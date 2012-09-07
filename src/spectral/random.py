@@ -2,15 +2,19 @@
 Random Distributions particular to spectral algorithms
 """
 
-import scipy as m
+import scipy as sc
 import scipy.stats as stats
 import scipy.linalg as linalg
 
 def permutation( n ):
     """Generate a random permutation"""
     lst = range( n )
-    m.random.shuffle( lst )
+    sc.random.shuffle( lst )
     return lst
+
+def matrix_permutation( m, n ):
+    """Generate a random matrix permutations"""
+    return permutation( m ), permutation( n )
 
 def orthogonal(n):
     """Generate a random orthogonal 'd' dimensional matrix, using the
@@ -18,11 +22,11 @@ def orthogonal(n):
     Francesco Mezzadri, "How to generate random matrices from the
     classical compact groups" 
     """
-    z = m.randn(n,n) 
-    q,r = m.linalg.qr(z) 
-    d = m.diagonal(r) 
-    ph = d/m.absolute(d) 
-    q = m.multiply(q,ph,q) 
+    z = sc.randn(n,n) 
+    q,r = sc.linalg.qr(z) 
+    d = sc.diagonal(r) 
+    ph = d/sc.absolute(d) 
+    q = sc.multiply(q,ph,q) 
     return q
 
 def wishart(n,V,nsamples=1):
@@ -66,14 +70,14 @@ def wishart(n,V,nsamples=1):
         out= []
     for kk in range(nsamples):
         #Generate the lower triangular A such that a_ii = (\chi2_(n-i+2))^{1/2} and a_{ij} ~ N(0,1) for j < i (i 1-based)
-        A= m.zeros((p,p))
+        A= sc.zeros((p,p))
         for ii in range(p):
-            A[ii,ii]= m.sqrt(stats.chi2.rvs(n-ii+2))
+            A[ii,ii]= sc.sqrt(stats.chi2.rvs(n-ii+2))
             for jj in range(ii):
-                A[ii,jj]= stats.norm.rvs()
+                A[ii,jj]= stats.norsc.rvs()
         #Compute the sample X = L A A\T L\T
-        thissample= m.dot(L,A)
-        thissample= m.dot(thissample,thissample.transpose())
+        thissample= sc.dot(L,A)
+        thissample= sc.dot(thissample,thissample.transpose())
         if nsamples == 1:
             return thissample
         else:
