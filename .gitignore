@@ -6,6 +6,7 @@
 *.o
 cscope.out
 tags
+*.lprof
 
 # TeX
 *.log

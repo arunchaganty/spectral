@@ -66,3 +66,20 @@ def mrank( x, eps=1e-12 ):
     d = svdvals( x )
     return len( [v for v in d if abs(v) > eps ] ) 
 
+def condition_number( x, k = None ):
+    """Condition number for the k-rank approximation of x"""
+    # Get the eigenvalues
+    s = svdvals( x )
+
+    if k is not None:
+        return s[0]/s[k]
+    else:
+        return s[0]/s[-1]
+    
+def eigengap( x, k = None ):
+    """Minimum difference in eigenvalues"""
+    # Get the eigenvalues
+    s = svdvals( x )
+
+    return sc.diff( s ).min() / s[0]
+
