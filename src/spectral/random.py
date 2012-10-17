@@ -8,12 +8,14 @@ import scipy.linalg as linalg
 
 def permutation( n ):
     """Generate a random permutation"""
+    n = int( n )
     lst = range( n )
     sc.random.shuffle( lst )
     return lst
 
 def matrix_permutation( m, n ):
     """Generate a random matrix permutations"""
+    m, n = int( m ), int( n )
     return permutation( m ), permutation( n )
 
 def orthogonal(n):
@@ -22,6 +24,7 @@ def orthogonal(n):
     Francesco Mezzadri, "How to generate random matrices from the
     classical compact groups" 
     """
+    n = int( n )
     z = sc.randn(n,n) 
     q,r = sc.linalg.qr(z) 
     d = sc.diagonal(r) 
