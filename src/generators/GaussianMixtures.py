@@ -11,7 +11,7 @@ multinomial = sc.random.multinomial
 multivariate_normal = sc.random.multivariate_normal 
 dirichlet = sc.random.dirichlet
 
-import spectral.random as sr
+import spectral.rand as sr
 import spectral.linalg as sl
 
 class GaussianMixtureModel( MixtureModel ):

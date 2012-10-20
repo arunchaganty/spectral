@@ -7,7 +7,7 @@ import scipy as sc
 from scipy import diag, array, ndim
 from scipy.linalg import norm, det, eig, svd, svdvals, inv
 from spectral.linalg import svdk, mrank
-from spectral.random import orthogonal
+from spectral.rand import orthogonal
 from spectral.data import Pairs, Triples
 
 def recoverM3( k, P12, P13, P123 ):
