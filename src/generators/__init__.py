@@ -3,14 +3,14 @@ Data generators for various models
 """
 
 from generators.MixtureModel import MixtureModel
-from generators.GaussianMixtures import GaussianMixtureModel
+from generators.GaussianMixtures import GaussianMixtureModel, MultiViewGaussianMixtureModel
 from generators.TopicModel import TopicModel, LDATopicModel
 
 import scipy as sc
 from scipy import matrix, array
 from scipy.linalg import norm 
 import spectral.linalg as sl
-import spectral.random as sr
+import spectral.rand as sr
 
 def recovery_error( x, y ):
     """Return the difference between canonical forms of x and y"""
