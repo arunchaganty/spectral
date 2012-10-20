@@ -11,13 +11,29 @@ cimport numpy as np
 # DTYPE for this, which is assigned to the usual NumPy runtime
 # type info object.
 DTYPE = np.double
+LONG = np.long
 # "ctypedef" assigns a corresponding compile-time type to DTYPE_t. For
 # every type in the numpy module there's a corresponding compile-time
 # type with a _t-suffix.
 ctypedef np.double_t DTYPE_t
+
+ctypedef np.long_t LONG_t
 # "def" can type its arguments but not have a return type. The type of the
 # arguments for a "def" function is checked at run-time when entering the
 # function.
+
+def count_frequency(np.ndarray[LONG_t, ndim=2] X, unsigned int d):
+    cdef unsigned int N = X.shape[0]
+    cdef unsigned int W = X.shape[1]
+
+    cdef np.ndarray[LONG_t, ndim=2] Y = np.zeros( (N,d), dtype=LONG )
+
+    for n in range( N ):
+        for w in range( W ):
+            i = X[n,w]
+            Y[n,i] += 1
+
+    return Y
 
 def Pairs(np.ndarray[DTYPE_t, ndim=2] x1, np.ndarray[DTYPE_t, ndim=2] x2):
     """Compute E[x1 \ctimes x2]"""

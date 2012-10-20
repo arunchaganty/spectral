@@ -8,6 +8,11 @@ from scipy.linalg import norm
 
 from . import _data
 
+def count_frequency( X, d ):
+    N, W = X.shape
+    Y = _data.count_frequency( X, d )
+    return Y/float(W)
+
 Pairs = _data.Pairs
 
 def Triples( x1, x2, x3, eta = None):
