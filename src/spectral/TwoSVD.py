@@ -88,8 +88,7 @@ def test_exact_recovery():
 
     O_ = recover_topics( P, T, k, a0 )
 
-    O = canonicalise( O )
-    O_ = canonicalise( O_ )
+    O_ = closest_permuted_matrix( O.T, O_.T ).T
 
     assert norm( O - O_ ) < 1e-3
 
