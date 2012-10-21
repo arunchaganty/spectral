@@ -4,7 +4,7 @@ Linear algebra methods for spectral learning
 
 import scipy as sc 
 from scipy import array, diag
-from scipy.linalg import svd, svdvals, norm
+from scipy.linalg import svd, svdvals, norm, eigvals, eig
 from spectral.rand import orthogonal
 
 from munkres import Munkres
@@ -80,18 +80,28 @@ def condition_number( x, k = None ):
     s = svdvals( x )
 
     if k is not None:
-        return s[0]/s[k]
+        return s[0]/s[k-1]
     else:
         return s[0]/s[-1]
     
-def eigengap( x, k = None ):
+def spectral_gap( x, k = None ):
     """Minimum difference in eigenvalues"""
-    # Get the eigenvalues
+    # Get the singular values
     s = svdvals( x )
     if k is not None:
         s = s[:k]
 
     return sc.diff( s ).min() / s[0]
+
+def eigen_sep( X, k = None ):
+    """Minimum difference in eigenvalues"""
+    # Get the eigenvalues
+    s = eigvals( X ).real
+    if k is not None:
+        s = s[:k]
+
+    return min(abs(s).min(), abs(sc.diff( s )).min())
+
 
 def column_aerr( M, M_ ):
     return max( map( lambda (mu,mu_): norm( mu - mu_ ),  zip( M.T, M_.T

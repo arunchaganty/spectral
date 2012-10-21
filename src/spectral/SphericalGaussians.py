@@ -8,12 +8,17 @@ methods and spectral decompositions" (2012).
 import ipdb
 import scipy as sc 
 from scipy import diag, array, ndim, outer, eye, ones, log
-from scipy.linalg import norm, svd, svdvals, eig #, inv, det, cholesky
-from spectral.linalg import svdk, mrank, approxk, \
-        canonicalise, closest_permuted_matrix
+from scipy.linalg import norm, svd, svdvals, eig, eigvals #, inv, det, cholesky
+from spectral.linalg import svdk, mrank, approxk, condition_number, eigen_sep, \
+        canonicalise, closest_permuted_matrix, \
+        tensor_aerr, tensor_rerr, column_aerr, column_rerr
 from spectral.rand import orthogonal
 from spectral.data import Pairs, Triples
 from generators import GaussianMixtureModel
+
+import time
+import logging
+logging.basicConfig( level=logging.INFO )
 
 eps = 1e-2
 
@@ -32,20 +37,36 @@ def get_whitener( A, k ):
     
     return W, Wt
 
-def recover_components( P, T, k, delta=0.01 ):
-    """Recover the k components given input moments M2 and M3"""
+def recover_components( P, T, k, Pe, Te, delta=0.01 ):
+    """Recover the k components given input moments M2 and M3 (Pe, Te) are exact P and T"""
+    d, _ = P.shape
+
+    logging.info( "\|\delta P\|_2\t\t%f\t\t%f", norm(Pe - P, 2), norm(Pe - P, 2)/norm(P, 2) )
 
     # Consider the k rank approximation of P,
     P = approxk( P, k )
+    Pe = approxk( Pe, k )
+    logging.info( "\|\delta P_k\|_2\t\t%f\t\t%f", norm(Pe - P, 2), norm(Pe - P, 2)/norm(P, 2) )
+    logging.info( "\|P\|_2, \sigma_k(P), K(P)\t\t%f\t\t%f\t\t%f", norm( Pe , 2 ), svdvals(Pe)[k-1], condition_number( Pe, k ) )
+    logging.info( "\|P'\|_2, \sigma_k(P'), K(P')\t\t%f\t\t%f\t\t%f", norm( P , 2 ), svdvals(P)[k-1], condition_number( P, k ) )
 
     # Get the whitening matrix of M2
     W, Wt = get_whitener( P, k )
+    We, Wte = get_whitener( Pe, k )
+    logging.info( "\|\delta W\|_2\t\t%f\t\t%f", norm(We - W, 2), norm(We - W, 2)/norm(W, 2) )
+    logging.info( "\|W\|_2, \sigma_k(W), K(W)\t\t%f\t\t%f\t\t%f", norm( We , 2 ), svdvals(We)[k-1], condition_number( We, k ) )
+    logging.info( "\|W'\|_2, \sigma_k(W'), K(W')\t\t%f\t\t%f\t\t%f", norm( W , 2 ), svdvals(W)[k-1], condition_number( W, k ) )
 
     # Whiten the third moment
+    logging.info( "\|\delta T\|_2\t\t%f\t\t%f", tensor_aerr( Te, T, d, 2 ), tensor_rerr( Te, T, d, 2 ) ) 
+
     Tw = lambda theta: W.T.dot( T( W.dot( theta ) ) ).dot( W )
+    Twe = lambda theta: We.T.dot( Te( We.dot( theta ) ) ).dot( We )
 
+    logging.info( "\|\delta T_W\|_2\t\t%f\t\t%f", tensor_aerr( Twe, Tw, k, 2 ), tensor_rerr( Twe, Tw, k, 2 ) ) 
 
-    # Repeat [-\log(\delta] times for confidence 1-\delta
+    # Repeat [-\log(\delta] times for confidence 1-\delta to find best
+    # \theta
     t = int( sc.ceil( -log( delta ) ) )
     best = (-sc.inf, None, None)
     for i in xrange( t ):
@@ -53,35 +74,32 @@ def recover_components( P, T, k, delta=0.01 ):
         theta = orthogonal( k ).T[0] 
 
         # Try with eigen vectors
-        S, U = eig( Tw(theta), left=True, right=False )
-        assert( sc.isreal( S ).all() )
-        assert( sc.isreal( U ).all() )
-        S, U = S.real, U.real
+        X = Tw(theta)
+        sep = eigen_sep( X )
 
-        lv = zip( S, U.T )
-        lv.sort()
-        l = array( map( lambda x: x[0], lv ) )
+        if sep > best[0]:
+            best = sep, theta, X
+    
+    # Find the eigenvectors as well
+    sep, theta, X
+    S, U = eig( X, left=True, right=False )
+    assert( sc.isreal( S ).all() )
+    assert( sc.isreal( U ).all() )
+    S, U = S.real, U.real
 
-        # Compare min of |\lambda_i| and |\lambda_i - \lambda_j|
-        diff = min( abs(l).min(), abs(sc.diff( l )).min() )
-        if diff > best[0]:
-            best = diff, theta, lv
+    Xe = Twe( theta )
+    sepe = eigen_sep( Xe )
+    Se, Ue = eig( Xe, left=True, right=False )
 
-        M = []
-        for (l, v) in lv:
-            m = l/(theta.dot(v)) * Wt.T.dot( v )
-            M.append( m )
-        M = sc.column_stack( M )
-        print diff, M
-
-
-    diff, theta, lv = best
+    logging.info( "\|\delta \Delta\| \t\t%f\t\t%f", abs( sepe - sep ), abs( sepe - sep )/abs( sep ) )
+    logging.info( "\|\delta \lambda_i\| \t\t%f\t\t%f", norm( Se - S ), norm( Se - S )/norm( S ) )
+    logging.info( "\|\delta v_i\| \t\t%f\t\t%f", column_aerr( Ue, U ), column_rerr( Ue, U ) ) 
+    
     M = []
-    for (l, v) in lv:
+    for (l, v) in zip( S,  U ):
         m = l/(theta.dot(v)) * Wt.T.dot( v )
         M.append( m )
     M = sc.column_stack( M )
-    print "Final: ", diff, M
 
     return M
 
@@ -107,7 +125,7 @@ def test_exact_recovery():
 
     P, T = exact_moments( A, w )
 
-    A_ = recover_components( P, T, k, delta = 0.1 )
+    A_ = recover_components( P, T, k, P, T, delta = 0.01 )
     A_ = closest_permuted_matrix( A.T, A_.T ).T
 
     print norm( A - A_ )/norm( A )
@@ -155,8 +173,9 @@ def test_sample_recovery():
 
     X = gmm.sample( 100000 ) # Normalising for the words
     P, T = sample_moments( X, k )
+    Pe, Te = exact_moments( A, w )
 
-    A_ = recover_components( P, T, k )
+    A_ = recover_components( P, T, k, Pe=Pe, Te=Te )
     A_ = closest_permuted_matrix( A.T, A_.T ).T
 
     print norm( A - A_ )/norm( A )
@@ -165,29 +184,44 @@ def test_sample_recovery():
 
     assert norm( A - A_ )/norm( A ) < 1e-3
 
-# def main( fname ):
-#     """Run on sample in fname"""
-# 
-#     lda = sc.load( fname )
-#     k, d, a0, O, X = lda['k'], lda['d'], lda['a0'], lda['O'], lda['data']
-#     X1, X2, X3 = X
-# 
-#     P, T = sample_moments( X1, X2, X3, k, a0 )
-# 
-#     O_ = recover_topics( P, T, k, a0 )
-#     O_ = closest_permuted_matrix( O.T, O_.T ).T
-# 
-#     print k, d, a0, norm( O - O_ )
-# 
-#     #print O
-#     #print O_
-# 
-# if __name__ == "__main__":
-#     import argparse
-#     parser = argparse.ArgumentParser()
-#     parser.add_argument( "fname", help="Input file (as npz)" )
-# 
-#     args = parser.parse_args()
-# 
-#     main( args.fname )
-# 
+def main( fname, samples, delta ):
+    """Run on sample in fname"""
+
+    gmm = sc.load( fname )
+    k, d, M, w, X = gmm['k'], gmm['d'], gmm['M'], gmm['w'], gmm['X']
+    logging.info( "\|M\|_2, \sigma_k(M), K(M)\t\t%f\t\t%f\t\t%f", norm( M , 2 ), svdvals(M)[k-1], condition_number( M, k ) )
+    logging.info( "w_min, w_max\t\t%f\t\t%f", w.min(), w.max() )
+
+    N, _ = X.shape
+    if (samples < 0 or samples > N):
+        print "Warning: %s greater than number of samples in file. Using %s instead." % ( samples, N )
+    else:
+        X = X[:samples, :]
+
+    P, T = sample_moments( X, k )
+    Pe, Te = exact_moments( M, w )
+
+    start = time.time()
+    M_ = recover_components( P, T, k, delta = delta, Pe = Pe, Te = Te )
+    stop = time.time()
+    M_ = closest_permuted_matrix( M.T, M_.T ).T
+
+    # Error data
+    logging.info( "\|\delta M\|_F\t\t%f\t\t%f", norm(M - M_), norm(M - M_)/norm(M) )
+    logging.info( "\|\delta mu_i\|_2\t\t%f\t\t%f", column_aerr( M, M_ ), column_rerr( M, M_ ) )
+    logging.info( "Running Time: %f", stop - start )
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument( "fname", help="Input file (as npz)" )
+    parser.add_argument( "--seed", default=time.time(), type=long, help="Seed used" )
+    parser.add_argument( "--samples", default=-1, type=float, help="Number of samples to be used" )
+    parser.add_argument( "--delta", default=0.01, type=float, help="Confidence bound" )
+
+    args = parser.parse_args()
+    print "Seed:", int( args.seed )
+    sc.random.seed( int( args.seed ) )
+
+    main( args.fname, int(args.samples), args.delta )
+
