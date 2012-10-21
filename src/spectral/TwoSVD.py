@@ -6,25 +6,26 @@ decompositions for probabilistic topic modelling and latent Dirichlet
 allocation" (2012).
 """
 
-import ipdb
+#import ipdb
 import scipy as sc 
 from scipy import diag, array, ndim, outer
-from scipy.linalg import norm, det, eig, eigvals, svd, svdvals, inv, cholesky
-from spectral.linalg import svdk, mrank, approxk, canonicalise, matrix_matching
+from scipy.linalg import norm, svd #, inv, det, cholesky
+from spectral.linalg import svdk, mrank, approxk, \
+        canonicalise, closest_permuted_matrix
 from spectral.rand import orthogonal
-from spectral.data import Pairs, Triples, count_frequency
+from spectral.data import Pairs, Triples
 from generators import LDATopicModel
 
 eps = 1e-2
 
 def get_whitener( A, k ):
-    """Return the matrix W that whitens A, i.e. W^T A W = I. Assumes A is k-rank"""
+    """Return the matrix W that whitens A, i.e. W^T A W = I. Assumes A
+    is k-rank"""
 
     assert( mrank( A ) == k )
     # If A is PSD
     U, S, _ = svdk( A, k )
     W, Wt = U.dot( diag( sc.sqrt(S)**-1 ) ) , ( diag( sc.sqrt(S) ) ).dot( U.T )
-    W_ = inv(A.dot( A.T ))
 
     # assert( sc.allclose( W.T.dot( A ).dot( W ), sc.eye( k ) ) )
     # assert( sc.allclose( Wt.T.dot( Wt ), A ) )
@@ -92,22 +93,21 @@ def test_exact_recovery():
 
     assert norm( O - O_ ) < 1e-3
 
-def sample_moments( X1, X2, X3, d, k, a0 ):
+def sample_moments( X1, X2, X3, k, a0 ):
     """Get the sample moments from data
     Assumes every row of the document corresponds to one data point
     """
-    N, W = X1.shape
+    #N, W = X1.shape
 
     # Get three uncorrelated sections of the data
     M1 = X1.mean(0)
     M2 = Pairs( X1, X2 )
     M3 = Triples( X1, X2, X3 )
 
-    mu = X1.mean(0) 
-    P = M2 - a0/(a0+1) * outer(mu,mu)
-    T = lambda theta: (M3(theta) - a0/(a0+2) * (M2.dot( outer(theta, mu))
-            + outer( mu, theta ).dot( M2 ) + theta.dot(mu) * M2 )  +
-        2 * a0**2/((a0+2)*(a0+1)) * (theta.dot(mu) * outer(mu,mu)))
+    P = M2 - a0/(a0+1) * outer(M1, M1)
+    T = lambda theta: (M3(theta) - a0/(a0+2) * (M2.dot( outer(theta, M1))
+            + outer( M1, theta ).dot( M2 ) + theta.dot(M1) * M2 )  +
+        2 * a0**2/((a0+2)*(a0+1)) * (theta.dot(M1) * outer(M1, M1)))
 
     return P, T    
 
@@ -123,11 +123,11 @@ def test_sample_recovery():
     O = lda.topics 
 
     X1, X2, X3 = lda.sample( 1000, words=1000 ) # Normalising for the words
-    P, T = sample_moments( X1, X2, X3, d, k, a0 )
+    P, T = sample_moments( X1, X2, X3, k, a0 )
 
     O_ = recover_topics( P, T, k, a0 )
     
-    O_ = matrix_matching( O, O_ )
+    O_ = closest_permuted_matrix( O, O_ )
 
     print O
     print O_
@@ -141,10 +141,10 @@ def main( fname ):
     k, d, a0, O, X = lda['k'], lda['d'], lda['a0'], lda['O'], lda['data']
     X1, X2, X3 = X
 
-    P, T = sample_moments( X1, X2, X3, d, k, a0 )
+    P, T = sample_moments( X1, X2, X3, k, a0 )
 
     O_ = recover_topics( P, T, k, a0 )
-    O_ = matrix_matching( O.T, O_.T ).T
+    O_ = closest_permuted_matrix( O.T, O_.T ).T
 
     print k, d, a0, norm( O - O_ )
 
