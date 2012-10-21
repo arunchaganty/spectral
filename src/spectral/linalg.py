@@ -5,6 +5,7 @@ Linear algebra methods for spectral learning
 import scipy as sc 
 from scipy import array, diag
 from scipy.linalg import svd, svdvals, norm
+from spectral.rand import orthogonal
 
 from munkres import Munkres
 
@@ -92,6 +93,30 @@ def eigengap( x, k = None ):
 
     return sc.diff( s ).min() / s[0]
 
+def column_aerr( M, M_ ):
+    return max( map( lambda (mu,mu_): norm( mu - mu_ ),  zip( M.T, M_.T
+        ) ) )
+
+def column_rerr( M, M_ ):
+    return max( map( lambda (mu,mu_): norm( mu - mu_ )/norm( mu ),  zip(
+        M.T, M_.T ) ) )
+
+def tensor_norm( T, d, ntype=2 ):
+    """Approximately calculate a tensor norm by projecting it onto a number of vectors"""
+    theta = orthogonal( d )
+
+    return max( [ norm( T(t), ntype ) for t in theta ] )
+
+def tensor_aerr( T, T_, d, ntype=2 ):
+    """Approximately calculate aerr of a tensor by projecting it onto a number of vectors"""
+    theta = orthogonal( d )
+    return max( [norm( T(t) - T_(t), ntype ) for t in theta ] )
+
+def tensor_rerr( T, T_, d, ntype=2 ):
+    """Approximately calculate rerr of a tensor by projecting it onto a number of vectors"""
+    theta = orthogonal( d )
+    return max( [norm( T(t) - T_(t), ntype )/norm( T(t), ntype ) for t in theta ] )
+
 def closest_permuted_vector( a, b ):
     """Find a permutation of b that matches a most closely (i.e. min |A
     - B|_2)"""
@@ -148,4 +173,6 @@ def test_closest_permuted_matrix():
 
     B_ = closest_permuted_matrix( A, B )
     assert( sc.allclose( B_, Bo ) )
+
+
 

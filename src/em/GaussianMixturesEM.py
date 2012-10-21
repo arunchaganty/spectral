@@ -14,7 +14,7 @@ cdist = scipy.spatial.distance.cdist
 multivariate_normal = scipy.random.multivariate_normal
 logsumexp = scipy.misc.logsumexp
 
-from spectral.linalg import closest_permuted_matrix, closest_permuted_vector
+from spectral.linalg import closest_permuted_matrix, closest_permuted_vector, column_aerr, column_rerr
 
 class GaussianMixtureEM( em.EMAlgorithm ):
     """
@@ -34,7 +34,7 @@ class GaussianMixtureEM( em.EMAlgorithm ):
 
         total_lhood = 0
         # Get pairwise distances between centers (D_ij = \|X_i - M_j\|)
-        D = cdist( X, M )
+        D = cdist( X, M.T )
         # Probability dist = 1/2(\sigma^2) D^2 + log w
         Z = - 0.5/sigma**2 * (D**2) + log( w ) - 0.5 * d * log(sigma) # Ignoreing constant term
         total_lhood += logsumexp(Z)
@@ -52,12 +52,12 @@ class GaussianMixtureEM( em.EMAlgorithm ):
 
         # Cluster weights (smoothed)
         # Pseudo counts
-        P = Z.sum(axis=0) + 1
+        w = Z.sum(axis=0) + 1
 
         # Get new means
-        M = (Z.T.dot( X ).T / P).T
-        sigma = (cdist( X, M ) * Z).sum()/(d*N)
-        w = P/P.sum()
+        M = (Z.T.dot( X ).T / w)
+        sigma = (cdist( X, M.T ) * Z).sum()/(d*N)
+        w /= w.sum()
 
         return M, sigma, w
 
@@ -83,7 +83,8 @@ class GaussianMixtureEM( em.EMAlgorithm ):
             m = sc.random.multinomial( 1, D ).argmax()
             M.append( X[m] )
 
-        sigma = cdist( X, M ).sum()/(k*d*N)
+        M = sc.column_stack( M )
+        sigma = cdist( X, M.T ).sum()/(k*d*N)
         w = ones( k )/float(k)
 
         return M, sigma, w
@@ -123,4 +124,42 @@ def test_gaussian_em():
     assert( norm( M - M_ )/norm(M) < 1e-1 )
     assert( abs(sigma - sigma_) < 1 )
     assert( norm( w - w_ ) < 1e-3 )
+
+def main(fname, samples):
+    """Run GMM EM on the data in @fname"""
+
+    gmm = sc.load( fname )
+    k, d, M, S, w, X = gmm['k'], gmm['d'], gmm['M'], gmm['S'], gmm['w'], gmm['X']
+
+    algo = GaussianMixtureEM( k, d )
+
+    N, _ = X.shape
+
+    if (samples < 0 or samples > N):
+        print "Warning: %s greater than number of samples in file. Using %s instead." % ( samples, N )
+    else:
+        X = X[:samples, :]
+
+    lhood, Z, O = algo.run( X )
+    M_, S_, w_ = O
+
+    M_ = closest_permuted_matrix( M.T, M_.T ).T
+
+    # Table
+    print "Variable\tAbs. Error\t\tRel. Err"
+    print "M(F)\t\t%f\t\t%f" % ( norm(M - M_), norm(M - M_)/norm(M) )
+    print "\mu(2)\t\t%f\t\t%f" % ( column_aerr( M, M_ ), column_rerr( M, M_ ) )
+
+if __name__ == "__main__":
+    import argparse, time
+    parser = argparse.ArgumentParser()
+    parser.add_argument( "fname", help="Input file (as npz)" )
+    parser.add_argument( "--seed", default=time.time(), type=long, help="Seed used" )
+    parser.add_argument( "--samples", type=float, default=-1, help="Limit number of samples" )
+
+    args = parser.parse_args()
+    print "Seed:", int( args.seed )
+    sc.random.seed( int( args.seed ) )
+
+    main( args.fname, int(args.samples) )
 

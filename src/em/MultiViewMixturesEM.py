@@ -14,7 +14,7 @@ cdist = scipy.spatial.distance.cdist
 multivariate_normal = scipy.random.multivariate_normal
 logsumexp = scipy.misc.logsumexp
 
-from spectral.linalg import closest_permuted_matrix
+from spectral.linalg import closest_permuted_matrix, column_aerr, column_rerr
 
 class MultiViewGaussianMixtureEM( em.EMAlgorithm ):
     """A multiview gaussian, each with spherical covariance"""
@@ -89,10 +89,11 @@ class MultiViewGaussianMixtureEM( em.EMAlgorithm ):
             m = sc.random.multinomial( 1, D ).argmax()
             M.append( X[m] )
 
-        sigma = cdist( X, M ).sum()/(k*d*N)
+        M = sc.column_stack( M )
+        sigma = cdist( X, M.T ).sum()/(k*d*N)
         w = ones( k )/float(k)
 
-        return sc.column_stack(M), sigma, w
+        return M, sigma, w
 
     def run( self, X, O = None, *args, **kwargs ):
         if O == None:
@@ -122,8 +123,7 @@ def test_multiview_gmm_em():
     assert norm(M2 - M2_)/norm(M2) < 1e-2
     assert norm(M3 - M3_)/norm(M3) < 1e-2
 
-
-def main(fname):
+def main(fname, samples):
     """Run MVGMM EM on the data in @fname"""
 
     mvgmm = sc.load( fname )
@@ -131,29 +131,43 @@ def main(fname):
 
     algo = MultiViewGaussianMixtureEM( k, d )
 
+    X1, X2, X3 = X
+    N, _ = X1.shape
+
+    if (samples < 0 or samples > N):
+        print "Warning: %s greater than number of samples in file. Using\
+        %s instead." % ( samples, N )
+    else:
+        X1, X2, X3 = X1[:samples, :], X2[:samples, :], X3[:samples, :] 
+        X = (X1, X2, X3)
+
     lhood, Z, O = algo.run( X )
     (M1_, M2_, M3_), (S1, S2, S3), w = O
 
     M1, M2, M3 = M
 
-    M1_ = closest_permuted_matrix( M1, M1_ )
-    M2_ = closest_permuted_matrix( M2, M2_ )
-    M3_ = closest_permuted_matrix( M3, M3_ )
+    M1_ = closest_permuted_matrix( M1.T, M1_.T ).T
+    M2_ = closest_permuted_matrix( M2.T, M2_.T ).T
+    M3_ = closest_permuted_matrix( M3.T, M3_.T ).T
 
-    print "Error in M1: ", (norm(M1 - M1_)/norm(M1))
-    print "Error in M2: ", (norm(M2 - M2_)/norm(M2))
-    print "Error in M3: ", (norm(M3 - M3_)/norm(M3))
+    print "Variable\tAbs. Error\t\tRel. Err"
+    print "M1(F)\t\t%f\t\t%f" % ( norm(M1 - M1_), norm(M1 - M1_)/norm(M1) )
+    print "M2(F)\t\t%f\t\t%f" % ( norm(M2 - M2_), norm(M2 - M2_)/norm(M2) )
+    print "M3(F)\t\t%f\t\t%f" % ( norm(M3 - M3_), norm(M3 - M3_)/norm(M3) )
+    print "\mu1(2)\t\t%f\t\t%f" % ( column_aerr( M1, M1_ ), column_rerr( M1, M1_ ) )
+    print "\mu2(2)\t\t%f\t\t%f" % ( column_aerr( M2, M2_ ), column_rerr( M2, M2_ ) )
+    print "\mu3(2)\t\t%f\t\t%f" % ( column_aerr( M3, M3_ ), column_rerr( M3, M3_ ) )
 
 if __name__ == "__main__":
     import argparse, time
     parser = argparse.ArgumentParser()
     parser.add_argument( "fname", help="Input file (as npz)" )
-    parser.add_argument( "--seed", default=time.time(), type=long, help="Input file (as npz)" )
+    parser.add_argument( "--seed", default=time.time(), type=long, help="Seed used" )
+    parser.add_argument( "--samples", type=float, default=-1, help="Limit number of samples" )
 
     args = parser.parse_args()
     print "Seed:", int( args.seed )
     sc.random.seed( int( args.seed ) )
 
-
-    main( args.fname )
+    main( args.fname, int(args.samples) )
 
