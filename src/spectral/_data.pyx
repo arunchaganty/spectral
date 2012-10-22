@@ -53,24 +53,20 @@ def Pairs(np.ndarray[DTYPE_t, ndim=2] x1, np.ndarray[DTYPE_t, ndim=2] x2):
     return pairs
 
 def Triples(np.ndarray[DTYPE_t, ndim=2] x1, np.ndarray[DTYPE_t, ndim=2]
-        x2, np.ndarray[DTYPE_t, ndim=2] x3, np.ndarray[DTYPE_t,
-            ndim=1] eta):
-    """Compute E[x1 \ctimes x2 <eta, x3> ]"""
-    assert x1.dtype == DTYPE and x2.dtype == DTYPE and x3.dtype == DTYPE and eta.dtype == DTYPE
+        x2, np.ndarray[DTYPE_t, ndim=2] x3):
+    """Compute E[x1 \ctimes x2 \ctimes x3 ]"""
+    assert x1.dtype == DTYPE and x2.dtype == DTYPE and x3.dtype == DTYPE
 
     cdef unsigned int N = x1.shape[0]
     cdef unsigned int d = x1.shape[1]
-    cdef np.ndarray[DTYPE_t, ndim=2] triples = np.zeros( (d,d), dtype=DTYPE )
-    cdef unsigned int n, i, j
+    cdef np.ndarray[DTYPE_t, ndim=3] triples = np.zeros( (d,d,d), dtype=DTYPE )
+    cdef unsigned int n, i, j, k
 
-    # Compute one element of Pairs at a time
+    # Compute one element of Triples at a time
     for n in range( N ):
-        for j in range( d ):
-            for i in range( d ):
-                # Compute <x3, eta> - this seems faster because it is non-pythonic
-                nm = 0
-                for k in range( d ):
-                    nm += x3[n,k] * eta[k]
-                triples[i,j] += (x1[n,i] * x2[n,j] * nm - triples[i,j])/(n+1)
+        for k in range( d ):
+            for j in range( d ):
+                for i in range( d ):
+                    triples[i,j,k] += (x1[n,i] * x2[n,j] * x3[n,k] - triples[i,j,k])/(n+1)
     return triples
 

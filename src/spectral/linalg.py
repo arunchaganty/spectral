@@ -184,5 +184,42 @@ def test_closest_permuted_matrix():
     B_ = closest_permuted_matrix( A, B )
     assert( sc.allclose( B_, Bo ) )
 
+def tensorify( x1, x2, x3 ):
+    """Create a tensor from x1 cross x2 cross x3"""
+    M, = x1.shape
+    N, = x2.shape
+    O, = x3.shape
+    assert( N == M and M == O )
 
+    X = sc.outer(x1,x2)
+    B = sc.zeros( (N, N, N) )
+    for i in xrange(N):
+        B[:,:,i] = X * x3[i]
+    return B
+
+def matrix_tensorify( A, x ):
+    """Create a tensor from the matrix A and vector x"""
+    N, M = A.shape
+    O, = x.shape
+    assert( N == M and M == O )
+
+    B = sc.zeros( (N, N, N) )
+    for i in xrange(N):
+        B[:,:,i] = A * x[i]
+    return B
+
+def test_matrix_tensorify():
+    """Test whether this tensorification routine works"""
+
+    A = sc.eye( 3 )
+    x = sc.random.rand(3)
+    y = sc.ones( 3 )
+
+    B = matrix_tensorify( A, x )
+
+    assert ( B.dot( y )  == A * x.dot(y) ).all()
+    C = B.swapaxes( 2, 0 )
+    assert ( C.dot( y )  == sc.outer(x, y) ).all()
+    D = B.swapaxes( 2, 1 )
+    assert ( D.dot( y )  == sc.outer(y, x) ).all()
 
