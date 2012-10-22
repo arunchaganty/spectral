@@ -10,8 +10,8 @@ import scipy as sc
 from scipy import diag, array, outer, eye, ones, log
 from scipy.linalg import norm, svdvals, eig, pinv, cholesky
 from spectral.linalg import svdk, mrank, approxk, eigen_sep, \
-        closest_permuted_matrix, \
-        tensorify, matrix_tensorify
+        closest_permuted_matrix, tensorify, matrix_tensorify, \
+        column_aerr, column_rerr
 from spectral.data import Pairs, Triples
 from spectral.util import DataLogger
 from generators import GaussianMixtureModel
@@ -37,7 +37,7 @@ def get_whitener( A, k ):
     
     return W, Wt
 
-def recover_components( P, T, k, Pe, Te, delta=0.01 ):
+def recover_components( k, P, T, Pe, Te, delta=0.01 ):
     """Recover the k components given input moments M2 and M3 (Pe, Te) are exact P and T"""
     d, _ = P.shape
 
@@ -122,7 +122,7 @@ def test_exact_recovery():
 
     P, T = exact_moments( A, w )
 
-    A_ = recover_components( P, T, k, P, T, delta = 0.01 )
+    A_ = recover_components( k, P, T, P, T, delta = 0.01 )
     A_ = closest_permuted_matrix( A.T, A_.T ).T
 
     print norm( A - A_ )/norm( A )
@@ -171,7 +171,7 @@ def test_sample_recovery():
     P, T = sample_moments( X, k )
     Pe, Te = exact_moments( A, w )
 
-    A_ = recover_components( P, T, k, Pe=Pe, Te=Te )
+    A_ = recover_components( k, P, T, Pe, Te )
     A_ = closest_permuted_matrix( A.T, A_.T ).T
 
     print norm( A - A_ )/norm( A )
@@ -205,7 +205,7 @@ def main( fname, samples, delta ):
     Pe, Te = exact_moments( M, w )
 
     start = time.time()
-    M_ = recover_components( P, T, k, delta = delta, Pe = Pe, Te = Te )
+    M_ = recover_components( k, P, T, Pe, Te, delta = delta )
     stop = time.time()
     M_ = closest_permuted_matrix( M.T, M_.T ).T
 
@@ -213,6 +213,8 @@ def main( fname, samples, delta ):
     logger.add_err( "M", M, M_ )
     logger.add_err( "M", M, M_, 'col' )
     logger.add( "time", stop - start )
+
+    print column_aerr(M, M_), column_rerr(M, M_)
 
 if __name__ == "__main__":
     import argparse
