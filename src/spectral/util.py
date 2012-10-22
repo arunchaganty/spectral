@@ -30,11 +30,11 @@ class DataLogger:
         """Print the error between two objects"""
 
         if ntype is None:
-            self.add( "aerr_%s)" % key, norm( A - A_ ) )
-            self.add( "rerr_%s)" % key, norm( A - A_ )/norm(A) )
+            self.add( "aerr_%s" % key, norm( A - A_ ) )
+            self.add( "rerr_%s" % key, norm( A - A_ )/norm(A) )
         elif ntype == "col":
-            self.add( "aerr_%s_col)" % key, column_aerr( A, A_ ) )
-            self.add( "rerr_%s_col)" % key,  column_rerr( A, A_ ) )
+            self.add( "aerr_%s_col" % key, column_aerr( A, A_ ) )
+            self.add( "rerr_%s_col" % key,  column_rerr( A, A_ ) )
         else:
             self.add( "aerr_%s_%d" % (key, ntype), norm( A - A_ ) )
             self.add( "rerr_%s_%d" % (key, ntype), norm( A - A_, ntype )/norm(A, ntype) )
