@@ -24,8 +24,10 @@ tags
 *.png
 *.mat
 *.dat
+*.npz
 output/
 output-*/
 data-*/
 
 # Temporary stuff
+*.sh
