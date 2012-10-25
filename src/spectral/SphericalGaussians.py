@@ -96,7 +96,6 @@ def recover_components( k, P, T, Pe, Te, delta=0.01 ):
     M = sc.zeros( (d, k) )
     for i in xrange(k):
         M[:, i] = S[i]/theta.dot(U.T[i]) * Wt.dot(U.T[i]) 
-    logger.add( "M_", M )
 
     return M
 
@@ -208,6 +207,7 @@ def main( fname, samples, delta ):
     M_ = recover_components( k, P, T, Pe, Te, delta = delta )
     stop = time.time()
     M_ = closest_permuted_matrix( M.T, M_.T ).T
+    logger.add( "M_", M )
 
     # Error data
     logger.add_err( "M", M, M_ )

@@ -4,7 +4,7 @@ Anandkumar, Hsu, Kakade, "A Method of Moments for Mixture Models and
 Hidden Markov Models" (2012).
 """
 
-import ipdb
+#import ipdb
 import scipy as sc 
 from scipy import diag, array, ndim, outer, eye, ones, log
 from scipy.linalg import norm, svd, svdvals, eig, eigvals, inv, det
@@ -87,7 +87,6 @@ def recover_M3( k, P12, P13, P123, P12e, P13e, P123e, delta=0.01 ):
         logger.add_err( "L", Le, L, 2 )
 
         M3_ = U3.dot( inv(theta.T) ).dot( L )
-        logger.add( "M3_", M3_ )
         return M3_
 
 def exact_moments( w, M1, M2, M3 ):
@@ -184,10 +183,14 @@ def main( fname, samples, delta ):
     stop = time.time()
     M3_ = closest_permuted_matrix( M3.T, M3_.T ).T
 
+    logger.add( "M3_", M3_ )
+
     # Error data
     logger.add_err( "M3", M3, M3_ )
     logger.add_err( "M3", M3, M3_, 'col' )
     logger.add( "time", stop - start )
+
+    print column_aerr(M, M_), column_rerr(M, M_)
 
 if __name__ == "__main__":
     import argparse

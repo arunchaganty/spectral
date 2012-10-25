@@ -30,7 +30,7 @@ class GaussianMixtureModel( MixtureModel ):
 
         # Shuffle all of the data 
         # Row permutation only
-        shuffle = sr.permutation( n ), None
+        #shuffle = sr.permutation( n ), None
 
         points = []
         for (k, cnt) in zip( xrange( self.K ), cnts ):
@@ -40,7 +40,7 @@ class GaussianMixtureModel( MixtureModel ):
         points = sc.row_stack( points )
 
         # Permute the rows
-        points = sl.apply_matrix_permutation( shuffle, points )
+        #points = sl.apply_matrix_permutation( shuffle, points )
         return points
 
     @staticmethod
@@ -92,7 +92,7 @@ class MultiViewGaussianMixtureModel( MixtureModel ):
 
         # Shuffle all of the data 
         # Row permutation only
-        shuffle = sr.permutation( n ), None
+        #shuffle = sr.permutation( n ), None
 
         # Data for each view
         points = []
@@ -104,7 +104,7 @@ class MultiViewGaussianMixtureModel( MixtureModel ):
                 mean, sigma = self.means[view].T[ k ], self.sigmas[view][ k ]
                 points_.append( multivariate_normal( mean, sigma, cnt  ) )
             points_ = sc.row_stack( points_ )
-            points_ = sl.apply_matrix_permutation( shuffle, points_ )
+            #points_ = sl.apply_matrix_permutation( shuffle, points_ )
 
             points.append( points_ )
 

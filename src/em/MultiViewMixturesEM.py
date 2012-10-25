@@ -14,7 +14,11 @@ cdist = scipy.spatial.distance.cdist
 multivariate_normal = scipy.random.multivariate_normal
 logsumexp = scipy.misc.logsumexp
 
-from spectral.linalg import closest_permuted_matrix, column_aerr, column_rerr
+from spectral.linalg import closest_permuted_matrix, \
+        column_aerr, column_rerr
+from spectral.util import DataLogger
+
+logger = DataLogger("log")
 
 class MultiViewGaussianMixtureEM( em.EMAlgorithm ):
     """A multiview gaussian, each with spherical covariance"""
@@ -132,6 +136,7 @@ def main(fname, samples):
     algo = MultiViewGaussianMixtureEM( k, d )
 
     X1, X2, X3 = X
+    M1, M2, M3 = M
     N, _ = X1.shape
 
     if (samples < 0 or samples > N):
@@ -140,34 +145,48 @@ def main(fname, samples):
     else:
         X1, X2, X3 = X1[:samples, :], X2[:samples, :], X3[:samples, :] 
         X = (X1, X2, X3)
+    N, _ = X1.shape
 
     lhood, Z, O = algo.run( X )
     (M1_, M2_, M3_), (S1, S2, S3), w = O
 
-    M1, M2, M3 = M
+    logger.add( "k", k )
+    logger.add( "d", d )
+    logger.add( "N", N )
+    logger.add( "M1", M1 )
+    logger.add( "M2", M2 )
+    logger.add( "M3", M3 )
 
     M1_ = closest_permuted_matrix( M1.T, M1_.T ).T
     M2_ = closest_permuted_matrix( M2.T, M2_.T ).T
     M3_ = closest_permuted_matrix( M3.T, M3_.T ).T
+    logger.add( "M1_", M1_ )
+    logger.add( "M2_", M2_ )
+    logger.add( "M3_", M3_ )
 
-    print "Variable\tAbs. Error\t\tRel. Err"
-    print "M1(F)\t\t%f\t\t%f" % ( norm(M1 - M1_), norm(M1 - M1_)/norm(M1) )
-    print "M2(F)\t\t%f\t\t%f" % ( norm(M2 - M2_), norm(M2 - M2_)/norm(M2) )
-    print "M3(F)\t\t%f\t\t%f" % ( norm(M3 - M3_), norm(M3 - M3_)/norm(M3) )
-    print "\mu1(2)\t\t%f\t\t%f" % ( column_aerr( M1, M1_ ), column_rerr( M1, M1_ ) )
-    print "\mu2(2)\t\t%f\t\t%f" % ( column_aerr( M2, M2_ ), column_rerr( M2, M2_ ) )
-    print "\mu3(2)\t\t%f\t\t%f" % ( column_aerr( M3, M3_ ), column_rerr( M3, M3_ ) )
+    logger.add_err( "M", M1, M1_ )
+    logger.add_err( "M", M1, M1_, 'col' )
+    logger.add_err( "M", M2, M2_ )
+    logger.add_err( "M", M2, M2_, 'col' )
+    logger.add_err( "M", M3, M3_ )
+    logger.add_err( "M", M3, M3_, 'col' )
+    print column_aerr( M3, M3_ ), column_rerr( M3, M3_ )
 
 if __name__ == "__main__":
     import argparse, time
     parser = argparse.ArgumentParser()
     parser.add_argument( "fname", help="Input file (as npz)" )
+    parser.add_argument( "ofname", help="Output file (as npz)" )
     parser.add_argument( "--seed", default=time.time(), type=long, help="Seed used" )
     parser.add_argument( "--samples", type=float, default=-1, help="Limit number of samples" )
 
     args = parser.parse_args()
+
+    logger = DataLogger(args.ofname)
+
     print "Seed:", int( args.seed )
     sc.random.seed( int( args.seed ) )
+    logger.add( "seed", int( args.seed ) )
 
     main( args.fname, int(args.samples) )
 
