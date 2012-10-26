@@ -65,8 +65,9 @@ def chunked_update( out, n, blocksize, fn, *params ):
         pbar.update( block )
 
     # Draw the remaining number of samples.
-    out[ blocks * blocksize : ] = fn( *params, size = n - blocks
-            * blocksize ) 
+    n_ = n - blocks * blocksize
+    if n_ > 0:
+        out[ blocks * blocksize : ] = fn( *params, size = n_ )
     pbar.stop()
 
     return out

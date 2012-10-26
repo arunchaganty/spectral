@@ -40,7 +40,7 @@ class GaussianMixtureModel( Model ):
             # Generate a bunch of points for each mean
             mean, sigma = self.means.T[ i ], self.sigmas[ i ]
             # 1e4 is a decent block size
-            chunked_update( X[ cnt_ : cnt_ + cnt ], cnt, 10**4,
+            chunked_update( X[ cnt_ : cnt_ + cnt ], int(cnt), 10**4,
                     multivariate_normal, mean, sigma ) 
 
         return X
