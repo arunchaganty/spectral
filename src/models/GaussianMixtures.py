@@ -22,7 +22,13 @@ class GaussianMixtureModel( Model ):
         self.d = self.get_parameter( "d" )
         self.weights = self.get_parameter( "w" )
         self.means = self.get_parameter( "M" )
-        self.sigmas = self.get_parameter( "S" )
+       self.sigmas = self.get_parameter( "S" )
+
+    @staticmethod
+    def from_file( fname ):
+        """Load model from a HDF file"""
+        hdf = tables.openFile( fname, "r+" )
+        return GaussianMixtureModel( hdf )
 
     def sample( self, n ):
         """Sample n samples from the model"""
@@ -126,6 +132,12 @@ class MultiViewGaussianMixtureModel( Model ):
         self.weights = self.get_parameter( "w" )
         self.means = self.get_parameter( "M" )
         self.sigmas = self.get_parameter( "S" )
+
+    @staticmethod
+    def from_file( fname ):
+        """Load model from a HDF file"""
+        hdf = tables.openFile( fname, "r+" )
+        return MultiViewGaussianMixtureModel( hdf )
 
     def sample( self, n ):
         """Sample n samples from the mixture model"""

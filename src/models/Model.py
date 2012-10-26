@@ -53,7 +53,7 @@ class Model:
         self.store.close()
 
     @staticmethod
-    def load_from_file( fname ):
+    def from_file( fname ):
         """Load model from a HDF file"""
         hdf = tables.openFile( fname, "r+" )
         return Model( hdf )
