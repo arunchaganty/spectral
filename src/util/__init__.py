@@ -44,7 +44,7 @@ class ProgressBar:
         sys.stdout.write("\n")
         self.state, self.total = 0, 0
 
-def chunked_update( out, n, blocksize, fn, *params ):
+def chunked_update( out, offset, n, blocksize, fn, *params ):
     """Run @fn to produce samples @blocksize at a time. This
     function tries to balance efficient use of the numpy sampler,
     while writing to a memmapped/HDF array to reduce memory overhead.
@@ -60,14 +60,14 @@ def chunked_update( out, n, blocksize, fn, *params ):
 
     pbar.start( blocks )
     for block in xrange( blocks ):
-        out[block * blocksize : (block+1)*blocksize ] = fn(
+        out[offset + block * blocksize : offset + (block+1)*blocksize ] = fn(
                 *params, size=blocksize ) 
         pbar.update( block )
 
     # Draw the remaining number of samples.
     n_ = n - blocks * blocksize
     if n_ > 0:
-        out[ blocks * blocksize : ] = fn( *params, size = n_ )
+        out[ offset + blocks * blocksize : offset + n ] = fn( *params, size = n_ )
     pbar.stop()
 
     return out
