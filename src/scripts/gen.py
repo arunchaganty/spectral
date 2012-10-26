@@ -5,6 +5,7 @@ Generate datasets
 import scipy as sc 
 from scipy import array, eye
 from models import GaussianMixtureModel
+from models import MultiViewGaussianMixtureModel
 
 def main( fname, dataset_type, N, k, d, params ):
     """Generate dataset in file fname"""
@@ -16,14 +17,14 @@ def main( fname, dataset_type, N, k, d, params ):
         gmm.sample( N )
 
         gmm.close() 
-    #elif dataset_type == "mvgmm":
-    #    views = params.views 
-    #    if params.cov == "spherical" and params.sigma2 > 0:
-    #        params.cov = array( [params.sigma2 * eye(d)] * views  )
-    #    mvgmm = MultiViewGaussianMixtureModel.generate( fname, k, d, views, params.means,
-    #            params.cov, params.weights )
-    #    mvgmm.sample( N )
-    #    mvgmm.save()
+    elif dataset_type == "mvgmm":
+        views = params.views 
+        if params.cov == "spherical" and params.sigma2 > 0:
+            params.cov = array( [[params.sigma2 * eye(d)] * k] * views )
+        mvgmm = MultiViewGaussianMixtureModel.generate( fname, k, d, views, params.means,
+                params.cov, params.weights )
+        mvgmm.sample( N )
+        mvgmm.close()
     else:
         raise NotImplementedError
                 
