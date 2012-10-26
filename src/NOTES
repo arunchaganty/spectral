@@ -1,0 +1,8 @@
+
+* The cross-covariance matrix in the 2-SVD (LDA) paper is not PSD, and
+  hence can not be properly whitened. 
+* It's possible to get very arbitrary values like (8,2,-1) 
+* Higher \delta \lambda does not necessarily correspond to better mean
+  values. Really crazy output.
+
+

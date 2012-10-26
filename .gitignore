@@ -28,6 +28,8 @@ tags
 output/
 output-*/
 data-*/
+results/
 
 # Temporary stuff
 *.sh
+attic/
