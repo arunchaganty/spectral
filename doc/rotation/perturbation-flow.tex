@@ -1,0 +1,64 @@
+\section{Perturbation Flow Diagrams}
+\label{sec:perturbation-flow-diagrams}
+
+Each of the spectral algorithms summarised in this report perform
+a sequence of basic linear algebraic operations like a matrix inverse or
+SVD transformations to arrive solve a matrix equation. These algorithms
+can be represented as a flow charts, a representation that makes it
+easier to trace the dependencies in the algorithm and more importantly
+the manner in which error is propagated. 
+
+\tableref{tab:operators} lists the basic building blocks of these
+algorithmic flow charts, along with absolute and relative errors of the
+output {\em to first order}. The exact bounds and proofs for these can
+be found in \appendixref{sec:perturbation-theory}.
+
+\begin{table}[htbp]
+\floatconts
+  {tab:operators}%
+  {\caption{Upper Bounds on Absolute Error of Basic Operators and their
+  Diagrammatic Representation}}%
+  {\begin{tabular}{l | c | c }
+  \toprule
+  \bfseries Operation & \bfseries Diagram & \bfseries Abs. Error (Upper Bound) \\
+  \midrule
+  $A+B$         & \pdiagadd & $\aerr{A} + \aerr{B}$ \\
+  $A*B$         & \pdiagmul & $\aerr{A} \|B\| + \|A\| \aerr{B} $ \\
+  $A^{-1}$      & \pdiaginv & $\|A^{-1}\| \frac{\cnd{A}}{\|A\| - \aerr{A} \cnd{A}} \aerr{A}$ \\
+  $\lambda(A)$  & \pdiageig & $ (2n-1) \cnd{A} \aerr{A}$ \\
+  $\lambda(A_1, \cdots, A_{n})$  & \pdiageign & $O(n^3 \cnd{R}^2 \|\inv{R}\|^2 \inv{\gap{\lambda}}) \aerr{A}$ \\
+  $\xi(A)$      & \pdiagevec & $n^3 \cnd{R} \|\inv{R}\| \gap{\lambda} \aerr{A}$ \\
+  $v(A)$      & \pdiagsvec & $\frac{2 \sqrt{k} \aerr{A}}{\gap(A) - \aerr(A)}$ \\
+  $\hat{U}^T A \hat{V}$     & \pdiagrot & $\aerr{A}$ \\
+  $W(A)$        & \pdiagwhite & $\frac{2}{\sigma_k(A)^2} (\frac{\alpha_A}{1-\alpha_A})$ \\
+  $T[A,A,A]$    &             & $\|\Ap\|\aerr{T} + \|T\| (\|A\|^2 + \|A\|\|\Ap\| + \|\Ap\|^2 ) \aerr{W} $ \\
+  \bottomrule
+  \end{tabular}
+  }
+\end{table}
+
+\begin{table}[htbp]
+\floatconts
+  {tab:rel-err}%
+  {\caption{Relative Errors of Basic Operators}}%
+  {\begin{tabular}{l | c | c c | l}
+  \toprule
+  \bfseries Operation & \bfseries Diagram & \bfseries Rel. Err. \\
+  \midrule
+  $A+B$         & \pdiagadd & $\frac{\|A\|\rerr{A} + \|B\|\rerr{B}}{\|A+B\|}$ \\
+  $A*B$         & \pdiagmul & $\frac{\|A\|\|B\|}{\|AB\|} (\rerr{A} + \rerr{B})$ \\
+  $A^{-1}$      & \pdiaginv & $\frac{\cnd{A}}{1 - \rerr{A}\cnd{A}} \rerr{A}$ \\
+  $\lambda(A)$  & \pdiageig & $(2n-1) \cnd{A} \rerr{A}$ \\
+  $\lambda(A_1, \cdots, A_{n})$  & \pdiageign & $O(n^3 \cnd{R}^2 \|\inv{R}\|^2 \inv{\gap{\lambda}}) \rerr{A}$ \\
+  $\xi(A)$      & \pdiagevec & $n^3 \cnd{R} \|\inv{R}\| \gap{\lambda} \rerr{A}$ \\
+  $\nu(A)$      & \pdiagsvec & $\rerr{A} + \rerr{B}$ \\
+  $\hat{U}^T A \hat{V}$     & \pdiagrot & $\rerr{A}$ \\
+  $W(A)$        & \pdiagwhite & \\
+  $T[A,A,A]$    &             & \\
+  \bottomrule
+  \end{tabular}
+  }
+\end{table}
+
+Describe the flow diagrams for each model and the computed complexity. (3hrs)
+

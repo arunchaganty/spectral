@@ -1,0 +1,34 @@
+% Section References
+\newcommand{\secref}[1] {\hyperref[#1]{Section~\ref*{#1}}}
+%\newcommand{\appendixref}[1] {\hyperref[#1]{Appendix~\ref*{#1}}}
+\newcommand{\exref}[1] {\hyperref[#1]{Example~\ref*{#1}}}
+
+\newcommand{\eqnref}[1] {Equation \eqref{#1}}
+
+\newcommand{\figref}[1] {\hyperref[#1]{Figure~\ref*{#1}}}
+\newcommand{\algoref}[1] {\hyperref[#1]{Algorithm~\ref*{#1}}}
+\newcommand{\thmref}[1] {\hyperref[#1]{Theorem~\eqref*{#1}}}
+\newcommand{\lmref}[1] {\hyperref[#1]{Lemma~\eqref*{#1}}}
+
+%\theoremstyle{plain} \newtheorem{thm}{Theorem}
+
+%Math Operators
+\DeclareMathOperator {\argmax} {argmax}
+\DeclareMathOperator {\sgn} {sgn}
+\DeclareMathOperator {\trace} {tr}
+\DeclareMathOperator {\diag} {diag}
+\DeclareMathOperator{\E} {E}
+\DeclareMathOperator{\Var} {Var}
+
+\newcommand{\ud}{\, \mathrm{d}}
+\newcommand{\diff}[1] {\frac{\partial}{\, \partial #1}}
+\newcommand{\diffn}[2] {\frac{\partial^{#2}}{\, \partial {#1}^{#2}}}
+\newcommand{\tuple}[1] {\langle #1 \rangle}
+
+% Constants/etc.
+\renewcommand{\Re} {\mathbb{R}}
+\newcommand{\Cm} {\mathbb{C}}
+\newcommand{\Qm} {\mathbb{Q}}
+\newcommand{\half} {\frac{1}{2}}
+
+\newcommand{\todo}[1] {\colorbox{yellow}{{\bf TODO:} #1}}

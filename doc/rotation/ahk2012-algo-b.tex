@@ -1,0 +1,48 @@
+\begin{tikzpicture}[node distance=1cm,auto]
+  \node (p12) {$P_{12}$};
+  \node[right of=p12] (p123) {$P_{123}$};
+  \node[right of=p123] (p13) {$P_{13}$};
+
+  % U^T Pairs V
+  \rotb{rot1}{below of=p12};
+  \path[line] (p12) -- (rot1);
+  \draw[line] (p12) to[in=180,out=180] (rot1);
+
+  % (U^T Pairs V)^{-1}
+  \invb{inv1}{below of=rot1};
+  \path[line] (rot1) -- (inv1);
+
+  % Random vector
+  \node[right of=p13] (theta) {$\theta$};
+  \node[below of=theta] (u1) {$U^T$};
+  \path[line] (theta) -- (u1);
+
+  % {Triples(\eta)}
+  \innerb{inner1}{below of=p123};
+  \path[tensor] (p123) -- (inner1);
+  \path[mvec] (u1) -- (inner1);
+
+  % (U^T Triples(\eta) V)
+  \rotb{rot2}{below of=inner1};
+  \path[mmat] (inner1) -- (rot2);
+
+  % (U^T Triples(\eta) V)(U^T Pairs V)^{-1}
+  \mulb{mul1}{below of=inv1};
+  \path[line] (inv1) -- (mul1);
+  \path[mmat] (rot2) -- (mul1);
+
+  % \xi(B)
+  \eigb{eig}{below of=mul1};
+  \path[mmat] (mul1) -- (eig);
+
+  \invb{inv2}{right of=eig};
+  \path[line] (theta) -- (inv2);
+
+  \mulb{mul2}{below of=eig};
+  \path[line] (eig) -- (mul2);
+  \path[line] (inv2) -- (mul2);
+
+  % U \xi(B)
+  \node[below of=mul2] (u2) {$U$};
+  \path[vec] (mul2) -- (u2);
+\end{tikzpicture}

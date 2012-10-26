@@ -1,0 +1,40 @@
+\begin{tikzpicture}[node distance=1cm,auto]
+  \node (pairs) {$\Pairs$};
+  \node[right of=pairs] (triples) {$\Triples$};
+
+  % Random vector
+  \node[right of=triples] (theta) {$\theta$};
+  % W\theta
+  \whiteb{wtheta}{below of=theta};
+  \path[vec] (theta) -- (wtheta);
+
+  % Triples(\eta)
+  \innerb{inner1}{below of=triples};
+  \path[tensor] (triples) -- (inner1);
+  \path[vec] (wtheta) -- (inner1);
+
+  % (W^T Triples(\eta) W)
+  \whiteb{wtriples}{below of=inner1};
+  \path[line] (inner1) -- (wtriples);
+
+  % (U^T Triples(\eta) V)(U^T Pairs V)^{-1}
+  \svecb{svec}{below of=wtriples};
+  \path[line] (wtriples) -- (svec);
+
+  \whiteb{wsvec}{right of=svec};
+  \path[mvec] (svec) -- (wsvec);
+
+  \innerb{inner2}{below of=wsvec};
+  \path[mvec] (wsvec) -- (inner2);
+  \innerb{inner3}{below of=inner2};
+  \path[mvec] (inner2) -- (inner3);
+  \innerb{inner4}{below of=inner3};
+  \path[mvec] (inner3) -- (inner4);
+
+  \whiteb{wisvec}{left of=svec};
+  \path[mvec] (svec) -- (wisvec);
+
+  \mulb{mul3}{below of=svec};
+  \path[mvec] (wisvec) -- (mul3);
+  \path[mvec] (inner4) -- (mul3);
+\end{tikzpicture}

@@ -1,0 +1,77 @@
+\section{Comparative Analysis of Existing Algorithms}
+\label{sec:comparative-analysis}
+
+\subsection{Mixture Models}
+\begin{figure}[htbp]
+\floatconts
+  {fig:ahk2012-algo-a}
+  {\caption{Algorithm A from AHK2012}}
+  {\input{ahk2012-algo-a}}
+\end{figure}
+
+\begin{figure}[htbp]
+\floatconts
+  {fig:ahk2012-algo-b}
+  {\caption{Algorithm B from AHK2012}}
+  {\input{ahk2012-algo-b}}
+\end{figure}
+
+\subsection{LDA}
+
+\begin{figure}[htbp]
+\floatconts
+  {fig:2svd-lda}
+  {\caption{Algorithm 5 from Two SVDs}}
+  {\input{2svd-lda}}
+\end{figure}
+
+Let the errors of the inputs, $\Pairs$ and $\Triples$ be $\aerr{P}$ and
+$\aerr{T}$ respectively. The error in the whitening operator $W$ is then,
+\begin{eqnarray}
+  \aerr{W} &=& \frac{2}{\sigma_k(P)^2} (\beta_P) \\
+  \|W\| &=& \frac{1}{\sqrt{\sigma_k(P)}} \\
+  \|\Wp\| &\le& \frac{1}{\sqrt{\sigma_k(P) - \aerr{P}}} \\
+          &=& \frac{\|W\|}{\sqrt{1 - \alpha_P}}.
+\end{eqnarray}
+
+The whitened tensor $T_W = \Triples[W,W,W]$ have the error, 
+\begin{eqnarray}
+  \aerr{T_W} 
+    &\le& \|\Wp\| \aerr{T} + \|T\| (\|W\|^2 + \|W\|\|\Wp\| + \|\Wp\|^2 ) \\
+    &\le& \frac{\|\inv{P}\|^{\half}}{\sqrt{1 - \alpha_P}} \aerr{T} + \|T\| \|\inv{P}\| (1 + \frac{1}{\sqrt{1 - \alpha_P}} + \frac{1}{1 - \alpha_P}).
+\end{eqnarray}
+
+The singular vectors of $T_W(\theta)$ have the error,
+\begin{eqnarray}
+  \aerr{v_i} 
+    &\le& \frac{2 \sqrt{k} \aerr{T_W}}{\gap{T_W} - \aerr{T_W}}.
+\end{eqnarray}
+
+To make the calculation tractable, we assume $\aerr{T_W}
+< \frac{\gap{T_W}}{2}$. By the random projection result, with probability $1-\delta$,  
+
+\begin{eqnarray}
+  \aerr{v_i} 
+    &\le& \frac{2 \sqrt{k}}{\gap{T_W} - \aerr{T_W}}  \aerr{T_W}\\
+    &\le& \frac{4 \sqrt{k}}{\gap{T_W}}  \aerr{T_W}\\
+    &\approx& \frac{4 \sqrt{k} \aerr{T_W}}{\frac{\delta}{\sqrt{e} \binom{n}{2} (1 + \sqrt{2\log(\frac{k}{\delta})}) \gap{T}}} \\
+    &=& \frac{4 \sqrt{ke} \binom{n}{2} (1 + \sqrt{2\log(\frac{k}{\delta})})}{\delta} \gap{T} \aerr{T_W}
+\end{eqnarray}
+
+\todo{$\gap{T_W}$ is not the same as the $\gap{A}$ use in AHK2012; needs some new notation.}
+
+Finally, we must normalise these singular vectors, which we do by
+projecting $v_i$ onto $W$, i.e. $(\pinv{W})^T v_i$ and dividing by $Z_i
+= \frac{2}{(\alpha_0 + 2) T_W[v_i, v_i, v_i]}$ Thus, 
+
+\begin{eqnarray}
+  \aerr{O_i} 
+  &\le& \| O_i - \Pi_W O_i \| + \| \Pi_W O_i - \frac{1}{\Zp_i} (\pinv{W})^T \vp_i \|
+  &\le& \|\Pi - \Pi_W\| 
+  + \frac{\|\pinv{W}\|}{Z_i} \aerr{v_i} 
+  + \frac{\|\vp_i\|}{Z_i} \aerr{\pinv{W}} 
+  + \|\pinv{\Wp}\| \|\vp_i\| \aerr{\frac{1}{Z_i}}.
+\end{eqnarray}
+
+\subsection{Spherical Gaussians}
+

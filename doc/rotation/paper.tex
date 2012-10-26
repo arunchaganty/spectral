@@ -1,0 +1,42 @@
+\documentclass[tablecaption=bottom]{jmlr} % gray
+
+\usepackage{booktabs}
+%\usepackage{siunitx}
+
+ % change the arguments, as appropriate, in the following:
+%\jmlrvolume{1}
+\jmlryear{2012}
+%\jmlrsubmitted{submission date}
+%\jmlrpublished{publication date}
+
+\usepackage{tikz}
+
+\title[Asymptotics of Spectral Algorithms]{Asymptotics of Spectral Algorithms}
+\author{\Name{Arun Tejasvi {Chaganty}} \Email{chaganty@stanford.edu}\AND
+  \Name{Percy {Liang}} \Email{pliang@stanford.edu}\\
+  \addr Department of Computer Science\\Stanford University}
+
+\input{macros}
+\input{spectral-macros}
+
+\begin{document}
+
+\input{pdiag-macros}
+
+\maketitle
+\input{abstract}
+\begin{keywords}
+matrix perturbation theory, parameter learning, spectral algorithms
+\end{keywords}
+
+\input{intro}
+\input{perturbation-flow}
+\input{comparative-analysis}
+
+\bibliography{jmlr-sample}
+
+\appendix
+
+\input{perturbation-theory}
+
+\end{document}

@@ -1,0 +1,40 @@
+\begin{tikzpicture}[node distance=1cm,auto]
+  \node (pairs) {$\Pairs$};
+  \node[right of=pairs] (triples) {$\Triples$};
+
+  % U^T Pairs V
+  \rotb{rot1}{below of=pairs};
+  \path[line] (pairs) -- (rot1);
+  \draw[line] (pairs) to[in=180,out=180] (rot1);
+
+  % (U^T Pairs V)^{-1}
+  \invb{inv1}{below of=rot1};
+  \path[line] (rot1) -- (inv1);
+
+  % Random vector
+  \node[right of=triples] (theta) {$\theta$};
+  \node[below of=theta] (u1) {$U^T$};
+  \path[vec] (theta) -- (u1);
+
+  % Triples(\eta)
+  \innerb{inner1}{below of=triples};
+  \path[tensor] (triples) -- (inner1);
+  \path[vec] (u1) -- (inner1);
+
+  % (U^T Triples(\eta) V)
+  \rotb{rot2}{below of=inner1};
+  \path[line] (inner1) -- (rot2);
+
+  % (U^T Triples(\eta) V)(U^T Pairs V)^{-1}
+  \mulb{mul}{below of=inv1};
+  \path[line] (inv1) -- (mul);
+  \path[line] (rot2) -- (mul);
+
+  % \xi(B)
+  \evecb{evec}{below of=mul};
+  \path[line] (mul) -- (evec);
+
+  % U \xi(B)
+  \node[below of=evec] (u2) {$U$};
+  \path[vec] (evec) -- (u2);
+\end{tikzpicture}

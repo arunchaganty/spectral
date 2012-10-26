@@ -1,0 +1,203 @@
+\section{Matrix Perturbation Theory Results}\label{sec:perturbation-theory}
+
+This section summarises several standard results on matrix perturbation.
+
+\subsection{Notation}
+
+For all the results, $A \in \Re^{m \times n}$ with $m > n$ is the
+original matrix and $\Ap = A + E$ is the perturbed version of the same.
+The default norm $\|A\|$ is taken to be the spectral norm, $\|A\|_2
+= \sqrt{ \lambda_{\max}(A^*A) } = \sigma_1(A)$, for matrices and the
+$L_2$ norm for vectors unless otherwise mentioned. The condition number
+is denoted as $\cnd{A} = \frac{\sigma_1(A)}{\sigma_k(A)} = \|A\|
+\|A^{-1}\|$.
+
+\subsection{Perturbation Bounds}
+
+We now present a series of results on the absolute error ($\aerr{f(A)}
+= \|f(\Ap) - f(A)\|$) and relative error ($\rerr{f(A)}
+= \frac{\aerr{f(A)}}{\|f(A)\|} = \frac{\|f(\Ap) - f(A)\|}{\|f(A)\|}$) in
+the output. For brevity, we also use the notation $\serr{A}
+= \frac{\aerr{A}}{\sigma_k{A}}$.
+
+\begin{theorem}(Weyl)
+  \begin{eqnarray}
+    max_i | \sigma_{i}(\Ap) - \sigma_{i}(\Ap) | &\le& \aerr{A}.
+  \end{eqnarray}
+\end{theorem}
+\begin{proof}
+\end{proof}
+
+\begin{corollary}
+  \begin{align}
+     - \aerr{A} &\le \| \Ap \| -  &\le \|A\| + \aerr{A} \\
+    \frac{\cnd{A} - \serr{A}}{1 + \serr{A}} &\le \cnd{\Ap} &\le \frac{\cnd{A} + \serr{A}}{1 - \serr{A}}.
+  \end{align}
+\end{corollary}
+\begin{proof}
+\end{proof}
+
+\begin{proof}
+  The result follows from the triangle inequality of the spectral norm,
+  \begin{eqnarray}
+    \aerr{ A+B } 
+      &=& \| (\Ap - A) + (\Bp - B) \| \\
+      &=& \| (\Ap - A) + (\Bp - B) \| \\
+      &\le& \| \Ap - A \| + \| \Bp - B \| \\
+      &\le& \aerr{A} + \aerr{B}.
+  \end{eqnarray}
+\end{proof}
+
+\begin{proposition}(Matrix Sum)
+  Let $A$ and $B$ be any $m \times n$ matrices, then, 
+  \begin{eqnarray}
+    \aerr{A+B} &\le& \aerr{A} + \aerr{B} \\
+    \rerr{A+B} &\le& \frac{\|A\|\rerr{A} + \|B\|\rerr{B}}{\|A+B\|}.
+  \end{eqnarray}
+\end{proposition}
+\begin{proof}
+  The result follows from the triangle inequality of the spectral norm,
+  \begin{eqnarray}
+    \aerr{ A+B } 
+      &=& \| (\Ap - A) + (\Bp - B) \| \\
+      &=& \| (\Ap - A) + (\Bp - B) \| \\
+      &\le& \| \Ap - A \| + \| \Bp - B \| \\
+      &\le& \aerr{A} + \aerr{B}.
+  \end{eqnarray}
+\end{proof}
+
+\begin{proposition}(Matrix Product)
+  Let $A$ and $B$ be compatible matrices, then, 
+  \begin{eqnarray}
+    \aerr{A*B} &\le& \aerr{A} \|B\| + \|A\| \aerr{B} + \aerr{A} \aerr{B} \\
+               &\approx& \aerr{A} \|B\| + \|A\| \aerr{B} \\
+   \rerr{A*B} &\le& \frac{\|A\|\|B\|}{\|AB\|} (\rerr{A} + \rerr{B} + \rerr{A}\rerr{B} \|A\|\|B\|) \\
+              &\le& \frac{\|A\|\|B\|}{\|AB\|} (\rerr{A} + \rerr{B}).
+  \end{eqnarray}
+\end{proposition}
+\begin{proof}
+  The result follows from the sub-multiplicative property of the
+  spectral norm,
+  \begin{eqnarray}
+    \aerr{ A B } 
+      &=& \| \Ap \Bp - A B \| \\
+      &=& \| \Ap \Bp - \Ap B + \Ap B - A B \| \\
+      &\le& \| \Ap \Bp - \Ap B \|  + \| \Ap B - A B \| \\
+      &\le& \| \Ap \| \| \Bp - B \|  + \| \Ap - A \| \| B \| \\
+      &\le& (\|A\| + \aerr{A}) \aerr{B} + \aerr{A} \| B \| \\
+      &\le& \|A\| \aerr{B} + \aerr{A} \|B\| + \aerr{A} \aerr{B}.
+  \end{eqnarray}
+\end{proof}
+
+\begin{proposition}(Matrix Inverse)
+  Let $A$ be a non-singular matrix, then, 
+  \begin{eqnarray}
+    \aerr{\inv{A}} 
+    &\le& \frac{\|\inv{A}\| \aerr{A}}{1 - \|\inv{A}\|\aerr{A}} \\
+      &\approx& \cnd{A} \rerr{A} \\
+   \rerr{\inv{A}} 
+      &\le& \frac{\cnd{A}}{1 - \rerr{A}\cnd{A}} \rerr{A} \\
+      &\approx& \cnd{A} \rerr{A}.
+  \end{eqnarray}
+\end{proposition}
+\begin{proof}
+\end{proof}
+
+\begin{proposition}(Matrix Rotation)
+  Let $A$ be a non-singular matrix, and $U$ and $V$ be it's left and right singular vectors. Then, 
+  \begin{eqnarray}
+      \aerr{\Up^T A \Vp} &=& \frac{\aerr{A}}{1 - \beta_A^2} \\
+                         &\approx& \aerr{A} \\
+      \rerr{\Up^T A \Vp} &=& \frac{\rerr{A}}{1 - \beta_A^2} \\
+                         &\approx& \rerr{A}.
+  \end{eqnarray}
+\end{proposition}
+\begin{proof}
+\end{proof}
+
+\begin{proposition}(Eigenvalue Decomposition)
+  Let $A$ be a diagonalisable matrix, i.e. there exists some $R$ such that $\inv{R} A R = \diag(\lambda_1, \cdots, \lambda_m)$. Then,
+    there exists a permutation $\tau$ such that,
+  \begin{eqnarray}
+    \aerr{\lambda} &=& \max_i | \lambdap_i - \lambda_i | \\
+      &\le& (2n -1)\cnd{R} \aerr{A} \\
+    \rerr{\lambda} &=& \frac{\max_i | \lambdap_i - \lambda_i |}{\max_i \lambda_i} \\
+      &\le& (2n -1)\cnd{R} \rerr{A}.
+  \end{eqnarray}
+
+  Further more, the error in the normalised left eigenvectors ($\xi(A)$) and right eigenvectors ($\zeta(A)$) can be characterised as,
+
+  \begin{eqnarray}
+    \aerr{\xi} 
+      &=& \max_i |\hat{\xi}_i - \xi_{\tau(i)}| \\
+      &\le& 2 (n-1) \|\inv{R}\| (\aerr{\lambda} + \frac{\aerr{A}}{\|A\|}) \gap{\lambda}^{-1} \\
+      &=& 2 \|R^{-1}\| (n-1)(\frac{1}{\|A\|} + (2n-1)\cnd{R}) \gap{\lambda}^{-1} \aerr{A} \\\
+    \rerr{\xi} 
+      &=& \max_i |\hat{\xi}_i - \xi_{\tau(i)}| \\
+      &\le& 2 (n-1) \|R^-1\| (\rerr{\lambda} + \rerr{A}) \gap{\lambda}^{-1} \\
+      &=& \|R^{-1}\| (n-1)(1 + (2n-1)\cnd{R}) ^{-1} \gap{\lambda}^{-1} \rerr{A} \\\
+      &\approx& n^2 \cnd{R} \|R^{-1}\| \gap{\lambda}^{-1} \rerr{A} \\
+    \aerr{\zeta} 
+      &le& \sqrt{n} \cnd{R} \aerr{\xi} \\
+    \rerr{\zeta} 
+      &le& \sqrt{n} \cnd{R} \rerr{\xi}.
+  \end{eqnarray}
+  where $\gap{\lambda} = \frac{\min_{i,j} |\lambda_i - \lambda_j|}{\max_i \lambda_i}$.
+
+  Finally, the error in $R$ itself can be characterised as,
+
+  \begin{eqnarray}
+    \aerr{R} &\le&  \|R\| \sqrt{n} \aerr{\xi} \\
+    \rerr{R} &\le&  \sqrt{n} \rerr{\xi} 
+  \end{eqnarray}
+
+\end{proposition}
+\begin{proof}
+\end{proof}
+
+\begin{remark} (Ill-Specification of $R$)
+  Note that if $R$ diagonalises $A$, then so does $DR$ for any non-singular matrix $D$. Thus, $\cnd{R}$ is ill specified, and can be made arbitrarily small or large. Usually, it is taken to be of the form $R = V\diag(\|V e_1\|, \cdots, \|V e_n\|)^{-1}$, in which case, $\|R\| = \|\inv{R}\| = \cnd(V)$.
+\end{remark}
+
+\begin{remark} (Bounds presented in AHK2012)
+    In the paper, they use $\delta_{\lambda} \le \cnd{R}\delta_A$, but
+    it seems like this may not be true.
+\end{remark}
+
+\begin{proposition}(Simultaneous Diagonalisation)
+  Let $A_1, \cdots, A_n$ be a simultaneously diagonalised by $R$. If $\hat{R}$ diagonalises $A_1$, then relative
+    error of the eigenvalues of the $A_i$ for ($i > 1$) is,
+
+    \begin{eqnarray}
+    \rerr{\lambda_i} 
+      &\le& \|\inv{R}\| \rerr{A} + \|\inv{R}\| \rerr{A} \rerr{\xi}
+            + \rerr{\zeta} \rerr{A} + \rerr{\xi} \rerr{\zeta} \rerr{\xi}
+            + \rerr{\zeta} + \rerr{\xi} \inv{\|R\|} + \rerr{\xi} \rerr{\zeta} \\
+      &\le& (1 + \frac{ n^3 \cnd{R} (\|\inv{R}\| + \sqrt{n} \cnd{R})}{\gap{\lambda}} ) \|\inv{R}\| \rerr{A} \\ 
+      &+& O(n^{6.5} \cnd{R}^3 \|\inv{R}\|^2 \gap{\lambda}^{-2}) (\rerr{A}^2 + \rerr{A}^3) \\
+    &\approx& O(n^3 \cnd{R}^2 \|\inv{R}\|^2 \gap{\lambda}^{-1}) \rerr{A}.
+    \end{eqnarray}
+\end{proposition}
+
+\begin{proof}
+\end{proof}
+
+\begin{proposition}(Random Projections)
+  If $\theta$ is a vector drawn randomly from the sphere
+  $\mathcal{S}^{n-1}$, then the vector projected into the space of $A
+  = [a_1 | a_2 | \cdots | a_n]$, then with probability greater than
+  $1-\delta$, $A\theta$ has the following properties,
+
+  \begin{eqnarray}
+    \max_i |\theta^T a_i| &\le& \frac{1 + \sqrt{2 \log(\frac{n^2}{\delta})}}{\sqrt{n}} \max_i \|a_i\|_2 \\
+    \min_{i,j} \theta^T (a_i -a_j)  &>& \frac{\delta}{\sqrt{en} \binom{n}{2}} \min_{i,j} \|a_i - a_j\| \\
+    \gap{A\theta} &>& \frac{\delta}{\sqrt{e} \binom{n}{2} (1+\sqrt{2\log(\frac{m}{\delta}})} \gap{A},
+  \end{eqnarray}
+  where $\gap{A} = \frac{\min_{i,j} a_i - a_j}{\max_i a_i}$ and
+    $\gap{A\theta} = \frac{\min_{i,j} \theta^T(a_i - a_j)}{\max_i
+    \theta^Ta_i}$.
+\end{proposition}
+
+\begin{proof}
+\end{proof}
+
