@@ -99,14 +99,14 @@ class MultiViewGaussianMixtureEM( em.EMAlgorithm ):
 
         return M, sigma, w
 
-    def run( self, X, O = None, *args, **kwargs ):
-        if O == None:
+    def run( self, X, O, O_ = None, *args, **kwargs ):
+        if O_ == None:
             X1, X2, X3 = X
             M1, S1, w = self.kmeanspp_initialisation( X1 )
             M2, S2, _ = self.kmeanspp_initialisation( X2 )
             M3, S3, _ = self.kmeanspp_initialisation( X3 )
-            O = (M1, M2, M3), (S1, S2, S3), w
-        return em.EMAlgorithm.run( self, X, O, *args, **kwargs )
+            O_ = (M1, M2, M3), (S1, S2, S3), w
+        return em.EMAlgorithm.run( self, X, O, O_, *args, **kwargs )
 
 def test_multiview_gmm_em():
     mvgmm = sc.load( "test-data/mvgmm-2-3-1e4.npz" )
@@ -114,8 +114,9 @@ def test_multiview_gmm_em():
 
     algo = MultiViewGaussianMixtureEM( k, d )
 
-    lhood, Z, O = algo.run( X )
-    (M1_, M2_, M3_), (S1, S2, S3), w = O
+    O = M, S, w
+    lhood, Z, O_ = algo.run( X, O )
+    (M1_, M2_, M3_), (S1, S2, S3), w = O_
 
     M1, M2, M3 = M
 
@@ -147,8 +148,9 @@ def main(fname, samples):
         X = (X1, X2, X3)
     N, _ = X1.shape
 
-    lhood, Z, O = algo.run( X )
-    (M1_, M2_, M3_), (S1, S2, S3), w = O
+    O = M, S, w
+    lhood, Z, O_ = algo.run( X, O )
+    (M1_, M2_, M3_), (S1, S2, S3), w = O_
 
     logger.add( "k", k )
     logger.add( "d", d )

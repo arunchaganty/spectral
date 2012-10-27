@@ -2,7 +2,7 @@
 E-M algorithm to detect and separate GMMs
 """
 
-#import ipdb
+import ipdb
 import em
 import scipy as sc
 import scipy.misc
@@ -34,7 +34,7 @@ class GaussianMixtureEM( em.EMAlgorithm ):
 
     def compute_expectation( self, X, O ):
         """Compute the most likely values of the latent variables; returns lhood"""
-        N, d = X.shape
+        _, d = X.shape
         M, sigma, w = O
 
         total_lhood = 0
@@ -94,15 +94,17 @@ class GaussianMixtureEM( em.EMAlgorithm ):
 
         return M, sigma, w
 
-    def run( self, X, O = None, *args, **kwargs ):
-        if O == None:
-            O = self.kmeanspp_initialisation( X )
-        return em.EMAlgorithm.run( self, X, O, *args, **kwargs )
+    def run( self, X, O, O_ = None, *args, **kwargs ):
+        """O are the 'true' parameters"""
+        if O_ == None:
+            O_ = self.kmeanspp_initialisation( X )
+        return em.EMAlgorithm.run( self, X, O, O_, *args, **kwargs )
 
 def test_gaussian_em():
     """Test the Gaussian EM on a small generated dataset"""
 
     k, d = 2, 2
+    N = 10000 # 1e4
 
     M1 = array( [ -1.0, 1.0 ] ) # Diagonally placed centers
     M2 = array( [ 1.0, -1.0 ] )
@@ -110,14 +112,16 @@ def test_gaussian_em():
     sigma = 0.2
     w = array( [0.5, 0.5] )
 
-    X1 = multivariate_normal( M1, sigma*eye(2), 10000 )
-    X2 = multivariate_normal( M2, sigma*eye(2), 10000 )
+    X1 = multivariate_normal( M1, sigma*eye(2), N )
+    X2 = multivariate_normal( M2, sigma*eye(2), N )
     X = sc.row_stack( (X1, X2) )
 
     algo = GaussianMixtureEM(k, d)
 
-    lhood, Z, O = algo.run( X )
-    M_, sigma_, w_ = O
+    O = M, sigma, w
+
+    lhood, Z, O_ = algo.run( X, O )
+    M_, sigma_, w_ = O_
 
     M_ = closest_permuted_matrix( M, M_ )
     w_ = closest_permuted_vector( w, w_ )
@@ -133,32 +137,36 @@ def test_gaussian_em():
 def main(fname, samples):
     """Run GMM EM on the data in @fname"""
 
-    gmm = sc.load( fname )
-    k, d, M, S, w, X = gmm['k'], gmm['d'], gmm['M'], gmm['S'], gmm['w'], gmm['X']
+    gmm = GaussianMixtureModel.from_file( fname )
+    k, d, M, S, w = gmm.k, gmm.d, gmm.means, gmm.sigmas, gmm.weights
+    # Note that X is really a view of HDF5 file
+    X = gmm.get_samples()
 
     algo = GaussianMixtureEM( k, d )
 
+    # Get the number of samples we want to extract
     N, _ = X.shape
-
-    if (samples < 0 or samples > N):
-        print "Warning: %s greater than number of samples in file. Using %s instead." % ( samples, N )
-    else:
-        X = X[:samples, :]
-    N, _ = X.shape
+    if (samples < 0 ):
+        samples = N
+    elif (samples > N):
+        print "Warning: %s greater than number of samples in file. Using maximum of %s." % ( N )
+        samples = N
+    N = samples
 
     logger.add( "k", k )
     logger.add( "d", d )
     logger.add( "N", N )
     logger.add( "M", M )
 
-    lhood, Z, O = algo.run( X )
-    M_, S_, w_ = O
+    O = M, S, w
+    lhood, Z, O_ = algo.run( X, O )
+    M_, S_, w_ = O_
 
     M_ = closest_permuted_matrix( M.T, M_.T ).T
     logger.add( "M_", M_ )
 
     # Table
-    logger.add_err( "M", M, M_ )
+    logger.add_err( "M", M, M_, 2 )
     logger.add_err( "M", M, M_, 'col' )
     print column_aerr( M, M_ ), column_rerr( M, M_ )
 

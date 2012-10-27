@@ -9,6 +9,9 @@ from spectral.rand import orthogonal
 
 from munkres import Munkres
 
+from . import _data
+apply_shuffle = _data.apply_shuffle
+
 def apply_permutation( perm, lst ):
     """Apply a permutation to a list"""
     return [ lst[ i ] for i in perm ]

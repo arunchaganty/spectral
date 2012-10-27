@@ -10,12 +10,12 @@ cimport numpy as np
 # We now need to fix a datatype for our arrays. I've used the variable
 # DTYPE for this, which is assigned to the usual NumPy runtime
 # type info object.
-DTYPE = np.double
+DTYPE = np.float32
 LONG = np.long
 # "ctypedef" assigns a corresponding compile-time type to DTYPE_t. For
 # every type in the numpy module there's a corresponding compile-time
 # type with a _t-suffix.
-ctypedef np.double_t DTYPE_t
+ctypedef np.float32_t DTYPE_t
 
 ctypedef np.long_t LONG_t
 # "def" can type its arguments but not have a return type. The type of the
@@ -69,4 +69,19 @@ def Triples(np.ndarray[DTYPE_t, ndim=2] x1, np.ndarray[DTYPE_t, ndim=2]
                 for i in range( d ):
                     triples[i,j,k] += (x1[n,i] * x2[n,j] * x3[n,k] - triples[i,j,k])/(n+1)
     return triples
+
+
+def apply_shuffle( np.ndarray[DTYPE_t, ndim=2] X, np.ndarray[LONG_t, ndim=1] perm ):
+    assert X.dtype == DTYPE 
+
+    cdef unsigned int N = X.shape[0]
+    cdef unsigned int d = X.shape[1]
+    cdef np.ndarray[DTYPE_t, ndim=1] buf = np.zeros( (d,), dtype=DTYPE )
+    for i in range( N-1 ):
+        j = perm[i]
+        buf[:] = X[i,:]
+        X[i,:] = X[i+j,:]
+        X[i+j,:] = buf
+
+    return X
 

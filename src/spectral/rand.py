@@ -6,8 +6,13 @@ import scipy as sc
 import scipy.stats as stats
 import scipy.linalg as linalg
 
+def shuffle_permutation( n ):
+    """Generate a random permutation as a sequence of swaps"""
+    n = int( n )
+    return sc.array( map( sc.random.randint, xrange( n-1, 0, -1) ) )
+
 def permutation( n ):
-    """Generate a random permutation"""
+    """Generate a random permutation as a sequence of swaps"""
     n = int( n )
     lst = range( n )
     sc.random.shuffle( lst )
