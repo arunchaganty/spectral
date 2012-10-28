@@ -15,8 +15,8 @@ def main( fname, dataset_type, N, k, d, params ):
         gmm = GaussianMixtureModel.generate( fname, k, d, params.means,
                 params.cov, params.weights )
         gmm.sample( N )
+        gmm.save() 
 
-        gmm.close() 
     elif dataset_type == "mvgmm":
         views = params.views 
         if params.cov == "spherical" and params.sigma2 > 0:
@@ -24,7 +24,7 @@ def main( fname, dataset_type, N, k, d, params ):
         mvgmm = MultiViewGaussianMixtureModel.generate( fname, k, d, views, params.means,
                 params.cov, params.weights )
         mvgmm.sample( N )
-        mvgmm.close()
+        mvgmm.save()
     else:
         raise NotImplementedError
                 
