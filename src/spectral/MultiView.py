@@ -13,8 +13,9 @@ from spectral.linalg import svdk, mrank, approxk, eigen_sep, \
         column_aerr, column_rerr
 from spectral.rand import orthogonal
 from spectral.data import Pairs, Triples
-from spectral.util import DataLogger
-from generators import MultiViewGaussianMixtureModel
+
+from util import DataLogger
+from models import MultiViewGaussianMixtureModel
 
 import time
 
@@ -152,11 +153,14 @@ def test_sample_recovery():
 
     assert norm(M3 - M3_)/norm( M3 ) < 1e-2
 
-def main( fname, samples, delta ):
+def main( prefix, samples, delta ):
     """Run on sample in fname"""
 
-    mvgmm = sc.load( fname )
-    k, d, M, w, X = mvgmm['k'], mvgmm['d'], mvgmm['M'], mvgmm['w'], mvgmm['X']
+    mvgmm = MultiViewGaussianMixtureModel.from_file( prefix )
+    k, d, M, w = mvgmm.k, mvgmm.d, mvgmm.means, mvgmm.weights
+    X1 = mvgmm.get_samples("X1", d)
+    X2 = mvgmm.get_samples("X2", d)
+    X3 = mvgmm.get_samples("X3", d)
 
     (M1, M2, M3) = M
     logger.add( "M3", M3 )
@@ -165,8 +169,6 @@ def main( fname, samples, delta ):
     logger.add_consts( "M3", M3, k, 2 )
     logger.add_consts( "w_min", w.min() )
     logger.add_consts( "w_max", w.max() )
-
-    (X1, X2, X3) = X
 
     N, _ = X1.shape
     if (samples < 0 or samples > N):
@@ -190,12 +192,12 @@ def main( fname, samples, delta ):
     logger.add_err( "M3", M3, M3_, 'col' )
     logger.add( "time", stop - start )
 
-    print column_aerr(M, M_), column_rerr(M, M_)
+    print column_aerr(M3, M3_), column_rerr(M3, M3_)
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument( "fname", help="Input file (as npz)" )
+    parser.add_argument( "prefix", help="Input file (as npz)" )
     parser.add_argument( "ofname", help="Output file (as npz)" )
     parser.add_argument( "--seed", default=time.time(), type=long, help="Seed used" )
     parser.add_argument( "--samples", default=-1, type=float, help="Number of samples to be used" )
@@ -210,5 +212,5 @@ if __name__ == "__main__":
 
     logger.add( "seed", int( args.seed ) )
 
-    main( args.fname, int(args.samples), args.delta )
+    main( args.prefix, int(args.samples), args.delta )
 

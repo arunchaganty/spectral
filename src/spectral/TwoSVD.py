@@ -14,7 +14,7 @@ from spectral.linalg import svdk, mrank, approxk, \
         canonicalise, closest_permuted_matrix
 from spectral.rand import orthogonal
 from spectral.data import Pairs, Triples
-from generators import LDATopicModel
+from models import LDATopicModel
 
 eps = 1e-2
 

@@ -5,7 +5,6 @@ Hsu and Kakade, "Learning mixtures of spherical Gaussians: moment
 methods and spectral decompositions" (2012).
 """
 
-#import ipdb
 import scipy as sc 
 from scipy import diag, array, outer, eye, ones, log
 from scipy.linalg import norm, svdvals, eig, pinv, cholesky
@@ -13,8 +12,9 @@ from spectral.linalg import svdk, mrank, approxk, eigen_sep, \
         closest_permuted_matrix, tensorify, matrix_tensorify, \
         column_aerr, column_rerr
 from spectral.data import Pairs, Triples
-from spectral.util import DataLogger
-from generators import GaussianMixtureModel
+
+from util import DataLogger
+from models import GaussianMixtureModel
 
 import time
 
@@ -117,7 +117,6 @@ def test_exact_recovery():
     A = array( [[-1.0, 0.0, 0.0],
                 [0.0, 0.0, 1.0]] ).T
     sigma2 = [0.2 * eye( 3 )] * 2
-    gmm = GaussianMixtureModel( w, A, sigma2 )
 
     P, T = exact_moments( A, w )
 
@@ -164,11 +163,13 @@ def test_sample_recovery():
     A = array( [[-1.0, 0.0, 0.0],
                 [0.0, 0.0, 1.0]] ).T
     sigma2 = [0.2 * eye( 3 )] * 2
-    gmm = GaussianMixtureModel( w, A, sigma2 )
+    gmm = GaussianMixtureModel( "/tmp/sp", 
+            k=k, d=d, w=w, M=A, S=sigma2 )
 
-    X = gmm.sample( 1000000 ) 
+    X = gmm.sample( 1000 ) 
     P, T = sample_moments( X, k )
     Pe, Te = exact_moments( A, w )
+    gmm.delete()
 
     A_ = recover_components( k, P, T, Pe, Te )
     A_ = closest_permuted_matrix( A.T, A_.T ).T
@@ -179,10 +180,11 @@ def test_sample_recovery():
 
     assert norm( A - A_ )/norm( A ) < 1e-3
 
-def main( fname, samples, delta ):
+def main( prefix, samples, delta ):
     """Run on sample in fname"""
-    gmm = sc.load( fname )
-    k, d, M, w, X = gmm['k'], gmm['d'], gmm['M'], gmm['w'], gmm['X']
+    gmm = GaussianMixtureModel.from_file( prefix )
+    k, d, M, w = gmm.k, gmm.d, gmm.means, gmm.weights
+    X = gmm.get_samples("X", d)
 
     logger.add( "M", M )
     logger.add_consts( "M", M, k, 2 )
@@ -219,7 +221,7 @@ def main( fname, samples, delta ):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument( "fname", help="Input file (as npz)" )
+    parser.add_argument( "prefix", help="Input file-prefix" )
     parser.add_argument( "ofname", help="Output file (as npz)" )
     parser.add_argument( "--seed", default=time.time(), type=long, help="Seed used" )
     parser.add_argument( "--samples", default=-1, type=float, help="Number of samples to be used" )
@@ -235,5 +237,5 @@ if __name__ == "__main__":
     logger.add( "seed", int( args.seed ) )
 
 
-    main( args.fname, int(args.samples), args.delta )
+    main( args.prefix, int(args.samples), args.delta )
 

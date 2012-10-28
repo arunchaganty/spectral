@@ -79,9 +79,10 @@ def apply_shuffle( np.ndarray[DTYPE_t, ndim=2] X, np.ndarray[LONG_t, ndim=1] per
     cdef np.ndarray[DTYPE_t, ndim=1] buf = np.zeros( (d,), dtype=DTYPE )
     for i in range( N-1 ):
         j = perm[i]
-        buf[:] = X[i,:]
-        X[i,:] = X[i+j,:]
-        X[i+j,:] = buf
+        if j != 0:
+            buf = X[i]
+            X[i] = X[i+j]
+            X[i+j] = buf
 
     return X
 
