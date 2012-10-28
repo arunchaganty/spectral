@@ -177,6 +177,10 @@ def main( prefix, samples, delta ):
         X1, X2, X3 = X1[:samples, :], X2[:samples, :], X3[:samples, :]
         X = X1, X2, X3
 
+    logger.add( "k", k )
+    logger.add( "d", d )
+    logger.add( "N", N )
+
     P12, P13, P123 = sample_moments( X1, X2, X3 )
     P12e, P13e, P123e = exact_moments( w, M1, M2, M3 )
 
