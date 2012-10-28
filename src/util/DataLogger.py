@@ -1,4 +1,4 @@
-"""Utility functions"""
+"""Data Logger"""
 
 import scipy as sc
 import scipy.linalg
