@@ -54,7 +54,7 @@ class GaussianMixtureModel( Model ):
             def update( start, stop ):
                 """Sample random vectors and then assign them to X in
                 order"""
-                Y = multivariate_normal( mean, sigma, (stop - start) )
+                Y = multivariate_normal( mean, sigma, int(stop - start) )
                 # Insert into X in a shuffled order
                 X[ perm[ start:stop ] ] = Y
 
@@ -178,7 +178,7 @@ class MultiViewGaussianMixtureModel( Model ):
                 def update( start, stop ):
                     """Sample random vectors and then assign them to X in
                     order"""
-                    Y = multivariate_normal( mean, sigma, (stop - start) )
+                    Y = multivariate_normal( mean, sigma, int(stop - start) )
                     # Insert into X in a shuffled order
                     X[view][ perm[ start:stop ] ] = Y
                 chunked_update( update, cnt_, 10 ** 4, cnt_ + cnt  )
