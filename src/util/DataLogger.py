@@ -5,7 +5,7 @@ import scipy.linalg
 
 from scipy.linalg import norm, svdvals
 from spectral.linalg import condition_number, eigen_sep, \
-        column_aerr, column_rerr
+        tensor_aerr, tensor_norm, column_aerr, column_rerr
 
 import time
 
@@ -39,6 +39,14 @@ class DataLogger:
             self.add( "aerr_%s_%d" % (key, ntype), norm( A - A_ ) )
             self.add( "rerr_%s_%d" % (key, ntype), norm( A - A_, ntype )/norm(A, ntype) )
 
+    def add_terr( self, key, A, A_, d, ntype=None ):
+        """Print the error between two objects"""
+
+        err = tensor_aerr( A, A_, d, ntype )
+        mag = tensor_norm( A, d, ntype )
+        self.add( "aerr_%s" % key, err )
+        self.add( "rerr_%s" % key, err / mag )
+
     def add_consts( self, key, A, k=-1, ntype=None ):
         """Print the error between two objects"""
 
@@ -55,4 +63,8 @@ class DataLogger:
             self.add( "K_%s" % key, condition_number( A, k ) )
             if A.shape[0] == A.shape[1]:
                 self.add( "D_%s" % key, eigen_sep( A, k ) )
+
+    def add_tconsts( self, key, A, d, k=-1, ntype=None ):
+        """Print the error between two objects"""
+        self.add( "norm_%s" % key, tensor_norm( A, d, ntype ) )
 

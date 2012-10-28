@@ -12,7 +12,7 @@ from spectral.linalg import svdk, mrank, approxk, eigen_sep, \
         closest_permuted_matrix, tensorify, matrix_tensorify, \
         column_aerr, column_rerr
 from spectral.rand import orthogonal
-from spectral.data import Pairs, Triples
+from spectral.data import Pairs, TriplesP
 
 from util import DataLogger
 from models import MultiViewGaussianMixtureModel
@@ -30,8 +30,8 @@ def recover_M3( k, P12, P13, P123, P12e, P13e, P123e, delta=0.01 ):
     logger.add_consts( "P12", P12e, k, 2 )
     logger.add_err( "P13", P12e, P12, 2 )
     logger.add_consts( "P13", P12e, k, 2 )
-    logger.add_err( "P123", P123e, P123 )
-    logger.add_consts( "P123", P123e )
+    logger.add_terr( "P123", P123e, P123, d )
+    logger.add_tconsts( "P123", P123e, d )
 
     # Get singular vectors
     U1, _, U2 = svdk( P12, k )
@@ -50,20 +50,22 @@ def recover_M3( k, P12, P13, P123, P12e, P13e, P123e, delta=0.01 ):
         theta = orthogonal( k )
 
         P12i = inv( U1.T.dot( P12 ).dot( U2 ) ) 
-        B123_ = sc.einsum( 'ijk,ia,jb,kc->abc', P123, U1, U2, U3 )
-        B123 = sc.einsum( 'ajc,jb ->abc', B123_, P12i )
+        #B123_ = sc.einsum( 'ijk,ia,jb,kc->abc', P123, U1, U2, U3 )
+        #B123 = sc.einsum( 'ajc,jb ->abc', B123_, P12i )
+        B123 = lambda theta: U1.T.dot( P123( U3.dot( theta ) ) ).dot( U2 ).dot( P12i )
 
         P12ie = inv( U1e.T.dot( P12e ).dot( U2e ) ) 
-        B123e_ = sc.einsum( 'ijk,ia,jb,kc->abc', P123e, U1e, U2e, U3e )
-        B123e = sc.einsum( 'ajc,jb ->abc', B123e_, P12ie )
+        #B123e_ = sc.einsum( 'ijk,ia,jb,kc->abc', P123e, U1e, U2e, U3e )
+        #B123e = sc.einsum( 'ajc,jb ->abc', B123e_, P12ie )
+        B123e = lambda theta: U1e.T.dot( P123e( U3e.dot( theta ) ) ).dot( U2e ).dot( P12ie )
 
-        logger.add_err( "B123", B123, B123e )
+        logger.add_terr( "B123", B123, B123e, k )
 
-        l, R1 = eig( B123.dot( theta.T[0] ) )
+        l, R1 = eig( B123( theta.T[0] ) )
         R1 = array( map( lambda col: col/norm(col), R1.T ) ).T
         assert( norm(R1.T[0]) - 1.0 < 1e-10 )
 
-        le, R1e = eig( B123e.dot( theta.T[0] ) )
+        le, R1e = eig( B123e( theta.T[0] ) )
         logger.add_err( "R", R1e, R1, 2 )
         logger.add_consts( "R", R1e, k, 2 )
 
@@ -73,7 +75,7 @@ def recover_M3( k, P12, P13, P123, P12e, P13e, P123e, delta=0.01 ):
 
         L = [l.real]
         for i in xrange( 1, k ):
-            l = diag( inv(R1).dot( B123.dot( theta.T[i] ).dot( R1 ) ) )
+            l = diag( inv(R1).dot( B123( theta.T[i] ).dot( R1 ) ) )
             # Restart
             if not ( sc.isreal( l ).all() ):
                 continue
@@ -82,7 +84,7 @@ def recover_M3( k, P12, P13, P123, P12e, P13e, P123e, delta=0.01 ):
 
         Le = [le.real]
         for i in xrange( 1, k ):
-            le = diag( inv(R1e).dot( B123e.dot( theta.T[i] ).dot( R1e ) ) )
+            le = diag( inv(R1e).dot( B123e( theta.T[i] ).dot( R1e ) ) )
             Le.append( le )
         Le = array( sc.vstack( Le ) )
         logger.add_err( "L", Le, L, 2 )
@@ -104,7 +106,8 @@ def exact_moments( w, M1, M2, M3 ):
     # Get pairwise estimates
     P12 = M1.dot( diag( w ).dot( M2.T ) )
     P13 = M1.dot( diag( w ).dot( M3.T ) )
-    P123 = sum( [ w[i] * tensorify( M1.T[i], M2.T[i], M3.T[i] ) for i in xrange( k ) ] )
+    #P123 = sum( [ w[i] * tensorify( M1.T[i], M2.T[i], M3.T[i] ) for i in xrange( k ) ] )
+    P123 = lambda theta: M1.dot( diag( w ) ).dot( diag( M3.T.dot( theta ) ) ).dot( M2.T )
 
     return P12, P13, P123
 
@@ -130,7 +133,7 @@ def sample_moments( x1, x2, x3 ):
     """Learn a model using SVD and three views with k vectors"""
 
     assert( x1.shape == x2.shape and x2.shape == x3.shape )
-    return Pairs( x1, x2 ), Pairs( x1, x3 ), Triples( x1, x2, x3 )
+    return Pairs( x1, x2 ), Pairs( x1, x3 ), lambda theta: TriplesP( x1, x2, x3, theta )
 
 def test_sample_recovery():
     """Test the accuracy of recovery with actual samples"""

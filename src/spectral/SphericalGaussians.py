@@ -11,7 +11,7 @@ from scipy.linalg import norm, svdvals, eig, pinv, cholesky
 from spectral.linalg import svdk, mrank, approxk, eigen_sep, \
         closest_permuted_matrix, tensorify, matrix_tensorify, \
         column_aerr, column_rerr
-from spectral.data import Pairs, Triples
+from spectral.data import Pairs, TriplesP
 
 from util import DataLogger
 from models import GaussianMixtureModel
@@ -33,7 +33,6 @@ def get_whitener( A, k ):
     W, Wt = U.dot( pinv( A2 ) ), U.dot( A2 )
 
     assert( sc.allclose( W.T.dot( A ).dot( W ), sc.eye( k ) ) )
-    #assert( sc.allclose( Wt.T.dot( Wt ), A ) )
     
     return W, Wt
 
@@ -45,9 +44,9 @@ def recover_components( k, P, T, Pe, Te, delta=0.01 ):
     logger.add_err( "P", Pe, P, 2 )
     logger.add_consts( "Pe", Pe, k, 2 )
     logger.add_consts( "P", P, k, 2 )
-    logger.add_err( "T", Te, T )
-    logger.add_consts( "Te", Te )
-    logger.add_consts( "Te", T )
+    logger.add_terr( "T", Te, T, d )
+    logger.add_tconsts( "Te", Te, d )
+    logger.add_tconsts( "T", T, d )
 
     # Get the whitening matrix of M2
     W, Wt = get_whitener( P, k )
@@ -57,10 +56,12 @@ def recover_components( k, P, T, Pe, Te, delta=0.01 ):
     logger.add_consts( "We", We, k, 2 )
     logger.add_consts( "W", W, k, 2 )
 
-    Tw = sc.einsum( 'ijk,ia,jb,kc->abc', T, W, W, W )
-    Twe = sc.einsum( 'ijk,ia,jb,kc->abc', Te, We, We, We )
+    Tw = lambda theta: W.T.dot( T( W.dot( theta ) ) ).dot( W )
+    Twe = lambda theta: We.T.dot( Te( We.dot( theta ) ) ).dot( We )
+    #Tw = sc.einsum( 'ijk,ia,jb,kc->abc', T, W, W, W )
+    #Twe = sc.einsum( 'ijk,ia,jb,kc->abc', Te, We, We, We )
 
-    logger.add_err( "Tw", Twe, Tw )
+    logger.add_terr( "Tw", Twe, Tw, k )
 
     # Repeat [-\log(\delta] times for confidence 1-\delta to find best
     # \theta
@@ -72,7 +73,8 @@ def recover_components( k, P, T, Pe, Te, delta=0.01 ):
         theta = theta/theta.sum()
 
         # Find the eigen separation
-        X = Tw.dot(theta)
+        X = Tw(theta)
+        #X = Tw.dot(theta)
         sep = eigen_sep( X )
 
         if sep > best[0]:
@@ -84,7 +86,8 @@ def recover_components( k, P, T, Pe, Te, delta=0.01 ):
     assert( sc.isreal( S ).all() and sc.isreal( U ).all() )
     S, U = S.real, U.real
 
-    Xe = Twe.dot( theta )
+    Xe = Twe( theta )
+    ##Xe = Twe.dot( theta )
     sepe = eigen_sep( Xe )
     Se, Ue = eig( Xe, left=True, right=False )
     Se, Ue = Se.real, Ue.real
@@ -104,7 +107,8 @@ def exact_moments( A, w ):
 
     k = len(w)
     P = A.dot( diag( w ) ).dot( A.T )
-    T = sum( [ w[i] * tensorify( A.T[i], A.T[i], A.T[i] ) for i in xrange( k ) ] )
+    #T = sum( [ w[i] * tensorify( A.T[i], A.T[i], A.T[i] ) for i in xrange( k ) ] )
+    T = lambda theta: A.dot( diag( w) ).dot( diag( A.T.dot( theta ) ) ).dot( A.T )
 
     return P, T    
 
@@ -140,7 +144,8 @@ def sample_moments( X, k ):
     M1 = X1.mean(0)
     M1_ = X2.mean(0)
     M2 = Pairs( X1, X1 ) 
-    M3 = Triples( X2, X2, X2 )
+    M3 = lambda theta: TriplesP( X2, X2, X2, theta )
+    #M3 = Triples( X2, X2, X2 )
 
     # Estimate \sigma^2 = k-th eigenvalue of  M2 - mu mu^T
     sigma2 = svdvals( M2 - outer( M1, M1 ) )[k-1]
@@ -149,7 +154,8 @@ def sample_moments( X, k ):
     P = approxk( M2 - sigma2 * eye( d ), k )
 
     B = matrix_tensorify( eye(d), M1_ )
-    T = M3 - sigma2 * ( B + B.swapaxes(2, 1) + B.swapaxes(2, 0) )
+    T = lambda theta: M3(theta) - sigma2 * ( M1_.dot(theta) * eye( d ) + outer( M1_, theta ) + outer( theta, M1_ ) )
+    #T = M3 - sigma2 * ( B + B.swapaxes(2, 1) + B.swapaxes(2, 0) )
 
     return P, T    
 

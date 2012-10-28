@@ -16,3 +16,7 @@ def count_frequency( X, d ):
 Pairs = _data.Pairs
 Triples = _data.Triples
 
+def TriplesP(X1, X2, X3, theta):
+    theta = sc.array( theta, dtype=sc.float32 )
+
+    return _data.TriplesP( X1, X2, X3, theta )

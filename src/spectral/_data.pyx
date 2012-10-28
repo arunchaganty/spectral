@@ -7,6 +7,8 @@ import numpy as np
 # about the numpy module (this is stored in a file numpy.pxd which is
 # currently part of the Cython distribution).
 cimport numpy as np
+cimport cython
+np.import_array()
 # We now need to fix a datatype for our arrays. I've used the variable
 # DTYPE for this, which is assigned to the usual NumPy runtime
 # type info object.
@@ -35,6 +37,7 @@ def count_frequency(np.ndarray[LONG_t, ndim=2] X, unsigned int d):
 
     return Y
 
+@cython.boundscheck(False) 
 def Pairs(np.ndarray[DTYPE_t, ndim=2] x1, np.ndarray[DTYPE_t, ndim=2] x2):
     """Compute E[x1 \ctimes x2]"""
 
@@ -70,6 +73,27 @@ def Triples(np.ndarray[DTYPE_t, ndim=2] x1, np.ndarray[DTYPE_t, ndim=2]
                     triples[i,j,k] += (x1[n,i] * x2[n,j] * x3[n,k] - triples[i,j,k])/(n+1)
     return triples
 
+@cython.boundscheck(False) 
+def TriplesP(np.ndarray[DTYPE_t, ndim=2] x1, np.ndarray[DTYPE_t, ndim=2]
+        x2, np.ndarray[DTYPE_t, ndim=2] x3, np.ndarray[DTYPE_t, ndim=1] theta):
+    """Compute E[x1 \ctimes x2 \ctimes x3 ]"""
+    assert x1.dtype == DTYPE and x2.dtype == DTYPE and x3.dtype == DTYPE
+
+    cdef unsigned int N = x1.shape[0]
+    cdef unsigned int d = x1.shape[1]
+    cdef np.ndarray[DTYPE_t, ndim=2] triples = np.zeros( (d,d), dtype=DTYPE )
+    cdef DTYPE_t y
+    cdef unsigned int n, i, j, k
+
+    # Compute one element of Triples at a time
+    for n in range( N ):
+        y = 0
+        for k in range(d):
+            y += x3[n,k] * theta[k]
+        for j in range( d ):
+            for i in range( d ):
+                triples[i,j] += (x1[n,i] * x2[n,j] * y - triples[i,j])/(n+1)
+    return triples
 
 def apply_shuffle( np.ndarray[DTYPE_t, ndim=2] X, np.ndarray[LONG_t, ndim=1] perm ):
     assert X.dtype == DTYPE 
