@@ -11,16 +11,15 @@ multinomial = sc.random.multinomial
 multivariate_normal = sc.random.multivariate_normal 
 dirichlet = sc.random.dirichlet
 
-from spectral.rand import shuffle_permutation
-from spectral.linalg import apply_shuffle
+from spectral.rand import permutation
 
 # import spectral.linalg as sl
 
 class GaussianMixtureModel( Model ):
     """Generic mixture model with N components"""
-    def __init__( self, fname, **params ):
+    def __init__( self, prefix, **params ):
         """Create a mixture model for components using given weights"""
-        Model.__init__( self, fname, **params )
+        Model.__init__( self, prefix, **params )
         self.k = self.get_parameter( "k" )
         self.d = self.get_parameter( "d" )
         self.weights = self.get_parameter( "w" )
@@ -28,10 +27,10 @@ class GaussianMixtureModel( Model ):
         self.sigmas = self.get_parameter( "S" )
 
     @staticmethod
-    def from_file( fname ):
+    def from_file( prefix ):
         """Load model from a HDF file"""
-        model = Model.from_file( fname ) 
-        return GaussianMixtureModel( **model.params )
+        model = Model.from_file( prefix ) 
+        return GaussianMixtureModel( prefix, **model.params )
 
     def sample( self, n ):
         """Sample n samples from the model"""
@@ -39,7 +38,8 @@ class GaussianMixtureModel( Model ):
         shape = (n, self.d)
 
         X = self._allocate_samples( "X", shape )
-        shuffle = shuffle_permutation( n )
+        # Get a random permutation of N elements
+        perm = permutation( n )
 
         # Sample the number of samples from each view
         cnts = multinomial( n, self.weights )
@@ -49,22 +49,27 @@ class GaussianMixtureModel( Model ):
             cnt = cnts[i]
             # Generate a bunch of points for each mean
             mean, sigma = self.means.T[ i ], self.sigmas[ i ]
+
             # 1e4 is a decent block size
-            chunked_update( X, cnt_, int(cnt), 10**4,
-                    multivariate_normal, mean, sigma ) 
+            def update( start, stop ):
+                """Sample random vectors and then assign them to X in
+                order"""
+                Y = multivariate_normal( mean, sigma, (stop - start) )
+                # Insert into X in a shuffled order
+                X[ perm[ start:stop ] ] = Y
+
+            chunked_update( update, cnt_, 10 ** 4, cnt_ + cnt  )
             cnt_ += cnt
-        # Shuffle the data in X
-        apply_shuffle( X,shuffle )
         X.flush()
         return X
 
     @staticmethod
-    def generate( fname, k, d, means = "hypercube", cov = "spherical",
+    def generate( prefix, k, d, means = "hypercube", cov = "spherical",
             weights = "random", dirichlet_scale = 10, gaussian_precision
             = 0.01 ):
         """Generate a mixture of k d-dimensional gaussians""" 
 
-        model = Model( fname )
+        model = Model( prefix )
 
         model.add_parameter( "k", k )
         model.add_parameter( "d", d )
@@ -105,32 +110,36 @@ class GaussianMixtureModel( Model ):
         model.add_parameter( "S", S )
 
         # Unwrap the store and put it into the appropriate model
-        return GaussianMixtureModel( model.fname, **model.params )
+        return GaussianMixtureModel( model.prefix, **model.params )
 
 def test_gaussian_mixture_generator_dimensions():
     "Test the GaussianMixtureModel generator"
-    import os, tempfile
-    fname = tempfile.mktemp()
+    import tempfile
+    prefix = tempfile.mktemp()
 
     N = 1000
     D = 100
     K = 3
 
-    gmm = GaussianMixtureModel.generate( fname, K, D )
+    gmm = GaussianMixtureModel.generate( prefix, K, D )
     assert( gmm.means.shape == (D, K) )
     assert( gmm.weights.shape == (K,) )
 
-    points = gmm.sample( N )
+    X = gmm.sample( N )
     # 1000 points with 100 dim each
-    assert( points.shape == (N, D) )
+    assert( X.shape == (N, D) )
 
     gmm.save()
+    gmm_ = GaussianMixtureModel.from_file( prefix )
+    Y = gmm_.get_samples( "X", D )
+    assert( sc.allclose( X, Y ) )
+
     gmm.delete()
 
 class MultiViewGaussianMixtureModel( Model ):
     """Generic mixture model with N components"""
-    def __init__( self, fname, **params ):
-        Model.__init__( self, fname, **params )
+    def __init__( self, prefix, **params ):
+        Model.__init__( self, prefix, **params )
         self.k = self.get_parameter( "k" )
         self.d = self.get_parameter( "d" )
         self.n_views = self.get_parameter( "v" )
@@ -139,20 +148,21 @@ class MultiViewGaussianMixtureModel( Model ):
         self.sigmas = self.get_parameter( "S" )
 
     @staticmethod
-    def from_file( fname ):
+    def from_file( prefix ):
         """Load model from a HDF file"""
-        model = Model.from_file( fname ) 
-        return MultiViewGaussianMixtureModel( **model.params )
+        model = Model.from_file( prefix ) 
+        return MultiViewGaussianMixtureModel( prefix, **model.params )
 
     def sample( self, n ):
         """Sample n samples from the mixture model"""
 
         shape = (n, self.d)
-        shuffle = shuffle_permutation( n )
 
         X = []
         for i in xrange( self.n_views ):
             X.append( self._allocate_samples( "X%d" % (i+1), shape ) )
+        # Get a random permutation of N elements
+        perm = permutation( n )
 
         # Sample the number of samples from each view
         cnts = multinomial( n, self.weights )
@@ -164,20 +174,25 @@ class MultiViewGaussianMixtureModel( Model ):
                 cnt = cnts[i]
                 # Generate a bunch of points for each mean
                 mean, sigma = self.means[view].T[ i ], self.sigmas[view][ i ]
-                chunked_update( X[view], cnt_, int(cnt), 10**4,
-                        multivariate_normal, mean, sigma ) 
+
+                def update( start, stop ):
+                    """Sample random vectors and then assign them to X in
+                    order"""
+                    Y = multivariate_normal( mean, sigma, (stop - start) )
+                    # Insert into X in a shuffled order
+                    X[view][ perm[ start:stop ] ] = Y
+                chunked_update( update, cnt_, 10 ** 4, cnt_ + cnt  )
                 cnt_ += cnt
-                apply_shuffle( X[view], shuffle )
 
         return X
 
     @staticmethod
-    def generate( fname, k, d, n_views = 3, means = "hypercube", cov =
+    def generate( prefix, k, d, n_views = 3, means = "hypercube", cov =
         "spherical", weights = "random", dirichlet_scale = 10,
         gaussian_precision = 0.01 ):
         """Generate a mixture of k d-dimensional multi-view gaussians""" 
 
-        model = Model( fname )
+        model = Model( prefix )
 
         model.add_parameter( "k", k )
         model.add_parameter( "d", d )
@@ -230,19 +245,19 @@ class MultiViewGaussianMixtureModel( Model ):
         model.add_parameter( "S", S )
 
         # Unwrap the store and put it into the appropriate model
-        return MultiViewGaussianMixtureModel( model.fname, **model.params )
+        return MultiViewGaussianMixtureModel( model.prefix, **model.params )
 
 def test_mv_gaussian_mixture_generator_dimensions():
     "Test the MultiViewGaussianMixtureModel generator"
-    import os, tempfile
-    fname = tempfile.mktemp()
+    import tempfile
+    prefix = tempfile.mktemp()
 
     N = 1000
     D = 100
     K = 3
     VIEWS = 3
 
-    mvgmm = MultiViewGaussianMixtureModel.generate( fname, K, D, n_views = VIEWS )
+    mvgmm = MultiViewGaussianMixtureModel.generate( prefix, K, D, n_views = VIEWS )
     assert( len( mvgmm.means ) == K )
     assert( len( mvgmm.sigmas ) == K )
     for view in xrange(VIEWS):

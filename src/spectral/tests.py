@@ -6,12 +6,12 @@ import scipy as sc
 from scipy import matrix, array, all, allclose, diag
 from scipy.linalg import norm
 
-import spectral.random as sr
+import spectral.rand as sr
 import spectral.linalg as sl
 import spectral.data as sd
 import spectral.mixture 
 
-from generators import gmm
+from models import GaussianMixtureModel
 
 def test_random_orthogonal( ):
     """Generate several matrices from orthogonal(), and verify that
@@ -116,7 +116,7 @@ def test_canonical_idempotence( ):
 def test_sample_moments( ):
     """Check that the moments of the data are close to the analytic values"""
     def check( k, d ):
-        model = gmm.GaussianMixtureModel.generate( k, d )
+        model = GaussianMixtureModel.generate( k, d )
         M1, M2, M3 = model.means
         w = model.weights
 
@@ -165,70 +165,4 @@ def test_sample_moments( ):
         for d in xrange( k+1, 20, 3 ):
             for i in xrange( 3 ):
                 yield check, k, d
-
-def test_exact_recovery( ):
-    def check( k, d ):
-        model = gmm.GaussianMixtureModel.generate( k, d )
-        M1, M2, M3 = model.means
-        weights = model.weights
-
-        M3_ = spectral.mixture.exact_recovery( weights, M1, M2, M3 )
-        err = sd.recovery_error( M3, M3_ )
-        assert err < 1e-05
-
-    for k in xrange( 2, 10 ):
-        for d in xrange( k+1, 20, 3 ):
-            for i in xrange( 3 ):
-                yield check, k, d
-
-def test_fuzzed_exact_recovery( ):
-    def check( k, d, fuzz ):
-        model = gmm.GaussianMixtureModel.generate( k, d )
-        M1, M2, M3 = model.means
-        w = model.weights
-        P12, P13, P123 = spectral.mixture.exact_moments( w, M1, M2, M3 )
-
-        P12_ = P12 + sc.randn( d, d ) * fuzz
-        P13_ = P13 + sc.randn( d, d ) * fuzz
-        P123_ = lambda eta: P123(eta) + sc.randn( d, d )/500.0
-
-        M3_ = spectral.mixture.recoverM3( k, P12_, P13_, P123_ )
-        err = sd.recovery_error( M3, M3_ )
-        print sl.canonicalise(M3), sl.canonicalise(M3_)
-        print err
-        assert err < 1e-05
-
-    for k in xrange( 2, 10 ):
-        for d in xrange( k+1, 10, 4 ):
-            for fuzz in [ 1e-5, 1e-3, 1e-1 ]:
-                yield check, k, d, fuzz
-                
-def test_sample_recovery( ):
-    def check( k, d ):
-        model = gmm.GaussianMixtureModel.generate( k, d )
-        _, _, M3 = model.means
-
-        x1, x2, x3 = model.sample( 1e5 )
-
-        M3_ = spectral.mixture.sample_recovery( k, x1, x2, x3 )
-        err = sd.recovery_error( M3, M3_ )
-        print sl.canonicalise(M3), sl.canonicalise(M3_)
-        print err
-        assert err < 1e-02
-
-    for k in [2, 3, 5, 10]:
-        for d in xrange( k+1, 20, 4 ):
-            for i in xrange( 1 ):
-                yield check, k, d
-
-if __name__ == "__main__":
-    print "Testing exact recovery..."
-    for tst in test_exact_recovery():
-        tst[0]( *tst[1:] )
-    print "Testing fuzzed exact recovery..."
-    for tst in test_fuzzed_exact_recovery():
-        tst[0]( *tst[1:] )
-    print "Testing sample recovery..."
-    for tst in test_sample_recovery():
-        tst[0]( *tst[1:] )
 

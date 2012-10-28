@@ -14,7 +14,7 @@ def shuffle_permutation( n ):
 def permutation( n ):
     """Generate a random permutation as a sequence of swaps"""
     n = int( n )
-    lst = range( n )
+    lst = sc.arange( n )
     sc.random.shuffle( lst )
     return lst
 
@@ -30,14 +30,14 @@ def orthogonal(n):
     classical compact groups" 
     """
     n = int( n )
-    z = sc.randn(n,n) 
+    z = sc.randn(n, n) 
     q,r = sc.linalg.qr(z) 
     d = sc.diagonal(r) 
     ph = d/sc.absolute(d) 
-    q = sc.multiply(q,ph,q) 
+    q = sc.multiply(q, ph, q) 
     return q
 
-def wishart(n,V,nsamples=1):
+def wishart(n, V, nsamples=1):
     """wishart: Sample a matrix from a Wishart distribution given
     by a shape paramter n and a scale matrix V
     Based on: W. B. Smith and R. R. Hocking, Algorithm AS 53: Wishart
@@ -69,23 +69,23 @@ def wishart(n,V,nsamples=1):
        2009-05-20 - Written Bovy (NYU)
     """
     #Check that n > p-1
-    p= V.shape[0]
+    p = V.shape[0]
     if n < p-1:
         return -1
     #First lower Cholesky of V
-    L= linalg.cholesky(V,lower=True)
+    L = linalg.cholesky(V,lower=True)
     if nsamples > 1:
-        out= []
+        out = []
     for kk in range(nsamples):
         #Generate the lower triangular A such that a_ii = (\chi2_(n-i+2))^{1/2} and a_{ij} ~ N(0,1) for j < i (i 1-based)
-        A= sc.zeros((p,p))
+        A = sc.zeros((p,p))
         for ii in range(p):
-            A[ii,ii]= sc.sqrt(stats.chi2.rvs(n-ii+2))
+            A[ii,ii] = sc.sqrt(stats.chi2.rvs(n-ii+2))
             for jj in range(ii):
-                A[ii,jj]= stats.norsc.rvs()
+                A[ii,jj] = stats.norsc.rvs()
         #Compute the sample X = L A A\T L\T
-        thissample= sc.dot(L,A)
-        thissample= sc.dot(thissample,thissample.transpose())
+        thissample = sc.dot(L,A)
+        thissample = sc.dot(thissample,thissample.transpose())
         if nsamples == 1:
             return thissample
         else:
