@@ -25,6 +25,7 @@ tags
 *.mat
 *.dat
 *.npz
+*.npy
 output/
 output-*/
 data-*/

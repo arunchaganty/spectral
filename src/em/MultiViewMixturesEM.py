@@ -16,7 +16,8 @@ logsumexp = scipy.misc.logsumexp
 
 from spectral.linalg import closest_permuted_matrix, \
         column_aerr, column_rerr
-from spectral.util import DataLogger
+from util import DataLogger
+from models import MultiViewGaussianMixtureModel
 
 logger = DataLogger("log")
 
@@ -99,41 +100,60 @@ class MultiViewGaussianMixtureEM( em.EMAlgorithm ):
 
         return M, sigma, w
 
-    def run( self, X, O, O_ = None, *args, **kwargs ):
-        if O_ == None:
+    def run( self, X, O = None, *args, **kwargs ):
+        if O == None:
             X1, X2, X3 = X
             M1, S1, w = self.kmeanspp_initialisation( X1 )
             M2, S2, _ = self.kmeanspp_initialisation( X2 )
             M3, S3, _ = self.kmeanspp_initialisation( X3 )
-            O_ = (M1, M2, M3), (S1, S2, S3), w
-        return em.EMAlgorithm.run( self, X, O, O_, *args, **kwargs )
+            O = (M1, M2, M3), (S1, S2, S3), w
+        return em.EMAlgorithm.run( self, X, O, *args, **kwargs )
 
 def test_multiview_gmm_em():
-    mvgmm = sc.load( "test-data/mvgmm-2-3-1e4.npz" )
-    k, d, M, S, w, X = mvgmm['k'], mvgmm['d'], mvgmm['M'], mvgmm['S'], mvgmm['w'], mvgmm['X']
+    fname = "./test-data/mvgmm-3-10-1e6"
+    mvgmm = MultiViewGaussianMixtureModel.from_file( fname )
+    k, d, M, S, v, w = mvgmm.k, mvgmm.d, mvgmm.means, mvgmm.sigmas, mvgmm.n_views, mvgmm.weights
+    # Simplifying assumption for now
+    X = []
+    for i in xrange( v ):
+        X.append( mvgmm.get_samples( "X%d" % (i+1), d ) )
+
+    assert( v == 3 )
 
     algo = MultiViewGaussianMixtureEM( k, d )
 
-    O = M, S, w
-    lhood, Z, O_ = algo.run( X, O )
-    (M1_, M2_, M3_), (S1, S2, S3), w = O_
-
     M1, M2, M3 = M
+    O = M, S, w
+
+    start = time.time()
+    def report( i, O_, lhood ):
+        (_, _, M3_), _, _ = O_
+        logger.add_err( "M_3_t%d" % (i), M3, M3_ )
+        logger.add( "time_%d" % (i), time.time() - start )
+    lhood, Z, O_ = algo.run( X, None, report )
+    logger.add( "time", time.time() - start )
+
+    (M1_, M2_, M3_), (S1, S2, S3), w = O_
 
     M1_ = closest_permuted_matrix( M1, M1_ )
     M2_ = closest_permuted_matrix( M2, M2_ )
     M3_ = closest_permuted_matrix( M3, M3_ )
 
-    assert norm(M1 - M1_)/norm(M1) < 1e-2
-    assert norm(M2 - M2_)/norm(M2) < 1e-2
-    assert norm(M3 - M3_)/norm(M3) < 1e-2
+    print column_aerr( M3, M3_ ), column_rerr( M3, M3_ )
+
+    assert column_rerr( M3, M3_ ) < 1e-2
 
 def main(fname, samples):
     """Run MVGMM EM on the data in @fname"""
 
-    mvgmm = sc.load( fname )
-    k, d, M, S, w, X = mvgmm['k'], mvgmm['d'], mvgmm['M'], mvgmm['S'], mvgmm['w'], mvgmm['X']
+    mvgmm = MultiViewGaussianMixtureModel.from_file( fname )
+    k, d, M, S, v, w = mvgmm.k, mvgmm.d, mvgmm.means, mvgmm.sigmas, mvgmm.n_views, mvgmm.weights
 
+    # Simplifying assumption for now
+    assert( v == 3 )
+    X = []
+    for i in xrange( v ):
+        X.append( mvgmm.get_samples( "X%d" % (i+1), d ) )
     algo = MultiViewGaussianMixtureEM( k, d )
 
     X1, X2, X3 = X
@@ -149,7 +169,15 @@ def main(fname, samples):
     N, _ = X1.shape
 
     O = M, S, w
-    lhood, Z, O_ = algo.run( X, O )
+    
+    start = time.time()
+    def report( i, O_, lhood ):
+        (_, _, M3_), _, _ = O_
+        logger.add_err( "M_3_t%d" % (i), M3, M3_ )
+        logger.add( "time_%d" % (i), time.time() - start )
+    lhood, Z, O_ = algo.run( X, None, report )
+    logger.add( "time", time.time() - start )
+    
     (M1_, M2_, M3_), (S1, S2, S3), w = O_
 
     logger.add( "k", k )

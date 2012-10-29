@@ -113,8 +113,10 @@ def exact_moments( w, M1, M2, M3 ):
 
 def test_exact_recovery():
     """Test the accuracy of exact recovery"""
-    mvgmm = sc.load( "test-data/mvgmm-2-3-1e4.npz" )
-    k, M, w = mvgmm['k'], mvgmm['M'], mvgmm['w']
+    prefix = "./test-data/mvgmm-3-10-1e4"
+    mvgmm = MultiViewGaussianMixtureModel.from_file( prefix )
+
+    k, d, M, w = mvgmm.k, mvgmm.d, mvgmm.means, mvgmm.weights
 
     M1, M2, M3 = M
 
@@ -137,12 +139,15 @@ def sample_moments( x1, x2, x3 ):
 
 def test_sample_recovery():
     """Test the accuracy of recovery with actual samples"""
-    mvgmm = sc.load( "test-data/mvgmm-2-3-1e4.npz" )
-    k, M, w, X = mvgmm['k'], mvgmm['M'], mvgmm['w'], mvgmm['X']
+    prefix = "./test-data/mvgmm-3-10-1e4"
+    mvgmm = MultiViewGaussianMixtureModel.from_file( prefix )
+
+    k, d, M, w = mvgmm.k, mvgmm.d, mvgmm.means, mvgmm.weights
+    X1 = mvgmm.get_samples("X1", d)
+    X2 = mvgmm.get_samples("X2", d)
+    X3 = mvgmm.get_samples("X3", d)
 
     M1, M2, M3 = M
-
-    X1, X2, X3 = X
 
     P12, P13, P123 = sample_moments( X1, X2, X3 )
     P12e, P13e, P123e = exact_moments( w, M1, M2, M3 )

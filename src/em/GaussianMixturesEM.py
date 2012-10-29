@@ -17,7 +17,8 @@ logsumexp = scipy.logaddexp.reduce
 
 from spectral.linalg import closest_permuted_matrix, \
         closest_permuted_vector, column_aerr, column_rerr
-from spectral.util import DataLogger
+from util import DataLogger
+from models import GaussianMixtureModel
 
 logger = DataLogger("log")
 
@@ -45,7 +46,7 @@ class GaussianMixtureEM( em.EMAlgorithm ):
         total_lhood += logsumexp( logsumexp(Z) )
 
         # Normalise the probilities (soft EM)
-        Z = sc.exp(Z.T - logsumexp(Z,1)).T
+        Z = sc.exp(Z.T - logsumexp(Z, 1)).T
             
         return total_lhood, Z
 
@@ -94,11 +95,11 @@ class GaussianMixtureEM( em.EMAlgorithm ):
 
         return M, sigma, w
 
-    def run( self, X, O, O_ = None, *args, **kwargs ):
+    def run( self, X, O = None, *args, **kwargs ):
         """O are the 'true' parameters"""
-        if O_ == None:
-            O_ = self.kmeanspp_initialisation( X )
-        return em.EMAlgorithm.run( self, X, O, O_, *args, **kwargs )
+        if O == None:
+            O = self.kmeanspp_initialisation( X )
+        return em.EMAlgorithm.run( self, X, O, *args, **kwargs )
 
 def test_gaussian_em():
     """Test the Gaussian EM on a small generated dataset"""
@@ -108,7 +109,7 @@ def test_gaussian_em():
 
     M1 = array( [ -1.0, 1.0 ] ) # Diagonally placed centers
     M2 = array( [ 1.0, -1.0 ] )
-    M = sc.row_stack( (M1,M2) )
+    M = sc.row_stack( (M1, M2) )
     sigma = 0.2
     w = array( [0.5, 0.5] )
 
@@ -120,7 +121,14 @@ def test_gaussian_em():
 
     O = M, sigma, w
 
-    lhood, Z, O_ = algo.run( X, O )
+    start = time.time()
+    def report( i, O_, lhood ):
+        M_, _, _ = O_
+        logger.add_err( "M_t%d" % (i), M, M_ )
+        logger.add( "time_%d" % (i), time.time() - start )
+    lhood, Z, O_ = algo.run( X, None, report )
+    logger.add( "time", time.time() - start )
+
     M_, sigma_, w_ = O_
 
     M_ = closest_permuted_matrix( M, M_ )
@@ -140,7 +148,7 @@ def main(fname, samples):
     gmm = GaussianMixtureModel.from_file( fname )
     k, d, M, S, w = gmm.k, gmm.d, gmm.means, gmm.sigmas, gmm.weights
     # Note that X is really a view of HDF5 file
-    X = gmm.get_samples()
+    X = gmm.get_samples( "X", d )
 
     algo = GaussianMixtureEM( k, d )
 
@@ -152,6 +160,7 @@ def main(fname, samples):
         print "Warning: %s greater than number of samples in file. Using maximum of %s." % ( N )
         samples = N
     N = samples
+    X = X[:N]
 
     logger.add( "k", k )
     logger.add( "d", d )
@@ -159,9 +168,16 @@ def main(fname, samples):
     logger.add( "M", M )
 
     O = M, S, w
-    lhood, Z, O_ = algo.run( X, O )
-    M_, S_, w_ = O_
 
+    start = time.time()
+    def report( i, O_, lhood ):
+        M_, _, _ = O_
+        logger.add_err( "M_t%d" % (i), M, M_ )
+        logger.add( "time_%d" % (i), time.time() - start )
+    lhood, Z, O_ = algo.run( X, None, report )
+    logger.add( "time", time.time() - start )
+
+    M_, S_, w_ = O_
     M_ = closest_permuted_matrix( M.T, M_.T ).T
     logger.add( "M_", M_ )
 
