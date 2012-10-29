@@ -12,7 +12,7 @@ from scipy import array, eye, ones, log
 from scipy.linalg import norm
 cdist = scipy.spatial.distance.cdist
 multivariate_normal = scipy.random.multivariate_normal
-logsumexp = scipy.misc.logsumexp
+logsumexp = scipy.logaddexp.reduce
 
 from spectral.linalg import closest_permuted_matrix, \
         column_aerr, column_rerr
@@ -42,7 +42,7 @@ class MultiViewGaussianMixtureEM( em.EMAlgorithm ):
         # Log-likelihood = - 0.5 ( S1^-2 D1**2 + S2^-2 D2**2 + S2^-2
         # D2**2) + log w + -d/2 (log S1 + log S2 + log S3)
         Z = -0.5 * (D1**2/S1**2 + D2**2/S2**2 + D3**2/S3**2) + log( w ) - 0.5 * d * (log(S1) + log(S2) + log(S3))
-        total_lhood += logsumexp(Z)
+        total_lhood += logsumexp( logsumexp(Z) )
 
         # Normalise the probilities (soft EM)
         Z = sc.exp(Z.T - logsumexp(Z, 1)).T

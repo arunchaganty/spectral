@@ -2,7 +2,6 @@
 E-M algorithm to detect and separate GMMs
 """
 
-import ipdb
 import em
 import scipy as sc
 import scipy.misc
