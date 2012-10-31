@@ -26,8 +26,10 @@ def get_whitener( A, k ):
 
     assert( mrank( A ) == k )
     # Verify PSD
-    e = eigvals( A )[:k]
-    assert (e > 0).all()
+    e = eigvals( A )[:k].real
+    if not (e >= 0).all():
+      print "Warning: Not PSD"
+      print e
 
     # If A is PSD
     U, S, _ = svdk( A, k )
