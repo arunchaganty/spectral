@@ -175,7 +175,7 @@ def test_sample_recovery():
 
     assert norm( A - A_ )/norm( A ) < 5e-1
 
-def main( prefix, N, n, delta ):
+def main( prefix, N, n, delta, params ):
     """Run on sample in fname"""
     gmm = GaussianMixtureModel.from_file( prefix )
     k, d, M, w = gmm.k, gmm.d, gmm.means, gmm.weights
@@ -190,8 +190,8 @@ def main( prefix, N, n, delta ):
     logger.add( "n", n )
 
     # Set seed for the algorithm
-    sc.random.seed( params.seed )
-    logger.add( "seed", int( args.seed ) )
+    sc.random.seed( int( params.seed ) )
+    logger.add( "seed", int( params.seed ) )
 
     P, T = sample_moments( X, k )
     Pe, Te = exact_moments( M, w )
@@ -223,5 +223,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     logger = DataLogger(args.ofname)
-    main( args.prefix, int(args.samples), int(args.subsamples), args.delta )
+    main( args.prefix, int(args.samples), int(args.subsamples), args.delta, args )
 

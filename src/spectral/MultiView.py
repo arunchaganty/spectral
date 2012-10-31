@@ -178,8 +178,8 @@ def main( fname, N, n, delta, params ):
     logger.add( "n", n )
 
     # Set seed for the algorithm
-    sc.random.seed( params.seed )
-    logger.add( "seed", int( args.seed ) )
+    sc.random.seed( int( params.seed ) )
+    logger.add( "seed", int( params.seed ) )
 
     P12, P13, P123 = sample_moments( X1, X2, X3 )
     P12e, P13e, P123e = exact_moments( w, M1, M2, M3 )
@@ -212,5 +212,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     logger = DataLogger(args.ofname)
-    main( args.fname, int(args.samples), int( args.subsamples), args.delta )
+    main( args.fname, int(args.samples), int( args.subsamples), args.delta, args )
 
