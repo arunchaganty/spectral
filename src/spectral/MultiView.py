@@ -212,5 +212,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     logger = DataLogger(args.ofname)
-    main( args.fname, int(args.samples), int( args.subsamples), args.delta )
+    main( args.fname, int(args.samples), int( args.subsamples), args.delta, args )
 
