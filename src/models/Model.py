@@ -3,17 +3,35 @@ The parameters are stored as is in an npz file, and the data is stored
 in a memmappable npy file, as objects, while the data is compressed.
 """
 import scipy as sc
+import time
+import tempfile
 import os
 
 class Model:
     """Generic mixture model that contains a bunch of weighted means"""
 
-    def __init__( self, prefix, **params ):
+    def __init__( self, fname, **params ):
         """Create a mixture model for components using given weights"""
-        self.prefix = prefix
+        self.fname = fname
         self.params = params
-        if "data" not in self.params:
-            self.params["data"] = []
+        # Directory for storing memmapped 
+        self.dname = None
+
+    def __del__( self ):
+        """Annihilate the temporary directory"""
+        if self.dname is not None:
+            for root, _, files in os.walk( self.dname ):
+                for f in files:
+                    os.remove( os.path.join(root, f) )
+            os.rmdir(root)
+            self.dname = None
+
+    def set_seed( self, seed = None ):
+        """Set seed or generate a new one"""
+        if seed is None:
+            seed = int(time.time() * 1000)
+        sc.random.seed( int( seed ) )
+        self.add_parameter( "seed", seed )
 
     def add_parameter( self, name, values ):
         """Add a parameter with values as a whole object. No compression"""
@@ -21,43 +39,32 @@ class Model:
 
     def get_parameter( self, name ):
         """Read the parameter value from the store"""
-        return self.params[ name ]
+        v = self.params[ name ]
+        return v
 
     def _allocate_samples( self, name, shape ):
         """Allocate for (shape) samples"""
-        # Save samples in a mem-mapped array, prefix
-        # save in the metadata "params"
-        self.params[ "data" ].append( name )
-        arr = sc.memmap( "%s_%s.npy" % ( self.prefix, name ), mode="w+", dtype=sc.float32, shape=shape )
-        return arr
+        # Save samples in a temporary mem-mapped array, fname save in
+        # the metadata "params"
 
-    def get_samples( self, name, d):
-        """Get samples from the store if they exist"""
-        arr = sc.memmap( "%s_%s.npy" % ( self.prefix, name ), mode="r+", dtype=sc.float32 )
-        N = len(arr)/d
-        arr = arr.reshape( (N,d ) )
+        self.dname = tempfile.mkdtemp()
+        arr = sc.memmap( os.path.join(self.dname,name), mode="w+", dtype=sc.float32, shape=shape )
+        #arr = sc.zeros( dtype=sc.float32, shape=shape )
         return arr
 
     def save(self):
         """Flush to disk"""
-        sc.savez( self.prefix, **self.params )
-
-    def delete(self):
-        """Flush to disk"""
-        for name in self.params["data"]:
-            path = "%s_%s.npy" %( self.prefix, name )
-            if os.path.exists( path ):
-                os.remove( path )
-        path = "%s.npz" %( self.prefix )
-        if os.path.exists( path ):
-            os.remove( path )
+        sc.savez( self.fname, **self.params )
 
     @staticmethod
-    def from_file( prefix ):
+    def from_file( fname ):
         """Load model from a HDF file"""
 
-        fname = "%s.npz" % prefix 
-
+        if not fname.endswith(".npz"):
+            fname += ".npz"
         params = dict( sc.load( fname ).items() )
-        return Model( prefix, **params )
+        model = Model( fname, **params )
+        if "seed" in params:
+            model.set_seed( model.get_parameter("seed") )
+        return model
 

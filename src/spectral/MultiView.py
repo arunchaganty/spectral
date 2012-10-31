@@ -113,8 +113,8 @@ def exact_moments( w, M1, M2, M3 ):
 
 def test_exact_recovery():
     """Test the accuracy of exact recovery"""
-    prefix = "./test-data/mvgmm-3-10-1e4"
-    mvgmm = MultiViewGaussianMixtureModel.from_file( prefix )
+    fname = "./test-data/mvgmm-3-10-0.7.npz"
+    mvgmm = MultiViewGaussianMixtureModel.from_file( fname )
 
     k, d, M, w = mvgmm.k, mvgmm.d, mvgmm.means, mvgmm.weights
 
@@ -139,15 +139,12 @@ def sample_moments( x1, x2, x3 ):
 
 def test_sample_recovery():
     """Test the accuracy of recovery with actual samples"""
-    prefix = "./test-data/mvgmm-3-10-1e4"
-    mvgmm = MultiViewGaussianMixtureModel.from_file( prefix )
-
+    fname = "./test-data/mvgmm-3-10-0.7.npz"
+    mvgmm = MultiViewGaussianMixtureModel.from_file( fname )
     k, d, M, w = mvgmm.k, mvgmm.d, mvgmm.means, mvgmm.weights
-    X1 = mvgmm.get_samples("X1", d)
-    X2 = mvgmm.get_samples("X2", d)
-    X3 = mvgmm.get_samples("X3", d)
-
     M1, M2, M3 = M
+
+    X1, X2, X3 = mvgmm.sample( 10**5 )
 
     P12, P13, P123 = sample_moments( X1, X2, X3 )
     P12e, P13e, P123e = exact_moments( w, M1, M2, M3 )
@@ -159,18 +156,15 @@ def test_sample_recovery():
     print M3
     print M3_
 
-    assert norm(M3 - M3_)/norm( M3 ) < 1e-2
+    assert norm(M3 - M3_)/norm( M3 ) < 1e-1
 
-def main( prefix, samples, delta ):
+def main( fname, N, n, delta, params ):
     """Run on sample in fname"""
 
-    mvgmm = MultiViewGaussianMixtureModel.from_file( prefix )
+    mvgmm = MultiViewGaussianMixtureModel.from_file( fname )
     k, d, M, w = mvgmm.k, mvgmm.d, mvgmm.means, mvgmm.weights
-    X1 = mvgmm.get_samples("X1", d)
-    X2 = mvgmm.get_samples("X2", d)
-    X3 = mvgmm.get_samples("X3", d)
+    M1, M2, M3 = M
 
-    (M1, M2, M3) = M
     logger.add( "M3", M3 )
     logger.add_consts( "M1", M1, k, 2 )
     logger.add_consts( "M2", M2, k, 2 )
@@ -178,16 +172,14 @@ def main( prefix, samples, delta ):
     logger.add_consts( "w_min", w.min() )
     logger.add_consts( "w_max", w.max() )
 
-    N, _ = X1.shape
-    if (samples < 0 or samples > N):
-        print "Warning: %s greater than number of samples in file. Using %s instead." % ( samples, N )
-    else:
-        X1, X2, X3 = X1[:samples, :], X2[:samples, :], X3[:samples, :]
-        X = X1, X2, X3
-
+    X1, X2, X3 = mvgmm.sample( N, n )
     logger.add( "k", k )
     logger.add( "d", d )
-    logger.add( "N", N )
+    logger.add( "n", n )
+
+    # Set seed for the algorithm
+    sc.random.seed( params.seed )
+    logger.add( "seed", int( args.seed ) )
 
     P12, P13, P123 = sample_moments( X1, X2, X3 )
     P12e, P13e, P123e = exact_moments( w, M1, M2, M3 )
@@ -195,34 +187,30 @@ def main( prefix, samples, delta ):
     start = time.time()
     M3_ = recover_M3( k, P12, P13, P123, P12e, P13e, P123e, delta=delta )
     stop = time.time()
-    M3_ = closest_permuted_matrix( M3.T, M3_.T ).T
+    logger.add( "time", stop - start )
 
+    M3_ = closest_permuted_matrix( M3.T, M3_.T ).T
     logger.add( "M3_", M3_ )
 
     # Error data
     logger.add_err( "M3", M3, M3_ )
     logger.add_err( "M3", M3, M3_, 'col' )
-    logger.add( "time", stop - start )
 
     print column_aerr(M3, M3_), column_rerr(M3, M3_)
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument( "prefix", help="Input file (as npz)" )
+    parser.add_argument( "fname", help="Input file (as npz)" )
     parser.add_argument( "ofname", help="Output file (as npz)" )
-    parser.add_argument( "--seed", default=time.time(), type=long, help="Seed used" )
-    parser.add_argument( "--samples", default=-1, type=float, help="Number of samples to be used" )
+    parser.add_argument( "--seed", default=time.time(), type=long,
+            help="Seed used for algorithm (separate from generation)" )
+    parser.add_argument( "--samples", type=float, help="Number of samples to be used" )
+    parser.add_argument( "--subsamples", default=-1, type=float, help="Subset of samples to be used" )
     parser.add_argument( "--delta", default=0.01, type=float, help="Confidence bound" )
 
     args = parser.parse_args()
 
     logger = DataLogger(args.ofname)
-
-    print "Seed:", int( args.seed )
-    sc.random.seed( int( args.seed ) )
-
-    logger.add( "seed", int( args.seed ) )
-
-    main( args.prefix, int(args.samples), args.delta )
+    main( args.fname, int(args.samples), int( args.subsamples), args.delta )
 

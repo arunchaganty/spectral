@@ -6,8 +6,8 @@ methods and spectral decompositions" (2012).
 """
 
 import scipy as sc 
-from scipy import diag, array, outer, eye, ones, log
-from scipy.linalg import norm, svdvals, eig, pinv, cholesky
+from scipy import diag, array, outer, eye, ones, log, sqrt
+from scipy.linalg import norm, svdvals, eig, eigvals, pinv, cholesky
 from spectral.linalg import svdk, mrank, approxk, eigen_sep, \
         closest_permuted_matrix, tensorify, matrix_tensorify, \
         column_aerr, column_rerr
@@ -18,8 +18,6 @@ from models import GaussianMixtureModel
 
 import time
 
-eps = 1e-2
-
 logger = DataLogger()
 
 def get_whitener( A, k ):
@@ -27,12 +25,14 @@ def get_whitener( A, k ):
     is k-rank"""
 
     assert( mrank( A ) == k )
+    # Verify PSD
+    e = eigvals( A )[:k]
+    assert (e > 0).all()
+
     # If A is PSD
     U, S, _ = svdk( A, k )
     A2 = cholesky( U.T.dot( A ).dot( U ) )
     W, Wt = U.dot( pinv( A2 ) ), U.dot( A2 )
-
-    assert( sc.allclose( W.T.dot( A ).dot( W ), sc.eye( k ) ) )
     
     return W, Wt
 
@@ -114,13 +114,9 @@ def exact_moments( A, w ):
 
 def test_exact_recovery():
     """Test the exact recovery of topics"""
-
-    k, d = 2, 3
-
-    w = array( ones( 2 )/2 )
-    A = array( [[-1.0, 0.0, 0.0],
-                [0.0, 0.0, 1.0]] ).T
-    sigma2 = [0.2 * eye( 3 )] * 2
+    fname = "./test-data/gmm-3-10-0.7.npz"
+    gmm = GaussianMixtureModel.from_file( fname )
+    k, d, A, w = gmm.k, gmm.d, gmm.means, gmm.weights
 
     P, T = exact_moments( A, w )
 
@@ -161,21 +157,14 @@ def sample_moments( X, k ):
 
 def test_sample_recovery():
     """Test the recovery of topics from samples"""
-
-    k, d = 2, 3
-
-    # Generate data from the LDA model
-    w = array( ones( 2 )/2 )
-    A = array( [[-1.0, 0.0, 0.0],
-                [0.0, 0.0, 1.0]] ).T
-    sigma2 = [0.2 * eye( 3 )] * 2
-    gmm = GaussianMixtureModel( "/tmp/sp", 
-            k=k, d=d, w=w, M=A, S=sigma2 )
-
-    X = gmm.sample( 1000 ) 
+    fname = "./test-data/gmm-3-10-0.7.npz"
+    gmm = GaussianMixtureModel.from_file( fname )
+    k, d, A, w = gmm.k, gmm.d, gmm.means, gmm.weights
+    X = gmm.sample( 10**5 ) 
     P, T = sample_moments( X, k )
+
     Pe, Te = exact_moments( A, w )
-    gmm.delete()
+    del gmm
 
     A_ = recover_components( k, P, T, Pe, Te )
     A_ = closest_permuted_matrix( A.T, A_.T ).T
@@ -184,29 +173,25 @@ def test_sample_recovery():
     print A
     print A_
 
-    assert norm( A - A_ )/norm( A ) < 1e-3
+    assert norm( A - A_ )/norm( A ) < 5e-1
 
-def main( prefix, samples, delta ):
+def main( prefix, N, n, delta ):
     """Run on sample in fname"""
     gmm = GaussianMixtureModel.from_file( prefix )
     k, d, M, w = gmm.k, gmm.d, gmm.means, gmm.weights
-    X = gmm.get_samples("X", d)
-
     logger.add( "M", M )
     logger.add_consts( "M", M, k, 2 )
     logger.add( "w_min", w.min() )
     logger.add( "w_max", w.max() )
 
-    N, _ = X.shape
-    if (samples < 0 or samples > N):
-        print "Warning: %s greater than number of samples in file. Using %s instead." % ( samples, N )
-    else:
-        X = X[:samples, :]
-    N, _ = X.shape
-
+    X = gmm.sample( N, n )
     logger.add( "k", k )
     logger.add( "d", d )
-    logger.add( "N", N )
+    logger.add( "n", n )
+
+    # Set seed for the algorithm
+    sc.random.seed( params.seed )
+    logger.add( "seed", int( args.seed ) )
 
     P, T = sample_moments( X, k )
     Pe, Te = exact_moments( M, w )
@@ -214,13 +199,14 @@ def main( prefix, samples, delta ):
     start = time.time()
     M_ = recover_components( k, P, T, Pe, Te, delta = delta )
     stop = time.time()
+    logger.add( "time", stop - start )
+
     M_ = closest_permuted_matrix( M.T, M_.T ).T
     logger.add( "M_", M )
 
     # Error data
     logger.add_err( "M", M, M_ )
     logger.add_err( "M", M, M_, 'col' )
-    logger.add( "time", stop - start )
 
     print column_aerr(M, M_), column_rerr(M, M_)
 
@@ -230,18 +216,12 @@ if __name__ == "__main__":
     parser.add_argument( "prefix", help="Input file-prefix" )
     parser.add_argument( "ofname", help="Output file (as npz)" )
     parser.add_argument( "--seed", default=time.time(), type=long, help="Seed used" )
-    parser.add_argument( "--samples", default=-1, type=float, help="Number of samples to be used" )
+    parser.add_argument( "--samples", type=float, help="Number of samples to be used" )
+    parser.add_argument( "--subsamples", default=-1, type=float, help="Subset of samples to be used" )
     parser.add_argument( "--delta", default=0.01, type=float, help="Confidence bound" )
 
     args = parser.parse_args()
 
     logger = DataLogger(args.ofname)
-
-    print "Seed:", int( args.seed )
-    sc.random.seed( int( args.seed ) )
-
-    logger.add( "seed", int( args.seed ) )
-
-
-    main( args.prefix, int(args.samples), args.delta )
+    main( args.prefix, int(args.samples), int(args.subsamples), args.delta )
 
