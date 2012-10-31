@@ -188,7 +188,7 @@ if __name__ == "__main__":
     parser.add_argument( "fname", help="Input file (as npz)" )
     parser.add_argument( "ofname", help="Output file (as npz)" )
     parser.add_argument( "--seed", default=time.time(), type=long, help="Seed used" )
-    parser.add_argument( "--samples", type=float, default=-1, help="Limit number of samples" )
+    parser.add_argument( "--samples", type=float, help="Limit number of samples" )
     parser.add_argument( "--subsamples", default=-1, type=float, help="Subset of samples to be used" )
 
     args = parser.parse_args()
