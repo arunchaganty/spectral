@@ -141,33 +141,25 @@ def test_gaussian_em():
     assert( abs(sigma - sigma_) < 1 )
     assert( norm( w - w_ ) < 1e-3 )
 
-def main(fname, samples):
+def main(fname, N, n, params):
     """Run GMM EM on the data in @fname"""
 
     gmm = GaussianMixtureModel.from_file( fname )
     k, d, M, S, w = gmm.k, gmm.d, gmm.means, gmm.sigmas, gmm.weights
-    # Note that X is really a view of HDF5 file
-    X = gmm.get_samples( "X", d )
+    logger.add( "M", M )
+
+    X = gmm.sample( N, n )
+    logger.add( "k", k )
+    logger.add( "d", d )
+    logger.add( "n", n )
+
+    # Set seed for the algorithm
+    sc.random.seed( int( params.seed ) )
+    logger.add( "seed", int( params.seed ) )
 
     algo = GaussianMixtureEM( k, d )
 
-    # Get the number of samples we want to extract
-    N, _ = X.shape
-    if (samples < 0 ):
-        samples = N
-    elif (samples > N):
-        print "Warning: %s greater than number of samples in file. Using maximum of %s." % ( N )
-        samples = N
-    N = samples
-    X = X[:N]
-
-    logger.add( "k", k )
-    logger.add( "d", d )
-    logger.add( "N", N )
-    logger.add( "M", M )
-
     O = M, S, w
-
     start = time.time()
     def report( i, O_, lhood ):
         M_, _, _ = O_
@@ -192,14 +184,10 @@ if __name__ == "__main__":
     parser.add_argument( "ofname", help="Output file (as npz)" )
     parser.add_argument( "--seed", default=time.time(), type=long, help="Seed used" )
     parser.add_argument( "--samples", type=float, default=-1, help="Limit number of samples" )
+    parser.add_argument( "--subsamples", default=-1, type=float, help="Subset of samples to be used" )
 
     args = parser.parse_args()
 
     logger = DataLogger(args.ofname)
-
-    print "Seed:", int( args.seed )
-    sc.random.seed( int( args.seed ) )
-    logger.add( "seed", int( args.seed ) )
-
-    main( args.fname, int(args.samples) )
+    main( args.fname, int(args.samples), int(args.subsamples), args )
 
