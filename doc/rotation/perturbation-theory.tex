@@ -21,6 +21,7 @@ the output. For brevity, we also use the notation $\serr{A}
 = \frac{\aerr{A}}{\sigma_k{A}}$.
 
 \begin{theorem}(Weyl)
+  \label{thm:weyl}
   \begin{eqnarray}
     max_i | \sigma_{i}(\Ap) - \sigma_{i}(\Ap) | &\le& \aerr{A}.
   \end{eqnarray}
@@ -29,6 +30,7 @@ the output. For brevity, we also use the notation $\serr{A}
 \end{proof}
 
 \begin{corollary}
+  \label{corr:weyl}
   \begin{align}
      - \aerr{A} &\le \| \Ap \| -  &\le \|A\| + \aerr{A} \\
     \frac{\cnd{A} - \serr{A}}{1 + \serr{A}} &\le \cnd{\Ap} &\le \frac{\cnd{A} + \serr{A}}{1 - \serr{A}}.
@@ -190,12 +192,50 @@ the output. For brevity, we also use the notation $\serr{A}
 
 \begin{proposition}(Matrix Whitening)
   \label{prop:white}
-  If $\theta$ is a vector drawn randomly from the sphere
-  $\mathcal{S}^{n-1}$, then the vector projected into the space of $A
-  = [a_1 | a_2 | \cdots | a_n]$, then with probability greater than
-  $1-\delta$, $A\theta$ has the following properties,
+  Let $\Wp$ be a matrix that whitens $A$, i.e. $\Wp^T \Ap \Wp = I$.
+  Suppose $\Wp^T A \Wp = U D U^T$, then define $W = \hat{W} U D^{-\half}
+  U^T$. Note that $W$ whitens $A$. 
+
+  Then, 
+  \begin{eqnarray}
+    \aerr{W} &=& \frac{2}{\sqrt{\sigma_k{A}}} \berr{A} \\
+    \| W \| &=& \frac{1}{\sqrt{\sigma_k(A)}} \\
+    \| \Wp \| &\le& \frac{\|W\|}{\sqrt{1 - \serr{A}}} \\
+    \aerr{\pinv{W}} &=& 2 \sqrt{\|A\| + \aerr{A}} \berr{A} \\
+    \| \pinv{W} \| &=& \sqrt{\|A\|} \\
+    \| \pinv{\Wp} \| &\le& \sqrt{\|A\| + \aerr{A}}
+  \end{eqnarray}
 \end{proposition}
 \begin{proof}
+  Firstly, 
+  \begin{eqnarray}
+    \| W \|^2 &=& \| \inv{A} \| \\
+    \| W \| &=& \frac{1}{\sqrt{\sigma_k(A)}} \\
+    \| \Wp \|^2 &=& \| \inv{\Ap} \| \\
+    \| \Wp \| &=& \frac{1}{\sqrt{\sigma_k(A) + \aerr{A}}}
+  \end{eqnarray}
+  $\| \pinv{W} \|$ and $\| \pinv{\Wp} \|$ can be found similarly.
+
+  Now, to find $\aerr{W}$,
+  \begin{eqnarray}
+    \aerr{W} &=& \| \Wp - W \| \\
+    &=& \| W U D^{\half} U^T - W \| \\
+    &\le& \|W\| \| I - U D^{\half} U^T \| \\
+    &\le& \|W\| \| I - D \| \\
+    &\le& \|W\| \| I - U D U^T \| \\
+    &\le& \|W\| \| \Wp^T \Ap_k \Wp - \Wp^T A \Wp \| \\
+    &\le& \|W\| \| \Wp^T (\Ap_k - \Ap) \Wp \| + \| \Wp^T (\Ap - A) \Wp \| \\
+    &\le& \|W\| \|\Wp\|^2 (\sigma_{k+1}(\Ap) + \aerr{A}) \\
+    &\le& 2 \|W\| \|\Wp\|^2 \aerr{A} \\
+    &\le& \frac{1}{\sigma_k(A)^{1.5}} \frac{1}{1 - \serr{A}} \aerr{A} \\
+    &\le& \frac{1}{\sqrt{\sigma_k(A)}} \berr{A} \\
+    \aerr{\pinv{W}} &=& \| \pinv{\Wp} - \pinv{W} \| \\
+    &=& \| \pinv{\Wp} U D^{\half} U^T - \pinv{W} \| \\
+    &\le& \|\pinv{\Wp}\| \| I - U D^{\half} U^T \| \\
+    &\le& 2 \|\pinv{\Wp}\| \|\Wp\|^2 \aerr{A} \\
+    &\le& 2 \sqrt{\|A\| + \aerr{A}} \berr{A}.
+  \end{eqnarray}
+
 \end{proof}
 
 \begin{proposition}(Random Projections)

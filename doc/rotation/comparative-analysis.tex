@@ -126,3 +126,79 @@ projecting $v_i$ onto $W$, i.e. $(\pinv{W})^T v_i$ and dividing by $Z_i
 
 \subsection{Spherical Gaussians}
 
+Let the absolute error of the inputs, $\cM_{2}$ and $\cM_{3}$ be
+$\aerr{\cM_{2}}$ and $\aerr{\cM_{3}}$ respectively. 
+\begin{align}
+  \sigma^2 &=& \sigma_k( \cM_2 - \mu \mu^T ) \\
+  \comment{\theoremref{thm:weyl}}
+  \aerr{\sigma^2} &\le& \|(\cM_2 - \mu \mu^T) - (\cMp_2 - \mup \mup^T)\| \\
+  &\le& \aerr{\cM_2} + 2 \|\mu\|_p \aerr{\mu} + \aerr{\mu}^2
+\end{align}
+
+Next, $M_2$ is defined to be the best k-rank approximation of  $(\cM_2 - \sigma^2 I)$, 
+\begin{align}
+  \aerr{M_2} &=& \| \Mp_2 - (\cMp_2 - \sigmap^2 I) + (\cMp_2 - \sigmap^2 I) - \cM_2 - \sigma^2 I \| \\
+  &\le& \| \Mp_2 - (\cMp_2 - \sigmap^2 I) \| + \| \cMp_2 - \cM_2 \| + \| \sigmap^2 I - \sigma^2 I \| \\
+  \comment{\theoremref{thm:weyl}}
+  &\le& \sigma_{k+1}(\cMp_2 - \sigmap^2 I) + \aerr{\cM_2 - \sigma^2 I} \\
+  &\le& 2\aerr{\cM_2 - \sigma^2 I} \\
+  &\le& 2\aerr{\cM_2} + 2 \aerr{\sigma^2} \\
+  &\le& 4\aerr{\cM_2} + 4 \|\mu\|_p \aerr{\mu} + 2 \aerr{\mu}^2.
+\end{align}
+
+$M_3$ is similarly defined to be $\cM_3 - \sigma^2 (\sum_{i=1}^{d}
+(\mu_i \otimes e_i \otimes e_i + e_i \otimes \mu_i \otimes e_i +e_i \otimes
+e_i \otimes \mu_i)$,
+\begin{align}
+  \comment{\propositionref{prop:prod}}
+  \aerr{M_3} &\le& \aerr{ \cM_3 } + 3 (\| \mu \| + \aerr{\mu}) \aerr{ \sigma } +  3 \sigma^2 \aerr{\mu}.
+\end{align}
+
+We need to construct the whitening operator $W$,
+\begin{align}
+  \comment{\propositionref{prop:white}} 
+  \aerr{W} &=& \frac{2}{\sqrt{\sigma_k(M_2)}} \berr{M_2} \\
+  \|W\| &=& \frac{1}{\sqrt{\sigma_k(M_2)}} \\
+  \|\Wp\| &\le& \frac{1}{\sqrt{\sigma_k(M_2) - \aerr{M_2}}} \\
+       &=& \frac{\|W\|}{\sqrt{1 - \alpha_{M_2}}} \\
+  \comment{\propositionref{prop:white}} 
+  \aerr{\pinv{W}} &=& 2 \sqrt{M_2 + \aerr{M_2}} \berr{M_2} \\
+  \|\pinv{W}\| &=& \sqrt{\|M_2\|} \\
+  \|\pinv{\Wp}\| &\le& {\sqrt{\sigma_k(M_2) + \aerr{M_2}}}.
+\end{align}
+
+And the whitened tensor, $T_W = M3[W,W,W]$ has the error, 
+\begin{eqnarray}
+  \aerr{T_W} 
+    &\le& \|\Wp\| \aerr{T} + \|T\| (\|W\|^2 + \|W\|\|\Wp\| + \|\Wp\|^2 ) \\
+    &\le& \frac{\|\inv{M_2}\|^{\half}}{\sqrt{1 - \alpha_{M_2}}} \aerr{T} + \|T\| \|\inv{M_2}\| (1 + \frac{1}{\sqrt{1 - \alpha_{M_2}}} + \frac{1}{1 - \alpha_{M_2}}).
+\end{eqnarray}
+
+We can use the fact that this tensor projected onto a random vector will
+be positive semi-definite to perform our eigendecomposition analysis.
+
+The difference between two eigenvalues $\lambda$ and two eigenvectors
+$v$ is, 
+\begin{align}
+  \aerr{\lambda_i} &\le& \aerr{T_W} \\
+  \aerr{v_i} &\le& 4\sqrt{2} \aerr{T_W} \gap{T_W}.
+\end{align}
+
+Finally, when reconstructing $\mu_i$, 
+\begin{align}
+  \aerr{\mu_i} &=& \| \frac{\lambdap_i}{\theta^T \pinv{\Wp} \vp_i} \pinv{\Wp} \vp - \mu_i \| \\
+  &\le& \frac{1}{\sqrt{w_i}} \| \frac{\lambdap_i}{\theta^T \pinv{\Wp} \vp_i} \sqrt{w_i} \pinv{\Wp} \vp - \sqrt{w_i} \mu_i \| \\
+  &\le& | \frac{\lambdap_i}{\theta^T \pinv{\Wp} \vp_i} - \frac{1}{\sqrt{w_i}} | \|\pinv{\Wp} \vp_i\| + \| \pinv{\Wp} \vp_i - \sqrt{w_i} \mu_i \| \\
+  \| \pinv{\Wp} \vp_i - \sqrt{w_i} \mu_i \| 
+  &=&  \| \pinv{\Wp} \vp_i - \pinv{W} v_i \| \\
+  &\le&  \| \pinv{\Wp} \| \aerr{v_i} + \aerr{\pinv{W}} \\
+  | \frac{\lambdap_i}{\theta^T \pinv{\Wp} \vp_i} - \frac{1}{\sqrt{w_i}} | 
+  &=& \frac{1}{\sqrt{w_i}} |\sqrt{w_i} \lambdap_i - \theta^T \pinv{\Wp} \vp_i | \\
+  &=& \frac{1}{\sqrt{w_i}} |\sqrt{w_i} (\lambdap_i - \lambda_i) + \theta^T ( \pinv{W}v_i -  \pinv{W}\vp_i) | \\
+  &=& \aerr{\lambda_i} + \aerr{\pinv{W}v_i} \\
+  &=& \aerr{\lambda_i} + \frac{1}{\sqrt{w_i}} \| \pinv{\Wp} \| \aerr{v_i} + \aerr{\pinv{W}} \\
+  \aerr{\mu_i} 
+  &\le& \aerr{\lambda_i} + (1+\frac{1}{\sqrt{w_i}}) \| \pinv{\Wp} \| \aerr{v_i} + \aerr{\pinv{W}}.
+\end{align}
+
+
