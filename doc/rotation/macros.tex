@@ -1,6 +1,9 @@
 % Section References
 \newcommand{\secref}[1] {\hyperref[#1]{Section~\ref*{#1}}}
 %\newcommand{\appendixref}[1] {\hyperref[#1]{Appendix~\ref*{#1}}}
+\newcommand{\propositionref}[1] {\hyperref[#1]{Proposition~\ref*{#1}}}
+%\newcommand*{\propositionref}[1]{%
+%  \objectref{#1}{Proposition}{Propositions}{}{}}
 \newcommand{\exref}[1] {\hyperref[#1]{Example~\ref*{#1}}}
 
 \newcommand{\eqnref}[1] {Equation \eqref{#1}}
@@ -32,3 +35,8 @@
 \newcommand{\half} {\frac{1}{2}}
 
 \newcommand{\todo}[1] {\colorbox{yellow}{{\bf TODO:} #1}}
+
+\newcommand{\comment}[1]{%
+  \text{\phantom{(#1)}} \tag{#1}
+}
+

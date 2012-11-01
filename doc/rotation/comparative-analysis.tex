@@ -25,14 +25,14 @@
   {\input{2svd-lda}}
 \end{figure}
 
-Let the errors of the inputs, $\Pairs$ and $\Triples$ be $\aerr{P}$ and
+Let the absolute errors of the inputs, $\Pairs$ and $\Triples$ be $\aerr{P}$ and
 $\aerr{T}$ respectively. The error in the whitening operator $W$ is then,
-\begin{eqnarray}
-  \aerr{W} &=& \frac{2}{\sigma_k(P)^2} (\beta_P) \\
+\begin{align}
+  \comment{\propositionref{prop:white}} \aerr{W} &=& \frac{2}{\sigma_k(P)^2} (\beta_P) \\
   \|W\| &=& \frac{1}{\sqrt{\sigma_k(P)}} \\
   \|\Wp\| &\le& \frac{1}{\sqrt{\sigma_k(P) - \aerr{P}}} \\
           &=& \frac{\|W\|}{\sqrt{1 - \alpha_P}}.
-\end{eqnarray}
+\end{align}
 
 The whitened tensor $T_W = \Triples[W,W,W]$ have the error, 
 \begin{eqnarray}
@@ -66,7 +66,7 @@ projecting $v_i$ onto $W$, i.e. $(\pinv{W})^T v_i$ and dividing by $Z_i
 
 \begin{eqnarray}
   \aerr{O_i} 
-  &\le& \| O_i - \Pi_W O_i \| + \| \Pi_W O_i - \frac{1}{\Zp_i} (\pinv{W})^T \vp_i \|
+  &\le& \| O_i - \Pi_W O_i \| + \| \Pi_W O_i - \frac{1}{\Zp_i} (\pinv{W})^T \vp_i \| \\
   &\le& \|\Pi - \Pi_W\| 
   + \frac{\|\pinv{W}\|}{Z_i} \aerr{v_i} 
   + \frac{\|\vp_i\|}{Z_i} \aerr{\pinv{W}} 

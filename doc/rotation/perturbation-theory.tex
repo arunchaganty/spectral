@@ -49,6 +49,7 @@ the output. For brevity, we also use the notation $\serr{A}
 \end{proof}
 
 \begin{proposition}(Matrix Sum)
+  \label{prop:sum}
   Let $A$ and $B$ be any $m \times n$ matrices, then, 
   \begin{eqnarray}
     \aerr{A+B} &\le& \aerr{A} + \aerr{B} \\
@@ -67,6 +68,7 @@ the output. For brevity, we also use the notation $\serr{A}
 \end{proof}
 
 \begin{proposition}(Matrix Product)
+  \label{prop:prod}
   Let $A$ and $B$ be compatible matrices, then, 
   \begin{eqnarray}
     \aerr{A*B} &\le& \aerr{A} \|B\| + \|A\| \aerr{B} + \aerr{A} \aerr{B} \\
@@ -90,6 +92,7 @@ the output. For brevity, we also use the notation $\serr{A}
 \end{proof}
 
 \begin{proposition}(Matrix Inverse)
+  \label{prop:inv}
   Let $A$ be a non-singular matrix, then, 
   \begin{eqnarray}
     \aerr{\inv{A}} 
@@ -104,6 +107,7 @@ the output. For brevity, we also use the notation $\serr{A}
 \end{proof}
 
 \begin{proposition}(Matrix Rotation)
+  \label{prop:rot}
   Let $A$ be a non-singular matrix, and $U$ and $V$ be it's left and right singular vectors. Then, 
   \begin{eqnarray}
       \aerr{\Up^T A \Vp} &=& \frac{\aerr{A}}{1 - \beta_A^2} \\
@@ -116,6 +120,7 @@ the output. For brevity, we also use the notation $\serr{A}
 \end{proof}
 
 \begin{proposition}(Eigenvalue Decomposition)
+  \label{prop:eigd}
   Let $A$ be a diagonalisable matrix, i.e. there exists some $R$ such that $\inv{R} A R = \diag(\lambda_1, \cdots, \lambda_m)$. Then,
     there exists a permutation $\tau$ such that,
   \begin{eqnarray}
@@ -165,6 +170,7 @@ the output. For brevity, we also use the notation $\serr{A}
 \end{remark}
 
 \begin{proposition}(Simultaneous Diagonalisation)
+  \label{prop:sim-eigd}
   Let $A_1, \cdots, A_n$ be a simultaneously diagonalised by $R$. If $\hat{R}$ diagonalises $A_1$, then relative
     error of the eigenvalues of the $A_i$ for ($i > 1$) is,
 
@@ -182,7 +188,18 @@ the output. For brevity, we also use the notation $\serr{A}
 \begin{proof}
 \end{proof}
 
+\begin{proposition}(Matrix Whitening)
+  \label{prop:white}
+  If $\theta$ is a vector drawn randomly from the sphere
+  $\mathcal{S}^{n-1}$, then the vector projected into the space of $A
+  = [a_1 | a_2 | \cdots | a_n]$, then with probability greater than
+  $1-\delta$, $A\theta$ has the following properties,
+\end{proposition}
+\begin{proof}
+\end{proof}
+
 \begin{proposition}(Random Projections)
+  \label{prop:proj}
   If $\theta$ is a vector drawn randomly from the sphere
   $\mathcal{S}^{n-1}$, then the vector projected into the space of $A
   = [a_1 | a_2 | \cdots | a_n]$, then with probability greater than
