@@ -16,6 +16,57 @@
   {\input{ahk2012-algo-b}}
 \end{figure}
 
+Let the absolute error of the inputs, $P_{12}$, $P_{13}$, $P_{123}$ be
+$\aerr{P_{12}}, \aerr{P_{13}}$ and $\aerr{P_{123}}$ respectively. The
+first step of the algorithm ``aligns'' $P_{123}$ with the singular
+vectors of $P_{12}$.
+\begin{align}
+  \comment{\propositionref{prop:rot}} \aerr{\Up_1^T P_{12} \Up_2} &=& \aerr{P_{12}} \\
+  \comment{\propositionref{prop:rot}} \aerr{\Up_1^T P_{123} \Up_2} &=& \aerr{P_{123}}.
+\end{align}
+
+Subsequently, $B_{123} = (\Up_1^T P_{123} \Up_2) \inv{(\Up_1^T P_{12} \Up_2)}$
+is constructed,
+\begin{align}
+  \comment{\propositionref{prop:inv}} \aerr{\inv{P_{12}}} &=& \|\inv{P_{12}}\| \frac{ \cnd{A} }{\|P_{12}\| - \aerr{P_{12}} \cnd{A}} \aerr{P_{12}} \\
+  \comment{\propositionref{prop:prod}} \aerr{B_{123}} &=& \aerr{P_{123}} \|\inv{P_{12}} \| + \|P_{123}\| \aerr{\inv{P_{12}}}.
+\end{align}
+
+$B_{123}$ is projected onto $k$ different $\theta_i$, and subsequently
+diagonalised to give eigenvalues $\lambda_i$
+\begin{align}
+  \comment{\propositionref{prop:sim-eigd}} 
+  \aerr{\lambda} &=& O(n^3) \cnd{R}^2 \|\inv{R}\| \inv{\gap{\lambda}}  \aerr{B_{123}} \\
+  \comment{\propositionref{prop:proj}}
+  \gap{\lambda} 
+  &\le& \frac{\delta}{\sqrt{e} n^2 (1 + \sqrt{2\log(\frac{m}{\delta})})}
+         \gap{\Up_3^T M_3} \\
+  &\le& \frac{\delta}{\sqrt{e} n^2 (1 + \sqrt{2\log(\frac{m}{\delta})})}
+         \gap{M_3}.
+\end{align}
+
+We can use the fact that $B_{123} = (\Up_1^T M_1) \diag( M_3^T \Up_3
+\theta ) \inv{(\Up_1^T M_1)}$ to find $R$,
+\begin{align}
+  R &=& \Up_1^T M_1 \inv{\diag( \|\Up_1^T M_1 \vec{e}_1 \|, \cdots )} \\
+  \| \inv{R} \| &\le& \cnd{\Up_1^T \|M_1\|} \\
+          &\le& 2 \cnd{M_1} \\
+  \cnd{R} &\le& 4 \cnd{M_1}^2.
+\end{align}
+
+Finally, in order to recover $M_3$ from $\lambda_i$, we need to invert
+our projection, namely, $\mu_i = \Up_3^T \inv{\Theta} \lambda_i$. 
+\begin{align}
+  \aerr{\mu_i} &\le& \| \mu_i - \mup_i \|_2 \\
+     &\le& \| \Up_3^T \inv{\Theta} \lambdap_i - \mu_i \|_2 \\
+     &\le& \| \inv{\Theta} \lambdap_i - \Up_3 \mu_i \|_2 + \|\mu_i\|
+     \frac{\|\inv{P_{13}}\| \aerr{P_{13}}}{1 - \|\inv{P_{13}}\| \aerr{P_{13}}} \\
+     &\le& \| \inv{\Theta} (\lambdap_i - \lambda_i) \|_2 + 2 \|\mu_i\|
+            \frac{\|\inv{P_{13}}\| \aerr{P_{13}}}{1 - \|\inv{P_{13}}\| \aerr{P_{13}}} \\
+     &\le& \sqrt{k} \aerr{\lambda} + 2 \|\mu_i\|
+            \frac{\|\inv{P_{13}}\| \aerr{P_{13}}}{1 - \|\inv{P_{13}}\| \aerr{P_{13}}} \\
+\end{align}
+
 \subsection{LDA}
 
 \begin{figure}[htbp]
