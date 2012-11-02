@@ -3,7 +3,9 @@ Generate data from a Gaussian mixture model
 """
 
 import scipy as sc
+import scipy.linalg
 from scipy import array, zeros, ones, eye
+from scipy.linalg import inv
 from models.Model import Model
 from util import chunked_update #, ProgressBar
 
@@ -11,7 +13,7 @@ multinomial = sc.random.multinomial
 multivariate_normal = sc.random.multivariate_normal 
 dirichlet = sc.random.dirichlet
 
-from spectral.rand import permutation
+from spectral.rand import permutation, wishart
 
 # import spectral.linalg as sl
 
@@ -104,8 +106,9 @@ class GaussianMixtureModel( Model ):
             S = array( [ sigma * eye( d ) for i in xrange( k ) ] )
         elif isinstance( cov, sc.ndarray ):
             S = cov
+        elif cov == "random":
+            S = array( [ gaussian_precision * inv( wishart( d+1, sc.eye( d ), 1 ) ) for i in xrange( k ) ] )
         else:
-            # TODO: Implement random wishart and other variations.
             raise NotImplementedError
 
         model.add_parameter( "w", w )
@@ -261,8 +264,15 @@ class MultiViewGaussianMixtureModel( Model ):
             S = array( S ) 
         elif isinstance( cov, sc.ndarray ):
             S = cov
+        elif cov == "random":
+            S = []
+            for i in xrange( n_views ):
+                # Roughly the largest element if p = 2d ~= 1, so well
+                # scaled.
+                s = array( [ gaussian_precision * inv( wishart( d+1, sc.eye( d ), 1 ) ) for i in xrange( k ) ] )
+                S.append( s )
+            S = array( S ) 
         else:
-            # TODO: Implement random wishart and other variations.
             raise NotImplementedError
 
         model.add_parameter( "w", w )
@@ -329,7 +339,7 @@ def main( fname, dataset_type, k, d, params ):
         if params.cov == "spherical" and params.sigma2 > 0:
             params.cov = array( [params.sigma2 * eye(d)] * k )
         gmm = GaussianMixtureModel.generate( fname, k, d, params.means,
-                params.cov, params.weights )
+                params.cov, params.weights, dirichlet_scale=params.w0, gaussian_precision = params.sigma2 )
         gmm.set_seed( params.seed )
         gmm.save() 
     elif dataset_type == "mvgmm":
@@ -337,7 +347,7 @@ def main( fname, dataset_type, k, d, params ):
         if params.cov == "spherical" and params.sigma2 > 0:
             params.cov = array( [[params.sigma2 * eye(d)] * k] * views )
         mvgmm = MultiViewGaussianMixtureModel.generate( fname, k, d, views, params.means,
-                params.cov, params.weights )
+                params.cov, params.weights, dirichlet_scale=params.w0, gaussian_precision = params.sigma2 )
         mvgmm.set_seed( params.seed )
         mvgmm.save()
     else:
@@ -352,11 +362,12 @@ if __name__ == "__main__":
     parser.add_argument( "k", type=int, help="Number of mixture components"  )
     parser.add_argument( "d", type=int, help="Dimensionality of each component"  )
 
-    parser.add_argument( "--seed", default=long(time.time() * 1000) )
-    parser.add_argument( "--weights", default="uniform", help="Mixture weights, default=uniform" )
+    parser.add_argument( "--seed", default=int(time.time() * 1000), type=int )
+    parser.add_argument( "--weights", default="uniform", help="Mixture weights, default=uniform|random" )
+    parser.add_argument( "--w0", default=10.0, type=float, help="Scale parameter for the Dirichlet" )
     # GMM options
     parser.add_argument( "--means", default="hypercube", help="Mean generation procedure, default = hypercube" )
-    parser.add_argument( "--cov", default="spherical", help="Covariance generation procedure, default = hypercube"  )
+    parser.add_argument( "--cov", default="spherical", help="Covariance generation procedure, default = spherical|random"  )
     parser.add_argument( "--sigma2", default=0.2, type=float )
     # Multiview options
     parser.add_argument( "--views", default=3, help="Number of views", type=int )

@@ -82,7 +82,7 @@ def wishart(n, V, nsamples=1):
         for ii in range(p):
             A[ii,ii] = sc.sqrt(stats.chi2.rvs(n-ii+2))
             for jj in range(ii):
-                A[ii,jj] = stats.norsc.rvs()
+                A[ii,jj] = stats.norm.rvs()
         #Compute the sample X = L A A\T L\T
         thissample = sc.dot(L,A)
         thissample = sc.dot(thissample,thissample.transpose())
