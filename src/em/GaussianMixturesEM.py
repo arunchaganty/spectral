@@ -102,23 +102,15 @@ class GaussianMixtureEM( em.EMAlgorithm ):
 
 def test_gaussian_em():
     """Test the Gaussian EM on a small generated dataset"""
+    fname = "./test-data/gmm-3-10-0.7.npz"
+    gmm = GaussianMixtureModel.from_file( fname )
+    k, d, M, S, w = gmm.k, gmm.d, gmm.means, gmm.sigmas, gmm.weights
+    N, n = 1e6, 1e4
 
-    k, d = 2, 2
-    N = 10000 # 1e4
 
-    M1 = array( [ -1.0, 1.0 ] ) # Diagonally placed centers
-    M2 = array( [ 1.0, -1.0 ] )
-    M = sc.row_stack( (M1, M2) )
-    sigma = 0.2
-    w = array( [0.5, 0.5] )
-
-    X1 = multivariate_normal( M1, sigma*eye(2), N )
-    X2 = multivariate_normal( M2, sigma*eye(2), N )
-    X = sc.row_stack( (X1, X2) )
+    X = gmm.sample( N, n )
 
     algo = GaussianMixtureEM(k, d)
-
-    O = M, sigma, w
 
     start = time.time()
     def report( i, O_, lhood ):
@@ -128,17 +120,17 @@ def test_gaussian_em():
     lhood, Z, O_ = algo.run( X, None, report )
     logger.add( "time", time.time() - start )
 
-    M_, sigma_, w_ = O_
+    M_, S_, w_ = O_
 
     M_ = closest_permuted_matrix( M, M_ )
     w_ = closest_permuted_vector( w, w_ )
 
     print norm( M - M_ )/norm(M)
-    print abs(sigma - sigma_) 
+    print abs(S - S_) 
     print norm( w - w_ ) 
 
     assert( norm( M - M_ )/norm(M) < 1e-1 )
-    assert( abs(sigma - sigma_) < 1 )
+    assert( abs(S - S_) < 1 )
     assert( norm( w - w_ ) < 1e-3 )
 
 def main(fname, N, n, params):

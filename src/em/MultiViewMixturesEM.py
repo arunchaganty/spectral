@@ -110,15 +110,15 @@ class MultiViewGaussianMixtureEM( em.EMAlgorithm ):
         return em.EMAlgorithm.run( self, X, O, *args, **kwargs )
 
 def test_multiview_gmm_em():
-    fname = "./test-data/mvgmm-3-10-1e6"
+    fname = "./test-data/mvgmm-3-10-0.7.npz"
     mvgmm = MultiViewGaussianMixtureModel.from_file( fname )
     k, d, M, S, v, w = mvgmm.k, mvgmm.d, mvgmm.means, mvgmm.sigmas, mvgmm.n_views, mvgmm.weights
     # Simplifying assumption for now
-    X = []
-    for i in xrange( v ):
-        X.append( mvgmm.get_samples( "X%d" % (i+1), d ) )
-
     assert( v == 3 )
+
+    N, n = 1e6, 1e5
+
+    X = mvgmm.sample( N, n )
 
     algo = MultiViewGaussianMixtureEM( k, d )
 
