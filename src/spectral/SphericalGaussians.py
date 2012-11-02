@@ -8,9 +8,10 @@ methods and spectral decompositions" (2012).
 import scipy as sc 
 from scipy import diag, array, outer, eye, ones, log, sqrt
 from scipy.linalg import norm, svdvals, eig, eigvals, pinv, cholesky
-from spectral.linalg import svdk, mrank, approxk, eigen_sep, \
+from spectral.linalg import svdk, mrank, approxk, \
         closest_permuted_matrix, tensorify, matrix_tensorify, \
-        column_aerr, column_rerr
+        column_aerr, column_rerr, \
+        column_sep
 from spectral.data import Pairs, TriplesP
 
 from util import DataLogger
@@ -32,7 +33,7 @@ def get_whitener( A, k ):
       print e
 
     # If A is PSD
-    U, S, _ = svdk( A, k )
+    U, _, _ = svdk( A, k )
     A2 = cholesky( U.T.dot( A ).dot( U ) )
     W, Wt = U.dot( pinv( A2 ) ), U.dot( A2 )
     
@@ -77,7 +78,7 @@ def recover_components( k, P, T, Pe, Te, delta=0.01 ):
         # Find the eigen separation
         X = Tw(theta)
         #X = Tw.dot(theta)
-        sep = eigen_sep( X )
+        sep = column_sep( X )
 
         if sep > best[0]:
             best = sep, theta, X
@@ -90,12 +91,12 @@ def recover_components( k, P, T, Pe, Te, delta=0.01 ):
 
     Xe = Twe( theta )
     ##Xe = Twe.dot( theta )
-    sepe = eigen_sep( Xe )
+    sepe = column_sep( Xe )
     Se, Ue = eig( Xe, left=True, right=False )
     Se, Ue = Se.real, Ue.real
 
     logger.add( "D", sep/sepe )
-    logger.add_err( "lambda", Se, S )
+    logger.add_err( "lambda", Se, S, 'inf' )
     logger.add_err( "v", Se, S, 'col' )
     
     M = sc.zeros( (d, k) )
@@ -145,6 +146,7 @@ def sample_moments( X, k ):
     M3 = lambda theta: TriplesP( X2, X2, X2, theta )
     #M3 = Triples( X2, X2, X2 )
 
+    # TODO: Ah, not computing sigma2! 
     # Estimate \sigma^2 = k-th eigenvalue of  M2 - mu mu^T
     sigma2 = svdvals( M2 - outer( M1, M1 ) )[k-1]
     assert( sc.isreal( sigma2 ) and sigma2 > 0 )
@@ -176,6 +178,55 @@ def test_sample_recovery():
     print A_
 
     assert norm( A - A_ )/norm( A ) < 5e-1
+
+def compare_error_bounds( model_fname, log_fname, delta = 0.1 ):
+    """Compare error bounds theoretical analysis"""
+    gmm = GaussianMixtureModel.from_file( model_fname )
+    k, d, M, w = gmm.k, gmm.d, gmm.means, gmm.weights
+
+    P, T = exact_moments( M, w )
+
+    lg = sc.load( log_fname )
+
+    # TODO: Use concentration bounds on aerr_P12
+    n_M, sk_M = lg["norm_M_2"], lg["s_k_M"], 
+    e_P, e_T = lg["aerr_P_2"], lg["aerr_T"], 
+    n_P, sk_P, n_T = lg["norm_Pe_2"], lg["s_k_P"], lg["norm_Te"]
+    w_min = min(w)
+
+    # TODO: Ah, not computing sigma2! 
+
+    # alpha_P and \beta_P
+    a_P = e_P/sk_P
+    b_P = a_P/(1-a_P)
+
+    e_Wb = 2/sqrt(sk_P) * b_P
+    e_W = lg["aerr_W_2"]
+
+    e_Twb = 1/sqrt(sk_M * (1-a_P)) * e_T + n_T/sk_M * (1 + 1/sqrt(1-a_P) + 1/(1-a_P)) * e_W
+    e_Tw = lg["aerr_Tw"]
+
+    e_Lb = e_Tw
+    e_L = lg["aerr_lambda"]
+
+    D_M = column_sep( M )
+    D_Tw = delta/(sqrt(sc.e) * k**2 * (1+sqrt(2 * log(k/delta)))) * D_M
+    e_vb = 4 * sqrt(2) * e_Tw / D_Tw
+    e_v = lg["aerr_v_col"]
+
+    e_Wtb = 2 * sqrt( n_P + e_P ) * b_P
+    n_Wtb = sqrt( n_P + e_P )
+
+    e_mub = e_Lb + (1+1/sqrt(w_min)) * n_Wtb * e_vb + e_Wtb
+    e_mu = lg["aerr_M_col"]
+
+    print "A\t\tbound\t\tactual"
+    print "W\t\t%f\t\t%f" % (e_Wb, e_W)
+    print "Tw\t\t%f\t\t%f" % (e_Twb, e_Tw)
+    print "L\t\t%f\t\t%f" % (e_Lb, e_L)
+    print "v\t\t%f\t\t%f" % (e_vb, e_v)
+    print "mu\t\t%f\t\t%f" % (e_mub, e_mu)
+    return [(e_W/e_Wb), (e_Tw/e_Twb), (e_L / e_Lb), (e_v/e_vb), (e_mu / e_mub),]
 
 def main( prefix, N, n, delta, params ):
     """Run on sample in fname"""

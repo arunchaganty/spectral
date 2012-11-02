@@ -6,11 +6,12 @@ Hidden Markov Models" (2012).
 
 #import ipdb
 import scipy as sc 
-from scipy import diag, array, ndim, outer, eye, ones, log
+from scipy import diag, array, ndim, outer, eye, ones, log, sqrt
 from scipy.linalg import norm, svd, svdvals, eig, eigvals, inv, det
 from spectral.linalg import svdk, mrank, approxk, eigen_sep, \
         closest_permuted_matrix, tensorify, matrix_tensorify, \
-        column_aerr, column_rerr
+        column_aerr, column_rerr,\
+        condition_number, column_gap, column_sep
 from spectral.rand import orthogonal
 from spectral.data import Pairs, TriplesP
 
@@ -197,6 +198,53 @@ def main( fname, N, n, delta, params ):
     logger.add_err( "M3", M3, M3_, 'col' )
 
     print column_aerr(M3, M3_), column_rerr(M3, M3_)
+
+def compare_error_bounds( model_fname, log_fname, delta = 0.1 ):
+    """Compare error bounds theoretical analysis"""
+
+    mvgmm = MultiViewGaussianMixtureModel.from_file( model_fname )
+    k, d, M, w = mvgmm.k, mvgmm.d, mvgmm.means, mvgmm.weights
+    M1, M2, M3 = M
+
+    P12, P13, P123 = exact_moments( w, M1, M2, M3 )
+    U1, _, U2 = svdk( P12, k )
+    _, _, U3 = svdk( P13, k )
+    U2, U3 = U2.T, U3.T
+
+    lg = sc.load( log_fname )
+
+    # TODO: Use concentration bounds on aerr_P12
+    e_P12, e_P13, e_P123 = lg["aerr_P12_2"], lg["aerr_P13_2"], lg["aerr_P123"], 
+    n_P12, n_P13, n_P123 = lg["norm_P12_2"], lg["norm_P13_2"], lg["norm_P123"], 
+
+    P12_ = U1.T.dot( P12 ).dot( U2 )
+    n_P12i = norm( inv(P12_) )
+    K_P12 = condition_number( P12_ )
+
+    P13_ = U1.T.dot( P13 ).dot( U3 )
+    n_P13i = norm( inv(P13_) )
+
+    e_P12ib = n_P12i * K_P12 / (n_P12 - e_P12 * K_P12) * e_P12
+    e_B123b = e_P123 * n_P12i + n_P123 * e_P12ib
+    e_B123 = lg["aerr_B123"]
+
+    D_M3 = column_gap( U3.T.dot( M3 ), k )
+    D_L = delta/(sqrt(sc.e) * k**2 * (1+sqrt(2 * log(k/delta)))) * D_M3
+    n_R, K_R = lg["norm_R_2"], lg["K_R"]
+    e_Lb = k**3 * K_R**2 * n_R / D_L * e_B123
+    # TODO: Adjust because this is a bound on Frob. norm, not spec. norm
+    e_Lb = e_Lb * k
+    e_L = lg["aerr_L_2"]
+
+    n_mu = max(norm(M3.T[i]) for i in xrange(k))
+    e_mub = sqrt(k) * e_L + 2 * n_mu * n_P13i * e_P13/ (1 - n_P13i * e_P13) 
+    e_mu = lg["aerr_M3_col"]
+
+    print "A\t\tbound\t\tactual"
+    print "B123\t\t%f\t\t%f" % (e_B123b, e_B123)
+    print "L\t\t%f\t\t%f" % (e_Lb, e_L)
+    print "M3\t\t%f\t\t%f" % (e_mub, e_mu)
+    return [ e_B123/e_B123b, e_L/e_Lb, e_mu/e_mub,]
 
 if __name__ == "__main__":
     import argparse
