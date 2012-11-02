@@ -36,8 +36,8 @@ class DataLogger:
             self.add( "aerr_%s_col" % key, column_aerr( A, A_ ) )
             self.add( "rerr_%s_col" % key,  column_rerr( A, A_ ) )
         else:
-            self.add( "aerr_%s_%d" % (key, ntype), norm( A - A_ ) )
-            self.add( "rerr_%s_%d" % (key, ntype), norm( A - A_, ntype )/norm(A, ntype) )
+            self.add( "aerr_%s_%s" % (key, str(ntype)), norm( A - A_, ntype ) )
+            self.add( "rerr_%s_%s" % (key, str(ntype)), norm( A - A_, ntype )/norm(A, ntype) )
 
     def add_terr( self, key, A, A_, d, ntype=2 ):
         """Print the error between two objects"""
@@ -53,7 +53,7 @@ class DataLogger:
         if ntype is None:
             self.add( "norm_%s" % key, norm( A ) )
         else:
-            self.add( "norm_%s_%d" % (key, ntype), norm( A, ntype ) )
+            self.add( "norm_%s_%s" % (key, str(ntype)), norm( A, ntype ) )
 
         if ntype == 2:
             if k > 0:

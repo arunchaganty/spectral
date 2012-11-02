@@ -96,7 +96,7 @@ def recover_components( k, P, T, Pe, Te, delta=0.01 ):
     Se, Ue = Se.real, Ue.real
 
     logger.add( "D", sep/sepe )
-    logger.add_err( "lambda", Se, S, 'inf' )
+    logger.add_err( "lambda", Se, S, sc.inf )
     logger.add_err( "v", Se, S, 'col' )
     
     M = sc.zeros( (d, k) )
