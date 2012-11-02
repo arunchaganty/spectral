@@ -7,10 +7,10 @@ from scipy import array, diag
 from scipy.linalg import svd, svdvals, norm, eigvals, eig
 from spectral.rand import orthogonal
 
-from munkres import Munkres
+from spectral.munkres import Munkres
 
-from . import _data
-apply_shuffle = _data.apply_shuffle
+#from spectral import _data
+#apply_shuffle = _data.apply_shuffle
 
 def apply_permutation( perm, lst ):
     """Apply a permutation to a list"""
@@ -87,6 +87,36 @@ def condition_number( x, k = None ):
     else:
         return s[0]/s[-1]
     
+def column_gap( X, k ):
+    """Minimum difference between column values"""
+    mag = 0
+    diff = sc.inf
+    for i in xrange(k):
+        mag_ = norm( X.T[i] )
+        if mag_ > mag:
+            mag = mag_
+        for j in xrange(i+1, k):
+            diff_ = norm( X.T[i] - X.T[j] )
+            if diff_ < diff:
+                diff = diff_
+    return diff/mag
+    
+def column_sep( X ):
+    """Minimum difference in and between column values"""
+    d,k = X.shape
+    mag = sc.inf
+    diff = sc.inf
+
+    for i in xrange(k):
+        mag_ = norm( X.T[i] )
+        if mag_ < mag:
+            mag = mag_
+        for j in xrange(i+1, k):
+            diff_ = norm( X.T[i] - X.T[j] )
+            if diff_ < diff:
+                diff = diff_
+    return min( diff, mag )
+    
 def spectral_gap( x, k = None ):
     """Minimum difference in eigenvalues"""
     # Get the singular values
@@ -105,13 +135,12 @@ def eigen_sep( X, k = None ):
 
     return min(abs(s).min(), abs(sc.diff( s )).min())
 
-
 def column_aerr( M, M_ ):
-    return max( map( lambda (mu,mu_): norm( mu - mu_ ),  zip( M.T, M_.T
+    return max( map( lambda (mu, mu_): norm( mu - mu_ ),  zip( M.T, M_.T
         ) ) )
 
 def column_rerr( M, M_ ):
-    return max( map( lambda (mu,mu_): norm( mu - mu_ )/norm( mu ),  zip(
+    return max( map( lambda (mu, mu_): norm( mu - mu_ )/norm( mu ),  zip(
         M.T, M_.T ) ) )
 
 def tensor_norm( T, d, ntype=2 ):
@@ -180,8 +209,9 @@ def closest_permuted_matrix( A, B ):
     return B_
 
 def test_closest_permuted_matrix():
-    A = array([[0, 1, 2],[2,3,4],[4,5,6]])
-    B = array([[2.3, 3.1, 4.1], [4.1,5.2,5.9], [0.1,1.3,1.9]])
+    """Test whether the closest_permuted_matrix fn works"""
+    A = array([[0, 1, 2], [2, 3, 4], [4, 5, 6]])
+    B = array([[2.3, 3.1, 4.1], [4.1, 5.2, 5.9], [0.1, 1.3, 1.9]])
     Bo = array([[0.1, 1.3, 1.9], [2.3, 3.1, 4.1], [4.1, 5.2, 5.9]])
 
     B_ = closest_permuted_matrix( A, B )
