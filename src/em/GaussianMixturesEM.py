@@ -123,7 +123,7 @@ def test_gaussian_em():
     start = time.time()
     def report( i, O_, lhood ):
         M_, _, _ = O_
-        logger.add_err( "M_t%d" % (i), M, M_ )
+        logger.add_err( "M_t%d" % (i), M, M_, 'col' )
         logger.add( "time_%d" % (i), time.time() - start )
     lhood, Z, O_ = algo.run( X, None, report )
     logger.add( "time", time.time() - start )
@@ -163,7 +163,7 @@ def main(fname, N, n, params):
     start = time.time()
     def report( i, O_, lhood ):
         M_, _, _ = O_
-        logger.add_err( "M_t%d" % (i), M, M_ )
+        logger.add_err( "M_t%d" % (i), M, M_, 'col' )
         logger.add( "time_%d" % (i), time.time() - start )
     lhood, Z, O_ = algo.run( X, None, report )
     logger.add( "time", time.time() - start )

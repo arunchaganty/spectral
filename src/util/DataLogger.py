@@ -39,7 +39,7 @@ class DataLogger:
             self.add( "aerr_%s_%d" % (key, ntype), norm( A - A_ ) )
             self.add( "rerr_%s_%d" % (key, ntype), norm( A - A_, ntype )/norm(A, ntype) )
 
-    def add_terr( self, key, A, A_, d, ntype=None ):
+    def add_terr( self, key, A, A_, d, ntype=2 ):
         """Print the error between two objects"""
 
         err = tensor_aerr( A, A_, d, ntype )

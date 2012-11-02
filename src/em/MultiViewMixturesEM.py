@@ -128,7 +128,7 @@ def test_multiview_gmm_em():
     start = time.time()
     def report( i, O_, lhood ):
         (_, _, M3_), _, _ = O_
-        logger.add_err( "M_3_t%d" % (i), M3, M3_ )
+        logger.add_err( "M_3_t%d" % (i), M3, M3_, 'col' )
         logger.add( "time_%d" % (i), time.time() - start )
     lhood, Z, O_ = algo.run( X, None, report )
     logger.add( "time", time.time() - start )
@@ -169,7 +169,7 @@ def main(fname, N, n, params):
     start = time.time()
     def report( i, O_, lhood ):
         (_, _, M3_), _, _ = O_
-        logger.add_err( "M_3_t%d" % (i), M3, M3_ )
+        logger.add_err( "M_3_t%d" % (i), M3, M3_, 'col' )
         logger.add( "time_%d" % (i), time.time() - start )
     lhood, Z, O_ = algo.run( X, None, report )
     logger.add( "time", time.time() - start )
