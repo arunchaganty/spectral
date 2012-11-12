@@ -22,8 +22,46 @@ import time
 
 logger = DataLogger("log")
 
-def recover_M3( k, P12, P13, P123, P12e, P13e, P123e, delta=0.01 ):
+def recover_M3( k, P12, P13, P123 ):
     """Recover M3 from P_12, P_13 and P_123"""
+    d, _ = P12.shape
+
+    # Get singular vectors
+    U1, _, U2 = svdk( P12, k )
+    _, _, U3 = svdk( P13, k )
+    U2, U3 = U2.T, U3.T
+
+    while True:
+        # Get a random basis set
+        theta = orthogonal( k )
+
+        P12i = inv( U1.T.dot( P12 ).dot( U2 ) ) 
+        #B123_ = sc.einsum( 'ijk,ia,jb,kc->abc', P123, U1, U2, U3 )
+        #B123 = sc.einsum( 'ajc,jb ->abc', B123_, P12i )
+        B123 = lambda theta: U1.T.dot( P123( U3.dot( theta ) ) ).dot( U2 ).dot( P12i )
+
+        l, R1 = eig( B123( theta.T[0] ) )
+        R1 = array( map( lambda col: col/norm(col), R1.T ) ).T
+        assert( norm(R1.T[0]) - 1.0 < 1e-3 )
+
+        # Restart
+        if not ( sc.isreal( l ).all() ):
+            continue
+
+        L = [l.real]
+        for i in xrange( 1, k ):
+            l = diag( inv(R1).dot( B123( theta.T[i] ).dot( R1 ) ) )
+            # Restart
+            if not ( sc.isreal( l ).all() ):
+                continue
+            L.append( l )
+        L = array( sc.vstack( L ) )
+
+        M3_ = U3.dot( inv(theta.T) ).dot( L )
+        return M3_
+
+def recover_M3_we( k, P12, P13, P123, P12e, P13e, P123e, delta=0.01 ):
+    """Recover M3 from P_12, P_13 and P_123 (with error information)"""
     d, _ = P12.shape
 
     # Inputs
@@ -123,7 +161,7 @@ def test_exact_recovery():
 
     P12, P13, P123 = exact_moments( w, M1, M2, M3 )
 
-    M3_ = recover_M3( k, P12, P13, P123, P12, P13, P123 )
+    M3_ = recover_M3_we( k, P12, P13, P123, P12, P13, P123 )
     M3_ = closest_permuted_matrix( M3.T, M3_.T ).T
 
     print norm( M3 - M3_ )/norm( M3 )
@@ -150,7 +188,7 @@ def test_sample_recovery():
     P12, P13, P123 = sample_moments( X1, X2, X3 )
     P12e, P13e, P123e = exact_moments( w, M1, M2, M3 )
 
-    M3_ = recover_M3( k, P12, P13, P123, P12e, P13e, P123e )
+    M3_ = recover_M3_we( k, P12, P13, P123, P12e, P13e, P123e )
     M3_ = closest_permuted_matrix( M3.T, M3_.T ).T
 
     print norm( M3 - M3_ )/norm( M3 )
@@ -186,7 +224,7 @@ def main( fname, N, n, delta, params ):
     P12e, P13e, P123e = exact_moments( w, M1, M2, M3 )
 
     start = time.time()
-    M3_ = recover_M3( k, P12, P13, P123, P12e, P13e, P123e, delta=delta )
+    M3_ = recover_M3_we( k, P12, P13, P123, P12e, P13e, P123e, delta=delta )
     stop = time.time()
     logger.add( "time", stop - start )
 
