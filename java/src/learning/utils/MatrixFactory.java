@@ -87,6 +87,40 @@ public class MatrixFactory {
 	}	
 	
 	/**
+	 * Add a vector to each row/col of a matrix
+	 * @param n
+	 * @param M
+	 * @return
+	 */
+	public static SimpleMatrix vectorPlus( SimpleMatrix M, SimpleMatrix v ) {
+		assert( v.numRows() == 1 || v.numCols() == 1 );
+		
+		int n = M.numRows();
+		int d = M.numCols();
+		SimpleMatrix N = zeros(n, d);
+		
+		// Add to all rows of M
+		if( v.numRows() == 1 )
+		{
+			for( int i = 0; i < M.numRows(); i++ )
+			{
+				for( int j = 0; j < M.numCols(); j++ )
+					N.set(i,j, M.get(i,j) + v.get(j));
+			}
+		}
+		else
+		{
+			for( int j = 0; j < M.numRows(); j++ )
+			{
+				for( int i = 0; i < M.numCols(); i++ )
+					N.set(i,j, M.get(i,j) + v.get(j));
+			}
+		}
+		
+		return N;
+	}
+	
+	/**
 	 * Stack v n times to form a n x v matrix
 	 * @param n
 	 * @param M
@@ -125,7 +159,7 @@ public class MatrixFactory {
 			SimpleMatrix x2 = X2.extractMatrix(i, i+1, 0, m).transpose();
 			SimpleMatrix Z = x1.kron(x2);
 			// Rolling mean
-			Y.plus( Z.minus(Y).divide(i+1) );
+			Y = Y.plus( Z.minus(Y).divide(i+1) );
 		}
 		
 		return Y;
@@ -183,6 +217,23 @@ public class MatrixFactory {
 		
 		for( int j = 0; j < r.numRows(); j++ )
 			X.set( i, j, r.get(j));
+	}
+	
+	/**
+	 * Set the rows i to j of the matrix X
+	 * @param X
+	 * @param i
+	 * @param j
+	 * @return
+	 */
+	public static void setRows( SimpleMatrix X, int i, int j, SimpleMatrix r ) {
+		assert( r.numRows() == j-i );
+		
+		for( int x = i; x < j; x++ )
+		{
+			for( int y = 0; y < r.numCols(); y++ )
+				X.set( x, y, r.get(x-i,y));
+		}
 	}
 	/**
 	 * Set the i-th column of the matrix X
