@@ -8,6 +8,9 @@ cscope.out
 tags
 *.lprof
 
+# Java
+*.class
+
 # TeX
 *.log
 *.aux
