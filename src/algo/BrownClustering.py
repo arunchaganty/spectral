@@ -4,177 +4,179 @@ Liang 2005.
 """
 
 import scipy as sc
-from scipy import array
+from scipy import array, log
 import scipy.sparse
 from scipy.sparse import lil_matrix
 import ipdb
 import util
+from util import slog
 from operator import itemgetter
 
-class BrownClusteringAlgorithm:
-    """Maintain as a class to keep track of all state variables"""
+def compute_unigrams( C, V ):
+    """Get the unigram counts"""
+    u = sc.zeros( V )
+    for d in C:
+        u[ d ] += 1
+    # Normalise
+    N = u.sum()
+    u /= N
+    return u
 
-    def __init__( self, C ):
-        """Initialise the algorithm for the corpus C and vocabulary V""" 
-        self.C = C
-        self.V = max( map( lambda d: d.max(), C ) ) + 1
+def compute_bigrams( self, C, V, N, clusters ):
+    """Get the bigram between clusters"""
+    nC = len(clusters)
+    b = sc.zeros( (nC, nC) )
 
-        self.u = self.compute_unigrams( )
+    # Create an inverse lookup table
+    clusterOf = sc.zeros(V)
+    for i in xrange(len(clusters)):
+        clusterOf[list(clusters[i])] = i
 
-    def compute_unigrams( self ):
-        """Get the unigram counts"""
-        u = sc.zeros( self.V )
-        for d in self.C:
-            u[ d ] += 1
-        # Normalise
-        self.N = u.sum()
-        u /= self.N
-        return u
+    # TODO: Optimise
+    for d in C:
+        for i in xrange( len(d) -1 ):
+            b[ clusterOf[d[i]], clusterOf[d[i+1]] ] += 1
+    b /= N**2
+    return b
 
-    def compute_bigrams( self, clusters ):
-        """Get the bigram between clusters"""
-        nC = len(clusters)
-        b = sc.zeros( (nC, nC) )
+def merge_clusters( u, b, L, c, c_ ):
+    """Compute the weight of the merge c \cup c'
+    P(c \cup c') = P(c) + P(c')
+    P(c \cup c', c'') = P(c, c'') + P(c', c'')
+    P(c \cup c', c \cup c') = P(c, c) + P(c, c') + P(c', c) + P(c', c') 
 
-        # Create an inverse lookup table
-        clusterOf = sc.zeros(self.V)
-        for i in xrange(len(clusters)):
-            clusterOf[list(clusters[i])] = i
+    Returns the adjusted u, b and L (with the union cluster pushed to the last column)
+    """
+    n, = u.shape
 
-        # TODO: Optimise
-        for d in self.C:
-            for i in xrange( len(d) -1 ):
-                b[ clusterOf[d[i]], clusterOf[d[i+1]] ] += 1
-        b /= self.N**2
-        return b
+    # The new cluster selection set
+    C_ = [i for i in range(n) if i != c and i != c_ ]
 
-    def merge_clusters( self, u, b, L, c, c_ ):
-        """Compute the weight of the merge c \cup c'
-        P(c \cup c') = P(c) + P(c')
-        P(c \cup c', c'') = P(c, c'') + P(c', c'')
-        P(c \cup c', c \cup c') = P(c, c) + P(c, c') + P(c', c) + P(c', c') 
+    # Update u
+    u_ = sc.zeros( n-1 )
+    u_[:n-1] = u[C_] 
+    u_[n-1] = u[c] + u[c_]
 
-        Returns the adjusted u, b and L (with the union cluster pushed to the last column)
-        """
-        n, = u.shape
-        w = sc.zeros( n - 1 )
+    # Update b
+    b_ = sc.zeros( (n-1, n-1) )
+    b_[:n-1, :n-1] = b[C_, C_]
+    b_[n-1, :n-1] = b[c, C_] + b[c_, C_]
+    b_[:n-1, n-1] = b[C_, c] + b[C_, c_]
+    b_[n-1, n-1] = b[c, c] + b[c_, c_] + b[c_, c] + b[c, c_]
 
+    # Weight computation functions 
+    # Note: x and y could be sets
+    def w( x, y ):
+        """Weight of edges between x and y in the old graph C"""
+        z =  b[x, y] * ( slog( b[x, y] ) - slog( u[x] ) - slog( u[y] ) )
+        z += b[y, x] * ( slog( b[y, x] ) - slog( u[x] ) - slog( u[y] ) )
+        return z
+    def w_( x, y ):
+        """Weight of edges between x and y in the new graph C with merged c and c_"""
+        z = b_[x, y] * ( slog( b_[x, y] ) - slog( u_[x] ) - slog( u_[y] ) )
+        z += b_[y, x] * ( slog( b_[y, x] ) - slog( u_[x] ) - slog( u_[y] ) )
+        return z
+    def wm( x, x_, y ):
+        """Difference in weight when merging x and x_ in the old graph"""
+        z = (b[x, y] + b[x_, y]) * ( slog( b[x, y] + b[x_, y] ) - slog( u[x] + u[x_] ) - slog( u[y] ) )
+        z += (b[y, x] + b[y, x_]) * ( slog( b[y, x] + b[y, x_] ) - slog( u[x] + u[x_] ) - slog( u[y] ) )
+        return z
+    def wm_( x, x_, y ):
+        """Differnce in weight when merging x and x_ in the new graph C with merged c and c_"""
+        z = (b_[x, y] + b_[x_, y]) * ( slog( b_[x, y] + b_[x_, y] ) - slog( u_[x] + u_[x_] ) - slog( u_[y] ) )
+        z += (b_[y, x] + b_[y, x_]) * ( slog( b_[y, x] + b_[y, x_] ) - slog( u_[x] + u_[x_] ) - slog( u_[y] ) )
+        return z
+
+    # Update L
+    L[:n-1, :n-1] = L[C_, C_]
+    for d in xrange( n-2 ):
+        for d_ in xrange( c+1, n-2 ):
+            # e, e_ are the indices of d, d_ in the original array
+            e, e_ = C_.index(d), C_.index( d_ )
+            # \Delta L = w(d \cup d', c \cup c') - w(d \cup d', c) - w(d \cup d', c') 
+            #   - (w(d , c \cup c') - w(d , c) - w(d , c') )
+            #   - (w(d', c \cup c') - w(d', c) - w(d', c') )
+            L[d, d_] += wm_(d, d_, -1) - wm(e, e_, c) -  wm(e, e_, c_) 
+            L[d, d_] += - (w_(d, -1) - w(e, c) -  w(e, c_))
+            L[d, d_] += - (w_(d_, -1) - w(e_, c) -  w(e_, c_))
+    for c in xrange( n-2 ):
+        c_ = -1
         # The new cluster selection set
-        C_ = range( n )
-        C_.remove( c )
-        C_.remove( c_ )
+        C_ = [i for i in range(n-1) if i != c and i != c_ ]
+        L[c, c_] = wm_(c, c_, C_).sum() + wm_(c, c_, [c, c_] ).sum() / 2
+    # Instead of resizing L, we just set the remaining terms to be
+    # infinities
+    L[n, :] = sc.inf * sc.ones( n )
+    L[:, n] = sc.inf * sc.ones( n )
 
-        # Update u
-        u_ = sc.zeros( n-1 )
-        u_[:n-1] = u[C_] 
-        u_[n-1] = u[c] + u[c_]
+    return u_, b_, L
 
-        # Update b
-        b_ = sc.zeros( (n-1,n-1) )
-        b_[:n-1, :n-1] = b[C_, C_]
-        b_[n-1, :n-1] = b[c, C_] + b[c_, C_]
-        b_[:n-1, n-1] = b[C_, c] + b[C_, c_]
-        b_[n-1, n-1] = b[c, c] + b[c_, c_] + b[c_, c] + b[c, c_]
+def compute_merge_cost( u, b ):
+    """Compute the weight of the merge c \cup c' for each pair c, c_
+    P(c \cup c') = P(c) + P(c')
+    P(c \cup c', c'') = P(c, c'') + P(c', c'')
+    P(c \cup c', c \cup c') = P(c, c) + P(c, c') + P(c', c) + P(c', c') 
 
-        def w( x, y ):
-            z =  b[x, y] * ( log( b[x, y] ) - log( u[x] ) - log( u[y] ) )
-            z += b[y, x] * ( log( b[y, x] ) - log( u[x] ) - log( u[y] ) )
-            return z
-        def w_( x, y ):
-            z = b_[x, y] * ( log( b_[x, y] ) - log( u_[x] ) - log( u_[y] ) )
-            z += b_[y, x] * ( log( b_[y, x] ) - log( u_[x] ) - log( u_[y] ) )
-            return z
-        def wm( x, x_, y ):
-            z = (b[x, y] + b[x_, y]) * ( log( b[x, y] + b[x_, y] ) - log( u[x] + u[x_] ) - log( u[y] ) )
-            z += (b[y, x] + b[y, x_]) * ( log( b[y, x] + b[y, x_] ) - log( u[x] + u[x_] ) - log( u[y] ) )
-            return z
-        def wm_( x, x_, y ):
-            z = (b_[x, y] + b_[x_, y]) * ( log( b_[x, y] + b_[x_, y] ) - log( u_[x] + u_[x_] ) - log( u_[y] ) )
-            z += (b_[y, x] + b_[y, x_]) * ( log( b_[y, x] + b_[y, x_] ) - log( u_[x] + u_[x_] ) - log( u_[y] ) )
-            return z
+    L(c,c') = \sum_{d \in C'} w( c \cup c', d ) -  \sum_{d \in C} ( w( c, d ) + w( c', d ) )
 
-        # Update L
-        L[:n-1,:n-1] = L[C_, C_]
-        for d in xrange( n-2 ):
-            for d_ in xrange( c+1, n-2 ):
-                # e, e_ are the indices of d, d_ in the original array
-                e, e_ = C_.index(d), C_.index( d_ )
-                # \delta L = w(d \cup d', c \cup c') - w(d \cup d', c) - w(d \cup d', c') 
-                #   - (w(d , c \cup c') - w(d , c) - w(d , c') )
-                #   - (w(d', c \cup c') - w(d', c) - w(d', c') )
-                L[d,d_] += wm_(d, d_, -1) - wm(e, e_, c) -  wm(e, e_, c_) 
-                L[d,d_] += - (w_(d, -1) - w(e, c) -  w(e, c_))
-                L[d,d_] += - (w_(d_, -1) - w(e_, c) -  w(e_, c_))
-        for c in xrange( n-2 ):
-            c_ = -1
-            # The new cluster selection set
-            C_ = [i for i in range(n-1) if i != c and i != c_ ]
-            L[c, c_] = w_(c, c_, C_).sum() + w_(c, c_, [c,c_] ).sum() / 2
+    Returns the adjusted weights, u and b (with the union cluster pushed to the last column)
+    """
+    n, = u.shape
+    L = sc.inf * sc.ones( (n, n) )
 
-        return u_, b_, L
-
-    def compute_merge_cost( self, u, b ):
-        """Compute the weight of the merge c \cup c' for each pair c, c_
-        P(c \cup c') = P(c) + P(c')
-        P(c \cup c', c'') = P(c, c'') + P(c', c'')
-        P(c \cup c', c \cup c') = P(c, c) + P(c, c') + P(c', c) + P(c', c') 
-
-        L(c,c') = \sum_{d \in C'} w( c \cup c', d ) -  \sum_{d \in C} ( w( c, d ) + w( c', d ) )
-
-        Returns the adjusted weights, u and b (with the union cluster pushed to the last column)
+    def w( x, x_, y ):
+        """Compute the mutual information weights of merger,
+        w(c,c') = P(c,c') log p(c,c')/p(c)p(c') + P(c',c) log p(c',c)/p(c)p(c') if c != c'
+        w(c,c') = P(c,c) log p(c,c)/p(c)p(c) if c == c'
         """
-        n = u.shape
-        L = sc.inf * sc.ones( (n,n) )
+        z = (b[x, y] + b[x_, y]) * ( slog( b[x, y] + b[x_, y] ) - slog( u[x] + u[x_] ) - slog( u[y] ) )
+        z += (b[y, x] + b[y, x_]) * ( slog( b[y, x] + b[y, x_] ) - slog( u[x] + u[x_] ) - slog( u[y] ) )
+        return z
 
-        def w( x, x_, y ):
-            """Compute the mutual information weights of merger,
-            w(c,c') = P(c,c') log p(c,c')/p(c)p(c') + P(c',c) log p(c',c)/p(c)p(c') if c != c'
-            w(c,c') = P(c,c) log p(c,c)/p(c)p(c) if c == c'
-            """
-            z = (b[x, y] + b[x_, y]) * ( log( b[x, y] + b[x_, y] ) - log( u[x] + u[x_] ) - log( u[y] ) )
-            z += (b[y, x] + b[y, x_]) * ( log( b[y, x] + b[y, x_] ) - log( u[x] + u[x_] ) - log( u[y] ) )
-            return z
+    for c in xrange( n ):
+        for c_ in xrange( c+1, n ):
+            # The new cluster selection set
+            C_ = [i for i in range(n) if i != c and i != c_ ]
+            L[c, c_] = w(c, c_, C_).sum() + w(c, c_, [c, c_] ).sum() / 2
+    return L
 
-        for c in xrange( n ):
-            for c_ in xrange( c+1, n ):
-                # The new cluster selection set
-                C_ = [i for i in range(n) if i != c and i != c_ ]
-                L[c, c_] = w(c, c_, C_).sum() + w(c, c_, [c,c_] ).sum() / 2
-        return L
+def get_brown_clusters( C, k, W ):
+    """Run the algorithm until 'k' clusters Initialising the top 'W'
+    words as clusters"""
+    
+    V = max( map( lambda d: d.max(), C ) ) + 1
+    u = compute_unigrams( C, V )
+    N = u.sum()
+    
+    # Initialise the top W as individual clusters 
+    clusters = range(V)
+    clusters.sort( key = u.__getitem__ )
+    clusters = map( lambda x: set([x]), clusters[:W] )
+    # Put the rest in a # separate cluster
+    remainder = set(range(V)).difference( reduce( lambda x, y: x.union(y), clusters ) )
+    clusters.append( remainder )
+    
+    u = array( map( lambda x: u[list(x)].sum(), clusters ) )
+    b = compute_bigrams( C, V, N, clusters )
+    
+    # L is memoised
+    N = W+1
+    L = compute_merge_cost( u, b )
+    # Iterate until k clusters
+    for i in xrange( N, k-1, -1 ):
+        # Choose the cluster pair with the smallest cost
+        c = L.argmin()
+        c, c_ = c / N, c % N
 
-    def run( self, k, W ):
-        """Run the algorithm until 'k' clusters Initialising the top 'W'
-        words as clusters"""
+        merged = clusters[c].union( clusters[c_] )
+        clusters.remove(clusters[c])
+        clusters.remove(clusters[c_])
+        clusters.append( merged )
 
-        # Initialise the top W as individual clusters 
-        clusters = range(self.V)
-        clusters.sort( key = self.u.__getitem__ )
-        clusters = map( lambda x: set([x]), clusters[:W] )
-        # Put the rest in a # separate cluster
-        remainder = set(range(self.V)).difference( reduce( lambda x, y: x.union(y), clusters ) )
-        clusters.append( remainder )
+        # Memoised reduction step
+        u, b, L = merge_clusters( u, b, L, c, c_ )
 
-        u = array( map( lambda x: self.u[list(x)].sum(), clusters ) )
-        b = self.compute_bigrams( clusters )
-
-        # L is memoised
-        N = W+1
-        L = self.compute_merge_cost( u, b )
-        # Iterate until k clusters
-        for i in xrange( N, k-1, -1 ):
-            # Choose the cluster pair with the smallest cost
-            c = L.argmin()
-            c, c_ = c / N, c % N
-
-            merged = clusters[c].union( clusters[c_] )
-            clusters.remove(c)
-            clusters.remove(c_)
-            clusters.append( merged )
-
-            # Memoised reduction step
-            u, b, L = merge_clusters( u, b, L, c, c_ )
-
-        return clusters
+    return clusters
 
 def test_unigram_counts():
     C = array([ 
@@ -206,12 +208,12 @@ def test_get_bigram_counts():
        [ 0.,  1.,  2.,  0.]])
     N = sum( map(len, C) )
     b /= N
-    clusters = [ set([3]), set([0]), set([2]), set([1,4]) ]
+    clusters = [ set([3]), set([0]), set([2]), set([1, 4]) ]
     b_ = bc.compute_bigrams( clusters )
     assert( sc.allclose( b, b_ ) )
     
 def test_brown_clustering():
-    fname = "test-data/text-1e4.npz"
+    fname = "test-data/text-1e2.npz"
     F = sc.load( fname )
     C, D = F['C'], F['D']
     k = 100

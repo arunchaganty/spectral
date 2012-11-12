@@ -24,6 +24,16 @@ def chunked_update( fn, start, step, stop ):
         fn( start, stop )
     pbar.stop()
 
+def slog( x ):
+    """Safe log - preserve 0"""
+    if type(x) == sc.ndarray:
+        y = sc.zeros( x.shape )
+        y[ x > 0 ] = sc.log( x[ x > 0 ] )
+    else:
+        y = 0.0 if x == 0 else sc.log(x)
+
+    return y
+
 #def chunked_update( out, offset, n, blocksize, fn, *params ):
 #    """Run @fn to produce samples @blocksize at a time. This
 #    function tries to balance efficient use of the numpy sampler,
