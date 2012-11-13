@@ -283,4 +283,48 @@ public class MatrixFactory {
 			D.set(i, D.get(i)/Math.abs(D.get(i)));
 		return Q.mult(diag(D));
 	}
+	
+	public static double distance(SimpleMatrix x, SimpleMatrix y)  {
+		assert( x.numCols() == y.numCols() );
+		assert( x.numRows() == 1 && y.numRows() == 1 );
+		
+		double d = 0.0;
+		for( int i = 0; i < x.numCols(); i++ )
+		{
+			double d_ = x.get( i ) - y.get(i);
+			d += d_ * d_;
+		}
+		d = Math.sqrt(d);
+		
+		return d;
+	}
+
+	/**
+	 * Find the pairwise distance of the i-th row in X and j-th row in Y
+	 * @param X
+	 * @param Y
+	 * @return
+	 */
+	public static SimpleMatrix cdist(SimpleMatrix X, SimpleMatrix Y) {
+		assert( X.numCols() == Y.numCols() );
+		
+		int n = X.numRows();
+		int m = Y.numRows();
+		
+		SimpleMatrix Z = zeros( n, m );
+		
+		for( int i = 0; i < n; i++ ) {
+			for( int j = 0; j<m; j++ ) {
+				// Find the distance between X and Y
+				double d = 0;
+				for( int k = 0; k < X.numCols(); k++ ) {
+					double d_ = X.get(i,k) - X.get(j,k);
+					d += d_ * d_;
+				}
+				Z.set( i, j, Math.sqrt( d ) );
+			}
+		}
+		
+		return Z;
+	}
 }
