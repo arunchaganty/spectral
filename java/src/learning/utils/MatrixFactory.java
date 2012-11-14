@@ -5,11 +5,7 @@
  */
 package learning.utils;
 
-import java.util.Random;
-
 import org.ejml.data.DenseMatrix64F;
-import org.ejml.factory.DecompositionFactory;
-import org.ejml.factory.QRDecomposition;
 import org.ejml.simple.SimpleMatrix;
 import org.ejml.simple.SimpleSVD;
 
@@ -17,7 +13,12 @@ import org.ejml.simple.SimpleSVD;
  * Common routines to construct a number of different matrices
  */
 public class MatrixFactory {
-	private static Random rand = new Random();
+	
+	public static SimpleMatrix vector( double[] x )
+	{
+		double[][] x_ = {x};
+		return new SimpleMatrix( x_ );
+	}
 	
 	/**
 	 * Create a matrix of dimension n x m filled with zeros
@@ -30,6 +31,15 @@ public class MatrixFactory {
 	}
 	
 	/**
+	 * Create a column vector of dimension n filled with zeros
+	 * @param n
+	 * @return
+	 */
+	public static SimpleMatrix zeros( int n ) {
+		return new SimpleMatrix(n, 1);
+	}
+	
+	/**
 	 * Create a matrix of dimension n x m filled with ones
 	 * @param n
 	 * @param m
@@ -38,8 +48,20 @@ public class MatrixFactory {
 	public static SimpleMatrix ones( int n, int m ) {
 		double[][] vals = new double[n][m];
 		for( int i = 0; i < n; i++ )
-			for( int j = 0; j < n; j++ )
+			for( int j = 0; j < m; j++ )
 				vals[i][j] = 1.0;
+		return new SimpleMatrix(vals);
+	}
+	
+	/**
+	 * Create a column vector of dimension n filled with ones
+	 * @param n
+	 * @return
+	 */
+	public static SimpleMatrix ones( int n ) {
+		double[][] vals = new double[n][1];
+		for( int i = 0; i < n; i++ )
+				vals[i][0] = 1.0;
 		return new SimpleMatrix(vals);
 	}
 	
@@ -146,23 +168,32 @@ public class MatrixFactory {
 	 * @return
 	 */
 	public static SimpleMatrix Pairs( SimpleMatrix X1, SimpleMatrix X2 ) {
-		assert( X1.numRows() == X2.numRows() );
-		int N = X1.numRows();
+		DenseMatrix64F X1_ = X1.getMatrix();
+		DenseMatrix64F X2_ = X2.getMatrix();
+		assert( X1_.numRows == X2_.numRows );
+		int N = X1_.numRows;
 		
-		int n = X1.numCols();
-		int m = X2.numCols();
+		int n = X1_.numCols;
+		int m = X2_.numCols;
 		
-		SimpleMatrix Y = MatrixFactory.zeros( n, m );
+		DenseMatrix64F Y_ = new DenseMatrix64F(n, m);
 		for( int i = 0; i < N; i++ )
 		{
-			SimpleMatrix x1 = X1.extractMatrix(i, i+1, 0, n);
-			SimpleMatrix x2 = X2.extractMatrix(i, i+1, 0, m).transpose();
-			SimpleMatrix Z = x1.kron(x2);
-			// Rolling mean
-			Y = Y.plus( Z.minus(Y).divide(i+1) );
+			for( int j = 0; j < n; j++)
+			{
+				for( int k = 0; k < m; k++)
+				{
+					double x1 = X1_.data[X1_.getIndex(i, j)];
+					double x2 = X2_.data[X2_.getIndex(i, k)];
+					double y = Y_.data[Y_.getIndex(j, k)];
+					
+					// Rolling mean
+					Y_.data[Y_.getIndex(j, k)] += (x1*x2 - y)/(i+1);
+				}
+			}
 		}
 		
-		return Y;
+		return new SimpleMatrix(Y_);
 	}
 	
 	public static SimpleMatrix[] svdk( SimpleMatrix X, int k )
@@ -251,38 +282,6 @@ public class MatrixFactory {
 			X.set( j, i, r.get(j));
 	}
 	
-	/**
-	 * Generate a random matrix with standard normal entries.
-	 * @param d
-	 * @return
-	 */
-	public static SimpleMatrix randn(int m, int n) {
-		SimpleMatrix X = zeros(m,n);
-		for( int i = 0; i < m; i++)
-			for( int j = 0; j < n; j++)
-				X.set( i, j, rand.nextGaussian() );
-		
-		return X;
-	}
-
-	/**
-	 * Generate a random orthogonal 'd' dimensional matrix, using the
-     * the technique described in: Francesco Mezzadri, "How to generate 
-     * random matrices from the classical compact groups" 
-	 * @param d
-	 * @return
-	 */
-	public static SimpleMatrix randomOrthogonal(int d) {
-		SimpleMatrix Z = randn(d,d);
-		QRDecomposition<DenseMatrix64F> Z_QR = DecompositionFactory.qr(Z.numRows(), Z.numCols());
-		Z_QR.decompose(Z.getMatrix());
-		SimpleMatrix Q = SimpleMatrix.wrap( Z_QR.getQ(null, true) );
-		SimpleMatrix R = SimpleMatrix.wrap( Z_QR.getR(null, true) ); 
-		SimpleMatrix D = diag(R);
-		for( int i = 0; i < d; i++)
-			D.set(i, D.get(i)/Math.abs(D.get(i)));
-		return Q.mult(diag(D));
-	}
 	
 	public static double distance(SimpleMatrix x, SimpleMatrix y)  {
 		assert( x.numCols() == y.numCols() );

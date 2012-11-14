@@ -5,10 +5,10 @@
  */
 package learning.models;
 
-import java.sql.Time;
 import java.util.Random;
 
 import learning.utils.MatrixFactory;
+import learning.utils.RandomFactory;
 
 import org.ejml.simple.SimpleMatrix;
 
@@ -70,7 +70,7 @@ public class MultiViewGaussianModel {
 				// TODO: Handle covariance
 				// Generate samples from M and with co-variance S
 				MatrixFactory.setRows(X[i], offset, offset+n,
-						MatrixFactory.vectorPlus( MatrixFactory.randn( n, d ), 
+						MatrixFactory.vectorPlus( RandomFactory.randn( n, d ), 
 								MatrixFactory.col(M[i], j).transpose() ) 
 								);
 				offset += n;
@@ -79,7 +79,7 @@ public class MultiViewGaussianModel {
 			// TODO: Handle covariance
 			// Generate samples from M and with co-variance S
 			MatrixFactory.setRows(X[i], offset, offset+n,
-					MatrixFactory.vectorPlus( MatrixFactory.randn( n, d ), 
+					MatrixFactory.vectorPlus( RandomFactory.randn( n, d ), 
 							MatrixFactory.col(M[i], k-1).transpose() ) 
 							);
 			offset += n;

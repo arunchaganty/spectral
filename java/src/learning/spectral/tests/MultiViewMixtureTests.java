@@ -5,7 +5,6 @@
  */
 package learning.spectral.tests;
 
-import static org.junit.Assert.*;
 import learning.models.MultiViewGaussianModel;
 import learning.spectral.MultiViewMixture;
 

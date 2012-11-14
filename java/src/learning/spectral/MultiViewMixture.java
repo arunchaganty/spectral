@@ -6,6 +6,7 @@
 package learning.spectral;
 
 import learning.utils.MatrixFactory;
+import learning.utils.RandomFactory;
 import learning.utils.SimpleTensor;
 
 import org.ejml.simple.SimpleEVD;
@@ -104,7 +105,7 @@ public class MultiViewMixture extends MomentMethod {
 		{
 			try{
 				// Project onto an orthogonal basis set
-				SimpleMatrix Theta = MatrixFactory.randomOrthogonal( k );
+				SimpleMatrix Theta = RandomFactory.orthogonal( k );
 				SimpleMatrix L = attemptRecovery(k, U1T, U2, U3, P12, P123, Theta);
 				
 				// Reconstruct

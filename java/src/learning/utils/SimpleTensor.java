@@ -5,6 +5,7 @@
  */
 package learning.utils;
 
+import org.ejml.data.DenseMatrix64F;
 import org.ejml.simple.SimpleMatrix;
 
 /**
@@ -56,24 +57,39 @@ public class SimpleTensor {
 		}
 		assert( theta.numRows() == X[idx3].numCols() );
 		
-		int N = X[idx1].numRows();
+		DenseMatrix64F X1_ = X[idx1].getMatrix();
+		DenseMatrix64F X2_ = X[idx2].getMatrix();
+		DenseMatrix64F X3_ = X[idx3].getMatrix();
+		DenseMatrix64F theta_ = theta.getMatrix();
 		
-		int n = X[idx1].numCols();
-		int m = X[idx2].numCols();
+		int N = X1_.numRows;
 		
-		SimpleMatrix Y = MatrixFactory.zeros( n, m );
+		int n = X1_.numCols;
+		int m = X2_.numCols;
+		int p = X3_.numCols;
+		
+		DenseMatrix64F Y = new DenseMatrix64F( n, m);
 		for( int i = 0; i < N; i++ )
 		{
-			SimpleMatrix x1 = X[idx1].extractMatrix(i, i+1, 0, SimpleMatrix.END);
-			SimpleMatrix x2t = X[idx2].extractMatrix(i, i+1, 0, SimpleMatrix.END).transpose();
-			SimpleMatrix x3 = X[idx3].extractMatrix(i, i+1, 0, SimpleMatrix.END);
-			double k = x3.dot( theta );
-			SimpleMatrix Z = x1.kron(x2t).scale(k);
-			// Rolling mean
-			Y = Y.plus( Z.minus(Y).divide(i+1) );
+			double prod = 0.0;
+			for (int l = 0; l < p; l++) {
+				double x3 = X3_.data[ X3_.getIndex(i, l)];
+				prod += x3 * theta_.data[l];
+			}
+			for( int j = 0; j < n; j++ ){
+				for (int k = 0; k < m; k++) {
+					double x1 = X1_.data[ X1_.getIndex(i, j)];
+					double x2 = X2_.data[ X2_.getIndex(i, k)];
+					double y = Y.data[Y.getIndex(j, k)];
+					
+					// Rolling mean
+					Y.data[Y.getIndex(j, k)] += (prod*x1*x2 - y)/(i+1);
+				}
+			}
 		}
 		
-		return Y;
+		return new SimpleMatrix(Y);
 	}
+	
 
 }
