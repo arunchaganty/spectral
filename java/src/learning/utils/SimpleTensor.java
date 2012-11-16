@@ -11,7 +11,7 @@ import org.ejml.simple.SimpleMatrix;
 /**
  * A tensor class that makes it easy to project onto a matrix
  */
-public class SimpleTensor {
+public class SimpleTensor implements Tensor {
 	protected SimpleMatrix[] X;
 	
 	/**
@@ -36,6 +36,7 @@ public class SimpleTensor {
 	 * @param theta
 	 * @return
 	 */
+	@Override
 	public SimpleMatrix project( int axis, SimpleMatrix theta )
 	{
 		assert( 0 <= axis && axis < 3 );

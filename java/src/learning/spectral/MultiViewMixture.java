@@ -8,7 +8,9 @@ package learning.spectral;
 import learning.utils.MatrixFactory;
 import learning.utils.RandomFactory;
 import learning.utils.SimpleTensor;
+import learning.utils.Tensor;
 
+import org.ejml.factory.DecompositionFactory;
 import org.ejml.simple.SimpleEVD;
 import org.ejml.simple.SimpleMatrix;
 
@@ -18,12 +20,34 @@ import org.ejml.simple.SimpleMatrix;
  * Hidden Markov Models" (2012).
  */
 public class MultiViewMixture extends MomentMethod {
+	public class RecoveryFailure extends Exception {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -2899249561379935402L;
+		/**
+		 * 
+		 */
+		public RecoveryFailure() {
+			super();
+		}
+		public RecoveryFailure(String message) {
+			super(message);
+		}
+		
+	}
 	
 	protected class NumericalException extends Exception {
 		/**
 		 * 
 		 */
 		private static final long serialVersionUID = 471085729902573029L;
+		public NumericalException() {
+			super();
+		}
+		public NumericalException(String message) {
+			super(message);
+		}
 		
 	}
 	
@@ -39,34 +63,40 @@ public class MultiViewMixture extends MomentMethod {
 	 * @throws NumericalException 
 	 */
 	private SimpleMatrix attemptRecovery( int k, SimpleMatrix U1T, SimpleMatrix U2, 
-			SimpleMatrix U3, SimpleMatrix P12, SimpleTensor P123, 
+			SimpleMatrix U3, SimpleMatrix P12, Tensor P123, 
 			SimpleMatrix Theta ) throws NumericalException {
 		
 		SimpleMatrix L = MatrixFactory.zeros( k, k );
 		SimpleMatrix R = MatrixFactory.zeros( k, k );
+		SimpleMatrix R_;
 		
 		Theta = U3.mult( Theta );
 		
 		SimpleMatrix theta = MatrixFactory.col( Theta, 0 );
+		SimpleMatrix P123T = P123.project(2, theta );
+		assert( P123T.svd().rank() >= k );
 		
 		// B123 = (U1' P123 U2) (U1' P12 U2)^-1
-		SimpleMatrix U1P12U2_1 = U1T.mult(P12).mult(U2).invert();
-		SimpleMatrix P123T = P123.project(2, theta );
+		SimpleMatrix U1P12U2 = (U1T.mult(P12).mult(U2));
+		SimpleMatrix U1P12U2_1 = U1P12U2.invert();
 		SimpleMatrix B123 = U1T.mult( P123T )
 				.mult( U2 ).mult( U1P12U2_1 );
 		
-		@SuppressWarnings("unchecked")
-		SimpleEVD<SimpleMatrix> EVD = B123.eig();
-		
-		// Simultaneously diagonalize
-		for( int i = 0; i<k; i++ )
-		{
-			if( !EVD.getEigenvalue(i).isReal() )
-				throw new NumericalException();
-			L.set( 0, i, EVD.getEigenvalue(i).real );
-			MatrixFactory.setRow( R, i, EVD.getEigenVector(i));
+		try {
+			@SuppressWarnings("unchecked")
+			SimpleEVD<SimpleMatrix> EVD = B123.eig();
+			// Get the eigenvector matrix
+			for( int i = 0; i<k; i++ )
+			{
+				if( !EVD.getEigenvalue(i).isReal() )
+					throw new NumericalException();
+				L.set( 0, i, EVD.getEigenvalue(i).real );
+				MatrixFactory.setRow( R, i, EVD.getEigenVector(i));
+			}
+			R_ = R.invert();
+		} catch( RuntimeException e ) {
+			throw new NumericalException( e.getMessage() );
 		}
-		SimpleMatrix R_ = R.invert();
 		
 		// Simultaneously diagonalize all the other matrices
 		for( int i = 1; i<k; i++ )
@@ -89,10 +119,9 @@ public class MultiViewMixture extends MomentMethod {
 	 * @param P13 - Second moment of X1 and X3
 	 * @param P123 - Third moment of X1, X2 and X3
 	 * @return - Component means (M3)
+	 * @throws RecoveryFailure 
 	 */
-	protected SimpleMatrix recoverM3( int k, SimpleMatrix P12, SimpleMatrix P13, SimpleTensor P123 ) {
-		int d = P12.numCols();
-		
+	public SimpleMatrix recoverM3( int k, SimpleMatrix P12, SimpleMatrix P13, Tensor P123 ) throws RecoveryFailure {
 		// Get U1, U2, U3
 		SimpleMatrix[] U1DU2 = MatrixFactory.svdk(P12, k);
 		SimpleMatrix U1T = U1DU2[0].transpose();
@@ -116,8 +145,8 @@ public class MultiViewMixture extends MomentMethod {
 				continue;
 			}
 		}
-			
-		return null;
+		
+		throw new RecoveryFailure();
 	}
 	
 	/**
@@ -129,8 +158,9 @@ public class MultiViewMixture extends MomentMethod {
 	 * @param M2
 	 * @param M3
 	 * @return
+	 * @throws RecoveryFailure 
 	 */
-	public SimpleMatrix exactRecovery( int k, SimpleMatrix w, SimpleMatrix M1, SimpleMatrix M2, SimpleMatrix M3 ) {
+	public SimpleMatrix exactRecovery( int k, SimpleMatrix w, SimpleMatrix M1, SimpleMatrix M2, SimpleMatrix M3 ) throws RecoveryFailure {
 		assert( M1.svd().rank() >= k );
 		assert( M2.svd().rank() >= k );
 		assert( M3.svd().rank() >= k );
@@ -156,11 +186,14 @@ public class MultiViewMixture extends MomentMethod {
 	 * @param X2
 	 * @param X3
 	 * @return
+	 * @throws RecoveryFailure 
 	 */
-	public SimpleMatrix sampleRecovery( int k, SimpleMatrix X1, SimpleMatrix X2, SimpleMatrix X3 ) {
+	public SimpleMatrix sampleRecovery( int k, SimpleMatrix X1, SimpleMatrix X2, SimpleMatrix X3 ) throws RecoveryFailure {
 		
 		SimpleMatrix P12 = MatrixFactory.Pairs(X1, X2);
 		SimpleMatrix P13 = MatrixFactory.Pairs(X1, X3);
+		assert( P12.svd().rank() >= k );
+		assert( P13.svd().rank() >= k );
 		SimpleTensor P123 = new SimpleTensor( X1, X2, X3 );
 		
 		SimpleMatrix M3_ = recoverM3( k, P12, P13, P123 );
