@@ -234,6 +234,20 @@ public class MatrixFactory {
 		return X.extractMatrix( 0, SimpleMatrix.END, i, i+1 );
 	}
 	
+	public static DenseMatrix64F col( DenseMatrix64F X, int i ) {
+		DenseMatrix64F x = new DenseMatrix64F( X.numRows, 1 );
+		for( int j = 0; j < X.numRows; j++ )
+			x.set(j, X.get( X.getIndex(j, i)));
+		return x;
+	}
+	
+	public static DenseMatrix64F row( DenseMatrix64F X, int i ) {
+		DenseMatrix64F x = new DenseMatrix64F( 1, X.numCols );
+		for( int j = 0; j < X.numCols; j++ )
+			x.set(j, X.get( X.getIndex(i, j)));
+		return x;
+	}
+	
 	/**
 	 * Set the i-th row of the matrix X
 	 * @param X
@@ -326,4 +340,81 @@ public class MatrixFactory {
 		
 		return Z;
 	}
+	
+	public static double columnSum(DenseMatrix64F X, int col ){
+		double sum = 0;
+		for( int i = 0; i < X.numRows; i++ )
+			sum += X.get( X.getIndex( i, col ));
+		return sum;
+	}
+	
+	public static double columnSum(SimpleMatrix X, int col ){
+		return columnSum( X.getMatrix(), col );
+	}
+	
+	/**
+	 * Project each columns of X onto a simplex
+	 * @param X
+	 * @return
+	 */
+	public static DenseMatrix64F projectOntoSimplex( DenseMatrix64F X ) {
+		int n = X.numRows;
+		int m = X.numCols;
+		for( int col = 0; col < m; col++ ) {
+			double X_bar = columnSum( X, col )/n;
+			for( int i = 0; i < n; i++ ) {
+				double x  = X.get( X.getIndex(i, col) );
+				
+				if( X_bar < 0 ) x = -(x + X_bar + 1.0/n);
+				else x = x - X_bar + 1.0/n;
+				if( x < 0 ) x = 0;
+				X.set( X.getIndex(i, col), x);
+			}
+			// Re-normalize
+			double X_sum = columnSum( X, col );
+			for( int i = 0; i < n; i++ ) {
+				double x  = X.get( X.getIndex(i, col) );
+				X.set( X.getIndex(i, col), x/X_sum);
+			}
+			// Re-normalize
+			assert( Math.abs( columnSum( X, col ) - 1.0 ) < 1e-4 );
+		}
+		
+		return X;
+	}
+	
+	/**
+	 * Project each columns of X onto a simplex
+	 * @param X
+	 * @return
+	 */
+	public static SimpleMatrix projectOntoSimplex( SimpleMatrix X )
+	{
+		DenseMatrix64F Y = X.getMatrix().copy();
+		return new SimpleMatrix( projectOntoSimplex(Y));
+	}	
+	
+	/**
+	 * Project each columns of X onto a simplex
+	 * @param X
+	 * @return
+	 */
+	public static int argmax( DenseMatrix64F X )
+	{
+		int max_i = 0;
+		double max = Double.NEGATIVE_INFINITY;
+		for( int i = 0; i < X.getNumElements(); i++ ) {
+			double x = X.get(i);
+			if( x > max ) {
+				max = x; max_i = i;
+			}
+		}
+		
+		return max_i;
+	}	
+	public static int argmax( SimpleMatrix X )
+	{
+		return argmax( X.getMatrix() );
+	}
+	
 }

@@ -7,8 +7,10 @@ package learning.spectral.tests;
 
 import learning.models.MultiViewGaussianModel;
 import learning.spectral.MultiViewMixture;
+import learning.spectral.MultiViewMixture.RecoveryFailure;
 
 import org.ejml.simple.SimpleMatrix;
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -34,9 +36,14 @@ public class MultiViewMixtureTests {
 		SimpleMatrix M2 = new SimpleMatrix( M2D );
 		SimpleMatrix M3 = new SimpleMatrix( M3D );
 		
-		SimpleMatrix M3_ = algo.exactRecovery(2, w, M1, M2, M3);
-		System.out.println( M3 );
-		System.out.println( M3_ );
+		try {
+			SimpleMatrix M3_ = algo.exactRecovery(2, w, M1, M2, M3);
+			System.out.println( M3 );
+			System.out.println( M3_ );
+		}
+		catch (RecoveryFailure e) {
+			Assert.fail();
+		}
 	}
 
 	/**
@@ -65,9 +72,14 @@ public class MultiViewMixtureTests {
 		
 		SimpleMatrix[] X = model.sample( 100000 );
 		
-		SimpleMatrix M3_ = algo.sampleRecovery( k, X[0], X[1], X[2]);
-		System.out.println( M3 );
-		System.out.println( M3_ );
+		try {
+			SimpleMatrix M3_ = algo.sampleRecovery( k, X[0], X[1], X[2]);
+			System.out.println( M3 );
+			System.out.println( M3_ );
+		}
+		catch (RecoveryFailure e) {
+			Assert.fail();
+		}
 	}
 
 }
