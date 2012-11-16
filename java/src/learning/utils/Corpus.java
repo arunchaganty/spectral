@@ -61,6 +61,18 @@ public class Corpus {
 	    return new Corpus( dict, C_ );
 	}
 	
+	public void setProjection(SimpleMatrix Theta) {
+		this.Theta = Theta;
+	}
+	public void setProjection(int n) {
+		int N = dict.length;
+		SimpleMatrix Theta = RandomFactory.randn( N, n );
+		setProjection( Theta );
+	}
+	public SimpleMatrix getProjection() {
+		return Theta;
+	}
+	
 	public SimpleMatrix[] featurize(SimpleMatrix Theta) {
 		SimpleMatrix X1, X2, X3;
 		
@@ -96,17 +108,9 @@ public class Corpus {
 	}
 	
 	public SimpleMatrix defeaturize(SimpleMatrix X) {
-		return Theta.mult(X);
+		// Get the pseudo inverse of Theta
+		SimpleMatrix ThetaI = Theta.transpose().pseudoInverse();
+		return ThetaI.mult(X);
 	}
 	
-	/**
-	 * Construct a mapping from the dictionary to a random n dimensional subspace
-	 * @param n
-	 * @return
-	 */
-	public SimpleMatrix[] featurize(int n) {
-		int N = dict.length;
-		SimpleMatrix Theta = RandomFactory.randn( N, n );
-		return featurize( Theta );
-	}
 }

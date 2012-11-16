@@ -19,14 +19,6 @@ public class ParsedCorpus extends Corpus {
 		this.Z = Z;
 	}
 	
-	public static int[] toPrimitive( Integer[] x ) {
-		final int[] y = new int[x.length];
-		for(int i = 0; i < x.length; i++ )
-			y[i] = x[i].intValue();
-		return y;
-	}
-	
-	
 	/**
 	 * Parse a parsed sentence dictionary. Every line contains a tree represented as S-expression
 	 * @param fname
@@ -51,7 +43,7 @@ public class ParsedCorpus extends Corpus {
 	    	for( int i = 0; i < tokens.length; i++ ) {
 	    		int n = tokens[i].length();
 		    	// Because we have S-expressions, we just need to seek for leaf nodes matching "[^)])$"
-	    		// HACK: Check for (NP~http://) which just parses wierd
+	    		// HACK: Check for (NP~http://) which just parses weird
 	    		if( tokens[i].charAt(0) != '(' && tokens[i].charAt(n-1) == ')' && tokens[i].charAt(n-2) != ')' ) {
 	    			String word = tokens[i].substring(0,n-1);
 	    			assert( tokens[i-1].charAt(0) == '(' );
@@ -68,8 +60,8 @@ public class ParsedCorpus extends Corpus {
 	    	
 	    	if( x.size() > 0 )
 	    	{
-		    	int[] x_ = toPrimitive( x.toArray(new Integer[0]) );
-		    	int[] z_ = toPrimitive( z.toArray(new Integer[0]) );
+		    	int[] x_ = Misc.toPrimitive( x.toArray(new Integer[0]) );
+		    	int[] z_ = Misc.toPrimitive( z.toArray(new Integer[0]) );
 		    	
 		    	C.add( x_ ); Z.add( z_ );
 	    	}
