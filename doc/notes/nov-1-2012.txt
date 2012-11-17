@@ -1,0 +1,6 @@
+November 1st, 2012
+------------------
+
+I am running experiments with non-spherical Gaussians, i.e. with arbitrarily
+shaped variance. The shape is loosely bounded by sigma.
+

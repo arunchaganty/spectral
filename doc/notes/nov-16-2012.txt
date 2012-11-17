@@ -1,0 +1,40 @@
+November 16th 2012
+==================
+
+Experiments
+------------
+
+* Brown clustering is still clustering
+* Issue: the random projection matrix fails when the number of word types
+  grows out of hand.
+  + Solution: Use seeds or cluster words that occur very infrequently into
+    word types (digits, lowercase, uppercase, others)
+* Goal: Build table of (Brown, EM, Spectral) vs (Fake-NYT-15, Fake-NYT-42,
+  NYT-42, NYT-100, NYT-500, NYT-1000)
+* Using fig to keep track of experiments.
+
+Mixture of Linear Regressions (Independent Case)
+------------------------------------------------
+
+* The model is $y = \sum_i P(h_i) P(y|x,h)$ where $P(h_i)$ is fixed
+  multinomial and $P(y|x,h) = \beta_i^T x + \varepsilon$.
+* The moments have the following form:
+  $E[ Y^k X ] = X^{\otimes k+1} (\sum_i \pi_i \beta_i^{\otimes k})$
+* If we can factor out the $X^{\otimes k+1}$ by some higher generalisation of
+  whitening, we can solve for $\beta_i$ by projecting $\beta_i^{\otimes 3}$ onto
+  an orthonormal basis $\Theta$.
+
+Mixture of Linear Regressions (Dependent Case)
+------------------------------------------------
+
+* The model is $y = \sum_i P(h_i) P(x|h_i) P(y|x,h)$ where $P(x|h_i)$ is
+  $\normal{\mu_i}{\sigma^2}$ multinomial and 
+  $P(y|x,h) = \beta_i^T x + \varepsilon$.
+* This looks like an interesting case and worth looking at after the above
+  scenario.
+
+Meta-discussion
+---------------
+
+* We have about 3-4 weeks left. 
+
