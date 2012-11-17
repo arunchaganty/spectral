@@ -9,9 +9,9 @@ easier to trace the dependencies in the algorithm and more importantly
 the manner in which error is propagated. 
 
 \tableref{tab:operators} lists the basic building blocks of these
-algorithmic flow charts, along with absolute and relative errors of the
-output {\em to first order}. The exact bounds and proofs for these can
-be found in \appendixref{sec:perturbation-theory}.
+algorithmic flow charts, along with absolute errors of the output {\em
+to first order}. The exact bounds and proofs for these can be found in
+\appendixref{sec:perturbation-theory}.
 
 \begin{table}[htbp]
 \floatconts
@@ -37,28 +37,26 @@ be found in \appendixref{sec:perturbation-theory}.
   }
 \end{table}
 
-\begin{table}[htbp]
-\floatconts
-  {tab:rel-err}%
-  {\caption{Relative Errors of Basic Operators}}%
-  {\begin{tabular}{l | c | c c | l}
-  \toprule
-  \bfseries Operation & \bfseries Diagram & \bfseries Rel. Err. \\
-  \midrule
-  $A+B$         & \pdiagadd & $\frac{\|A\|\rerr{A} + \|B\|\rerr{B}}{\|A+B\|}$ \\
-  $A*B$         & \pdiagmul & $\frac{\|A\|\|B\|}{\|AB\|} (\rerr{A} + \rerr{B})$ \\
-  $A^{-1}$      & \pdiaginv & $\frac{\cnd{A}}{1 - \rerr{A}\cnd{A}} \rerr{A}$ \\
-  $\lambda(A)$  & \pdiageig & $(2n-1) \cnd{A} \rerr{A}$ \\
-  $\lambda(A_1, \cdots, A_{n})$  & \pdiageign & $O(n^3 \cnd{R}^2 \|\inv{R}\|^2 \inv{\gap{\lambda}}) \rerr{A}$ \\
-  $\xi(A)$      & \pdiagevec & $n^3 \cnd{R} \|\inv{R}\| \gap{\lambda} \rerr{A}$ \\
-  $\nu(A)$      & \pdiagsvec & $\rerr{A} + \rerr{B}$ \\
-  $\hat{U}^T A \hat{V}$     & \pdiagrot & $\rerr{A}$ \\
-  $W(A)$        & \pdiagwhite & \\
-  $T[A,A,A]$    &             & \\
-  \bottomrule
-  \end{tabular}
-  }
-\end{table}
-
-Describe the flow diagrams for each model and the computed complexity. (3hrs)
+% \begin{table}[htbp]
+% \floatconts
+%   {tab:rel-err}%
+%   {\caption{Relative Errors of Basic Operators}}%
+%   {\begin{tabular}{l | c | c c | l}
+%   \toprule
+%   \bfseries Operation & \bfseries Diagram & \bfseries Rel. Err. \\
+%   \midrule
+%   $A+B$         & \pdiagadd & $\frac{\|A\|\rerr{A} + \|B\|\rerr{B}}{\|A+B\|}$ \\
+%   $A*B$         & \pdiagmul & $\frac{\|A\|\|B\|}{\|AB\|} (\rerr{A} + \rerr{B})$ \\
+%   $A^{-1}$      & \pdiaginv & $\frac{\cnd{A}}{1 - \rerr{A}\cnd{A}} \rerr{A}$ \\
+%   $\lambda(A)$  & \pdiageig & $(2n-1) \cnd{A} \rerr{A}$ \\
+%   $\lambda(A_1, \cdots, A_{n})$  & \pdiageign & $O(n^3 \cnd{R}^2 \|\inv{R}\|^2 \inv{\gap{\lambda}}) \rerr{A}$ \\
+%   $\xi(A)$      & \pdiagevec & $n^3 \cnd{R} \|\inv{R}\| \gap{\lambda} \rerr{A}$ \\
+%   $\nu(A)$      & \pdiagsvec & $\rerr{A} + \rerr{B}$ \\
+%   $\hat{U}^T A \hat{V}$     & \pdiagrot & $\rerr{A}$ \\
+%   $W(A)$        & \pdiagwhite & \\
+%   $T[A,A,A]$    &             & \\
+%   \bottomrule
+%   \end{tabular}
+%   }
+% \end{table}
 
