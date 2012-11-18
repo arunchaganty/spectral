@@ -8,8 +8,8 @@ package learning.models;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Vector;
 
+import learning.utils.ParsedCorpus;
 import learning.utils.RandomFactory;
 
 /**
@@ -89,45 +89,87 @@ public class SentenceHMM implements Serializable {
 	 * @param dict
 	 * @return
 	 */
-	public static SentenceHMM learnFullyObserved( int emissionDim, int latentDim, int wordsPerState, int[][] X, int[][] Z, String[] dict )
+	public static SentenceHMM learnFullyObserved( ParsedCorpus C, int wordsPerState, boolean shouldSmooth )
 	{
+		int[][] X = C.C;
+		int[][] Z = C.Z;
+		int latentDim = C.Zdict.length;
+		int emissionDim = C.dict.length;
+		
 		assert( X.length == Z.length );
 		int N = X.length;
 		
 		double[] pi = new double[ latentDim ];
-		int piCount = 0;
 		double[][] T = new double[ latentDim ][latentDim];
-		int[] TCount = new int[ latentDim ];
 		final double[][] O = new double[ latentDim ][emissionDim];
-		int[] OCount = new int[ latentDim ];
 		
-		// Initialise with some simple smoothing
-		for( int i = 0; i < latentDim; i++ )
-			pi[i] = 1.0/latentDim;
-		piCount = latentDim;
-		
-		for( int i = 0; i < latentDim; i++ )
-		{
-			for( int j = 0; j < latentDim; j++ )
-				T[i][j] = 1.0/latentDim;
-			TCount[i] = latentDim;
+		// Initialize with some simple smoothing
+		if( shouldSmooth ) {
+			for( int i = 0; i < latentDim; i++ )
+				pi[i] = 1.0/latentDim;
+			
+			for( int i = 0; i < latentDim; i++ )
+			{
+				for( int j = 0; j < latentDim; j++ )
+					T[i][j] = 1.0/latentDim;
+			}
+			
+			for( int i = 0; i < latentDim; i++ )
+			{
+				for( int j = 0; j < emissionDim; j++ )
+					O[i][j] = 1.0/emissionDim;
+			}
+		}
+		else {
+			// TODO: For some reason this fails without smoothing 
+			for( int i = 0; i < latentDim; i++ )
+				pi[i] = 0.0;
+			
+			for( int i = 0; i < latentDim; i++ )
+			{
+				for( int j = 0; j < latentDim; j++ )
+					T[i][j] = 0.0;
+			}
+			
+			for( int i = 0; i < latentDim; i++ )
+			{
+				for( int j = 0; j < emissionDim; j++ )
+					O[i][j] = 0.0;
+			}
 		}
 		
-		for( int i = 0; i < latentDim; i++ )
-		{
-			for( int j = 0; j < emissionDim; j++ )
-				O[i][j] = 1.0/emissionDim;
-			OCount[i] = emissionDim;
-		}
-		
-		// For each sequence in X and Z, increment those counts (do simple smoothing)
+		// For each sequence in X and Z, increment those counts
 		for( int i = 0; i < N; i++ ) {
-			pi[Z[i][0]] += (1 - pi[Z[i][0]])/(++piCount);
 			for( int j = 0; j < Z[i].length; j++ )
 			{
+				pi[Z[i][j]] += 1;
 				if( j < Z[i].length - 1)
-					T[Z[i][j]][Z[i][j+1]] += (1 - T[Z[i][j]][Z[i][j+1]])/(++TCount[Z[i][j]]);
-				O[Z[i][j]][X[i][j]] += (1 - O[Z[i][j]][X[i][j]])/(++OCount[Z[i][j]]);
+				{
+					T[Z[i][j]][Z[i][j+1]] += 1;
+				}
+				O[Z[i][j]][X[i][j]] += 1;
+			}
+		}
+		
+		{
+			double totalProb = 0.0;
+			for( int j = 0; j < latentDim; j++ ) {
+				totalProb += pi[j];
+			}
+			for( int j = 0; j < latentDim; j++ ) {
+				pi[j] /= totalProb;
+			}
+		}
+		
+		// Check that the rows are properly normalized
+		for( int i = 0; i < latentDim; i++ ) {
+			// Renormalize
+			double totalProb = 0.0;
+			for( int j = 0; j < latentDim; j++ ) {
+				totalProb += T[i][j];
+			}
+			for( int j = 0; j < latentDim; j++ ) {
+				T[i][j] /= totalProb;
 			}
 		}
 		
@@ -140,13 +182,19 @@ public class SentenceHMM implements Serializable {
 			
 			// Choose top k words
 			Arrays.sort(words_, new SentenceHMM.IndexedComparator(O[i]) );
+			double totalProb = 0.0; 
 			for( int j = 0; j < wordsPerState; j++ ) {
 				O_[i][j] = O[i][words_[j]];
 				words[i][j] = words_[j];
+				totalProb += O_[i][j];
+			}
+			// Renormalize
+			for( int j = 0; j < wordsPerState; j++ ) {
+				O_[i][j] /= totalProb;
 			}
 		}
 			
-		return new SentenceHMM(pi, O_, words, T, dict);
+		return new SentenceHMM(pi, O_, words, T, C.dict);
 	}
 
 }
