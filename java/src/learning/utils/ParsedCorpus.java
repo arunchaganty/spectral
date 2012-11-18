@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.Random;
 
 public class ParsedCorpus extends Corpus {
 	public String[] Zdict; // The parsed token state dictionary

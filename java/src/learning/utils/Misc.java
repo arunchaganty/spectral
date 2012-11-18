@@ -28,4 +28,16 @@ public class Misc {
 			y[i] = x[i].doubleValue();
 		return y;
 	}	
+	
+	public static class NotImplementedException extends Exception {
+		private static final long serialVersionUID = 4046853531401489206L;
+		
+		public NotImplementedException() {
+			super();
+		}
+		public NotImplementedException(String message) {
+			super(message);
+		}
+	}
+	
 }

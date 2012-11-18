@@ -5,23 +5,17 @@
  */
 package learning.spectral.applications;
 
-import java.io.BufferedWriter;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import fig.basic.Option;
 import fig.basic.OptionsParser;
 
 import learning.models.SentenceHMM;
+import learning.utils.Misc;
+import learning.utils.Misc.NotImplementedException;
 import learning.utils.ParsedCorpus;
 
 /**
@@ -42,7 +36,7 @@ public class SentenceHMMLearner {
 	@Option(gloss="Is fully observed?")
 	public boolean isObserved = true;
 	
-	public void fit() throws IOException {
+	public void fit() throws IOException, NotImplementedException {
 		//TODO: Add a control for the number of classes
 		ParsedCorpus C = ParsedCorpus.parseText(Paths.get(inputPath));
 		
@@ -54,7 +48,7 @@ public class SentenceHMMLearner {
 		if( isObserved )
 			hmm = SentenceHMM.learnFullyObserved( C, wordLimit, shouldSmooth );
 		else
-			throw new NotImplementedException();
+			throw new Misc.NotImplementedException();
 		
 		ObjectOutputStream out = new ObjectOutputStream( new FileOutputStream( outputPath ) ); 
 		out.writeObject(hmm);
@@ -65,8 +59,9 @@ public class SentenceHMMLearner {
 	 * Word Clustering using a HMM kind of model
 	 * @param args
 	 * @throws IOException 
+	 * @throws NotImplementedException 
 	 */
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException, NotImplementedException {
 		SentenceHMMLearner prog = new SentenceHMMLearner();
 		OptionsParser parser = new OptionsParser(prog);
 		parser.doParse(args);
