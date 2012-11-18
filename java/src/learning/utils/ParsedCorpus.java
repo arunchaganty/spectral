@@ -78,8 +78,8 @@ public class ParsedCorpus extends Corpus {
 	    	Zdict[entry.getValue()] = entry.getKey();
 	    }
 	    
-    	int[][] C_ = (int[][]) C.toArray(new int[0][0]);
-    	int[][] Z_ = (int[][]) Z.toArray(new int[0][0]);
+    	int[][] C_ = C.toArray(new int[0][0]);
+    	int[][] Z_ = Z.toArray(new int[0][0]);
 	    
 	    return new ParsedCorpus( dict, C_, Zdict, Z_ );
 	}

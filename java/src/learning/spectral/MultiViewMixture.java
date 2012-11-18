@@ -10,7 +10,6 @@ import learning.utils.RandomFactory;
 import learning.utils.SimpleTensor;
 import learning.utils.Tensor;
 
-import org.ejml.factory.DecompositionFactory;
 import org.ejml.simple.SimpleEVD;
 import org.ejml.simple.SimpleMatrix;
 
