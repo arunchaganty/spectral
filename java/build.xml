@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- WARNING: Eclipse auto-generated file.
+              Any modifications will be overwritten.
+              To include a user specific buildfile here, simply create one in the same
+              directory with the processing instruction <?eclipse.ant.import?>
+              as the first entry and export the buildfile again. -->
+<project basedir="." default="build" name="java">
+    <property environment="env"/>
+    <property name="ECLIPSE_HOME" value="../../../../../usr/lib/eclipse"/>
+    <property name="junit.output.dir" value="junit"/>
+    <property name="debuglevel" value="source,lines,vars"/>
+    <property name="target" value="1.7"/>
+    <property name="source" value="1.7"/>
+    <path id="JUnit 4.libraryclasspath">
+        <pathelement location="${ECLIPSE_HOME}/dropins/jdt/plugins/org.junit_4.8.2.v4_8_2_v20110321-1705/junit.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/dropins/jdt/plugins/org.hamcrest.core_1.1.0.jar"/>
+    </path>
+    <path id="java.classpath">
+        <pathelement location="bin"/>
+        <pathelement location="deps/ejml-0.20.jar"/>
+        <pathelement location="deps/fig.jar"/>
+        <path refid="JUnit 4.libraryclasspath"/>
+        <pathelement location="deps/javatuples-1.2.jar"/>
+        <pathelement location="deps/javatuples-1.2-javadoc.jar"/>
+    </path>
+    <target name="init">
+        <mkdir dir="bin"/>
+        <copy includeemptydirs="false" todir="bin">
+            <fileset dir="src">
+                <exclude name="**/*.launch"/>
+                <exclude name="**/*.java"/>
+            </fileset>
+        </copy>
+    </target>
+    <target name="clean">
+        <delete dir="bin"/>
+    </target>
+    <target depends="clean" name="cleanall"/>
+    <target depends="build-subprojects,build-project" name="build"/>
+    <target name="build-subprojects"/>
+    <target depends="init" name="build-project">
+        <echo message="${ant.project.name}: ${ant.file}"/>
+        <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
+            <src path="src"/>
+            <classpath refid="java.classpath"/>
+        </javac>
+    </target>
+    <target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects"/>
+    <target description="copy Eclipse compiler jars to ant lib directory" name="init-eclipse-compiler">
+        <copy todir="${ant.library.dir}">
+            <fileset dir="${ECLIPSE_HOME}/plugins" includes="org.eclipse.jdt.core_*.jar"/>
+        </copy>
+        <unzip dest="${ant.library.dir}">
+            <patternset includes="jdtCompilerAdapter.jar"/>
+            <fileset dir="${ECLIPSE_HOME}/plugins" includes="org.eclipse.jdt.core_*.jar"/>
+        </unzip>
+    </target>
+    <target description="compile project with Eclipse compiler" name="build-eclipse-compiler">
+        <property name="build.compiler" value="org.eclipse.jdt.core.JDTCompilerAdapter"/>
+        <antcall target="build"/>
+    </target>
+    <target name="MultiViewMixtureTests">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="learning.spectral.tests.MultiViewMixtureTests" todir="${junit.output.dir}"/>
+            <classpath refid="java.classpath"/>
+        </junit>
+    </target>
+    <target name="learning.spectral.tests">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="learning.spectral.tests.MultiViewMixtureTests" todir="${junit.output.dir}"/>
+            <classpath refid="java.classpath"/>
+        </junit>
+    </target>
+    <target name="WordClustering">
+        <java classname="learning.spectral.applications.WordClustering" failonerror="true" fork="yes">
+            <jvmarg line="-XX:-UseSplitVerifier"/>
+            <arg line="-k 10 -d 1000 -inputPath nyt-gen-1e6.txt -outputPath clusters"/>
+            <classpath refid="java.classpath"/>
+        </java>
+    </target>
+    <target name="java">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="learning.spectral.tests.MultiViewMixtureTests" todir="${junit.output.dir}"/>
+            <jvmarg line="-XX:-UseSplitVerifier"/>
+            <classpath refid="java.classpath"/>
+        </junit>
+    </target>
+    <target name="MultiViewMixtureTests.testSampleRecovery">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="learning.spectral.tests.MultiViewMixtureTests" todir="${junit.output.dir}"/>
+            <classpath refid="java.classpath"/>
+        </junit>
+    </target>
+    <target name="SentenceHMMLearner Generate">
+        <java classname="learning.spectral.applications.SentenceHMMLearner" failonerror="true" fork="yes">
+            <arg line="-g nyt-1e4.hmm 1000 10 hmm-gen.txt"/>
+            <classpath refid="java.classpath"/>
+        </java>
+    </target>
+    <target name="SentenceHMMLearner">
+        <java classname="learning.spectral.applications.SentenceHMMLearner" failonerror="true" fork="yes">
+            <arg line="--inputPath data/nyt/nyt.parsed --wordLimit 1000 --outputPath nyt.hmm"/>
+            <classpath refid="java.classpath"/>
+        </java>
+    </target>
+    <target name="SentenceHMMLearner Profiled">
+        <java classname="learning.spectral.applications.SentenceHMMLearner" failonerror="true" fork="yes">
+            <arg line="-f data/nyt/nyt-1e4.parsed 1000 nyt-1e4.hmm"/>
+            <classpath refid="java.classpath"/>
+        </java>
+    </target>
+    <target name="SentenceGenerator">
+        <java classname="learning.spectral.applications.SentenceGenerator" failonerror="true" fork="yes">
+            <arg line="-inputPath nyt.hmm -outputPath nyt-gen-1e5.txt -documentLength = 10 -documents 100000"/>
+            <classpath refid="java.classpath"/>
+        </java>
+    </target>
+    <target name="junitreport">
+        <junitreport todir="${junit.output.dir}">
+            <fileset dir="${junit.output.dir}">
+                <include name="TEST-*.xml"/>
+            </fileset>
+            <report format="frames" todir="${junit.output.dir}"/>
+        </junitreport>
+    </target>
+</project>
