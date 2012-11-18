@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Random;
 
 public class ParsedCorpus extends Corpus {
 	public String[] Zdict; // The parsed token state dictionary
@@ -17,6 +18,28 @@ public class ParsedCorpus extends Corpus {
 		super( dict, C );
 		this.Zdict = Zdict;
 		this.Z = Z;
+	}
+	
+	/**
+	 * Merge the last k clusters
+	 * @param k
+	 */
+	public void shrink( int k ) {
+		int[] map = new int[Zdict.length];
+		
+		for( int i = 0; i < k; i++ ) map[i] = i;
+		for( int i = Zdict.length - 1; i >= k; i-- ) 
+			map[i] = rnd.nextInt(k);
+		
+		for( int i = 0; i < Z.length; i++ ) {
+			for( int j = 0; j < Z[i].length; j++ ) {
+				Z[i][j] = map[Z[i][j]];
+			}
+		}
+		
+		String[] Zdict_ = new String[k];
+		for( int i = 0; i < Zdict.length; i++ ) Zdict_[map[i]] += Zdict[i]; 
+		Zdict = Zdict_;
 	}
 	
 	/**

@@ -23,8 +23,11 @@ tags
 *_tmp.*
 
 # Data
+data/
+java/data
 *.dot
 *.png
+*.hmm
 *.mat
 *.dat
 *.npz

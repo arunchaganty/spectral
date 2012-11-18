@@ -37,14 +37,19 @@ public class SentenceHMMLearner {
 	public String outputPath;
 	@Option(gloss="Number of words to truncate in each hidden state")
 	public int wordLimit = 1000;
+	@Option(gloss="Number of components")
+	public int componentCount = -1;
 	@Option(gloss="Is fully observed?")
 	public boolean isObserved = true;
 	
 	public void fit() throws IOException {
 		//TODO: Add a control for the number of classes
 		ParsedCorpus C = ParsedCorpus.parseText(Paths.get(inputPath));
-		// Use the Z and C to learn the HMM parameters
 		
+		if( componentCount != -1 ) 
+			C.shrink(componentCount);
+		
+		// Use the Z and C to learn the HMM parameters
 		SentenceHMM hmm;
 		if( isObserved )
 			hmm = SentenceHMM.learnFullyObserved( C, wordLimit, shouldSmooth );

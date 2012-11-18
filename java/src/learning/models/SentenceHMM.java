@@ -9,6 +9,8 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Comparator;
 
+import com.sun.corba.se.impl.interceptors.PICurrent;
+
 import learning.utils.ParsedCorpus;
 import learning.utils.RandomFactory;
 
@@ -89,8 +91,7 @@ public class SentenceHMM implements Serializable {
 	 * @param dict
 	 * @return
 	 */
-	public static SentenceHMM learnFullyObserved( ParsedCorpus C, int wordsPerState, boolean shouldSmooth )
-	{
+	public static SentenceHMM learnFullyObserved( ParsedCorpus C, int wordsPerState, boolean shouldSmooth ) {
 		int[][] X = C.C;
 		int[][] Z = C.Z;
 		int latentDim = C.Zdict.length;
