@@ -1,0 +1,36 @@
+November 21st 2012
+==================
+
+We have a new idea for extracting values for solving the matrix. We started with
+the following obstacle to recovering the moments and hence the regression
+coefficients in the mixture of linear regressions problem.
+
+In general, 
+\begin{eqnarray}
+\E[ y^k X^r ] &=& E[ X^{\otimes k+r} \sum_i \pi_i \beta_i^{\otimes k} ] \\
+&=& M_{k+r}_{l_1, ..., l_k} \beta_{l_1 i} ... \beta_{l_k i}. 
+\end{eqnarray}
+does not give any new information over 
+\begin{eqnarray}
+\E[ y^k ] &=& E[ X^{\otimes k} \sum_i \pi_i \beta_i^{\otimes k} ] \\
+&=& M_{k}_{l_1, ..., l_k} \beta_{l_1 i} ... \beta_{l_k i}.
+\end{eqnarray}
+because each element of $\E[ y^k X^r ]$ is going to be $\E[ y^k ]$ into some
+constant.
+
+This is a problem because each such equation gives us only a scalar value, and
+hence we'd need to find atleast $k(d+1)$ powers of $y$ to hope to recover $\pi$
+and $\beta$. 
+
+Getting multiple projections of 2nd and 3rd Moments
+---------------------------------------------------
+
+Consider $\E[y^2] = \E[ xx^T ] \cdot \beta \diag(\pi) \beta^T$, which gives us
+one projection of the unrolled vector $\beta \diag(\pi) \beta^T$. If we could
+recover this outer product of $\beta$ as well as third order tensor, we'd be
+done.
+
+We can project $\beta \diag(\pi) \beta^T$ onto different random vectors by
+modifying $\E[ xx^T ]$, which we can do by adjusting the distribution, i.e.
+$\E[ xx^T \frac{q(x)}{p(x)} ] = \E_q[ xx^T ]$ for different $q$. We would need
+$\frac{d (d-1)}{2}$ such random projections.
