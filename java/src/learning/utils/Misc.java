@@ -28,6 +28,39 @@ public class Misc {
 		}
 	}
 	
+	public static double max( double[] x ) {
+		double val = Double.NEGATIVE_INFINITY;
+		for(int i = 0; i < x.length; i++ )
+			if( x[i] > val ) val = x[i];
+		return val;
+	}
+	public static int argmax( double[] x ) {
+		double val = Double.NEGATIVE_INFINITY;
+		int idx = -1;
+		for(int i = 0; i < x.length; i++ )
+			if( x[i] > val ) {
+				val = x[i];
+				idx = i;
+			}
+		return idx;
+	}
+	public static double min( double[] x ) {
+		double val = Double.POSITIVE_INFINITY;
+		for(int i = 0; i < x.length; i++ )
+			if( x[i] < val ) val = x[i];
+		return val;
+	}
+	public static int argmin( double[] x ) {
+		double val = Double.POSITIVE_INFINITY;
+		int idx = -1;
+		for(int i = 0; i < x.length; i++ )
+			if( x[i] < val ) {
+				val = x[i];
+				idx = i;
+			}
+		return idx;
+	}
+	
 	/**
 	 * Renormalises x to a probability distribution in-place
 	 * @param x

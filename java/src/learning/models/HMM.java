@@ -32,6 +32,15 @@ public class HMM implements Serializable {
 			O = new double[stateCount][emissionCount];
 		}
 		
+		public Params clone() {
+			Params p = new Params(stateCount, emissionCount);
+			p.pi = pi.clone();
+			p.T = T.clone();
+			p.O = O.clone();
+			
+			return p;
+		}
+		
 		public static Params uniformWithNoise(int stateCount, int emissionCount, double noise) {
 			Params p = new Params(stateCount, emissionCount);
 			
@@ -145,14 +154,109 @@ public class HMM implements Serializable {
 	}
 	
 	/**
-	
-	/**
 	 * Use the Viterbi dynamic programming algorithm to find the hidden states for o.
 	 * @param o
 	 * @return
 	 */
 	public int[] viterbi( int[] o ) {
-		return null;
+		// Store the dynamic programming array and back pointers
+		double [][] V = new double[o.length][params.stateCount];
+		int [][] Ptr = new int[o.length][params.stateCount];
+		
+		// Initialize with 0 and path length
+		for( int s = 1; s < params.stateCount; s++ )
+		{
+			// P( o_0 | s_k ) \pi(s_k)
+			V[0][s] = params.O[s][o[0]] * params.pi[s];
+			Ptr[0][s] = -1; // Doesn't need to be defined.
+		}
+		
+		// The dynamic program to find the optimal path
+		for( int i = 1; i < o.length; i++ ) {
+			for( int s = 1; s < params.stateCount; s++ )
+			{
+				// Find the max of T(s | s') V_(i-1)(s')
+				double T_max = 0.0;
+				int S_max = -1;
+				for( int s_ = 1; s_ < params.stateCount; s_++ )
+				{
+					if( params.T[s_][s] * V[i-1][s_] > T_max ) {
+						T_max = params.T[s_][s] * V[i-1][s_];
+						S_max = s_;
+					}
+				}
+				
+				// P( o_i | s_k ) = P(o_i | s) *  max_j T(s | s') V_(i-1)(s')
+				V[i][s] = params.O[s][o[i]] * T_max;
+				Ptr[i][s] = S_max; 
+			}
+		}
+		
+		int[] z = new int[o.length];
+		// Choose the best last state and back track from there
+		z[o.length-1] = Misc.argmax(V[o.length-1]);
+		for(int i = o.length-1; i >= 0; i-- ) 
+			z[i-1] = Ptr[i][z[i]];
+		
+		return z;
+	}
+	
+	/**
+	 * Use the forward-backward algorithm to find the posterior probability over states
+	 * @param o
+	 * @return
+	 */
+	public double[][] forwardBackward( int[] o ) {
+		// Store the forward probabilities
+		double [][] f = new double[o.length][params.stateCount];
+		// Normalization constants
+		double [] c = new double[o.length];
+		
+		// Initialise with the initial probabilty
+		for( int s = 0; s < params.stateCount; s++ ) {
+			f[0][s] = params.pi[s] * params.O[s][o[0]];
+		}
+		for( int s = 0; s < params.stateCount; s++ ) c[0] += f[0][s];
+		
+		// Compute the forward values as f_t(s) = sum_{s_} f_{t-1}(s_) * T( s | s_ ) * O( y | s )
+		for( int i = 1; i < o.length; i++ ) {
+			for( int s = 0; s < params.stateCount; s++ ) {
+				f[i][s] = 0.0;
+				for( int s_ = 0; s_ < params.stateCount; s_++ ) {
+					f[i][s] += f[i-1][s_] * params.T[s_][s];
+				}
+				f[i][s] *= params.O[s][o[i]];
+			}
+			// Compute normalisation constant
+			for( int s = 0; s < params.stateCount; s++ ) c[i] += f[i][s];
+			// Normalise
+			for( int j = 0; j < i; j++ ) 
+				for( int s = 0; s < params.stateCount; s++ ) 
+					f[i][s] /= c[j];
+		}
+		
+		double [][] b = new double[o.length][params.stateCount];
+		for( int s = 0; s < params.stateCount; s++ ) {
+			b[o.length-1][s] = 1;
+		}
+		for( int i = o.length-2; i >= 0; i-- ) {
+			for( int s = 0; s < params.stateCount; s++ ) {
+				b[i][s] = 0.0;
+				for( int s_ = 0; s_ < params.stateCount; s_++ ) {
+					b[i][s] += b[i+1][s_] * params.T[s][s_] * params.O[s_][o[i+1]];
+				}
+			}
+			// Normalise
+			for( int j = i+1; j < o.length-1; j++ ) 
+				for( int s = 0; s < params.stateCount; s++ ) 
+					b[i][s] /= c[j];
+		}
+
+		double[][] z = new double[o.length][params.stateCount];
+		for(int i = 0; i < o.length; i++ )
+			for(int s = 0; s < params.stateCount; s++ )
+				z[i][s] = f[i][s] * b[i][s];
+		return z;
 	}
 	
 	public static HMM learnFullyObserved( int stateCount, int emissionCount, int[][] X, int[][] Z, 
@@ -190,5 +294,10 @@ public class HMM implements Serializable {
 		
 		return new HMM(p_);
 	}
+	
+	public static HMM learnBaumWelch( int stateCount, int emissionCount, int[][] X )
+	{
+		return null;
+	}	
 
 }
