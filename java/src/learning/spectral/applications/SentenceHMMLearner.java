@@ -64,7 +64,7 @@ public class SentenceHMMLearner {
 	public static void main(String[] args) throws IOException, NotImplementedException {
 		SentenceHMMLearner prog = new SentenceHMMLearner();
 		OptionsParser parser = new OptionsParser(prog);
-		parser.doParse(args);
-		prog.fit();
+		if( parser.doParse(args) )
+			prog.fit();
 	}
 }
