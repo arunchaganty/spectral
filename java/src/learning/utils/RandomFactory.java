@@ -26,6 +26,15 @@ public class RandomFactory {
 		
 		return X;
 	}
+	
+	/**
+	 * Generate a single random variable
+	 * @param sigma - noise
+	 * @return
+	 */
+	public static double randn(double sigma) {
+		return rand.nextGaussian() * sigma;
+	}
 
 	/**
 	 * Generate a random orthogonal 'd' dimensional matrix, using the
