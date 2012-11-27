@@ -1,0 +1,32 @@
+% November 26th 2012
+
+Algorithm for fixed $P(h|x)$
+============================
+
+We make the following assumptions:
+
+#. $\beta$ is a full-rank $d \times k$ matrix.
+#. $\pi$ is fixed, though unknown and positive.
+#. $X \sim \normal{\mu}{\Sigma}$.
+
+Then, informally, our algorithm is:
+
+#. Center and whiten $X$.
+#. Generate $\Sigma_i \sim Wishart(d,I)$, and define $q_i = \normal{0}{\Sigma_i}$.
+#. Compute $M^2 = (M^2_1, ..., M^2_{d'})$ where $M^2_i = \E_{q_i}[ y^2 ]$ for $0 \le i \le \frac{d (d-1)}{2} = d'$. 
+#. Compute $S = [\triu(\Sigma_1) | \cdots | \triu(\Sigma_n)]$ and then, the off
+   diagonal elements of $B^2 = \beta \diag(\pi) \beta^T$ are $S^{-1} M^2/2$ (because the matrix is symmetric) and
+   the diagonal elements are $S^{-1} M^2$.
+#. Similarly, compute $B^3(U^T \theta)$
+#. Use $B^2$ to "whiten" $B^3$, allowing us to read off $\beta^T U^T \theta$ by looking at the singular values.
+#. Adjust $\beta$ by inverting $U^T \Theta$, unwhitening and finally uncentering.
+
+Recovering $y = \|x\|_1$
+========================
+
+This runs into an issue that the number of lines implicitly defined in this
+distribution $k$ is $2^d > d$, so our technique described above doesn't work.
+
+The main bottleneck in extending it is that $B^2$ and would have a rank $\le d < k$.
+
+
