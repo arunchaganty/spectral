@@ -10,36 +10,42 @@ from spectral.linalg import svdk, mrank, approxk, eigen_sep, \
         closest_permuted_matrix, tensorify, matrix_tensorify, \
         column_aerr, column_rerr,\
         condition_number, column_gap, column_sep
-from spectral.rand import orthogonal, wishart
-from spectral.data import Pairs, TriplesP, PairsQ, TriplesPQ
+from spectral.rand import orthogonal, wishart, dirichlet
+from spectral.data import Pairs, Triples, PairsQ, TriplesQ
 from models import LinearRegressionsMixture 
 
-def recover_parameters( k, d, M2, M3 ):
-    """M2 is a vector, while M3 is a tensor"""
+def recover_parameters( k, d, N, X2, X3, Y2, Y3 ):
+    """X2: vector -> matrix, while X3: vector -> tensor"""
     # Extract B2 by projecting on a large number of S 
-    
-    B2_ = zeros( d * (d+1) / 2 )
-    B2__ = zeros( d * (d+1) / 2 )
-    Ss = wishart( d, eye(d), d * (d+1) / 2 )
+    B2 = zeros( d * (d+1) / 2 )
 
-    for i in xrange( d * (d+1) / 2 ):
-        B2_[i] = M2( Ss[i] )
-        B2__[i] = M2( Ss[i] )/2
-    # Get the projection 
-    Ss = array( [ S_[sc.triu_indices( d )] for S_ in Ss ] )
-    Ss_inv = inv(Ss.T.dot(Ss)).dot( Ss.T )
-    B2_ = Ss_inv.dot( B2_ )
-    B2__ = Ss_inv.dot( B2__ )
+    # The transform
+    T2 = zeros( (d * (d+1)/2, d * (d+1)/2) )
+
+    # Generate the qs
+    Q = dirichlet( 0.1 * ones(N), d**2 )
+
+    B2_ = zeros( d*(d+1)/2 )
+
+    for i in xrange( d * (d+1)/2 ):
+        q = Q[i]
+        T2[i] = X2(q)[sc.triu_indices( d )]
+        B2_[i] = Y2(q)
+    ipdb.set_trace()
+
+    # Get the pseudo inverse 
+    T2_inv = inv( T2.T.dot(T2) ).dot( T2.T )
 
     # Symmetrise
     B2 = zeros( (d ,d) )
-    B2[ sc.triu_indices( d ) ] = B2__
+    B2[ sc.triu_indices( d ) ] = T2_inv.dot(B2_/2)
     B2[ sc.tril_indices(d) ] = B2.T[ sc.tril_indices(d) ]
 
     idx = zip(* sc.triu_indices( d ) )
-    diag_idx = [i for i in xrange( len(idx) ) if idx[i][0] == idx[i][1]]
-    for i in xrange(d) :
-        B2[ i, i ] = B2_[diag_idx[i]]
+    tdiag_idx = [d*i - i*(i-1)/2 for i in xrange( d ) ]
+    diagB2 = T2_inv.dot(B2_)[tdiag_idx]
+    for i in xrange( d ):
+        B2[i,i] = diagB2[i]
 
     return B2
 
@@ -74,7 +80,72 @@ def test_exact_recovery():
 
     M2, M3, B2 = exact_moments( k, pi, B, M, S )
 
-    B2_ = recover_parameters( k, d, M2, M3 )
+    #B2_ = recover_parameters( k, d, M2, M3 )
+
+    #ipdb.set_trace()
+
+    #assert( sc.allclose( B2, B2_ ) )
+
+def normalise( y, X ):
+
+    # Normalise data 
+    # Center
+    mu = X.mean(0)
+    X = X - mu
+    # Whiten
+    S = Pairs( X, X )
+    W = cholesky( S )
+    X = X.dot( inv( W ) )
+
+    return y, X, mu, S
+
+def sample_moments( k, y, X ):
+    """Get the sample moments"""
+    (N, d) = X.shape
+
+    # Normalise data 
+    # Center
+    #mu = X.mean(0)
+    #X = X - mu
+    ## Whiten
+    #S = Pairs( X, X )
+    #W = cholesky( S )
+    #X = X.dot( inv( W ) )
+
+    def X2( q ):
+        return PairsQ( X, q )
+    
+    def Y2( q ):
+        return (y**2).dot( q )/N
+    
+    def X3( q ):
+        return TriplesQ( X, q )
+
+    def Y3( q ):
+        return (y**3).dot( q )/N
+
+    return X2, X3, Y2, Y3
+
+def test_sample_recovery():
+    """Test the accuracy of sample recovery"""
+    k = 3
+    d = 3
+    N = 1e5
+
+    fname = "/tmp/test.npz"
+    lrm = LinearRegressionsMixture.generate(fname, k, d, cov = "eye")
+    M, S, pi, B = lrm.mean, lrm.sigma, lrm.weights, lrm.betas
+
+    y, X = lrm.sample( N )
+
+    B2 = B.dot( diag( pi ) ).dot( B.T )
+
+    X2, X3, Y2, Y3 = sample_moments( k, y, X )
+
+    B2_ = recover_parameters( k, d, N, X2, X3, Y2, Y3 )
+    #B2_ = closest_permuted_matrix( B2.T, B2_.T ).T
+
+    print ( norm( B2 - B2_ ) )
 
     ipdb.set_trace()
 

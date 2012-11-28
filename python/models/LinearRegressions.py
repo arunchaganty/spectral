@@ -40,8 +40,42 @@ class LinearRegressionsMixture( Model ):
     def sample( self, N, n = -1 ):
         """Sample N samples from the model. If N, n are both specified,
         then generate N samples, but only keep n of them"""
+        if n <= 0: 
+            n = N
+        shape = (n, self.d)
+        y_shape = (n,)
 
-        raise NotImplementedError
+        X = self._allocate_samples( "X", shape )
+        y = self._allocate_samples( "y", y_shape )
+        # Get a random permutation of N elements
+        perm = permutation( N )
+
+        # Sample the number of samples from each view
+        cnts = multinomial( N, self.weights )
+
+        mean, sigma = self.mean, self.sigma
+
+        cnt_ = 0
+        for i in xrange( self.k ):
+            cnt = cnts[i]
+            # Generate a bunch of points for each mean
+            beta = self.betas.T[i]
+
+            # 1e4 is a decent block size
+            def update( start, stop ):
+                """Sample random vectors and then assign them to X in
+                order"""
+                Z = multivariate_normal( mean, sigma, int(stop - start) )
+                # Insert into X in a shuffled order
+                p = perm[ start:stop ]
+                perm_ = p[ p < n ]
+                X[ perm_ ] = Z[ p < n ]
+                y[ perm_] = Z[ p < n ].dot( beta )
+            chunked_update( update, cnt_, 10 ** 4, cnt_ + cnt  )
+            cnt_ += cnt
+        X.flush()
+        y.flush()
+        return y, X
 
     @staticmethod
     def generate( fname, k, d, mean = "zero", cov = "random", betas = "random", weights = "random",
@@ -77,7 +111,9 @@ class LinearRegressionsMixture( Model ):
         else:
             raise NotImplementedError
 
-        if cov == "spherical":
+        if cov == "eye":
+            S = eye( d )
+        elif cov == "spherical":
             # Using 1/gamma instead of inv_gamma
             sigma = 1/sc.random.gamma(1/gaussian_precision)
             S = sigma * eye( d )

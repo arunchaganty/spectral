@@ -5,6 +5,7 @@ Random Distributions particular to spectral algorithms
 import scipy as sc
 import scipy.stats as stats
 import scipy.linalg as linalg
+dirichlet = sc.random.dirichlet
 
 def shuffle_permutation( n ):
     """Generate a random permutation as a sequence of swaps"""

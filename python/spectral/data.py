@@ -14,9 +14,10 @@ def count_frequency( X, d ):
     return Y/float(W)
 
 Pairs = _data.Pairs
-Triples = _data.Triples
-TriplesP = _data.TriplesP
 PairsQ = _data.PairsQ
+Triples = _data.Triples
+TriplesQ = _data.TriplesP
+TriplesP = _data.TriplesP
 TriplesPQ = _data.TriplesPQ
 
 def test_pairs():
