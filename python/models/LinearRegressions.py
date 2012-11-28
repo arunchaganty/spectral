@@ -61,19 +61,19 @@ class LinearRegressionsMixture( Model ):
         else:
             raise NotImplementedError
 
-        elif betas == "random":
-            B = sc.randn( d )
+        if betas == "random":
+            B = sc.randn( d, k )
         elif isinstance( betas, sc.ndarray ):
             B = betas
         else:
             raise NotImplementedError
 
-        if means == "zero":
+        if mean == "zero":
             M = zeros( d )
-        elif means == "random":
+        elif mean == "random":
             M = sc.randn( d )
-        elif isinstance( means, sc.ndarray ):
-            M = means
+        elif isinstance( mean, sc.ndarray ):
+            M = mean
         else:
             raise NotImplementedError
 
@@ -89,14 +89,12 @@ class LinearRegressionsMixture( Model ):
             raise NotImplementedError
 
         model.add_parameter( "w", w )
-        model.add_parameter( "B", M )
+        model.add_parameter( "B", B )
         model.add_parameter( "M", M )
         model.add_parameter( "S", S )
 
         # Unwrap the store and put it into the appropriate model
         return LinearRegressionsMixture( model.fname, **model.params )
-
-
 
 if __name__ == "__main__":
     import argparse
@@ -120,8 +118,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     sc.random.seed( int( args.seed ) )
 
-    main( args.fname, args.model, args.k, args.d, args )
-
-
-
+    #main( args.fname, args.model, args.k, args.d, args )
 
