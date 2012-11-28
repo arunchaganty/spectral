@@ -19,18 +19,19 @@ import learning.spectral.MultiViewMixture.RecoveryFailure;
 import learning.utils.Corpus;
 import learning.utils.MatrixFactory;
 import learning.utils.Tensor;
+import learning.utils.VectorOps;
 
 import org.ejml.simple.SimpleMatrix;
 import org.javatuples.Pair;
 
 import fig.basic.Option;
-import fig.basic.OptionsParser;
+import fig.exec.Execution;
 
 
 /**
  * Word clustering using a HMM model
  */
-public class WordClustering {
+public class WordClustering implements Runnable {
 	@Option(gloss = "Number of classes", required=true)
 	public int k;
 	@Option(gloss = "Number of latent dimensiosn", required=true)
@@ -39,8 +40,6 @@ public class WordClustering {
 	public int cutoff = 5;
 	@Option(gloss = "Input filename", required=true)
 	public String inputPath;
-	@Option(gloss = "Output clusters", required=true)
-	public String outputPath;
 	@Option(gloss = "Random seed")
 	public long seed = (new Date()).getTime();
 	
@@ -92,47 +91,48 @@ public class WordClustering {
 	protected SimpleMatrix GetPairs13() {
 		int n = C.projectionDim;
 		
-		SimpleMatrix P13 = new SimpleMatrix( n, n );
-		for( int[] c : C.C ) {
+		double[][] P13 = new double[n][n];
+		double count = 0.0;
+		for( int c_i = 0; c_i < C.C.length; c_i++ ) {
+			int[] c = C.C[c_i];
 			int l = c.length - 2;
 			for( int i = 0; i < l; i++ )
 			{
-				SimpleMatrix x1 = C.getFeatureForWord( c[i] );
-				SimpleMatrix x3 = C.getFeatureForWord( c[i+2] );
+				double[] x1 = C.getFeatureForWord( c[i] );
+				double[] x3 = C.getFeatureForWord( c[i+2] );
 				// Add into P13
 				for( int j = 0; j < n; j++ ) {
 					for( int k = 0; k < n; k++ ) {
-						double p = P13.get( j, k );
-						p += (x1.get(j) * x3.get(k) - p)/(i+1);
-						P13.set( j, k, p );
+						P13[j][k] += (x1[j] * x3[k] - P13[j][k])/(++count);
 					}
 				}
 			}
 		}
-		return P13;
+		return new SimpleMatrix(P13);
 	}
 	
-	protected SimpleMatrix GetPairs12() {
-		int n = C.projectionDim;
+	protected void GetPairs(double[][] P12, double [][] P13) {
+		int d = C.projectionDim;
 		
-		SimpleMatrix P12 = new SimpleMatrix( n, n );
-		for( int[] c : C.C ) {
+		double count = 0.0;
+		for( int c_i = 0; c_i < C.C.length; c_i++ ) {
+			int[] c = C.C[c_i];
 			int l = c.length - 2;
 			for( int i = 0; i < l; i++ )
 			{
-				SimpleMatrix x1 = C.getFeatureForWord( c[i] );
-				SimpleMatrix x2 = C.getFeatureForWord( c[i+1] );
-				// Add into P12
-				for( int j = 0; j < n; j++ ) {
-					for( int k = 0; k < n; k++ ) {
-						double p = P12.get( j, k );
-						p += (x1.get(j) * x2.get(k) - p)/(i+1);
-						P12.set( j, k, p );
+				double[] x1 = C.getFeatureForWord( c[i] );
+				double[] x2 = C.getFeatureForWord( c[i+1] );
+				double[] x3 = C.getFeatureForWord( c[i+2] );
+				// Add into P13
+				count++;
+				for( int j = 0; j < d; j++ ) {
+					for( int k = 0; k < d; k++ ) {
+						P12[j][k] += (x1[j] * x2[k] - P12[j][k])/(count);
+						P13[j][k] += (x1[j] * x3[k] - P13[j][k])/(count);
 					}
 				}
 			}
 		}
-		return P12;
 	}
 	
 	protected class Triples132 implements Tensor {
@@ -141,6 +141,7 @@ public class WordClustering {
 		@Override
 		public SimpleMatrix project( int axis, SimpleMatrix theta ) {
 			assert( 0 <= axis && axis < 3 );
+			double[] theta_ = theta.getMatrix().data;
 			
 			// Select the appropriate index
 			int off0, off1, off2;
@@ -158,31 +159,29 @@ public class WordClustering {
 					throw new IndexOutOfBoundsException();
 			}
 			
-			int n = C.projectionDim;
-			SimpleMatrix P132 = new SimpleMatrix( n, n );
-			for( int[] c : C.C ) {
+			int d = C.projectionDim;
+			double[][] P132 = new double[d][d];
+			double count = 0.0;
+			for( int c_i = 0; c_i < C.C.length; c_i++ ) {
+				int[] c = C.C[c_i];
 				int l = c.length - 2;
 				for( int i = 0; i < l; i++ )
 				{
-					SimpleMatrix x1 = C.getFeatureForWord( c[i+off0] );
-					SimpleMatrix x2 = C.getFeatureForWord( c[i+off1] );
-					SimpleMatrix x3 = C.getFeatureForWord( c[i+off2] );
-					double prod = 0.0;
-					for( int j = 0; j < n; j++ ) {
-						prod += x3.get(j) * theta.get(j);
-					}
+					double[] x1 = C.getFeatureForWord( c[i+off0] );
+					double[] x2 = C.getFeatureForWord( c[i+off1] );
+					double[] x3 = C.getFeatureForWord( c[i+off2] );
+					double prod = VectorOps.dot( x2, theta_);
 							
+					count++;
 					// Add into P13
-					for( int j = 0; j < n; j++ ) {
-						for( int k = 0; k < n; k++ ) {
-							double p = P132.get( j, k );
-							p += ( prod * x1.get(j) * x2.get(k) - p)/(i+1);
-							P132.set( j, k, p );
+					for( int j = 0; j < d; j++ ) {
+						for( int k = 0; k < d; k++ ) {
+							P132[j][k] += (prod * x1[j] * x3[k] - P132[j][k])/count;
 						}
 					}
 				}
 			}
-			return P132;
+			return new SimpleMatrix(P132);
 		}
 	
 	}
@@ -196,30 +195,51 @@ public class WordClustering {
 		return MatrixFactory.projectOntoSimplex( P ); 
 	}
 	
-	protected String[][] run() throws RecoveryFailure, IOException {
-		C = Corpus.parseText(Paths.get( inputPath ), cutoff);
-		// Map the words onto features
-		C.setProjection(seed, d);
+	@Override
+	public void run() {
+		try {
+			C = Corpus.parseText(Paths.get( inputPath ), cutoff);
+			// Map the words onto features
+			C.setProjection(seed, d);
+		} catch( IOException e ) {
+			return;
+		}
 		
 		MultiViewMixture algo = new MultiViewMixture();
-		
 		// Get the moments
 		// Get the moments because storing the matrices takes too much memory
-		SimpleMatrix P12 = GetPairs12();
-		SimpleMatrix P13 = GetPairs13();
+		double[][] P12_ = new double[d][d];
+		double[][] P13_ = new double[d][d];
+		GetPairs(P12_, P13_);
+		SimpleMatrix P12 = new SimpleMatrix( P12_ );
+		SimpleMatrix P13 = new SimpleMatrix( P13_ );
 		Tensor P132 = new Triples132();
+		SimpleMatrix O;
 		
 		// Get the cluster centers
-		SimpleMatrix O_ = algo.recoverM3( k, P13, P12, P132 );
-		
-		// Find the probability of various words appearing by 
-		// inverting the transform.
-		SimpleMatrix O = getTopicsFromMeans(O_);
-		
+		try {
+			SimpleMatrix O_ = algo.recoverM3( k, P13, P12, P132 );
+			// Find the probability of various words appearing by 
+			// inverting the transform.
+			O = getTopicsFromMeans(O_);
+		} catch( RecoveryFailure e ) {
+			return;
+		}
 		
 		int[][] clusters_ = createClusters( O );
+		String[][] wordClusters = getWordsForClusters(clusters_);
 		
-		return getWordsForClusters(clusters_);
+		String outputPath = Execution.getFile("output.clusters");
+		
+		try (BufferedWriter writer = Files.newBufferedWriter(Paths.get( outputPath ), Charset.defaultCharset())) {
+			for( int i = 0; i < wordClusters.length; i++) {
+				for( String word : wordClusters[i] )
+					writer.write( word + " " );
+				writer.write("\n");
+			}
+		} catch (IOException x) {
+		    System.err.format("IOException: %s%n", x);
+		}
 	}
 
 	/**
@@ -229,20 +249,6 @@ public class WordClustering {
 	 * @throws RecoveryFailure 
 	 */
 	public static void main(String[] args) throws IOException, RecoveryFailure {
-		WordClustering algo = new WordClustering();
-		OptionsParser parser = new OptionsParser(algo);
-		parser.doParse(args);
-		
-		String[][] clusters = algo.run();
-		
-		try (BufferedWriter writer = Files.newBufferedWriter(Paths.get( algo.outputPath ), Charset.defaultCharset())) {
-			for( int i = 0; i < clusters.length; i++) {
-				for( String word : clusters[i] )
-					writer.write( word + " " );
-				writer.write("\n");
-			}
-		} catch (IOException x) {
-		    System.err.format("IOException: %s%n", x);
-		}
+		Execution.run( args, new WordClustering() );
 	}
 }
