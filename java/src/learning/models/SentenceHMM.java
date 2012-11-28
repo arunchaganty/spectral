@@ -6,12 +6,7 @@
 package learning.models;
 
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.Comparator;
-
-import learning.utils.Misc;
 import learning.utils.ParsedCorpus;
-import learning.utils.RandomFactory;
 
 /**
  * A HMM model for sentences

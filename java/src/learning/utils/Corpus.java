@@ -17,8 +17,9 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Vector;
 
-import org.ejml.data.DenseMatrix64F;
 import org.ejml.simple.SimpleMatrix;
+
+import com.spaceprogram.kittycache.KittyCache;
 
 /**
  * Stores a corpus in an integer array
@@ -30,6 +31,7 @@ public class Corpus {
 	public int projectionDim;
 	protected Random rnd;
 	protected long[] seeds;
+	protected KittyCache<Integer, double[]> featureCache;
 	
 	public static final String DIGIT_CLASS = "@DIGIT@";
 	public static final String LOWER_CLASS = "@LOWER@";
@@ -41,6 +43,7 @@ public class Corpus {
 		this.C = C;
 		this.rnd = new Random(projectionSeed);
 		this.seeds = null;
+		this.featureCache = new KittyCache<>( 1000 );
 	}
 	
 	/**
@@ -144,13 +147,7 @@ public class Corpus {
 	public void setProjection(long seed, int d) {
 		this.projectionSeed = seed;
 		this.projectionDim = d;
-	}
-	
-	/**
-	 * Populate the projection table
-	 * @param seed
-	 */
-	protected void cacheProjections() {
+		
 		seeds = new long[ dict.length ];
 		rnd.setSeed(projectionSeed);
 		for(int i = 0; i < dict.length; i++ ) {
@@ -163,14 +160,22 @@ public class Corpus {
 	 * @param i
 	 * @return
 	 */
-	public SimpleMatrix getFeatureForWord( int i ) {
-		if( seeds == null ) cacheProjections();
+	public double[] getFeatureForWord( int i, boolean shouldCache ) {
+		double[] x = featureCache.get(i);
+		if( x == null ) {
+			rnd.setSeed(seeds[i]);
+			x = new double[projectionDim];
+			for(int j = 0; j < projectionDim; j++ )
+				//x[j] = 10 * rnd.nextGaussian();
+				x[j] = 10 * rnd.nextDouble();
+			if( shouldCache )
+				featureCache.put(i, x, -1);
+		}
 		
-		rnd.setSeed(seeds[i]);
-		DenseMatrix64F x = new DenseMatrix64F(projectionDim, 1);
-		for(int j = 0; j < projectionDim; j++ )
-			x.set(j, rnd.nextGaussian());
-		return SimpleMatrix.wrap(x);
+		return x;
+	}
+	public double[] getFeatureForWord( int i ) {
+		return getFeatureForWord(i, true);
 	}
 	
 	/**
@@ -178,15 +183,24 @@ public class Corpus {
 	 * @param feature
 	 * @return
 	 */
-	public SimpleMatrix getWordDistribution( SimpleMatrix x ) {
-		if( seeds == null ) cacheProjections();
-		
-		DenseMatrix64F z = new DenseMatrix64F(dict.length, 1);
-		for(int i = 0; i < dict.length; i++ )
-			z.set(i, getFeatureForWord(i).dot( x ) );
-		return SimpleMatrix.wrap(z);
+	public double[] getWordDistribution( double[] x ) {
+		double[] z = new double[dict.length];
+		for(int i = 0; i < dict.length; i++ ) {
+			double[] feature = getFeatureForWord(i);
+			z[i] = VectorOps.dot(feature, x);
+		}
+		return z;
 	}
 	
-	
-	
+	public SimpleMatrix getWordDistribution( SimpleMatrix x ) {
+		double[] x_ = x.getMatrix().data;
+		
+		double[] z = new double[dict.length];
+		for(int i = 0; i < dict.length; i++ ) {
+			double[] feature = getFeatureForWord(i, false);
+			z[i] = VectorOps.dot(feature, x_);
+		}
+		double[][] z_ = {z};
+		return new SimpleMatrix( z_ );
+	}
 }

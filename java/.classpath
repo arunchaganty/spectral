@@ -5,7 +5,8 @@
 	<classpathentry exported="true" kind="lib" path="deps/ejml-0.20.jar"/>
 	<classpathentry kind="lib" path="deps/fig.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
-	<classpathentry kind="lib" path="/media/world/Research/spectral/java/deps/javatuples-1.2.jar"/>
-	<classpathentry kind="lib" path="/media/world/Research/spectral/java/deps/javatuples-1.2-javadoc.jar"/>
+	<classpathentry kind="lib" path="deps/javatuples-1.2.jar"/>
+	<classpathentry kind="lib" path="deps/javatuples-1.2-javadoc.jar"/>
+	<classpathentry kind="lib" path="deps/KittyCache-1.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
