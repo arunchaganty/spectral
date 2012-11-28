@@ -15,10 +15,9 @@ def count_frequency( X, d ):
 
 Pairs = _data.Pairs
 Triples = _data.Triples
-
-def TriplesP(X1, X2, X3, theta):
-    theta = sc.float32( theta ) 
-    return _data.TriplesP( X1, X2, X3, theta )
+TriplesP = _data.TriplesP
+PairsQ = _data.PairsQ
+TriplesPQ = _data.TriplesPQ
 
 def test_pairs():
     """Test Pairs"""
@@ -27,8 +26,8 @@ def test_pairs():
     N = 1000
     d = 10
 
-    X1 = sc.float32( sc.random.rand( N, d ) )
-    X2 = sc.float32( sc.random.rand( N, d ) )
+    X1 = sc.random.rand( N, d )
+    X2 = sc.random.rand( N, d )
 
     P = Pairs( X1, X2 )
 
@@ -45,9 +44,9 @@ def test_triplesp():
     N = 1000
     d = 10
 
-    X1 = sc.float32( sc.random.rand( N, d ) )
-    X2 = sc.float32( sc.random.rand( N, d ) )
-    X3 = sc.float32( sc.random.rand( N, d ) )
+    X1 = sc.random.rand( N, d )
+    X2 = sc.random.rand( N, d )
+    X3 = sc.random.rand( N, d )
 
     theta = sc.random.rand( d )
 

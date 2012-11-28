@@ -48,8 +48,7 @@ class Model:
         # the metadata "params"
 
         self.dname = tempfile.mkdtemp()
-        arr = sc.memmap( os.path.join(self.dname,name), mode="w+", dtype=sc.float32, shape=shape )
-        #arr = sc.zeros( dtype=sc.float32, shape=shape )
+        arr = sc.memmap( os.path.join(self.dname,name), mode="w+", shape=shape )
         return arr
 
     def save(self):

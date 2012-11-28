@@ -58,7 +58,7 @@ class GaussianMixtureModel( Model ):
             def update( start, stop ):
                 """Sample random vectors and then assign them to X in
                 order"""
-                Y = sc.float32( multivariate_normal( mean, sigma, int(stop - start) ) )
+                Y = multivariate_normal( mean, sigma, int(stop - start) )
                 # Insert into X in a shuffled order
                 p = perm[ start:stop ]
                 perm_ = p[ p < n ]
@@ -205,7 +205,7 @@ class MultiViewGaussianMixtureModel( Model ):
                 def update( start, stop ):
                     """Sample random vectors and then assign them to X in
                     order"""
-                    Y = sc.float32( multivariate_normal( mean, sigma, int(stop - start) ) )
+                    Y = multivariate_normal( mean, sigma, int(stop - start) )
                     # Insert into X in a shuffled order
                     p = perm[ start:stop ]
                     perm_ = p[ p < n ]
