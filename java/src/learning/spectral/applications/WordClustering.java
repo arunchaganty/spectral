@@ -24,6 +24,7 @@ import learning.utils.VectorOps;
 import org.ejml.simple.SimpleMatrix;
 import org.javatuples.Pair;
 
+import fig.basic.LogInfo;
 import fig.basic.Option;
 import fig.exec.Execution;
 
@@ -90,6 +91,7 @@ public class WordClustering implements Runnable {
 	
 	protected SimpleMatrix GetPairs13() {
 		int n = C.projectionDim;
+		LogInfo.begin_track( "P13" );
 		
 		double[][] P13 = new double[n][n];
 		double count = 0.0;
@@ -107,13 +109,16 @@ public class WordClustering implements Runnable {
 					}
 				}
 			}
+			Execution.putOutput( "P13 status", c_i + "/" + C.C.length );
 		}
+		LogInfo.end_track( "P13" );
 		return new SimpleMatrix(P13);
 	}
 	
 	protected void GetPairs(double[][] P12, double [][] P13) {
 		int d = C.projectionDim;
 		
+		LogInfo.begin_track( "Pairs" );
 		double count = 0.0;
 		for( int c_i = 0; c_i < C.C.length; c_i++ ) {
 			int[] c = C.C[c_i];
@@ -132,7 +137,10 @@ public class WordClustering implements Runnable {
 					}
 				}
 			}
+			if( c_i % 10 == 0 )
+				Execution.putOutput( "Pairs status", ((float)c_i * 100)/C.C.length );
 		}
+		LogInfo.end_track( "Pairs" );
 	}
 	
 	protected class Triples132 implements Tensor {
@@ -159,6 +167,7 @@ public class WordClustering implements Runnable {
 					throw new IndexOutOfBoundsException();
 			}
 			
+			LogInfo.begin_track( "P132" );
 			int d = C.projectionDim;
 			double[][] P132 = new double[d][d];
 			double count = 0.0;
@@ -180,7 +189,9 @@ public class WordClustering implements Runnable {
 						}
 					}
 				}
+				Execution.putOutput( "P132 status", ((float)c_i * 100)/C.C.length );
 			}
+			LogInfo.end_track( "P132" );
 			return new SimpleMatrix(P132);
 		}
 	
@@ -198,10 +209,14 @@ public class WordClustering implements Runnable {
 	@Override
 	public void run() {
 		try {
+			LogInfo.begin_track("preprocessing");
 			C = Corpus.parseText(Paths.get( inputPath ), cutoff);
+			LogInfo.logsForce( "Parsed corpus" );
 			// Map the words onto features
 			C.setProjection(seed, d);
+			LogInfo.end_track("preprocessing");
 		} catch( IOException e ) {
+			LogInfo.error( e.getMessage() );
 			return;
 		}
 		
@@ -223,11 +238,14 @@ public class WordClustering implements Runnable {
 			// inverting the transform.
 			O = getTopicsFromMeans(O_);
 		} catch( RecoveryFailure e ) {
+			LogInfo.errors( "Could not recover M3:", e.getMessage() );
 			return;
 		}
 		
+		LogInfo.begin_track("postprocessing");
 		int[][] clusters_ = createClusters( O );
 		String[][] wordClusters = getWordsForClusters(clusters_);
+		LogInfo.end_track("postprocessing");
 		
 		String outputPath = Execution.getFile("output.clusters");
 		

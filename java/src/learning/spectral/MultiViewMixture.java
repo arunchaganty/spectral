@@ -13,6 +13,8 @@ import learning.utils.Tensor;
 import org.ejml.simple.SimpleEVD;
 import org.ejml.simple.SimpleMatrix;
 
+import fig.basic.LogInfo;
+
 /**
  * Implementation of the technique described in Anandkumar, 
  * Hsu, Kakade, "A Method of Moments for Mixture Models and
@@ -72,7 +74,7 @@ public class MultiViewMixture extends MomentMethod {
 		Theta = U3.mult( Theta );
 		
 		SimpleMatrix theta = MatrixFactory.col( Theta, 0 );
-		SimpleMatrix P123T = P123.project(2, theta );
+		SimpleMatrix P123T = P123.project(2, theta);
 		assert( P123T.svd().rank() >= k );
 		
 		// B123 = (U1' P123 U2) (U1' P12 U2)^-1
@@ -81,6 +83,7 @@ public class MultiViewMixture extends MomentMethod {
 		SimpleMatrix B123 = U1T.mult( P123T )
 				.mult( U2 ).mult( U1P12U2_1 );
 		
+		LogInfo.begin_track("simultaneously diagonalization");
 		try {
 			@SuppressWarnings("unchecked")
 			SimpleEVD<SimpleMatrix> EVD = B123.eig();
@@ -88,12 +91,17 @@ public class MultiViewMixture extends MomentMethod {
 			for( int i = 0; i<k; i++ )
 			{
 				if( !EVD.getEigenvalue(i).isReal() )
+				{
+					LogInfo.error("Non-real eigen value at index " + i);
+					LogInfo.end_track("simultaneously diagonalization");
 					throw new NumericalException();
+				}
 				L.set( 0, i, EVD.getEigenvalue(i).real );
 				MatrixFactory.setRow( R, i, EVD.getEigenVector(i));
 			}
 			R_ = R.invert();
 		} catch( RuntimeException e ) {
+			LogInfo.end_track("simultaneously diagonalization");
 			throw new NumericalException( e.getMessage() );
 		}
 		
@@ -105,6 +113,7 @@ public class MultiViewMixture extends MomentMethod {
 					.mult( U2 ).mult( U1P12U2_1 );
 			MatrixFactory.setRow( L, i, MatrixFactory.diag( R_.mult(B123_).mult(R) ) );
 		}
+		LogInfo.end_track("simultaneously diagonalization");
 		
 		return L;
 	}
@@ -121,6 +130,7 @@ public class MultiViewMixture extends MomentMethod {
 	 * @throws RecoveryFailure 
 	 */
 	public SimpleMatrix recoverM3( int k, SimpleMatrix P12, SimpleMatrix P13, Tensor P123 ) throws RecoveryFailure {
+		LogInfo.begin_track("spectral");
 		// Get U1, U2, U3
 		SimpleMatrix[] U1DU2 = MatrixFactory.svdk(P12, k);
 		SimpleMatrix U1T = U1DU2[0].transpose();
@@ -128,15 +138,19 @@ public class MultiViewMixture extends MomentMethod {
 		SimpleMatrix[] U1DU3 = MatrixFactory.svdk(P13, k);
 		SimpleMatrix U3 = U1DU3[2];
 		
+		LogInfo.logsForce( "Subspace computation done." );
+		
 		// Try to project onto theta 
 		for( int i = 0; i < 100; i++ )
 		{
 			try{
+				LogInfo.logs( "Attempt %d", i );
 				// Project onto an orthogonal basis set
 				SimpleMatrix Theta = RandomFactory.orthogonal( k );
 				SimpleMatrix L = attemptRecovery(k, U1T, U2, U3, P12, P123, Theta);
 				
 				// Reconstruct
+				LogInfo.end_track("spectral");
 				return U3.mult( Theta.transpose().invert() ).mult( L );
 			}
 			catch( NumericalException e )
@@ -145,6 +159,7 @@ public class MultiViewMixture extends MomentMethod {
 			}
 		}
 		
+		LogInfo.end_track("spectral");
 		throw new RecoveryFailure();
 	}
 	
