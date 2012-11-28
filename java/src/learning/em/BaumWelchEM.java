@@ -6,10 +6,7 @@
 package learning.em;
 
 import learning.models.HMM;
-import learning.models.SentenceHMM;
 import learning.utils.Corpus;
-import learning.utils.Misc;
-import learning.utils.RandomFactory;
 
 /**
  * Baum Welch EM

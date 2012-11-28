@@ -32,6 +32,7 @@ public class HMM implements Serializable {
 			O = new double[stateCount][emissionCount];
 		}
 		
+		@Override
 		public Params clone() {
 			Params p = new Params(stateCount, emissionCount);
 			p.pi = pi.clone();
