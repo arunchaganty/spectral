@@ -13,20 +13,45 @@ Then, informally, our algorithm is:
 
 #. Center and whiten $X$.
 #. Generate $\Sigma_i \sim Wishart(d,I)$, and define $q_i = \normal{0}{\Sigma_i}$.
-#. Compute $M^2 = (M^2_1, ..., M^2_{d'})$ where $M^2_i = \E_{q_i}[ y^2 ]$ for $0 \le i \le \frac{d (d-1)}{2} = d'$. 
+#. Compute $M_2 = (M_{21}, ..., M_{2d'})$ where $M_{2i} = \E_{q_i}[ y^2 ]$ for $0 \le i \le \frac{d (d-1)}{2} = d'$. 
 #. Compute $S = [\triu(\Sigma_1) | \cdots | \triu(\Sigma_n)]$ and then, the off
-   diagonal elements of $B^2 = \beta \diag(\pi) \beta^T$ are $S^{-1} M^2/2$ (because the matrix is symmetric) and
-   the diagonal elements are $S^{-1} M^2$.
-#. Similarly, compute $B^3(U^T \theta)$
-#. Use $B^2$ to "whiten" $B^3$, allowing us to read off $\beta^T U^T \theta$ by looking at the singular values.
+   diagonal elements of $B_2 = \beta \diag(\pi) \beta^T$ are $S^{-1} M_2/2$ (because the matrix is symmetric) and
+   the diagonal elements are $S^{-1} M_2$.
+#. Similarly, compute $B^3(U^T \theta)$. *NOTE:* We might run into a bottleneck
+   with the third moments of the Gaussian being $0$.
+#. Use $B_2$ to "whiten" $B^3$, allowing us to read off $\beta^T U^T \theta$ by looking at the singular values.
 #. Adjust $\beta$ by inverting $U^T \Theta$, unwhitening and finally uncentering.
+
+There is still a lingering issue that we are obviously not using the data as
+effectively as possible - we should only need $d k$ samples of $q$, since that
+is how many parameters there really are.
 
 Recovering $y = \|x\|_1$
 ========================
 
 This runs into an issue that the number of lines implicitly defined in this
-distribution $k$ is $2^d > d$, so our technique described above doesn't work.
+distribution $k$ is $2^d > d$, so our technique described above doesn't work,
+since the rank is $\le d < k$.
 
-The main bottleneck in extending it is that $B^2$ and would have a rank $\le d < k$.
+Relaxing the distribution over X
+================================
 
+In the algorithm above, we make the assumption that $X$ is Gaussian to adjust
+the distribution with $q$. One way we could relax this whole setup is to
+arbitrarily reweigh the _observed points_ according to some $w(x) ~ Dirichlet(\alpha)$. 
+The distribution of $q$ is then a sample from a _Dirichlet process_ with base distribution
+$p(x)$ (in the limit atleast).
+
+We could use the mean "measure" of the DP to calculate the inverse transforms we
+need to effect to recover our desired moments.
+
+
+Todo Items
+==========
+
+#. Instrument the experiments to try and find out why they are taking as long as
+   they are.
+#. Study the properties of the Dirichlet process and try to compute the means,
+   etc.
+#. Work out the factors when there is some noise present.
 
