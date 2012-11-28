@@ -1,0 +1,58 @@
+% November 27, 2012  
+
+Status of Experiments
+=====================
+
+I spent a considerable amount of time in the evening instrumenting and trying to
+identify why the spectral clustering algorithms were taking so long. 
+
+With the Eclipse profilers failing or running out of heap memory for some
+reason, I tried attacking the major bottlenecks that I could discern, like
+function call overhead while setting and getting elements of the SimpleMatrix
+over using a native unboxed matrix (double[][]). I also used a cache library to
+take care of caching the feature vectors for words; the cache had a hit ratio of
+nearly 80%, so that was definitely a good idea.
+
+These improvements did speed up the program, but not by a significant order.  It
+seems like the NetBeans profiler is the only one out there that actually works.
+The profiler basically said that the largest fraction of time was spent in the
+function itself; which was obvious in retrospect - it just takes that long to
+compute the outer product of two 1000 vectors; it's a million multiplications!
+
+With all my optimisations, I had a "throughput" of roughly 200
+outer-products/second which was quite reasonable compared to the 1000
+outer-products/second I could achieve with a much simplified C++ program. The
+final conclusion is hence - I can't handle $d=1000$ in this set up, and need to
+drop $d$ and the number of entries in order to actually get any results.
+
+Unfortunately, I am now running into a numerical issue; $B_{123}(\theta)$ is
+throwing out imaginary eigenvalues. I had faced this problem earlier when $k$
+was too large relative to $d$, yet it gave me this problem for almost all
+reasonable values of $k$ and $d$. I will need to write some tests on some very
+simple clean HMM data and debug this issue.
+
+Simplification of the Surrogate Distributions and New Algorithm
+===============================================================
+
+The novel idea for our approach for the mixture of linear regressions boils down
+to importance-reweighting of the moment computations. Percy pointed out to me
+that I did not even need to compute the moments for the algorithm to pull
+through because we can compute $\E_{q}[X X^T]$!
+
+The algorithm is thus,
+_
+#. Center and whiten $X$.
+#. Generate an arbitrary re-weighting of the data from the symmetric Dirichlet prior; $q_i \sim Dirichlet(\alpha}$. 
+#. Compute $X_{2i} = \E_{q_i}[X X^T]$ and $M_{2i} = \E_{q_i}[ y^2 ]$ for $0 \le i \le \frac{d (d-1)}{2} = d'$. 
+#. Compute $S = [X_{21} | \cdots | X_{2d'} ]$ and then, the off diagonal
+   elements of $B_2 = \beta \diag(\pi) \beta^T$ are $S^{-1} M_2/2$ (because the
+   matrix is symmetric) and the diagonal elements are $S^{-1} M_2$.
+#. Similarly, we can compute $B^3(U^T \theta)$. 
+#. Use $B_2$ to "whiten" $B^3$, allowing us to read off $\beta^T U^T \theta$ by looking at the singular values.
+#. Adjust $\beta$ by inverting $U^T \Theta$, unwhitening and finally uncentering.
+
+The only steps that have really changed here are how we compute $q$. Taking
+a Dirichlet over the whole set of points seems somewhat far-fetched, but it
+seems like it could easily be overcome in practice by weighing partitions of the
+data, etc.
+
