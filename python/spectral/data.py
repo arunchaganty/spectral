@@ -16,7 +16,7 @@ def count_frequency( X, d ):
 Pairs = _data.Pairs
 PairsQ = _data.PairsQ
 Triples = _data.Triples
-TriplesQ = _data.TriplesP
+TriplesQ = _data.TriplesQ
 TriplesP = _data.TriplesP
 TriplesPQ = _data.TriplesPQ
 
