@@ -221,14 +221,15 @@ def test_sample_recovery():
 
 def test_discrete():
     """Test the accuracy of sample recovery"""
-    k = 2
-    d = 3
+    K = 2
+    d = 2
 
     # Simple orthogonal lines
-    B = eye(d)[:,:k]
+    B = eye(d)[:,:K]
+    #B = sc.randn(d,k)
     pi = ones(d)/d
     B2 = B.T.dot(diag(pi)).dot(B)
-    B3 = sum( [ pi[i] * tensorify(B.T[i], B.T[i], B.T[i] ) for i in xrange(k) ] )
+    B3 = sum( [ pi[i] * tensorify(B.T[i], B.T[i], B.T[i] ) for i in xrange(K) ] )
 
     N = 5
     X = sc.randn(N,d)
@@ -244,38 +245,49 @@ def test_discrete():
     Q = dirichlet( ones(N), d_ )
 
     X2 = X2_0.dot( Q.T )
-    assert( det(X2) > 1e-6 )
+    assert( abs( det(X2) ) > 1e-6 )
 
     Y2 = X2.dot( B2[indices] )
 
     B2_ = zeros((d,d))
     B2_[indices] = inv(X2).dot( Y2 )
     B2_ = (B2_ + B2_.T) - diag(diag( B2_ ))
-    assert( sc.allclose( B2[indices], B2_[indices] ) )
+    print B2, B2_
+    assert( sc.allclose( B2, B2_ ) )
 
     # Recovering B3
     indices = []
     for i in xrange(d):
-        indices.append( (i, i, i ) )
-        for j in xrange(i+1, d):
-            indices.append( (i, i, j ) )
-            for k in xrange(j+1, d):
+        for j in xrange(i, d):
+            for k in xrange(j, d):
                 indices.append( (i, j, k) )
+
+    d_ = len(indices) 
     indices = zip(* indices)
 
-    d_ = d * (d**2 + 5)/6
-    B3 = zeros( d_ )
     X3_0 = sc.column_stack( [tensorify(x,x,x)[indices] for x in X ] )
     Q = dirichlet( ones(N), d_ )
 
     X3 = X3_0.dot( Q.T )
-    assert( det(X3) > 1e-6 )
+    assert( abs( det(X3) ) > 1e-6 )
 
     Y3 = X3.dot( B3[indices] )
 
     B3_ = zeros((d,d,d))
     B3_[indices] = inv(X3).dot(Y3)
-    B3_ = ( sc.swapaxes( B3_, 0, 1 ) + sc.swapaxes( B3_, 0, 2 ) + sc.swapaxes( B3_, 1, 2 ) )/6
-    assert( sc.allclose( B3[indices], B3_[indices] ) )
+    # appropriately divide to account for the symmetries
+    B3_ = ( sc.swapaxes( B3_, 0, 1 ) + sc.swapaxes( B3_, 0, 2 ) + sc.swapaxes( B3_, 1, 2 ) ) 
+    for i in xrange(d):
+        B3_[i,i,i] /= 3
+    print B3, B3_
+    assert( sc.allclose( B3, B3_ ) )
 
+    # Recovering B
+    B_ = recover_B( K, d, B2_, B3_ )
+    B_ = closest_permuted_matrix( B.T, B_.T ).T
+
+    print B
+    print B_
+
+    assert( sc.allclose( B, B_ ) )
 
