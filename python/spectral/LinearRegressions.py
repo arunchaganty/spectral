@@ -219,3 +219,53 @@ def test_sample_recovery():
 
     assert( sc.allclose( B2, B2_ ) )
 
+def test_discrete():
+    """Test the accuracy of sample recovery"""
+    k = 2
+    d = 2
+
+    # Simple orthogonal lines
+    B = eye(2)
+    pi = ones(2)/2
+    B2 = B.T.dot(diag(pi)).dot(B)
+
+    x = sc.randn(5,d)
+
+    # Probability of generating the 5 points 0, (+/-1,+/-1)
+    pX = ones(5)/5
+
+    indices = sc.triu_indices(d)
+
+    def X2(q):
+        Y = zeros((d,d))
+        for i in xrange(d):
+            Y += q[i] * outer( x[i], x[i] )
+        return Y
+
+    def Y2(q):
+        return X2(q).flatten().dot( B2.flatten() )
+
+    # For (d * d+1)/2 = 3 q's run the algorithm
+    d_ = d * (d+1) / 2
+    Q = array( [ones(5)/5, [0.1,0.2,0.3,0.2,0.2], [0.1, 0.3, 0.2, 0.15, 0.25]] )
+    
+    dirichlet( ones(5), d_ )
+    
+    Theta = zeros( (d_, d_ ) )
+    B2_Theta = zeros( d_ )
+    for i in xrange(d_):
+        q = Q[i]
+        Theta[i] = X2(q)[indices]
+        B2_Theta[i] = Y2(q)
+
+    B2_ = zeros((d,d))
+    B2_[indices] = inv(Theta).dot( B2_Theta )
+    B2_ = (B2_ + B2_.T) / 2
+
+    print B2 
+    print B2_
+    
+    ipdb.set_trace()
+
+    assert( sc.allclose( B2[indices], B2_[indices] ) )
+
