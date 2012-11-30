@@ -222,50 +222,60 @@ def test_sample_recovery():
 def test_discrete():
     """Test the accuracy of sample recovery"""
     k = 2
-    d = 2
+    d = 3
 
     # Simple orthogonal lines
-    B = eye(2)
-    pi = ones(2)/2
+    B = eye(d)[:,:k]
+    pi = ones(d)/d
     B2 = B.T.dot(diag(pi)).dot(B)
+    B3 = sum( [ pi[i] * tensorify(B.T[i], B.T[i], B.T[i] ) for i in xrange(k) ] )
 
-    x = sc.randn(5,d)
+    N = 5
+    X = sc.randn(N,d)
 
-    # Probability of generating the 5 points 0, (+/-1,+/-1)
-    pX = ones(5)/5
+    # Recovering B2
 
+    # The X2's are really the X's unrolled
     indices = sc.triu_indices(d)
-
-    def X2(q):
-        Y = zeros((d,d))
-        for i in xrange(d):
-            Y += q[i] * outer( x[i], x[i] )
-        return Y
-
-    def Y2(q):
-        return X2(q).flatten().dot( B2.flatten() )
+    X2_0 = sc.column_stack( [ outer( x, x )[indices] for x in X ] )
 
     # For (d * d+1)/2 = 3 q's run the algorithm
     d_ = d * (d+1) / 2
-    Q = array( [ones(5)/5, [0.1,0.2,0.3,0.2,0.2], [0.1, 0.3, 0.2, 0.15, 0.25]] )
-    
-    dirichlet( ones(5), d_ )
-    
-    Theta = zeros( (d_, d_ ) )
-    B2_Theta = zeros( d_ )
-    for i in xrange(d_):
-        q = Q[i]
-        Theta[i] = X2(q)[indices]
-        B2_Theta[i] = Y2(q)
+    Q = dirichlet( ones(N), d_ )
+
+    X2 = X2_0.dot( Q.T )
+    assert( det(X2) > 1e-6 )
+
+    Y2 = X2.dot( B2[indices] )
 
     B2_ = zeros((d,d))
-    B2_[indices] = inv(Theta).dot( B2_Theta )
-    B2_ = (B2_ + B2_.T) / 2
-
-    print B2 
-    print B2_
-    
-    ipdb.set_trace()
-
+    B2_[indices] = inv(X2).dot( Y2 )
+    B2_ = (B2_ + B2_.T) - diag(diag( B2_ ))
     assert( sc.allclose( B2[indices], B2_[indices] ) )
+
+    # Recovering B3
+    indices = []
+    for i in xrange(d):
+        indices.append( (i, i, i ) )
+        for j in xrange(i+1, d):
+            indices.append( (i, i, j ) )
+            for k in xrange(j+1, d):
+                indices.append( (i, j, k) )
+    indices = zip(* indices)
+
+    d_ = d * (d**2 + 5)/6
+    B3 = zeros( d_ )
+    X3_0 = sc.column_stack( [tensorify(x,x,x)[indices] for x in X ] )
+    Q = dirichlet( ones(N), d_ )
+
+    X3 = X3_0.dot( Q.T )
+    assert( det(X3) > 1e-6 )
+
+    Y3 = X3.dot( B3[indices] )
+
+    B3_ = zeros((d,d,d))
+    B3_[indices] = inv(X3).dot(Y3)
+    B3_ = ( sc.swapaxes( B3_, 0, 1 ) + sc.swapaxes( B3_, 0, 2 ) + sc.swapaxes( B3_, 1, 2 ) )/6
+    assert( sc.allclose( B3[indices], B3_[indices] ) )
+
 
