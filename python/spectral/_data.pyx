@@ -71,6 +71,7 @@ def PairsQ(np.ndarray[DTYPE_t, ndim=2] x, np.ndarray[DTYPE_t, ndim=1] q):
                 pairs[i,j] += (q[n] * x[n,i] * x[n,j] - pairs[i,j])/(n+1)
     return pairs
 
+@cython.boundscheck(False) 
 def Triples(np.ndarray[DTYPE_t, ndim=2] x1, np.ndarray[DTYPE_t, ndim=2]
         x2, np.ndarray[DTYPE_t, ndim=2] x3):
     """Compute E[x1 \ctimes x2 \ctimes x3 ]"""
@@ -89,6 +90,7 @@ def Triples(np.ndarray[DTYPE_t, ndim=2] x1, np.ndarray[DTYPE_t, ndim=2]
                     triples[i,j,k] += (x1[n,i] * x2[n,j] * x3[n,k] - triples[i,j,k])/(n+1)
     return triples
 
+@cython.boundscheck(False) 
 def TriplesQ(np.ndarray[DTYPE_t, ndim=2] x, np.ndarray[DTYPE_t, ndim=1] q):
     """Compute E[x1 \ctimes x2 \ctimes x3 ]"""
 

@@ -10,19 +10,23 @@ import sys
 from util.DataLogger import DataLogger
 from util.ProgressBar import ProgressBar
 
-def chunked_update( fn, start, step, stop ):
+def chunked_update( fn, start, step, stop, show_pbar = False ):
     """Run @fn with arguments @start to @stop in @step sized blocks."""
-    pbar = ProgressBar()
+    if show_pbar:
+        pbar = ProgressBar()
 
     iters = int( (stop - start)/step )
-    pbar.start( iters )
+    if show_pbar:
+        pbar.start( iters )
     for i in xrange( iters ):
         fn( start, start + step )
         start += step
-        pbar.update( i )
+        if show_pbar:
+            pbar.update( i )
     if start < stop:
         fn( start, stop )
-    pbar.stop()
+    if show_pbar:
+        pbar.stop()
 
 def slog( x ):
     """Safe log - preserve 0"""
