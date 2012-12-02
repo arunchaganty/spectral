@@ -95,7 +95,9 @@ class LinearRegressionsMixture( Model ):
         else:
             raise NotImplementedError
 
-        if betas == "random":
+        if betas == "eye":
+            B = sc.eye(d)[:,:k]
+        elif betas == "random":
             B = sc.randn( d, k )
         elif isinstance( betas, sc.ndarray ):
             B = betas
