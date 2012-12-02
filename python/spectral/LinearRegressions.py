@@ -4,8 +4,11 @@ Quick implementation of the mixture of linear regressions code
 
 import ipdb
 import scipy as sc 
-from scipy import diag, array, ndim, outer, eye, ones, log, sqrt, zeros, floor
+import scipy.spatial
+import scipy.linalg
+from scipy import diag, array, ndim, outer, eye, ones, log, sqrt, zeros, floor, exp
 from scipy.linalg import norm, svd, svdvals, eig, eigvals, inv, det, cholesky
+from scipy.spatial.distance import cdist
 from spectral.linalg import svdk, mrank, approxk, eigen_sep, \
         closest_permuted_matrix, tensorify, matrix_tensorify, \
         column_aerr, column_rerr,\
@@ -14,64 +17,73 @@ from spectral.rand import orthogonal, wishart, dirichlet
 from spectral.data import Pairs, Triples, PairsQ, TriplesQ
 from models import LinearRegressionsMixture 
 
-def recover_B2( k, d, N, X2, Y2 ):
-    """X2: vector -> matrix, while X3: vector -> tensor"""
-    # Extract B2 by projecting on a large number of S 
-    d_ = d * (d+1) / 2
-    B2 = zeros( d_ )
-
-    # The transform
-    T2 = zeros( (d_, d_) )
-
-    # Generate the qs
-    Q = dirichlet( 0.5 * ones(N), d_ )
-
-    B2_ = zeros( d_ )
+def recover_B2( d, N, y, X ):
+    """ Extract B2 by projecting onto various q """
+    l = 1.0
 
     indices = sc.triu_indices( d )
+    d_ = d * (d+1) / 2
 
+    # Pick a random set of d_ x's from the X
+    X0 = X[:d_]
+    Q = exp( - cdist( X, X0 )**2 / l )
+
+    # The transform
+    Theta = zeros( (d_, d_) )
     for i in xrange( d_ ):
-        q = Q[i]
-        T2[i] = X2(q)[indices]
-        B2_[i] = Y2(q)
+        q = Q.T[i]
+        Theta[i] = PairsQ(X, q)[indices]
+    B2_ = (y**2).dot(Q)/N
 
     B2 = zeros( (d, d) )
-    B2[ indices ] = inv(T2).dot(B2_)
+    B2[ indices ] = inv(Theta).dot(B2_)
     B2 = (B2 + B2.T)/2
 
     return B2
 
-def recover_B3( k, d, N, X3, Y3 ):
-    """X2: vector -> matrix, while X3: vector -> tensor"""
+def recover_B3( d, N, y, X ):
+    """Extract B3 by projecting onto various q"""
+    l = 1.0
 
     indices = []
     for i in xrange(d):
-        indices.append( (i, i, i ) )
-        for j in xrange(i+1, d):
-            indices.append( (i, i, j ) )
-            for k in xrange(j+1, d):
+        for j in xrange(i, d):
+            for k in xrange(j, d):
                 indices.append( (i, j, k) )
+    d_ = len(indices)
     indices = zip(* indices)
-    # Extract B2 by projecting on a large number of S 
-    d_ = d * (d**2 + 5)/6
-    B3 = zeros( d_ )
+
+    # Pick a random set of d_ x's from the X
+    X0 = X[:d_]
+    Q = exp( - cdist( X, X0 )**2 / l )
 
     # The transform
-    T3 = zeros( (d_, d_ ) )
-
-    # Generate the qs
-    Q = dirichlet( 0.5 * ones(N), d_ )
-
-
-    B3_ = zeros( d_ )
+    Theta = zeros( (d_, d_ ) )
     for i in xrange( d_ ):
-        q = Q[i]
-        T3[i] = X3(q)[indices]
-        B3_[i] = Y3(q)
+        q = Q.T[i]
+        Theta[i] = TriplesQ(X, q)[indices]
+    B3_ = (y**3).dot(Q)/N
 
     B3 = zeros( (d, d, d) )
-    B3[  indices ] = inv(T3).dot(B3_)
-    B3 = ( sc.swapaxes( B3, 0, 1 ) + sc.swapaxes( B3, 0, 2 ) + sc.swapaxes( B3, 1, 2 ) )/6
+    B3[  indices ] = inv(Theta).dot(B3_)
+    # Ugly 
+    for i in xrange(d):
+        for j in xrange(i, d):
+            for k in xrange(j, d):
+                if i == j and j == k:
+                    pass
+                elif i != j and j != k:
+                    B3[i,j,k] /= 3
+                else:
+                    B3[i,j,k] /= 2
+    for i in xrange(d):
+        for j in xrange(d):
+            for k in xrange(d):
+                idx = [i,j,k]
+                idx.sort()
+                i_, j_, k_ = idx
+                B3[i,j,k] = B3[i_,j_,k_]  
+    #B3 = ( sc.swapaxes( B3, 0, 1 ) + sc.swapaxes( B3, 0, 2 ) + sc.swapaxes( B3, 1, 2 ) )/6
 
     return B3
 
@@ -110,43 +122,6 @@ def recover_B( k, d, B2, B3 ):
         M3_ = U.dot( inv(theta.T) ).dot( L )
         return M3_
 
-def exact_moments( k, pi, beta, mu, S ):
-    """Get the exact moments from the model parameters"""
-    (d, k) = beta.shape
-
-    B2 = beta.dot( diag( pi ) ).dot( beta.T )
-    B3 = lambda theta: beta.dot( diag( pi ).diag( beta.T.dot( theta ) ) ).dot( beta.T )
-
-    # Get the square root of W
-    W = cholesky( S )
-
-    def M2( S_ ):
-        #S_ = W.T.dot( S ).dot( W )
-        return S_.flatten().dot( B2.flatten() )
-
-    def M3( S_, theta ):
-        #S_ = W.T.dot( S ).dot( W )
-        return S_.flatten().dot( B3(theta).flatten() )
-
-    return M2, M3, B2
-
-def test_exact_recovery():
-    """Test the accuracy of exact recovery"""
-    k = 3
-    d = 10
-
-    fname = "/tmp/test.npz"
-    lrm = LinearRegressionsMixture.generate(fname, k, d)
-    M, S, pi, B = lrm.mean, lrm.sigma, lrm.weights, lrm.betas
-
-    M2, M3, B2 = exact_moments( k, pi, B, M, S )
-
-    #B2_ = recover_parameters( k, d, M2, M3 )
-
-    #ipdb.set_trace()
-
-    #assert( sc.allclose( B2, B2_ ) )
-
 def normalise( y, X ):
 
     # Normalise data 
@@ -158,66 +133,46 @@ def normalise( y, X ):
     W = cholesky( S )
     X = X.dot( inv( W ) )
 
+    # Normalise y
+
     return y, X, mu, S
-
-def sample_moments( k, y, X ):
-    """Get the sample moments"""
-    (N, d) = X.shape
-
-    # Normalise data 
-    # Center
-    #mu = X.mean(0)
-    #X = X - mu
-    ## Whiten
-    #S = Pairs( X, X )
-    #W = cholesky( S )
-    #X = X.dot( inv( W ) )
-
-    def X2( q ):
-        return PairsQ( X, q )
-    
-    def Y2( q ):
-        return (y**2).dot( q )/N
-    
-    def X3( q ):
-        return TriplesQ( X, q )
-
-    def Y3( q ):
-        return (y**3).dot( q )/N
-
-    return X2, X3, Y2, Y3
 
 def test_sample_recovery():
     """Test the accuracy of sample recovery"""
-    k = 3
+    K = 3
     d = 3
-    N = 1e6
+    N = 1e5
 
     fname = "/tmp/test.npz"
-    lrm = LinearRegressionsMixture.generate(fname, k, d, cov = "eye")
+    lrm = LinearRegressionsMixture.generate(fname, K, d, cov = "eye", betas="eye")
     M, S, pi, B = lrm.mean, lrm.sigma, lrm.weights, lrm.betas
 
     y, X = lrm.sample( N )
 
     B2 = B.dot( diag( pi ) ).dot( B.T )
+    B3 = sum( [ pi[i] * tensorify(B.T[i], B.T[i], B.T[i] ) for i in xrange(K) ] )
 
-    X2, X3, Y2, Y3 = sample_moments( k, y, X )
+    #X2, X3, Y2, Y3 = sample_moments( k, y, X )
 
-    B2_ = recover_B2( k, d, N, X2, Y2 )
-    B3_ = recover_B3( k, d, N, X3, Y3 )
-    B_ = recover_B( k, d, B2_, B3_ )
-    #B2_ = closest_permuted_matrix( B2.T, B2_.T ).T
-    #B2_ = closest_permuted_matrix( B2.T, B2_.T ).T
-    print B2
-    print B2_
+    B2_ = recover_B2( d, N, y, X )
+    #print B2
+    #print B2_
+    #print "B2 recovery", norm(B2 - B2_)/norm(B2) 
 
+    B3_ = recover_B3( d, N, y, X )
+    #print B4
+    #print B3_
+    #print "B3 recovery", norm(B3 - B3_)/norm(B3)
+
+    B_ = recover_B( K, d, B2_, B3_ )
     B_ = closest_permuted_matrix( B.T, B_.T ).T
 
-    print ( norm( B - B_ ) )
+    rerr = norm( B - B_ )#/norm(B)
+    print "B recovery", rerr
     print B
     print B_
 
-    assert( sc.allclose( B2, B2_ ) )
+    assert( rerr < 1e-2 )
 
 def test_discrete():
     """Test the accuracy of sample recovery"""
@@ -290,4 +245,39 @@ def test_discrete():
     print B_
 
     assert( sc.allclose( B, B_ ) )
+
+if __name__ == "__main__":
+    K = 3
+    d = 3
+    N = 1e6
+
+    fname = "/tmp/test.npz"
+    lrm = LinearRegressionsMixture.generate(fname, K, d, cov = "eye", betas="eye")
+    M, S, pi, B = lrm.mean, lrm.sigma, lrm.weights, lrm.betas
+
+    y, X = lrm.sample( N )
+
+    B2 = B.dot( diag( pi ) ).dot( B.T )
+    B3 = sum( [ pi[i] * tensorify(B.T[i], B.T[i], B.T[i] ) for i in xrange(K) ] )
+
+    #X2, X3, Y2, Y3 = sample_moments( k, y, X )
+
+    B2_ = recover_B2( d, N, y, X )
+    #print B2
+    #print B2_
+    #print "B2 recovery", norm(B2 - B2_)/norm(B2) 
+
+    B3_ = recover_B3( d, N, y, X )
+    #print B4
+    #print B3_
+    #print "B3 recovery", norm(B3 - B3_)/norm(B3)
+
+    B_ = recover_B( K, d, B2_, B3_ )
+    B_ = closest_permuted_matrix( B.T, B_.T ).T
+
+    rerr = norm( B - B_ )#/norm(B)
+    #print "B recovery", rerr
+    print rerr
+    #print B
+    #print B_
 
