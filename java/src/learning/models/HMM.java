@@ -146,7 +146,10 @@ public class HMM implements Serializable {
 		{
 			// Generate a word
 			int o = RandomFactory.multinomial( params.O[state] );
-			output[i] = params.map[state][o];
+			if( params.map != null )
+				output[i] = params.map[state][o];
+			else
+				output[i] = o;
 			// Transit to a new state
 			state = RandomFactory.multinomial( params.T[state] );
 		}

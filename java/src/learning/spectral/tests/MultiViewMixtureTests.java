@@ -6,6 +6,9 @@
 package learning.spectral.tests;
 
 import learning.models.MultiViewGaussianModel;
+import learning.models.MultiViewGaussianModel.CovarianceDistribution;
+import learning.models.MultiViewGaussianModel.MeanDistribution;
+import learning.models.MultiViewGaussianModel.WeightDistribution;
 import learning.spectral.MultiViewMixture;
 import learning.spectral.MultiViewMixture.RecoveryFailure;
 
@@ -50,7 +53,7 @@ public class MultiViewMixtureTests {
 	 * Test method for {@link learning.spectral.MultiViewMixture#sampleRecovery(int, org.ejml.simple.SimpleMatrix, org.ejml.simple.SimpleMatrix, org.ejml.simple.SimpleMatrix)}.
 	 */
 	@Test
-	public void testSampleRecovery() {
+	public void testSampleRecoverySimple() {
 		MultiViewMixture algo = new MultiViewMixture();
 		
 		// Generate some random data 
@@ -75,6 +78,32 @@ public class MultiViewMixtureTests {
 		try {
 			SimpleMatrix M3_ = algo.sampleRecovery( k, X[0], X[1], X[2]);
 			System.out.println( M3 );
+			System.out.println( M3_ );
+		}
+		catch (RecoveryFailure e) {
+			Assert.fail();
+		}
+	}
+
+	/**
+	 * Test method for {@link learning.spectral.MultiViewMixture#sampleRecovery(int, org.ejml.simple.SimpleMatrix, org.ejml.simple.SimpleMatrix, org.ejml.simple.SimpleMatrix)}.
+	 */
+	@Test
+	public void testSampleRecovery() {
+		MultiViewMixture algo = new MultiViewMixture();
+		
+		// Generate some random data 
+		int k = 4;
+		int d = 6;
+		int V = 3;
+		
+		MultiViewGaussianModel model = MultiViewGaussianModel.generate(k, d, V, 1.0, WeightDistribution.Uniform, MeanDistribution.Hypercube, CovarianceDistribution.Spherical);
+		
+		SimpleMatrix[] X = model.sample( 100000 );
+		
+		try {
+			SimpleMatrix M3_ = algo.sampleRecovery( k, X[0], X[1], X[2]);
+			System.out.println( model.getM()[2] );
 			System.out.println( M3_ );
 		}
 		catch (RecoveryFailure e) {
