@@ -187,7 +187,7 @@ public class Corpus {
 		double[] z = new double[dict.length];
 		for(int i = 0; i < dict.length; i++ ) {
 			double[] feature = getFeatureForWord(i);
-			z[i] = VectorOps.dot(feature, x);
+			z[i] = MatrixOps.dot(feature, x);
 		}
 		return z;
 	}
@@ -198,7 +198,7 @@ public class Corpus {
 		double[] z = new double[dict.length];
 		for(int i = 0; i < dict.length; i++ ) {
 			double[] feature = getFeatureForWord(i, false);
-			z[i] = VectorOps.dot(feature, x_);
+			z[i] = MatrixOps.dot(feature, x_);
 		}
 		double[][] z_ = {z};
 		return new SimpleMatrix( z_ );
