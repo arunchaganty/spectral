@@ -7,25 +7,26 @@ package learning.models;
 
 import java.util.Random;
 
-import learning.utils.MatrixFactory;
+import learning.utils.SimpleMatrixFactory;
 import learning.utils.RandomFactory;
-import learning.utils.VectorOps;
+import learning.utils.MatrixOps;
+import learning.utils.SimpleMatrixOps;
 
-import org.ejml.simple.SimpleMatrix;
+import fig.prob.MultGaussian;
 
 /**
  * A Multi-View Gaussian Model
  */
 public class MultiViewGaussianModel {
 	
-	protected int k;
-	protected int d;
+	protected int K;
+	protected int D;
 	protected int V;
-	protected SimpleMatrix w;
-	protected SimpleMatrix[] M;
-	protected SimpleMatrix[][] S;
+	protected double[] w;
+	protected double[][][] M;
+	protected double[][][][] S;
 	
-	protected Random rnd;
+	Random rnd = new Random();
 	
 	/**
 	 * A Multi-view Gaussian with means given by the matrix M. The individual covariances are given by S.
@@ -34,80 +35,78 @@ public class MultiViewGaussianModel {
 	 * @param M
 	 * @param S
 	 */
-	public MultiViewGaussianModel( int k, int d, int V, SimpleMatrix w, SimpleMatrix M[], SimpleMatrix[][] S ) {
-		assert( S.length == k );
-		
-		this.k = k;
-		this.d = d;
-		this.V = V;
-		
+	public MultiViewGaussianModel( int K, int D, int V, double[] w, double M[][][], double[][][][] S ) {
+		assert( S.length == V ); assert( S[0].length == K );
 		for( int i = 0; i < V; i++ )
-			assert( M[i].numCols() == k && M[i].numRows() == d );
+			assert( M[i].length == K && M[i][0].length == D );
+		
+		this.K = K;
+		this.D = D;
+		this.V = V;
 		
 		this.w = w;
 		this.M = M;
 		this.S = S;
-		
-		rnd = new Random();
 	}
 	
 	public int getK() {
-		return k;
+		return K;
 	}
 
 	public int getD() {
-		return d;
+		return D;
 	}
 
 	public int getV() {
 		return V;
 	}
 
-	public SimpleMatrix getW() {
+	public double[] getW() {
 		return w;
 	}
 
-	public SimpleMatrix[] getM() {
+	public double[][][] getM() {
 		return M;
 	}
 
-	public SimpleMatrix[][] getS() {
+	public double[][][][] getS() {
 		return S;
 	}
-
+	
 	public void setSeed( long seed ) {
 		rnd.setSeed( seed );
 	}
+
+	/**
+	 * Sample from a particular cluster
+	 * @param N
+	 * @param cluster
+	 * @return
+	 */
+	public double[][] sample( int n, int view, int cluster ) {
+		fig.prob.MultGaussian x = new MultGaussian(M[view][cluster], S[view][cluster]);
+		double[][] y = new double[n][D];
+		for(int i = 0; i < n; i++)
+			y[i] = x.sample(rnd);
+		return y;
+	}
 	
 	/** Generate N samples **/
-	public SimpleMatrix[] sample( int N ) {
-		SimpleMatrix[] X = new SimpleMatrix[V];
+	public double[][][] sample( int N ) {
+		double[][][] X = new double[V][N][D];
 		
 		// Take w * N samples of each class
-		for( int i = 0; i < V; i++ )
+		for( int v = 0; v < V; v++ )
 		{
 			int	offset = 0;
-			X[i] = MatrixFactory.zeros( N, d );
-			
-			for( int j = 0; j < k-1; j++ )
+			for( int k = 0; k < K-1; k++ )
 			{
-				int n = (int) ( w.get(j) * N );
-				// TODO: Handle covariance
-				// Generate samples from M and with co-variance S
-				MatrixFactory.setRows(X[i], offset, offset+n,
-						MatrixFactory.vectorPlus( RandomFactory.randn( n, d ), 
-								MatrixFactory.col(M[i], j).transpose() ) 
-								);
+				int n = (int) ( w[k] * N );
+				MatrixOps.setRows(X[v], offset, offset+n, sample(n, v, k) );
 				offset += n;
 			}
 			int n = N - offset;
-			// TODO: Handle covariance
-			// Generate samples from M and with co-variance S
-			MatrixFactory.setRows(X[i], offset, offset+n,
-					MatrixFactory.vectorPlus( RandomFactory.randn( n, d ), 
-							MatrixFactory.col(M[i], k-1).transpose() ) 
-							);
-			offset += n;
+			MatrixOps.setRows(X[v], offset, offset+n, sample(n, v, K-1) );
 		}
 		
 		return X;
@@ -130,18 +129,18 @@ public class MultiViewGaussianModel {
 	}
 	
 	public static MultiViewGaussianModel generate( final int K, final int d, final int V, double sigma, WeightDistribution wDistribution, MeanDistribution MDistribution, CovarianceDistribution SDistribution ) {
-		double[][] w = new double[1][K];
+		double[] w = new double[K];
 		double[][][] M = new double[V][K][d];
 		double[][][][] S = new double[V][K][d][d];
 		
 		switch( wDistribution ) {
 			case Uniform:
-				for(int i = 0; i < K; i++ ) w[0][i] = 1.0/K;
+				for(int i = 0; i < K; i++ ) w[i] = 1.0/K;
 				break;
 			case Random:
 				// Generate random values, and then normalise
-				for(int i = 0; i < K; i++ ) w[0][i] = Math.abs( RandomFactory.randn(1.0) ); 
-				VectorOps.normalize( w[0] );
+				for(int i = 0; i < K; i++ ) w[i] = Math.abs( RandomFactory.randn(1.0) ); 
+				MatrixOps.normalize( w );
 				break;
 		}
 		
@@ -190,17 +189,7 @@ public class MultiViewGaussianModel {
 				throw new NoSuchMethodError();
 		}
 		
-		SimpleMatrix w_ = new SimpleMatrix(w);
-		SimpleMatrix M_[] = new SimpleMatrix[V];
-		for(int v = 0; v < V; v++) M_[v] = (new SimpleMatrix( M[v] )).transpose();
-		SimpleMatrix S_[][] = new SimpleMatrix[V][K];
-		for(int v = 0; v < V; v++) {
-			for(int k = 0; k < K; k++) {
-				S_[v][k] = new SimpleMatrix( S[v][k] );
-			}
-		}
-		
-		return new MultiViewGaussianModel(K, d, V, w_, M_, S_);
+		return new MultiViewGaussianModel(K, d, V, w, M, S);
 	}
 	
 

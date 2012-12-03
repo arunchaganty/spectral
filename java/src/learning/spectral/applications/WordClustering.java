@@ -17,9 +17,10 @@ import java.util.Collections;
 import learning.spectral.MultiViewMixture;
 import learning.spectral.MultiViewMixture.RecoveryFailure;
 import learning.utils.Corpus;
-import learning.utils.MatrixFactory;
+import learning.utils.SimpleMatrixFactory;
+import learning.utils.SimpleMatrixOps;
 import learning.utils.Tensor;
-import learning.utils.VectorOps;
+import learning.utils.MatrixOps;
 
 import org.ejml.simple.SimpleMatrix;
 import org.javatuples.Pair;
@@ -57,8 +58,8 @@ public class WordClustering implements Runnable {
 			
 		// For each element, push it into the appropriate cluster.
 		for( int i  = 0; i < n; i++ ) {
-			SimpleMatrix m = MatrixFactory.row( O, i );
-			int j = MatrixFactory.argmax( m );
+			SimpleMatrix m = SimpleMatrixOps.row( O, i );
+			int j = SimpleMatrixOps.argmax( m );
 			clusters.get( j ).add( new Pair<Double, Integer>( O.get(i,j), i ) );
 		}
 		
@@ -179,7 +180,7 @@ public class WordClustering implements Runnable {
 					double[] x1 = C.getFeatureForWord( c[i+off0] );
 					double[] x2 = C.getFeatureForWord( c[i+off1] );
 					double[] x3 = C.getFeatureForWord( c[i+off2] );
-					double prod = VectorOps.dot( x2, theta_);
+					double prod = MatrixOps.dot( x2, theta_);
 							
 					count++;
 					// Add into P13
@@ -200,10 +201,10 @@ public class WordClustering implements Runnable {
 	protected SimpleMatrix getTopicsFromMeans( SimpleMatrix O ) {
 		SimpleMatrix P = new SimpleMatrix( C.dict.length, O.numCols() );
 		for( int i = 0; i < O.numCols(); i++ ) {
-			SimpleMatrix o = MatrixFactory.col(O, i);
-			MatrixFactory.setCol( P, i, C.getWordDistribution(o) );
+			SimpleMatrix o = SimpleMatrixOps.col(O, i);
+			SimpleMatrixOps.setCol( P, i, C.getWordDistribution(o) );
 		}
-		return MatrixFactory.projectOntoSimplex( P ); 
+		return SimpleMatrixOps.projectOntoSimplex( P ); 
 	}
 	
 	@Override

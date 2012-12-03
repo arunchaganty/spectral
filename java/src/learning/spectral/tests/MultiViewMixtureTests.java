@@ -11,6 +11,8 @@ import learning.models.MultiViewGaussianModel.MeanDistribution;
 import learning.models.MultiViewGaussianModel.WeightDistribution;
 import learning.spectral.MultiViewMixture;
 import learning.spectral.MultiViewMixture.RecoveryFailure;
+import learning.utils.MatrixFactory;
+import learning.utils.MatrixOps;
 
 import org.ejml.simple.SimpleMatrix;
 import org.junit.Assert;
@@ -60,25 +62,22 @@ public class MultiViewMixtureTests {
 		int k = 2;
 		int d = 3;
 		int V = 3;
-		double[][] wD = { {0.4, 0.6} };
-		double[][] M1D = { {-1.0, 0.0}, {0.0, 0.0}, {0.0, 1.0} };
-		double[][] M2D = { {-1.0, 0.0}, {0.0, 0.0}, {0.0, 1.0} };
-		double[][] M3D = { {-1.0, 0.0}, {0.0, 0.0}, {0.0, 1.0} };
+		double[] wD = {0.4, 0.6};
+		double[][] M1D = { {-1.0, 0.0, 0.0}, {0.0, 0.0, 1.0} };
+		double[][] M2D = { {0.0, 1.0, 0.0}, {1.0, 0.0, 0.0} };
+		double[][] M3D = { {1.0, 0.0, 1.0}, {0.0, -1.0, 1.0} };
+		double[][][] M = {M1D,M2D,M3D};
+		double[][][][] S = new double[V][k][][];
+		for(int v = 0; v < V; v++ ) for(int i = 0; i<k; i++) S[v][i] = MatrixFactory.eye(d);
 		
-		SimpleMatrix w = new SimpleMatrix( wD );
-		SimpleMatrix M1 = new SimpleMatrix( M1D );
-		SimpleMatrix M2 = new SimpleMatrix( M2D );
-		SimpleMatrix M3 = new SimpleMatrix( M3D );
-		SimpleMatrix[] M = {M1,M2,M3};
+		MultiViewGaussianModel model = new MultiViewGaussianModel(k, d, V, wD, M, S);
 		
-		MultiViewGaussianModel model = new MultiViewGaussianModel(k, d, V, w, M, null);
-		
-		SimpleMatrix[] X = model.sample( 100000 );
+		double[][][] X = model.sample( 100000 );
 		
 		try {
 			SimpleMatrix M3_ = algo.sampleRecovery( k, X[0], X[1], X[2]);
-			System.out.println( M3 );
-			System.out.println( M3_ );
+			MatrixOps.printMatrix(M3D);
+			System.out.println( M3_.transpose() );
 		}
 		catch (RecoveryFailure e) {
 			Assert.fail();
@@ -99,12 +98,12 @@ public class MultiViewMixtureTests {
 		
 		MultiViewGaussianModel model = MultiViewGaussianModel.generate(k, d, V, 1.0, WeightDistribution.Uniform, MeanDistribution.Hypercube, CovarianceDistribution.Spherical);
 		
-		SimpleMatrix[] X = model.sample( 100000 );
+		double[][][] X = model.sample( 100000 );
 		
 		try {
 			SimpleMatrix M3_ = algo.sampleRecovery( k, X[0], X[1], X[2]);
-			System.out.println( model.getM()[2] );
-			System.out.println( M3_ );
+			MatrixOps.printMatrix( model.getM()[2] );
+			System.out.println( M3_.transpose() );
 		}
 		catch (RecoveryFailure e) {
 			Assert.fail();

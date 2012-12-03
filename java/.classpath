@@ -4,6 +4,7 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/java-7-openjdk-amd64"/>
 	<classpathentry exported="true" kind="lib" path="deps/ejml-0.20.jar"/>
 	<classpathentry kind="lib" path="deps/fig.jar"/>
+	<classpathentry kind="lib" path="deps/Jama-1.0.3.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="lib" path="deps/javatuples-1.2.jar"/>
 	<classpathentry kind="lib" path="deps/javatuples-1.2-javadoc.jar"/>

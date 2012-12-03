@@ -5,8 +5,10 @@
  */
 package learning.spectral;
 
-import learning.utils.MatrixFactory;
+import learning.utils.MatrixOps;
+import learning.utils.SimpleMatrixFactory;
 import learning.utils.RandomFactory;
+import learning.utils.SimpleMatrixOps;
 import learning.utils.SimpleTensor;
 import learning.utils.Tensor;
 
@@ -67,13 +69,13 @@ public class MultiViewMixture extends MomentMethod {
 			SimpleMatrix U3, SimpleMatrix P12, Tensor P123, 
 			SimpleMatrix Theta ) throws NumericalException {
 		
-		SimpleMatrix L = MatrixFactory.zeros( k, k );
-		SimpleMatrix R = MatrixFactory.zeros( k, k );
+		SimpleMatrix L = SimpleMatrixFactory.zeros( k, k );
+		SimpleMatrix R = SimpleMatrixFactory.zeros( k, k );
 		SimpleMatrix R_;
 		
 		Theta = U3.mult( Theta );
 		
-		SimpleMatrix theta = MatrixFactory.col( Theta, 0 );
+		SimpleMatrix theta = SimpleMatrixOps.col( Theta, 0 );
 		SimpleMatrix P123T = P123.project(2, theta);
 		assert( P123T.svd().rank() >= k );
 		
@@ -97,7 +99,7 @@ public class MultiViewMixture extends MomentMethod {
 					throw new NumericalException();
 				}
 				L.set( 0, i, EVD.getEigenvalue(i).real );
-				MatrixFactory.setRow( R, i, EVD.getEigenVector(i));
+				SimpleMatrixOps.setRow( R, i, EVD.getEigenVector(i));
 			}
 			R_ = R.invert();
 		} catch( RuntimeException e ) {
@@ -108,10 +110,10 @@ public class MultiViewMixture extends MomentMethod {
 		// Simultaneously diagonalize all the other matrices
 		for( int i = 1; i<k; i++ )
 		{
-			SimpleMatrix theta_ = MatrixFactory.col( Theta, i );
+			SimpleMatrix theta_ = SimpleMatrixOps.col( Theta, i );
 			SimpleMatrix B123_ = U1T.mult( P123.project(2, theta_ ) )
 					.mult( U2 ).mult( U1P12U2_1 );
-			MatrixFactory.setRow( L, i, MatrixFactory.diag( R_.mult(B123_).mult(R) ) );
+			SimpleMatrixOps.setRow( L, i, SimpleMatrixFactory.diag( R_.mult(B123_).mult(R) ) );
 		}
 		LogInfo.end_track("simultaneously diagonalization");
 		
@@ -132,10 +134,10 @@ public class MultiViewMixture extends MomentMethod {
 	public SimpleMatrix recoverM3( int k, SimpleMatrix P12, SimpleMatrix P13, Tensor P123 ) throws RecoveryFailure {
 		LogInfo.begin_track("spectral");
 		// Get U1, U2, U3
-		SimpleMatrix[] U1DU2 = MatrixFactory.svdk(P12, k);
+		SimpleMatrix[] U1DU2 = SimpleMatrixOps.svdk(P12, k);
 		SimpleMatrix U1T = U1DU2[0].transpose();
 		SimpleMatrix U2 = U1DU2[2];
-		SimpleMatrix[] U1DU3 = MatrixFactory.svdk(P13, k);
+		SimpleMatrix[] U1DU3 = SimpleMatrixOps.svdk(P13, k);
 		SimpleMatrix U3 = U1DU3[2];
 		
 		LogInfo.logsForce( "Subspace computation done." );
@@ -181,9 +183,9 @@ public class MultiViewMixture extends MomentMethod {
 		
 		int d = M1.numRows();
 		
-		SimpleMatrix P12 = M1.mult( MatrixFactory.diag( w ) ).mult( M2.transpose() );
-		SimpleMatrix P13 = M1.mult( MatrixFactory.diag( w ) ).mult( M3.transpose() );
-		SimpleMatrix Z = MatrixFactory.vectorStack(d, w);
+		SimpleMatrix P12 = M1.mult( SimpleMatrixFactory.diag( w ) ).mult( M2.transpose() );
+		SimpleMatrix P13 = M1.mult( SimpleMatrixFactory.diag( w ) ).mult( M3.transpose() );
+		SimpleMatrix Z = SimpleMatrixFactory.vectorStack(d, w);
 		Z = Z.scale( k ); // Scale by k so that the averaging doesn't hurt.
 		
 		SimpleTensor P123 = new SimpleTensor( M1.transpose(), M2.transpose(), M3.elementMult( Z ).transpose() );
@@ -202,10 +204,10 @@ public class MultiViewMixture extends MomentMethod {
 	 * @return
 	 * @throws RecoveryFailure 
 	 */
-	public SimpleMatrix sampleRecovery( int k, SimpleMatrix X1, SimpleMatrix X2, SimpleMatrix X3 ) throws RecoveryFailure {
+	public SimpleMatrix sampleRecovery( int k, double[][] X1, double[][] X2, double[][] X3 ) throws RecoveryFailure {
 		
-		SimpleMatrix P12 = MatrixFactory.Pairs(X1, X2);
-		SimpleMatrix P13 = MatrixFactory.Pairs(X1, X3);
+		SimpleMatrix P12 = new SimpleMatrix( MatrixOps.Pairs(X1, X2) );
+		SimpleMatrix P13 = new SimpleMatrix( MatrixOps.Pairs(X1, X3) );
 		assert( P12.svd().rank() >= k );
 		assert( P13.svd().rank() >= k );
 		SimpleTensor P123 = new SimpleTensor( X1, X2, X3 );
