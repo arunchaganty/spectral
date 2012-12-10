@@ -4,6 +4,23 @@ package learning.utils;
  * General vector operations
  */
 public class MatrixOps {
+
+  /*
+	 * Computes the Frobenius norm
+	 * @param x
+	 * @return
+	 */
+	public static double norm( double[][] x ) {
+		int nRows = x.length;
+		int nCols = x[0].length;
+		
+		double result = 0.0;
+		for( int i = 0; i < nRows; i++ ) {
+			for( int j = 0; j < nCols; j++ )
+				result += x[i][j] * x[i][j];
+		}
+		return Math.sqrt(result);
+	}
 	
 	/**
 	 * Transpose the matrix x
@@ -11,17 +28,16 @@ public class MatrixOps {
 	 * @return
 	 */
 	public static double[][] transpose( double[][] x ) {
-		int d = x.length;
-		int r = x[0].length;
+		int nRows = x.length;
+		int nCols = x[0].length;
 		
-		double[][] result = new double[r][d];
-		for( int i = 0; i < d; i++ ) {
-			for( int j = 0; j < r; j++ )
+		double[][] result = new double[nCols][nRows];
+		for( int i = 0; i < nCols; i++ ) {
+			for( int j = 0; j < nRows; j++ )
 				result[i][j] = x[j][i];
 		}
 		return result;
 	}
-	
 	
 	/**
 	 * Return the vector dot-product for x and y
@@ -82,6 +98,33 @@ public class MatrixOps {
 		return sum;
 	}
 	
+	/**
+	 * Compute a X + b Y
+	 * @param x
+	 * @return
+	 */
+	public static double[][] matrixAdd( double a, double[][] X, double b, double[][] Y ) {
+    assert( X.length == Y.length );
+    assert( X[0].length == Y[0].length );
+
+    int r = X.length;
+    int c = X[0].length;
+
+		double[][] result = new double[r][c];
+		for( int i = 0; i < r; i++ )
+			for( int j = 0; j < c; j++ )
+				result[i][j] = a * X[i][j] + b * Y[i][j];
+		return result;
+	}
+
+	public static double[][] matrixAdd( double[][] X, double[][] Y ) {
+    return matrixAdd( 1, X, 1, Y );
+  }
+
+	public static double[][] matrixSub( double[][] X, double[][] Y ) {
+    return matrixAdd( 1, X, -1, Y );
+  }
+
 	/**
 	 * Normalize the entries of x to sum to 1
 	 * Note: Changes x in place
@@ -197,6 +240,29 @@ public class MatrixOps {
 		assert( r.length == end-start );
 		for( int i = 0; i < end-start; i++ ) X[start+i] = r[i];
 	}
+	public static void setRow( double[][] X, int i, double[] r ) {
+    X[i] = r;
+	}
+
+	/**
+	 * Set the rows i to j of the matrix X
+	 * @param X
+	 * @param i
+	 * @param j
+	 * @return
+	 */
+	public static void setCols( double[][] X, int start, int end, double[][] c ) {
+		assert( c[0].length == end-start );
+		for( int i = 0; i < end-start; i++ ) {
+      for( int j = 0; j < X.length; j++ ) { 
+        X[j][start+i] = c[i][j];
+      }
+    }
+	}
+	public static void setCol( double[][] X, int i, double[] c ) {
+    double [][] c_ = {c};
+    setCols( X, i, i+1, c_ );
+	}
 	
 	/**
 	 * Project each columns of X onto a simplex
@@ -293,6 +359,78 @@ public class MatrixOps {
 			}
 			System.out.printf( "\n" );
 		}
+	}
+
+	/**
+	 * Find the pairwise distance of the i-th row in X and j-th row in Y
+	 * @param X
+	 * @param Y
+	 * @return
+	 */
+	public static double[][] cdist(double[][] X, double[][] Y, boolean betweenRows) {
+    assert( X.length == Y.length );
+    assert( X[0].length == Y[0].length );
+
+		int nRows = X.length;
+		int nCols = X[0].length;
+
+    double[][] D;
+    if( betweenRows ) {
+      D = new double[nRows][nRows];
+      for( int i = 0; i < nRows; i++ ) {
+        for( int j = 0; j < nRows; j++ ) {
+          double dist = 0.0;
+          for( int k = 0; k < nCols; k++ )
+            dist += (X[i][k] - Y[j][k]) * (X[i][k] - Y[j][k]);
+          D[i][j] = Math.sqrt(dist);
+        }
+      }
+    } else {
+      D = new double[nCols][nCols];
+      for( int i = 0; i < nCols; i++ ) {
+        for( int j = 0; j < nCols; j++ ) {
+          double dist = 0.0;
+          for( int k = 0; k < nRows; k++ )
+            dist += (X[k][i] - Y[k][j]) * (X[k][i] - Y[k][j]);
+          D[i][j] = Math.sqrt(dist);
+        }
+      }
+    }
+
+    return D;
+	}
+
+  /**
+   * Align the rows of matrix X so that the rows/columns are matched with the
+   * columns of Y
+   */
+	public static double[][] alignMatrix( double[][] X, double[][] Y, boolean alignRows ) {
+    assert( X.length == Y.length );
+    assert( X[0].length == Y[0].length );
+    int nRows = X.length; 
+    int nCols = X[0].length; 
+
+    double[][] X_ = new double[nRows][nCols];
+
+    if( alignRows ) {
+      // Populate the weight matrix 
+      double[][] W = cdist( Y, X, true );
+      // Compute min-weight matching
+      int[][] matching = HungarianAlgorithm.findWeightedMatching( W, false );
+      // Shuffle rows
+      for( int[] match : matching )
+        X_[match[0]] = X[ match[1] ];
+    } else {
+      // Populate the weight matrix 
+      double[][] W = cdist( Y, X, false );
+      // Compute min-weight matching
+      int[][] matching = HungarianAlgorithm.findWeightedMatching( W, false );
+      // Shuffle rows
+      for( int[] match : matching )
+        setCol( X_, match[0], col( X, match[1] ) );
+    }
+
+    return X_;
 	}
 
 }

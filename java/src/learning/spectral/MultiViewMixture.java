@@ -7,6 +7,7 @@ package learning.spectral;
 
 import learning.utils.MatrixOps;
 import learning.utils.SimpleMatrixFactory;
+import learning.utils.MatrixFactory;
 import learning.utils.RandomFactory;
 import learning.utils.SimpleMatrixOps;
 import learning.utils.SimpleTensor;
@@ -204,7 +205,7 @@ public class MultiViewMixture extends MomentMethod {
 	 * @return
 	 * @throws RecoveryFailure 
 	 */
-	public SimpleMatrix sampleRecovery( int k, double[][] X1, double[][] X2, double[][] X3 ) throws RecoveryFailure {
+	public double[][] sampleRecovery( int k, double[][] X1, double[][] X2, double[][] X3 ) throws RecoveryFailure {
 		
 		SimpleMatrix P12 = new SimpleMatrix( MatrixOps.Pairs(X1, X2) );
 		SimpleMatrix P13 = new SimpleMatrix( MatrixOps.Pairs(X1, X3) );
@@ -212,9 +213,9 @@ public class MultiViewMixture extends MomentMethod {
 		assert( P13.svd().rank() >= k );
 		SimpleTensor P123 = new SimpleTensor( X1, X2, X3 );
 		
-		SimpleMatrix M3_ = recoverM3( k, P12, P13, P123 );
-		
-		return M3_;
-	}
+		double[][] M3_ = MatrixFactory.fromSimpleMatrix( recoverM3( k, P12, P13, P123 ) );
 
+		return MatrixOps.transpose( M3_ );
+	}
 }
+

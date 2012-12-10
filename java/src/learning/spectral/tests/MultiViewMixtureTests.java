@@ -18,6 +18,8 @@ import org.ejml.simple.SimpleMatrix;
 import org.junit.Assert;
 import org.junit.Test;
 
+import fig.basic.LogInfo;
+
 /**
  * 
  */
@@ -62,22 +64,29 @@ public class MultiViewMixtureTests {
 		int k = 2;
 		int d = 3;
 		int V = 3;
-		double[] wD = {0.4, 0.6};
-		double[][] M1D = { {-1.0, 0.0, 0.0}, {0.0, 0.0, 1.0} };
-		double[][] M2D = { {0.0, 1.0, 0.0}, {1.0, 0.0, 0.0} };
-		double[][] M3D = { {1.0, 0.0, 1.0}, {0.0, -1.0, 1.0} };
-		double[][][] M = {M1D,M2D,M3D};
+		double[] w = {0.4, 0.6};
+		double[][] M1 = { {-1.0, 0.0, 0.0}, {0.0, 0.0, 1.0} };
+		double[][] M2 = { {0.0, 1.0, 0.0}, {1.0, 0.0, 0.0} };
+		double[][] M3 = { {1.0, 0.0, 1.0}, {0.0, -1.0, 1.0} };
+		double[][][] M = {M1,M2,M3};
 		double[][][][] S = new double[V][k][][];
 		for(int v = 0; v < V; v++ ) for(int i = 0; i<k; i++) S[v][i] = MatrixFactory.eye(d);
 		
-		MultiViewGaussianModel model = new MultiViewGaussianModel(k, d, V, wD, M, S);
+		MultiViewGaussianModel model = new MultiViewGaussianModel(k, d, V, w, M, S);
 		
-		double[][][] X = model.sample( 100000 );
+		double[][][] X = model.sample( 1000000 );
 		
 		try {
-			SimpleMatrix M3_ = algo.sampleRecovery( k, X[0], X[1], X[2]);
-			MatrixOps.printMatrix(M3D);
-			System.out.println( M3_.transpose() );
+			double[][] M3_ = algo.sampleRecovery( k, X[0], X[1], X[2]);
+      M3_ = MatrixOps.alignMatrix( M3_, M3, false ); 
+      MatrixOps.printMatrix( M3 );
+      MatrixOps.printMatrix( M3_ );
+      double err = MatrixOps.norm( MatrixOps.matrixSub( M3, M3_ ) );
+      double rerr = err/MatrixOps.norm( M3 );
+		  LogInfo.logsForce( "abs-err: " + err );
+		  LogInfo.logsForce( "rel-err: " + rerr );
+      if( err > 1e-2 )
+			  Assert.fail();
 		}
 		catch (RecoveryFailure e) {
 			Assert.fail();
@@ -97,17 +106,31 @@ public class MultiViewMixtureTests {
 		int V = 3;
 		
 		MultiViewGaussianModel model = MultiViewGaussianModel.generate(k, d, V, 1.0, WeightDistribution.Uniform, MeanDistribution.Hypercube, CovarianceDistribution.Spherical);
+    double[][] M3 = model.getM()[2];
 		
-		double[][][] X = model.sample( 100000 );
+		double[][][] X = model.sample( 1000000 );
 		
 		try {
-			SimpleMatrix M3_ = algo.sampleRecovery( k, X[0], X[1], X[2]);
-			MatrixOps.printMatrix( model.getM()[2] );
-			System.out.println( M3_.transpose() );
+			double[][] M3_ = algo.sampleRecovery( k, X[0], X[1], X[2]);
+      M3_ = MatrixOps.alignMatrix( M3_, M3, false ); 
+      MatrixOps.printMatrix( M3 );
+      MatrixOps.printMatrix( M3_ );
+      double err = MatrixOps.norm( MatrixOps.matrixSub( M3, M3_ ) );
+      double rerr = err/MatrixOps.norm( M3 );
+		  LogInfo.logsForce( "abs-err: " + err );
+		  LogInfo.logsForce( "rel-err: " + rerr );
+      if( err > 1e-2 )
+			  Assert.fail();
 		}
 		catch (RecoveryFailure e) {
 			Assert.fail();
 		}
 	}
+
+  public static void main(String[] args) {
+	  //testExactRecovery();
+	  //testSampleRecoverySimple();
+	  //testSampleRecovery();
+  }
 
 }

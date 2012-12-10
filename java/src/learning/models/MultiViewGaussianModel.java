@@ -148,7 +148,7 @@ public class MultiViewGaussianModel {
 					for(int i = 0; i < K; i++) {
 						for(int j = 0; j < d; j++) {
 							if( j == (i + v) % d ) M[v][i][j] = 1.0;
-							else M[v][i][j] = -1.0;
+							else M[v][i][j] = 0.0;
 						}
 					}
 				}

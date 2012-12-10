@@ -103,7 +103,7 @@ public class MatrixFactory {
 		double[][] result = new double[r][c];
 		for(int i = 0; i < r; i++ ) {
 			for(int j = 0; j < c; j++ ) {
-				result[i][j] = data[i*r + j];
+				result[i][j] = data[i*c + j];
 			}
 		}
 		

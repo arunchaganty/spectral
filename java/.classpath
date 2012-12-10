@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/java-7-openjdk-amd64"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/java-7-openjdk"/>
 	<classpathentry exported="true" kind="lib" path="deps/ejml-0.20.jar"/>
 	<classpathentry kind="lib" path="deps/fig.jar"/>
 	<classpathentry kind="lib" path="deps/Jama-1.0.3.jar"/>
