@@ -1,5 +1,9 @@
-package learning.utils;
-
+/**
+ * learning.spectral
+ * Arun Chaganty <chaganty@stanford.edu
+ *
+ */
+package learning.linalg;
 import org.ejml.simple.SimpleMatrix;
 
 public interface Tensor {
@@ -11,3 +15,4 @@ public interface Tensor {
 	 */
 	public SimpleMatrix project( int axis, SimpleMatrix theta );
 }
+

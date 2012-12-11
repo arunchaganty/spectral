@@ -3,14 +3,14 @@
  * Arun Chaganty <chaganty@stanford.edu>
  * 
  */
-package learning.utils;
+package learning.linalg;
 
 import org.ejml.simple.SimpleMatrix;
 
 /**
  * Common routines to construct a number of different matrices
  */
-public class SimpleMatrixFactory {
+public class MatrixFactory {
 	
 	/**
 	 * Create a simple matrix from a uni-dimensional array x
@@ -124,3 +124,4 @@ public class SimpleMatrixFactory {
 	
 
 }
+

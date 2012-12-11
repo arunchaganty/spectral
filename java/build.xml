@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- WARNING: Eclipse auto-generated file.
-              Any modifications will be overwritten.
-              To include a user specific buildfile here, simply create one in the same
-              directory with the processing instruction <?eclipse.ant.import?>
-              as the first entry and export the buildfile again. -->
 <project basedir="." default="build" name="java">
     <property environment="env"/>
-    <property name="ECLIPSE_HOME" value="../../../../../usr/lib/eclipse"/>
     <property name="junit.output.dir" value="junit"/>
     <property name="debuglevel" value="source,lines,vars"/>
     <property name="target" value="1.7"/>
@@ -16,8 +10,10 @@
         <pathelement location="deps/ejml-0.20.jar"/>
         <pathelement location="deps/fig.jar"/>
         <pathelement location="deps/junit-4.10.jar" />
+        <pathelement location="deps/hamecrest.jar" />
         <pathelement location="deps/javatuples-1.2.jar"/>
         <pathelement location="deps/javatuples-1.2-javadoc.jar"/>
+        <pathelement location="deps/KittyCache-1.2.jar" />
     </path>
     <target name="init">
         <mkdir dir="bin"/>
@@ -77,54 +73,5 @@
             <arg line="-k 10 -d 1000 -inputPath nyt-gen-1e6.txt -outputPath clusters"/>
             <classpath refid="java.classpath"/>
         </java>
-    </target>
-    <target name="java">
-        <mkdir dir="${junit.output.dir}"/>
-        <junit fork="yes" printsummary="withOutAndErr">
-            <formatter type="xml"/>
-            <test name="learning.spectral.tests.MultiViewMixtureTests" todir="${junit.output.dir}"/>
-            <jvmarg line="-XX:-UseSplitVerifier"/>
-            <classpath refid="java.classpath"/>
-        </junit>
-    </target>
-    <target name="MultiViewMixtureTests.testSampleRecovery">
-        <mkdir dir="${junit.output.dir}"/>
-        <junit fork="yes" printsummary="withOutAndErr">
-            <formatter type="xml"/>
-            <test name="learning.spectral.tests.MultiViewMixtureTests" todir="${junit.output.dir}"/>
-            <classpath refid="java.classpath"/>
-        </junit>
-    </target>
-    <target name="SentenceHMMLearner Generate">
-        <java classname="learning.spectral.applications.SentenceHMMLearner" failonerror="true" fork="yes">
-            <arg line="-g nyt-1e4.hmm 1000 10 hmm-gen.txt"/>
-            <classpath refid="java.classpath"/>
-        </java>
-    </target>
-    <target name="SentenceHMMLearner">
-        <java classname="learning.spectral.applications.SentenceHMMLearner" failonerror="true" fork="yes">
-            <arg line="--inputPath data/nyt/nyt.parsed --wordLimit 1000 --outputPath nyt.hmm"/>
-            <classpath refid="java.classpath"/>
-        </java>
-    </target>
-    <target name="SentenceHMMLearner Profiled">
-        <java classname="learning.spectral.applications.SentenceHMMLearner" failonerror="true" fork="yes">
-            <arg line="-f data/nyt/nyt-1e4.parsed 1000 nyt-1e4.hmm"/>
-            <classpath refid="java.classpath"/>
-        </java>
-    </target>
-    <target name="SentenceGenerator">
-        <java classname="learning.spectral.applications.SentenceGenerator" failonerror="true" fork="yes">
-            <arg line="-inputPath nyt.hmm -outputPath nyt-gen-1e5.txt -documentLength = 10 -documents 100000"/>
-            <classpath refid="java.classpath"/>
-        </java>
-    </target>
-    <target name="junitreport">
-        <junitreport todir="${junit.output.dir}">
-            <fileset dir="${junit.output.dir}">
-                <include name="TEST-*.xml"/>
-            </fileset>
-            <report format="frames" todir="${junit.output.dir}"/>
-        </junitreport>
     </target>
 </project>
