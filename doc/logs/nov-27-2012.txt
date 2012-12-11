@@ -40,7 +40,7 @@ that I did not even need to compute the moments for the algorithm to pull
 through because we can compute $\E_{q}[X X^T]$!
 
 The algorithm is thus,
-_
+
 #. Center and whiten $X$.
 #. Generate an arbitrary re-weighting of the data from the symmetric Dirichlet prior; $q_i \sim Dirichlet(\alpha}$. 
 #. Compute $X_{2i} = \E_{q_i}[X X^T]$ and $M_{2i} = \E_{q_i}[ y^2 ]$ for $0 \le i \le \frac{d (d-1)}{2} = d'$. 
