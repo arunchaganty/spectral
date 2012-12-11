@@ -10,6 +10,7 @@
         <pathelement location="deps/ejml-0.20.jar"/>
         <pathelement location="deps/fig.jar"/>
         <pathelement location="deps/junit-4.10.jar" />
+        <pathelement location="deps/Jama-1.0.3.jar" />
         <pathelement location="deps/hamecrest.jar" />
         <pathelement location="deps/javatuples-1.2.jar"/>
         <pathelement location="deps/javatuples-1.2-javadoc.jar"/>
@@ -49,7 +50,7 @@
         <mkdir dir="${junit.output.dir}"/>
         <junit fork="yes" printsummary="withOutAndErr">
             <formatter type="plain"/>
-              <batchtest>
+            <batchtest todir="${junit.output.dir}">
                 <fileset dir="tests">
                   <include name="**/*Test*.java"/>
                   <exclude name="**/AllTests.java"/>

@@ -7,6 +7,8 @@ import org.ejml.factory.DecompositionFactory;
 import org.ejml.factory.QRDecomposition;
 import org.ejml.simple.SimpleMatrix;
 
+import fig.prob.MultGaussian;
+
 /**
  * A set of functions to generate random variables
  */
@@ -89,9 +91,10 @@ public class RandomFactory {
 	 * @param pi - Parameters
 	 * @return - Vector with count of number of times a value was drawn
 	 */
-	public static SimpleMatrix multinomial(int n, SimpleMatrix pi) {
-		assert( pi.numCols() == 1 );
-		double[] cnt = new double[pi.numRows()];
+	public static SimpleMatrix multinomial(SimpleMatrix pi, int n) {
+		if( pi.numCols() == 1 )
+      pi = pi.transpose();
+		double[] cnt = new double[pi.numCols()];
 		
 		for( int i = 0; i < n; i++)
 			cnt[ multinomial(pi) ] += 1;
@@ -99,6 +102,31 @@ public class RandomFactory {
 		double[][] cnt_ = {cnt};
 		return new SimpleMatrix( cnt_ );
 	}
+
+
+	/**
+	 * Generate a random matrix with standard normal entries.
+	 * @param D
+	 * @return
+	 */
+	public static double[][] multivariateGaussian(double[] mean, double[][] cov, int count) {
+		MultGaussian gaussian = new MultGaussian( mean, cov );
+
+		double[][] X = new double[count][mean.length];
+		for( int i = 0; i < count; i++) {
+      double[] y = gaussian.sample( rand );
+      for( int j = 0; j < mean.length; j++ )
+        X[i][j] = y[j];
+    }
+		
+		return X;
+	}
+	public static SimpleMatrix multivariateGaussian(SimpleMatrix mean, SimpleMatrix cov, int count) {
+    double[] mean_ = MatrixFactory.toVector( mean );
+    double[][] cov_ = MatrixFactory.toArray( cov );
+
+    return new SimpleMatrix( multivariateGaussian( mean_, cov_, count ) );
+  }
 
 }
 

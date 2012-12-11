@@ -116,9 +116,6 @@ public class MultiViewMixture {
 		
 		LogInfo.end_track("algorithmB");
 		throw new RecoveryFailure();
-
-
-
   }
 
 

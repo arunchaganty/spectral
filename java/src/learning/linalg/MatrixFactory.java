@@ -22,6 +22,41 @@ public class MatrixFactory {
 		double[][] x_ = {x};
 		return new SimpleMatrix( x_ );
 	}
+
+	/**
+	 * Create a simple matrix from a uni-dimensional array x
+	 * @param x
+	 * @return
+	 */
+	public static double[] toVector( SimpleMatrix X )
+	{
+    if( X.numCols() == 1 )
+      X = X.transpose();
+
+		double[] M = new double[ X.numCols() ];
+    for( int col = 0; col < X.numCols(); col++ ) {
+        M[col] = X.get( 0, col );
+    }
+
+		return M;
+	}
+
+	/**
+	 * Create a simple matrix from a uni-dimensional array x
+	 * @param x
+	 * @return
+	 */
+	public static double[][] toArray( SimpleMatrix X )
+	{
+		double[][] M = new double[ X.numRows() ][ X.numCols() ];
+    for( int row = 0; row < X.numRows(); row++ ) {
+      for( int col = 0; col < X.numCols(); col++ ) {
+        M[row][col] = X.get( row, col );
+      }
+    }
+
+		return M;
+	}
 	
 	/**
 	 * Create a matrix of dimension n x m filled with zeros
@@ -121,7 +156,6 @@ public class MatrixFactory {
 				N.set(i, j, M.get(j,0));
 		return N;
 	}
-	
 
 }
 

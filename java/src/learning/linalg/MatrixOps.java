@@ -178,6 +178,12 @@ public class MatrixOps {
 			r = r.transpose();
     setRows( X, i, i+1, r );
 	}
+	public static void setRow( SimpleMatrix X, int i, double[] r ) {
+    assert( X.numCols() == r.length );
+    for( int col = 0; col < X.numCols(); col++ )
+      X.set( i, col, r[col] );
+	}
+  
 	/**
 	 * Set the cols i to j of the matrix X
 	 * @param X
