@@ -17,6 +17,65 @@ import org.ejml.simple.SimpleEVD;
 public class MatrixOps {
 
   /**
+   * Test whether two matrices are within eps of each other
+   */
+  public static boolean allclose( DenseMatrix64F X1, DenseMatrix64F X2, double eps ) {
+    assert( X1.numRows == X2.numRows );
+    assert( X1.numCols == X2.numCols );
+
+    double[] X1_ = X1.data;
+    double[] X2_ = X2.data;
+
+    for( int i = 0; i < X1_.length; i++ ) {
+        if( Math.abs( X1_[i] - X2_[i] )  > eps ) {
+          return false;
+        }
+    }
+
+    return true;
+  }
+  public static boolean allclose( DenseMatrix64F X1, DenseMatrix64F X2 ) {
+    return allclose( X1, X2, 1e-4 );
+  }
+  public static boolean allclose( SimpleMatrix X1, SimpleMatrix X2, double eps ) {
+    return allclose( X1.getMatrix(), X2.getMatrix(), eps );
+  }
+  public static boolean allclose( SimpleMatrix X1, SimpleMatrix X2 ) {
+    return allclose( X1.getMatrix(), X2.getMatrix() );
+  }
+
+  /**
+   * Find the minimium value of the matrix X
+   */
+  public static double min( DenseMatrix64F X ) {
+    double[] X_ = X.data;
+		double min = Double.POSITIVE_INFINITY;
+		for( int i = 0; i < X_.length; i++ ) 
+				if( X_[i] < min ) min = X_[i];
+
+    return min;
+  }
+  public static double min( SimpleMatrix X ) {
+    return min( X.getMatrix() );
+  }
+  /**
+   * Find the maximum value of the matrix X
+   */
+  public static double max( DenseMatrix64F X ) {
+    double[] X_ = X.data;
+    double max = Double.NEGATIVE_INFINITY;
+		for( int i = 0; i < X_.length; i++ ) 
+				if( X_[i] > max ) max = X_[i];
+
+    return max;
+  }
+  public static double max( SimpleMatrix X ) {
+    return max( X.getMatrix() );
+  }
+
+
+
+  /**
    * Compute the average outer product of each row of X1 and X2
    */
   public static DenseMatrix64F Pairs( DenseMatrix64F X1, DenseMatrix64F X2 ) {
