@@ -6,6 +6,7 @@
 package learning.linalg;
 
 import learning.linalg.MatrixOps;
+import learning.exceptions.NumericalException;
 
 import org.ejml.simple.SimpleMatrix;
 import org.junit.Assert;
@@ -20,6 +21,7 @@ public class MatrixOpsTest {
   SimpleMatrix X1;
   SimpleMatrix X2;
   SimpleMatrix X3;
+  SimpleMatrix X4;
 
   @Before
   public void setUp() {
@@ -38,21 +40,18 @@ public class MatrixOpsTest {
       { 0.32112581,  0.59689873, -1.05131256},
       { 0.61709072, -0.26502982, -0.83136217}};
 
+    double[][] X4_ = {
+      {-1.28215659,  1.1546932 , -2.52303139},
+      { 0.28178498, -1.36063266,  0.14748404},
+      {-0.84325768, -1.57915379,  1.08970879},
+      { 1.32421528, -0.93429939, -2.14364265},
+      { 0.32112581,  0.59689873, -1.05131256},
+      { 0.61709072, -0.26502982, -0.83136217}};
+
     X1 = new SimpleMatrix(X1_);
     X2 = new SimpleMatrix(X2_);
     X3 = new SimpleMatrix(X3_);
-  }
-
-  @Test
-  public void min() {
-    double min = MatrixOps.min( X1 );
-    Assert.assertTrue( min == -1.49155831 );
-  }
-
-  @Test
-  public void max() {
-    double max = MatrixOps.max( X1 );
-    Assert.assertTrue( max == 1.74702881 );
+    X4 = new SimpleMatrix(X4_);
   }
 
   @Test
@@ -76,6 +75,30 @@ public class MatrixOpsTest {
     Assert.assertTrue( MatrixOps.allclose( P12_1, P12_2 ) );
     Assert.assertFalse( MatrixOps.allclose( P12_1, P12_3 ) );
     Assert.assertTrue( MatrixOps.allclose( P12_1, P12_3, 1e-1 ) );
+  }
+
+  @Test
+  public void abs() {
+    double[][] X1a_ = {
+      { 1.74702881, 1.11241135, 0.18658948},
+      { 0.05982937, 0.22105371, 1.49155831},
+      { 0.95235621, 0.81554199, 0.33258448}};
+    SimpleMatrix X1a = new SimpleMatrix( X1a_ );
+    SimpleMatrix X1b = MatrixOps.abs( X1 );
+
+    Assert.assertTrue( MatrixOps.allclose( X1a, X1b ) );
+  }
+
+  @Test
+  public void min() {
+    double min = MatrixOps.min( X1 );
+    Assert.assertTrue( min == -1.49155831 );
+  }
+
+  @Test
+  public void max() {
+    double max = MatrixOps.max( X1 );
+    Assert.assertTrue( max == 1.74702881 );
   }
 
   @Test
@@ -136,12 +159,30 @@ public class MatrixOpsTest {
 
   @Test
 	public void setCol() {
+    double[][] theta = {
+      { 0.63137104,},
+      { 0.59910771,},
+      { 0.02021931,}};
+
+    double[][] X1a_ = {
+      { 1.74702881, 0.63137104,  0.18658948},
+      {-0.05982937, 0.59910771, -1.49155831},
+      { 0.95235621, 0.02021931, -0.33258448}};
+
+    SimpleMatrix X1a = new SimpleMatrix( X1a_ );
+
+    SimpleMatrix X1b = new SimpleMatrix(X1);
+    MatrixOps.setCol( X1b, 1, new SimpleMatrix(theta) );
+    Assert.assertTrue( MatrixOps.allclose( X1a, X1b ) );
+
+    X1b = new SimpleMatrix(X1);
+    MatrixOps.setCol( X1b, 1, (new SimpleMatrix(theta)).transpose() );
+    Assert.assertTrue( MatrixOps.allclose( X1a, X1b ) );
   }
 
   @Test
 	public void setRow() {
-    double[][] theta1 = {{ 0.63137104,  0.59910771,  0.02021931}};
-    double[][] theta2 = {{ 0.82945477,  0.23272397,  0.60360884}};
+    double[][] theta = {{ 0.63137104,  0.59910771,  0.02021931}};
 
     double[][] X1a_ = {
       { 1.74702881, -1.11241135,  0.18658948},
@@ -149,14 +190,32 @@ public class MatrixOpsTest {
       { 0.95235621, -0.81554199, -0.33258448}};
 
     SimpleMatrix X1a = new SimpleMatrix( X1a_ );
+    
     SimpleMatrix X1b = new SimpleMatrix(X1);
-    MatrixOps.setRow( X1b, 1, new SimpleMatrix(theta1) );
+    MatrixOps.setRow( X1b, 1, new SimpleMatrix(theta) );
+    Assert.assertTrue( MatrixOps.allclose( X1a, X1b ) );
 
+    X1b = new SimpleMatrix(X1);
+    MatrixOps.setRow( X1b, 1, (new SimpleMatrix(theta)).transpose() );
     Assert.assertTrue( MatrixOps.allclose( X1a, X1b ) );
   }
 	
   @Test
 	public void setCols() {
+    double[][] theta = {
+      { 0.63137104,  0.82945477},
+      { 0.59910771,  0.23272397},
+      { 0.02021931,  0.60360884}};
+
+    double[][] X1a_ = {
+      { 1.74702881, 0.63137104,  0.82945477},
+      {-0.05982937, 0.59910771,  0.23272397},
+      { 0.95235621, 0.02021931,  0.60360884}};
+
+    SimpleMatrix X1a = new SimpleMatrix( X1a_ );
+    SimpleMatrix X1b = new SimpleMatrix(X1);
+    MatrixOps.setCols( X1b, 1, 3, new SimpleMatrix(theta) );
+    Assert.assertTrue( MatrixOps.allclose( X1a, X1b ) );
   }
 
   @Test
@@ -178,43 +237,144 @@ public class MatrixOpsTest {
 
   @Test
 	public void rowSum() {
+    double sum = -1.3303339757731367;
+    double sum_ = MatrixOps.rowSum( X1, 1 );
+    Assert.assertTrue( Math.abs( sum - sum_ ) < 1e-7 );
   }
 	
   @Test
 	public void columnSum() {
+    double sum = -1.706899636542059;
+    double sum_ = MatrixOps.columnSum( X1, 1 );
+    Assert.assertTrue( Math.abs( sum - sum_ ) < 1e-7 );
   }
-
 
   @Test
 	public void rowNormalize() {
+    double[][] X1_ = {
+      { 1.74702881, -1.11241135,  0.18658948},
+      { 0.0449732 , -0.16616407,  1.12119088},
+      { 0.95235621, -0.81554199, -0.33258448}};
+
+    SimpleMatrix X1a = new SimpleMatrix( X1_ );
+    SimpleMatrix X1b = new SimpleMatrix(X1);
+    MatrixOps.rowNormalize( X1b.getMatrix(), 1 );
+    Assert.assertTrue( MatrixOps.allclose( X1a, X1b ) );
   }
 	
   @Test
 	public void columnNormalize() {
+    double[][] X1_ = {
+      { 1.74702881,  0.65171457,  0.18658948},
+      {-0.05982937, -0.12950598, -1.49155831},
+      { 0.95235621,  0.47779142, -0.33258448}};
+
+    SimpleMatrix X1a = new SimpleMatrix( X1_ );
+    SimpleMatrix X1b = new SimpleMatrix(X1);
+    MatrixOps.columnNormalize( X1b.getMatrix(), 1 );
+
+    Assert.assertTrue( MatrixOps.allclose( X1a, X1b ) );
   }
 
   @Test
 	public void cdist() {
+    double[][] D_ = {
+      { 4.6537912 ,  1.48663463,  2.78263492,  2.37496883,  2.54702606,
+         1.74098855},
+       { 1.8519458 ,  2.3032351 ,  3.24306133,  1.9171944 ,  0.69296655,
+         1.06318246},
+       { 3.69769277,  0.98856228,  2.41459114,  1.85265058,  1.70587533,
+         0.81501276}};
+
+    SimpleMatrix Da = new SimpleMatrix( D_ );
+    SimpleMatrix Db = MatrixOps.cdist( X1, X4 );
+
+    Assert.assertTrue( MatrixOps.allclose( Da, Db ) );
   }
 
   @Test
 	public void projectOntoSimplex() {
+    double[][] theta_ = { 
+      { 0.50481492,  0.47901866,  0.01616642 },
+      { 0.50481492,  0.47901866,  -0.01616642 }};
+    double[][] thetaA_ = {
+      { 0.50481492,  0.47901866,  0.01616642 },
+      { 0.51311007,  0.48688993,  0.         }};
+
+    SimpleMatrix theta = new SimpleMatrix( theta_ );
+    SimpleMatrix thetaA = new SimpleMatrix( thetaA_ );
+
+    SimpleMatrix thetaB = MatrixOps.projectOntoSimplex( thetaA.transpose() ).transpose();
+
+    Assert.assertTrue( MatrixOps.allclose( thetaA, thetaB ) );
   }
 
   @Test
 	public void rank() {
+    double[][] R1Matrix_ = {
+      { 0.39862939,  0.37825926,  0.01276589},
+      { 0.37825926,  0.35893005,  0.01211354},
+      { 0.01276589,  0.01211354,  0.00040882}};
+    SimpleMatrix R1Matrix = new SimpleMatrix( R1Matrix_ );
+
+    Assert.assertTrue( MatrixOps.rank( X1 ) == 3 );
+    Assert.assertTrue( MatrixOps.rank( R1Matrix ) == 1 );
   }
 
   @Test
 	public void svdk() {
+    double[][] U_ = {
+      {-0.85615465, -0.02776278},
+      { 0.11303394,  0.96430814},
+      {-0.50420486,  0.26332308}};
+    double[][] W_ = {
+      { 2.42589405,  0.0 },
+      {  0.0, 1.53816955 }};
+    double[][] V_ = {
+      {-0.81729547,  0.09399552}, 
+      { 0.5724005 ,  0.01904634},
+      { -0.06622525, -0.99539042,}};
+
+    SimpleMatrix U = new SimpleMatrix( U_ );
+    SimpleMatrix W = new SimpleMatrix( W_ );
+    SimpleMatrix V = new SimpleMatrix( V_ );
+
+    SimpleMatrix[] UWV = MatrixOps.svdk( X1, 2 );
+    Assert.assertTrue( MatrixOps.allclose( MatrixOps.abs( U ), MatrixOps.abs( UWV[0] ) ) );
+    Assert.assertTrue( MatrixOps.allclose( MatrixOps.abs( W ), MatrixOps.abs( UWV[1] ) ) );
+    Assert.assertTrue( MatrixOps.allclose( MatrixOps.abs( V ), MatrixOps.abs( UWV[2] ) ) );
   }
 
   @Test
 	public void approxk() {
+    double[][] X1_R2Approx_ = {
+      { 1.69346008, -1.18965511,  0.18005292},
+      {-0.08468856,  0.18520784, -1.49459168},
+      { 1.03774449, -0.69241583, -0.32216523}};
+    SimpleMatrix X1_R2ApproxA = new SimpleMatrix( X1_R2Approx_ );
+
+    SimpleMatrix X1_R2ApproxB = MatrixOps.approxk( X1, 2 );
+    Assert.assertTrue( MatrixOps.allclose( X1_R2ApproxA, X1_R2ApproxB ) );
   }
 
   @Test
 	public void eig() {
+    double[][] L_ = {{-0.94770034, 0.31734053, 2.26585785}};
+    double[][] R_ = { 
+      { 0.2740856 ,  0.61844862,  0.84960229},
+      { 0.76229792,  0.78220896, -0.32681905},
+      { 0.58632667, -0.07530232,  0.41396288}};
+
+    SimpleMatrix L = new SimpleMatrix(L_);
+    SimpleMatrix R = new SimpleMatrix(R_);
+
+    try {
+      SimpleMatrix[] LR = MatrixOps.eig( X1 );
+      Assert.assertTrue( MatrixOps.allclose( L, LR[0] ) );
+      Assert.assertTrue( MatrixOps.allclose( MatrixOps.abs( R ), MatrixOps.abs( LR[1] ) ) );
+    } catch( NumericalException e ) {
+      Assert.fail( e.getMessage() );
+    }
   }
 
 }

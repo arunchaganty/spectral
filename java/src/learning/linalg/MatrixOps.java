@@ -16,6 +16,9 @@ import org.ejml.simple.SimpleEVD;
 
 public class MatrixOps {
 
+  public static double EPS_CLOSE = 1e-4;
+  public static double EPS_ZERO = 1e-7;
+
   /**
    * Test whether two matrices are within eps of each other
    */
@@ -35,13 +38,28 @@ public class MatrixOps {
     return true;
   }
   public static boolean allclose( DenseMatrix64F X1, DenseMatrix64F X2 ) {
-    return allclose( X1, X2, 1e-4 );
+    return allclose( X1, X2, EPS_CLOSE );
   }
   public static boolean allclose( SimpleMatrix X1, SimpleMatrix X2, double eps ) {
     return allclose( X1.getMatrix(), X2.getMatrix(), eps );
   }
   public static boolean allclose( SimpleMatrix X1, SimpleMatrix X2 ) {
     return allclose( X1.getMatrix(), X2.getMatrix() );
+  }
+
+  /**
+   * Return the absolute value of each entry in X
+   */
+  public static void abs( DenseMatrix64F X ) {
+    double[] X_ = X.data;
+		for( int i = 0; i < X_.length; i++ ) 
+      X_[i] = Math.abs( X_[i] );
+  }
+
+  public static SimpleMatrix abs( SimpleMatrix X ) {
+    DenseMatrix64F Y = X.getMatrix().copy();
+    abs(Y);
+    return SimpleMatrix.wrap( Y ) ;
   }
 
   /**
@@ -326,10 +344,22 @@ public class MatrixOps {
   /**
    * Find the rank of the matrix
    */
-  public static int rank( SimpleMatrix X ) {
-    return X.svd().rank();
+  public static int rank( SimpleMatrix X, double eps ) {
+    // HACK: X.svd().rank() does not give the right rank for some reason.
+    SimpleMatrix W = X.svd().getW(); 
+
+    for( int i = 0; i < W.numRows(); i++ )
+    {
+      if( W.get( i, i ) < eps ) return i;
+    }
+
+    return W.numRows();
   }
 
+  public static int rank( SimpleMatrix X ) {
+    return rank( X, EPS_ZERO );
+  }
+  
   /**
    * Compute the SVD and compress it to choose the top k singular vectors
    */
@@ -367,7 +397,7 @@ public class MatrixOps {
    * Compute eigenvalues and eigenvectors of X
    */
   public static SimpleMatrix[] eig( SimpleMatrix X ) throws NumericalException {
-    SimpleMatrix L = new SimpleMatrix( X.numRows(), 1 );
+    SimpleMatrix L = new SimpleMatrix( 1, X.numCols() );
     SimpleMatrix R = new SimpleMatrix( X.numRows(), X.numCols() );
 
     @SuppressWarnings("unchecked")
@@ -379,7 +409,7 @@ public class MatrixOps {
       if( !EVD.getEigenvalue(i).isReal() )
         throw new NumericalException("Imaginary eigenvalue at index " + i);
       L.set( 0, i, EVD.getEigenvalue(i).real );
-      MatrixOps.setRow( R, i, EVD.getEigenVector(i));
+      MatrixOps.setCol( R, i, EVD.getEigenVector(i));
     }
 
     SimpleMatrix[] LR = {L, R};
