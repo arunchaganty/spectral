@@ -118,10 +118,20 @@ public class MatrixOpsTest {
 
   @Test
 	public void col() {
+    double[][] X11_ = { {-1.11241135}, {0.22105371}, {-0.81554199},};
+    SimpleMatrix X11a = new SimpleMatrix( X11_ );
+    SimpleMatrix X11 = MatrixOps.col( X1, 1 );
+
+    Assert.assertTrue( MatrixOps.allclose( X11, X11a ) );
   }
 
   @Test
 	public void row() {
+    double[][] X11_ = { {-0.05982937,  0.22105371, -1.49155831},};
+    SimpleMatrix X11a = new SimpleMatrix( X11_ );
+    SimpleMatrix X11 = MatrixOps.row( X1, 1 );
+
+    Assert.assertTrue( MatrixOps.allclose( X11, X11a ) );
   }
 
   @Test
@@ -130,6 +140,19 @@ public class MatrixOpsTest {
 
   @Test
 	public void setRow() {
+    double[][] theta1 = {{ 0.63137104,  0.59910771,  0.02021931}};
+    double[][] theta2 = {{ 0.82945477,  0.23272397,  0.60360884}};
+
+    double[][] X1a_ = {
+      { 1.74702881, -1.11241135,  0.18658948},
+      { 0.63137104,  0.59910771,  0.02021931},
+      { 0.95235621, -0.81554199, -0.33258448}};
+
+    SimpleMatrix X1a = new SimpleMatrix( X1a_ );
+    SimpleMatrix X1b = new SimpleMatrix(X1);
+    MatrixOps.setRow( X1b, 1, new SimpleMatrix(theta1) );
+
+    Assert.assertTrue( MatrixOps.allclose( X1a, X1b ) );
   }
 	
   @Test
@@ -138,6 +161,19 @@ public class MatrixOpsTest {
 
   @Test
 	public void setRows() {
+    double[][] theta = {
+      { 0.63137104,  0.59910771,  0.02021931},
+      { 0.82945477,  0.23272397,  0.60360884}};
+
+    double[][] X1a_ = {
+      { 1.74702881, -1.11241135,  0.18658948},
+      { 0.63137104,  0.59910771,  0.02021931},
+      { 0.82945477,  0.23272397,  0.60360884}};
+
+    SimpleMatrix X1a = new SimpleMatrix( X1a_ );
+    SimpleMatrix X1b = new SimpleMatrix(X1);
+    MatrixOps.setRows( X1b, 1, 3, new SimpleMatrix(theta) );
+    Assert.assertTrue( MatrixOps.allclose( X1a, X1b ) );
   }
 
   @Test

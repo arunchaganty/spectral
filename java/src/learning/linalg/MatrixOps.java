@@ -156,7 +156,7 @@ public class MatrixOps {
 		}
 	}
 	public static void setRow( SimpleMatrix X, int i, SimpleMatrix r ) {
-		if( r.numRows() == 1 )
+		if( r.numCols() == 1 )
 			r = r.transpose();
     setRows( X, i, i+1, r );
 	}
@@ -182,7 +182,7 @@ public class MatrixOps {
 	 * @return
 	 */
 	public static void setCol( SimpleMatrix X, int i, SimpleMatrix c ) {
-		if( c.numCols() == 1 )
+		if( c.numRows() == 1 )
 			c = c.transpose();
     setCols( X, i, i+1, c );
 	}
