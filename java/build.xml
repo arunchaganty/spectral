@@ -11,7 +11,7 @@
         <pathelement location="deps/fig.jar"/>
         <pathelement location="deps/junit-4.10.jar" />
         <pathelement location="deps/Jama-1.0.3.jar" />
-        <pathelement location="deps/hamecrest.jar" />
+        <pathelement location="deps/hamcrest.jar" />
         <pathelement location="deps/javatuples-1.2.jar"/>
         <pathelement location="deps/javatuples-1.2-javadoc.jar"/>
         <pathelement location="deps/KittyCache-1.2.jar" />
