@@ -13,7 +13,14 @@ import fig.prob.MultGaussian;
  * A set of functions to generate random variables
  */
 public class RandomFactory {
-	private static Random rand = new Random();
+	public static Random rand = new Random();
+	public int seed = 0;
+
+    public static void setSeed(long seed) {
+        rand.setSeed( seed );
+    }
+
+
 	
 	/**
 	 * Generate a random matrix with standard normal entries.

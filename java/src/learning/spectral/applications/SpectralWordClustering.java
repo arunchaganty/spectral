@@ -9,6 +9,7 @@ import learning.exceptions.RecoveryFailure;
 import learning.spectral.MultiViewMixture;
 import learning.data.Corpus;
 import learning.data.ProjectedCorpus;
+import learning.data.MomentComputer;
 import learning.linalg.MatrixOps;
 import learning.linalg.MatrixFactory;
 import learning.linalg.RandomFactory;
@@ -49,8 +50,10 @@ public class SpectralWordClustering implements Runnable {
 	public int d;
 	@Option(gloss = "Number of attempts to try projecting on different theta")
 	public int attempts = 3;
+	@Option(gloss = "Number of threads")
+	public int nThreads = 1;
 	@Option(gloss = "Random seed")
-	public long seed = (new Date()).getTime();
+	public int seed = (int)(new Date()).getTime();
 
 	protected Corpus C;
 	protected ProjectedCorpus PC;
@@ -60,96 +63,13 @@ public class SpectralWordClustering implements Runnable {
   protected SimpleMatrix[] Theta;
   protected SimpleMatrix[][] P132; // Stores various projects of this.
 
-  protected SimpleMatrix[] Pairs( ProjectedCorpus PC ) {
-    int d = PC.projectionDim;
-    double[][] P12 = new double[d][d];
-    double[][] P13 = new double[d][d];
-
-		LogInfo.begin_track( "Pairs" );
-		double count = 0.0;
-		for( int c_i = 0; c_i < PC.C.length; c_i++ ) {
-			int[] doc = PC.C[c_i];
-			int l = doc.length - 2;
-			for( int word = 0; word < l; word++ ) {
-				double[] x1 = PC.featurize( doc[word] );
-				double[] x2 = PC.featurize( doc[word+1] );
-				double[] x3 = PC.featurize( doc[word+2] );
-				// Add into P13
-				count++;
-				for( int i = 0; i < d; i++ ) {
-					for( int j = 0; j < d; j++ ) {
-						P12[i][j] += (x1[i] * x2[j] - P12[i][j])/(count);
-						P13[i][j] += (x1[i] * x3[j] - P13[i][j])/(count);
-					}
-				}
-			}
-			if( c_i % 10 == 0 )
-				Execution.putOutput( "Pairs status", ((float)c_i * 100)/C.C.length );
-		}
-		LogInfo.end_track( "Pairs" );
-
-    SimpleMatrix P12_ = new SimpleMatrix( P12 );
-    SimpleMatrix P13_ = new SimpleMatrix( P13 );
-    SimpleMatrix[] P12P13 = {P12_, P13_};
-
-    return P12P13;
-  }
-
-  /**
-   * Compute the projected tensor using each column of theta.
-   */
-  protected SimpleMatrix[] Triples( ProjectedCorpus PC, SimpleMatrix theta ) {
-    int nClusters = theta.numCols();
-    int d = PC.projectionDim;
-    double[][][] P132 = new double[nClusters][d][d];
-
-    // Let's use rows because they're easier to index with
-    double[][] theta_ = MatrixFactory.toArray( theta.transpose() );
-
-		LogInfo.begin_track( "Triples" );
-		double count = 0.0;
-		for( int c_i = 0; c_i < PC.C.length; c_i++ ) {
-			int[] doc = PC.C[c_i];
-			int l = doc.length - 2;
-			for( int word = 0; word < l; word++ ) {
-				double[] x1 = PC.featurize( doc[word] );
-				double[] x2 = PC.featurize( doc[word+1] );
-				double[] x3 = PC.featurize( doc[word+2] );
-
-        // Compute inner products
-        double[] prod = new double[nClusters];
-        for( int i = 0; i < nClusters; i++ )
-          for( int j = 0; j < d; j++ )
-            prod[i] += x2[j] * theta_[i][j];
-
-				// Add into P132
-				count++;
-				for( int i = 0; i < d; i++ ) {
-					for( int j = 0; j < d; j++ ) {
-            for( int cluster = 0; cluster < nClusters; cluster++ ) {
-              P132[cluster][i][j] += (prod[cluster] * x1[i] * x3[j] - P132[cluster][i][j])/count;
-            }
-					}
-				}
-			}
-			if( c_i % 10 == 0 )
-				Execution.putOutput( "Triples status", ((float)c_i * 100)/C.C.length );
-		}
-		LogInfo.end_track( "Triples" );
-
-    SimpleMatrix[] P132_ = new SimpleMatrix[nClusters];
-    for( int i = 0; i < nClusters; i++ )
-      P132_[i] = new SimpleMatrix( P132[i] );
-
-    return P132_;
-  }
-
   /**
    * Compute the moments of the data for attempts # of $theta$
    */
   protected void computeMoments( ProjectedCorpus PC ) {
+    MomentComputer comp = new MomentComputer( PC, nThreads );
     // Compute P12, P13
-    SimpleMatrix[] P12P13 = Pairs( PC );
+    SimpleMatrix[] P12P13 = comp.Pairs();
     P12 = P12P13[0];
     P13 = P12P13[1];
 
@@ -166,7 +86,7 @@ public class SpectralWordClustering implements Runnable {
       
       theta = U3.mult( theta );
       // Compute the projected moment 
-      P132[i] = Triples( PC, theta );
+      P132[i] = comp.Triples( theta );
     }
   }
 	
@@ -224,6 +144,8 @@ public class SpectralWordClustering implements Runnable {
 	
 	@Override
 	public void run() {
+    // Set the seed
+    RandomFactory.setSeed( seed );
     // Populate the moment matrices, either by reading stored values or
     // computing from files.
 		try {
@@ -235,6 +157,9 @@ public class SpectralWordClustering implements Runnable {
 			LogInfo.error( e.getMessage() );
 			return;
     }
+
+    System.out.println( P132[0][0] );
+    System.out.println( P132[1][1] );
 
     if( computeClustering ) {
       runClustering();

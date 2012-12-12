@@ -7,6 +7,7 @@ package learning.data;
 
 import learning.linalg.MatrixOps;
 import learning.linalg.MatrixFactory;
+import learning.linalg.RandomFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -22,16 +23,12 @@ import java.io.Serializable;
 
 import org.ejml.simple.SimpleMatrix;
 
-import com.spaceprogram.kittycache.KittyCache;
-
 /**
  * Stores a corpus in an integer array
  */
 public class ProjectedCorpus extends Corpus implements Serializable {
 	public int projectionDim;
-	protected Random rnd;
 	protected long[] seeds;
-	protected KittyCache<Integer, double[]> featureCache;
 
   protected ProjectedCorpus() {
       super();
@@ -42,34 +39,8 @@ public class ProjectedCorpus extends Corpus implements Serializable {
     projectionDim = d;
 
     // Stuff for lazy featurisation
-		this.rnd = new Random();
-		this.seeds = seeds;
-		this.featureCache = new KittyCache<>( 1000 );
+    this.seeds = seeds;
   }
-
-  /**
-   * Custom writeObject implementation to leave out the feature cache.
-   */
-  private void writeObject(java.io.ObjectOutputStream out)
-  throws IOException {
-    out.writeObject( dict );
-    out.writeObject( C );
-    out.writeObject( projectionDim );
-    out.writeObject( seeds );
-  }
-  /**
-   * Custom writeObject implementation to leave out the feature cache.
-   */
-  private void readObject(java.io.ObjectInputStream in)
-  throws IOException, ClassNotFoundException {
-     dict = (String[]) in.readObject();
-     C = (int[][]) in.readObject();
-     projectionDim = (int) in.readObject();
-     seeds = (long[]) in.readObject();
-     this.rnd = new Random();
-     this.featureCache = new KittyCache<>( 1000 );
-  }
-
 
   /**
    * Project a corpus onto a random set of d-dimensional vectors
@@ -78,65 +49,60 @@ public class ProjectedCorpus extends Corpus implements Serializable {
     Random rnd = new Random( seed );
 
     // Generate a set of seeds for each word
-		long[] seeds = new long[ C.dict.length ];
-		for(int i = 0; i < C.dict.length; i++ ) 
-			seeds[i] = rnd.nextLong();
+    long[] seeds = new long[ C.dict.length ];
+    for(int i = 0; i < C.dict.length; i++ ) 
+        seeds[i] = rnd.nextLong();
 
     return new ProjectedCorpus( C.dict, C.C, d, seeds );
   }
+  /**
+   * If no seed was provided, use the RandomFactory rng.
+   */
   public static ProjectedCorpus fromCorpus( Corpus C, int d ) {
-    return fromCorpus( C, d, (new Date()).getTime() );
+    // Generate a set of seeds for each word
+    long[] seeds = new long[ C.dict.length ];
+    for(int i = 0; i < C.dict.length; i++ ) 
+        seeds[i] = RandomFactory.rand.nextLong();
+
+    return new ProjectedCorpus( C.dict, C.C, d, seeds );
   }
 
   /**
    * Get the d-dimensional feature vectore for the i-th index word
    */
-  public double[] featurize( int i, boolean shouldCache ) {
-    // Try getting it from the cache
-		double[] x = featureCache.get(i);
-
-		if( x == null ) {
-      // Otherwise, set the seed and generate the random number
-			rnd.setSeed(seeds[i]);
-			x = new double[projectionDim];
-			for(int j = 0; j < projectionDim; j++ )
-				x[j] = rnd.nextGaussian();
-				//x[j] = 10 * rnd.nextDouble();
+  public double[] featurize( int i ) {
+      Random rnd = new Random( seeds[i] );
+      double[] x = new double[projectionDim];
+      for(int j = 0; j < projectionDim; j++ )
+          x[j] = rnd.nextGaussian();
+      //x[j] = 10 * rnd.nextDouble();
       // Normalize x
       MatrixOps.makeUnitVector( x );
-      
-			if( shouldCache )
-				featureCache.put(i, x, -1);
-		}
-		
-		return x;
-  }
-  public double[] featurize( int i ) {
-    return featurize( i, true );
+      return x;
   }
 
-	/**
-	 * Get the distribution over words for this feature
-	 * @param feature
-	 * @return
-	 */
-	public double[] getWordDistribution( double[] x ) {
-		double[] z = new double[dict.length];
+  /**
+   * Get the distribution over words for this feature
+   * @param feature
+   * @return
+   */
+  public double[] getWordDistribution( double[] x ) {
+      double[] z = new double[dict.length];
 
-    MatrixOps.makeUnitVector( x );
-		for(int i = 0; i < dict.length; i++ ) {
-			double[] feature = featurize(i, false);
-			z[i] = MatrixOps.dot(feature, x);
-      if( z[i] < 0 ) z[i] = 0;
-		}
-    // Normalize into a probability distribution
-    MatrixOps.projectOntoSimplex( z );
-		return z;
-	}
-	public SimpleMatrix getWordDistribution( SimpleMatrix x ) {
-		double[] x_ = x.getMatrix().data;
-    return MatrixFactory.fromVector( getWordDistribution( x_ ) );
-	}
+      MatrixOps.makeUnitVector( x );
+      for(int i = 0; i < dict.length; i++ ) {
+          double[] feature = featurize(i);
+          z[i] = MatrixOps.dot(feature, x);
+          if( z[i] < 0 ) z[i] = 0;
+      }
+      // Normalize into a probability distribution
+      MatrixOps.projectOntoSimplex( z );
+      return z;
+  }
+  public SimpleMatrix getWordDistribution( SimpleMatrix x ) {
+      double[] x_ = x.getMatrix().data;
+      return MatrixFactory.fromVector( getWordDistribution( x_ ) );
+  }
 
 }
 
