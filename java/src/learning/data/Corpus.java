@@ -18,12 +18,14 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Vector;
 
+import java.io.Serializable;
+
 import org.ejml.simple.SimpleMatrix;
 
 /**
  * Stores a corpus in an integer array
  */
-public class Corpus {
+public class Corpus implements Serializable {
   /// Stores a list of unique vocabulary
 	public String[] dict;
 
@@ -37,6 +39,8 @@ public class Corpus {
 	public static final String UPPER_CLASS = "@UPPER@";
 	public static final String MISC_CLASS = "@MISC@";
 	
+	protected Corpus() {}
+
 	public Corpus( String[] dict, int[][] C ) {
 		this.dict = dict;
 		this.C = C;

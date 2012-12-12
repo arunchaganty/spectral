@@ -18,6 +18,7 @@ import org.javatuples.Pair;
 
 import fig.basic.LogInfo;
 import fig.basic.Option;
+import fig.basic.OptionsParser;
 import fig.exec.Execution;
 
 import java.util.Date;
@@ -42,11 +43,11 @@ public class SpectralWordClustering implements Runnable {
 	public int cutoff = 5;
 	@Option(gloss = "If true, compute moments from input file", required = true)
 	public boolean computeMoments;
-	@Option(gloss = "If true, compute clustering from moments", required = true)
+	@Option(gloss = "If true, compute clustering from moments")
 	public boolean computeClustering;
 	@Option(gloss = "Number of latent dimensions", required=true)
 	public int d;
-	@Option(gloss = "Number of attempts to try projecting on different theta", required=true)
+	@Option(gloss = "Number of attempts to try projecting on different theta")
 	public int attempts = 3;
 	@Option(gloss = "Random seed")
 	public long seed = (new Date()).getTime();
@@ -94,12 +95,16 @@ public class SpectralWordClustering implements Runnable {
     return P12P13;
   }
 
+  /**
+   * Compute the projected tensor using each column of theta.
+   */
   protected SimpleMatrix[] Triples( ProjectedCorpus PC, SimpleMatrix theta ) {
-    int nClusters = theta.numRows();
+    int nClusters = theta.numCols();
     int d = PC.projectionDim;
     double[][][] P132 = new double[nClusters][d][d];
 
-    double[][] theta_ = MatrixFactory.toArray( theta );
+    // Let's use rows because they're easier to index with
+    double[][] theta_ = MatrixFactory.toArray( theta.transpose() );
 
 		LogInfo.begin_track( "Triples" );
 		double count = 0.0;
@@ -151,9 +156,12 @@ public class SpectralWordClustering implements Runnable {
     SimpleMatrix[] U1WU3 = MatrixOps.svdk( P13, k );
     SimpleMatrix U3 = U1WU3[2];
 
+    Theta = new SimpleMatrix[attempts];
+    P132 = new SimpleMatrix[attempts][];
+
     for(int i = 0; i < attempts; i++) {
       // Generate a theta and project P132 onto it
-      SimpleMatrix theta = RandomFactory.orthogonal( d );
+      SimpleMatrix theta = RandomFactory.orthogonal( k );
       Theta[i] = theta;
       
       theta = U3.mult( theta );
@@ -174,6 +182,7 @@ public class SpectralWordClustering implements Runnable {
       
       // Compute the moments
       computeMoments( PC );
+			LogInfo.logsForce( "Moments computed" );
     } else {
       // Read the moments from the input file
       ObjectInputStream in = new ObjectInputStream( new FileInputStream( inputPath ) ); 
@@ -183,8 +192,34 @@ public class SpectralWordClustering implements Runnable {
       P132 = (SimpleMatrix[][]) in.readObject();
       Theta = (SimpleMatrix[]) in.readObject();
       in.close();
+      LogInfo.logsForce( "Read moments from file" );
     }
     LogInfo.end_track("preprocessing");
+  }
+
+  /**
+   * Serialise the computed moments
+   */
+  public void saveMoments() throws IOException {
+    String outputPath = Execution.getFile( "moments.dat" );
+    System.out.println( outputPath );
+
+    ObjectOutputStream out = new ObjectOutputStream( new FileOutputStream( outputPath ) ); 
+    out.writeObject( PC );
+    out.writeObject( P12 );
+    out.writeObject( P13 );
+    out.writeObject( P132 );
+    out.writeObject( Theta );
+    out.close();
+  }
+
+
+
+  /**
+   * Use the computed moments to learn an observation matrix of an HMM.
+   */
+	public void runClustering() {
+      // TODO: Use Algorithm A to compute the clusterings
   }
 	
 	@Override
@@ -202,25 +237,16 @@ public class SpectralWordClustering implements Runnable {
     }
 
     if( computeClustering ) {
-      // TODO: Use Algorithm A to compute the clusterings
+      runClustering();
     } else {
       // Just save the moments to disc.
-      String outputPath = Execution.getFile( "moments.dat" );
-      try{ 
-        ObjectOutputStream out = new ObjectOutputStream( new FileOutputStream( outputPath ) ); 
-        out.writeObject( PC );
-        out.writeObject( P12 );
-        out.writeObject( P13 );
-        out.writeObject( P132 );
-        out.writeObject( Theta );
-        out.close();
+      try {
+        saveMoments();
       } catch (IOException e) {
         LogInfo.error( e.getMessage() );
         return;
       }
-
     }
-		
 	}
 
 	/**

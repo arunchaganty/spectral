@@ -9,6 +9,8 @@ import learning.linalg.MatrixOps;
 import learning.data.Corpus;
 import learning.data.ProjectedCorpus;
 
+import java.io.File;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -16,6 +18,12 @@ import org.ejml.simple.SimpleMatrix;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.Before;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.lang.ClassNotFoundException;
 
 /**
  * 
@@ -39,6 +47,41 @@ public class ProjectedCorpusTest {
     // Small cutoff because the test corpus is so small
     Corpus C = Corpus.parseText( corpusPath, 2 );
     ProjectedCorpus PC = ProjectedCorpus.fromCorpus( C, 10 );
+
+    // Show that the projected vectors always choose the right word with
+    // highest probability
+    for( int i = 0; i < C.C.length; i++ ) {
+      int[] doc = C.C[i];
+      for( int j = 0; j < doc.length; j++ ) {
+        int word = doc[j];
+
+        double[] pr = PC.getWordDistribution( PC.featurize( word ) );
+        // Check the right word has the maximum probability  
+        double prMax = MatrixOps.max( pr );
+        Assert.assertTrue( Math.abs( pr[word] - prMax ) < EPS_ZERO );
+      }
+    }
+  }
+  
+  @Test
+  public void serializablityTest() throws IOException, ClassNotFoundException {
+    // Test whether parseText faithfully reproduces the text corpus,
+    // modulo reduction to sentinel classes
+    // Small cutoff because the test corpus is so small
+    Corpus C = Corpus.parseText( corpusPath, 2 );
+    ProjectedCorpus PC = ProjectedCorpus.fromCorpus( C, 10 );
+
+    File tmp = File.createTempFile("projected-corpus-test",".dat");
+
+    ObjectOutputStream out = new ObjectOutputStream( new FileOutputStream( tmp ) ); 
+    out.writeObject( PC );
+    out.close();
+
+    ObjectInputStream in = new ObjectInputStream( new FileInputStream( tmp ) ); 
+    PC = (ProjectedCorpus) in.readObject();
+    in.close();
+
+    tmp.deleteOnExit();
 
     // Show that the projected vectors always choose the right word with
     // highest probability

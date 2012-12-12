@@ -18,6 +18,8 @@ import java.util.Random;
 import java.util.Vector;
 import java.util.Date;
 
+import java.io.Serializable;
+
 import org.ejml.simple.SimpleMatrix;
 
 import com.spaceprogram.kittycache.KittyCache;
@@ -25,12 +27,15 @@ import com.spaceprogram.kittycache.KittyCache;
 /**
  * Stores a corpus in an integer array
  */
-public class ProjectedCorpus extends Corpus {
-
+public class ProjectedCorpus extends Corpus implements Serializable {
 	public int projectionDim;
 	protected Random rnd;
 	protected long[] seeds;
 	protected KittyCache<Integer, double[]> featureCache;
+
+  protected ProjectedCorpus() {
+      super();
+  }
 
   public ProjectedCorpus( String[] dict, int[][] C, int d, long[] seeds ) {
     super( dict, C );
@@ -41,6 +46,30 @@ public class ProjectedCorpus extends Corpus {
 		this.seeds = seeds;
 		this.featureCache = new KittyCache<>( 1000 );
   }
+
+  /**
+   * Custom writeObject implementation to leave out the feature cache.
+   */
+  private void writeObject(java.io.ObjectOutputStream out)
+  throws IOException {
+    out.writeObject( dict );
+    out.writeObject( C );
+    out.writeObject( projectionDim );
+    out.writeObject( seeds );
+  }
+  /**
+   * Custom writeObject implementation to leave out the feature cache.
+   */
+  private void readObject(java.io.ObjectInputStream in)
+  throws IOException, ClassNotFoundException {
+     dict = (String[]) in.readObject();
+     C = (int[][]) in.readObject();
+     projectionDim = (int) in.readObject();
+     seeds = (long[]) in.readObject();
+     this.rnd = new Random();
+     this.featureCache = new KittyCache<>( 1000 );
+  }
+
 
   /**
    * Project a corpus onto a random set of d-dimensional vectors
