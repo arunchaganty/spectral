@@ -20,6 +20,42 @@ public class MatrixOps {
   public static double EPS_ZERO = 1e-7;
 
   /**
+   * Take the vector dot product of two vectors (as arrays)
+   */
+  public static void printVector( double[] x ) {
+    System.out.printf( "{ " );
+    for( int i = 0; i < x.length; i++ )
+      System.out.printf( "%f, ", x[i] );
+    System.out.printf( "}\n" );
+  }
+
+  /**
+   * Take the vector dot product of two vectors (as arrays)
+   */
+  public static double dot( double[] x, double[] y ) {
+    assert( x.length == y.length );
+    double sum = 0.0;
+    for( int i = 0; i < x.length; i++ )
+      sum += x[i] * y[i];
+    return sum;
+  }
+
+  /**
+   * Test whether two matrices are within eps of each other
+   */
+  public static boolean allclose( double[] X1, double[] X2, double eps ) {
+    for( int i = 0; i < X1.length; i++ ) {
+        if( Math.abs( X1[i] - X2[i] )  > eps ) {
+          return false;
+        }
+    }
+    return true;
+  }
+  public static boolean allclose( double[] X1, double[] X2 ) {
+    return allclose( X1, X2, EPS_CLOSE );
+  }
+
+  /**
    * Test whether two matrices are within eps of each other
    */
   public static boolean allclose( DenseMatrix64F X1, DenseMatrix64F X2, double eps ) {
@@ -79,6 +115,13 @@ public class MatrixOps {
   /**
    * Find the maximum value of the matrix X
    */
+  public static double max( double[] x ) {
+    double max = Double.NEGATIVE_INFINITY;
+		for( int i = 0; i < x.length; i++ ) 
+				if( x[i] > max ) max = x[i];
+
+    return max;
+  }
   public static double max( DenseMatrix64F X ) {
     double[] X_ = X.data;
     double max = Double.NEGATIVE_INFINITY;
@@ -210,7 +253,45 @@ public class MatrixOps {
 			c = c.transpose();
     setCols( X, i, i+1, c );
 	}
+
 	
+  /**
+   * Find the sum of a vector
+   */
+	public static double sum(double[] x ) {
+    double sum = 0.0;
+    for( int i = 0; i < x.length; i++ )
+      sum += x[i];
+    return sum;
+  }
+
+  /**
+   * Find the sum of a vector
+   */
+	public static void normalize(double[] x) {
+    double sum = sum( x );
+    for( int i = 0; i < x.length; i++ )
+      x[i] /= sum;
+  }
+  
+  /**
+   * Find the norm of a vector
+   */
+	public static double norm(double[] x) {
+    double sum = 0.0;
+    for( int i = 0; i < x.length; i++ )
+      sum += x[i]*x[i];
+    return Math.sqrt( sum );
+  }
+  
+  /**
+   * Find the norm of a vector
+   */
+	public static void makeUnitVector(double[] x) {
+    double sum = norm( x );
+    for( int i = 0; i < x.length; i++ )
+      x[i] /= sum;
+  }
 
   /**
    * Find the sum of the rows of the column in X 
@@ -309,6 +390,14 @@ public class MatrixOps {
 	 * @param X
 	 * @return
 	 */
+	public static void projectOntoSimplex( double[] x ) {
+    // Normalize and shrink to 0
+    normalize(x);
+    for(int i = 0; i < x.length; i++ )
+      if( x[i] < 0 ) x[i] = 0;
+    normalize(x);
+  }
+
 	public static void projectOntoSimplex( DenseMatrix64F X ) {
 		int nRows = X.numRows;
 		int nCols = X.numCols;
@@ -316,26 +405,18 @@ public class MatrixOps {
     double[] X_ = X.data;
 
 		for( int col = 0; col < nCols; col++ ) {
-      // For each column, shift the value towards $\bar{X} - 1.0/n$, 
-      // Note that if $X$ is already on the simplex, then this leaves x
-      // unchanged.
-      
-      double X_bar = columnSum( X, col )/nRows;
+      // For each column, normalize the vector and zero out negative values.
+      columnNormalize( X, col );
 
 			for( int row = 0; row < nRows; row++ ) {
 				double x  = X_[ X.getIndex(row, col) ];
-
-        // If X_bar < 0 then project onto the -1 simplex.
-				if( X_bar < 0 ) x = -(x - X_bar - 1.0/nRows);
-				else x = x - X_bar + 1.0/nRows;
-        // If the x is still less than zero, remove it
-				if( x < 0 ) x = 0;
-				X_[X.getIndex(row, col)] = x;
-			}
+        if( x < 0 ) X_[ X.getIndex(row, col) ] = 0;
+      }
 
       columnNormalize( X, col );
 		}
 	}
+
 	/**
 	 * Project each columns of X onto a simplex
 	 * @param X

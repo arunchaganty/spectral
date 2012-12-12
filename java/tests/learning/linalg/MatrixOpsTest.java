@@ -23,6 +23,9 @@ public class MatrixOpsTest {
   SimpleMatrix X3;
   SimpleMatrix X4;
 
+  static double EPS_ZERO = 1e-7;
+  static double EPS_CLOSE = 1e-4;
+
   @Before
   public void setUp() {
     double[][] X1_ = {
@@ -236,17 +239,49 @@ public class MatrixOpsTest {
   }
 
   @Test
+	public void sum() {
+    double[] x = {-0.05982937,  0.22105371, -1.49155831};
+    double sum = -1.3303339757731367;
+    double sum_ = MatrixOps.sum( x );
+    Assert.assertTrue( Math.abs( sum - sum_ ) < EPS_ZERO );
+  }
+
+  @Test
 	public void rowSum() {
     double sum = -1.3303339757731367;
     double sum_ = MatrixOps.rowSum( X1, 1 );
-    Assert.assertTrue( Math.abs( sum - sum_ ) < 1e-7 );
+    Assert.assertTrue( Math.abs( sum - sum_ ) < EPS_ZERO );
   }
 	
   @Test
 	public void columnSum() {
     double sum = -1.706899636542059;
     double sum_ = MatrixOps.columnSum( X1, 1 );
-    Assert.assertTrue( Math.abs( sum - sum_ ) < 1e-7 );
+    Assert.assertTrue( Math.abs( sum - sum_ ) < EPS_ZERO );
+  }
+
+  @Test
+	public void normalize() {
+    double[] x = {-0.05982937,  0.22105371, -1.49155831};
+    double[] y = { 0.0449732 , -0.16616407,  1.12119088};
+    MatrixOps.normalize( x );
+    Assert.assertTrue( MatrixOps.allclose( x, y ) );
+  }
+  @Test
+
+	public void norm() {
+    double[] x = {-0.05982937,  0.22105371, -1.49155831};
+    double norm = 1.5090362780097162;
+    double norm_ = MatrixOps.norm( x );
+    Assert.assertTrue( Math.abs( norm - norm_ ) < EPS_ZERO );
+  }
+
+  @Test
+	public void makeUnitVector() {
+    double[] x = {-0.05982937,  0.22105371, -1.49155831};
+    double[] y = {-0.0396474 ,  0.14648668, -0.98841779};
+    MatrixOps.makeUnitVector( x );
+    Assert.assertTrue( MatrixOps.allclose( x, y ) );
   }
 
   @Test
@@ -290,6 +325,20 @@ public class MatrixOpsTest {
     SimpleMatrix Db = MatrixOps.cdist( X1, X4 );
 
     Assert.assertTrue( MatrixOps.allclose( Da, Db ) );
+  }
+
+  @Test
+	public void projectOntoSimplexArray() {
+    double[] theta1 = { 0.50481492,  0.47901866,  0.01616642 };
+    double[] theta2 = { 0.50481492,  0.47901866,  -0.01616642 };
+    double[] theta1A = { 0.50481492,  0.47901866,  0.01616642 };
+    double[] theta2A = { 0.51311007,  0.48688993,  0.         };
+
+    MatrixOps.projectOntoSimplex(theta1);
+    MatrixOps.projectOntoSimplex(theta2);
+
+    Assert.assertTrue( MatrixOps.allclose( theta1, theta1A) );
+    Assert.assertTrue( MatrixOps.allclose( theta2, theta2A) );
   }
 
   @Test
