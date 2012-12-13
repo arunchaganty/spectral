@@ -1,5 +1,5 @@
 * Test the multi-view algorithm with random Gaussian inputs
 * Implement algorithm A for multiview
 * Test the multi-view algorithm with random HMMs
-* Push onto servers
+* Test the various EM techniques.
 
