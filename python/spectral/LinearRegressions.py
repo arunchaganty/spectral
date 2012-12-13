@@ -17,7 +17,7 @@ from spectral.rand import orthogonal, wishart, dirichlet
 from spectral.data import Pairs, Triples, PairsQ, TriplesQ
 from models import LinearRegressionsMixture 
 
-def recover_B2( d, N, y, X ):
+def recover_B2( k, d, N, y, X ):
     """ Extract B2 by projecting onto various q """
     l = 1.0
 
@@ -32,7 +32,7 @@ def recover_B2( d, N, y, X ):
     Theta = zeros( (d_, d_) )
     for i in xrange( d_ ):
         q = Q.T[i]
-        Theta[i] = PairsQ(X, q)[indices]
+        Theta[i,:d_] = PairsQ(X, q)[indices]
     B2_ = (y**2).dot(Q)/N
 
     B2 = zeros( (d, d) )
@@ -152,27 +152,18 @@ def test_sample_recovery():
     B2 = B.dot( diag( pi ) ).dot( B.T )
     B3 = sum( [ pi[i] * tensorify(B.T[i], B.T[i], B.T[i] ) for i in xrange(K) ] )
 
-    #X2, X3, Y2, Y3 = sample_moments( k, y, X )
-
-    B2_ = recover_B2( d, N, y, X )
-    #print B2
-    #print B2_
-    #print "B2 recovery", norm(B2 - B2_)/norm(B2) 
+    B2_ = recover_B2( K, d, N, y, X )
 
     B3_ = recover_B3( d, N, y, X )
-    #print B4
-    #print B3_
-    #print "B3 recovery", norm(B3 - B3_)/norm(B3)
 
     B_ = recover_B( K, d, B2_, B3_ )
     B_ = closest_permuted_matrix( B.T, B_.T ).T
 
-    rerr = norm( B - B_ )#/norm(B)
-    print "B recovery", rerr
-    print B
-    print B_
+    err = norm( B - B_ )
+    print "B:", err
+    print B, B_
 
-    assert( rerr < 1e-2 )
+    assert( err < 1e-2 )
 
 def test_discrete():
     """Test the accuracy of sample recovery"""
@@ -247,37 +238,39 @@ def test_discrete():
     assert( sc.allclose( B, B_ ) )
 
 if __name__ == "__main__":
-    K = 3
+    import tempfile 
+
+    K = 2
     d = 3
     N = 1e6
 
-    fname = "/tmp/test.npz"
+    sc.random.seed(0)
+
+    # Initialise a model
+    fname = tempfile.mktemp()
     lrm = LinearRegressionsMixture.generate(fname, K, d, cov = "eye", betas="eye")
     M, S, pi, B = lrm.mean, lrm.sigma, lrm.weights, lrm.betas
 
+    # Generate some samples
     y, X = lrm.sample( N )
+
+    # Add some noise to y
+    withNoise = False
+    if( withNoise ):
+        sigma2 = 0.2
+        noise = sc.randn(*y.shape) * sqrt( sigma2 )
+        y += noise
 
     B2 = B.dot( diag( pi ) ).dot( B.T )
     B3 = sum( [ pi[i] * tensorify(B.T[i], B.T[i], B.T[i] ) for i in xrange(K) ] )
 
-    #X2, X3, Y2, Y3 = sample_moments( k, y, X )
-
-    B2_ = recover_B2( d, N, y, X )
-    #print B2
-    #print B2_
-    #print "B2 recovery", norm(B2 - B2_)/norm(B2) 
+    B2_ = recover_B2( K, d, N, y, X )
+    print "B2", norm(B2 - B2_)
 
     B3_ = recover_B3( d, N, y, X )
-    #print B4
-    #print B3_
-    #print "B3 recovery", norm(B3 - B3_)/norm(B3)
+    print "B3:", norm(B3 - B3_)
 
     B_ = recover_B( K, d, B2_, B3_ )
     B_ = closest_permuted_matrix( B.T, B_.T ).T
-
-    rerr = norm( B - B_ )#/norm(B)
-    #print "B recovery", rerr
-    print rerr
-    #print B
-    #print B_
+    print "B:", norm( B - B_ )
 
