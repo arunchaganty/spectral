@@ -52,6 +52,17 @@ When I tried this last, with a mixture of Gaussians, it failed; my hypothesis
 then was that the $q(x)$ was not smooth enough, which I thought was confirmed
 when applying the random smooth function $q(x) = \exp( - \|x - x_0\|_2)$ worked.
 
+# A better recovery procedure
+
+Rather than the wasteful $O(d^2)$ approach we've been looking at, Percy
+suggested using some ideas from sparse compressive sensing which would recover
+$B$ in $O(dk)$ projections, which is the best we could hope for. Two techniques
+that directly apply are (a) PhaseLift and (b) CPRL. The problem they are looking
+at is almost identical to our own - where a known real valued linear function
+(given by the $X$) takes $B = \beta \beta^T$ to the observed $y$ and we'd like
+to recover $B$ with a low-rank constraint. The CPRL paper also describes how to
+constrain $B$ to be sparse.
+
 # Tasks for the immediate future
 
 #. Figure out why the Dirichlet did not work last time and fix it or formulate
