@@ -3,7 +3,10 @@ Quick implementation of the mixture of linear regressions code
 """
 
 import ipdb
-import scipy as sc 
+
+import tempfile 
+
+import scipy as sc
 import scipy.spatial
 import scipy.linalg
 from scipy import diag, array, ndim, outer, eye, ones, log, sqrt, zeros, floor, exp
@@ -17,22 +20,37 @@ from spectral.rand import orthogonal, wishart, dirichlet
 from spectral.data import Pairs, Triples, PairsQ, TriplesQ
 from models import LinearRegressionsMixture 
 
-def recover_B2( k, d, N, y, X ):
+ALPHA = 1.0
+
+def recover_B2( d, N, y, X, mode = "dirichlet" ):
     """ Extract B2 by projecting onto various q """
     l = 1.0
 
     indices = sc.triu_indices( d )
-    d_ = d * (d+1) / 2
+    # Handle noise by including another row
+    d_ = (d * (d+1) / 2) 
 
-    # Pick a random set of d_ x's from the X
-    X0 = X[:d_]
-    Q = exp( - cdist( X, X0 )**2 / l )
+    # Pick our set of Q
+    if mode == "local":
+        # Pick a random set of d_ x's from the X
+        # And locally reweight points based on their distance 
+        X0 = X[:d_]
+        Q = exp( - cdist( X, X0 )**2 / l )
+    elif mode == "dirichlet":
+        # Pick a random set of points and assign weights
+        global ALPHA
+        alpha = ALPHA
+        Q = dirichlet( alpha * ones(N), d_ )
+        Q = Q.T
+    else:
+        raise NotImplementedError()
 
     # The transform
     Theta = zeros( (d_, d_) )
     for i in xrange( d_ ):
         q = Q.T[i]
         Theta[i,:d_] = PairsQ(X, q)[indices]
+        #Theta[i, d_-1] = 1
     B2_ = (y**2).dot(Q)/N
 
     B2 = zeros( (d, d) )
@@ -41,7 +59,7 @@ def recover_B2( k, d, N, y, X ):
 
     return B2
 
-def recover_B3( d, N, y, X ):
+def recover_B3( d, N, y, X, mode ):
     """Extract B3 by projecting onto various q"""
     l = 1.0
 
@@ -50,18 +68,28 @@ def recover_B3( d, N, y, X ):
         for j in xrange(i, d):
             for k in xrange(j, d):
                 indices.append( (i, j, k) )
-    d_ = len(indices)
+    d_ = len(indices) 
     indices = zip(* indices)
 
-    # Pick a random set of d_ x's from the X
-    X0 = X[:d_]
-    Q = exp( - cdist( X, X0 )**2 / l )
+    # Pick our set of Q
+    if mode == "local":
+        # Pick a random set of d_ x's from the X
+        # And locally reweight points based on their distance 
+        X0 = X[:d_]
+        Q = exp( - cdist( X, X0 )**2 / l )
+    elif mode == "dirichlet":
+        # Pick a random set of points and assign weights
+        alpha = ALPHA
+        Q = dirichlet( alpha * ones(N), d_ )
+        Q = Q.T
+    else:
+        raise NotImplementedError()
 
     # The transform
     Theta = zeros( (d_, d_ ) )
     for i in xrange( d_ ):
         q = Q.T[i]
-        Theta[i] = TriplesQ(X, q)[indices]
+        Theta[i, :d_] = TriplesQ(X, q)[indices]
     B3_ = (y**3).dot(Q)/N
 
     B3 = zeros( (d, d, d) )
@@ -160,7 +188,7 @@ def test_sample_recovery():
     B_ = closest_permuted_matrix( B.T, B_.T ).T
 
     err = norm( B - B_ )
-    print "B:", err
+    print "B:", 
     print B, B_
 
     assert( err < 1e-2 )
@@ -237,40 +265,56 @@ def test_discrete():
 
     assert( sc.allclose( B, B_ ) )
 
-if __name__ == "__main__":
-    import tempfile 
+def main( args ):
+    sc.random.seed(args.seed)
 
-    K = 2
-    d = 3
-    N = 1e6
-
-    sc.random.seed(0)
+    K, d, N = args.k, args.d, int( args.samples )
 
     # Initialise a model
     fname = tempfile.mktemp()
     lrm = LinearRegressionsMixture.generate(fname, K, d, cov = "eye", betas="eye")
     M, S, pi, B = lrm.mean, lrm.sigma, lrm.weights, lrm.betas
 
+    # Compute exact moments
+    B2 = B.dot( diag( pi ) ).dot( B.T )
+    B3 = sum( [ pi[i] * tensorify(B.T[i], B.T[i], B.T[i] ) for i in xrange(K) ] )
+
     # Generate some samples
     y, X = lrm.sample( N )
 
     # Add some noise to y
-    withNoise = False
-    if( withNoise ):
+    if args.with_noise:
         sigma2 = 0.2
         noise = sc.randn(*y.shape) * sqrt( sigma2 )
         y += noise
 
-    B2 = B.dot( diag( pi ) ).dot( B.T )
-    B3 = sum( [ pi[i] * tensorify(B.T[i], B.T[i], B.T[i] ) for i in xrange(K) ] )
+    # Set alphas
+    global ALPHA
+    ALPHA = args.alpha
 
-    B2_ = recover_B2( K, d, N, y, X )
-    print "B2", norm(B2 - B2_)
 
-    B3_ = recover_B3( d, N, y, X )
-    print "B3:", norm(B3 - B3_)
-
+    B2_ = recover_B2( d, N, y, X, args.mode )
+    B3_ = recover_B3( d, N, y, X, args.mode )
     B_ = recover_B( K, d, B2_, B3_ )
     B_ = closest_permuted_matrix( B.T, B_.T ).T
-    print "B:", norm( B - B_ )
+
+    print norm( B - B_ ),  norm(B2 - B2_), norm(B3 - B3_)
+
+if __name__ == "__main__":
+    import argparse, time
+    parser = argparse.ArgumentParser()
+    parser.add_argument( "-k", type=int, help="number of clusters" )
+    parser.add_argument( "-d", type=int, help="number of dimensions" )
+    parser.add_argument( "--seed", default=int(time.time() * 100), type=int,
+            help="Seed used for algorithm (separate from generation)" )
+    parser.add_argument( "--alpha", default=0.01, type=float, help="alphas" )
+    parser.add_argument( "--samples", default=1e6, type=float, help="Number of samples to be used" )
+    parser.add_argument( "--with-noise", default=False, type=bool, help="Use noise" )
+    parser.add_argument( "--mode", default="dirichlet", type=str, help="Generation of Q = dirichlet|local" )
+
+    args = parser.parse_args()
+    try:
+        main( args )
+    except:
+        pass
 
