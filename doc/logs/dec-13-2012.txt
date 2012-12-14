@@ -1,0 +1,67 @@
+% December 13, 2012
+
+On the use of Dirichlets
+------------------------
+
+I ran some experiments to look at the performance of the Dirichlet generation of
+$q(x)$ across varying $\alpha$. The graphs conclusively showed that it was
+extremely poor at recovering $\beta_i$, but we were confused as to why that was
+the case.
+
+~~~~~~ {.python}
+def test_dirichlet():
+    K, d, N = 2, 3, 1000
+
+    # Initialise a model
+    lrm = LinearRegressionsMixture.generate(tempfile.mktemp(), K, d, cov = "eye", betas="eye")
+    M, S, pi, B = lrm.mean, lrm.sigma, lrm.weights, lrm.betas
+
+    # Compute exact moments
+    B2 = B.dot( diag( pi ) ).dot( B.T )
+
+    # Generate some samples
+    y, X = lrm.sample( N )
+
+    indices = sc.triu_indices( d )
+    d_ = (d * (d+1) / 2) 
+
+    # Reweighting for a bunch of points
+    alpha = 1.0
+    Q = dirichlet( alpha * ones( N ), d_ )
+
+    Y = Q.dot(y**2)
+    Theta = zeros( (d_, d_) )
+    for i in xrange( n ):
+        Theta[i,:] = PairsQ(X, Q[i])[indices]
+
+    Theta_inv = inv( Theta )
+    B2_indices = Theta_inv.dot( Y )
+
+    B2_ = zeros( (d, d) )
+    B2_[indices] = B2_indices
+    B2_ = (B2_ + B2_.T)/2
+
+    print norm(B2 - B2_)
+~~~~~~
+
+Stepping through the algorithm, I realised that two things were culprit, 
+
+(a) The source of sampling noise comes from the averaging of the different
+$\beta_i$. When $\alpha$ is too small, we choose only a handful of $x$,
+increasing the sampling noise, leading to terrible estimates. This confirms the
+intuition about why the local Gaussians worked - they would average over the
+different $x$ in a region which statistically would have sufficiently many
+choices of $h$, leading to good estimates of $B = \sum_i \pi_i \beta_i
+\beta_i^T$.
+(b) When $\alpha$ is larger, the matrix $S$ with rows $vec(\E_q[ x x^T ])$ is
+very poorly conditioned and the small sampling noise is amplified when $S$ is
+inverted. Using more samples of $q$ and regularising the matrix helped but only
+marginally.
+
+It is interesting that these two factors compensate for each other to give
+uniformly terrible estimates. The final conclusion seems to be that Dirichlets
+are not a suitable class of priors of $q$ for this problem.
+
+We agreed to two new directions, playing around more with the locally weighted
+Gaussians and choosing subsets of the points.
+
