@@ -2,9 +2,7 @@
 Quick implementation of the mixture of linear regressions code
 """
 
-import ipdb
-
-import tempfile 
+import shutil, tempfile 
 
 import scipy as sc
 import scipy.spatial
@@ -16,50 +14,84 @@ from spectral.linalg import svdk, mrank, approxk, eigen_sep, \
         closest_permuted_matrix, tensorify, matrix_tensorify, \
         column_aerr, column_rerr,\
         condition_number, column_gap, column_sep
-from spectral.rand import orthogonal, wishart, dirichlet
+from spectral.rand import orthogonal, wishart, dirichlet, multinomial
 from spectral.data import Pairs, Triples, PairsQ, TriplesQ
 from models import LinearRegressionsMixture 
 
-ALPHA = 1.0
-
-def recover_B2( d, N, y, X, mode = "dirichlet" ):
-    """ Extract B2 by projecting onto various q """
-    l = 1.0
-
-    indices = sc.triu_indices( d )
-    # Handle noise by including another row
-    d_ = (d * (d+1) / 2) 
+def getQ( n, X, mode, *args ):
+    N, d = X.shape
 
     # Pick our set of Q
     if mode == "local":
         # Pick a random set of d_ x's from the X
         # And locally reweight points based on their distance 
-        X0 = X[:d_]
-        Q = exp( - cdist( X, X0 )**2 / l )
+        if len(args) == 0: 
+            l = 1.0
+        else:
+            l = args[0]
+            args = args[1:]
+        X0 = X[:n]
+        Q = exp( - cdist( X0, X )**2 / l )
     elif mode == "dirichlet":
         # Pick a random set of points and assign weights
-        global ALPHA
-        alpha = ALPHA
-        Q = dirichlet( alpha * ones(N), d_ )
-        Q = Q.T
+        if len(args) == 0: 
+            alpha = 1.0
+        else:
+            alpha = args[0]
+            args = args[1:]
+        Q = dirichlet( alpha * ones(N), n )
+    elif mode == "subset":
+        # Pick a random set of points and assign weights
+        if len(args) == 0: 
+            subset_size = sc.ceil( 0.01 * N ) # 1%
+        else:
+            subset_size = sc.ceil( args[0] * N )
+            args = args[1:]
+        Q = []
+        for i in xrange( n ):
+            q = array( multinomial( subset_size, ones( N )/N), dtype = sc.double ) 
+            Q.append( q )
+        Q = array( Q )
     else:
         raise NotImplementedError()
+    # Normalize Q
+    Q = (Q.T / Q.sum(1)).T
+
+    assert (Q.shape == (n, N))
+    return Q
+
+
+def recover_B2( d, N, oversample, y, X, mode = "dirichlet", *args ):
+    """ Extract B2 by projecting onto various q """
+
+    indices = sc.triu_indices( d )
+    # Handle noise by including another row
+    d_ = (d * (d+1) / 2) 
+
+    n_points = int( oversample * d_ )
+
+    Q = getQ( n_points, X, mode, *args )
 
     # The transform
-    Theta = zeros( (d_, d_) )
-    for i in xrange( d_ ):
-        q = Q.T[i]
+    Theta = zeros( (n_points, d_) )
+    for i in xrange( n_points ):
+        q = Q[i]
         Theta[i,:d_] = PairsQ(X, q)[indices]
-        #Theta[i, d_-1] = 1
-    B2_ = (y**2).dot(Q)/N
+    B2_ = (y**2).dot(Q.T)
+
+    if len( args ) > 0:
+        reg = args[0]
+    else:
+        reg = 0.0
+    theta_inv = inv( Theta.T.dot( Theta ) + reg * eye( d_ ) ).dot( Theta.T )
 
     B2 = zeros( (d, d) )
-    B2[ indices ] = inv(Theta).dot(B2_)
+    B2[ indices ] = theta_inv.dot(B2_)
     B2 = (B2 + B2.T)/2
 
     return B2
 
-def recover_B3( d, N, y, X, mode ):
+def recover_B3( d, N, oversample, y, X, mode = "dirichlet", *args ):
     """Extract B3 by projecting onto various q"""
     l = 1.0
 
@@ -71,29 +103,25 @@ def recover_B3( d, N, y, X, mode ):
     d_ = len(indices) 
     indices = zip(* indices)
 
-    # Pick our set of Q
-    if mode == "local":
-        # Pick a random set of d_ x's from the X
-        # And locally reweight points based on their distance 
-        X0 = X[:d_]
-        Q = exp( - cdist( X, X0 )**2 / l )
-    elif mode == "dirichlet":
-        # Pick a random set of points and assign weights
-        alpha = ALPHA
-        Q = dirichlet( alpha * ones(N), d_ )
-        Q = Q.T
-    else:
-        raise NotImplementedError()
+    n_points = int( oversample * d_ )
+
+    Q = getQ( n_points, X, mode, *args )
 
     # The transform
-    Theta = zeros( (d_, d_ ) )
-    for i in xrange( d_ ):
-        q = Q.T[i]
+    Theta = zeros( (n_points, d_ ) )
+    for i in xrange( n_points ):
+        q = Q[i]
         Theta[i, :d_] = TriplesQ(X, q)[indices]
-    B3_ = (y**3).dot(Q)/N
+    B3_ = (y**3).dot(Q.T)
+
+    if len( args ) > 0:
+        reg = args[0]
+    else:
+        reg = 0.0
+    theta_inv = inv( Theta.T.dot( Theta ) + reg * eye( d_ ) ).dot( Theta.T )
 
     B3 = zeros( (d, d, d) )
-    B3[  indices ] = inv(Theta).dot(B3_)
+    B3[  indices ] = theta_inv.dot(B3_)
     # Ugly 
     for i in xrange(d):
         for j in xrange(i, d):
@@ -150,21 +178,6 @@ def recover_B( k, d, B2, B3 ):
         M3_ = U.dot( inv(theta.T) ).dot( L )
         return M3_
 
-def normalise( y, X ):
-
-    # Normalise data 
-    # Center
-    mu = X.mean(0)
-    X = X - mu
-    # Whiten
-    S = Pairs( X, X )
-    W = cholesky( S )
-    X = X.dot( inv( W ) )
-
-    # Normalise y
-
-    return y, X, mu, S
-
 def test_sample_recovery():
     """Test the accuracy of sample recovery"""
     K = 3
@@ -180,90 +193,16 @@ def test_sample_recovery():
     B2 = B.dot( diag( pi ) ).dot( B.T )
     B3 = sum( [ pi[i] * tensorify(B.T[i], B.T[i], B.T[i] ) for i in xrange(K) ] )
 
-    B2_ = recover_B2( K, d, N, y, X )
-
-    B3_ = recover_B3( d, N, y, X )
-
+    B2_ = recover_B2( d, N, 1.0, y, X )
+    B3_ = recover_B3( d, N, 1.0, y, X )
     B_ = recover_B( K, d, B2_, B3_ )
     B_ = closest_permuted_matrix( B.T, B_.T ).T
 
     err = norm( B - B_ )
-    print "B:", 
+    print "B:", err
     print B, B_
 
     assert( err < 1e-2 )
-
-def test_discrete():
-    """Test the accuracy of sample recovery"""
-    K = 2
-    d = 2
-
-    # Simple orthogonal lines
-    B = eye(d)[:,:K]
-    #B = sc.randn(d,k)
-    pi = ones(d)/d
-    B2 = B.T.dot(diag(pi)).dot(B)
-    B3 = sum( [ pi[i] * tensorify(B.T[i], B.T[i], B.T[i] ) for i in xrange(K) ] )
-
-    N = 5
-    X = sc.randn(N,d)
-
-    # Recovering B2
-
-    # The X2's are really the X's unrolled
-    indices = sc.triu_indices(d)
-    X2_0 = sc.column_stack( [ outer( x, x )[indices] for x in X ] )
-
-    # For (d * d+1)/2 = 3 q's run the algorithm
-    d_ = d * (d+1) / 2
-    Q = dirichlet( ones(N), d_ )
-
-    X2 = X2_0.dot( Q.T )
-    assert( abs( det(X2) ) > 1e-6 )
-
-    Y2 = X2.dot( B2[indices] )
-
-    B2_ = zeros((d,d))
-    B2_[indices] = inv(X2).dot( Y2 )
-    B2_ = (B2_ + B2_.T) - diag(diag( B2_ ))
-    print B2, B2_
-    assert( sc.allclose( B2, B2_ ) )
-
-    # Recovering B3
-    indices = []
-    for i in xrange(d):
-        for j in xrange(i, d):
-            for k in xrange(j, d):
-                indices.append( (i, j, k) )
-
-    d_ = len(indices) 
-    indices = zip(* indices)
-
-    X3_0 = sc.column_stack( [tensorify(x,x,x)[indices] for x in X ] )
-    Q = dirichlet( ones(N), d_ )
-
-    X3 = X3_0.dot( Q.T )
-    assert( abs( det(X3) ) > 1e-6 )
-
-    Y3 = X3.dot( B3[indices] )
-
-    B3_ = zeros((d,d,d))
-    B3_[indices] = inv(X3).dot(Y3)
-    # appropriately divide to account for the symmetries
-    B3_ = ( sc.swapaxes( B3_, 0, 1 ) + sc.swapaxes( B3_, 0, 2 ) + sc.swapaxes( B3_, 1, 2 ) ) 
-    for i in xrange(d):
-        B3_[i,i,i] /= 3
-    print B3, B3_
-    assert( sc.allclose( B3, B3_ ) )
-
-    # Recovering B
-    B_ = recover_B( K, d, B2_, B3_ )
-    B_ = closest_permuted_matrix( B.T, B_.T ).T
-
-    print B
-    print B_
-
-    assert( sc.allclose( B, B_ ) )
 
 def main( args ):
     sc.random.seed(args.seed)
@@ -288,17 +227,14 @@ def main( args ):
         noise = sc.randn(*y.shape) * sqrt( sigma2 )
         y += noise
 
-    # Set alphas
-    global ALPHA
-    ALPHA = args.alpha
-
-
-    B2_ = recover_B2( d, N, y, X, args.mode )
-    B3_ = recover_B3( d, N, y, X, args.mode )
+    B2_ = recover_B2( d, N, args.oversample, y, X, args.mode, *args.args )
+    B3_ = recover_B3( d, N, args.oversample, y, X, args.mode, *args.args )
     B_ = recover_B( K, d, B2_, B3_ )
     B_ = closest_permuted_matrix( B.T, B_.T ).T
 
     print norm( B - B_ ),  norm(B2 - B2_), norm(B3 - B3_)
+
+    del lrm
 
 if __name__ == "__main__":
     import argparse, time
@@ -307,14 +243,13 @@ if __name__ == "__main__":
     parser.add_argument( "-d", type=int, help="number of dimensions" )
     parser.add_argument( "--seed", default=int(time.time() * 100), type=int,
             help="Seed used for algorithm (separate from generation)" )
-    parser.add_argument( "--alpha", default=0.01, type=float, help="alphas" )
     parser.add_argument( "--samples", default=1e6, type=float, help="Number of samples to be used" )
     parser.add_argument( "--with-noise", default=False, type=bool, help="Use noise" )
     parser.add_argument( "--mode", default="dirichlet", type=str, help="Generation of Q = dirichlet|local" )
+    parser.add_argument( "--oversample", default=1.0, type=float, help="Use more points to regularise" )
+    parser.add_argument( "args", metavar='args', type=float, nargs='+',
+                       help='Arguments for the Q generation')
 
     args = parser.parse_args()
-    try:
-        main( args )
-    except:
-        pass
+    main( args )
 

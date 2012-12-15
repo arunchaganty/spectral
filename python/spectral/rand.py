@@ -6,6 +6,7 @@ import scipy as sc
 import scipy.stats as stats
 import scipy.linalg as linalg
 dirichlet = sc.random.dirichlet
+multinomial = sc.random.multinomial
 
 def shuffle_permutation( n ):
     """Generate a random permutation as a sequence of swaps"""

@@ -68,7 +68,8 @@ def PairsQ(np.ndarray[DTYPE_t, ndim=2] x, np.ndarray[DTYPE_t, ndim=1] q):
     for n in range( N ):
         for j in range( d ):
             for i in range( d ):
-                pairs[i,j] += (q[n] * x[n,i] * x[n,j] - pairs[i,j])/(n+1)
+                #pairs[i,j] += (q[n] * x[n,i] * x[n,j] - pairs[i,j])/(n+1)
+                pairs[i,j] += q[n] * x[n,i] * x[n,j]
     return pairs
 
 @cython.boundscheck(False) 
@@ -104,7 +105,7 @@ def TriplesQ(np.ndarray[DTYPE_t, ndim=2] x, np.ndarray[DTYPE_t, ndim=1] q):
         for k in range( d ):
             for j in range( d ):
                 for i in range( d ):
-                    triples[i,j,k] += (q[n] * x[n,i] * x[n,j] * x[n,k] - triples[i,j,k])/(n+1)
+                    triples[i,j,k] += q[n] * x[n,i] * x[n,j] * x[n,k] 
     return triples
 
 @cython.boundscheck(False) 
