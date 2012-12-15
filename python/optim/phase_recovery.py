@@ -22,11 +22,13 @@ def gradient_step( y, X, B, iter, alpha = "1/T" ):
     dB = zeros( (d, d) )
     for (y_i, x_i) in zip( y, X ):
         dB += (x_i.T.dot( B ).dot( x_i ) - y_i**2) * outer( x_i, x_i )
-    B -= (1.0/(iter+1)) * dB/len(y)
+    if alpha == "1/T" :
+       alpha = 1.0/(iter+1)
+    B -= alpha * dB/len(y)
 
     return B
 
-def low_rankify( X, thresh = 1e-1 ):
+def low_rankify( X, thresh = 1.0 ):
     """Make X low rank"""
     U, S, Vt = svd( X )
     S[ S < thresh ] = 0.0
@@ -64,10 +66,10 @@ def solve( y, X, B0 = None, coeff = 1e-2, iters = 100 ):
 
 def test_solve():
     N = 1000
-    d = 2 
-    k = 1
+    d = 3 
+    k = 2
 
-    pi = array( [1.0] ) 
+    pi = array( [0.5, 0.5] ) 
     B = eye( d, k )
     B2 = B.dot( diag( pi ) ).dot( B.T )
     X = randn( N, d )
