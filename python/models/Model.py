@@ -5,7 +5,7 @@ in a memmappable npy file, as objects, while the data is compressed.
 import scipy as sc
 import time
 import tempfile
-import os
+import os, shutil
 
 class Model:
     """Generic mixture model that contains a bunch of weighted means"""
@@ -20,10 +20,7 @@ class Model:
     def __del__( self ):
         """Annihilate the temporary directory"""
         if self.dname is not None:
-            for root, _, files in os.walk( self.dname ):
-                for f in files:
-                    os.remove( os.path.join(root, f) )
-            os.rmdir(root)
+            shutil.rmtree(self.dname)
             self.dname = None
 
     def set_seed( self, seed = None ):
@@ -47,7 +44,8 @@ class Model:
         # Save samples in a temporary mem-mapped array, fname save in
         # the metadata "params"
 
-        self.dname = tempfile.mkdtemp()
+        if self.dname is None:
+            self.dname = tempfile.mkdtemp()
         arr = sc.memmap( os.path.join(self.dname,name), mode="w+", shape=shape, dtype = sc.double )
         return arr
 
