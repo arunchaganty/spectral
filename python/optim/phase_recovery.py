@@ -2,13 +2,14 @@
 Phase recovery using proximal subgradient descent
 """
 
-import ipdb
+#import ipdb
 import scipy as sc
 from scipy import diag, array, ndim, outer, eye, ones, log, sqrt, zeros, floor, exp
 from scipy.linalg import norm, svd, svdvals, eig, eigvals, inv, det, cholesky
 rand, randn = sc.rand, sc.randn
 
 from models import LinearRegressionsMixture
+from spectral.data import Pairs
 
 #import matplotlib.pyplot as plt
 
@@ -59,7 +60,7 @@ def residual( y, X, B ):
         tot += (x_i.T.dot( B ).dot( x_i ) - y_i)**2
     return tot/N
 
-def solve( y, X, B0 = None, reg = 1e-3, iters = 500, alpha = "1/T" ):
+def solve( y, X, B0 = None, reg = 1e-2, iters = 500, alpha = "1/T" ):
     """
     Solve for B that optimises the following objective:
     $\\argmin_{B} = 1/2 * \sum_i (x_i^T B x_i - y_i^2)^2/N + \lambda Tr(B)$
@@ -87,7 +88,7 @@ def solve( y, X, B0 = None, reg = 1e-3, iters = 500, alpha = "1/T" ):
         #dB += reg * nuclear_subgradient( B_ )
 
         if alpha == "1/T" :
-            alpha = 0.01/sqrt(i+1)
+            alpha = 0.1/sqrt(i+1)
         B = B_ - alpha * dB
 
         # Do the proximal step of making B low rank by soft thresholding k.
@@ -98,6 +99,7 @@ def solve( y, X, B0 = None, reg = 1e-3, iters = 500, alpha = "1/T" ):
 
         residuals.append( residual( y, X, B_ ) )
         gradient_norms.append( norm( dB ) )
+        print B
         print i, residuals[-1], gradient_norms[-1], norm( B - B_ ) / norm( B )
 
         # Check convergence
@@ -111,8 +113,8 @@ def solve( y, X, B0 = None, reg = 1e-3, iters = 500, alpha = "1/T" ):
 
     return B
 
-def test_solve_exact(iters):
-    N = 100
+def test_solve_exact(samples, iters):
+    N = samples
     d = 3
     k = 2
 
@@ -134,29 +136,42 @@ def test_solve_exact(iters):
     print svdvals(B2_), svdvals(B2)
     print norm(B2 - B2_)/norm(B2)
 
-def test_solve_samples(iters):
+def test_solve_samples(samples, iters):
     K = 2
     d = 3
-    N = 1e3
+    N = samples
 
     fname = "/tmp/test.npz"
-    lrm = LinearRegressionsMixture.generate(fname, K, d, cov = "eye", betas="eye")
+    lrm = LinearRegressionsMixture.generate(fname, K, d, cov = "eye", betas="random")
     M, S, pi, B = lrm.mean, lrm.sigma, lrm.weights, lrm.betas
     B2 = B.dot( diag( pi ) ).dot( B.T )
 
     y, X = lrm.sample( N )
+    EX2, Ey = Pairs( X, X ), (y**2).mean()
 
-    B2_ = solve( y, X, B2, iters = iters )
+    print B2
+    print "Expected loss:", EX2.flatten().dot( B2.flatten() ) - Ey**2
+    B2_ = solve( y**2, X, B2, iters = iters )
 
-    print residual( y, X, B2 )
-    print residual( y, X, B2_ )
+    print "Expected loss:", EX2.flatten().dot( B2.flatten() ) - Ey**2
+    print "Expected loss:", EX2.flatten().dot( B2_.flatten() ) - Ey**2
+
+    print residual( y**2, X, B2 )
+    print residual( y**2, X, B2_ )
 
     print B2_, B2
     print svdvals(B2_), svdvals(B2)
     print norm(B2 - B2_)/norm(B2)
 
 if __name__ == "__main__":
-    test_solve_exact(100)
-    test_solve_samples(100)
+    import argparse, time
+    parser = argparse.ArgumentParser()
+    parser.add_argument( "--samples", default=1e6, type=float, help="Number of samples to be used" )
+    parser.add_argument( "--iters", default=1e2, type=float, help="Number of iterations to be used" )
+    parser.add_argument( "--with-noise", default=False, type=bool, help="Use noise" )
 
+    args = parser.parse_args()
+
+    #test_solve_exact(args.samples, args.iters)
+    test_solve_samples(int(args.samples), int( args.iters) )
 
