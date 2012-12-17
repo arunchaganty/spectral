@@ -8,7 +8,9 @@ from scipy import diag, array, ndim, outer, eye, ones, log, sqrt, zeros, floor, 
 from scipy.linalg import norm, svd, svdvals, eig, eigvals, inv, det, cholesky
 rand, randn = sc.rand, sc.randn
 
-import matplotlib.pyplot as plt
+from models import LinearRegressionsMixture
+
+#import matplotlib.pyplot as plt
 
 def gradient_step( y, X, B ):
     """
@@ -25,7 +27,7 @@ def gradient_step( y, X, B ):
     # Compute x^T B x - y
     dB = zeros( (d, d) )
     for (y_i, x_i) in zip( y, X ):
-        dB += (x_i.T.dot( B ).dot( x_i ) - y_i**2) * outer( x_i, x_i )
+        dB += (x_i.T.dot( B ).dot( x_i ) - y_i) * outer( x_i, x_i )
 
     return 2 * dB/N
 
@@ -54,10 +56,10 @@ def residual( y, X, B ):
     N = len( y )
     tot = 0
     for (x_i, y_i) in zip( X, y ):
-        tot += (x_i.T.dot( B ).dot( x_i ) - y_i**2)**2
+        tot += (x_i.T.dot( B ).dot( x_i ) - y_i)**2
     return tot/N
 
-def solve( y, X, B0 = None, reg = 1e-2, iters = 100, alpha = "1/T" ):
+def solve( y, X, B0 = None, reg = 1e-3, iters = 500, alpha = "1/T" ):
     """
     Solve for B that optimises the following objective:
     $\\argmin_{B} = 1/2 * \sum_i (x_i^T B x_i - y_i^2)^2/N + \lambda Tr(B)$
@@ -80,59 +82,81 @@ def solve( y, X, B0 = None, reg = 1e-2, iters = 100, alpha = "1/T" ):
     B_ = B0
     for i in xrange( iters ):
         # Run a gradient descent step
-        residuals.append( residual( y, X, B_ ) )
         dB = gradient_step( y, X, B_ )
         # Add the subgradient
-        dB += reg * nuclear_subgradient( B_ )
-
-        gradient_norms.append( norm( dB ) )
-        print i, residuals[-1], gradient_norms[-1]
+        #dB += reg * nuclear_subgradient( B_ )
 
         if alpha == "1/T" :
-            alpha = 0.1/sqrt(i+1)
+            alpha = 0.01/sqrt(i+1)
         B = B_ - alpha * dB
 
         # Do the proximal step of making B low rank by soft thresholding k.
-        B_ = low_rankify( B_, reg )
+        B = low_rankify( B, reg )
 
         # Proximal step of constraining to bounded norm
-        B = finite_norm( B )
+        #B = finite_norm( B )
+
+        residuals.append( residual( y, X, B_ ) )
+        gradient_norms.append( norm( dB ) )
+        print i, residuals[-1], gradient_norms[-1], norm( B - B_ ) / norm( B )
 
         # Check convergence
-        if norm( B - B_ ) / norm( B ) < 1e-7:
+        if norm( B - B_ ) / norm( B ) < 1e-5:
             break
         B_ = B
-
     # Plot graphs
-    plt.plot( residuals )
-    plt.plot( gradient_norms )
-    plt.show()
+    # plt.plot( residuals )
+    # plt.plot( gradient_norms )
+    # plt.show()
 
     return B
 
-
-def test_solve():
-    N = 10000
-    d = 3 
+def test_solve_exact(iters):
+    N = 100
+    d = 3
     k = 2
 
     pi = array( [0.5, 0.5] ) 
     B = eye( d, k )
+    #B = randn( d, k )
     B2 = B.dot( diag( pi ) ).dot( B.T )
     X = randn( N, d )
     y = array( [ x.T.dot( B2 ).dot( x ) for x in X ] )
 
-    print residual( y, X, B2 )
-
     #B20 = B2 + 0.1 * randn( d, d )
     #B2_ = solve( y, X, B20 )
-    B2_ = solve( y, X, B2, alpha = 0.1 )
+    B2_ = solve( y, X, iters = iters )
+
+    print residual( y, X, B2 )
+    print residual( y, X, B2_ )
+
+    print B2_, B2
+    print svdvals(B2_), svdvals(B2)
+    print norm(B2 - B2_)/norm(B2)
+
+def test_solve_samples(iters):
+    K = 2
+    d = 3
+    N = 1e3
+
+    fname = "/tmp/test.npz"
+    lrm = LinearRegressionsMixture.generate(fname, K, d, cov = "eye", betas="eye")
+    M, S, pi, B = lrm.mean, lrm.sigma, lrm.weights, lrm.betas
+    B2 = B.dot( diag( pi ) ).dot( B.T )
+
+    y, X = lrm.sample( N )
+
+    B2_ = solve( y, X, B2, iters = iters )
+
+    print residual( y, X, B2 )
+    print residual( y, X, B2_ )
 
     print B2_, B2
     print svdvals(B2_), svdvals(B2)
     print norm(B2 - B2_)/norm(B2)
 
 if __name__ == "__main__":
-    test_solve()
+    test_solve_exact(100)
+    test_solve_samples(100)
 
 
