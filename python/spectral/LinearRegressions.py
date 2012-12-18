@@ -185,24 +185,34 @@ def test_sample_recovery():
     N = 1e5
 
     fname = "/tmp/test.npz"
-    lrm = LinearRegressionsMixture.generate(fname, K, d, cov = "eye", betas="eye")
-    M, S, pi, B = lrm.mean, lrm.sigma, lrm.weights, lrm.betas
+    lrm = LinearRegressionsMixture.generate(fname, K, d, cov = "eye", 
+            betas="eye")
+    _, _, pi, B = lrm.mean, lrm.sigma, lrm.weights, lrm.betas
 
+    # Compute exact moments
+    B2 = B.dot( diag( pi ) ).dot( B.T )
+    B3 = sum( [ pi[i] * tensorify(B.T[i], B.T[i], B.T[i] ) 
+        for i in xrange(K) ] )
+
+    # Generate some samples
     y, X = lrm.sample( N )
 
-    B2 = B.dot( diag( pi ) ).dot( B.T )
-    B3 = sum( [ pi[i] * tensorify(B.T[i], B.T[i], B.T[i] ) for i in xrange(K) ] )
+    # Add some noise to y
+    if args.with_noise:
+        sigma2 = 0.2
+        noise = sc.randn(*y.shape) * sqrt( sigma2 )
+        y += noise
 
-    B2_ = recover_B2( d, N, 1.0, y, X )
-    B3_ = recover_B3( d, N, 1.0, y, X )
+    B2_ = recover_B2( d, N, args.oversample, y, X, args.mode, *args.args )
+    B3_ = recover_B3( d, N, args.oversample, y, X, args.mode, *args.args )
     B_ = recover_B( K, d, B2_, B3_ )
     B_ = closest_permuted_matrix( B.T, B_.T ).T
 
-    err = norm( B - B_ )
-    print "B:", err
-    print B, B_
+    print norm( B - B_ ),  norm(B2 - B2_), norm(B3 - B3_)
 
-    assert( err < 1e-2 )
+    del lrm
+
+    assert( norm( B - B_) < 1e-1 )
 
 def main( args ):
     sc.random.seed(args.seed)
