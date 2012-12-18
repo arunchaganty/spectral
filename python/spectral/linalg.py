@@ -8,6 +8,7 @@ from scipy.linalg import svd, svdvals, norm, eigvals, eig
 from spectral.rand import orthogonal
 
 from spectral.munkres import Munkres
+from spectral.hosvd import unfold, fold, HOSVD
 
 #from spectral import _data
 #apply_shuffle = _data.apply_shuffle
@@ -124,12 +125,12 @@ def spectral_gap( x, k = None ):
     if k is not None:
         s = s[:k]
 
-    return sc.diff( s ).min() / s[0]
+    return (sc.diff( s )).min() / s[0]
 
 def eigen_sep( X, k = None ):
     """Minimum difference in eigenvalues"""
     # Get the eigenvalues
-    s = eigvals( X ).real
+    s = (eigvals( X )).real
     if k is not None:
         s = s[:k]
 
