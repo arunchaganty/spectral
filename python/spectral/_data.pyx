@@ -166,3 +166,42 @@ def apply_shuffle( np.ndarray[DTYPE_t, ndim=2] X, np.ndarray[LONG_t, ndim=1] per
 
     return X
 
+@cython.boundscheck(False) 
+def xMy(np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=2] X, np.ndarray[DTYPE_t, ndim=2] Y):
+    """Compute x^i M y^i"""
+
+    assert X.shape[0] == Y.shape[0]
+    assert X.shape[1] == Y.shape[1] and X.shape[1] == M.shape[0]
+
+    cdef unsigned int N = X.shape[0]
+    cdef unsigned int d = X.shape[1]
+    cdef np.ndarray[DTYPE_t, ndim=1] result = np.zeros( N, dtype=DTYPE )
+    cdef unsigned int n, i, j
+
+    # Compute one element of Pairs at a time
+    for n in range( N ):
+        for j in range( d ):
+            for i in range( d ):
+                result[n] += (M[i,j] * X[n,i] * Y[n,j] )
+    return result
+
+@cython.boundscheck(False) 
+def Txyz(np.ndarray[DTYPE_t, ndim=3] T, np.ndarray[DTYPE_t, ndim=2] X, np.ndarray[DTYPE_t, ndim=2] Y, np.ndarray[DTYPE_t, ndim=2] Z):
+    """Compute T(x^i, y^i, z^i)"""
+
+    assert X.shape[0] == Y.shape[0] and X.shape[0] == Z.shape[0]
+    assert X.shape[1] == Y.shape[1] and X.shape[1] == Z.shape[1] and X.shape[1] == T.shape[0]
+
+    cdef unsigned int N = X.shape[0]
+    cdef unsigned int d = X.shape[1]
+    cdef np.ndarray[DTYPE_t, ndim=1] result = np.zeros( N, dtype=DTYPE )
+    cdef unsigned int n, i, j
+
+    # Compute one element of Pairs at a time
+    for n in range( N ):
+        for k in range( d ):
+            for j in range( d ):
+                for i in range( d ):
+                    result[n] += (T[i,j,k] * X[n,i] * Y[n,j] * Z[n,k] )
+    return result
+

@@ -6,6 +6,7 @@ import scipy as sc
 from scipy import diag, array, outer, eye, ones, sqrt, zeros, einsum
 from scipy.linalg import norm, svd, svdvals 
 from spectral.linalg import tensorify, HOSVD, fold, unfold
+from spectral.data import Txyz
 
 from optim.ProximalGradient import ProximalGradient
 
@@ -24,13 +25,15 @@ class TensorRecovery( ProximalGradient ):
         $\diff{L}{B_{ij}} = \sum_i (B(x^i, x^i, x^i)' - y^i^2) x^i \otimes x^i \otimes x^i 
         """ 
 
+        Q2 = self.Q2
         d = B.shape[0]
         N = len(y)
 
         # Compute x^T B x - y
         dB = zeros( (d, d, d) )
+        Z = (Txyz( B, X, X, X ) - y).dot( Q2 )
         for (y_i, x_i) in zip( y, X ):
-            dB += (einsum("ijk,i,j,k", B, x_i, x_i, x_i)  - y_i) * tensorify( x_i, x_i, x_i )
+            dB += Z[i] * tensorify( x_i, x_i, x_i )
 
         return dB/N
 
@@ -52,6 +55,17 @@ class TensorRecovery( ProximalGradient ):
         for (x_i, y_i) in zip( X, y ):
             tot += (einsum( "ijk,i,j,k", B, x_i, x_i, x_i) - y_i)**2
         return tot/N
+
+    def solve( self, y, X, Q = None, *args, **kwargs ):
+        """Solve using a Q value"""
+        N = len(y)
+
+        if Q is None:
+            Q = eye( N )
+        self.Q = Q
+        self.Q2 = Q.dot( Q.T )
+
+        return ProximalGradient.solve( self, y, X, *args, **kwargs )
 
 def test_solve_exact(samples = 1e4, iters = 1e2):
     K = 2

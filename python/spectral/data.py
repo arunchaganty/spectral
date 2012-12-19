@@ -20,6 +20,9 @@ TriplesQ = _data.TriplesQ
 TriplesP = _data.TriplesP
 TriplesPQ = _data.TriplesPQ
 
+xMy = _data.xMy
+Txyz = _data.Txyz
+
 def test_pairs():
     """Test Pairs"""
     

@@ -6,6 +6,8 @@ import scipy as sc
 from scipy import diag, array, ndim, outer, eye, ones, sqrt, zeros
 from scipy.linalg import norm, svd, svdvals 
 
+from spectral.data import xMy
+
 from optim.ProximalGradient import ProximalGradient
 
 class PhaseRecovery( ProximalGradient ):
@@ -24,13 +26,21 @@ class PhaseRecovery( ProximalGradient ):
         $\diff{L}{B_{ij}} = \sum_i (x^i' B x^i - y^i^2) x^i_i x^i_j
         """ 
 
+        Q2 = self.Q2
         d, _ = B.shape
         N = len(y)
 
+        assert( Q2.shape == (N,N) )
+
         # Compute x^T B x - y
         dB = zeros( (d, d) )
-        for (y_i, x_i) in zip( y, X ):
-            dB += (x_i.T.dot( B ).dot( x_i ) - y_i) * outer( x_i, x_i )
+        # Forgive me father for I have multiplied two large matrices.
+        Z = ( xMy( B, X, X ) - y).dot( Q2 )
+        assert( Z.shape == (N,) )
+
+        for i in xrange( N ):
+            x_i = X[i]
+            dB += Z[i] * outer( x_i, x_i )
 
         return dB/N
 
@@ -48,6 +58,18 @@ class PhaseRecovery( ProximalGradient ):
         for (x_i, y_i) in zip( X, y ):
             tot += (x_i.dot( B ).dot( x_i ) - y_i)**2
         return tot/N
+
+    def solve( self, y, X, Q = None, *args, **kwargs ):
+        """Solve using a Q value"""
+        N = len(y)
+
+        if Q is None:
+            Q = eye( N )
+        self.Q = Q
+        self.Q2 = Q.dot( Q.T )
+
+        return ProximalGradient.solve( self, y, X, *args, **kwargs )
+
 
 def test_solve_exact(samples = 1e4, iters = 100):
     N = samples
