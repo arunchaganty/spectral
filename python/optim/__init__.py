@@ -2,6 +2,7 @@
 Optimisation methods
 """
 
-import ProximalGradient
-from PhaseRecovery import PhaseRecovery
+import optim.ProximalGradient
+from optim.PhaseRecovery import PhaseRecovery
+from optim.TensorRecovery import TensorRecovery
 
