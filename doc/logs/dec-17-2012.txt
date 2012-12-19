@@ -1,0 +1,41 @@
+% December 17th 2012 
+
+I spent most of today working out a way of extending the phase recovery
+technique to higher-order tensors. With the additional dimensions, there is some
+ambiguity of the definition of rank. One possible definition is to consider the
+rank of each "unfolding" of the tensor, i.e. the matrix formed by taking one
+axis and flattening the rest. Another definition, more commonly associated with
+"Tucker decomposition" is the minimum number of rank-1 tensors required to
+construct a give tensor.
+
+The Tucker decomposition is also known as the higher order SVD (HOSVD)
+decomposition, and has the following form:
+\begin{eqnarray}
+  \mathcal{A} &=& \mathcal{S} \times_1 U^{(1)} \times_2 U^{(2)} \cdots \times_n U^{(n)} \\
+              &=& \sum_{i_1 i_2 \dots i_N} s_{i_1 i_2 ... i_N} U^{(1)}_{i_1 j_1} U^{(2)}_{i_2 j_2} \cdots \times_N U^{(N)}_{i_N j_N},
+\end{eqnarray}
+where $\mathcal{S}$, is "core" tensor, whose entries are analogous to singular
+values and the $U^{(n)}$ are orthogonal matrices. The core matrix in general is
+not diagonal[^1], but rather satisfies the "all-orthogonal" property, i.e.
+a sub-tensor on the $i$-th axis is orthogonal to all other subtensors in that
+axis. 
+
+The singular vectors $U^{(n)}$ can be found rather easily by taking the left
+singular vectors of each n-mode matrix. The core matrix can then be recovered by
+"inverting" the $U^{(n)}$, i.e.
+\begin{eqnarray}
+  \mathcal{S} &=& \mathcal{A} \times_1 U^{(1) H} \times_2 U^{(2) H} \cdots \times_n U^{(n) H}.
+\end{eqnarray}
+
+Finally, I also looked at how the nuclear norm subgradient methods extended to
+tensors. It took me a little of math to understand the derivation of the
+subgradient and see how they'd extend to tensors. However, it turns out that
+someone has already done so. The method corresponds to basically soft
+thresholding the singular values of each n-mode SVD.
+
+Ultimately, the tensor regularlizer worked well and it seemed to produce rather
+competitve results.
+
+[^1]: In fact, an interesting degrees of freedom argument shows that this can't
+be the case. With a diagonal core tensor, there are at most $I (\sum I_n
++ 1 - N(I+1)/2)$ degrees of freedom, which is less than $\prod I_n$.
