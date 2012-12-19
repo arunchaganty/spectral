@@ -7,27 +7,25 @@ import shutil, tempfile
 import scipy as sc
 import scipy.spatial
 import scipy.linalg
-from scipy import diag, array, ndim, outer, eye, ones, log, sqrt, zeros, floor, exp
-from scipy.linalg import norm, svd, svdvals, eig, eigvals, inv, det, cholesky
+from scipy import diag, array, ndim, outer, eye, ones,\
+        log, sqrt, zeros, floor, exp
+from scipy.linalg import norm, svd, svdvals, eig, eigvals, inv 
 from scipy.spatial.distance import cdist
-from spectral.linalg import svdk, mrank, approxk, eigen_sep, \
-        closest_permuted_matrix, tensorify, matrix_tensorify, \
-        column_aerr, column_rerr,\
-        condition_number, column_gap, column_sep
-from spectral.rand import orthogonal, wishart, dirichlet, multinomial
-from spectral.data import Pairs, Triples, PairsQ, TriplesQ
+permutation, rand = scipy.random.permutation, scipy.random.rand
+from spectral.linalg import tensorify, closest_permuted_matrix 
+
 from models import LinearRegressionsMixture 
 
 from spectral.MultiView import recover_M3
 
 from optim import PhaseRecovery, TensorRecovery
 
-def recover_B( k, y, X, iters = 50 ):
+def recover_B( k, y, X, iters = 50, Q = None ):
     """Recover the mixture weights B"""
 
     # Use convex optimisation to recover B2 and B3
-    B2 = PhaseRecovery().solve( y**2, X, alpha0 = 0.1, iters = iters )
-    B3 = TensorRecovery().solve( y**3, X, alpha0 = 0.01, iters = iters, reg = 1e-3 )
+    B2 = PhaseRecovery().solve( y**2, X, Q, alpha0 = 0.1, iters = iters, verbose = False )
+    B3 = TensorRecovery().solve( y**3, X, Q, alpha0 = 0.01, iters = iters, reg = 1e-3, verbose = False )
 
     B3_ = lambda theta: sc.einsum( 'abj,j->ab', B3, theta )
 
@@ -69,6 +67,49 @@ def test_sample_recovery():
 
     assert( norm( B - B_) < 1e-1 )
 
+def make_smoothener( y, X, smoothing, smoothing_dimensions = None):
+    """
+    Make a smoothener based on the scheme:
+    none - return eye(N) - no mixing between Xs
+    all - return 1_N/N complete mixing between Xs
+    local - return cdist( x_m, X_N ) partial local mixing between Xs
+    subset - return a partition of m random Xs
+    random - return rand( m, N ) partial local mixing between Xs
+    """
+
+    N, d = X.shape
+
+    if smoothing_dimensions == None:
+        smoothing_dimensions = N
+
+    if smoothing == "none":
+        return eye( N )
+    elif smoothing == "all":
+        return ones( N )/N
+    elif smoothing == "local":
+        # Choose smoothing_dimensions number of random Xs
+        Zi = permutation(N)[:smoothing_dimensions]
+        Z = X[ Zi ]
+        Q =  cdist( Z, X )
+        # Normalise to be stochastic
+        Q = (Q.T/Q.sum(1)).T
+        return Q
+    elif smoothing == "subset":
+        # Choose smoothing_dimensions number of random Xs
+        Q = zeros( (smoothing_dimensions, N) )
+        for i in xrange( smoothing_dimensions ):
+            Zi = permutation(N)[:smoothing_dimensions]
+            Q[ i, Zi ] = 1.0/len(Zi)
+        return Q
+    elif smoothing == "random":
+        # Choose smoothing_dimensions number of random Xs
+        Q = rand(smoothing_dimensions, N)
+        # Normalise to be stochastic
+        Q = (Q.T/Q.sum(1)).T
+        return Q
+    else: 
+        raise NotImplementedError()
+
 def main( args ):
     sc.random.seed(args.seed)
 
@@ -85,6 +126,8 @@ def main( args ):
 
     # Generate some samples
     y, X = lrm.sample( N )
+
+    Q = make_smoothener( y, X, args.smoothing, args.smoothing_dimensions )
 
     # Add some noise to y
     if args.with_noise:
@@ -106,9 +149,11 @@ if __name__ == "__main__":
     parser.add_argument( "-d", type=int, help="number of dimensions" )
     parser.add_argument( "--seed", default=int(time.time() * 100), type=int,
             help="Seed used for algorithm (separate from generation)" )
-    parser.add_argument( "--samples", default=1e6, type=float, help="Number of samples to be used" )
-    parser.add_argument( "--iters", default=1e2, type=float, help="Number of samples to be used" )
+    parser.add_argument( "--samples", default=1e4, type=float, help="Number of samples to be used" )
+    parser.add_argument( "--iters", default=1e2, type=float, help="Number of iterations of gradient descent" )
     parser.add_argument( "--with-noise", default=False, type=bool, help="Use noise" )
+    parser.add_argument( "--smoothing", default="none", type=str, help="Smoothing scheme used; eye | all | local | random" )
+    parser.add_argument( "--smoothing-dimensions", default=None, type=int, help="Number of dimensions after smoothing" )
 
     args = parser.parse_args()
     main( args )

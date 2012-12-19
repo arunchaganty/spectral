@@ -32,7 +32,9 @@ class TensorRecovery( ProximalGradient ):
         # Compute x^T B x - y
         dB = zeros( (d, d, d) )
         Z = (Txyz( B, X, X, X ) - y).dot( Q2 )
-        for (y_i, x_i) in zip( y, X ):
+
+        for i in xrange( N ):
+            x_i = X[i]
             dB += Z[i] * tensorify( x_i, x_i, x_i )
 
         return dB/N

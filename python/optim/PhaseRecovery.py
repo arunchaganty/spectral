@@ -30,13 +30,10 @@ class PhaseRecovery( ProximalGradient ):
         d, _ = B.shape
         N = len(y)
 
-        assert( Q2.shape == (N,N) )
-
         # Compute x^T B x - y
         dB = zeros( (d, d) )
         # Forgive me father for I have multiplied two large matrices.
         Z = ( xMy( B, X, X ) - y).dot( Q2 )
-        assert( Z.shape == (N,) )
 
         for i in xrange( N ):
             x_i = X[i]
