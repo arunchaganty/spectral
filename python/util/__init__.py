@@ -8,7 +8,7 @@ import time
 import sys
 
 from util.DataLogger import DataLogger
-from util.ProgressBar import ProgressBar
+from util.ProgressBar import ProgressBar, ErrorBar
 
 def chunked_update( fn, start, step, stop, show_pbar = False ):
     """Run @fn with arguments @start to @stop in @step sized blocks."""

@@ -2,6 +2,7 @@
 
 import time
 import sys
+import scipy as sc
 
 class ProgressBar:
     """Progress Bar"""
@@ -39,4 +40,43 @@ class ProgressBar:
             sys.stdout.write("-")
         sys.stdout.write("\n")
         self.state, self.total = 0, 0
+
+class ErrorBar:
+    """Progress Bar"""
+
+    def __init__(self, width = 40):
+        """Initialise with some width"""
+        self.width = width
+        self.max_err, self.total = sc.inf, 0
+
+    def start(self, total_iterations):
+        """Set up a scaling factor for total iterations"""
+
+        self.max_err, self.total = -sc.inf, total_iterations
+
+        msg = "(%2.2f%%) [%s]" % (0.0, " " * self.width)
+        sys.stdout.write( msg )
+        sys.stdout.flush()
+        # return to start of line, after '['
+        sys.stdout.write("\b" * len(msg) )
+
+    def update(self, n, err):
+        """Update the ticker"""
+        err = sc.log( abs( err ) )
+        if err > self.max_err:
+            self.max_err = err
+        
+        # Error rating
+        rating = err / self.max_err
+        rating = sc.floor( rating * self.width )
+        
+        msg = "(%2.2f%%) [%s]" % (100*float(n)/self.total, "-" * rating + " " * (self.width-rating)) 
+        sys.stdout.write(msg)
+        sys.stdout.flush()
+        sys.stdout.write("\b" * len(msg))
+
+    def stop(self):
+        """End the ticker"""
+        sys.stdout.write("\n")
+        self.max_err, self.total = sc.inf, 0
 

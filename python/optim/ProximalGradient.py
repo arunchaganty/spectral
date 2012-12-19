@@ -5,6 +5,7 @@ General proximal gradient methods
 import scipy as sc
 from scipy import diag, array, eye, ones, sqrt, zeros
 from scipy.linalg import norm 
+from util import ErrorBar
 
 class ProximalGradient:
     """A proximal gradient method consists of two steps:
@@ -30,7 +31,7 @@ class ProximalGradient:
         raise NotImplementedError()
 
 
-    def solve( self, y, X, B0 = None, reg = 1e-2, iters = 500, eps = 1e-4, alpha0 = 0.1, alpha = "1/T" ):
+    def solve( self, y, X, B0 = None, reg = 1e-2, iters = 500, eps = 1e-4, alpha0 = 0.1, alpha = "1/T", verbose = True ):
         """
         Solve the problem B = argmin L( f(X;B), y ) + \|B\|
         """
@@ -38,6 +39,10 @@ class ProximalGradient:
         # Initialise the B0
         if B0 is None:
             B0 = self.initialise( y, X )
+
+        if verbose:
+            ebar = ErrorBar()
+            ebar.start( iters )
 
         B_ = B0
         for i in xrange( iters ):
@@ -53,11 +58,17 @@ class ProximalGradient:
 
             # Do the proximal step of making B low rank by soft thresholding k.
             B = self.proximal_step( y, X, B, reg )
-            print i, self.loss( y, X, B ), norm( B - B_ ) / norm( B )
+
+            if verbose:
+                ebar.update( i, self.loss( y, X, B ) )
 
             # Check convergence
             if norm( B - B_ ) / norm( B ) < eps:
                 break
             B_ = B
+
+        if verbose:
+            ebar.stop()
+
         return B
 
