@@ -11,7 +11,9 @@ from scipy import diag, array, ndim, outer, eye, ones,\
         log, sqrt, zeros, floor, exp
 from scipy.linalg import norm, svd, svdvals, eig, eigvals, inv 
 from scipy.spatial.distance import cdist
-permutation, rand = scipy.random.permutation, scipy.random.rand
+
+permutation, rand, dirichlet = scipy.random.permutation, scipy.random.rand, scipy.random.dirichlet
+
 from spectral.linalg import tensorify, closest_permuted_matrix 
 
 from models import LinearRegressionsMixture 
@@ -100,6 +102,11 @@ def make_smoothener( y, X, smoothing, smoothing_dimensions = None):
         for i in xrange( smoothing_dimensions ):
             Zi = permutation(N)[:smoothing_dimensions]
             Q[ i, Zi ] = 1.0/len(Zi)
+        return Q
+    elif smoothing == "dirichlet":
+        # Choose smoothing_dimensions number of random Xs
+        alpha = 0.1
+        Q = dirichlet( alpha * ones(N)/N, smoothing_dimensions )
         return Q
     elif smoothing == "random":
         # Choose smoothing_dimensions number of random Xs
