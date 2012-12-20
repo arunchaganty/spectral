@@ -1,0 +1,65 @@
+% December 18th 2012
+
+\newcommand{\mL}{\mathcal{L}}
+
+In a meeting with Percy, we looked at the results of the proximal subgradient
+methods for the mixture of linear regressions problem. We asked how the previous
+heuristic-y approach was related to this simpler convex optimization problem. We
+were able to show that everything fell into the class of least-squares with
+different regularlizers and different "metrics"[^1]. More formally, 
+\begin{eqnarray}
+  \mL_Q &=& \frac{1}{2} (\trace(X^T B X) - y)^T Q Q^T (\trace(X^T B X) - y) + \lambda \|B\| \\
+              &=& \frac{1}{2} z^T Q Q^T z - y + \lambda \|B\|.
+\end{eqnarray}
+
+In our initial attempts, we used an arbitrary $Q$ with $\| B \|_2$. For the
+convex optimization case, we used $Q = I_{n \times n}$ and $\| B \|_*$.
+
+The general gradient updates for this method would then be,
+\begin{eqnarray}
+  \frac{1}{2} \diff{z^T Q Q^T z}{B} &=& \sum_n z^T (QQ^T)_{n} \diff{z_n}{B} \\
+                                    &=& \sum_n z^T (QQ^T)_{n} x^{(n)} x^{(n)T}).
+\end{eqnarray}
+
+The minimizer of this objective will have the following property,
+\begin{eqnarray}
+  \diff{\mL_Q}{B} &=& 0 \\
+  \lim_{N \to \infty} \sum_n (\trace(X^T B X) - y)^T (QQ^T)_{n} x^{(n)} x^{(n)T} &=& 0 \\
+  \E[ \trace(x^T B x) - y)^T q(x) xx^T ]&=& 0 \\
+  \E_q[ x^{\otimes 4}] \cdot B - \E_q[ x^{\otimes 4}] \cdot B^* &=& 0 \\
+  \E_q[ x^{\otimes 4}] \cdot (B - B^*) &=& 0.
+\end{eqnarray}
+In other words, the $B$ recovered is the true $B^*$ plus some component in the
+null space of $\E_q[ x^{\otimes 4}]$.
+
+The method of moments objective also fits in this framework when $Q = 1 1^T$,
+\begin{eqnarray}
+  \mL_* &=& \argmin_{B \in \mathcal{B}} \frac{1}{2} |\E[ \trace(X^T B X) - y ]|  + \lambda \|B\| \\
+        &=& \argmin_{B \in \mathcal{B}} \frac{1}{2} | \trace(\E[ X^T X ] B) - \E[y] |   + \lambda \|B\| \\
+        &\approx& \argmin_{B \in \mathcal{B}} \frac{1}{2} (\trace(\E[ X^T X ] B) - \E[y])^2   + \lambda \|B\| \\
+        &=& \lim_{N \to \infty} \frac{1}{2 N^2} (\trace(X^T B X) - y)^T 1 1^T (\trace(X^T B X) - y) + \lambda \|B\|.
+\end{eqnarray}
+
+This objective attains the minimum value of zero when,
+\begin{eqnarray}
+  \E[ \trace(x^T B x) - y^2] &=& 0 \\
+  \E[ x^{\otimes 2} ] \cdot (B - B^*) &=& 0 \\
+\end{eqnarray}
+
+Thus, the minimizer of this objective is also the true $B^*$ plus some
+orthogonal noise, but the null spaces of this objective differ from that of
+$\mL_Q$.
+
+This is just a first order analysis, and to really understand what the $Q$s are
+doing, we should be doing a 2nd order analysis, breaking the error into a bias
+and variance term. Percy suggested his ICML 2010 paper to this effect.
+
+We left an open ended question as to whether we could compute the $\beta$ directly.
+
+## Tasks to do
+
+#. Implement the proximal subgradient method for the arbitrary $Q$ case.
+#. Parameter search the low-rank recovery technique. 
+#. Implement EM.
+
+[^1]: The $QQ^T$ is technically a "metric" over $x$ since it is positive semidefinite.

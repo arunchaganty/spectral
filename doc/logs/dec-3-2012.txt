@@ -1,0 +1,5 @@
+% December 3rd 2012
+
+Over the weekend, I basically managed to find the bug, but have not yet fixed
+it. This week will be unproductive because of NIPS.
+

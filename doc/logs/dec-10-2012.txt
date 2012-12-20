@@ -1,0 +1,4 @@
+% December 10th, 2012
+
+I worked through cleanly building the project together writing test-cases where I could. My objective for tomorrow will be to get the experiments back on full power.
+

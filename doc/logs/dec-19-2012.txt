@@ -1,0 +1,98 @@
+% Decemeber 19th 2012
+
+I spent most of today playing around with different schemes of "Q" in
+the regression problem, $min_B (tr(x'Bx) - y^2)' QQ' (tr(x'Bx)
+- y^2)$.
+
+I call it "smoothing" because we're minimising the error _averaged_
+over a set of points. I tried using a variety of schemes,
+(a) Q is the identity matrix (this is the vanilla recovery problem
+I showed results for the last time we met).
+(b) Q is the ones vector (this theoretically minimised the average
+error)
+(c) Q is a matrix formed with rows each of which select a random
+subset of the data points ("subset")
+(d) Q is formed using uniform random vectors
+(e) Q is formed using the local "gaussian" weighting ("local")
+(f) Q is formed with each row drawn from a dirichlet
+
+Each was normalised to be stochastic, i.e. the row would sum to 1.
+Again, k = 2, d = 3.
+
+Initially, I had attempted to script out and perform a parameter
+search on all the schemes; for better or for worse, I ran into
+annoying systems issues on the NLP machines and was forced to hand
+twiddle with them. This allowed me to see the various failure modes
+and correct for them. As a general methodology, I think I will adopt
+this slower but surer experimentation approach.
+
+I had to play around a lot with the learning rates for to get it to
+converge.  I had had to remove the regularisation which was pulling
+the $B$ to zero too quickly. I also tried using random starting points
+instead of B =
+0 to avoid this, but that didn't help.
+
+In general, all methods other than the first (identity) and the local
+performed terribly. The sort of B's they recovered look like this:
+
+Actual B:
+
+----    ----    ----
+0.5     0       0
+0       0.5     0
+0       0       0
+----    ----    ----
+
+B from method (a):
+
+----    ----    ----
+0.45    0       0
+0       0.55    0
+0       0       0
+----    ----    ----
+
+B from methods (b)-(d)
+
+----    ----    ----
+0.31    0       0
+0       0.33    0
+0       0       0.32
+----    ----    ----
+
+The local method did something like,
+
+B from methods (e)
+
+----    ----    ----
+0.44    0       0
+0       0.60    0
+0       0       0
+----    ----    ----
+
+and Dirichlet methods do something more reasonable, though still
+pretty poor,
+
+B from methods (f)
+
+----    ----    ----
+0.23    0       0
+0       0.60    0
+0       0       0
+----    ----    ----
+
+Throwing more data at it didn't significantly help; I went up from
+using a 1,000 data points to 10,000 data points with little
+improvement in any of the results (some methods did worse until
+I tweaked their parameters some mores a ).
+
+Also, perhaps worth noting, (a), or the no-smoothing case converges
+the fastest amongst the lot, though it required a smaller learning
+rate than the others.
+
+I tried comparing the results with what I had had earlier and found
+that the 'local' and 'subset' performed somewhat similarly to the
+(b)-(d) range (diagonal entries near 0.33) when the number of q's
+I got was the bare minimum $\frac{d (d+1)}{2}$, and improved as this
+increased to about 10 times that. They recover the B within a 3-4%,
+which is better than using the proximal subgradient.
+

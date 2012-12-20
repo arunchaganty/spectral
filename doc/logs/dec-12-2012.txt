@@ -1,0 +1,74 @@
+% December 12th 2012
+
+# Experiment Status
+
+I've been writing test cases for every function to guarantee that the code works
+correctly as specified. As part of that, I isolated the moment computation code,
+parallelised it and farmed it out onto jamie. That will let me work through the
+rest of the algorithms as I choose to. 
+
+Pending work:
+
+* Writing comprehensive tests for the actual multi-view spectral algorithms (Dec 12).
+* Testing recovery with an HMM (Dec 12).
+* Testing the EM-implementations (Dec 13).
+
+# Recovery with Noise
+
+## A rank-based approach that could work, in theory.
+
+I came up with a "theoretical" recovery mechanism for the noise covariance
+$\sigma^2$, which is too sensitive in practice to be useful. Let $S$ be the
+matrix with columns $s = vec(\Sigma_q)$ and $b = vec(\beta \beta^T)$. Then,
+
+\newcommand{\ones}{\mathbf{1}}
+
+\begin{eqnarray}
+  \E_{q}[ y^2 ] &=& s^T b + \sigma^2 \\
+  Y &=& S^T b + \sigma^2 \ones \\
+  Y^T &=& b^T S + \sigma^2 \ones^T \\
+  Y^T \inv{S} &=& b^T + \sigma^2 \ones^T \inv{S}.
+\end{eqnarray}
+
+When reassembled into a matrix, the first term $mat(b)$ has low rank, and the
+second part has full rank. So, in theory at least,
+\begin{eqnarray}
+  \sigma^2 &=& \frac{ \sigma_{k+1}(mat( Y^T \inv{S} )) }{ \sigma_{k+1}(mat( \inv{S} )) }.
+\end{eqnarray}
+
+## A simpler approach
+
+Percy had a *much* simpler solution to this problem; stack ones at the end of
+$S$. Then, the last element of the recovered $b$ will be $\sigma^2$.
+
+# The distribution over $Q$
+
+We revisited to topic of using a Dirichlet distribution over the $x$. If it
+works on a finite support, then it should by all means work on any amount of
+data we give it. The only thing that remains to be seen is how we can handle
+noise in this framework. 
+
+When I tried this last, with a mixture of Gaussians, it failed; my hypothesis
+then was that the $q(x)$ was not smooth enough, which I thought was confirmed
+when applying the random smooth function $q(x) = \exp( - \|x - x_0\|_2)$ worked.
+
+# A better recovery procedure
+
+Rather than the wasteful $O(d^2)$ approach we've been looking at, Percy
+suggested using some ideas from sparse compressive sensing which would recover
+$B$ in $O(dk)$ projections, which is the best we could hope for. Two techniques
+that directly apply are (a) PhaseLift and (b) CPRL. The problem they are looking
+at is almost identical to our own - where a known real valued linear function
+(given by the $X$) takes $B = \beta \beta^T$ to the observed $y$ and we'd like
+to recover $B$ with a low-rank constraint. The CPRL paper also describes how to
+constrain $B$ to be sparse.
+
+# Tasks for the immediate future
+
+#. Figure out why the Dirichlet did not work last time and fix it or formulate
+   a counter-argument.
+#. Thoroughly test the spectral methods, using Algorithm A and B. 
+    #. See if I can use the tensor power method instead.
+#. Test the EM methods.
+    #. Deploy them.
+

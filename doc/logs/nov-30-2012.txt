@@ -1,0 +1,29 @@
+% November 30, 2012  
+
+I am reconstructing this diary entry from memory, so it is unfortunately only partially complete.
+
+Status of Experiments
+=====================
+
+I revisited my multi-view Gaussian code to find that there seems to be some
+bugs. It works well when the means are well separated, but for random means it
+fails on some particular entries. I will need to slowly test the functions
+from scratch.
+
+The New Algorithm
+=================
+
+I found that the new algorithm of using a Dirichlet over points failed to
+work. Working incrementally by testing this on finite distributions, which did
+work lead me to conjecture that it was failing because we didn't have enough
+samples to converge as the proposal $q(x)$ was quite non-smooth when using the
+Dirichlet. 
+
+Instead of using a Dirichlet, I used something like a radial-basis function
+$q(x) = \exp(\|x-x_0\|)$ and this worked perfectly fine. 
+
+Meeting Percy, we set an agenda to do the following:
+
+#. Run the algorithm with some simple standard data
+#. Experiment with simpler $q(x)$ functions.
+ 
