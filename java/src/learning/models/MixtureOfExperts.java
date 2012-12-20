@@ -12,12 +12,15 @@ import learning.linalg.RandomFactory;
 import org.ejml.simple.SimpleMatrix;
 import org.ejml.data.DenseMatrix64F;
 
+import fig.basic.*;
+
 import java.util.Random;
 
 /**
  * A mixture of experts model
  */
 public class MixtureOfExperts {
+
   protected int K; // Number of experts
   protected int D; // Dimensionality of space
 
@@ -127,14 +130,15 @@ public class MixtureOfExperts {
     switch( bDistribution ) {
       case Eye:
         for(int i = 0; i < D; i++) {
-          for(int j = 0; j < D; j++) {
-            B[i][j] = (i == j) ? 1.0 : 0.0;
+          for(int j = 0; j < K; j++) {
+            double slope = ( i % 2 == 0 ) ? 1.0 : -1.0;
+            B[i][j] = (i == j) ? slope : 0.0;
           }
         }
         break;
       case Random:
         for(int i = 0; i < D; i++) {
-          for(int j = 0; j < D; j++) {
+          for(int j = 0; j < K; j++) {
             B[i][j] = RandomFactory.randn(1.0);
           }
         }
@@ -171,13 +175,110 @@ public class MixtureOfExperts {
     SimpleMatrix weights = MatrixFactory.fromVector( w );
     SimpleMatrix betas = new SimpleMatrix( B );
     SimpleMatrix mean = MatrixFactory.fromVector( M );
-    SimpleMatrix cov = new SimpleMatrix( B );
+    SimpleMatrix cov = new SimpleMatrix( S );
 
     return new MixtureOfExperts( K, D, weights, betas, sigma2, mean, cov );
   }
 
   public static MixtureOfExperts generate( final int K, final int D, double sigma2, WeightDistribution wDistribution, BetaDistribution bDistribution, MeanDistribution mDistribution, CovarianceDistribution SDistribution ) {
     return generate( K, D, sigma2, wDistribution, bDistribution, mDistribution, SDistribution, 10.0 );
+  }
+
+  public static MixtureOfExperts generate( GenerationOptions options ) {
+    WeightDistribution wDistribution;
+    BetaDistribution bDistribution;
+    MeanDistribution mDistribution;
+    CovarianceDistribution SDistribution;
+
+    switch( options.weights.toLowerCase() ) {
+      case "uniform":
+        wDistribution = WeightDistribution.Uniform; break;
+      case "random":
+        wDistribution = WeightDistribution.Random; break;
+      default:
+        throw new NoSuchMethodError();
+    }
+
+    switch( options.betas.toLowerCase() ) {
+      case "eye":
+        bDistribution = BetaDistribution.Eye; break;
+      case "random":
+        bDistribution = BetaDistribution.Random; break;
+      default:
+        throw new NoSuchMethodError();
+    }
+
+    switch( options.mean.toLowerCase() ) {
+      case "zero":
+        mDistribution = MeanDistribution.Zero; break;
+      case "random":
+        mDistribution = MeanDistribution.Random; break;
+      default:
+        throw new NoSuchMethodError();
+    }
+
+    switch( options.cov.toLowerCase() ) {
+      case "eye":
+        SDistribution = CovarianceDistribution.Eye; break;
+      case "spherical":
+        SDistribution = CovarianceDistribution.Spherical; break;
+      case "random":
+        SDistribution = CovarianceDistribution.Random; break;
+      default:
+        throw new NoSuchMethodError();
+    }
+
+    return generate( options.K, options.D, options.sigma2, wDistribution, bDistribution, mDistribution, SDistribution, options.pointSigma );
+  }
+
+  public static class GenerationOptions {
+    @Option(gloss="Number of experts") 
+    public int K = 2;
+    @Option(gloss="Number of dimensions") 
+    public int D = 3;
+    @Option(gloss="Noise") 
+    public double sigma2 = 0.0;
+    
+    @Option(gloss="Weight distribution = uniform|random") 
+    public String weights = "uniform";
+    @Option(gloss="Beta distribution = eye|random") 
+    public String betas = "eye";
+    @Option(gloss="Mean distribution = zero|random") 
+    public String mean = "zero";
+    @Option(gloss="Covariance distribution = eye|spherical|random") 
+    public String cov = "eye";
+    @Option(gloss="Point variance parameter") 
+    public double pointSigma = 10.0;
+
+    @Option(gloss="Number of points") 
+    public double N = 1e3;
+  }
+
+  /**
+   * Generates data with given specifications to stdout. 
+   */
+  public static void main( String[] args ) {
+    GenerationOptions options = new GenerationOptions();
+    OptionsParser parser = new OptionsParser( options );
+    if( !parser.parse( args ) ) {
+      return;
+    }
+
+    MixtureOfExperts model = MixtureOfExperts.generate( options );
+
+    int N = (int) options.N;
+    SimpleMatrix[] data = model.sample( N );
+
+    SimpleMatrix y = data[0];
+    SimpleMatrix X = data[1];
+
+    // Print data
+    for( int i = 0; i < N; i++ ) {
+      for( int d = 0; d < options.D; d++ )
+        System.out.printf( "%f ", X.get(i,d) );
+      System.out.printf( "%f\n", y.get(i) );
+    }
+
   }
 
 
