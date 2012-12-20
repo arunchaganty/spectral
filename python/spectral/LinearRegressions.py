@@ -85,35 +85,35 @@ def make_smoothener( y, X, smoothing, smoothing_dimensions = None):
         smoothing_dimensions = N
 
     if smoothing == "none":
-        return eye( N )
+        return None
     elif smoothing == "all":
-        return ones( N )/N
+        return ones( (N, N) )/N**2
     elif smoothing == "local":
         # Choose smoothing_dimensions number of random Xs
         Zi = permutation(N)[:smoothing_dimensions]
         Z = X[ Zi ]
-        Q =  cdist( Z, X )
+        Q = exp( - cdist( Z, X )**2 )
         # Normalise to be stochastic
         Q = (Q.T/Q.sum(1)).T
-        return Q
+        return Q.T.dot(Q)
     elif smoothing == "subset":
         # Choose smoothing_dimensions number of random Xs
         Q = zeros( (smoothing_dimensions, N) )
         for i in xrange( smoothing_dimensions ):
             Zi = permutation(N)[:smoothing_dimensions]
             Q[ i, Zi ] = 1.0/len(Zi)
-        return Q
+        return Q.T.dot(Q)
     elif smoothing == "dirichlet":
         # Choose smoothing_dimensions number of random Xs
         alpha = 0.1
         Q = dirichlet( alpha * ones(N)/N, smoothing_dimensions )
-        return Q
+        return Q.T.dot(Q)
     elif smoothing == "random":
         # Choose smoothing_dimensions number of random Xs
         Q = rand(smoothing_dimensions, N)
         # Normalise to be stochastic
         Q = (Q.T/Q.sum(1)).T
-        return Q
+        return Q.T.dot(Q)
     else: 
         raise NotImplementedError()
 
