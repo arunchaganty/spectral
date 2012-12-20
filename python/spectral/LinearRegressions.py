@@ -22,12 +22,13 @@ from spectral.MultiView import recover_M3
 
 from optim import PhaseRecovery, TensorRecovery
 
-def recover_B( k, y, X, iters = 50, Q = None ):
+def recover_B( k, y, X, iters = 50, alpha0 = 0.1, Q = None ):
     """Recover the mixture weights B"""
 
     # Use convex optimisation to recover B2 and B3
-    B2 = PhaseRecovery().solve( y**2, X, Q, alpha0 = 0.1, iters = iters, verbose = False )
-    B3 = TensorRecovery().solve( y**3, X, Q, alpha0 = 0.01, iters = iters, reg = 1e-3, verbose = False )
+    B2 = PhaseRecovery().solve( y**2, X, Q,  alpha0 = alpha0, iters = iters, reg = 1e-3, verbose = True )
+    B3 = TensorRecovery().solve( y**3, X, Q, alpha0 = alpha0/5, iters = iters, reg = 1e-4, verbose = True )
+    print B2, B3
 
     B3_ = lambda theta: sc.einsum( 'abj,j->ab', B3, theta )
 
@@ -118,34 +119,35 @@ def make_smoothener( y, X, smoothing, smoothing_dimensions = None):
         raise NotImplementedError()
 
 def main( args ):
-    sc.random.seed(args.seed)
-
     K, d, N = args.k, args.d, int( args.samples )
 
-    # Initialise a model
-    fname = tempfile.mktemp()
-    lrm = LinearRegressionsMixture.generate(fname, K, d, cov = "eye", betas="eye")
-    M, S, pi, B = lrm.mean, lrm.sigma, lrm.weights, lrm.betas
-
-    # Compute exact moments
-    B2 = B.dot( diag( pi ) ).dot( B.T )
-    B3 = sum( [ pi[i] * tensorify(B.T[i], B.T[i], B.T[i] ) for i in xrange(K) ] )
-
+    # Initialise the model
+    if args.model is not None:
+        lrm = LinearRegressionsMixture.from_file( args.model )
+    else:
+        sc.random.seed(args.seed)
+        fname = tempfile.mktemp()
+        lrm = LinearRegressionsMixture.generate(fname, K, d, cov = "eye", betas="eye")
     # Generate some samples
     y, X = lrm.sample( N )
 
-    Q = make_smoothener( y, X, args.smoothing, args.smoothing_dimensions )
+    # Compute exact moments
+    _, _, pi, B = lrm.mean, lrm.sigma, lrm.weights, lrm.betas
+    B2 = B.dot( diag( pi ) ).dot( B.T )
+    B3 = sum( [ pi[i] * tensorify(B.T[i], B.T[i], B.T[i] ) for i in xrange(K) ] )
 
     # Add some noise to y
     if args.with_noise:
         sigma2 = 0.2
         noise = sc.randn(*y.shape) * sqrt( sigma2 )
         y += noise
+    sc.random.seed(args.seed)
 
-    B_, B2_, B3_ = recover_B( K, y, X, int( args.iters ) )
+    Q2 = make_smoothener( y, X, args.smoothing, args.smoothing_dimensions )
+    B_, B2_, B3_ = recover_B( K, y, X, int( args.iters ), float(args.alpha0), Q2 )
     B_ = closest_permuted_matrix( B.T, B_.T ).T
 
-    print norm( B - B_ ),  norm(B2 - B2_), norm(B3 - B3_)
+    print norm( B - B_ ), norm( B2 - B2_ ), norm( B3 - B3_ )
 
     del lrm
 
@@ -154,9 +156,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument( "-k", type=int, help="number of clusters" )
     parser.add_argument( "-d", type=int, help="number of dimensions" )
+    parser.add_argument( "--model", default=None, type=str, help="Load model from" )
     parser.add_argument( "--seed", default=int(time.time() * 100), type=int,
             help="Seed used for algorithm (separate from generation)" )
     parser.add_argument( "--samples", default=1e4, type=float, help="Number of samples to be used" )
+    parser.add_argument( "--alpha0", default=1e1, type=float, help="Starting pace for gradient descent" )
     parser.add_argument( "--iters", default=1e2, type=float, help="Number of iterations of gradient descent" )
     parser.add_argument( "--with-noise", default=False, type=bool, help="Use noise" )
     parser.add_argument( "--smoothing", default="none", type=str, help="Smoothing scheme used; eye | all | local | random" )
