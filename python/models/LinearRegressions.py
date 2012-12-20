@@ -134,27 +134,34 @@ class LinearRegressionsMixture( Model ):
         # Unwrap the store and put it into the appropriate model
         return LinearRegressionsMixture( model.fname, **model.params )
 
+def main( fname, K, d, args ):
+    model = LinearRegressionsMixture.generate(fname, K, d, 
+                mean = args.mean, cov = args.cov, betas = args.betas, 
+                weights = args.weights, dirichlet_scale = args.dirichlet_scale, 
+                gaussian_precision = args.gaussian_precision )
+    model.set_seed( int( args.seed ) )
+    model.save()
+
 if __name__ == "__main__":
     import argparse
     import time
     parser = argparse.ArgumentParser()
     parser.add_argument( "fname", help="Output file (as npz)" )
-    parser.add_argument( "model", help="Model: gmm|mvgmm" )
     parser.add_argument( "k", type=int, help="Number of mixture components"  )
     parser.add_argument( "d", type=int, help="Dimensionality of each component"  )
 
     parser.add_argument( "--seed", default=int(time.time() * 1000), type=int )
-    parser.add_argument( "--weights", default="uniform", help="Mixture weights, default=uniform|random" )
-    parser.add_argument( "--w0", default=10.0, type=float, help="Scale parameter for the Dirichlet" )
-    # GMM options
-    parser.add_argument( "--means", default="hypercube", help="Mean generation procedure, default = hypercube" )
-    parser.add_argument( "--cov", default="spherical", help="Covariance generation procedure, default = spherical|random"  )
-    parser.add_argument( "--sigma2", default=0.2, type=float )
-    # Multiview options
-    parser.add_argument( "--views", default=3, help="Number of views", type=int )
+
+    parser.add_argument( "--betas", default="eye", help="Regression coefficients, default=random|eye" )
+    parser.add_argument( "--weights", default="random", help="Mixture weights, default=uniform|random" )
+    parser.add_argument( "--dirichlet_scale", default=10.0, type=float, help="Scale parameter for the Dirichlet" )
+
+    parser.add_argument( "--mean", default="zero", help="Mean generation procedure, default = zero" )
+    parser.add_argument( "--cov", default="eye", help="Covariance generation procedure, default = spherical|random|eye"  )
+    parser.add_argument( "--gaussian_precision", default=0.2, type=float )
 
     args = parser.parse_args()
     sc.random.seed( int( args.seed ) )
 
-    #main( args.fname, args.model, args.k, args.d, args )
+    main( args.fname, args.k, args.d, args )
 
