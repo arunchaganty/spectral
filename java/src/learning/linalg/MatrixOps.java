@@ -20,12 +20,26 @@ public class MatrixOps {
   public static double EPS_ZERO = 1e-7;
 
   /**
-   * Take the vector dot product of two vectors (as arrays)
+   * Print entries of a vector
    */
   public static void printVector( double[] x ) {
     System.out.printf( "{ " );
     for( int i = 0; i < x.length; i++ )
       System.out.printf( "%f, ", x[i] );
+    System.out.printf( "}\n" );
+  }
+
+  /**
+   * Print entries of a arrays
+   */
+  public static void printArray( double[][] X ) {
+    System.out.printf( "{ " );
+    for( int i = 0; i < X.length; i++ ) {
+      System.out.printf( "{ " );
+      for( int j = 0; j < X[i].length; j++ )
+        System.out.printf( "%f, ", X[i][j] );
+      System.out.printf( "}\n" );
+    }
     System.out.printf( "}\n" );
   }
 
