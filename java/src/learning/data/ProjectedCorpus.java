@@ -27,11 +27,11 @@ import org.ejml.simple.SimpleMatrix;
  * Stores a corpus in an integer array
  */
 public class ProjectedCorpus extends Corpus implements Serializable {
-	public int projectionDim;
-	protected long[] seeds;
+  public int projectionDim;
+  protected long[] seeds;
 
   protected ProjectedCorpus() {
-      super();
+    super();
   }
 
   public ProjectedCorpus( String[] dict, int[][] C, int d, long[] seeds ) {
@@ -51,7 +51,7 @@ public class ProjectedCorpus extends Corpus implements Serializable {
     // Generate a set of seeds for each word
     long[] seeds = new long[ C.dict.length ];
     for(int i = 0; i < C.dict.length; i++ ) 
-        seeds[i] = rnd.nextLong();
+      seeds[i] = rnd.nextLong();
 
     return new ProjectedCorpus( C.dict, C.C, d, seeds );
   }
@@ -62,7 +62,7 @@ public class ProjectedCorpus extends Corpus implements Serializable {
     // Generate a set of seeds for each word
     long[] seeds = new long[ C.dict.length ];
     for(int i = 0; i < C.dict.length; i++ ) 
-        seeds[i] = RandomFactory.rand.nextLong();
+      seeds[i] = RandomFactory.rand.nextLong();
 
     return new ProjectedCorpus( C.dict, C.C, d, seeds );
   }
@@ -71,14 +71,14 @@ public class ProjectedCorpus extends Corpus implements Serializable {
    * Get the d-dimensional feature vectore for the i-th index word
    */
   public double[] featurize( int i ) {
-      Random rnd = new Random( seeds[i] );
-      double[] x = new double[projectionDim];
-      for(int j = 0; j < projectionDim; j++ )
-          x[j] = rnd.nextGaussian();
-      //x[j] = 10 * rnd.nextDouble();
-      // Normalize x
-      MatrixOps.makeUnitVector( x );
-      return x;
+    Random rnd = new Random( seeds[i] );
+    double[] x = new double[projectionDim];
+    for(int j = 0; j < projectionDim; j++ )
+      x[j] = rnd.nextGaussian();
+    //x[j] = 10 * rnd.nextDouble();
+    // Normalize x
+    MatrixOps.makeUnitVector( x );
+    return x;
   }
 
   /**
@@ -87,21 +87,21 @@ public class ProjectedCorpus extends Corpus implements Serializable {
    * @return
    */
   public double[] getWordDistribution( double[] x ) {
-      double[] z = new double[dict.length];
+    double[] z = new double[dict.length];
 
-      MatrixOps.makeUnitVector( x );
-      for(int i = 0; i < dict.length; i++ ) {
-          double[] feature = featurize(i);
-          z[i] = MatrixOps.dot(feature, x);
-          if( z[i] < 0 ) z[i] = 0;
-      }
-      // Normalize into a probability distribution
-      MatrixOps.projectOntoSimplex( z );
-      return z;
+    MatrixOps.makeUnitVector( x );
+    for(int i = 0; i < dict.length; i++ ) {
+      double[] feature = featurize(i);
+      z[i] = MatrixOps.dot(feature, x);
+      if( z[i] < 0 ) z[i] = 0;
+    }
+    // Normalize into a probability distribution
+    MatrixOps.projectOntoSimplex( z );
+    return z;
   }
   public SimpleMatrix getWordDistribution( SimpleMatrix x ) {
-      double[] x_ = x.getMatrix().data;
-      return MatrixFactory.fromVector( getWordDistribution( x_ ) );
+    double[] x_ = x.getMatrix().data;
+    return MatrixFactory.fromVector( getWordDistribution( x_ ) );
   }
 
 }

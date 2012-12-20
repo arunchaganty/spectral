@@ -19,8 +19,8 @@ public class CachedProjectedCorpus extends ProjectedCorpus {
   protected ProjectedCorpus PC;
   protected KittyCache<Integer,double[]> featureCache;
   public CachedProjectedCorpus( ProjectedCorpus PC ) {
-      this.PC = PC;
-      this.featureCache = new KittyCache<>( 1000 );
+    this.PC = PC;
+    this.featureCache = new KittyCache<>( 1000 );
   }
 
   /**
@@ -28,13 +28,13 @@ public class CachedProjectedCorpus extends ProjectedCorpus {
    */
   public double[] featurize( int i ) {
     // Try getting it from the cache
-	double[] x = featureCache.get(i);
+    double[] x = featureCache.get(i);
     // Otherwise call PC to get it
     if( x == null ) {
-        x = PC.featurize( i );
-        featureCache.put(i, x, -1);
+      x = PC.featurize( i );
+      featureCache.put(i, x, -1);
     }
-		
+
     return x;
   }
 }

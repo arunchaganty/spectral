@@ -45,9 +45,9 @@ public class MatrixOps {
    */
   public static boolean allclose( double[] X1, double[] X2, double eps ) {
     for( int i = 0; i < X1.length; i++ ) {
-        if( Math.abs( X1[i] - X2[i] )  > eps ) {
-          return false;
-        }
+      if( Math.abs( X1[i] - X2[i] )  > eps ) {
+        return false;
+      }
     }
     return true;
   }
@@ -66,9 +66,9 @@ public class MatrixOps {
     double[] X2_ = X2.data;
 
     for( int i = 0; i < X1_.length; i++ ) {
-        if( Math.abs( X1_[i] - X2_[i] )  > eps ) {
-          return false;
-        }
+      if( Math.abs( X1_[i] - X2_[i] )  > eps ) {
+        return false;
+      }
     }
 
     return true;
@@ -88,7 +88,7 @@ public class MatrixOps {
    */
   public static void abs( DenseMatrix64F X ) {
     double[] X_ = X.data;
-		for( int i = 0; i < X_.length; i++ ) 
+    for( int i = 0; i < X_.length; i++ ) 
       X_[i] = Math.abs( X_[i] );
   }
 
@@ -103,9 +103,9 @@ public class MatrixOps {
    */
   public static double min( DenseMatrix64F X ) {
     double[] X_ = X.data;
-		double min = Double.POSITIVE_INFINITY;
-		for( int i = 0; i < X_.length; i++ ) 
-				if( X_[i] < min ) min = X_[i];
+    double min = Double.POSITIVE_INFINITY;
+    for( int i = 0; i < X_.length; i++ ) 
+      if( X_[i] < min ) min = X_[i];
 
     return min;
   }
@@ -117,16 +117,16 @@ public class MatrixOps {
    */
   public static double max( double[] x ) {
     double max = Double.NEGATIVE_INFINITY;
-		for( int i = 0; i < x.length; i++ ) 
-				if( x[i] > max ) max = x[i];
+    for( int i = 0; i < x.length; i++ ) 
+      if( x[i] > max ) max = x[i];
 
     return max;
   }
   public static double max( DenseMatrix64F X ) {
     double[] X_ = X.data;
     double max = Double.NEGATIVE_INFINITY;
-		for( int i = 0; i < X_.length; i++ ) 
-				if( X_[i] > max ) max = X_[i];
+    for( int i = 0; i < X_.length; i++ ) 
+      if( X_[i] > max ) max = X_[i];
 
     return max;
   }
@@ -178,87 +178,87 @@ public class MatrixOps {
   /**
    * Extract the i-th column of X
    */
-	public static SimpleMatrix col( SimpleMatrix X, int col ) {
-		return X.extractMatrix( 0, SimpleMatrix.END, col, col+1 );
-	}
-	public static DenseMatrix64F col( DenseMatrix64F X, int col ) {
-		DenseMatrix64F x = new DenseMatrix64F( X.numRows, 1 );
-		for( int row = 0; row < X.numRows; row++ )
-			x.set(row, X.get( X.getIndex(row, col)));
-		return x;
-	}
-	
+  public static SimpleMatrix col( SimpleMatrix X, int col ) {
+    return X.extractMatrix( 0, SimpleMatrix.END, col, col+1 );
+  }
+  public static DenseMatrix64F col( DenseMatrix64F X, int col ) {
+    DenseMatrix64F x = new DenseMatrix64F( X.numRows, 1 );
+    for( int row = 0; row < X.numRows; row++ )
+      x.set(row, X.get( X.getIndex(row, col)));
+    return x;
+  }
+
   /**
    * Extract the i-th row of X
    */
-	public static SimpleMatrix row( SimpleMatrix X, int row ) {
-		return X.extractMatrix( row, row+1, 0, SimpleMatrix.END);
-	}
-	public static DenseMatrix64F row( DenseMatrix64F X, int row ) {
-		DenseMatrix64F x = new DenseMatrix64F( 1, X.numCols );
-		for( int col = 0; col < X.numCols; col++ )
-			x.set(col, X.get( X.getIndex(row, col)));
-		return x;
-	}
+  public static SimpleMatrix row( SimpleMatrix X, int row ) {
+    return X.extractMatrix( row, row+1, 0, SimpleMatrix.END);
+  }
+  public static DenseMatrix64F row( DenseMatrix64F X, int row ) {
+    DenseMatrix64F x = new DenseMatrix64F( 1, X.numCols );
+    for( int col = 0; col < X.numCols; col++ )
+      x.set(col, X.get( X.getIndex(row, col)));
+    return x;
+  }
 
-	/**
-	 * Set the rows i to j of the matrix X
-	 * @param X
-	 * @param i
-	 * @param j
-	 * @return
-	 */
-	public static void setRows( SimpleMatrix X, int i, int j, SimpleMatrix r ) {
-		assert( r.numRows() == j-i );
-		for( int row = i; row < j; row++ )
-		{
-			for( int col = 0; col < r.numCols(); col++ )
-				X.set( row, col, r.get(row-i,col));
-		}
-	}
-	public static void setRow( SimpleMatrix X, int i, SimpleMatrix r ) {
-		if( r.numCols() == 1 )
-			r = r.transpose();
+  /**
+   * Set the rows i to j of the matrix X
+   * @param X
+   * @param i
+   * @param j
+   * @return
+   */
+  public static void setRows( SimpleMatrix X, int i, int j, SimpleMatrix r ) {
+    assert( r.numRows() == j-i );
+    for( int row = i; row < j; row++ )
+    {
+      for( int col = 0; col < r.numCols(); col++ )
+        X.set( row, col, r.get(row-i,col));
+    }
+  }
+  public static void setRow( SimpleMatrix X, int i, SimpleMatrix r ) {
+    if( r.numCols() == 1 )
+      r = r.transpose();
     setRows( X, i, i+1, r );
-	}
-	public static void setRow( SimpleMatrix X, int i, double[] r ) {
+  }
+  public static void setRow( SimpleMatrix X, int i, double[] r ) {
     assert( X.numCols() == r.length );
     for( int col = 0; col < X.numCols(); col++ )
       X.set( i, col, r[col] );
-	}
-  
-	/**
-	 * Set the cols i to j of the matrix X
-	 * @param X
-	 * @param i
-	 * @param j
-	 * @return
-	 */
-	public static void setCols( SimpleMatrix X, int i, int j, SimpleMatrix c ) {
-		assert( c.numCols() == j-i );
-		for( int col = i; col < j; col++ )
-		{
-			for( int row = 0; row < c.numRows(); row++ )
-				X.set( row, col, c.get(row,col-i));
-		}
-	}
-	/**
-	 * Set the i-th column of the matrix X
-	 * @param X
-	 * @param i
-	 * @return
-	 */
-	public static void setCol( SimpleMatrix X, int i, SimpleMatrix c ) {
-		if( c.numRows() == 1 )
-			c = c.transpose();
-    setCols( X, i, i+1, c );
-	}
+  }
 
-	
+  /**
+   * Set the cols i to j of the matrix X
+   * @param X
+   * @param i
+   * @param j
+   * @return
+   */
+  public static void setCols( SimpleMatrix X, int i, int j, SimpleMatrix c ) {
+    assert( c.numCols() == j-i );
+    for( int col = i; col < j; col++ )
+    {
+      for( int row = 0; row < c.numRows(); row++ )
+        X.set( row, col, c.get(row,col-i));
+    }
+  }
+  /**
+   * Set the i-th column of the matrix X
+   * @param X
+   * @param i
+   * @return
+   */
+  public static void setCol( SimpleMatrix X, int i, SimpleMatrix c ) {
+    if( c.numRows() == 1 )
+      c = c.transpose();
+    setCols( X, i, i+1, c );
+  }
+
+
   /**
    * Find the sum of a vector
    */
-	public static double sum(double[] x ) {
+  public static double sum(double[] x ) {
     double sum = 0.0;
     for( int i = 0; i < x.length; i++ )
       sum += x[i];
@@ -268,26 +268,26 @@ public class MatrixOps {
   /**
    * Find the sum of a vector
    */
-	public static void normalize(double[] x) {
+  public static void normalize(double[] x) {
     double sum = sum( x );
     for( int i = 0; i < x.length; i++ )
       x[i] /= sum;
   }
-  
+
   /**
    * Find the norm of a vector
    */
-	public static double norm(double[] x) {
+  public static double norm(double[] x) {
     double sum = 0.0;
     for( int i = 0; i < x.length; i++ )
       sum += x[i]*x[i];
     return Math.sqrt( sum );
   }
-  
+
   /**
    * Find the norm of a vector
    */
-	public static void makeUnitVector(double[] x) {
+  public static void makeUnitVector(double[] x) {
     double sum = norm( x );
     for( int i = 0; i < x.length; i++ )
       x[i] /= sum;
@@ -296,101 +296,101 @@ public class MatrixOps {
   /**
    * Find the sum of the rows of the column in X 
    */
-	public static double rowSum(DenseMatrix64F X, int row ) {
-		double sum = 0;
+  public static double rowSum(DenseMatrix64F X, int row ) {
+    double sum = 0;
     double[] X_ = X.data;
-		for( int col = 0; col < X.numCols; col++ )
-			sum += X_[ X.getIndex( row, col )];
-		return sum;
-	}
+    for( int col = 0; col < X.numCols; col++ )
+      sum += X_[ X.getIndex( row, col )];
+    return sum;
+  }
   /**
    * Find the sum of the entries of the column in X 
    */
-	public static double rowSum(SimpleMatrix X, int row ) {
-		return rowSum( X.getMatrix(), row );
-	}
+  public static double rowSum(SimpleMatrix X, int row ) {
+    return rowSum( X.getMatrix(), row );
+  }
 
   /**
    * Find the sum of the entries of the column in X 
    */
-	public static double columnSum(DenseMatrix64F X, int col ) {
-		double sum = 0;
+  public static double columnSum(DenseMatrix64F X, int col ) {
+    double sum = 0;
     double[] X_ = X.data;
-		for( int row = 0; row < X.numRows; row++ )
-			sum += X_[ X.getIndex( row, col )];
-		return sum;
-	}
+    for( int row = 0; row < X.numRows; row++ )
+      sum += X_[ X.getIndex( row, col )];
+    return sum;
+  }
   /**
    * Find the sum of the entries of the column in X 
    */
-	public static double columnSum(SimpleMatrix X, int col ) {
-		return columnSum( X.getMatrix(), col );
-	}
+  public static double columnSum(SimpleMatrix X, int col ) {
+    return columnSum( X.getMatrix(), col );
+  }
 
   /**
    * Normalize a column of X
    */
-	public static void columnNormalize(DenseMatrix64F X, int col ) {
-		double sum = columnSum( X, col );
+  public static void columnNormalize(DenseMatrix64F X, int col ) {
+    double sum = columnSum( X, col );
     double[] X_ = X.data;
-		for( int row = 0; row < X.numRows; row++ )
-			X_[ X.getIndex( row, col )] /= sum;
-	}
+    for( int row = 0; row < X.numRows; row++ )
+      X_[ X.getIndex( row, col )] /= sum;
+  }
   /**
    * Normalize a row of X
    */
-	public static void rowNormalize(DenseMatrix64F X, int row ) {
-		double sum = rowSum( X, row );
+  public static void rowNormalize(DenseMatrix64F X, int row ) {
+    double sum = rowSum( X, row );
     double[] X_ = X.data;
-		for( int col = 0; col < X.numCols; col++ )
-			X_[ X.getIndex( row, col )] /= sum;
-	}
+    for( int col = 0; col < X.numCols; col++ )
+      X_[ X.getIndex( row, col )] /= sum;
+  }
 
-	/**
-	 * Find the pairwise distance of the i-th row in X and j-th row in Y
-	 * @param X
-	 * @param Y
-	 * @return
-	 */
-	public static DenseMatrix64F cdist(DenseMatrix64F X, DenseMatrix64F Y) {
-		assert( X.numCols == Y.numCols );
-		
-		int n = X.numRows;
-		int m = Y.numRows;
-		
-		DenseMatrix64F Z = new DenseMatrix64F( n, m );
-		
-		for( int i = 0; i < n; i++ ) {
-			for( int j = 0; j < m; j++ ) {
-				// Find the distance between X and Y
-				double d = 0;
-				for( int k = 0; k < X.numCols; k++ ) {
-					double d_ = X.get(i,k) - Y.get(j,k);
-					d += d_ * d_;
-				}
-				Z.set( Z.getIndex(i, j), Math.sqrt( d ) );
-			}
-		}
-		
-		return Z;
-	}
-	/**
-	 * Find the pairwise distance of the i-th row in X and j-th row in Y
-	 * @param X
-	 * @param Y
-	 * @return
-	 */
-	public static SimpleMatrix cdist(SimpleMatrix X, SimpleMatrix Y) {
+  /**
+   * Find the pairwise distance of the i-th row in X and j-th row in Y
+   * @param X
+   * @param Y
+   * @return
+   */
+  public static DenseMatrix64F cdist(DenseMatrix64F X, DenseMatrix64F Y) {
+    assert( X.numCols == Y.numCols );
+
+    int n = X.numRows;
+    int m = Y.numRows;
+
+    DenseMatrix64F Z = new DenseMatrix64F( n, m );
+
+    for( int i = 0; i < n; i++ ) {
+      for( int j = 0; j < m; j++ ) {
+        // Find the distance between X and Y
+        double d = 0;
+        for( int k = 0; k < X.numCols; k++ ) {
+          double d_ = X.get(i,k) - Y.get(j,k);
+          d += d_ * d_;
+        }
+        Z.set( Z.getIndex(i, j), Math.sqrt( d ) );
+      }
+    }
+
+    return Z;
+  }
+  /**
+   * Find the pairwise distance of the i-th row in X and j-th row in Y
+   * @param X
+   * @param Y
+   * @return
+   */
+  public static SimpleMatrix cdist(SimpleMatrix X, SimpleMatrix Y) {
     return SimpleMatrix.wrap( cdist( X.getMatrix(), Y.getMatrix() ) );
-	}
+  }
 
 
-	/**
-	 * Project each column of X onto a simplex in place
-	 * @param X
-	 * @return
-	 */
-	public static void projectOntoSimplex( double[] x ) {
+  /**
+   * Project each column of X onto a simplex in place
+   * @param X
+   * @return
+   */
+  public static void projectOntoSimplex( double[] x ) {
     // Normalize and shrink to 0
     normalize(x);
     for(int i = 0; i < x.length; i++ )
@@ -398,35 +398,35 @@ public class MatrixOps {
     normalize(x);
   }
 
-	public static void projectOntoSimplex( DenseMatrix64F X ) {
-		int nRows = X.numRows;
-		int nCols = X.numCols;
+  public static void projectOntoSimplex( DenseMatrix64F X ) {
+    int nRows = X.numRows;
+    int nCols = X.numCols;
 
     double[] X_ = X.data;
 
-		for( int col = 0; col < nCols; col++ ) {
+    for( int col = 0; col < nCols; col++ ) {
       // For each column, normalize the vector and zero out negative values.
       columnNormalize( X, col );
 
-			for( int row = 0; row < nRows; row++ ) {
-				double x  = X_[ X.getIndex(row, col) ];
+      for( int row = 0; row < nRows; row++ ) {
+        double x  = X_[ X.getIndex(row, col) ];
         if( x < 0 ) X_[ X.getIndex(row, col) ] = 0;
       }
 
       columnNormalize( X, col );
-		}
-	}
+    }
+  }
 
-	/**
-	 * Project each columns of X onto a simplex
-	 * @param X
-	 * @return
-	 */
-	public static SimpleMatrix projectOntoSimplex( SimpleMatrix X ) {
-		DenseMatrix64F Y = X.getMatrix().copy();
-		projectOntoSimplex(Y);
+  /**
+   * Project each columns of X onto a simplex
+   * @param X
+   * @return
+   */
+  public static SimpleMatrix projectOntoSimplex( SimpleMatrix X ) {
+    DenseMatrix64F Y = X.getMatrix().copy();
+    projectOntoSimplex(Y);
     return SimpleMatrix.wrap( Y );
-	}	
+  }	
 
   /**
    * Find the rank of the matrix
@@ -446,7 +446,7 @@ public class MatrixOps {
   public static int rank( SimpleMatrix X ) {
     return rank( X, EPS_ZERO );
   }
-  
+
   /**
    * Compute the SVD and compress it to choose the top k singular vectors
    */
