@@ -33,7 +33,10 @@ class PhaseRecovery( ProximalGradient ):
         # Compute x^T B x - y
         dB = zeros( (d, d) )
         # Forgive me father for I have multiplied two large matrices.
-        Z = ( xMy( B, X, X ) - y).dot( Q2 )
+        if Q2 is None:
+            Z = ( xMy( B, X, X ) - y)
+        else:
+            Z = ( xMy( B, X, X ) - y).dot( Q2 )
 
         for i in xrange( N ):
             x_i = X[i]
@@ -56,14 +59,11 @@ class PhaseRecovery( ProximalGradient ):
             tot += (x_i.dot( B ).dot( x_i ) - y_i)**2
         return tot/N
 
-    def solve( self, y, X, Q = None, *args, **kwargs ):
+    def solve( self, y, X, Q2 = None, *args, **kwargs ):
         """Solve using a Q value"""
         N = len(y)
 
-        if Q is None:
-            Q = eye( N )
-        self.Q = Q
-        self.Q2 = Q.dot( Q.T )
+        self.Q2 = Q2
 
         return ProximalGradient.solve( self, y, X, *args, **kwargs )
 

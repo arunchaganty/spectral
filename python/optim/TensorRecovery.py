@@ -31,7 +31,10 @@ class TensorRecovery( ProximalGradient ):
 
         # Compute x^T B x - y
         dB = zeros( (d, d, d) )
-        Z = (Txyz( B, X, X, X ) - y).dot( Q2 )
+        if Q2 is None:
+            Z = (Txyz( B, X, X, X ) - y)
+        else:
+            Z = (Txyz( B, X, X, X ) - y).dot( Q2 )
 
         for i in xrange( N ):
             x_i = X[i]
@@ -58,14 +61,11 @@ class TensorRecovery( ProximalGradient ):
             tot += (einsum( "ijk,i,j,k", B, x_i, x_i, x_i) - y_i)**2
         return tot/N
 
-    def solve( self, y, X, Q = None, *args, **kwargs ):
+    def solve( self, y, X, Q2 = None, *args, **kwargs ):
         """Solve using a Q value"""
         N = len(y)
 
-        if Q is None:
-            Q = eye( N )
-        self.Q = Q
-        self.Q2 = Q.dot( Q.T )
+        self.Q2 = Q2
 
         return ProximalGradient.solve( self, y, X, *args, **kwargs )
 
