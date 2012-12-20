@@ -63,7 +63,7 @@ class ProximalGradient:
                 ebar.update( i, self.loss( y, X, B ) )
 
             # Check convergence
-            if norm( B - B_ ) / norm( B ) < eps:
+            if norm( B - B_ ) / (1e-10 + norm( B )) < eps:
                 break
             B_ = B
 
