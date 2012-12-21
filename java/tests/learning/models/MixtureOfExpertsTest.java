@@ -18,8 +18,7 @@ import org.junit.Before;
  */
 public class MixtureOfExpertsTest {
 
-  public void testModel( GenerationOptions options ) {
-    int N = (int) options.N;
+  public void testModel( int N, GenerationOptions options ) {
     int D = (int) options.D;
 
     MixtureOfExperts model = MixtureOfExperts.generate( options );
@@ -31,6 +30,9 @@ public class MixtureOfExpertsTest {
     Assert.assertTrue( X.numRows() == N );
     Assert.assertTrue( X.numCols() == D );
 
+  }
+  public void testModel( GenerationOptions options ) {
+    testModel( 1000, options );
   }
 
   @Test

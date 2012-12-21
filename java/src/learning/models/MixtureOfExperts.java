@@ -14,6 +14,10 @@ import org.ejml.data.DenseMatrix64F;
 
 import fig.basic.*;
 
+import java.io.FileOutputStream;
+import java.io.ObjectOutputStream;
+import java.io.IOException;
+
 import java.util.Random;
 
 /**
@@ -249,6 +253,10 @@ public class MixtureOfExperts {
     public String cov = "eye";
     @Option(gloss="Point variance parameter") 
     public double pointSigma = 10.0;
+  }
+  public static class OutputOptions {
+    @Option(gloss="Output file: '-' for STDOUT") 
+    public String outputPath = "-";
 
     @Option(gloss="Number of points") 
     public double N = 1e3;
@@ -258,25 +266,35 @@ public class MixtureOfExperts {
    * Generates data with given specifications to stdout. 
    */
   public static void main( String[] args ) {
-    GenerationOptions options = new GenerationOptions();
-    OptionsParser parser = new OptionsParser( options );
+    GenerationOptions genOptions = new GenerationOptions();
+    OutputOptions outOptions = new OutputOptions();
+    OptionsParser parser = new OptionsParser( genOptions, outOptions );
     if( !parser.parse( args ) ) {
       return;
     }
+    MixtureOfExperts model = MixtureOfExperts.generate( genOptions );
 
-    MixtureOfExperts model = MixtureOfExperts.generate( options );
+    int N = (int) outOptions.N;
+    SimpleMatrix[] yX = model.sample( N );
 
-    int N = (int) options.N;
-    SimpleMatrix[] data = model.sample( N );
+    if( outOptions.outputPath == "-" ) {
+      SimpleMatrix y = yX[0];
+      SimpleMatrix X = yX[1];
 
-    SimpleMatrix y = data[0];
-    SimpleMatrix X = data[1];
-
-    // Print data
-    for( int i = 0; i < N; i++ ) {
-      for( int d = 0; d < options.D; d++ )
-        System.out.printf( "%f ", X.get(i,d) );
-      System.out.printf( "%f\n", y.get(i) );
+      // Print data
+      for( int i = 0; i < N; i++ ) {
+        for( int d = 0; d < genOptions.D; d++ )
+          System.out.printf( "%f ", X.get(i,d) );
+        System.out.printf( "%f\n", y.get(i) );
+      }
+    } else {
+      try {
+        ObjectOutputStream out = new ObjectOutputStream( new FileOutputStream( outOptions.outputPath ) ); 
+        out.writeObject(yX);
+        out.close();
+      } catch (IOException e){
+        LogInfo.error( e );
+      }
     }
 
   }
