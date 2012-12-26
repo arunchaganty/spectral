@@ -1,0 +1,29 @@
+% December 21st 2012
+
+# Agenda
+
+We discussed the upcoming agenda for the project which we are targeting for the
+ICML February deadline. 
+
+Our main contributions will be:
+
+#. An algorithm for a mixture of linear regressions.
+    #. We should be able to integrate with the tensor power up method and also
+    sneak in the $\eta$ into the recovery step.
+#. Matrix perturbation based sample complexity results.
+#. A first order asymptotic analysis. 
+#. Experiments on "real" and simulated data.
+
+Some possible additions that would be interesting to include:
+
+#. A joint optimization of the tensor power up method and regression.
+#. Applications to cases where $h$ depends on $x$; i.e. basically non-smooth
+   intersections, etc.
+
+It will be important for this purpose that we do the following before the end of the winter break:
+
+#. Experiments on various simulated and real regimes.
+#. Handle input noise robustly.
+#. Scale to the order of a 100 dimensions reliably.
+#. Have an implementation setup to work on "real" datasets.
+

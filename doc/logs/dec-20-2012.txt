@@ -1,0 +1,50 @@
+% Decemeber 20 2012
+
+# Expectation Maximization for Mixtures of Linear Regressions
+
+The mixture of linear regressions model is the following:
+
+#. For each data point $x^{(n)}$, draw a $z^{(n)} ~ Mult(\pi)$, where the
+   support of $z^{(n)}$ is $[1,K]$.
+#. Given $z^{(n)} = i$, draw $y^{(n)} ~ \normal{\beta_i^T x^{(n)}}{\sigma^2}$.
+
+The conditional log-likelihood and objective function are then,
+\begin{eqnarray}
+\log P(y | \theta, X) &=& \sum_{n=1}^{N} \log( \sum_{k=1}^{K} \pi_k \normal{y^{(n)} | \beta_k^T x^{(n)}}{\sigma^2} ) \\
+\mL &=& \log P(y | \theta, X) + + \lambda (\sum_k \pi_k - 1).
+\end{eqnarray}
+
+Computing the partial derivatives with respect to the parameters $\beta$, $\pi$
+and $\sigma^2$, we get,
+\begin{eqnarray}
+\diff{\beta_j} \mL
+  &=& \sum_{n=1}^{N} \frac{ \pi_j \normal{y^{(n)} | \beta_j^T x^{(n)}}{\sigma^2} }
+        { \sum_{k=1}^{K} \pi_k \normal{y^{(n)} | \beta_k^T x^{(n)}}{\sigma^2}} \frac{1}{\sigma^2} (y^{(n)} - \beta_j^T x^{(n)}) x^{(n)T} \\
+  &=& \sum_{n=1}^{N} \tau_{nj} \frac{1}{\sigma^2} (y^{(n)} - \beta_j^T x^{(n)}) x^{(n)T} \\
+  \beta_j &=& \inv{(\sum_{n} \frac{\tau_{nj}}{N} x^{(n)} x^{(n)T})} \sum_{n=1}^{N} \frac{\tau_{nj}}{N} x^{(n)T} y^{(n)} \\
+\diff{\pi_j} \mL 
+  &=& \sum_{n=1}^{N} \frac{ \pi_j \normal{y^{(n)} | \beta_j^T x^{(n)}}{\sigma^2} }
+        { \sum_{k=1}^{K} \pi_k \normal{y^{(n)} | \beta_k^T x^{(n)}}{\sigma^2}} \frac{1}{\pi_j} + \lambda \\
+  \pi_j &\propto& \sum_{n=1}^{N} \tau_{nj} \\
+\diff{\sigma} \mL 
+  &=& \sum_{n=1}^{N} \sum_{j=1}^{K} \frac{ \pi_j \normal{y^{(n)} | \beta_j^T x^{(n)}}{\sigma^2} }
+        { \sum_{k=1}^{K} \pi_k \normal{y^{(n)} | \beta_k^T x^{(n)}}{\sigma^2}} \frac{1}{\sigma}(\frac{(y^{(n)} - \beta_j^T x^{(n)})}{\sigma^2} - 1 ) \\
+  &=&  \frac{1}{\sigma^3} \sum_{n=1}^{N} \sum_{j=1}^{K} \tau_{nj} ( (y^{(n)} - \beta_j^T x^{(n)})^2 - \sigma^2 ) \\
+  \sigma^2 &=& \frac{1}{N} \sum_{n=1}^{N} \sum_{j=1}^{K} \tau_{nj} (y^{(n)} - \beta_j^T x^{(n)})^2.
+\end{eqnarray}
+
+The EM implementation works extremely well in recovering the $\beta$s, for range
+of input data and noise settings. 
+
+# Meeting Notes
+
+We met shortly afterwards to discuss what these results meant in the bigger
+picture. One thing we need to tease apart is how much the "poor" performance of
+the proximal subgradient methods is due to bad optimization and how much of it
+is internal. 
+
+An important question to answer is why the "local" method works despite looking
+at localized regions, as opposed to a method that would look for statistics over
+a well-spread set of points. 
+
+
