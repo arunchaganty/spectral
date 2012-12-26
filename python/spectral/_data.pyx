@@ -56,6 +56,25 @@ def Pairs(np.ndarray[DTYPE_t, ndim=2] x1, np.ndarray[DTYPE_t, ndim=2] x2):
     return pairs
 
 @cython.boundscheck(False) 
+def Pairs2(np.ndarray[DTYPE_t, ndim=2] x1, np.ndarray[DTYPE_t, ndim=2] x2):
+    """Compute E[x1 \ctimes x2]"""
+
+    assert x1.dtype == DTYPE and x2.dtype == DTYPE
+
+    cdef unsigned int N = x1.shape[0]
+    cdef unsigned int d = x1.shape[1]
+    cdef np.ndarray[DTYPE_t, ndim=2] pairs = np.zeros( (d**2,d**2), dtype=DTYPE )
+    cdef unsigned int n, i, j
+
+    # Compute one element of Pairs at a time
+    for n in range( N ):
+        x1_ = np.outer( x1[n], x1[n] )
+        x2_ = np.outer( x2[n], x2[n] )
+        x12 = np.outer( x1_, x2_ )
+        pairs += (x12 - pairs)/(n+1)
+    return pairs
+
+@cython.boundscheck(False) 
 def PairsQ(np.ndarray[DTYPE_t, ndim=2] x, np.ndarray[DTYPE_t, ndim=1] q):
     """Compute E[x \ctimes x q(x)]"""
 

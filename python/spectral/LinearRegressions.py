@@ -9,12 +9,14 @@ import scipy.spatial
 import scipy.linalg
 from scipy import diag, array, ndim, outer, eye, ones,\
         log, sqrt, zeros, floor, exp
-from scipy.linalg import norm, svd, svdvals, eig, eigvals, inv 
+from scipy.linalg import norm, svd, svdvals, eig, eigvals, inv, pinv, cholesky
 from scipy.spatial.distance import cdist
 
 permutation, rand, dirichlet = scipy.random.permutation, scipy.random.rand, scipy.random.dirichlet
 
-from spectral.linalg import tensorify, closest_permuted_matrix 
+from spectral.linalg import tensorify, closest_permuted_matrix, \
+        mrank, condition_number 
+from spectral.data import Pairs, Pairs2
 
 from models import LinearRegressionsMixture 
 
@@ -22,13 +24,13 @@ from spectral.MultiView import recover_M3
 
 from optim import PhaseRecovery, TensorRecovery
 
-def recover_B( k, y, X, iters = 50, alpha0 = 0.1, Q = None ):
+def recover_B( k, y, X, iters = 50, alpha0 = 0.1, Q = None, B2B3 = (None,None) ):
     """Recover the mixture weights B"""
+    B20, B30 = B2B3
 
     # Use convex optimisation to recover B2 and B3
-    B2 = PhaseRecovery().solve( y**2, X, Q,  alpha0 = alpha0, iters = iters, reg = 1e-3, verbose = True )
-    B3 = TensorRecovery().solve( y**3, X, Q, alpha0 = alpha0/5, iters = iters, reg = 1e-4, verbose = True )
-    print B2, B3
+    B2 = PhaseRecovery().solve( y**2, X, Q, alpha = "1/sqrt(T)", alpha0 = alpha0, iters = iters, reg = 0, verbose = False )
+    B3 = TensorRecovery().solve( y**3, X, Q,alpha = "1/sqrt(T)", alpha0 = alpha0, iters = iters, reg = 0, verbose = False )
 
     B3_ = lambda theta: sc.einsum( 'abj,j->ab', B3, theta )
 
@@ -86,7 +88,7 @@ def make_smoothener( y, X, smoothing, smoothing_dimensions = None):
         smoothing_dimensions = N
 
     if smoothing == "none":
-        return None
+        return eye(N)
     elif smoothing == "all":
         return ones( (N, N) )/N**2
     elif smoothing == "local":
@@ -109,12 +111,81 @@ def make_smoothener( y, X, smoothing, smoothing_dimensions = None):
         alpha = 0.1
         Q = dirichlet( alpha * ones(N)/N, smoothing_dimensions )
         return Q.T.dot(Q)
+    elif smoothing == "white":
+        # Choose smoothing_dimensions number of random Xs
+        X2 = X.dot( X.T )
+        Q2 = inv( X2 )
+        return Q2
     elif smoothing == "random":
         # Choose smoothing_dimensions number of random Xs
         Q = rand(smoothing_dimensions, N)
         # Normalise to be stochastic
         Q = (Q.T/Q.sum(1)).T
         return Q.T.dot(Q)
+    else: 
+        raise NotImplementedError()
+
+def smooth_data( y, X, smoothing, smoothing_dimensions = None):
+    """
+    Make a smoothener based on the scheme:
+    none - return eye(N) - no mixing between Xs
+    all - return 1_N/N complete mixing between Xs
+    local - return cdist( x_m, X_N ) partial local mixing between Xs
+    subset - return a partition of m random Xs
+    random - return rand( m, N ) partial local mixing between Xs
+    """
+
+    N, d = X.shape
+
+    if smoothing_dimensions == None:
+        smoothing_dimensions = N
+
+    if smoothing == "none":
+        return y, X
+    elif smoothing == "all":
+        Q = ones( N )/N
+        y, X = Q.dot( y ), Q.dot( X )
+        return sc.atleast_1d( y ), sc.atleast_2d( X )
+    elif smoothing == "local":
+        # Choose smoothing_dimensions number of random Xs
+        Zi = permutation(N)[:smoothing_dimensions]
+        Z = X[ Zi ]
+        Q = exp( - cdist( Z, X )**2 )
+        # Normalise to be stochastic
+        Q = (Q.T/Q.sum(1)).T
+
+        y, X = Q.dot( y ), Q.dot( X )
+        return y, X
+    elif smoothing == "subset":
+        # Choose smoothing_dimensions number of random Xs
+        Q = zeros( (smoothing_dimensions, N) )
+        for i in xrange( smoothing_dimensions ):
+            Zi = permutation(N)[:smoothing_dimensions]
+            Q[ i, Zi ] = 1.0/len(Zi)
+
+        y, X = Q.dot( y ), Q.dot( X )
+        return y, X
+    elif smoothing == "dirichlet":
+        # Choose smoothing_dimensions number of random Xs
+        alpha = 0.1
+        Q = dirichlet( alpha * ones(N)/N, smoothing_dimensions )
+
+        y, X = Q.dot( y ), Q.dot( X )
+        return y, X
+    elif smoothing == "white":
+        # Choose smoothing_dimensions number of random Xs
+        Q = pinv( X )
+
+        y, X = Q.dot( y ), Q.dot( X )
+        return y, X
+    elif smoothing == "random":
+        # Choose smoothing_dimensions number of random Xs
+        Q = rand(smoothing_dimensions, N)
+        # Normalise to be stochastic
+        Q = (Q.T/Q.sum(1)).T
+
+        y, X = Q.dot( y ), Q.dot( X )
+        return y, X
     else: 
         raise NotImplementedError()
 
@@ -127,7 +198,7 @@ def main( args ):
     else:
         sc.random.seed(args.seed)
         fname = tempfile.mktemp()
-        lrm = LinearRegressionsMixture.generate(fname, K, d, cov = "eye", betas="eye")
+        lrm = LinearRegressionsMixture.generate(fname, K, d, weights = "uniform", cov = "eye", betas="eye")
     # Generate some samples
     y, X = lrm.sample( N )
 
@@ -143,11 +214,18 @@ def main( args ):
         y += noise
     sc.random.seed(args.seed)
 
-    Q2 = make_smoothener( y, X, args.smoothing, args.smoothing_dimensions )
-    B_, B2_, B3_ = recover_B( K, y, X, int( args.iters ), float(args.alpha0), Q2 )
-    B_ = closest_permuted_matrix( B.T, B_.T ).T
+    #Q2 = make_smoothener( y, X, args.smoothing, args.smoothing_dimensions )
+    Q2 = None
+    y, X = smooth_data( y, X, args.smoothing, args.smoothing_dimensions )
 
-    print norm( B - B_ ), norm( B2 - B2_ ), norm( B3 - B3_ )
+    B2_ = PhaseRecovery().solve( y**2, X, Q2, alpha = "1/sqrt(T)", alpha0 = float(args.alpha0), iters = int( args.iters ), reg = 0, verbose = False )
+    #B_, B2_, B3_ = recover_B( K, y, X, int( args.iters ), float(args.alpha0), Q2, (B2, B3) )
+    #B_ = closest_permuted_matrix( B.T, B_.T ).T
+
+    X2_ = Pairs2( X, X )
+    print norm( B2 - B2_ ), condition_number( X2_, mrank( X2_ ) )
+
+    #print norm( B - B_ ), norm( B2 - B2_ ), norm( B3 - B3_ ), condition_number( X2 )
 
     del lrm
 

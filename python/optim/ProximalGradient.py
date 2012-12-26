@@ -44,10 +44,12 @@ class ProximalGradient:
             ebar = ErrorBar()
             ebar.start( iters )
 
+        old_loss = 0
         B_ = B0
         for i in xrange( iters ):
             # Run a gradient descent step
             dB = self.gradient_step( y, X, B_ )
+
 
             # Anneal
             if alpha == "1/T" :
@@ -59,12 +61,15 @@ class ProximalGradient:
             # Do the proximal step of making B low rank by soft thresholding k.
             B = self.proximal_step( y, X, B, reg )
 
+            loss = self.loss(y, X, B)
             if verbose:
-                ebar.update( i, self.loss( y, X, B ) )
+                ebar.update( i, loss )
+            #print i, loss, norm(dB)
 
             # Check convergence
-            if norm( B - B_ ) / (1e-10 + norm( B )) < eps:
+            if abs(old_loss - loss)/(1e-7 + abs(loss)) < eps:
                 break
+            old_loss = loss
             B_ = B
 
         if verbose:
