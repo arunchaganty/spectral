@@ -96,18 +96,17 @@ public class RandomFactory {
    * @param pi - Parameters
    * @return - Vector with count of number of times a value was drawn
    */
-  public static SimpleMatrix multinomial(SimpleMatrix pi, int n) {
-    if( pi.numCols() == 1 )
-      pi = pi.transpose();
-    double[] cnt = new double[pi.numCols()];
+  public static double[] multinomial(double[] pi, int n) {
+    double[] cnt = new double[pi.length];
 
     for( int i = 0; i < n; i++)
       cnt[ multinomial(pi) ] += 1;
 
-    double[][] cnt_ = {cnt};
-    return new SimpleMatrix( cnt_ );
+    return cnt;
   }
-
+  public static SimpleMatrix multinomial(SimpleMatrix pi, int n) {
+    return MatrixFactory.fromVector( multinomial( MatrixFactory.toVector( pi ), n ) );
+  }
 
   /**
    * Generate a random matrix with standard normal entries.
