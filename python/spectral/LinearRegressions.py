@@ -29,8 +29,8 @@ def recover_B( k, y, X, iters = 50, alpha0 = 0.1, Q = None, B2B3 = (None,None) )
     B20, B30 = B2B3
 
     # Use convex optimisation to recover B2 and B3
-    B2 = PhaseRecovery().solve( y**2, X, Q, alpha = "1/sqrt(T)", alpha0 = alpha0, iters = iters, reg = 0, verbose = False )
-    B3 = TensorRecovery().solve( y**3, X, Q,alpha = "1/sqrt(T)", alpha0 = alpha0, iters = iters, reg = 0, verbose = False )
+    B2 = PhaseRecovery().solve( y**2, X, Q, B20 = B20, alpha = "1/sqrt(T)", alpha0 = alpha0, iters = iters, reg = 1e-3, verbose = False )
+    B3 = TensorRecovery().solve( y**3, X, Q, B30 = B30, alpha = "1/sqrt(T)", alpha0 = alpha0, iters = iters, reg = 1e-4, verbose = False )
 
     B3_ = lambda theta: sc.einsum( 'abj,j->ab', B3, theta )
 
@@ -218,7 +218,14 @@ def main( args ):
     Q2 = None
     y, X = smooth_data( y, X, args.smoothing, args.smoothing_dimensions )
 
-    B2_ = PhaseRecovery().solve( y**2, X, Q2, alpha = "1/sqrt(T)", alpha0 = float(args.alpha0), iters = int( args.iters ), reg = 0, verbose = False )
+    if args.init == "zero":
+        B20 = sc.zeros( B2.shape )
+    elif args.init == "random":
+        B20 = sc.randn(*B2.shape)
+    elif args.init == "near-optimal":
+        B20 = B2 + 0.1 * sc.randn(*B2.shape)
+
+    B2_ = PhaseRecovery().solve( y**2, X, Q2, B20, alpha = "1/sqrt(T)", alpha0 = float(args.alpha0), iters = int( args.iters ), reg = 1e-3, verbose = False )
     #B_, B2_, B3_ = recover_B( K, y, X, int( args.iters ), float(args.alpha0), Q2, (B2, B3) )
     #B_ = closest_permuted_matrix( B.T, B_.T ).T
 
@@ -238,6 +245,7 @@ if __name__ == "__main__":
     parser.add_argument( "--seed", default=int(time.time() * 100), type=int,
             help="Seed used for algorithm (separate from generation)" )
     parser.add_argument( "--samples", default=1e4, type=float, help="Number of samples to be used" )
+    parser.add_argument( "--init", default="zero", type=str, help="How to initialise" )
     parser.add_argument( "--alpha0", default=1e1, type=float, help="Starting pace for gradient descent" )
     parser.add_argument( "--iters", default=1e2, type=float, help="Number of iterations of gradient descent" )
     parser.add_argument( "--with-noise", default=False, type=bool, help="Use noise" )
