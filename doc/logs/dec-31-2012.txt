@@ -1,0 +1,16 @@
+% December 31st 2012
+
+The last few days have been slow on account of various break-related factors.
+
+Some status updates:
+
+* I've spent some time empirically looking at the role of the Q's in the
+  problem. It looks fairly random, but I'll need to see all the data to come to
+  a concrete conclusion.
+* The moment computations for the data with the smallest number of dimensions is
+  finally complete.
+* I've debugged and tested the Java version of Algorithm B. It seems to fail
+  with imaginary eigenvalues on large number of clusters. I need to tease out
+  whether this is a numerical issue or simply due to too small spectral values
+  in the tail?
+
