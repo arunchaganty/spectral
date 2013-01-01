@@ -22,6 +22,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.Before;
 
+import fig.basic.*;
+
 /**
  * 
  */
@@ -94,9 +96,6 @@ public class MultiViewTest {
       SimpleMatrix M3_ = algo.recoverM3( K, X[0], X[1], X[2] );
       M3_ = MatrixOps.alignMatrix( M3_, M3 );
 
-      System.out.println( M3_ );
-      System.out.println( M3 );
-
       double err = MatrixOps.norm( M3.minus( M3_ ) );
       System.out.println( err );
 
@@ -137,26 +136,30 @@ public class MultiViewTest {
     testAlgorithmB( N, K, D, V, model );
   }
 
-  @Test
   /**
    * Test algorithmB with exact moments
    */
-  public void algorithmBLarge() {
-		int N = (int) 1e6;
-		int K = 30;
-		int D = 50;
-		int V = 3;
-		
+  public void algorithmB() {
 		MixtureOfGaussians model = MixtureOfGaussians.generate(K, D, V, WeightDistribution.Uniform, MeanDistribution.Hypercube, CovarianceDistribution.Spherical, 1.0);
-
-    testAlgorithmB( N, K, D, V, model );
+    testAlgorithmB( (int) N, K, D, V, model );
   }
 
+  @Option( gloss = "Number of points" )
+  public double N = 1e4;
+  @Option( gloss = "Number of clusters" )
+  public int K = 2;
+  @Option( gloss = "Number of dimensions" )
+  public int D = 3;
+  @Option( gloss = "Number of views" )
+  public int V = 3;
   
-
   public static void main( String[] args ) {
     MultiViewTest test = new MultiViewTest();
-    test.algorithmBSmall();
+    OptionsParser parser = new OptionsParser( test );
+
+    if( parser.parse( args ) ) {
+      test.algorithmB();
+    }
   }
 
 }
