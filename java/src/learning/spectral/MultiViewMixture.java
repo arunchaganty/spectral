@@ -11,8 +11,11 @@ import learning.linalg.MatrixFactory;
 import learning.linalg.RandomFactory;
 import learning.linalg.Tensor;
 import learning.linalg.SimpleTensor;
+import learning.linalg.ExactTensor;
 import learning.exceptions.RecoveryFailure;
 import learning.exceptions.NumericalException;
+
+import org.javatuples.*;
 
 import org.ejml.simple.SimpleMatrix;
 import fig.basic.LogInfo;
@@ -20,80 +23,33 @@ import fig.basic.LogInfo;
 public class MultiViewMixture {
 
   /**
-   * Attempt to recover the eigen value matrix for a particular Theta
-   * @param U1
-   * @param U2
-   * @param U3
-   * @param P12
-   * @param P123
-   * @param Theta
-   * @return
-   * @throws NumericalException 
-   */
-  public SimpleMatrix attemptEigendecomposition( int k, SimpleMatrix U1T, SimpleMatrix U2, 
-      SimpleMatrix U3, SimpleMatrix P12, Tensor P123, 
-      SimpleMatrix Theta ) throws NumericalException {
-
-    SimpleMatrix L = new SimpleMatrix( k, k );
-    SimpleMatrix R = new SimpleMatrix( k, k );
-    SimpleMatrix R_inv;
-
-    // Project P123 onto the random orthogonal matrix
-    Theta = U3.mult( Theta );
-
-    SimpleMatrix theta = MatrixOps.col( Theta, 0 );
-    SimpleMatrix P123T = P123.project(2, theta);
-    assert( MatrixOps.rank( P123T ) >= k );
-
-    // Compute B123 = (U1' P123 U2) (U1' P12 U2)^-1
-    SimpleMatrix U1P12U2 = (U1T.mult(P12).mult(U2));
-    SimpleMatrix U1P12U2_1 = U1P12U2.invert();
-    SimpleMatrix B123 = U1T.mult( P123T )
-      .mult( U2 ).mult( U1P12U2_1 );
-
-    LogInfo.begin_track("simultaneously diagonalization");
-    try { 
-      // Try to compute the eigen vectors of B123
-      SimpleMatrix[] LR = MatrixOps.eig( B123 );
-      MatrixOps.setRow( L, 0, LR[0] );
-      R = LR[1];
-      R_inv = R.invert();
-    } catch( RuntimeException e ) {
-      LogInfo.error( e.getMessage() );
-      LogInfo.end_track("simultaneously diagonalization");
-      throw new NumericalException( e.getMessage() );
-    } catch( NumericalException e ) {
-      LogInfo.error( e.getMessage() );
-      LogInfo.end_track("simultaneously diagonalization");
-      throw e;
-    }
-
-    // Diagonalise the remaining matrices
-    for( int i = 1; i<k; i++ )
-    {
-      SimpleMatrix theta_ = MatrixOps.col( Theta, i );
-      SimpleMatrix B123_ = U1T.mult( P123.project(2, theta_ ) )
-        .mult( U2 ).mult( U1P12U2_1 );
-      MatrixOps.setRow( L, i, MatrixFactory.diag( R_inv.mult(B123_).mult(R) ) );
-    }
-    LogInfo.end_track("simultaneously diagonalization");
-
-    return L;
-  }
-
-  /**
    * Recover M3 from the sample moments using Algorithm B
    */
-  public SimpleMatrix algorithmB( int k, SimpleMatrix P12, SimpleMatrix P13, SimpleTensor P123 ) 
+  public SimpleMatrix algorithmB( int k, SimpleMatrix P12, SimpleMatrix P13, Tensor P123 ) 
     throws RecoveryFailure {
     LogInfo.begin_track("algorithmB");
+    //LogInfo.logsForce("P12: " + P12);
+    //LogInfo.logsForce("P13: " + P13);
+
     // Get the U_i
     SimpleMatrix[] U1DU2 = MatrixOps.svdk(P12, k);
     SimpleMatrix U1T = U1DU2[0].transpose();
     SimpleMatrix U2 = U1DU2[2];
     SimpleMatrix[] U1DU3 = MatrixOps.svdk(P13, k);
     SimpleMatrix U3 = U1DU3[2];
+
+    //LogInfo.logsForce("U1: " + U1T.transpose());
+    //LogInfo.logsForce("U2: " + U2);
+    //LogInfo.logsForce("U3: " + U3);
+
     LogInfo.logsForce( "Subspace computation done." );
+
+    SimpleMatrix U1P12U2 = (U1T.mult(P12).mult(U2));
+    SimpleMatrix U1P12U2_1 = U1P12U2.invert();
+
+    SimpleMatrix L = new SimpleMatrix( k, k );
+    SimpleMatrix R = null;
+    SimpleMatrix R_inv = null;
 
     // Try to project onto theta 
     for( int i = 0; i < 100; i++ )
@@ -101,15 +57,50 @@ public class MultiViewMixture {
       try{
         LogInfo.logs( "Attempt %d", i );
         // Project onto an orthogonal basis set
+        //SimpleMatrix Theta = MatrixFactory.eye( k );
         SimpleMatrix Theta = RandomFactory.orthogonal( k );
-        SimpleMatrix L = attemptEigendecomposition(k, U1T, U2, U3, P12, P123, Theta);
+        //LogInfo.logsForce("Theta: " + Theta);
+        // Project P123 onto the random orthogonal matrix
+        SimpleMatrix Theta_ = U3.mult( Theta );
+        SimpleMatrix theta = MatrixOps.col( Theta_, 0 );
+        SimpleMatrix P123T = P123.project(2, theta);
+        //LogInfo.logsForce("P123T: " + P123T);
+        assert( MatrixOps.rank( P123T ) >= k );
+
+        // Compute B123 = (U1' P123 U2) (U1' P12 U2)^-1
+        SimpleMatrix B123 = U1T.mult( P123T )
+          .mult( U2 ).mult( U1P12U2_1 );
+        //LogInfo.logsForce("B123: " + B123);
+
+
+        // Try to compute the eigen vectors of B123
+        SimpleMatrix[] LR = MatrixOps.eig( B123 );
+        MatrixOps.setRow( L, 0, LR[0] );
+        R = LR[1];
+        R_inv = R.invert();
+
+        // Diagonalise the remaining matrices
+        LogInfo.begin_track("simultaneously diagonalization");
+        for( int j = 1; j<k; j++ )
+        {
+          SimpleMatrix theta_ = MatrixOps.col( Theta_, j );
+          SimpleMatrix B123_ = U1T.mult( P123.project(2, theta_ ) )
+            .mult( U2 ).mult( U1P12U2_1 );
+          SimpleMatrix Li = R_inv.mult(B123_).mult(R);
+          //LogInfo.logsForce("L" + j + " " + Li);
+          MatrixOps.setRow( L, j, MatrixFactory.diag( Li  ) );
+        }
+        LogInfo.end_track("simultaneously diagonalization");
+
 
         // Reconstruct
         LogInfo.end_track("algorithmB");
-        return U3.mult( Theta.transpose().invert() ).mult( L );
-      }
-      catch( NumericalException e )
-      {
+
+        // We've been storing everything in it's transposed form.
+        SimpleMatrix M3T = U3.mult( Theta.transpose().invert() ).mult( L );
+        return M3T.transpose();
+      } catch( NumericalException e ) {
+        LogInfo.error( e.getMessage() );
         continue;
       }
     }
@@ -118,6 +109,22 @@ public class MultiViewMixture {
     throw new RecoveryFailure();
   }
 
+  /**
+   * Computes the exact moments of the model whose means are given by
+   * the columns of M[v].
+   */
+  public Triplet<SimpleMatrix, SimpleMatrix, Tensor> computeExactMoments( int D, int K, int V, SimpleMatrix weights, SimpleMatrix[] M ) {
+    SimpleMatrix M1 = M[0].transpose();
+    SimpleMatrix M2 = M[1].transpose();
+    SimpleMatrix M3 = M[2].transpose();
+
+    // Compute the moments
+    SimpleMatrix P12 = M1.mult( MatrixFactory.diag( weights ) ).mult( M2.transpose() );
+    SimpleMatrix P13 = M1.mult( MatrixFactory.diag( weights ) ).mult( M3.transpose() );
+    ExactTensor P123 = new ExactTensor( weights, M1, M2, M3 );
+
+    return new Triplet<SimpleMatrix, SimpleMatrix, Tensor>( P12, P13, P123 );
+  }
 
   /** 
    * Use Algorithm B to recover the the means of the third view (M3)

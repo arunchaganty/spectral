@@ -323,7 +323,6 @@ public class MatrixOpsTest {
 
     SimpleMatrix Da = new SimpleMatrix( D_ );
     SimpleMatrix Db = MatrixOps.cdist( X1, X4 );
-
     Assert.assertTrue( MatrixOps.allclose( Da, Db ) );
   }
 

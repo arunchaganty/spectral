@@ -98,6 +98,18 @@ public class MatrixOps {
   }
 
   /**
+   * Find the norm of a matrix
+   */
+  public static double norm(DenseMatrix64F X) {
+    double sum = 0.0;
+    double[] X_ = X.data;
+    return norm( X_ );
+  }
+  public static double norm(SimpleMatrix X) {
+    return norm( X.getMatrix() );
+  }
+
+  /**
    * Return the absolute value of each entry in X
    */
   public static void abs( DenseMatrix64F X ) {
@@ -516,6 +528,30 @@ public class MatrixOps {
     SimpleMatrix[] LR = {L, R};
     return LR;
   }
+
+  /**
+   * Align the rows of matrix X so that the rows/columns are matched with the
+   * columns of Y
+   */
+  public static SimpleMatrix alignMatrix( SimpleMatrix X, SimpleMatrix Y ) {
+    assert( X.numRows() == Y.numRows() );
+    assert( X.numCols() == Y.numCols() );
+    int nRows = X.numRows(); 
+    int nCols = X.numCols(); 
+
+    SimpleMatrix X_ = new SimpleMatrix( nRows, nCols );
+    // Populate the weight matrix 
+    double[][] W = MatrixFactory.toArray( cdist( Y, X ) );
+    // Compute min-weight matching
+    int[][] matching = HungarianAlgorithm.findWeightedMatching( W, false );
+    // Shuffle rows
+    for( int[] match : matching )
+      setRow( X_, match[0], row( X, match[1] ) );
+
+    return X_;
+  }
+
+
 }
 
 
