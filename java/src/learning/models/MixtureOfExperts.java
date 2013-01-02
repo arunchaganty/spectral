@@ -51,6 +51,16 @@ public class MixtureOfExperts {
     this.cov = cov;
   }
 
+  public SimpleMatrix getWeights() {
+    return weights;
+  }
+  public SimpleMatrix getBetas() {
+    return betas;
+  }
+  public double getSigma2() {
+    return sigma2;
+  }
+
   /**
    * Sample n points from the point distribution and generate y's
    * according to the mixture of experts model
