@@ -5,6 +5,8 @@
  */
 package learning;
 
+import java.util.Comparator;
+
 /**
  * Miscellaneous utilities
  */
@@ -57,5 +59,26 @@ public class Misc {
 
     return r;
   }
+
+	/**
+	 * Comparator to sort a list based on keys in another list 
+	 */
+	public static class IndexedComparator implements Comparator<Integer> {
+		double[] keys;
+		
+		public IndexedComparator(double[] keys) {
+			this.keys = keys;
+		}
+		
+		@Override
+		public int compare(Integer o1, Integer o2) {
+			if( keys[o2] - keys[o1] < 0 )
+				return -1;
+			else if( keys[o2] - keys[o1] > 0 )
+				return 1;
+			else
+				return 0;
+		}
+	}
 
 }

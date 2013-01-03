@@ -28,6 +28,12 @@ public class MatrixOps {
       System.out.printf( "%f, ", x[i] );
     System.out.printf( "}\n" );
   }
+  public static void printVector( int[] x ) {
+    System.out.printf( "{ " );
+    for( int i = 0; i < x.length; i++ )
+      System.out.printf( "%d, ", x[i] );
+    System.out.printf( "}\n" );
+  }
 
   /**
    * Print entries of a arrays
@@ -127,13 +133,15 @@ public class MatrixOps {
   /**
    * Find the minimium value of the matrix X
    */
-  public static double min( DenseMatrix64F X ) {
-    double[] X_ = X.data;
+  public static double min( double[] x ) {
     double min = Double.POSITIVE_INFINITY;
-    for( int i = 0; i < X_.length; i++ ) 
-      if( X_[i] < min ) min = X_[i];
+    for( int i = 0; i < x.length; i++ ) 
+      if( x[i] < min ) min = x[i];
 
     return min;
+  }
+  public static double min( DenseMatrix64F X ) {
+    return min( X.data );
   }
   public static double min( SimpleMatrix X ) {
     return min( X.getMatrix() );
@@ -149,15 +157,48 @@ public class MatrixOps {
     return max;
   }
   public static double max( DenseMatrix64F X ) {
-    double[] X_ = X.data;
-    double max = Double.NEGATIVE_INFINITY;
-    for( int i = 0; i < X_.length; i++ ) 
-      if( X_[i] > max ) max = X_[i];
-
-    return max;
+    return max( X.data );
   }
   public static double max( SimpleMatrix X ) {
     return max( X.getMatrix() );
+  }
+
+  /**
+   * Find the location of the minimum value of X
+   */
+  public static int argmax( double[] x ) {
+    int idx = -1;
+    double max = Double.NEGATIVE_INFINITY;
+    for( int i = 0; i < x.length; i++ ) 
+      if( x[i] > max ) {
+        idx = i;
+        max = x[i];
+      }
+
+    return idx;
+  }
+  public static int argmax( DenseMatrix64F X ) {
+    return argmax( X.data );
+  }
+  public static int argmax( SimpleMatrix X ) {
+    return argmax( X.getMatrix() );
+  }
+  public static int argmin( double[] x ) {
+    int idx = -1;
+    double min = Double.POSITIVE_INFINITY;
+    for( int i = 0; i < x.length; i++ ) 
+      if( x[i] < min ) {
+        idx = i;
+        min = x[i];
+      }
+
+    return idx;
+  }
+  public static int argmin( DenseMatrix64F X ) {
+    return argmin( X.data );
+  }
+  public static int argmin( SimpleMatrix X ) {
+    return argmin( X.getMatrix() );
   }
 
 

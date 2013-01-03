@@ -13,6 +13,30 @@ import org.ejml.simple.SimpleMatrix;
 public class MatrixFactory {
 
   /**
+   * Convert from a double array to an integer one.
+   * @param x
+   * @return
+   */
+  public static double[] castToDouble( int[] x )
+  {
+    double[] x_ = new double[ x.length ];
+    for( int i = 0; i < x.length; i++ ) x_[i] = x[i];
+    return x_;
+  }
+
+  /**
+   * Convert from an integer array to a double one.
+   * @param x
+   * @return
+   */
+  public static int[] castToInt( double[] x )
+  {
+    int[] x_ = new int[ x.length ];
+    for( int i = 0; i < x.length; i++ ) x_[i] = (int) x[i];
+    return x_;
+  }
+
+  /**
    * Create a simple matrix from a uni-dimensional array x
    * @param x
    * @return
