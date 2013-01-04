@@ -18,21 +18,21 @@ import fig.exec.Execution;
 
 import org.ejml.simple.SimpleMatrix;
 
+import org.javatuples.*;
+
 /**
  * Efficiently computes moments of text corpora.
  */
 public class MomentComputer {
-  final ProjectedCorpus PC;
-  double[][] Theta;
   final int nThreads;
-  int nClusters;
+  final protected RealSequenceData seqData;
 
-  public MomentComputer( ProjectedCorpus PC, int nThreads ) {
-    this.PC = PC;
+  public MomentComputer( RealSequenceData seqData, int nThreads ) {
+    this.seqData = seqData;
     this.nThreads = nThreads;
   }
-  public MomentComputer( ProjectedCorpus PC ) {
-    this.PC = PC;
+  public MomentComputer( RealSequenceData seqData ) {
+    this.seqData = seqData;
     this.nThreads = 4;
   }
 
@@ -47,38 +47,35 @@ public class MomentComputer {
     public int length;
     public PairsComputer( int offset, int length ) {
       this.offset = offset;
-      if( offset + length > PC.C.length )
-        length = PC.C.length - offset;
+      if( offset + length > seqData.getInstanceCount() )
+        length = seqData.getInstanceCount() - offset;
       this.length = length;
     }
 
     public void run() {
-      int d = PC.projectionDim;
-      P12 = new double[d][d];
-      P13 = new double[d][d];
-
-      CachedProjectedCorpus CPC = new CachedProjectedCorpus( PC );
+      int D = seqData.getDimension();
+      P12 = new double[D][D];
+      P13 = new double[D][D];
 
       LogInfo.begin_track( "Pairs @" + offset );
       double count = 0.0;
-      for( int c_i = offset; c_i < offset + length; c_i++ ) {
-        int[] doc = PC.C[c_i];
-        int l = doc.length - 2;
-        for( int word = 0; word < l; word++ ) {
-          double[] x1 = CPC.featurize( doc[word] );
-          double[] x2 = CPC.featurize( doc[word+1] );
-          double[] x3 = CPC.featurize( doc[word+2] );
+      for( int instance = offset; instance < offset + length; instance++ ) {
+        int instanceLength = seqData.getInstanceLength( instance );
+        for( int idx = 0; idx < instanceLength - 2; idx++ ) {
+          double[] x1 = seqData.getDatum( instance, idx );
+          double[] x2 = seqData.getDatum( instance, idx+1 );
+          double[] x3 = seqData.getDatum( instance, idx+2 );
           // Add into P13
           count++;
-          for( int i = 0; i < d; i++ ) {
-            for( int j = 0; j < d; j++ ) {
+          for( int i = 0; i < D; i++ ) {
+            for( int j = 0; j < D; j++ ) {
               P12[i][j] += (x1[i] * x2[j] - P12[i][j])/(count);
               P13[i][j] += (x1[i] * x3[j] - P13[i][j])/(count);
             }
           }
         }
-        if( c_i % 10 == 0 )
-          Execution.putOutput( "Pairs@" + offset + " status", ((float)c_i * 100)/PC.C.length );
+        if( instance % 10 == 0 )
+          Execution.putOutput( "Pairs@" + offset + " status", ((float)(instance - offset) * 100)/length );
       }
       LogInfo.end_track( "Pairs @" + offset );
     }
@@ -88,9 +85,9 @@ public class MomentComputer {
    * Compute moments in the embarrasingly parallel way - just split
    * into k parts.
    */
-  public SimpleMatrix[] Pairs() {
+  public Pair<SimpleMatrix, SimpleMatrix> Pairs() {
     int offset = 0;
-    int totalLength = PC.C.length;
+    int totalLength = seqData.getInstanceCount();
     int length = totalLength/nThreads;
 
     PairsComputer[] comps = new PairsComputer[nThreads];
@@ -109,12 +106,12 @@ public class MomentComputer {
     }
 
     // Average over all the comps
-    int d = PC.projectionDim;
-    double[][] P12 = new double[d][d];
-    double[][] P13 = new double[d][d];
+    int D = seqData.getDimension();
+    double[][] P12 = new double[D][D];
+    double[][] P13 = new double[D][D];
     for(PairsComputer comp : comps) {
-      for(int i = 0; i < d; i++) {
-        for(int j = 0; j < d; j++) {
+      for(int i = 0; i < D; i++) {
+        for(int j = 0; j < D; j++) {
           double ratio = (double) comp.length/totalLength;
           P12[i][j] += ratio * comp.P12[i][j];
           P13[i][j] += ratio * comp.P13[i][j];
@@ -124,60 +121,72 @@ public class MomentComputer {
 
     SimpleMatrix P12_ = new SimpleMatrix( P12 );
     SimpleMatrix P13_ = new SimpleMatrix( P13 );
-    SimpleMatrix[] P12P13 = {P12_, P13_};
 
-    return P12P13;
+    return new Pair<>( P12_, P13_ );
   }
 
   /**
    * Compute moments for a range in the dataset.
    */
   protected class TriplesComputer extends Thread {
-    public double[][][] P132;
+    public double[][][] P123;
+    public double[][] Theta;
+    public int idx1, idx2, idx3;
 
     public int offset;
     public int length;
-    public TriplesComputer( int offset, int length ) {
+    public TriplesComputer( int offset, int length, int axis, double[][] Theta ) {
+      assert( 0 <= axis && axis < 3 );
+
+      // Align the axes
+      idx1 = idx2 = idx3 = axis;
+      switch( axis ){
+        case 0: idx1 = 1; idx2 = 2; break;
+        case 1: idx1 = 0; idx2 = 2; break;
+        case 2: idx1 = 0; idx2 = 1; break;
+        default:
+                throw new IndexOutOfBoundsException();
+      }
+
       this.offset = offset;
-      if( offset + length > PC.C.length )
-        length = PC.C.length - offset;
+      if( offset + length > seqData.getInstanceCount() )
+        length = seqData.getInstanceCount() - offset;
       this.length = length;
+      this.Theta = Theta;
     }
 
     public void run() {
-      int d = PC.projectionDim;
-      P132 = new double[nClusters][d][d];
-
-      CachedProjectedCorpus CPC = new CachedProjectedCorpus( PC );
+      int D = seqData.getDimension();
+      int K = Theta.length;
+      P123 = new double[K][D][D];
 
       LogInfo.begin_track( "Triples @" + offset );
       double count = 0.0;
-      for( int c_i = offset; c_i < offset + length; c_i++ ) {
-        int[] doc = PC.C[c_i];
-        int l = doc.length - 2;
-        for( int word = 0; word < l; word++ ) {
-          double[] x1 = CPC.featurize( doc[word] );
-          double[] x2 = CPC.featurize( doc[word+1] );
-          double[] x3 = CPC.featurize( doc[word+2] );
+      for( int instance = offset; instance < offset + length; instance++ ) {
+        int instanceLength = seqData.getInstanceLength( instance );
+        for( int idx = 0; idx < instanceLength - 2; idx++ ) {
+          double[] x1 = seqData.getDatum( instance, idx + idx1 );
+          double[] x2 = seqData.getDatum( instance, idx + idx2 );
+          double[] x3 = seqData.getDatum( instance, idx + idx3 );
 
           // Compute inner products
-          double[] prod = new double[nClusters];
-          for( int i = 0; i < nClusters; i++ )
-            for( int j = 0; j < d; j++ )
-              prod[i] += x2[j] * Theta[i][j];
+          double[] prod = new double[K];
+          for( int i = 0; i < K; i++ )
+            for( int j = 0; j < D; j++ )
+              prod[i] += x3[j] * Theta[i][j];
 
-          // Add into P132
+          // Add into P123
           count++;
-          for( int i = 0; i < d; i++ ) {
-            for( int j = 0; j < d; j++ ) {
-              for( int cluster = 0; cluster < nClusters; cluster++ ) {
-                P132[cluster][i][j] += (prod[cluster] * x1[i] * x3[j] - P132[cluster][i][j])/count;
+          for( int i = 0; i < D; i++ ) {
+            for( int j = 0; j < D; j++ ) {
+              for( int cluster = 0; cluster < K; cluster++ ) {
+                P123[cluster][i][j] += (prod[cluster] * x1[i] * x2[j] - P123[cluster][i][j])/count;
               }
             }
           }
         }
-        if( c_i % 10 == 0 )
-          Execution.putOutput( "Triples@" + offset + " status", ((float)c_i * 100)/PC.C.length );
+        if( instance % 10 == 0 )
+          Execution.putOutput( "Triples@" + offset + " status", ((float)(instance - offset) * 100)/length );
       }
       LogInfo.end_track( "Triples @" + offset );
     }
@@ -185,19 +194,21 @@ public class MomentComputer {
 
   /**
    * Compute the projected tensor using each column of theta.
+   *
+   * TODO: Support ordering
    */
-  public SimpleMatrix[] Triples( SimpleMatrix theta ) {
-    nClusters = theta.numCols();
+  public SimpleMatrix[] Triples( int axis, SimpleMatrix theta ) {
+    int K = theta.numCols();
     // Let's use rows because they're easier to index with
-    Theta = MatrixFactory.toArray( theta.transpose() );
+    double[][] Theta = MatrixFactory.toArray( theta.transpose() );
 
     int offset = 0;
-    int totalLength = PC.C.length;
+    int totalLength = seqData.getInstanceCount();
     int length = totalLength/nThreads;
 
     TriplesComputer[] comps = new TriplesComputer[nThreads];
     for( int i = 0; i < nThreads; i++ ) {
-      comps[i] = new TriplesComputer( offset, length );
+      comps[i] = new TriplesComputer( offset, length, axis, Theta );
       offset += length;
       comps[i].start();
     }
@@ -211,23 +222,24 @@ public class MomentComputer {
     }
 
     // Average over all the comps
-    int d = PC.projectionDim;
-    double[][][] P132 = new double[nClusters][d][d];
+    int D = seqData.getDimension();
+    double[][][] P123 = new double[K][D][D];
     for(TriplesComputer comp : comps) {
-      for(int cluster = 0; cluster < nClusters; cluster++) {
-        for(int i = 0; i < d; i++) {
-          for(int j = 0; j < d; j++) {
+      for(int cluster = 0; cluster < K; cluster++) {
+        for(int i = 0; i < D; i++) {
+          for(int j = 0; j < D; j++) {
             double ratio = (double) comp.length/totalLength;
-            P132[cluster][i][j] += ratio * comp.P132[cluster][i][j];
+            P123[cluster][i][j] += ratio * comp.P123[cluster][i][j];
           }
         }
       }
     }
-    SimpleMatrix[] P132_ = new SimpleMatrix[nClusters];
-    for( int i = 0; i < nClusters; i++ )
-      P132_[i] = new SimpleMatrix( P132[i] );
+    SimpleMatrix[] P123_ = new SimpleMatrix[K];
+    for( int i = 0; i < K; i++ ) {
+      P123_[i] = new SimpleMatrix( P123[i] );
+    }
 
-    return P132_;
+    return P123_;
   }
 
 }

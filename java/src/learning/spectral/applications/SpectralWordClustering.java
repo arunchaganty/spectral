@@ -67,27 +67,28 @@ public class SpectralWordClustering implements Runnable {
    * Compute the moments of the data for attempts # of $theta$
    */
   protected void computeMoments( ProjectedCorpus PC ) {
-    MomentComputer comp = new MomentComputer( PC, nThreads );
-    // Compute P12, P13
-    SimpleMatrix[] P12P13 = comp.Pairs();
-    P12 = P12P13[0];
-    P13 = P12P13[1];
+    throw new NoSuchMethodError();
+    //MomentComputer comp = new MomentComputer( PC, nThreads );
+    //// Compute P12, P13
+    //SimpleMatrix[] P12P13 = comp.Pairs();
+    //P12 = P12P13[0];
+    //P13 = P12P13[1];
 
-    SimpleMatrix[] U1WU3 = MatrixOps.svdk( P13, k );
-    SimpleMatrix U3 = U1WU3[2];
+    //SimpleMatrix[] U1WU3 = MatrixOps.svdk( P13, k );
+    //SimpleMatrix U3 = U1WU3[2];
 
-    Theta = new SimpleMatrix[attempts];
-    P132 = new SimpleMatrix[attempts][];
+    //Theta = new SimpleMatrix[attempts];
+    //P132 = new SimpleMatrix[attempts][];
 
-    for(int i = 0; i < attempts; i++) {
-      // Generate a theta and project P132 onto it
-      SimpleMatrix theta = RandomFactory.orthogonal( k );
-      Theta[i] = theta;
-      
-      theta = U3.mult( theta );
-      // Compute the projected moment 
-      P132[i] = comp.Triples( theta );
-    }
+    //for(int i = 0; i < attempts; i++) {
+    //  // Generate a theta and project P132 onto it
+    //  SimpleMatrix theta = RandomFactory.orthogonal( k );
+    //  Theta[i] = theta;
+    //  
+    //  theta = U3.mult( theta );
+    //  // Compute the projected moment 
+    //  P132[i] = comp.Triples( theta );
+    //}
   }
 	
   protected void populateMoments() throws IOException, FileNotFoundException, ClassNotFoundException {
