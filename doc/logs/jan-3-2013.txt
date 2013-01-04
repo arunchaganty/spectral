@@ -1,0 +1,46 @@
+% January 03, 2013 
+
+I spent a lot of today tweaking code to get the recovery of the spectral HMM to
+work properly. I also spent some time thinking about the following problem.
+
+# Attractor region of the global optima for mixture of experts
+
+Given that the spectral methods we're using give us a clear bound on the
+distance from the true moments, I think it would be interesting to show a result
+on the shape of the E-M likelihood function. This is one of the agenda items for
+tomorrow - implementing the mixture of experts in Java and using E-M on the
+result produced for an empirical justification.
+
+Writing out the likelihood function, we see, 
+\begin{eqnarray*}
+  p(y | x, \beta) &=& \sum_{z} \pi(z) \normal{ y | \beta_z^T x}{\sigma^2} \\
+  \log p( y | X, \beta ) &=& \sum_{x} \log( \sum_{z} \pi(z) \normal{ y | \beta_z^T x}{\sigma^2} ) \\
+\end{eqnarray*}
+
+We can study the properties of the Hessian of the likelihood with respect to
+$\vec{\beta}$ to study when it is convex, i.e. positive semi-definite,
+\begin{eqnarray*}
+  \diff{\beta_z} \mL &=& \frac{1}{\sigma^2} \sum_{x} \frac{p( y, z | X, \beta )}{p( y | X, \beta )} (y - \beta_z^T x) x^T \\
+    &=& \frac{1}{\sigma^2} \sum_{x} p( z | X, y, \beta ) (y - \beta_z^T x) x^T \\
+  \difff{\beta_z}{\beta_{z'}}|_{z \neq z'} \mL 
+    &=& -\frac{1}{\sigma^4} \sum_{x} \frac{ p( y, z | X, \beta ) p( y, z' | X, \beta ) }{
+            p( y | X, \beta )^2} (y - \beta_{z'}^T x) (y - \beta_z^T x) x x^T \\
+  \diffn{\beta_z}{2} \mL 
+    &=& -\frac{1}{\sigma^4} \sum_{x}  
+            \frac{ p( y, z | X, \beta )^2 }{
+              p( y | X, \beta )^2} (y - \beta_z^T x)^2 x x^T \\
+    &+& \frac{1}{\sigma^4} \sum_{x}  
+            \frac{ p( y, z | X, \beta )^2 }{
+              \pi(z) p( y | X, \beta )} (y - \beta_z^T x) x x^T \\
+    &+& -\frac{1}{\sigma^2} \sum_{x}  
+            \frac{ p( y, z | X, \beta ) }{
+              p( y | X, \beta )} x x^T \\
+  \difff{\beta_z}{\beta_{z'}} \mL 
+    &=& \frac{-1}{\sigma^4} \sum_{x} p( z | y, X, \beta ) \epsilon_{z}(y,x)  p( z' | y, X, \beta ) \epsilon_{z'}(y,x) x x^T \\
+    &+& \frac{-1}{\sigma^4} \delta_{z,z'} \sum_{x} p( z | y, X, \beta ) \epsilon_{z}(y,x) ( \sigma^2 - p( y | z, X, \beta ) \epsilon_{z}(y,x) ) x x^T.
+\end{eqnarray*}
+
+By taking an expectation over $y \sim \normal{\beta_z^{*T} x, \sigma^2}$, we can
+show to what $\varepsilon$ this function is still p.s.d.
+
+
