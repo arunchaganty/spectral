@@ -21,6 +21,8 @@ import org.junit.Test;
 import org.junit.Before;
 
 import fig.basic.LogInfo;
+import fig.basic.Option;
+import fig.basic.OptionsParser;
 
 /**
  * 
@@ -223,6 +225,43 @@ public class SpectralHiddenMarkovModelTest {
 
     testHiddenMarkovModel( N, M, model );
   }
+
+  /**
+   * Test algorithmB with exact moments
+   */
+  public void arbitraryTest() throws NumericalException {
+    System.out.printf("N = %f, M = %d, K = %d, E = %d, D = %d, scheme = %s, noise = %f\n", N, M, K, E, D, scheme, noise );
+    GenerationOptions genOptions = new GenerationOptions(K, E);
+    FeatureOptions featureOptions = new FeatureOptions(D, scheme.trim(), noise);
+
+    RealHiddenMarkovModel model = RealHiddenMarkovModel.generate( genOptions, featureOptions );
+    testHiddenMarkovModel( (int) N, M, model );
+  }
+
+  @Option( gloss = "Number of sequences" )
+  public double N = 1e4;
+  @Option( gloss = "Length of each sequence" )
+  public int M = 3;
+  @Option( gloss = "Number of clusters" )
+  public int K = 2;
+  @Option( gloss = "Number of emissions" )
+  public int E = 3;
+  @Option( gloss = "Number of dimensions" )
+  public int D = 3;
+  @Option( gloss = "Noise in generated data" )
+  public double noise = 1e-1;
+  @Option( gloss = "Scheme = eye|random" )
+  public String scheme = "eye";
+  
+  public static void main( String[] args ) throws NumericalException {
+    SpectralHiddenMarkovModelTest test = new SpectralHiddenMarkovModelTest();
+    OptionsParser parser = new OptionsParser( test );
+
+    if( parser.parse( args ) ) {
+      test.arbitraryTest();
+    }
+  }
+
 
 }
 
