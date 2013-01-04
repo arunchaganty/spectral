@@ -39,10 +39,11 @@ public class MultiViewTest {
     SimpleMatrix M3 = model.getMeans()[V-1];
 
 		MultiViewMixture algo = new MultiViewMixture();
-    Triplet<SimpleMatrix, SimpleMatrix, Tensor> moments = algo.computeExactMoments( D, K, V, model.getWeights(), model.getMeans() );
+    SimpleMatrix[] M = model.getMeans();
+    Triplet<SimpleMatrix, SimpleMatrix, Tensor> moments = algo.computeExactMoments( model.getWeights(), M[0], M[1], M[2] );
     try {
       SimpleMatrix M3_ = algo.algorithmB( K, moments.getValue0(), moments.getValue1(), moments.getValue2() );
-      M3_ = MatrixOps.alignMatrix( M3_, M3 );
+      M3_ = MatrixOps.alignMatrix( M3_, M3, true );
 
       Assert.assertTrue( MatrixOps.allclose( M3, M3_) );
     } catch( RecoveryFailure e) {
@@ -100,10 +101,10 @@ public class MultiViewTest {
 		MultiViewMixture algo = new MultiViewMixture();
     try {
       SimpleMatrix M3_ = algo.recoverM3( K, X[0], X[1], X[2] );
-      M3_ = MatrixOps.alignMatrix( M3_, M3 );
+      M3_ = MatrixOps.alignMatrix( M3_, M3, true );
 
       double err = MatrixOps.norm( M3.minus( M3_ ) );
-      System.out.println( err );
+      System.err.println( err );
 
       Assert.assertTrue( MatrixOps.allclose( M3, M3_, 1e-1 ) );
     } catch( NumericalException | RecoveryFailure e) {

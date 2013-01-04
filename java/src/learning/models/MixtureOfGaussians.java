@@ -63,7 +63,7 @@ public class MixtureOfGaussians {
    * Sample N points from a particular cluster
    */
   public SimpleMatrix sample( int N, int view, int cluster ) {
-    double[] mean = MatrixFactory.toVector( MatrixOps.row( means[view], cluster ) );
+    double[] mean = MatrixFactory.toVector( MatrixOps.col( means[view], cluster ) );
     double[][] cov = MatrixFactory.toArray( covs[view][cluster] );
 		fig.prob.MultGaussian mgRnd = new MultGaussian( mean, cov );
 		double[][] y = new double[N][D];
@@ -194,7 +194,7 @@ public class MixtureOfGaussians {
 
     SimpleMatrix weights = MatrixFactory.fromVector( w );
     SimpleMatrix[] means  = new SimpleMatrix[V];
-    for( int v = 0; v < V; v++ ) means[v] = new SimpleMatrix( M[v] );
+    for( int v = 0; v < V; v++ ) means[v] = (new SimpleMatrix( M[v] )).transpose();
 
     SimpleMatrix[][] covs = new SimpleMatrix[V][K];
     for( int v = 0; v < V; v++ ) 

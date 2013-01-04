@@ -591,6 +591,12 @@ public class MatrixOps {
 
     return X_;
   }
+  public static SimpleMatrix alignMatrix( SimpleMatrix X, SimpleMatrix Y, boolean compareColumns ) {
+    if( compareColumns )
+      return alignMatrix( X.transpose(), Y.transpose() ).transpose();
+    else
+      return alignMatrix( X, Y );
+  }
 
 
 }
