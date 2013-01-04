@@ -95,7 +95,7 @@ public class RealHiddenMarkovModel extends HiddenMarkovModel {
       }
     }
 
-    return new SimpleMatrix( M );
+    return (new SimpleMatrix( M )).transpose();
   }
 
   public static RealHiddenMarkovModel generate( GenerationOptions options, FeatureOptions featureOptions ) {

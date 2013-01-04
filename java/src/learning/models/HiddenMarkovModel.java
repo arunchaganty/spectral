@@ -185,6 +185,15 @@ public class HiddenMarkovModel {
   public int getEmissionCount() {
     return params.emissionCount;
   }
+  public SimpleMatrix getPi() {
+    return MatrixFactory.fromVector( params.pi ).transpose();
+  }
+  public SimpleMatrix getT() {
+    return (new SimpleMatrix( params.T )).transpose();
+  }
+  public SimpleMatrix getO() {
+    return (new SimpleMatrix( params.O )).transpose();
+  }
 
 	/**
 	 * Generate a single observation sequence of length n
