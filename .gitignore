@@ -25,6 +25,8 @@ tags
 # Data
 data/
 java/data
+java/junit
+doc/logs/render
 *.dot
 *.png
 *.hmm
