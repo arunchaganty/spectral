@@ -29,6 +29,12 @@ import fig.basic.*;
  */
 public class MultiViewTest {
 
+  @Before 
+  public void setUp() {
+    LogInfo.writeToStdout = false;
+    LogInfo.init();
+  }
+
   public void testAlgorithmBExact( int K, int D, int V, MixtureOfGaussians model ) {
     SimpleMatrix M3 = model.getMeans()[V-1];
 

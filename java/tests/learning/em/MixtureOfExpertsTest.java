@@ -23,11 +23,18 @@ import org.junit.Test;
 import org.junit.Before;
 
 import fig.basic.*;
+import fig.basic.LogInfo;
 
 /**
  * 
  */
 public class MixtureOfExpertsTest {
+
+  @Before 
+  public void setUp() {
+    LogInfo.writeToStdout = false;
+    LogInfo.init();
+  }
 
   public void testRecovery( int N, int K, int D, learning.models.MixtureOfExperts model ) {
     SimpleMatrix betas = model.getBetas().transpose();
@@ -43,11 +50,11 @@ public class MixtureOfExpertsTest {
 
     SimpleMatrix weights_ = MatrixOps.alignMatrix( MatrixFactory.fromVector( params.weights ), weights );
     double weight_err = MatrixOps.norm( weights.minus( weights_ ) );
-    System.err.println( weight_err );
 
     SimpleMatrix betas_ = new SimpleMatrix( params.betas );
     betas_ = MatrixOps.alignMatrix( betas_, betas );
     double beta_err = MatrixOps.norm( betas.minus( betas_ ) );
+    System.err.printf( "weights: %f, betas: %f\n", weight_err, beta_err );
 
     Assert.assertTrue( MatrixOps.allclose( betas, betas_, 1e-1 ) );
     Assert.assertTrue( MatrixOps.allclose( weights, weights_, 1e-1 ) );
