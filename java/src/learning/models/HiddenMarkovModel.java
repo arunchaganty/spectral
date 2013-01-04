@@ -10,10 +10,12 @@ import learning.linalg.MatrixOps;
 import learning.linalg.MatrixFactory;
 import learning.linalg.RandomFactory;
 
+import org.javatuples.*;
 import org.ejml.simple.SimpleMatrix;
 import org.ejml.data.DenseMatrix64F;
 
-import fig.basic.*;
+import fig.basic.Option;
+import fig.basic.OptionsParser;
 
 import java.io.FileOutputStream;
 import java.io.ObjectOutputStream;
@@ -213,8 +215,8 @@ public class HiddenMarkovModel {
   /**
    * Sample both the observed and hidden variables.
    */
-	public int[][] sampleWithHiddenVariables(int n) {
-		int[] output = new int[n];
+	public Pair<int[], int[]> sampleWithHiddenVariables(int n) {
+		int[] observed = new int[n];
 		int[] hidden = new int[n];
 		
 		// Pick a start state
@@ -225,17 +227,16 @@ public class HiddenMarkovModel {
 			// Generate a word
 			int o = RandomFactory.multinomial( params.O[state] );
       hidden[i] = state;
+
 			if( params.map != null )
-				output[i] = params.map[state][o];
-			else
-				output[i] = o;
+				o = params.map[state][o];
+      observed[i] = o;
+
 			// Transit to a new state
 			state = RandomFactory.multinomial( params.T[state] );
 		}
 
-    int[][] result = {output, hidden};
-		
-		return result;
+		return new Pair<>( observed, hidden );
 	}
 	
 	/**

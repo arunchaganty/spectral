@@ -13,6 +13,7 @@ import learning.models.HiddenMarkovModel.GenerationOptions;
 
 import java.util.Arrays;
 
+import org.javatuples.*;
 import org.ejml.simple.SimpleMatrix;
 import org.junit.Assert;
 import org.junit.Test;
@@ -28,9 +29,9 @@ public class HiddenMarkovModelsTest {
     int D = (int) options.emissionCount;
 
     HiddenMarkovModel model = HiddenMarkovModel.generate( options );
-    int[][] data = model.sampleWithHiddenVariables( N );
-    double[] observed = MatrixFactory.castToDouble( data[0] );
-    double[] hidden = MatrixFactory.castToDouble( data[1] );
+    Pair<int[], int[]> data = model.sampleWithHiddenVariables( N );
+    double[] observed = MatrixFactory.castToDouble( data.getValue0() );
+    double[] hidden = MatrixFactory.castToDouble( data.getValue1() );
 
     Assert.assertTrue( observed.length == N );
     Assert.assertTrue( MatrixOps.min( hidden ) >= 0 && MatrixOps.max( hidden ) < K );
@@ -51,17 +52,6 @@ public class HiddenMarkovModelsTest {
   }
 
   @Test
-  public void testDefaultWithNoise() {
-    int K = 2;
-    int D = 3;
-
-    GenerationOptions options = new GenerationOptions(K, D);
-    options.noise = 1.0;
-
-    testModel( options );
-  }
-
-  @Test
   public void testLarge() {
     int K = 10;
     int D = 100;
@@ -70,9 +60,9 @@ public class HiddenMarkovModelsTest {
     testModel( options );
   }
 
-  public void testViterbi(HiddenMarkovModel model, int n) {
-    int[][] data = model.sampleWithHiddenVariables( n );
-    int[] observed = data[0]; int[] hidden = data[1];
+  public void testViterbi(HiddenMarkovModel model, int N) {
+    Pair<int[], int[]> data = model.sampleWithHiddenVariables( N );
+    int[] observed = data.getValue0(); int[] hidden = data.getValue1();
 
     int[] hidden_ = model.viterbi( observed );
     double actual_lhood = model.likelihood( observed, hidden );
@@ -96,10 +86,9 @@ public class HiddenMarkovModelsTest {
     }
   }
 
-  public void testForwardBackward(HiddenMarkovModel model, int n) {
-    int[][] data = model.sampleWithHiddenVariables( n );
-    int[] observed = data[0];
-    int[] hidden = data[1];
+  public void testForwardBackward(HiddenMarkovModel model, int N) {
+    Pair<int[], int[]> data = model.sampleWithHiddenVariables( N );
+    int[] observed = data.getValue0(); int[] hidden = data.getValue1();
 
     double[][] posterior = model.forwardBackward( observed );
     // TODO: Test the posteriori for some property.

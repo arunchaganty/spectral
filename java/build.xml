@@ -36,6 +36,7 @@
         <javac includeantruntime="false" debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
             <src path="src"/>
             <classpath refid="java.classpath"/>
+            <compilerarg line="-Xlint:unchecked" />
         </javac>
     </target>
     <target depends="build-project" name="build-tests">
@@ -43,6 +44,7 @@
         <javac includeantruntime="false" debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
             <src path="tests"/>
             <classpath refid="java.classpath"/>
+            <compilerarg line="-Xlint:unchecked" />
         </javac>
     </target>
     <target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects"/>
