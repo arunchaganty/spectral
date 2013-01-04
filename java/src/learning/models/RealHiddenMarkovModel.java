@@ -33,25 +33,34 @@ public class RealHiddenMarkovModel extends HiddenMarkovModel {
     int emissionCount;
     int dimension;
     public double[][] features; 
+    public double noise = 0.0; 
 
-    Features( int emissionCount, int dimension, double[][] features ) {
+    Features( int emissionCount, int dimension, double[][] features, double noise ) {
       this.emissionCount = emissionCount;
       this.dimension = dimension;
       this.features = features;
+      this.noise = noise;
     }
 
-    Features( int emissionCount, int dimension, SimpleMatrix features ) {
+    Features( int emissionCount, int dimension, SimpleMatrix features, double noise ) {
       this.emissionCount = emissionCount;
       this.dimension = dimension;
       this.features = MatrixFactory.toArray( features );
+      this.noise = noise;
     }
 
+		public static Features eye(int emissionCount, double noise) {
+      return new Features( emissionCount, emissionCount, MatrixFactory.eye( emissionCount ), noise );
+    }
 		public static Features eye(int emissionCount) {
-      return new Features( emissionCount, emissionCount, MatrixFactory.eye( emissionCount ) );
+      return eye( emissionCount, 0.0 );
     }
 
+		public static Features random(int emissionCount, int dimension, double noise) {
+      return new Features( emissionCount, dimension, RandomFactory.rand( emissionCount, dimension ), noise );
+    }
 		public static Features random(int emissionCount, int dimension) {
-      return new Features( emissionCount, dimension, RandomFactory.randn( emissionCount, dimension ) );
+      return random( emissionCount, dimension, 0.0 );
     }
   }
 	public static class FeatureOptions {
@@ -59,8 +68,15 @@ public class RealHiddenMarkovModel extends HiddenMarkovModel {
     int dimension = -1;
     @Option( gloss = "Generation scheme" )
     String scheme = "eye";
+    @Option( gloss = "Noise" )
+    double noise = 0.0;
 
     public FeatureOptions() {}
+    public FeatureOptions(int dimension, String scheme, double noise) {
+      this.dimension = dimension;
+      this.scheme = scheme;
+      this.noise = noise;
+    }
     public FeatureOptions(int dimension, String scheme) {
       this.dimension = dimension;
       this.scheme = scheme;
@@ -102,12 +118,13 @@ public class RealHiddenMarkovModel extends HiddenMarkovModel {
 		Params params = Params.uniformWithNoise( options.stateCount, options.emissionCount, options.noise );
     Features features = null;
 
-    if( featureOptions.scheme == "eye" )
+    if( featureOptions.scheme.equals( "eye" ) )
       features = Features.eye( options.emissionCount );
-    else if( featureOptions.scheme == "random" )
+    else if( featureOptions.scheme.equals( "random" ) )
       features = Features.random( options.emissionCount, featureOptions.dimension );
-    else 
+    else {
       throw new NoSuchMethodError();
+    }
 
     return new RealHiddenMarkovModel( params, features );
   }
@@ -118,7 +135,8 @@ public class RealHiddenMarkovModel extends HiddenMarkovModel {
 	 * @return
 	 */
 	public double[][] sampleReal(int N) {
-		double[][] output = new double[N][features.dimension];
+    int D = features.dimension;
+		double[][] output = new double[N][D];
 		
 		// Pick a start state
 		int state = RandomFactory.multinomial(params.pi);
@@ -130,6 +148,9 @@ public class RealHiddenMarkovModel extends HiddenMarkovModel {
 			if( params.map != null )
 				o = params.map[state][o];
       output[n] = features.features[ o ];
+      if( features.noise > 0.0 )
+        for( int d = 0; d < D; d++ ) 
+          output[n][d] += RandomFactory.randn(features.noise);
 			// Transit to a new state
 			state = RandomFactory.multinomial( params.T[state] );
 		}
@@ -148,21 +169,25 @@ public class RealHiddenMarkovModel extends HiddenMarkovModel {
   /**
    * Sample both the observed and hidden variables.
    */
-	public Pair<double[][],int[]> sampleRealWithHiddenVariables(int n) {
-		double[][] output = new double[n][features.dimension];
-		int[] hidden = new int[n];
+	public Pair<double[][],int[]> sampleRealWithHiddenVariables(int N) {
+    int D = features.dimension;
+		double[][] output = new double[N][D];
+		int[] hidden = new int[N];
 		
 		// Pick a start state
 		int state = RandomFactory.multinomial(params.pi);
 		
-		for( int i = 0; i < n; i++)
+		for( int n = 0; n < N; n++)
 		{
 			// Generate a word
 			int o = RandomFactory.multinomial( params.O[state] );
-      hidden[i] = state;
+      hidden[n] = state;
 			if( params.map != null )
 				o = params.map[state][o];
-      output[i] = features.features[ o ];
+      output[n] = features.features[ o ];
+      if( features.noise > 0.0 )
+        for( int d = 0; d < D; d++ ) 
+          output[n][d] += RandomFactory.randn(features.noise);
 			// Transit to a new state
 			state = RandomFactory.multinomial( params.T[state] );
 		}

@@ -33,19 +33,7 @@ public class SpectralHiddenMarkovModelTest {
     LogInfo.init();
   }
 
-  @Test
-  public void testMoments() throws NumericalException {
-    int N = (int) 1e6;
-    int M = (int) 3;
-
-    int K = 2;
-    int E = 3;
-    int D = 3;
-
-    GenerationOptions genOptions = new GenerationOptions(K, E);
-    FeatureOptions featureOptions = new FeatureOptions(D, "eye");
-
-    RealHiddenMarkovModel model = RealHiddenMarkovModel.generate( genOptions, featureOptions );
+  public void testMoments(int K, int D, int N, int M, RealHiddenMarkovModel model) {
     Triplet<SimpleMatrix, SimpleMatrix, Tensor> moments = SpectralHiddenMarkovModel.computeExactMoments( model );
 
     double[][][] data = model.sampleReal( N, M );
@@ -59,13 +47,13 @@ public class SpectralHiddenMarkovModelTest {
     SimpleMatrix P12_ = moments_.getValue0();
     err = MatrixOps.norm( P12.minus( P12_ ) );
     System.err.println( "P12: " + err );
-    Assert.assertTrue( MatrixOps.allclose( P12, P12_, 1e-3 ) );
+    Assert.assertTrue( MatrixOps.allclose( P12, P12_, 1e-2 ) );
 
     SimpleMatrix P13 = moments.getValue1();
     SimpleMatrix P13_ = moments_.getValue1();
     err = MatrixOps.norm( P13.minus( P13_ ) );
     System.err.println( "P13: " + err );
-    Assert.assertTrue( MatrixOps.allclose( P13, P13_, 1e-3 ) );
+    Assert.assertTrue( MatrixOps.allclose( P13, P13_, 1e-2 ) );
 
     SimpleMatrix theta = moments_.getValue3();
     SimpleMatrix U2 = MatrixOps.svdk( P12_, K )[2];
@@ -78,6 +66,39 @@ public class SpectralHiddenMarkovModelTest {
       System.err.printf( "P132T[%d]: %f\n", k, err );
       Assert.assertTrue( MatrixOps.allclose( P132T, P132T_, 1e-2 ) );
     }
+  }
+
+  @Test
+  public void testMoments() throws NumericalException {
+    int N = (int) 1e6;
+    int M = (int) 3;
+
+    int K = 2;
+    int E = 3;
+    int D = 3;
+
+    GenerationOptions genOptions = new GenerationOptions(K, E);
+    FeatureOptions featureOptions = new FeatureOptions(D, "eye");
+
+    RealHiddenMarkovModel model = RealHiddenMarkovModel.generate( genOptions, featureOptions );
+    testMoments( K, D, N, M, model );
+  }
+
+  @Test
+  public void testMomentsWithNoise() throws NumericalException {
+    int N = (int) 1e6;
+    int M = (int) 3;
+
+    int K = 2;
+    int E = 3;
+    int D = 3;
+    double noise = 1e-1;
+
+    GenerationOptions genOptions = new GenerationOptions(K, E);
+    FeatureOptions featureOptions = new FeatureOptions(D, "eye", noise);
+
+    RealHiddenMarkovModel model = RealHiddenMarkovModel.generate( genOptions, featureOptions );
+    testMoments( K, D, N, M, model );
   }
 
   public void testHiddenMarkovModel(int N, int M, RealHiddenMarkovModel model) 
@@ -111,6 +132,23 @@ public class SpectralHiddenMarkovModelTest {
 
     GenerationOptions genOptions = new GenerationOptions(K, E);
     FeatureOptions featureOptions = new FeatureOptions(D, "eye");
+
+    RealHiddenMarkovModel model = RealHiddenMarkovModel.generate( genOptions, featureOptions );
+
+    testHiddenMarkovModel( N, M, model );
+  }
+  @Test
+  public void testSmallWithNoise() throws NumericalException {
+    int N = (int) 1e6;
+    int M = (int) 6;
+
+    int K = 2;
+    int E = 3;
+    int D = 3;
+    double noise = 1e-1;
+
+    GenerationOptions genOptions = new GenerationOptions(K, E);
+    FeatureOptions featureOptions = new FeatureOptions(D, "eye", noise);
 
     RealHiddenMarkovModel model = RealHiddenMarkovModel.generate( genOptions, featureOptions );
 
@@ -168,6 +206,23 @@ public class SpectralHiddenMarkovModelTest {
     testHiddenMarkovModel( N, M, model );
   }
 
+  @Test
+  public void testMediumProjectionWithNoise() throws NumericalException {
+    int N = (int) 1e6;
+    int M = (int) 10;
+
+    int K = 3;
+    int E = 40;
+    int D = 6;
+    double noise = 1e-1;
+
+    GenerationOptions genOptions = new GenerationOptions(K, E);
+    FeatureOptions featureOptions = new FeatureOptions(D, "random", noise);
+
+    RealHiddenMarkovModel model = RealHiddenMarkovModel.generate( genOptions, featureOptions );
+
+    testHiddenMarkovModel( N, M, model );
+  }
 
 }
 

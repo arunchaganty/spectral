@@ -34,6 +34,15 @@ public class RandomFactory {
     return X;
   }
 
+  public static SimpleMatrix rand(int m, int n) {
+    SimpleMatrix X = MatrixFactory.zeros(m,n);
+    for( int i = 0; i < m; i++)
+      for( int j = 0; j < n; j++)
+        X.set( i, j, rand.nextDouble() );
+
+    return X;
+  }
+
   /**
    * Generate a single random variable
    * @param sigma - noise
