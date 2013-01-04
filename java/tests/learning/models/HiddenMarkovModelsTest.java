@@ -46,8 +46,7 @@ public class HiddenMarkovModelsTest {
     int K = 2;
     int D = 3;
 
-    GenerationOptions options = new GenerationOptions();
-    options.stateCount = K; options.emissionCount = D;
+    GenerationOptions options = new GenerationOptions(K, D);
     testModel( options );
   }
 
@@ -56,8 +55,7 @@ public class HiddenMarkovModelsTest {
     int K = 2;
     int D = 3;
 
-    GenerationOptions options = new GenerationOptions();
-    options.stateCount = K; options.emissionCount = D;
+    GenerationOptions options = new GenerationOptions(K, D);
     options.noise = 1.0;
 
     testModel( options );
@@ -68,8 +66,7 @@ public class HiddenMarkovModelsTest {
     int K = 10;
     int D = 100;
 
-    GenerationOptions options = new GenerationOptions();
-    options.stateCount = K; options.emissionCount = D;
+    GenerationOptions options = new GenerationOptions(K, D);
     testModel( options );
   }
 
@@ -91,8 +88,7 @@ public class HiddenMarkovModelsTest {
     int N = 100;
     int M = 5;
 
-    GenerationOptions options = new GenerationOptions();
-    options.stateCount = K; options.emissionCount = D;
+    GenerationOptions options = new GenerationOptions(K, D);
     HiddenMarkovModel model = HiddenMarkovModel.generate( options );
 
     for( int n = 0; n < N; n++ ) {
@@ -117,8 +113,7 @@ public class HiddenMarkovModelsTest {
     int N = 10;
     int M = 20;
 
-    GenerationOptions options = new GenerationOptions();
-    options.stateCount = K; options.emissionCount = D;
+    GenerationOptions options = new GenerationOptions(K, D);
     HiddenMarkovModel model = HiddenMarkovModel.generate( options );
 
     for( int n = 0; n < N; n++ ) {

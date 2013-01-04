@@ -24,7 +24,7 @@ import java.util.Random;
 import java.util.Arrays;
 
 /**
- * A mixture of experts model
+ * A hidden markov model.
  */
 public class HiddenMarkovModel {
 		
@@ -136,6 +136,27 @@ public class HiddenMarkovModel {
 			return p;
 		}
 	}
+  public static class GenerationOptions {
+    @Option( gloss = "Number of hidden states" )
+    int stateCount = 2;
+    @Option( gloss = "Dimension of observed variables" )
+    int emissionCount = 3;
+
+    @Option( gloss = "Noise parameter" )
+    double noise = 1.0;
+
+    public GenerationOptions(int stateCount, int emissionCount) {
+      this.stateCount = stateCount;
+      this.emissionCount = emissionCount;
+    }
+
+    public GenerationOptions(int stateCount, int emissionCount, double noise) {
+      this.stateCount = stateCount;
+      this.emissionCount = emissionCount;
+      this.noise = noise;
+    }
+  }
+
 
   Random rnd = new Random();
 
@@ -155,6 +176,12 @@ public class HiddenMarkovModel {
 
   public Params getParams() {
     return params;
+  }
+  public int getStateCount() {
+    return params.stateCount;
+  }
+  public int getEmissionCount() {
+    return params.emissionCount;
   }
 
 	/**
@@ -377,18 +404,8 @@ public class HiddenMarkovModel {
 		return new HiddenMarkovModel(p_);
 	}
 
-  public static class GenerationOptions {
-    @Option( gloss = "Number of hidden states" )
-    int stateCount = 2;
-    @Option( gloss = "Dimension of observed variables" )
-    int emissionCount = 3;
-
-    @Option( gloss = "Noise parameter" )
-    double noise = 1.0;
-  }
   public static class OutputOptions {
   }
-
   /**
    * Generates data with given specifications to stdout. 
    */
