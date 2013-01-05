@@ -230,12 +230,26 @@ public class SpectralHiddenMarkovModelTest {
    * Test algorithmB with exact moments
    */
   public void arbitraryTest() throws NumericalException {
-    System.out.printf("N = %f, M = %d, K = %d, E = %d, D = %d, scheme = %s, noise = %f\n", N, M, K, E, D, scheme, noise );
+
+    LogInfo.writeToStdout = false;
+    LogInfo.init();
+
     GenerationOptions genOptions = new GenerationOptions(K, E);
     FeatureOptions featureOptions = new FeatureOptions(D, scheme.trim(), noise);
 
     RealHiddenMarkovModel model = RealHiddenMarkovModel.generate( genOptions, featureOptions );
-    testHiddenMarkovModel( (int) N, M, model );
+
+    SimpleMatrix O = model.getRealO();
+
+    double[][][] data = model.sampleReal( (int)N, M );
+    SpectralHiddenMarkovModel algo = new SpectralHiddenMarkovModel(K, D);
+
+    SimpleMatrix O_ = algo.run( data );
+
+    O_ = MatrixOps.alignMatrix( O_, O, true );
+
+    double err = MatrixOps.norm( O.minus( O_ ) );
+    System.out.println( err );
   }
 
   @Option( gloss = "Number of sequences" )
