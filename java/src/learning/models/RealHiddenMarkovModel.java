@@ -62,6 +62,13 @@ public class RealHiddenMarkovModel extends HiddenMarkovModel {
 		public static Features random(int emissionCount, int dimension) {
       return random( emissionCount, dimension, 0.0 );
     }
+
+		public static Features gaussian(int emissionCount, int dimension, double noise) {
+      return new Features( emissionCount, dimension, RandomFactory.randn( emissionCount, dimension ), noise );
+    }
+		public static Features gaussian(int emissionCount, int dimension) {
+      return random( emissionCount, dimension, 0.0 );
+    }
   }
 	public static class FeatureOptions {
     @Option( gloss = "Number of dimensions" )
@@ -122,6 +129,8 @@ public class RealHiddenMarkovModel extends HiddenMarkovModel {
       features = Features.eye( options.emissionCount );
     else if( featureOptions.scheme.equals( "random" ) )
       features = Features.random( options.emissionCount, featureOptions.dimension );
+    else if( featureOptions.scheme.equals( "gaussian" ) )
+      features = Features.gaussian( options.emissionCount, featureOptions.dimension );
     else {
       throw new NoSuchMethodError();
     }
