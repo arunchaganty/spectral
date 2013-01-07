@@ -1,0 +1,14 @@
+% January 5th 2013
+
+To handle noise, all that was needed to be done was to add the appropriate bias
+term to the convexified optimization problem,
+\begin{eqnarray}
+  \min && \frac{1}{2} \sum ( y^2 - x^T B x - \sigma ) + \trace{B} \\
+  \textrm{subject to} && B \ge 0 \\
+                      && \sigma \ge 0.
+\end{eqnarray}
+
+I set up scripts to see how well this performed; they take a while to run
+though. Towards the latter part of the day, I experimented with CVX on Matlab.
+
+

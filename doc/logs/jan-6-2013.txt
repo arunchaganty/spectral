@@ -1,0 +1,23 @@
+% January 6th 2013
+
+I replicated the mixture of linear regressions experiments using `CVX` and started
+scripts for them as well.
+
+# Handling non-linearities
+
+Applying the kernel trick seems to be a hard nut to crack unless the spectral
+recovery of $B$ was rolled into process. The chief problem being that the
+dimensionality of $\beta \otimes \beta$ explodes with non-trivial kernels.
+
+I modified the existing mixture of linear regressions in a very ad-hoc manner to
+recover the $\beta$; the recovery of $\beta^{\otimes 2}$ and $\beta^{\otimes 3}$
+was much more sensitive (the condition numbers were also significantly larger),
+but the recovery did work. The theory we have so far doesn't really extend to
+this regime, and it would be interesting to investigate exactly where it breaks
+down. And, of course, whether we could provide results of our own.
+
+I set up experiments (on `corn04` and `corn11`) to check how well the recovery
+truly worked when the data was non-linear for different $K$ and $D$.
+
+
+
