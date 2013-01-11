@@ -146,17 +146,20 @@ public class RealHiddenMarkovModel extends HiddenMarkovModel {
 	public double[][] sampleReal(int N) {
     int D = features.dimension;
 		double[][] output = new double[N][D];
+
+    SimpleMatrix O_ = getRealO();
 		
 		// Pick a start state
 		int state = RandomFactory.multinomial(params.pi);
 		
 		for( int n = 0; n < N; n++)
 		{
+      output[n] = MatrixFactory.toVector( MatrixOps.col( O_, state ) );
 			// Generate a word
-			int o = RandomFactory.multinomial( params.O[state] );
-			if( params.map != null )
-				o = params.map[state][o];
-      output[n] = features.features[ o ];
+			// int o = RandomFactory.multinomial( params.O[state] );
+			// if( params.map != null )
+			// 	o = params.map[state][o];
+      // output[n] = features.features[ o ];
       if( features.noise > 0.0 )
         for( int d = 0; d < D; d++ ) 
           output[n][d] += RandomFactory.randn(features.noise);
