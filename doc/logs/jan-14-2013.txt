@@ -1,0 +1,29 @@
+% January 14, 2013  
+
+Percy and I met to discuss progress and make another attempt at recovering
+$\eta^T B$. The remainder term I pointed out earlier seems to have a constant
+bias that could be computed without too much effort. It seems like it would be
+more worthwhile to actually run some experiments on the data to test how well it
+could work.
+
+# Agenda
+
+#. Run experiments to try and recover $\eta^T B$ using the 
+   $\eta^T B x = (\eta^T x) y + \sigma$ argument.
+#. By Thursday, write a skeleton draft of the paper with suitable proof lemmas.
+#. By Thursday, run some experiments with EM, spectral and spectral+EM on the
+   non-linear data.
+
+# General plan for experiments
+
+We'd like to work with three different datasets,
+
+#. Gaussian data - it is clean, we can compute the expectations and measure how
+   the empirical quantities relate to the theoretical ones. The crux lies in
+   finding something that EM does poorly on.
+#. Non-linear curves 
+#. Motion Tracking data
+
+In all these cases, we'd like to vary $n$, $d$, $k$, $\sigma^2$ and the
+separation of the $\beta$. 
+

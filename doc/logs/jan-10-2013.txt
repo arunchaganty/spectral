@@ -1,0 +1,98 @@
+% January 10, 2013  
+
+\newcommand{\TB}{\mathcal{B}}
+\newcommand{\TX}{\mathcal{X}}
+\newcommand{\vect} {\mathrm{vec}}
+\newcommand{\lth} {^{(l)}}
+\newcommand{\kth} {^{(k)}}
+
+# Status check on the ICML deadline
+
+# Efficiently computing the projections of $\TB(\eta)$ 
+
+After much discussion, we believe we have a novel approach to compute the
+projections of the tensor $\TB = \sum_{i=1}^{K} \pi_i \beta_i \otimes
+\beta_i \otimes \beta_i$ onto a random vector $\eta$, that could permit an
+$O(d^2)$ computation of $\TB(\eta)$, an order of magnitude speed up over
+the existing approach.
+
+## Motivating Abstraction
+
+To motivate the approach, consider the two dimensional regression case,
+i.e. $X \beta = y$, which has the solution $\beta = X^{\dagger} y$;
+$X^{\dagger}$ being the pseudo-inverse of course. We would like to compute
+$\eta^T \beta$ without needing to compute $\beta$, or more importantly
+without needing to invert $X$.
+
+To do so, let $\eta = X \theta$, i.e. $\eta$ lies in the row-space of $X$.
+Then, $\eta^T \beta = \theta^T X \beta = \theta^T y$. Note that if we
+wanted to compute $\eta^T \beta$ for an arbitrary $\eta$, we would have to
+invert $X$ to find $\theta$. In our situation, however, we aren't
+particular about the $\eta$, as long as we know it. The number of
+computations required to compute $\eta^T \beta$ are now $O(n)$, which we
+could further reduce to $O(1)$ by requiring that $\theta$ be sparse.
+
+## Handling Regularizers
+
+In general, we want to find $\eta^T \beta^*$ where $\beta^*$ is solution of the
+following optimization problem,
+\begin{eqnarray}
+  \min \half \| y - \beta^T x \|_2^2 + \lambda \| \beta \|,
+\end{eqnarray}
+without actually optimizing for $\beta^*$ (atleast directly).
+
+Consider the easy case of the $L_2$ regularizer. We know the exact solution to
+be $\beta = \inv{(X^T X + \lambda I)} X^T y$.  In this scenario, we would like
+$\eta^T = \theta^T (X^T X + \lambda I)$, giving $\eta^T \beta = \theta^T X^T y$.
+$\theta$ being $1 \times d$ is unlikely to be sparse, giving us a $O(n d)$
+algorithm. The above result carries through for other regularizers when $\delta
+\|\beta\| = A \beta$, when $\eta^T = \theta^T (X^T X + \lambda A)$. 
+
+This approach does not work when we do not have a closed form solution for
+$\beta^*$. \todo{How do we handle the nuclear norm? Can we propose a different
+optimization problem, one in $\eta^T \beta$?.} Would the difference between the
+projection of $\eta$ onto the $B$ recovered using the $L_2$ regularizer be that
+different from that recovered using the nuclear norm?
+
+## Extending to recovery of matrix projections
+
+In this subsection, we will try to recover the one-dimensional projection of
+$\eta$ onto the matrix $B$, i.e. $\eta^T B = \eta_{i} B_{ij}$[^1]. We do not
+have any information to directly observe this quantity, but we might be able to
+massage the projection, $\eta^T B x\lth = \eta_{i} B_{ij} x\lth_{j}$ into a form
+which can actually observe, namely, $(y\lth)^2 = x\lth_i x\lth_j B_{ij}$. 
+
+### Representing $\eta$ in terms of $X$ naively
+
+It is hard to follow the same approach as above because the index $l$ is "tied",
+i.e. when computing $\eta_{i} B_{ij} x\lth_{j}$, we can not just write $\eta
+= \theta\lth x\lth$ unless the two indicies $l$ match. This means that $\eta$ is
+a linear scaling $\theta\lth x\lth$ of every data point $x\lth$. 
+
+Another approach that doesn't seem to work is as follows. Let $\Theta$ be such
+that $\eta_{i} = \Theta\lth_{i} x\lth_{i}$ for every $l$, i.e. $\Theta\lth$
+"transforms" each $x\lth$ to $\eta$, allowing us to write, $\eta^T B x\lth
+= \eta_{i} x\lth_{j} B_{ij} = \Theta\lth_{i} x\lth_{i} x\lth_{j} B_{ij}$.
+Unfortunately, as $\Theta$ indexes $i$ as well, we can not "forget" it and
+substitute $x\lth_{i} x\lth_{j} B_{ij}$ with $(y\lth)^2$.
+
+### Decomposing $\eta$ into $X$ 
+
+Consider an alternative view to $(y\lth)^2 = (x\lth)^T B x\lth$, by expanding $B
+= \pi\kth \beta\kth_i \beta\kth_j$. Then, $(y\lth)^2 = (x\lth)^T B x\lth
+= \pi\kth \innerprod{\beta\kth}{x\lth}^2$. Similarly, $\eta' B x\lth = \pi\kth
+\innerprod{\beta\kth}{x\lth}\innerprod{\beta\kth}{\eta}$. We can decompose
+$\eta$ along and perpendicular to $x\lth$, i.e. $\eta = p x\lth
++ q x_{\perp}\lth$ for suitable coefficients $p$, $q$. Then, $\eta' B x\lth
+= \pi\kth \innerprod{\beta\kth}{x\lth}(p \innerprod{\beta\kth}{x\lth}
++ q \innerprod{\beta\kth}{x_{\perp}\lth} ) = p (y\lth)^2 + q (x\lth)^T
+B x_{\perp}\lth.$
+
+\todo{ This is clearly hand-wavy as $x_{\perp}$ is really a subspace, not
+a vector. However, considering that $\eta$ belongs to the row space of $x$,
+shouldn't this be zero, atleast in expectation?  In expectation, if the last
+term is zero, then hopefully, we could treat it as noise, and simply find the
+solution to the regression problem, $(\eta^T B) X = \xi X = P y^2$.}
+
+[^1]: In conventional Einstein summations, repeated indices are summed over,
+unless present on the left hand side. 
