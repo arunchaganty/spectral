@@ -1,0 +1,35 @@
+\section{Introduction}
+\label{sec:intro}
+
+Local optima are a common problem faced when learning parameters in
+latent variable models. Recently, there has been an interest in spectral
+algorithms that provide statistically consistent estimators, i.e. given
+sufficient data they are guaranteed to converge to the global optimum,
+given that the model is identifiable. Furthermore, these algorithms have
+polynomial sample and computational complexities for several such
+models, e.g.  hidden Markov models \cite{anandkumar-hsu-kakade2012},
+probabilistic context free grammars \cite{hsu-kakade-liang2012}, etc. In
+this work, we provide a spectral algorithm for a discriminative model,
+a mixture of linear regressions.
+
+\todo{Where are mixtures of experts used? Why are they interesting?}
+
+Our approach uses regression to recover the moments of the data from the
+scalar observable output variable. Once we recover the second and third
+moments of the regression coefficients, we use a slight modification of
+the method outlined in \citet{anandkumar-hsu-kakade2012}.
+
+We evaluate our algorithm on simulated linear and non-linear data to
+understand how well the algorithm scales with the number of components,
+dimensions and separation. To test how the algorithms perform on a more
+real dataset, we study their performance on a motion tracking dataset.
+
+In \autoref{sec:model}, we formally define the mixture of linear
+regressions model and discuss when it is identifiable. We describe our
+algorithm and provide some theoretical results in \autoref{sec:algo}. We
+present the results of our evaluations in \autoref{sec:evaluation}.
+Finally, we discuss the merits and demerits of spectral algorithms in
+discriminative models and conclude in \autoref{sec:discussion}. The
+details of some proofs can be found in \autoref{sec:proofs}.
+
+

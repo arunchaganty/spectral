@@ -1,0 +1,74 @@
+\documentclass{article}
+
+% For figures
+\usepackage{graphicx} 
+\usepackage{subfigure} 
+
+% For citations
+\usepackage{natbib}
+
+% For algorithms
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+\usepackage{hyperref}
+
+% Packages hyperref and algorithmic misbehave sometimes.  We can fix
+% this with the following command.
+\newcommand{\theHalgorithm}{\arabic{algorithm}}
+
+\usepackage{icml2013} 
+% \usepackage[accepted]{icml2013}
+
+
+% The \icmltitle you define below is probably too long as a header.
+% Therefore, a short form for the running title is supplied here:
+\icmltitlerunning{Spectral Experts}
+
+% Math
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\input{macros}
+
+\begin{document} 
+
+\twocolumn[
+\icmltitle{Spectral Experts: A spectral algorithm for mixtures of linear
+regressions}
+
+% It is OKAY to include author information, even for blind
+% submissions: the style file will automatically remove it for you
+% unless you've provided the [accepted] option to the icml2013
+% package.
+\icmlauthor{Your Name}{email@yourdomain.edu}
+\icmladdress{Your Fantastic Institute,
+            314159 Pi St., Palo Alto, CA 94306 USA}
+\icmlauthor{Your CoAuthor's Name}{email@coauthordomain.edu}
+\icmladdress{Their Fantastic Institute,
+            27182 Exp St., Toronto, ON M6H 2T1 CANADA}
+
+% You may provide any keywords that you 
+% find helpful for describing your paper; these are used to populate 
+% the "keywords" metadata in the PDF but will not be shown in the document
+\icmlkeywords{spectral algorithms, mixture of experts, latent-variable
+models, machine learning, ICML}
+
+\vskip 0.3in
+]
+
+\input{abstract}
+\input{intro}
+\input{model}
+\input{algo}
+\input{evaluation}
+\input{discussion}
+
+\appendix
+\input{proofs}
+
+\bibliography{ref}
+\bibliographystyle{icml2013}
+
+\end{document} 
+
