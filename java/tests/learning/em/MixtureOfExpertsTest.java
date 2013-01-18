@@ -22,7 +22,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.Before;
 
-import fig.basic.*;
+import fig.basic.Option;
+import fig.basic.OptionsParser;
 import fig.basic.LogInfo;
 
 /**
@@ -40,9 +41,9 @@ public class MixtureOfExpertsTest {
     SimpleMatrix betas = model.getBetas().transpose();
     SimpleMatrix weights = model.getWeights();
 
-    SimpleMatrix[] yX = model.sample( N );
-    SimpleMatrix y = yX[0];
-    SimpleMatrix X = yX[1];
+    Pair<SimpleMatrix, SimpleMatrix> yX = model.sample( N );
+    SimpleMatrix y = yX.getValue0();
+    SimpleMatrix X = yX.getValue1();
 
     MixtureOfExperts algo = new MixtureOfExperts( K, D );
 

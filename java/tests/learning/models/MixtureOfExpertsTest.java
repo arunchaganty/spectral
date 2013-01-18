@@ -12,6 +12,7 @@ import learning.models.MixtureOfExperts.NonLinearity;
 import learning.linalg.MatrixOps;
 
 import org.ejml.simple.SimpleMatrix;
+import org.javatuples.*;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.Before;
@@ -44,14 +45,14 @@ public class MixtureOfExpertsTest {
     int D = (int) options.D;
 
     MixtureOfExperts model = MixtureOfExperts.generate( options );
-    SimpleMatrix[] data = model.sample( N );
+    Pair<SimpleMatrix, SimpleMatrix> yX = model.sample( N );
 
 
     int D_ = model.getNonLinearity().getLinearDimension( D +
         (options.bias ? 1 : 0) );
 
-    SimpleMatrix y = data[0];
-    SimpleMatrix X = data[1];
+    SimpleMatrix y = yX.getValue0();
+    SimpleMatrix X = yX.getValue1();
     Assert.assertTrue( y.numCols() == N );
     Assert.assertTrue( X.numRows() == N );
     Assert.assertTrue( X.numCols() == D_ );
