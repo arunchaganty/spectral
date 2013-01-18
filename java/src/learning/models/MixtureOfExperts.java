@@ -82,7 +82,9 @@ public class MixtureOfExperts {
    */
   public SimpleMatrix[] sample( int N ) {
     // Generate n random points
-    SimpleMatrix X = RandomFactory.multivariateGaussian( mean, cov, N );
+    //SimpleMatrix X = RandomFactory.multivariateGaussian( mean, cov, N );
+    SimpleMatrix X = RandomFactory.rand( N, D ); X = X.scale( 10.0 );
+
     // Add a bias term
     double[][] X_ = MatrixFactory.toArray( X );
     if( bias ) {
@@ -91,7 +93,7 @@ public class MixtureOfExperts {
           X_[n] = new double[ D + 1 ];
           X_[n][0] = 1.0;
           for( int d = 0; d < D; d++ )
-            X_[n][d] = x[d+1];
+            X_[n][d+1] = x[d];
       }
     }
 
@@ -393,7 +395,7 @@ public class MixtureOfExperts {
 
       // Print data
       for( int i = 0; i < N; i++ ) {
-        for( int d = 0; d < genOptions.D; d++ )
+        for( int d = 0; d < X.numCols(); d++ )
           System.out.printf( "%f ", X.get(i,d) );
         System.out.printf( "%f\n", y.get(i) );
       }
@@ -401,6 +403,7 @@ public class MixtureOfExperts {
       try {
         ObjectOutputStream out = new ObjectOutputStream( new FileOutputStream( outOptions.outputPath ) ); 
         out.writeObject(yX);
+        out.writeObject(model);
         out.close();
       } catch (IOException e){
         LogInfo.error( e );

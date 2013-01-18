@@ -82,6 +82,12 @@ public class MatrixOps {
     }
     return true;
   }
+  public static boolean equal( double x1, double x2, double eps ) {
+    return Math.abs( x1 - x2  ) < eps;
+  }
+  public static boolean equal( double x1, double x2 ) {
+    return equal( x1, x2, EPS_ZERO );
+  }
 
   /**
    * Test whether two matrices are within eps of each other
@@ -110,6 +116,7 @@ public class MatrixOps {
   public static boolean allclose( SimpleMatrix X1, SimpleMatrix X2 ) {
     return allclose( X1.getMatrix(), X2.getMatrix() );
   }
+
 
   /**
    * Find the norm of a matrix
@@ -604,6 +611,55 @@ public class MatrixOps {
       return alignMatrix( X.transpose(), Y.transpose() ).transpose();
     else
       return alignMatrix( X, Y );
+  }
+
+  // Algebraic operations
+  /**
+   * Find the sum of a vector
+   */
+  public static void plus(double[] x, double y ) {
+    for( int i = 0; i < x.length; i++ )
+      x[i] += y;
+  }
+  public static void plus(double[] x, double[] y ) {
+    assert( x.length == y.length );
+    for( int i = 0; i < x.length; i++ )
+      x[i] += y[i];
+  }
+
+  public static void minus(double[] x, double y ) {
+    for( int i = 0; i < x.length; i++ )
+      x[i] -= y;
+  }
+  public static void minus(double[] x, double[] y ) {
+    assert( x.length == y.length );
+    for( int i = 0; i < x.length; i++ )
+      x[i] -= y[i];
+  }
+
+  public static void log(double[] x) {
+    for( int i = 0; i < x.length; i++ )
+      x[i] = Math.log( x[i] );
+  }
+  public static void exp(double[] x) {
+    for( int i = 0; i < x.length; i++ )
+      x[i] = Math.exp( x[i] );
+  }
+
+
+  public static double logsumexp(double x, double y) {
+    double min_ = ( x < y ) ? x : y;
+    double max_ = ( x < y ) ? y : x;
+    return Math.log( 1 + Math.exp( max_ - min_ ) ) + min_;
+  }
+
+  public static double logsumexp(final double[] x) {
+    // Reduce
+    double logsum = x[0];
+    for( int i = 1; i < x.length; i++ ) {
+      logsum = logsumexp( logsum, x[i] );
+    }
+    return logsum;
   }
 
 

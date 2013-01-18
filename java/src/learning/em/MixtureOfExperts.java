@@ -110,10 +110,21 @@ public class MixtureOfExperts implements Runnable {
         // $tau_{nk} \propto 
         //    pi_k \exp( -0.5 (y_n - b_k' x_n)**2 / sigma**2 )
         double delta = (y[n] - MatrixOps.dot( state.betas[k], X[n] ));
-        R[n][k] = state.weights[k] * Math.exp( - 0.5 * delta*delta / state.sigma2 );
+        R[n][k] = Math.log( state.weights[k] ) - 0.5 * delta*delta / state.sigma2;
       }
       // Normalize
-      MatrixOps.normalize( R[n] );
+      double minR = MatrixOps.min( R[n] );
+      MatrixOps.minus( R[n], minR );
+      double Z = MatrixOps.logsumexp( R[n] );
+      if( Z == Double.POSITIVE_INFINITY ) {
+        int k = MatrixOps.argmax( R[n] );
+        for( int k_ = 0; k_ < K; k_++ )
+          R[n][k_] = (k == k_) ? 1.0 : 0.0;
+      } else {
+        MatrixOps.minus( R[n], Z );
+        MatrixOps.exp( R[n] );
+      }
+      assert( MatrixOps.equal( MatrixOps.sum( R[n] ), 1.0 ) );
     }
 
     return R;
@@ -217,7 +228,7 @@ public class MixtureOfExperts implements Runnable {
 
       // Stopping condition; difference in likelihood is less than
       // epsilion.
-      if( lhood - old_lhood < eps )
+      if( Math.abs(lhood - old_lhood) < eps )
         break;
 
       old_lhood = lhood;
@@ -230,6 +241,7 @@ public class MixtureOfExperts implements Runnable {
   }
 
   public Parameters run( double[] y, double[][] X ) {
+    assert( D == X[0].length );
     Parameters state = Parameters.random(K, D);
     return run( y, X, state );
   }
@@ -262,6 +274,7 @@ public class MixtureOfExperts implements Runnable {
       SimpleMatrix[] yX = readFromFile( inputPath );
       SimpleMatrix y = yX[0];
       SimpleMatrix X = yX[1];
+      this.D = X.numCols();
 
       Parameters params = run( y, X );
       MatrixOps.printVector( params.weights );

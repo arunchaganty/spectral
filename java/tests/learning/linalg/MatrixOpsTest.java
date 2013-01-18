@@ -425,4 +425,10 @@ public class MatrixOpsTest {
     }
   }
 
+  @Test
+	public void equals() {
+    Assert.assertTrue( MatrixOps.equal( 1.0, 0.9999999 ) );
+    Assert.assertFalse( MatrixOps.equal( 1.0, 0.99 ) );
+  }
+
 }
