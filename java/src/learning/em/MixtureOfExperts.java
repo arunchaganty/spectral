@@ -9,12 +9,17 @@ package learning.em;
 import learning.linalg.MatrixOps;
 import learning.linalg.MatrixFactory;
 import learning.linalg.RandomFactory;
+import learning.models.*;
 
 import org.ejml.simple.SimpleMatrix;
 import org.ejml.data.DenseMatrix64F;
 
-import fig.basic.*;
-import fig.exec.*;
+import org.javatuples.*;
+
+import fig.basic.LogInfo;
+import fig.basic.Option;
+import fig.basic.OptionsParser;
+import fig.exec.Execution;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -83,9 +88,7 @@ public class MixtureOfExperts implements Runnable {
     }
   }
 
-  @Option(gloss="Number of experts") 
   public int K = 2;
-  @Option(gloss="Number of dimensions") 
   public int D = 3;
 
   protected MixtureOfExperts() {}
@@ -259,28 +262,39 @@ public class MixtureOfExperts implements Runnable {
   @Option(gloss="Difference between iterations before stopping") 
   public double eps = 1e-3;
 
-  public SimpleMatrix[] readFromFile( String filename ) throws IOException, ClassNotFoundException {
+  @SuppressWarnings("unchecked")
+  public Pair< Pair< SimpleMatrix, SimpleMatrix >, learning.models.MixtureOfExperts > 
+      readFromFile( String filename ) throws IOException, ClassNotFoundException {
 		ObjectInputStream in = new ObjectInputStream( new FileInputStream( filename ) ); 
-    SimpleMatrix[] yX = (SimpleMatrix[]) in.readObject();
+
+    Pair<SimpleMatrix,SimpleMatrix> yX = (Pair<SimpleMatrix,SimpleMatrix>) in.readObject();
+    learning.models.MixtureOfExperts model = (learning.models.MixtureOfExperts) in.readObject();
 		in.close();
 
-    return yX;
+    return new Pair<>( yX, model );
   }
 
   @Override
   public void run() {
     // Read data from a file
     try {
-      SimpleMatrix[] yX = readFromFile( inputPath );
-      SimpleMatrix y = yX[0];
-      SimpleMatrix X = yX[1];
+      Pair< Pair<SimpleMatrix, SimpleMatrix>, learning.models.MixtureOfExperts > data = readFromFile( inputPath );
+      SimpleMatrix y = data.getValue0().getValue0();
+      SimpleMatrix X = data.getValue0().getValue1();
+      learning.models.MixtureOfExperts model = data.getValue1();
+      SimpleMatrix betas = model.getBetas();
+
+      // Recover paramaters
+      this.K = model.getK();
       this.D = X.numCols();
 
       Parameters params = run( y, X );
-      MatrixOps.printVector( params.weights );
-      MatrixOps.printArray( params.betas );
-      System.out.println( params.sigma2 );
-
+      SimpleMatrix betas_ = (new SimpleMatrix( params.betas )).transpose();
+      betas_ = MatrixOps.alignMatrix( betas_, betas, true );
+      System.out.println( betas );
+      System.out.println( betas_ );
+      double err = MatrixOps.norm( betas.minus( betas_ ) );
+      System.out.println( err );
     } catch (IOException e) {
       LogInfo.error( e.getMessage() );
       return;

@@ -13,18 +13,24 @@ import static learning.Misc.*;
 import org.ejml.simple.SimpleMatrix;
 import org.ejml.data.DenseMatrix64F;
 
-import fig.basic.*;
+import org.javatuples.*;
+
+import fig.basic.LogInfo;
+import fig.basic.Option;
+import fig.basic.OptionsParser;
+import fig.exec.Execution;
 
 import java.io.FileOutputStream;
 import java.io.ObjectOutputStream;
 import java.io.IOException;
+import java.io.Serializable;
 
 import java.util.Random;
 
 /**
  * A mixture of experts model
  */
-public class MixtureOfExperts {
+public class MixtureOfExperts implements Serializable {
 
   protected int K; // Number of experts
   protected int D; // Dimensionality of space
@@ -60,6 +66,16 @@ public class MixtureOfExperts {
     this.nl = nl;
   }
 
+  public int getK() {
+    return K;
+  }
+  public int getD() {
+    return D;
+  }
+  public int getDataDimension() {
+    return nl.getLinearDimension( D );
+  }
+
   public SimpleMatrix getWeights() {
     return weights;
   }
@@ -80,7 +96,7 @@ public class MixtureOfExperts {
    * @return The returned value is a tuple of 2 elements, the first
    * containing $y$ and the second $X$.
    */
-  public SimpleMatrix[] sample( int N ) {
+  public Pair<SimpleMatrix, SimpleMatrix> sample( int N ) {
     // Generate n random points
     //SimpleMatrix X = RandomFactory.multivariateGaussian( mean, cov, N );
     SimpleMatrix X = RandomFactory.rand( N, D ); X = X.scale( 10.0 );
@@ -114,9 +130,7 @@ public class MixtureOfExperts {
         y[n] += RandomFactory.randn( sigma2 );
     }
 
-    SimpleMatrix[] result = {MatrixFactory.fromVector( y ), new SimpleMatrix( X_ )};
-
-    return result;
+    return new Pair<>( MatrixFactory.fromVector( y ), new SimpleMatrix( X_ ) );
   }
 
   public static enum WeightDistribution {
@@ -140,7 +154,7 @@ public class MixtureOfExperts {
       Random
   }
   
-  public static class NonLinearity {
+  public static class NonLinearity implements Serializable {
     public int degree;
   
     public NonLinearity( int degree ) {
@@ -387,11 +401,11 @@ public class MixtureOfExperts {
     MixtureOfExperts model = MixtureOfExperts.generate( genOptions );
 
     int N = (int) outOptions.N;
-    SimpleMatrix[] yX = model.sample( N );
+    Pair<SimpleMatrix, SimpleMatrix> yX = model.sample( N );
 
     if( outOptions.outputPath == "-" ) {
-      SimpleMatrix y = yX[0];
-      SimpleMatrix X = yX[1];
+      SimpleMatrix y = yX.getValue0();
+      SimpleMatrix X = yX.getValue1();
 
       // Print data
       for( int i = 0; i < N; i++ ) {
