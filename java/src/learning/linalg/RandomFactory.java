@@ -25,10 +25,10 @@ public class RandomFactory {
    * @param D
    * @return
    */
-  public static SimpleMatrix randn(int m, int n) {
-    SimpleMatrix X = MatrixFactory.zeros(m,n);
-    for( int i = 0; i < m; i++)
-      for( int j = 0; j < n; j++)
+  public static SimpleMatrix randn(int N, int D) {
+    SimpleMatrix X = MatrixFactory.zeros(N,D);
+    for( int i = 0; i < N; i++)
+      for( int j = 0; j < D; j++)
         X.set( i, j, rand.nextGaussian() );
 
     return X;
@@ -38,7 +38,7 @@ public class RandomFactory {
     SimpleMatrix X = MatrixFactory.zeros(m,n);
     for( int i = 0; i < m; i++)
       for( int j = 0; j < n; j++)
-        X.set( i, j, rand.nextDouble() );
+        X.set( i, j, 2.0 * rand.nextDouble() - 1.0 );
 
     return X;
   }
