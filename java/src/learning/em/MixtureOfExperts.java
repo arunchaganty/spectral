@@ -291,10 +291,10 @@ public class MixtureOfExperts implements Runnable {
       Parameters params = run( y, X );
       SimpleMatrix betas_ = (new SimpleMatrix( params.betas )).transpose();
       betas_ = MatrixOps.alignMatrix( betas_, betas, true );
-      System.out.println( betas );
-      System.out.println( betas_ );
+      Execution.putOutput( "betas", betas );
+      Execution.putOutput( "betas_", betas_ );
       double err = MatrixOps.norm( betas.minus( betas_ ) );
-      System.out.println( err );
+      System.out.printf( "%.4f\n", err );
     } catch (IOException e) {
       LogInfo.error( e.getMessage() );
       return;
