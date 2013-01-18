@@ -8,6 +8,7 @@ package learning.models;
 import learning.linalg.MatrixOps;
 import learning.linalg.MatrixFactory;
 import learning.linalg.RandomFactory;
+import static learning.Misc.*;
 
 import org.ejml.simple.SimpleMatrix;
 import org.ejml.data.DenseMatrix64F;
@@ -37,9 +38,14 @@ public class MixtureOfExperts {
   protected SimpleMatrix mean;
   protected SimpleMatrix cov;
 
+  protected boolean bias;
+  protected NonLinearity nl;
+
   Random rnd = new Random();
 
-  public MixtureOfExperts( int K, int D, SimpleMatrix weights, SimpleMatrix betas, double sigma2, SimpleMatrix mean, SimpleMatrix cov ) {
+  public MixtureOfExperts( int K, int D, SimpleMatrix weights,
+      SimpleMatrix betas, double sigma2, SimpleMatrix mean, SimpleMatrix
+      cov, boolean bias, NonLinearity nl ) {
     this.K = K;
     this.D = D;
 
@@ -49,6 +55,9 @@ public class MixtureOfExperts {
 
     this.mean = mean;
     this.cov = cov;
+
+    this.bias = bias;
+    this.nl = nl;
   }
 
   public SimpleMatrix getWeights() {
@@ -59,6 +68,9 @@ public class MixtureOfExperts {
   }
   public double getSigma2() {
     return sigma2;
+  }
+  public NonLinearity getNonLinearity() {
+    return nl;
   }
 
   /**
@@ -71,7 +83,20 @@ public class MixtureOfExperts {
   public SimpleMatrix[] sample( int N ) {
     // Generate n random points
     SimpleMatrix X = RandomFactory.multivariateGaussian( mean, cov, N );
+    // Add a bias term
     double[][] X_ = MatrixFactory.toArray( X );
+    if( bias ) {
+        for( int n = 0; n < N; n++ ) {
+          double[] x = X_[n];
+          X_[n] = new double[ D + 1 ];
+          X_[n][0] = 1.0;
+          for( int d = 0; d < D; d++ )
+            X_[n][d] = x[d+1];
+      }
+    }
+
+    // Projected X onto the "feature space"
+    X_ = nl.getLinearEmbedding( X_ );
 
     // Get the betas in a row form to make it easier to generate data
     double[][] betas_ = MatrixFactory.toArray( betas.transpose() );
@@ -87,7 +112,7 @@ public class MixtureOfExperts {
         y[n] += RandomFactory.randn( sigma2 );
     }
 
-    SimpleMatrix[] result = {MatrixFactory.fromVector( y ), X};
+    SimpleMatrix[] result = {MatrixFactory.fromVector( y ), new SimpleMatrix( X_ )};
 
     return result;
   }
@@ -112,6 +137,63 @@ public class MixtureOfExperts {
       Spherical,
       Random
   }
+  
+  public static class NonLinearity {
+    public int degree;
+  
+    public NonLinearity( int degree ) {
+      this.degree = degree;
+    }
+    public NonLinearity() {
+      this.degree = 1;
+    }
+
+    /**
+     * Return the number of dimensions in the linearized version of the
+     * non-linearity.
+     */
+    public int getLinearDimension( int dimension ) {
+      return binomial( dimension + degree - 1, degree );
+    }
+
+    /**
+     * Return the linear embedding of $x$, like x_1^2 + x_1 x_2 + x_2
+     * x_1 + x_2^2. 
+     * The output is in lexicographic ordering with x_1 occupying the
+     * first index.
+     */
+    public double[] getLinearEmbedding( final double[] x ) {
+      final int D = x.length;
+      final int D_ = getLinearDimension( D );
+      final double[] y = new double[ D_ ];
+
+      traverseMultiCombination( D, degree, 
+          new TraversalFunction() {
+              int d_ = 0;
+              @Override
+              public void run( int[] powers ) {
+                y[ d_ ] = 1.0;
+                for( int d = 0; d < D; d++ ) {
+                  y[ d_ ] *= Math.pow( x[d], powers[d] );
+                }
+                d_++;
+              }
+          });
+      return y;
+    }
+    public double[][] getLinearEmbedding( final double[][] X ) {
+      int N = X.length;
+      int D = X[0].length;
+      int D_ = getLinearDimension( D );
+      double[][] Y = new double[ N ][];
+
+      for( int n = 0 ; n < N; n ++ ) {
+        Y[n] = getLinearEmbedding( X[n] );
+      }
+
+      return Y;
+    }
+  }
 
   /**
    * Generate a MixtureOfExperts model
@@ -123,12 +205,19 @@ public class MixtureOfExperts {
    * @param mDistribution - distribution on the point means
    * @param SDistribution - distribution on the point variance
    * @param pointSigma - variance parameter for the points.
+   * @param nlType - Non-Linearity type.
    */
-  public static MixtureOfExperts generate( final int K, final int D, double sigma2, WeightDistribution wDistribution, BetaDistribution bDistribution, MeanDistribution mDistribution, CovarianceDistribution SDistribution, double pointSigma ) {
+  public static MixtureOfExperts generate( final int K, final int D,
+      double sigma2, WeightDistribution wDistribution, BetaDistribution
+      bDistribution, MeanDistribution mDistribution,
+      CovarianceDistribution SDistribution, double pointSigma,
+      boolean bias, NonLinearity nl ) {
+    int D_ = nl.getLinearDimension( D + (bias ? 1 : 0) ); // The dimension of the linear embedding of the data.
+
     double[] w = new double[K];
-    double[][] B = new double[D][K];
-    double[] M = new double[D];
-    double[][] S = new double[D][D];
+    double[][] B = new double[D_][K];
+    double[] M = new double[D_];
+    double[][] S = new double[D_][D_];
 
     switch( wDistribution ) {
       case Uniform:
@@ -143,7 +232,7 @@ public class MixtureOfExperts {
 
     switch( bDistribution ) {
       case Eye:
-        for(int i = 0; i < D; i++) {
+        for(int i = 0; i < D_; i++) {
           for(int j = 0; j < K; j++) {
             double slope = ( i % 2 == 0 ) ? 1.0 : -1.0;
             B[i][j] = (i == j) ? slope : 0.0;
@@ -151,7 +240,7 @@ public class MixtureOfExperts {
         }
         break;
       case Random:
-        for(int i = 0; i < D; i++) {
+        for(int i = 0; i < D_; i++) {
           for(int j = 0; j < K; j++) {
             B[i][j] = RandomFactory.randn(1.0);
           }
@@ -191,11 +280,14 @@ public class MixtureOfExperts {
     SimpleMatrix mean = MatrixFactory.fromVector( M );
     SimpleMatrix cov = new SimpleMatrix( S );
 
-    return new MixtureOfExperts( K, D, weights, betas, sigma2, mean, cov );
+    return new MixtureOfExperts( K, D, weights, betas, sigma2, mean, cov, bias, nl );
   }
 
-  public static MixtureOfExperts generate( final int K, final int D, double sigma2, WeightDistribution wDistribution, BetaDistribution bDistribution, MeanDistribution mDistribution, CovarianceDistribution SDistribution ) {
-    return generate( K, D, sigma2, wDistribution, bDistribution, mDistribution, SDistribution, 10.0 );
+  public static MixtureOfExperts generate( final int K, final int D,
+      double sigma2, WeightDistribution wDistribution, BetaDistribution
+      bDistribution, MeanDistribution mDistribution,
+      CovarianceDistribution SDistribution ) {
+    return generate( K, D, sigma2, wDistribution, bDistribution, mDistribution, SDistribution, 10.0, true, new NonLinearity() );
   }
 
   public static MixtureOfExperts generate( GenerationOptions options ) {
@@ -242,7 +334,9 @@ public class MixtureOfExperts {
         throw new NoSuchMethodError();
     }
 
-    return generate( options.K, options.D, options.sigma2, wDistribution, bDistribution, mDistribution, SDistribution, options.pointSigma );
+    NonLinearity nl = new NonLinearity( options.nlDegree );
+
+    return generate( options.K, options.D, options.sigma2, wDistribution, bDistribution, mDistribution, SDistribution, options.pointSigma, options.bias, nl );
   }
 
   public static class GenerationOptions {
@@ -252,6 +346,9 @@ public class MixtureOfExperts {
     public int D = 3;
     @Option(gloss="Noise") 
     public double sigma2 = 0.0;
+
+    @Option(gloss="Include a bias term of '1'") 
+    public boolean bias = true;
     
     @Option(gloss="Weight distribution = uniform|random") 
     public String weights = "uniform";
@@ -263,6 +360,9 @@ public class MixtureOfExperts {
     public String cov = "eye";
     @Option(gloss="Point variance parameter") 
     public double pointSigma = 10.0;
+
+    @Option(gloss="Non-linearity degree") 
+    public int nlDegree = 1;
   }
   public static class OutputOptions {
     @Option(gloss="Output file: '-' for STDOUT") 

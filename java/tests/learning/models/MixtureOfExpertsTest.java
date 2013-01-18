@@ -7,6 +7,9 @@ package learning.models;
 
 import learning.models.MixtureOfExperts;
 import learning.models.MixtureOfExperts.GenerationOptions;
+import learning.models.MixtureOfExperts.NonLinearity;
+
+import learning.linalg.MatrixOps;
 
 import org.ejml.simple.SimpleMatrix;
 import org.junit.Assert;
@@ -18,18 +21,40 @@ import org.junit.Before;
  */
 public class MixtureOfExpertsTest {
 
+  @Test
+  public void testNonLinearUnitGeneration() {
+    int D = 3;
+    double x[] = {1.0, 2.0, 3.0};
+
+    NonLinearity nl = new NonLinearity();
+    Assert.assertTrue( nl.getLinearDimension( D ) == D );
+    double[] y = nl.getLinearEmbedding( x );
+    for( int i = 0; i < D; i++ )
+      Assert.assertTrue( x[i] == y[i] );
+
+    nl = new NonLinearity(2);
+    double z[] = {1.0, 2.0, 3.0, 4.0, 6.0, 9.0 };
+    Assert.assertTrue( nl.getLinearDimension( D ) == z.length );
+    y = nl.getLinearEmbedding( x );
+    for( int i = 0; i < D; i++ )
+      Assert.assertTrue( y[i] == z[i] );
+  }
+
   public void testModel( int N, GenerationOptions options ) {
     int D = (int) options.D;
 
     MixtureOfExperts model = MixtureOfExperts.generate( options );
     SimpleMatrix[] data = model.sample( N );
 
+
+    int D_ = model.getNonLinearity().getLinearDimension( D +
+        (options.bias ? 1 : 0) );
+
     SimpleMatrix y = data[0];
     SimpleMatrix X = data[1];
     Assert.assertTrue( y.numCols() == N );
     Assert.assertTrue( X.numRows() == N );
-    Assert.assertTrue( X.numCols() == D );
-
+    Assert.assertTrue( X.numCols() == D_ );
   }
   public void testModel( GenerationOptions options ) {
     testModel( 1000, options );
@@ -57,6 +82,14 @@ public class MixtureOfExpertsTest {
   }
 
   @Test
+  public void testRandomNoBias() {
+    GenerationOptions options = new GenerationOptions();
+    options.weights = "random";
+    options.bias = false;
+    testModel( options );
+  }
+
+  @Test
   public void testRandomBeta() {
     GenerationOptions options = new GenerationOptions();
     options.betas = "random";
@@ -76,6 +109,14 @@ public class MixtureOfExpertsTest {
     options.cov = "spherical";
     testModel( options );
   }
+
+  @Test
+  public void testNonLinear() {
+    GenerationOptions options = new GenerationOptions();
+    options.nlDegree = 2;
+    testModel( options );
+  }
+
   @Test
   public void testLarge() {
     int K = 6; int D = 20;

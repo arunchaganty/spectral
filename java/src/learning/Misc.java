@@ -81,4 +81,54 @@ public class Misc {
 		}
 	}
 
+  /** 
+   * Returns N choose K
+   */
+  public static int binomial( int n, int k ) {
+    if( k == 1) return n;
+    else if( k == 0) return 1;
+    else {
+      return n * binomial( n - 1, k - 1 ) / k;
+    }
+  }
+
+  public static interface TraversalFunction {
+    /**
+     * This function is run every time a new leaf node in a traversal is
+     * reached.
+     */
+    public void run( int[] values );
+  }
+
+  static void traverseMultiCombination( int N, int K, int n, int k, int[] accum, TraversalFunction fn ) {
+    // Check if we're done allocating $K$
+    if( k == K )
+      fn.run( accum );
+    // Choose n to be one of $[k, K]$
+    else {
+      // Allocate the remainder in this case
+      if( n == N-1 ) {
+        accum[ n ] = K - k;
+        traverseMultiCombination( N, K, n+1, K, accum, fn );
+      }
+      else {
+        for( int k_ = K-k; k_ >= 0; k_-- ) {
+          // Allocate k_ - k to n
+          accum[n] = k_;
+          traverseMultiCombination( N, K, n+1, k + k_, accum, fn );
+        } 
+      }
+      accum[n] = 0;
+    }
+  }
+
+  /** 
+   * Traverse all multi-combinations of $N$ elements such that exactly
+   * $K$ are chosen.
+   */
+  public static void traverseMultiCombination( int N, int K, TraversalFunction fn ) {
+    int[] accum = new int[ N ];
+    traverseMultiCombination( N, K, 0, 0, accum, fn );
+  }
+
 }

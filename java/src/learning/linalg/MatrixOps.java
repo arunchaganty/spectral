@@ -75,6 +75,14 @@ public class MatrixOps {
     return allclose( X1, X2, EPS_CLOSE );
   }
 
+  public static boolean equal( int[] X1, int[] X2 ) {
+    if( X1.length != X2.length ) return false;
+    for( int i = 0; i < X1.length; i++ ) {
+      if( X1[i] != X2[i] ) return false;
+    }
+    return true;
+  }
+
   /**
    * Test whether two matrices are within eps of each other
    */
