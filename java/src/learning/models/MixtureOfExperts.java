@@ -261,7 +261,6 @@ public class MixtureOfExperts implements Serializable {
             B[i][j] = RandomFactory.randn(1.0);
           }
         }
-
     }
 
     switch( mDistribution ) {

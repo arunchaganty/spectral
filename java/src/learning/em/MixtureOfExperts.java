@@ -295,10 +295,7 @@ public class MixtureOfExperts implements Runnable {
       Execution.putOutput( "betas_", betas_ );
       double err = MatrixOps.norm( betas.minus( betas_ ) );
       System.out.printf( "%.4f\n", err );
-    } catch (IOException e) {
-      LogInfo.error( e.getMessage() );
-      return;
-    } catch (ClassNotFoundException e) {
+    } catch( ClassNotFoundException | IOException e ) {
       LogInfo.error( e.getMessage() );
       return;
     }
