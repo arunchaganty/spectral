@@ -8,14 +8,10 @@ package learning.spectral.applications;
 import learning.exceptions.RecoveryFailure;
 import learning.exceptions.NumericalException;
 
+import learning.linalg.*;
 import learning.models.MixtureOfExperts;
 
 import learning.spectral.MultiViewMixture;
-import learning.linalg.MatrixOps;
-import learning.linalg.MatrixFactory;
-import learning.linalg.RandomFactory;
-import learning.linalg.Tensor;
-import learning.linalg.FullTensor;
 
 import learning.data.MomentComputer;
 import learning.data.RealSequence;
@@ -61,6 +57,17 @@ public class SpectralExperts implements Runnable {
     this.K = K;
   }
 
+  Pair<SimpleMatrix, Tensor> computeExactMoments( SimpleMatrix weights, SimpleMatrix betas ) {
+    SimpleMatrix Pairs = betas.mult( MatrixFactory.diag( weights ) ).mult( betas.transpose() );
+    ExactTensor Triples = new ExactTensor( weights, betas, betas, betas );
+
+    return new Pair<SimpleMatrix, Tensor>( Pairs, Triples );
+  }
+
+  Pair<SimpleMatrix, Tensor> computeExactMoments( MixtureOfExperts model ) {
+    return computeExactMoments(model.getWeights(), model.getBetas());
+  }
+
   /*
     Regularize the matrices A and b which form the solution of the linear equation
     Ax = b; i.e. (A'A + \lambda I) x = A' b;
@@ -89,15 +96,16 @@ public class SpectralExperts implements Runnable {
     // Consider only the upper triangular half of x x' (because it is symmetric) and construct a vector.
     double[][] A_ = new double[N][D_];
 
+    int idx  = 0;
     for( int n = 0; n < N; n++ ) {
+      idx = 0;
       for( int d = 0; d < D; d++ ) {
         for( int d_ = 0; d_ <= d; d_++ ) {
-          int idx = d * (d-1) / 2 + d_;
-          A_[n][ idx ] = X.get(n, d) * X.get(n,d_);
-          if( d != d_ ) A_[n][idx] /= 2;
+          A_[n][ idx++ ] = X.get(n, d) * X.get(n,d_);
         }
       }
     }
+
 
     // Solve for the matrix
     SimpleMatrix A = new SimpleMatrix( A_ );
@@ -107,15 +115,19 @@ public class SpectralExperts implements Runnable {
       Pair<SimpleMatrix, SimpleMatrix> Ab = regularize(A, b, reg);
       A = Ab.getValue0(); b = Ab.getValue1();
     }
-    SimpleMatrix x = A.solve(b);
+    //SimpleMatrix x = A.solve(b);
+    SimpleMatrix x = A.invert().mult(b);
+    System.out.println(x);
 
     // Reconstruct $B$ from $x$
     SimpleMatrix B = new SimpleMatrix(D, D);
+    idx = 0;
     for( int d = 0; d < D; d++ ) {
       for( int d_ = 0; d_ <= d; d_++ ) {
-        int idx = d * (d-1) / 2 + d_;
-        B.set(d, d_, x.get(idx));
-        B.set(d_, d, x.get(idx));
+        double multiplicity = (d == d_) ? 1 : 2;
+        double x_ = x.get(idx++) / multiplicity;
+        B.set(d, d_, x_);
+        B.set(d_, d, x_);
       }
     }
 
@@ -141,18 +153,13 @@ public class SpectralExperts implements Runnable {
     // Consider only the upper triangular half of x x' (because it is symmetric) and construct a vector.
     double[][] A_ = new double[N][D_];
 
+    int idx;
     for( int n = 0; n < N; n++ ) {
+      idx = 0;
       for( int d = 0; d < D; d++ ) {
         for( int d_ = 0; d_ <= d; d_++ ) {
           for( int d__ = 0; d__ <= d_; d__++ ) {
-            int idx = (d-1) * d * (d+1) / 6 + (d_-1) * d_ / 2 + d__;
-            A_[n][idx] = X.get(n, d) * X.get(n,d_) * X.get(n,d__);
-            if( d == d_ && d_ == d__ ) {
-            } else if( d == d_ || d_ == d__ || d == d__) {
-              A_[n][idx] /= 2;
-            } else {
-              A_[n][idx] /= 3;
-            }
+            A_[n][idx++] = X.get(n, d) * X.get(n,d_) * X.get(n,d__);
           }
         }
       }
@@ -170,13 +177,16 @@ public class SpectralExperts implements Runnable {
 
     // Reconstruct $B$ from $x$
     double[][][] B = new double[D][D][D];
+    idx = 0;
     for( int d = 0; d < D; d++ ) {
       for( int d_ = 0; d_ <= d; d_++ ) {
         for( int d__ = 0; d__ <= d_; d__++ ) {
-          int idx = (d-1) * d * (d+1) / 6 + (d_-1) * d_ / 2 + d__;
+          double multiplicity =
+                  ( d == d_ && d_ == d__ ) ? 1 :
+                  ( d == d_ || d_ == d__ || d == d__) ? 2 : 3;
           B[d][d_][d__] = B[d][d__][d_] =
-             B[d_][d][d__] = B[d_][d_][d_] =
-             B[d__][d][d_] = B[d__][d_][d] =  x.get(idx);
+             B[d_][d][d__] = B[d_][d_][d] =
+             B[d__][d][d_] = B[d__][d_][d] =  x.get(idx++) / multiplicity;
         }
       }
     }
@@ -211,6 +221,7 @@ public class SpectralExperts implements Runnable {
     return algo.algorithmB( K, Pairs,  Pairs, Triples );
   }
 
+  @SuppressWarnings("unchecked")
   public Pair< Pair< SimpleMatrix, SimpleMatrix >, learning.models.MixtureOfExperts >
   readFromFile( String filename ) throws IOException, ClassNotFoundException {
     ObjectInputStream in = new ObjectInputStream( new FileInputStream( filename ) );
