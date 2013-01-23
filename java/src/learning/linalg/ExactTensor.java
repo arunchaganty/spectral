@@ -35,6 +35,10 @@ public class ExactTensor implements Tensor {
     this.M[2] = M3;
   }
 
+  public int getDim( int axis ) {
+    return M[axis].numRows();
+  }
+
   /**
    * Project the tensor onto a matrix by taking an inner product with theta
    * @param axis

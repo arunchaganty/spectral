@@ -31,6 +31,10 @@ public class SimpleTensor implements Tensor {
     this.X[2] = X3;
   }
 
+  public int getDim( int axis ) {
+    return X[axis].numCols();
+  }
+
   /**
    * Project the tensor onto a matrix by taking an inner product with theta
    * @param axis

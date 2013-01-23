@@ -19,6 +19,16 @@ public class FullTensor implements Tensor {
     D3 = X[0][0].length;
   }
 
+  public int getDim( int axis ) {
+    switch( axis ) {
+      case 0: return D1;
+      case 1: return D2;
+      case 2: return D3;
+      default:
+        throw new IllegalArgumentException();
+    }
+  }
+
   @Override
   public SimpleMatrix project(int axis, SimpleMatrix theta) {
     assert( 0 <= axis && axis < 3 );
