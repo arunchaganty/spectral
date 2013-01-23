@@ -22,45 +22,45 @@ import fig.basic.OptionsParser;
  */
 public class SpectralExpertsTest {
 
-  @Test
-  public void testMoments() {
-    MixtureOfExperts.GenerationOptions options = new MixtureOfExperts.GenerationOptions();
-    options.K = 2; options.D = 2; options.betas = "eye"; options.bias = false;
-
-    MixtureOfExperts model = MixtureOfExperts.generate(options);
+  public void testMomentRunner(MixtureOfExperts model, int N, double reg) {
     int K = model.getK(); int D = model.getD();
     SpectralExperts algo = new SpectralExperts();
-
-    // Compute exact moments
-    Pair<SimpleMatrix, Tensor> moments = algo.computeExactMoments( model );
-    SimpleMatrix Pairs = moments.getValue0();
-    Tensor Triples = moments.getValue1();
+    algo.enableAnalysis(model);
 
     // Compute the empirical moments
-    Pair<SimpleMatrix, SimpleMatrix> yX = model.sample(10000);
+    Pair<SimpleMatrix, SimpleMatrix> yX = model.sample(N);
     SimpleMatrix y = yX.getValue0();
     SimpleMatrix X = yX.getValue1();
 
-    SimpleMatrix Pairs_ = algo.recoverPairs( y, X, 0.0001 );
-    Tensor Triples_ = algo.recoverTriples(y, X, 0.0001);
+    SimpleMatrix Pairs_ = algo.recoverPairs( y, X, reg );
+    algo.analysis.reportPairs(Pairs_);
+    Tensor Triples_ = algo.recoverTriples(y, X, reg);
+    algo.analysis.reportTriples(Triples_);
 
-    // Compare errors
-    double err = MatrixOps.norm( Pairs.minus( Pairs_ ) );
-    System.err.println( Pairs );
-    System.err.println( Pairs_ );
-    System.err.println( "Pairs: " + err );
-    // Assert.assertTrue( err < 1e-3 );
+    Assert.assertTrue( algo.analysis.PairsErr < 1e-2 );
+    Assert.assertTrue( algo.analysis.TriplesErr < 1e-2 );
+  }
 
-    SimpleMatrix eta = RandomFactory.rand(D, 1);
-    SimpleMatrix TriplesT = Triples.project(2, eta );
-    SimpleMatrix TriplesT_ = Triples_.project(2, eta );
-    System.err.println( TriplesT );
-    System.err.println( TriplesT_ );
+  @Test
+  public void testMomentsWithoutBias() {
+    MixtureOfExperts.GenerationOptions options = new MixtureOfExperts.GenerationOptions();
+    options.K = 2; options.D = 3; options.betas = "random"; options.bias = false; options.sigma2 = 0.0;
 
-    err = MatrixOps.norm( TriplesT.minus( TriplesT_ ) );
-    System.err.println( "Triples: " + err );
-//
-//    Assert.assertTrue( err < 1e-2 );
+    MixtureOfExperts model = MixtureOfExperts.generate(options);
+
+    int N = (int) 1e5; double reg = 1e-3;
+    testMomentRunner(model, N, reg);
+  }
+
+  //@Test
+  public void testMomentsWithBias() {
+    MixtureOfExperts.GenerationOptions options = new MixtureOfExperts.GenerationOptions();
+    options.K = 2; options.D = 1; options.betas = "random"; options.bias = true; options.sigma2 = 0.0;
+
+    MixtureOfExperts model = MixtureOfExperts.generate(options);
+
+    int N = (int) 1e5; double reg = 1e-2;
+    testMomentRunner(model, N, reg);
   }
 
 }
