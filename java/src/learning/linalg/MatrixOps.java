@@ -34,6 +34,15 @@ public class MatrixOps {
       System.out.printf( "%d, ", x[i] );
     System.out.printf( "}\n" );
   }
+  public static void printSize( SimpleMatrix X ) {
+    System.out.printf( "(%d, %d)\n", X.numRows(), X.numCols() );
+  }
+  public static void printSize( Tensor X ) {
+    System.out.printf( "(%d, %d, %d)\n", X.getDim(0), X.getDim(1), X.getDim(2) );
+  }
+  public static void printSize( double[][] X ) {
+    System.out.printf( "(%d, %d)\n", X.length, X[0].length );
+  }
 
   /**
    * Print entries of a arrays
