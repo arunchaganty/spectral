@@ -33,16 +33,28 @@ public class SpectralExpertsTest {
     SimpleMatrix X = yX.getValue1();
 
     SimpleMatrix Pairs_ = algo.recoverPairs( y, X, reg );
+    System.out.println( algo.analysis.Pairs );
+    System.out.println( Pairs_ );
     algo.analysis.reportPairs(Pairs_);
     Tensor Triples_ = algo.recoverTriples(y, X, reg);
     algo.analysis.reportTriples(Triples_);
 
     Assert.assertTrue( algo.analysis.PairsErr < 1e-2 );
-    Assert.assertTrue( algo.analysis.TriplesErr < 1e-2 );
+    Assert.assertTrue( algo.analysis.TriplesErr < 1e-1 );
   }
 
   @Test
-  public void testMomentsWithoutBias() {
+  public void testMomentsWithoutBiasEye() {
+    MixtureOfExperts.GenerationOptions options = new MixtureOfExperts.GenerationOptions();
+    options.K = 2; options.D = 3; options.betas = "eye"; options.bias = false; options.sigma2 = 0.0;
+
+    MixtureOfExperts model = MixtureOfExperts.generate(options);
+
+    int N = (int) 1e5; double reg = 1e-3;
+    testMomentRunner(model, N, reg);
+  }
+  @Test
+  public void testMomentsWithoutBiasRandom() {
     MixtureOfExperts.GenerationOptions options = new MixtureOfExperts.GenerationOptions();
     options.K = 2; options.D = 3; options.betas = "random"; options.bias = false; options.sigma2 = 0.0;
 
@@ -52,10 +64,21 @@ public class SpectralExpertsTest {
     testMomentRunner(model, N, reg);
   }
 
-  //@Test
-  public void testMomentsWithBias() {
+  @Test
+  public void testMomentsWithBiasEye() {
     MixtureOfExperts.GenerationOptions options = new MixtureOfExperts.GenerationOptions();
-    options.K = 2; options.D = 1; options.betas = "random"; options.bias = true; options.sigma2 = 0.0;
+    options.K = 2; options.D = 1; options.betas = "eye"; options.bias = true; options.sigma2 = 0.0;
+
+    MixtureOfExperts model = MixtureOfExperts.generate(options);
+
+    int N = (int) 1e5; double reg = 1e-2;
+    testMomentRunner(model, N, reg);
+  }
+
+  @Test
+  public void testMomentsWithBiasRandom() {
+    MixtureOfExperts.GenerationOptions options = new MixtureOfExperts.GenerationOptions();
+    options.K = 2; options.D = 3; options.betas = "random"; options.bias = true; options.sigma2 = 0.0;
 
     MixtureOfExperts model = MixtureOfExperts.generate(options);
 
