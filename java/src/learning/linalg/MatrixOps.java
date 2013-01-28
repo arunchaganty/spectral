@@ -43,6 +43,9 @@ public class MatrixOps {
   public static void printSize( double[][] X ) {
     System.out.printf( "(%d, %d)\n", X.length, X[0].length );
   }
+  public static void printSize( double[] X ) {
+    System.out.printf( "(%d,)\n", X.length );
+  }
 
   /**
    * Print entries of a arrays

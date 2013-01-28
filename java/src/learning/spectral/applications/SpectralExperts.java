@@ -87,7 +87,7 @@ public class SpectralExperts implements Runnable {
 
     public void reportTriples( Tensor Triples_ ) {
       int D = Triples_.getDim(0);
-      SimpleMatrix eta = RandomFactory.rand(D + 1, 1);
+      SimpleMatrix eta = MatrixFactory.ones(D); //RandomFactory.rand(D + 1, 1);
       SimpleMatrix TriplesT = Triples.project(2, eta);
       SimpleMatrix TriplesT_ = Triples_.project(2, eta );
       TriplesErr = MatrixOps.norm(TriplesT.minus(TriplesT_));
@@ -98,6 +98,8 @@ public class SpectralExperts implements Runnable {
         Execution.putOutput("TriplesTErr", TriplesErr);
       }
       LogInfo.logsForce("TriplesT: " + TriplesErr);
+      LogInfo.logsForce("TriplesT_: " + TriplesT);
+      LogInfo.logsForce("TriplesT_: " + TriplesT_);
     }
 
     public void reportBetas( SimpleMatrix betas_ ) {
@@ -117,23 +119,15 @@ public class SpectralExperts implements Runnable {
       SimpleMatrix betas = model.getBetas();
       SimpleMatrix weights = model.getWeights();
 
-      int N = y.numRows();
+      int N = y.numCols();
 
-      double Ey = y.elementSum();
+      double Ey = y.elementSum() / N;
+      double Ey_ = X.mult( betas.mult(weights.transpose()) ).elementSum() / N;
+      double err = Math.abs(Ey - Ey_);
 
-      MatrixOps.printSize(X);
-      MatrixOps.printSize(weights);
-      MatrixOps.printSize(betas);
+      LogInfo.logsForce("Ey: " + err);
 
-//      System.out.println( betas );
-//      System.out.println( y );
-//      System.out.println( X );
-
-      double Ey_ = X.mult( betas.mult(weights.transpose()) ).elementSum();
-
-      System.out.println( Ey + " " + Ey_ );
-
-      return Math.abs(Ey - Ey_);
+      return err;
     }
     public double checkDataSanity( SimpleMatrix y, SimpleMatrix X ) {
       return checkDataSanity(y, X, model);
@@ -376,8 +370,6 @@ public class SpectralExperts implements Runnable {
 
       SimpleMatrix betas_ = run( this.K, y, X );
       analysis.reportBetas(betas_);
-
-
 
       System.out.printf( "%.4f %.4f %.4f\n", analysis.betasErr,
               SpectralExpertsAnalysis.computeLoss(y, X, model.getBetas()),

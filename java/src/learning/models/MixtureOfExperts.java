@@ -118,6 +118,8 @@ public class MixtureOfExperts implements Serializable {
 
     // Get the betas in a row form to make it easier to generate data
     double[][] betas_ = MatrixFactory.toArray( betas.transpose() );
+    MatrixOps.printSize(X_);
+    MatrixOps.printSize(betas_);
 
     double[] y = new double[ N ];
     for( int n = 0; n < N; n++ ) {
@@ -199,8 +201,6 @@ public class MixtureOfExperts implements Serializable {
     }
     public double[][] getLinearEmbedding( final double[][] X ) {
       int N = X.length;
-      int D = X[0].length;
-      int D_ = getLinearDimension( D );
       double[][] Y = new double[ N ][];
 
       for( int n = 0 ; n < N; n ++ ) {
@@ -221,7 +221,7 @@ public class MixtureOfExperts implements Serializable {
    * @param mDistribution - distribution on the point means
    * @param SDistribution - distribution on the point variance
    * @param pointSigma - variance parameter for the points.
-   * @param nlType - Non-Linearity type.
+   * @param nl - Non-Linearity.
    */
   public static MixtureOfExperts generate( final int K, final int D,
       double sigma2, WeightDistribution wDistribution, BetaDistribution
@@ -402,7 +402,7 @@ public class MixtureOfExperts implements Serializable {
     int N = (int) outOptions.N;
     Pair<SimpleMatrix, SimpleMatrix> yX = model.sample( N );
 
-    if( outOptions.outputPath == "-" ) {
+    if( outOptions.outputPath.equals( "-" ) ) {
       SimpleMatrix y = yX.getValue0();
       SimpleMatrix X = yX.getValue1();
 
