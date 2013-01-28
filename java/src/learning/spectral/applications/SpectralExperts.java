@@ -19,6 +19,7 @@ import learning.data.RealSequence;
 import org.ejml.alg.dense.mult.GeneratorMatrixMatrixMult;
 import org.ejml.alg.dense.mult.MatrixMatrixMult;
 import org.ejml.data.DenseMatrix64F;
+import org.ejml.ops.CommonOps;
 import org.ejml.simple.SimpleBase;
 import org.ejml.simple.SimpleMatrix;
 import org.javatuples.*;
@@ -137,7 +138,7 @@ public class SpectralExperts implements Runnable {
      * Compute the loss \sum min_k( y - X betas[k])^2.
      * @param y
      * @param X
-     * @param betas_
+     * @param betas
      */
     public static double computeLoss( SimpleMatrix y, SimpleMatrix X, SimpleMatrix betas ) {
       int N = y.numRows();
@@ -201,10 +202,20 @@ public class SpectralExperts implements Runnable {
    * @param X
    * @return
    */
-  SimpleMatrix recoverPairs(SimpleMatrix y, SimpleMatrix X, double reg) {
+  SimpleMatrix recoverPairs(SimpleMatrix y, SimpleMatrix X, double reg, boolean doScale) {
     int N = X.numRows();
     int D = X.numCols();
     int D_ = D * (D+1) / 2;
+
+    // Normalize the data
+    SimpleMatrix xScaling = MatrixFactory.ones(D);
+    double yScaling = 1.0;
+    if(doScale) {
+      Pair<SimpleMatrix, SimpleMatrix> scaleInfo = MatrixOps.columnScale(X);
+      X = scaleInfo.getValue0(); xScaling = scaleInfo.getValue1();
+      scaleInfo = MatrixOps.rowScale(y);
+      y = scaleInfo.getValue0(); yScaling = scaleInfo.getValue1().get(0);
+    }
 
     // Consider only the upper triangular half of x x' (because it is symmetric) and construct a vector.
     double[][] A_ = new double[N][D_];
@@ -214,31 +225,36 @@ public class SpectralExperts implements Runnable {
       idx = 0;
       for( int d = 0; d < D; d++ ) {
         for( int d_ = 0; d_ <= d; d_++ ) {
-          A_[n][ idx++ ] = X.get(n, d) * X.get(n,d_);
+          double multiplicity = (d == d_) ? 1 : 2;
+          A_[n][ idx++ ] = X.get(n, d) * X.get(n,d_) * multiplicity;
         }
       }
     }
 
-
     // Solve for the matrix
     SimpleMatrix A = new SimpleMatrix( A_ );
     SimpleMatrix b = y.elementMult(y).transpose();
+    SimpleMatrix bEntries;
     // Regularize the matrix
     if( reg > 0.0 ) {
       Pair<SimpleMatrix, SimpleMatrix> Ab = regularize(A, b, reg);
       A = Ab.getValue0(); b = Ab.getValue1();
+      bEntries = A.solve(b);
     }
-    SimpleMatrix x = A.solve(b);
+    else
+      bEntries = A.solve(b);
 
     // Reconstruct $B$ from $x$
     SimpleMatrix B = new SimpleMatrix(D, D);
     idx = 0;
     for( int d = 0; d < D; d++ ) {
       for( int d_ = 0; d_ <= d; d_++ ) {
-        double multiplicity = (d == d_) ? 1 : 2;
-        double x_ = x.get(idx++) / multiplicity;
-        B.set(d, d_, x_);
-        B.set(d_, d, x_);
+        double b_ = bEntries.get(idx++);
+
+        if(doScale) // Unscale B
+          b_ = b_ * (yScaling * yScaling) /(xScaling.get(d) * xScaling.get(d_));
+        B.set(d, d_, b_);
+        B.set(d_, d, b_);
       }
     }
 
@@ -246,9 +262,38 @@ public class SpectralExperts implements Runnable {
   }
 
   SimpleMatrix recoverPairs(SimpleMatrix y, SimpleMatrix X) {
-    return recoverPairs( y, X, 0.0 );
+    return recoverPairs( y, X, 0.0, true );
   }
 
+  @Deprecated
+  SimpleMatrix recoverPairsGD(SimpleMatrix y, SimpleMatrix X, double reg) {
+    int N = X.numRows();
+    int D = X.numCols();
+    SimpleMatrix B = new SimpleMatrix(D,D);
+    // Normalize the data
+
+    // A single gradient step
+    for(int i = 0; i < 300; i++ ) {
+      double err = 0.0;
+      SimpleMatrix dB = new SimpleMatrix(D,D);
+      for( int n = 0; n < N; n++ ) {
+        // dB += (xBx - y^2) XX';
+        SimpleMatrix Xn = MatrixOps.row(X, n);
+        SimpleMatrix Xnt = Xn.transpose();
+        double yn = y.get(n);
+        double residual = Xn.mult(B).dot(Xn) - yn*yn;
+        err += residual;
+        dB = dB.plus( Xnt.mult(Xn).scale(residual) );
+      }
+      dB = dB.scale( -reg/N );
+      System.out.println( i + ": " + err );
+      System.out.println( dB );
+      B = B.plus(dB);
+      System.out.println( B );
+    }
+
+    return B;
+  }
 
   /**
    * Recover the second-order tensor \beta \otimes \beta by linear regression.
@@ -256,10 +301,19 @@ public class SpectralExperts implements Runnable {
    * @param X
    * @return
    */
-  Tensor recoverTriples(SimpleMatrix y, SimpleMatrix X, double reg) {
+  Tensor recoverTriples(SimpleMatrix y, SimpleMatrix X, double reg, boolean  doScale) {
     int N = X.numRows();
     int D = X.numCols();
     int D_ = D * (D+1) * (D+2) / 3;
+
+    SimpleMatrix xScaling = MatrixFactory.ones(D);
+    double yScaling = 1.0;
+    if(doScale) {
+      Pair<SimpleMatrix, SimpleMatrix> scaleInfo = MatrixOps.columnScale(X);
+      X = scaleInfo.getValue0(); xScaling = scaleInfo.getValue1();
+      scaleInfo = MatrixOps.rowScale(y);
+      y = scaleInfo.getValue0(); yScaling = scaleInfo.getValue1().get(0);
+    }
 
     // Consider only the upper triangular half of x x' (because it is symmetric) and construct a vector.
     double[][] A_ = new double[N][D_];
@@ -270,7 +324,10 @@ public class SpectralExperts implements Runnable {
       for( int d = 0; d < D; d++ ) {
         for( int d_ = 0; d_ <= d; d_++ ) {
           for( int d__ = 0; d__ <= d_; d__++ ) {
-            A_[n][idx++] = X.get(n, d) * X.get(n,d_) * X.get(n,d__);
+            double multiplicity =
+                    ( d == d_ && d_ == d__ ) ? 1 :
+                            ( d == d_ || d_ == d__ || d == d__) ? 3 : 6;
+            A_[n][idx++] = X.get(n, d) * X.get(n,d_) * X.get(n,d__) * multiplicity;
           }
         }
       }
@@ -284,7 +341,7 @@ public class SpectralExperts implements Runnable {
       Pair<SimpleMatrix, SimpleMatrix> Ab = regularize(A, b, reg);
       A = Ab.getValue0(); b = Ab.getValue1();
     }
-    SimpleMatrix x = A.solve(b);
+    SimpleMatrix bEntries = A.solve(b);
 
     // Reconstruct $B$ from $x$
     double[][][] B = new double[D][D][D];
@@ -292,12 +349,13 @@ public class SpectralExperts implements Runnable {
     for( int d = 0; d < D; d++ ) {
       for( int d_ = 0; d_ <= d; d_++ ) {
         for( int d__ = 0; d__ <= d_; d__++ ) {
-          double multiplicity =
-                  ( d == d_ && d_ == d__ ) ? 1 :
-                  ( d == d_ || d_ == d__ || d == d__) ? 2 : 3;
+          double value = bEntries.get(idx++);
+          if(doScale)
+            value = value * (yScaling * yScaling * yScaling) /
+                    (xScaling.get(d) * xScaling.get(d_) * xScaling.get(d_));
           B[d][d_][d__] = B[d][d__][d_] =
              B[d_][d][d__] = B[d_][d_][d] =
-             B[d__][d][d_] = B[d__][d_][d] =  x.get(idx++) / multiplicity;
+             B[d__][d][d_] = B[d__][d_][d] = value;
         }
       }
     }
@@ -306,7 +364,7 @@ public class SpectralExperts implements Runnable {
   }
 
   Tensor recoverTriples(SimpleMatrix y, SimpleMatrix X) {
-    return recoverTriples( y, X, 0.0 );
+    return recoverTriples( y, X, 0.0, true );
   }
 
 
@@ -323,9 +381,9 @@ public class SpectralExperts implements Runnable {
     RandomFactory.setSeed( seed );
 
     // Recover Pairs and Triples moments by linear regression
-    SimpleMatrix Pairs = recoverPairs( y, X, reg );
+    SimpleMatrix Pairs = recoverPairs( y, X, reg, true );
     if( analysis != null ) analysis.reportPairs(Pairs);
-    Tensor Triples = recoverTriples(y, X, reg );
+    Tensor Triples = recoverTriples(y, X, reg, true );
     if( analysis != null ) analysis.reportTriples(Triples);
 
     // Use Algorithm B symmetric to recover the $\beta$

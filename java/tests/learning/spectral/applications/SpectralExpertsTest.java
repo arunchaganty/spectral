@@ -32,11 +32,11 @@ public class SpectralExpertsTest {
     SimpleMatrix y = yX.getValue0();
     SimpleMatrix X = yX.getValue1();
 
-    SimpleMatrix Pairs_ = algo.recoverPairs( y, X, reg );
+    SimpleMatrix Pairs_ = algo.recoverPairs( y, X, reg, true );
     System.out.println( algo.analysis.Pairs );
     System.out.println( Pairs_ );
     algo.analysis.reportPairs(Pairs_);
-    Tensor Triples_ = algo.recoverTriples(y, X, reg);
+    Tensor Triples_ = algo.recoverTriples(y, X, reg, true);
     algo.analysis.reportTriples(Triples_);
 
     Assert.assertTrue( algo.analysis.PairsErr < 1e-2 );
@@ -104,18 +104,21 @@ public class SpectralExpertsTest {
     SimpleMatrix X = yX.getValue1();
     algo.analysis.checkDataSanity(y, X);
 
-//    SimpleMatrix Pairs_ = algo.recoverPairs( y, X, reg );
-//    System.out.println( algo.analysis.Pairs );
-//    System.out.println( Pairs_ );
-//    algo.analysis.reportPairs(Pairs_);
-//    Tensor Triples_ = algo.recoverTriples(y, X, reg);
-//    algo.analysis.reportTriples(Triples_);
+//    SimpleMatrix Pairs_ = algo.recoverPairsGD( y, X, reg );
+    SimpleMatrix Pairs_ = algo.recoverPairs( y, X, reg, doScale );
+    System.out.println( algo.analysis.Pairs );
+    System.out.println( Pairs_ );
+    algo.analysis.reportPairs(Pairs_);
+    Tensor Triples_ = algo.recoverTriples(y, X, reg, doScale );
+    algo.analysis.reportTriples(Triples_);
   }
 
   @Option( gloss = "Number of samples" )
   public double N = 1e4;
   @Option( gloss = "Regularization" )
   public double reg = 1e-3;
+  @Option( gloss = "Scale data?" )
+  public boolean doScale = false;
 
   public static void main( String[] args ) throws NumericalException {
     SpectralExpertsTest test = new SpectralExpertsTest();

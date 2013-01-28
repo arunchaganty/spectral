@@ -99,7 +99,7 @@ public class MixtureOfExperts implements Serializable {
   public Pair<SimpleMatrix, SimpleMatrix> sample( int N ) {
     // Generate n random points
     //SimpleMatrix X = RandomFactory.multivariateGaussian( mean, cov, N );
-    SimpleMatrix X = RandomFactory.rand( N, D ); X = X.scale( 10.0 );
+    SimpleMatrix X = RandomFactory.rand( N, D ); X = X.scale( 1.0 );
 
     // Add a bias term
     double[][] X_ = MatrixFactory.toArray( X );
@@ -118,8 +118,6 @@ public class MixtureOfExperts implements Serializable {
 
     // Get the betas in a row form to make it easier to generate data
     double[][] betas_ = MatrixFactory.toArray( betas.transpose() );
-    MatrixOps.printSize(X_);
-    MatrixOps.printSize(betas_);
 
     double[] y = new double[ N ];
     for( int n = 0; n < N; n++ ) {

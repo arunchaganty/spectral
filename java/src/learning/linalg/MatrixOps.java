@@ -13,6 +13,7 @@ import org.ejml.simple.SimpleMatrix;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.simple.SimpleSVD;
 import org.ejml.simple.SimpleEVD;
+import org.javatuples.*;
 
 public class MatrixOps {
 
@@ -188,6 +189,21 @@ public class MatrixOps {
   }
   public static double max( SimpleMatrix X ) {
     return max( X.getMatrix() );
+  }
+
+  public static double maxAbs( double[] x ) {
+    double max = 0.0;
+    for( int i = 0; i < x.length; i++ )
+      if( Math.abs(x[i]) > max ) max = Math.abs(x[i]);
+
+    return max;
+  }
+  public static double minAbs( double[] x ) {
+    double min = Double.POSITIVE_INFINITY;
+    for( int i = 0; i < x.length; i++ )
+      if( Math.abs(x[i]) < min ) min = Math.abs(x[i]);
+
+    return min;
   }
 
   /**
@@ -367,6 +383,70 @@ public class MatrixOps {
     for( int i = 0; i < x.length; i++ )
       x[i] /= sum;
   }
+
+  /**
+   * Normalize the rows of X to lie between -1 and 1;
+   */
+  public static Pair<double[],double[]> rowCenter(double[][] X) {
+    int rows = X.length;
+    double[] rowMin = new double[rows];
+    double[] rowMax = new double[rows];
+    for( int row = 0; row < X.length; row++ ) {
+      double rMin = rowMin[row] = min( X[row] );
+      double rMax = rowMax[row] = max( X[row] );
+      for( int i = 0; i < X[row].length; i++ )
+        if( rMax > rMin )
+          X[row][i] = 2 * (X[row][i] - rMin) / (rMax - rMin) - 1;
+      else
+          X[row][i] = 0;
+    }
+    return new Pair<>(rowMin, rowMax);
+  }
+
+  /**
+   * Normalize the rows of X
+   * @param X
+   * @return normalized X, row minimums and row maximums
+   */
+  public static Triplet<SimpleMatrix,SimpleMatrix,SimpleMatrix> rowCenter(SimpleMatrix X) {
+    double[][] X_ = MatrixFactory.toArray(X);
+    Pair<double[], double[]> minMax = rowCenter(X_);
+    return new Triplet<>(
+            new SimpleMatrix(X_),
+            MatrixFactory.fromVector(minMax.getValue0()),
+            MatrixFactory.fromVector(minMax.getValue1()));
+  }
+
+  /**
+   * Normalize the rows of X to lie between -1 and 1;
+   */
+  public static double[] rowScale(double[][] X) {
+    int rows = X.length;
+    double[] rowScale = new double[rows];
+    for( int row = 0; row < X.length; row++ ) {
+      double scale = rowScale[row] = maxAbs( X[row] );
+      for( int i = 0; i < X[row].length; i++ )
+          X[row][i] = X[row][i] / scale;
+    }
+    return rowScale;
+  }
+
+  /**
+   * Normalize the rows of X
+   * @param X
+   * @return normalized X, row minimums and row maximums
+   */
+  public static Pair<SimpleMatrix,SimpleMatrix> rowScale(SimpleMatrix X) {
+    double[][] X_ = MatrixFactory.toArray(X);
+    double[] scaling = rowScale(X_);
+    return new Pair<>( new SimpleMatrix(X_),
+          MatrixFactory.fromVector(scaling) );
+  }
+  public static Pair<SimpleMatrix,SimpleMatrix> columnScale(SimpleMatrix X) {
+    Pair<SimpleMatrix,SimpleMatrix> scaleInfo = rowScale(X.transpose());
+    return new Pair<>(scaleInfo.getValue0().transpose(), scaleInfo.getValue1());
+  }
+
 
   /**
    * Find the norm of a vector
