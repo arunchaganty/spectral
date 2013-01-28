@@ -10,6 +10,10 @@ tags
 
 # Java
 *.class
+java/junit
+java/bin
+java/out
+.idea
 
 # TeX
 *.log
@@ -17,6 +21,8 @@ tags
 *.out
 *.nav
 *.toc
+*.bbl
+*.blg
 *.snm
 *.pdf
 *.dvi
@@ -25,7 +31,6 @@ tags
 # Data
 data/
 java/data
-java/junit
 doc/logs/render
 *.dot
 *.png
