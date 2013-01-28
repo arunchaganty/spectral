@@ -49,6 +49,13 @@ public class MixtureOfExperts implements Runnable {
       this.sigma2 = sigma2;
     }
 
+    /**
+     * @param K
+     * @param D
+     * @param weights
+     * @param betas - The regression coefficients in K x D form.
+     * @param sigma2
+     */
     public Parameters( int K, int D, SimpleMatrix weights, SimpleMatrix betas, double sigma2 ) {
       this.K = K;
       this.D = D;
@@ -242,7 +249,6 @@ public class MixtureOfExperts implements Runnable {
 
     return state;
   }
-
   public Parameters run( double[] y, double[][] X ) {
     assert( D == X[0].length );
     Parameters state = Parameters.random(K, D);
@@ -251,6 +257,9 @@ public class MixtureOfExperts implements Runnable {
 
   public Parameters run( SimpleMatrix y, SimpleMatrix X ) {
     return run( MatrixFactory.toVector( y ), MatrixFactory.toArray( X ) );
+  }
+  public Parameters run( SimpleMatrix y, SimpleMatrix X, Parameters initState ) {
+    return run( MatrixFactory.toVector( y ), MatrixFactory.toArray( X ), initState );
   }
 
   @Option(gloss="Read data points from this file") 

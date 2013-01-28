@@ -47,7 +47,11 @@ public class SpectralExperts implements Runnable {
 	@Option(gloss = "Input filename", required=true)
 	public String inputPath;
   @Option(gloss = "Regularization")
-  public double reg = 0.1;
+  public double reg = 1e-1;
+  @Option(gloss = "Scale Data?")
+  public boolean scaleData = false;
+  @Option(gloss = "Run EM on spectral output?")
+  public boolean runEM = false;
 	@Option(gloss = "Number of Threads to use")
 	public int nThreads = 1;
 	@Option(gloss = "Random seed")
@@ -60,11 +64,12 @@ public class SpectralExperts implements Runnable {
     public SimpleMatrix Pairs;
     public Tensor Triples;
     public SimpleMatrix betas;
-
+    public SimpleMatrix betasEM;
 
     public double PairsErr;
     public double TriplesErr;
     public double betasErr;
+    public double betasEMErr;
 
     public SpectralExpertsAnalysis(MixtureOfExperts model) {
       this.model = model;
@@ -99,8 +104,6 @@ public class SpectralExperts implements Runnable {
         Execution.putOutput("TriplesTErr", TriplesErr);
       }
       LogInfo.logsForce("TriplesT: " + TriplesErr);
-      LogInfo.logsForce("TriplesT_: " + TriplesT);
-      LogInfo.logsForce("TriplesT_: " + TriplesT_);
     }
 
     public void reportBetas( SimpleMatrix betas_ ) {
@@ -113,6 +116,16 @@ public class SpectralExperts implements Runnable {
         Execution.putOutput( "betasErr", betasErr);
       }
       LogInfo.logsForce("betas: " + betasErr);
+    }
+    public void reportBetasEM( SimpleMatrix betas_ ) {
+      betas_ = MatrixOps.alignMatrix( betas_, betas, true );
+      betasEMErr = MatrixOps.norm( betas.minus( betas_ ) );
+
+      if( saveToExecution ) {
+        Execution.putOutput( "betasEM", betas_ );
+        Execution.putOutput( "betasEMErr", betasEMErr);
+      }
+      LogInfo.logsForce("betasEM: " + betasEMErr);
     }
 
     public static double checkDataSanity( SimpleMatrix y, SimpleMatrix X, MixtureOfExperts model ) {
@@ -381,9 +394,9 @@ public class SpectralExperts implements Runnable {
     RandomFactory.setSeed( seed );
 
     // Recover Pairs and Triples moments by linear regression
-    SimpleMatrix Pairs = recoverPairs( y, X, reg, true );
+    SimpleMatrix Pairs = recoverPairs( y, X, reg, scaleData );
     if( analysis != null ) analysis.reportPairs(Pairs);
-    Tensor Triples = recoverTriples(y, X, reg, true );
+    Tensor Triples = recoverTriples(y, X, reg, scaleData );
     if( analysis != null ) analysis.reportTriples(Triples);
 
     // Use Algorithm B symmetric to recover the $\beta$
@@ -423,16 +436,30 @@ public class SpectralExperts implements Runnable {
       analysis.checkDataSanity(y, X);
 
       // Set K from the model if it hasn't been provided
-      if( this.K < 1 )
-        this.K = model.getK();
+      if( K < 1 )
+        K = model.getK();
+      int D = X.numCols();
 
-      SimpleMatrix betas_ = run( this.K, y, X );
+      SimpleMatrix betas_ = run( K, y, X );
       analysis.reportBetas(betas_);
-
-      System.out.printf( "%.4f %.4f %.4f\n", analysis.betasErr,
-              SpectralExpertsAnalysis.computeLoss(y, X, model.getBetas()),
-              SpectralExpertsAnalysis.computeLoss(y, X, betas_) );
-    } catch( ClassNotFoundException | IOException |  NumericalException | RecoveryFailure e ) {
+      if( runEM ) {
+        learning.em.MixtureOfExperts.Parameters initState = new learning.em.MixtureOfExperts.Parameters(
+                this.K, D, MatrixFactory.ones(K).scale(1.0/K), betas_.transpose(), 0.1);
+        learning.em.MixtureOfExperts emAlgo = new learning.em.MixtureOfExperts(K, D);
+        learning.em.MixtureOfExperts.Parameters params = emAlgo.run( y, X, initState);
+        SimpleMatrix betasEM = (new SimpleMatrix( params.betas )).transpose();
+        analysis.reportBetasEM(betasEM);
+        System.out.printf( "%.4f %.4f %.4f %.4f %.4f\n",
+                analysis.betasErr, analysis.betasEMErr,
+                SpectralExpertsAnalysis.computeLoss(y, X, model.getBetas()),
+                SpectralExpertsAnalysis.computeLoss(y, X, betas_),
+                SpectralExpertsAnalysis.computeLoss(y, X, betasEM) );
+      } else {
+        System.out.printf( "%.4f %.4f %.4f\n", analysis.betasErr,
+                SpectralExpertsAnalysis.computeLoss(y, X, model.getBetas()),
+                SpectralExpertsAnalysis.computeLoss(y, X, betas_) );
+      }
+      } catch( ClassNotFoundException | IOException |  NumericalException | RecoveryFailure e ) {
       System.err.println( e.getMessage() );
       return;
     }
@@ -441,7 +468,7 @@ public class SpectralExperts implements Runnable {
 	/**
 	 * Mixture of Linear Regressions
 	 * @param args
-	 * @throws IOException 
+	 * @throws IOException
 	 * @throws RecoveryFailure 
 	 */
 	public static void main(String[] args) throws IOException, RecoveryFailure {
