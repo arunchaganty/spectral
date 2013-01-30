@@ -7,10 +7,11 @@ package learning.models;
 
 import learning.models.MixtureOfExperts;
 import learning.models.MixtureOfExperts.GenerationOptions;
-import learning.models.MixtureOfExperts.NonLinearity;
+import learning.models.transforms.NonLinearity;
 
 import learning.linalg.MatrixOps;
 
+import learning.models.transforms.PolynomialNonLinearity;
 import org.ejml.simple.SimpleMatrix;
 import org.javatuples.*;
 import org.junit.Assert;
@@ -27,13 +28,13 @@ public class MixtureOfExpertsTest {
     int D = 3;
     double x[] = {1.0, 2.0, 3.0};
 
-    NonLinearity nl = new NonLinearity();
+    NonLinearity nl = new PolynomialNonLinearity();
     Assert.assertTrue( nl.getLinearDimension( D ) == D );
     double[] y = nl.getLinearEmbedding( x );
     for( int i = 0; i < D; i++ )
       Assert.assertTrue( x[i] == y[i] );
 
-    nl = new NonLinearity(2);
+    nl = new PolynomialNonLinearity(2);
     double z[] = {1.0, 2.0, 3.0, 4.0, 6.0, 9.0 };
     Assert.assertTrue( nl.getLinearDimension( D ) == z.length );
     y = nl.getLinearEmbedding( x );

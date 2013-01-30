@@ -104,13 +104,16 @@ public class SpectralExpertsTest {
     SimpleMatrix X = yX.getValue1();
     algo.analysis.checkDataSanity(y, X);
 
-//    SimpleMatrix Pairs_ = algo.recoverPairsGD( y, X, reg );
+//    SimpleMatrix XX = MatrixOps.Pairs(X,X);
+//    System.out.println(XX);
+
+//    SimpleMatrix Pairs_ = algo.recoverPairsGD( y, X, reg, doScale );
     SimpleMatrix Pairs_ = algo.recoverPairs( y, X, reg, doScale );
     System.out.println( algo.analysis.Pairs );
     System.out.println( Pairs_ );
     algo.analysis.reportPairs(Pairs_);
-    Tensor Triples_ = algo.recoverTriples(y, X, reg, doScale );
-    algo.analysis.reportTriples(Triples_);
+//    Tensor Triples_ = algo.recoverTriples(y, X, reg, doScale );
+//    algo.analysis.reportTriples(Triples_);
   }
 
   @Option( gloss = "Number of samples" )

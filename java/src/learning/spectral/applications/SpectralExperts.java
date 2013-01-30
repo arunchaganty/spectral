@@ -228,6 +228,7 @@ public class SpectralExperts implements Runnable {
       X = scaleInfo.getValue0(); xScaling = scaleInfo.getValue1();
       scaleInfo = MatrixOps.rowScale(y);
       y = scaleInfo.getValue0(); yScaling = scaleInfo.getValue1().get(0);
+      System.out.println( scaleInfo.getValue1() );
     }
 
     // Consider only the upper triangular half of x x' (because it is symmetric) and construct a vector.
@@ -263,11 +264,17 @@ public class SpectralExperts implements Runnable {
     for( int d = 0; d < D; d++ ) {
       for( int d_ = 0; d_ <= d; d_++ ) {
         double b_ = bEntries.get(idx++);
-
-        if(doScale) // Unscale B
-          b_ = b_ * (yScaling * yScaling) /(xScaling.get(d) * xScaling.get(d_));
         B.set(d, d_, b_);
         B.set(d_, d, b_);
+      }
+    }
+    // Rescale
+    if(doScale) { // Unscale B
+      for( int d = 0; d < D; d++ ) {
+        for( int d_ = 0; d_ < D; d_++ ) {
+          double scaling = (yScaling * yScaling) / (xScaling.get(d) * xScaling.get(d_));
+          B.set( d, d_, B.get(d, d_) * scaling);
+        }
       }
     }
 
@@ -279,12 +286,22 @@ public class SpectralExperts implements Runnable {
   }
 
   @Deprecated
-  SimpleMatrix recoverPairsGD(SimpleMatrix y, SimpleMatrix X, double reg) {
+  SimpleMatrix recoverPairsGD(SimpleMatrix y, SimpleMatrix X, double reg, boolean  doScale ) {
     int N = X.numRows();
     int D = X.numCols();
     SimpleMatrix B = new SimpleMatrix(D,D);
     // Normalize the data
+    // Normalize the data
+    SimpleMatrix xScaling = MatrixFactory.ones(D);
+    double yScaling = 1.0;
+    if(doScale) {
+      Pair<SimpleMatrix, SimpleMatrix> scaleInfo = MatrixOps.columnScale(X);
+      X = scaleInfo.getValue0(); xScaling = scaleInfo.getValue1();
+      scaleInfo = MatrixOps.rowScale(y);
+      y = scaleInfo.getValue0(); yScaling = scaleInfo.getValue1().get(0);
+    }
 
+    double alpha = 0.5; // stepsize
     // A single gradient step
     for(int i = 0; i < 300; i++ ) {
       double err = 0.0;
@@ -298,12 +315,24 @@ public class SpectralExperts implements Runnable {
         err += residual;
         dB = dB.plus( Xnt.mult(Xn).scale(residual) );
       }
-      dB = dB.scale( -reg/N );
-      System.out.println( i + ": " + err );
+      dB = dB.scale( 1.0/N ).plus( reg, B );
+      dB = dB.scale( alpha );
+      System.out.println( i + ": " + err + " dB: " + dB.normF());
       System.out.println( dB );
-      B = B.plus(dB);
+      B = B.minus(dB);
       System.out.println( B );
+      if( dB.normF() < 1e-5 ) break;
     }
+
+//    if(doScale) { // Unscale B
+//      for( int d = 0; d < D; d++ ) {
+//        for( int d_ = 0; d_ < D; d_++ ) {
+//          double scaling = (yScaling * yScaling) / (xScaling.get(d) * xScaling.get(d_));
+//          B.set( d, d_, B.get(d, d_) * scaling);
+//        }
+//      }
+//    }
+    System.out.println( B );
 
     return B;
   }

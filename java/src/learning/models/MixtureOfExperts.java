@@ -10,6 +10,9 @@ import learning.linalg.MatrixFactory;
 import learning.linalg.RandomFactory;
 import static learning.Misc.*;
 
+import learning.models.transforms.FourierNonLinearity;
+import learning.models.transforms.NonLinearity;
+import learning.models.transforms.PolynomialNonLinearity;
 import org.ejml.simple.SimpleMatrix;
 import org.ejml.data.DenseMatrix64F;
 
@@ -99,7 +102,7 @@ public class MixtureOfExperts implements Serializable {
   public Pair<SimpleMatrix, SimpleMatrix> sample( int N ) {
     // Generate n random points
     //SimpleMatrix X = RandomFactory.multivariateGaussian( mean, cov, N );
-    SimpleMatrix X = RandomFactory.rand( N, D ); X = X.scale( 1.0 );
+    SimpleMatrix X = RandomFactory.rand( N, D ); X = X.scale( 10.0 );
 
     // Add a bias term
     double[][] X_ = MatrixFactory.toArray( X );
@@ -152,61 +155,6 @@ public class MixtureOfExperts implements Serializable {
     Eye,
       Spherical,
       Random
-  }
-  
-  public static class NonLinearity implements Serializable {
-    public int degree;
-  
-    public NonLinearity( int degree ) {
-      this.degree = degree;
-    }
-    public NonLinearity() {
-      this.degree = 1;
-    }
-
-    /**
-     * Return the number of dimensions in the linearized version of the
-     * non-linearity.
-     */
-    public int getLinearDimension( int dimension ) {
-      return binomial( dimension + degree - 1, degree );
-    }
-
-    /**
-     * Return the linear embedding of $x$, like x_1^2 + x_1 x_2 + x_2
-     * x_1 + x_2^2. 
-     * The output is in lexicographic ordering with x_1 occupying the
-     * first index.
-     */
-    public double[] getLinearEmbedding( final double[] x ) {
-      final int D = x.length;
-      final int D_ = getLinearDimension( D );
-      final double[] y = new double[ D_ ];
-
-      traverseMultiCombination( D, degree, 
-          new TraversalFunction() {
-              int d_ = 0;
-              @Override
-              public void run( int[] powers ) {
-                y[ d_ ] = 1.0;
-                for( int d = 0; d < D; d++ ) {
-                  y[ d_ ] *= Math.pow( x[d], powers[d] );
-                }
-                d_++;
-              }
-          });
-      return y;
-    }
-    public double[][] getLinearEmbedding( final double[][] X ) {
-      int N = X.length;
-      double[][] Y = new double[ N ][];
-
-      for( int n = 0 ; n < N; n ++ ) {
-        Y[n] = getLinearEmbedding( X[n] );
-      }
-
-      return Y;
-    }
   }
 
   /**
@@ -300,7 +248,7 @@ public class MixtureOfExperts implements Serializable {
       double sigma2, WeightDistribution wDistribution, BetaDistribution
       bDistribution, MeanDistribution mDistribution,
       CovarianceDistribution SDistribution ) {
-    return generate( K, D, sigma2, wDistribution, bDistribution, mDistribution, SDistribution, 10.0, true, new NonLinearity() );
+    return generate( K, D, sigma2, wDistribution, bDistribution, mDistribution, SDistribution, 10.0, true, new PolynomialNonLinearity() );
   }
 
   public static MixtureOfExperts generate( GenerationOptions options ) {
@@ -347,7 +295,15 @@ public class MixtureOfExperts implements Serializable {
         throw new NoSuchMethodError();
     }
 
-    NonLinearity nl = new NonLinearity( options.nlDegree );
+    NonLinearity nl;
+    switch(options.nlType) {
+      case "poly":
+        nl = new PolynomialNonLinearity( options.nlDegree ); break;
+      case "fourier":
+        nl = new FourierNonLinearity( options.nlDegree ); break;
+      default:
+        throw new NoSuchMethodError();
+    }
 
     return generate( options.K, options.D, options.sigma2, wDistribution, bDistribution, mDistribution, SDistribution, options.pointSigma, options.bias, nl );
   }
@@ -376,6 +332,8 @@ public class MixtureOfExperts implements Serializable {
 
     @Option(gloss="Non-linearity degree") 
     public int nlDegree = 1;
+    @Option(gloss="Non-linearity type")
+    public String nlType = "poly";
   }
   public static class OutputOptions {
     @Option(gloss="Output file: '-' for STDOUT") 

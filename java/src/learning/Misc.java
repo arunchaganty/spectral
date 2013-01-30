@@ -131,4 +131,25 @@ public class Misc {
     traverseMultiCombination( N, K, 0, 0, accum, fn );
   }
 
+  static void traverseChoices( int N, int K, int n, int[] accum, TraversalFunction fn ) {
+    // Check if we're done choosing
+    if( n == N )
+      fn.run(accum);
+    else {
+      for( int k = 0; k < K; k++ ) {
+        accum[n] = k;
+        traverseChoices(N, K, n+1, accum, fn);
+      }
+    }
+  }
+
+  /**
+   * Traverse all possible choices for $N$ objects with $K$ choices each
+   * $K$ are chosen.
+   */
+  public static void traverseChoices( int N, int K, TraversalFunction fn ) {
+    int[] accum = new int[ N ];
+    traverseChoices( N, K, 0, accum, fn );
+  }
+
 }
