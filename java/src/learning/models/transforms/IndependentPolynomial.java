@@ -95,7 +95,6 @@ public class IndependentPolynomial extends NonLinearity {
     Misc.traverseChoices(D, P, new Misc.TraversalFunction() {
       @Override
       public void run(int[] values) {
-        if( MatrixOps.sum(values) < 1 ) return;
         // With probability, choose this exponent
         if(RandomFactory.randUniform() < selectionProb) {
           boolean qi = isQuadraticallyIndependent(exponents, values);
