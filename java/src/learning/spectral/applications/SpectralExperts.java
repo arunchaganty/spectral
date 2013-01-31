@@ -228,7 +228,6 @@ public class SpectralExperts implements Runnable {
       X = scaleInfo.getValue0(); xScaling = scaleInfo.getValue1();
       scaleInfo = MatrixOps.rowScale(y);
       y = scaleInfo.getValue0(); yScaling = scaleInfo.getValue1().get(0);
-      System.out.println( scaleInfo.getValue1() );
     }
 
     // Consider only the upper triangular half of x x' (because it is symmetric) and construct a vector.
@@ -317,22 +316,19 @@ public class SpectralExperts implements Runnable {
       }
       dB = dB.scale( 1.0/N ).plus( reg, B );
       dB = dB.scale( alpha );
-      System.out.println( i + ": " + err + " dB: " + dB.normF());
-      System.out.println( dB );
+      LogInfo.logs( i + ": " + err + " dB: " + dB.normF());
       B = B.minus(dB);
-      System.out.println( B );
       if( dB.normF() < 1e-5 ) break;
     }
 
-//    if(doScale) { // Unscale B
-//      for( int d = 0; d < D; d++ ) {
-//        for( int d_ = 0; d_ < D; d_++ ) {
-//          double scaling = (yScaling * yScaling) / (xScaling.get(d) * xScaling.get(d_));
-//          B.set( d, d_, B.get(d, d_) * scaling);
-//        }
-//      }
-//    }
-    System.out.println( B );
+    if(doScale) { // Unscale B
+      for( int d = 0; d < D; d++ ) {
+        for( int d_ = 0; d_ < D; d_++ ) {
+          double scaling = (yScaling * yScaling) / (xScaling.get(d) * xScaling.get(d_));
+          B.set( d, d_, B.get(d, d_) * scaling);
+        }
+      }
+    }
 
     return B;
   }

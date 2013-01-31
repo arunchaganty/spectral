@@ -10,9 +10,7 @@ import learning.linalg.MatrixFactory;
 import learning.linalg.RandomFactory;
 import static learning.Misc.*;
 
-import learning.models.transforms.FourierNonLinearity;
-import learning.models.transforms.NonLinearity;
-import learning.models.transforms.PolynomialNonLinearity;
+import learning.models.transforms.*;
 import org.ejml.simple.SimpleMatrix;
 import org.ejml.data.DenseMatrix64F;
 
@@ -101,8 +99,7 @@ public class MixtureOfExperts implements Serializable {
    */
   public Pair<SimpleMatrix, SimpleMatrix> sample( int N ) {
     // Generate n random points
-    //SimpleMatrix X = RandomFactory.multivariateGaussian( mean, cov, N );
-    SimpleMatrix X = RandomFactory.rand( N, D ); X = X.scale( 10.0 );
+    SimpleMatrix X = RandomFactory.rand( N, D ); X = X.scale( 1.0 );
 
     // Add a bias term
     double[][] X_ = MatrixFactory.toArray( X );
@@ -301,6 +298,10 @@ public class MixtureOfExperts implements Serializable {
         nl = new PolynomialNonLinearity( options.nlDegree ); break;
       case "fourier":
         nl = new FourierNonLinearity( options.nlDegree ); break;
+      case "poly-independent":
+        nl = new IndependentPolynomial( options.nlDegree, options.D ); break;
+      case "random-fractional":
+        nl = new FractionalPolynomial( options.nlDegree ); break;
       default:
         throw new NoSuchMethodError();
     }

@@ -212,7 +212,7 @@ public class MixtureOfExperts implements Runnable {
         double delta = (y[n] - MatrixOps.dot( state.betas[k], X[n] ));
         term += state.weights[k] * Math.exp( - 0.5 * delta*delta / state.sigma2 );
       }
-      assert( term < 1.0 );
+      assert( term <= 1.0 );
       lhood += Math.log( term );
     }
 

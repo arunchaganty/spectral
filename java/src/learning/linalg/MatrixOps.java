@@ -61,6 +61,16 @@ public class MatrixOps {
     }
     System.out.printf( "}\n" );
   }
+  public static void printArray( int[][] X ) {
+    System.out.printf( "{ " );
+    for( int i = 0; i < X.length; i++ ) {
+      System.out.printf( "{ " );
+      for( int j = 0; j < X[i].length; j++ )
+        System.out.printf( "%d, ", X[i][j] );
+      System.out.printf( "}\n" );
+    }
+    System.out.printf( "}\n" );
+  }
 
   /**
    * Take the vector dot product of two vectors (as arrays)
@@ -369,6 +379,12 @@ public class MatrixOps {
    * Find the sum of a vector
    */
   public static double sum(double[] x ) {
+    double sum = 0.0;
+    for( int i = 0; i < x.length; i++ )
+      sum += x[i];
+    return sum;
+  }
+  public static double sum(int[] x ) {
     double sum = 0.0;
     for( int i = 0; i < x.length; i++ )
       sum += x[i];

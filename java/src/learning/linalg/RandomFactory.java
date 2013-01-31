@@ -53,6 +53,30 @@ public class RandomFactory {
   }
 
   /**
+   * Generate a single random integer variable
+   * @param lowerBound - lower bound
+   * @param upperBound - upper bound
+   * @return
+   */
+  public static int randInt(int lowerBound, int upperBound) {
+    assert( lowerBound < upperBound );
+    return lowerBound + rand.nextInt(upperBound - lowerBound);
+  }
+  public static int randInt(int upperBound) {
+    return randInt(0, upperBound);
+  }
+
+  public static double randUniform(double lowerBound, double upperBound) {
+    return lowerBound + rand.nextDouble() * (upperBound - lowerBound);
+  }
+  public static double randUniform(double upperBound) {
+    return randUniform(0, upperBound);
+  }
+  public static double randUniform() {
+    return randUniform(0, 1);
+  }
+
+  /**
    * Generate a random orthogonal 'd' dimensional matrix, using the
    * the technique described in: Francesco Mezzadri, "How to generate 
    * random matrices from the classical compact groups" 
