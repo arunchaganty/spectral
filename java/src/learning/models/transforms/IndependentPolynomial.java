@@ -20,7 +20,7 @@ public class IndependentPolynomial extends NonLinearity {
     this.degree = degree;
     this.dimension = dimension;
     this.exponents = computeExponents(dimension, degree);
-    MatrixOps.printArray(exponents);
+//    MatrixOps.printArray(exponents);
   }
 
   public static boolean isQuadraticallyIndependent(Collection<int[]> set, int[] candidate) {
