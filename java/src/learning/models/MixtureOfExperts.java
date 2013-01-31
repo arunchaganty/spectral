@@ -21,10 +21,7 @@ import fig.basic.Option;
 import fig.basic.OptionsParser;
 import fig.exec.Execution;
 
-import java.io.FileOutputStream;
-import java.io.ObjectOutputStream;
-import java.io.IOException;
-import java.io.Serializable;
+import java.io.*;
 
 import java.util.Random;
 
@@ -337,11 +334,26 @@ public class MixtureOfExperts implements Serializable {
     public String nlType = "poly";
   }
   public static class OutputOptions {
-    @Option(gloss="Output file: '-' for STDOUT") 
+    @Option(gloss="Print binary file in plain text and exit")
+    public String inputPath = null;
+
+    @Option(gloss="Output file: '-' for STDOUT")
     public String outputPath = "-";
 
     @Option(gloss="Number of points") 
     public double N = 1e3;
+  }
+
+  @SuppressWarnings("unchecked")
+  public static Pair< Pair< SimpleMatrix, SimpleMatrix >, MixtureOfExperts >
+  readFromFile( String filename ) throws IOException, ClassNotFoundException {
+    ObjectInputStream in = new ObjectInputStream( new FileInputStream( filename ) );
+
+    Pair<SimpleMatrix,SimpleMatrix> yX = (Pair<SimpleMatrix,SimpleMatrix>) in.readObject();
+    MixtureOfExperts model = (MixtureOfExperts) in.readObject();
+    in.close();
+
+    return new Pair<>( yX, model );
   }
 
   /**
@@ -353,6 +365,24 @@ public class MixtureOfExperts implements Serializable {
     OptionsParser parser = new OptionsParser( genOptions, outOptions );
     if( !parser.parse( args ) ) {
       return;
+    }
+    // If this has been enabled, just grok the file and exit
+    if( outOptions.inputPath != null ) {
+      try{
+        Pair<Pair<SimpleMatrix, SimpleMatrix>, MixtureOfExperts> data = readFromFile(outOptions.inputPath);
+        SimpleMatrix y = data.getValue0().getValue0();
+        SimpleMatrix X = data.getValue0().getValue1();
+
+        int N = X.numRows();
+        for( int i = 0; i < N; i++ ) {
+          for( int d = 0; d < X.numCols(); d++ )
+            System.out.printf( "%f ", X.get(i,d) );
+          System.out.printf( "%f\n", y.get(i) );
+        }
+      } catch(IOException | ClassNotFoundException e) {
+        System.err.println("Corrupt or unreadable input file");
+      }
+      System.exit(0);
     }
     MixtureOfExperts model = MixtureOfExperts.generate( genOptions );
 

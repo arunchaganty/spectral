@@ -271,23 +271,12 @@ public class MixtureOfExperts implements Runnable {
   @Option(gloss="Difference between iterations before stopping") 
   public double eps = 1e-3;
 
-  @SuppressWarnings("unchecked")
-  public Pair< Pair< SimpleMatrix, SimpleMatrix >, learning.models.MixtureOfExperts > 
-      readFromFile( String filename ) throws IOException, ClassNotFoundException {
-		ObjectInputStream in = new ObjectInputStream( new FileInputStream( filename ) ); 
-
-    Pair<SimpleMatrix,SimpleMatrix> yX = (Pair<SimpleMatrix,SimpleMatrix>) in.readObject();
-    learning.models.MixtureOfExperts model = (learning.models.MixtureOfExperts) in.readObject();
-		in.close();
-
-    return new Pair<>( yX, model );
-  }
-
   @Override
   public void run() {
     // Read data from a file
     try {
-      Pair< Pair<SimpleMatrix, SimpleMatrix>, learning.models.MixtureOfExperts > data = readFromFile( inputPath );
+      Pair< Pair<SimpleMatrix, SimpleMatrix>, learning.models.MixtureOfExperts > data =
+              learning.models.MixtureOfExperts.readFromFile( inputPath );
       SimpleMatrix y = data.getValue0().getValue0();
       SimpleMatrix X = data.getValue0().getValue1();
       learning.models.MixtureOfExperts model = data.getValue1();

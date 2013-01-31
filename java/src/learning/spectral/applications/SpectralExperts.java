@@ -429,18 +429,6 @@ public class SpectralExperts implements Runnable {
     return algo.algorithmB( K, Pairs,  Pairs, Triples );
   }
 
-  @SuppressWarnings("unchecked")
-  public Pair< Pair< SimpleMatrix, SimpleMatrix >, learning.models.MixtureOfExperts >
-  readFromFile( String filename ) throws IOException, ClassNotFoundException {
-    ObjectInputStream in = new ObjectInputStream( new FileInputStream( filename ) );
-
-    Pair<SimpleMatrix,SimpleMatrix> yX = (Pair<SimpleMatrix,SimpleMatrix>) in.readObject();
-    learning.models.MixtureOfExperts model = (learning.models.MixtureOfExperts) in.readObject();
-    in.close();
-
-    return new Pair<>( yX, model );
-  }
-
   public void enableAnalysis(MixtureOfExperts model, boolean saveToExecution) {
     analysis = new SpectralExpertsAnalysis(model);
     analysis.saveToExecution = saveToExecution;
@@ -453,7 +441,8 @@ public class SpectralExperts implements Runnable {
 	public void run() {
     try {
       // Read data from a file
-      Pair< Pair<SimpleMatrix, SimpleMatrix>, learning.models.MixtureOfExperts > data = readFromFile( inputPath );
+      Pair< Pair<SimpleMatrix, SimpleMatrix>, learning.models.MixtureOfExperts > data =
+              MixtureOfExperts.readFromFile( inputPath );
       SimpleMatrix y = data.getValue0().getValue0();
       SimpleMatrix X = data.getValue0().getValue1();
       learning.models.MixtureOfExperts model = data.getValue1();
