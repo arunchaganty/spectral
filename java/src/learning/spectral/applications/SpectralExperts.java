@@ -256,6 +256,7 @@ public class SpectralExperts implements Runnable {
     }
     else
       bEntries = A.solve(b);
+    LogInfo.logsForce( "Condition Number for Pairs: " + A.conditionP2());
 
     // Reconstruct $B$ from $x$
     SimpleMatrix B = new SimpleMatrix(D, D);
@@ -379,6 +380,7 @@ public class SpectralExperts implements Runnable {
       Pair<SimpleMatrix, SimpleMatrix> Ab = regularize(A, b, reg);
       A = Ab.getValue0(); b = Ab.getValue1();
     }
+    LogInfo.logsForce( "Condition Number for Triples: " + A.conditionP2());
     SimpleMatrix bEntries = A.solve(b);
 
     // Reconstruct $B$ from $x$
@@ -448,6 +450,8 @@ public class SpectralExperts implements Runnable {
       learning.models.MixtureOfExperts model = data.getValue1();
       enableAnalysis(model, true);
       analysis.checkDataSanity(y, X);
+
+      LogInfo.logs("basis", MatrixOps.arrayToString(model.getNonLinearity().getExponents()));
 
       // Set K from the model if it hasn't been provided
       if( K < 1 )

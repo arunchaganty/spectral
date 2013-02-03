@@ -298,7 +298,7 @@ public class MixtureOfExperts implements Serializable {
       case "poly-independent":
         nl = new IndependentPolynomial( options.nlDegree, options.D ); break;
       case "random-fractional":
-        nl = new FractionalPolynomial( options.nlDegree ); break;
+        nl = new FractionalPolynomial( options.nlDegree, options.D ); break;
       default:
         throw new NoSuchMethodError();
     }

@@ -14,19 +14,24 @@ import java.util.Collection;
 public class IndependentPolynomial extends NonLinearity {
   double degree;
   int dimension;
-  int[][] exponents;
+  double[][] exponents;
 
   public IndependentPolynomial(int degree, int dimension) {
     this.degree = degree;
     this.dimension = dimension;
     this.exponents = computeExponents(dimension, degree);
-//    MatrixOps.printArray(exponents);
+    MatrixOps.printArray(exponents);
   }
 
-  public static boolean isQuadraticallyIndependent(Collection<int[]> set, int[] candidate) {
+  @Override
+  public double[][] getExponents() {
+    return exponents;
+  }
+
+  public static boolean isQuadraticallyIndependent(Collection<double[]> set, double[] candidate) {
     int D = candidate.length;
-    for( int[] x1 : set ) {
-      for( int[] x2 : set ) {
+    for( double[] x1 : set ) {
+      for( double[] x2 : set ) {
         assert( x1.length ==  D);
         // Check if this exponent is the sum of any other two or vice versa.
         boolean isSum = true;
@@ -44,11 +49,11 @@ public class IndependentPolynomial extends NonLinearity {
     }
     return true;
   }
-  public static boolean isCubicallyIndependent(Collection<int[]> set, int[] candidate) {
+  public static boolean isCubicallyIndependent(Collection<double[]> set, double[] candidate) {
     int D = candidate.length;
-    for( int[] x1 : set ) {
-      for( int[] x2 : set ) {
-        for( int[] x3 : set ) {
+    for( double[] x1 : set ) {
+      for( double[] x2 : set ) {
+        for( double[] x3 : set ) {
           assert( x1.length ==  D);
           // Check if this exponent is the sum of any other two or vice versa.
           boolean isSum = true, isSummed1 = true, isSummed2 = true, isSummed3 = true;
@@ -73,14 +78,14 @@ public class IndependentPolynomial extends NonLinearity {
    * @param degree
    * @return
    */
-  public static int[][] computeExponents(int dimension, int degree) {
+  public static double[][] computeExponents(int dimension, int degree) {
     // Compute the possible exponents using a sieve
     // NOTE: By extension of J. Steinhardt's probabilistic method arguments,
     // it should be (deg)^4, but that sounds pretty bad, so let's lop off
     // a degree and terminate early
     final int D = dimension; int P = degree;
     final double selectionProb = 1.0; ///Math.pow(P,1.0);
-    final ArrayList<int[]> exponents = new ArrayList<>();
+    final ArrayList<double[]> exponents = new ArrayList<>();
 
     // Add a bias
     // exponents.add( new int[D] );
@@ -94,7 +99,9 @@ public class IndependentPolynomial extends NonLinearity {
     // Try each of the P choices of degree D
     Misc.traverseChoices(D, P, new Misc.TraversalFunction() {
       @Override
-      public void run(int[] values) {
+      public void run(int[] values_) {
+        double[] values = new double[values_.length];
+        for(int i = 0; i < values_.length; i++ ) values[i] = values_[i];
         // With probability, choose this exponent
         if(RandomFactory.randUniform() < selectionProb) {
           boolean qi = isQuadraticallyIndependent(exponents, values);
@@ -108,7 +115,7 @@ public class IndependentPolynomial extends NonLinearity {
       }
     });
 
-    return exponents.toArray(new int[][] {});
+    return exponents.toArray(new double[][] {});
   }
 
   /**

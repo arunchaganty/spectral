@@ -51,25 +51,37 @@ public class MatrixOps {
   /**
    * Print entries of a arrays
    */
-  public static void printArray( double[][] X ) {
-    System.out.printf( "{ " );
+  public static String arrayToString( double[][] X ) {
+    String out = "";
+    out += "{\n";
     for( int i = 0; i < X.length; i++ ) {
-      System.out.printf( "{ " );
+      out += "{ ";
       for( int j = 0; j < X[i].length; j++ )
-        System.out.printf( "%f, ", X[i][j] );
-      System.out.printf( "}\n" );
+        out += String.valueOf(X[i][j]) + ", ";
+      out += "}\n";
     }
-    System.out.printf( "}\n" );
+    out += "}";
+
+    return out;
+  }
+  public static String arrayToString( int[][] X ) {
+    String out = "";
+    out += "{\n";
+    for( int i = 0; i < X.length; i++ ) {
+      out += "{ ";
+      for( int j = 0; j < X[i].length; j++ )
+        out += String.valueOf(X[i][j]) + ", ";
+      out += "}\n";
+    }
+    out += "}";
+
+    return out;
+  }
+  public static void printArray( double[][] X ) {
+    System.out.println( arrayToString(X));
   }
   public static void printArray( int[][] X ) {
-    System.out.printf( "{ " );
-    for( int i = 0; i < X.length; i++ ) {
-      System.out.printf( "{ " );
-      for( int j = 0; j < X[i].length; j++ )
-        System.out.printf( "%d, ", X[i][j] );
-      System.out.printf( "}\n" );
-    }
-    System.out.printf( "}\n" );
+    System.out.println( arrayToString(X));
   }
 
   /**
@@ -769,8 +781,6 @@ public class MatrixOps {
     }
     return logsum;
   }
-
-
 }
 
 
