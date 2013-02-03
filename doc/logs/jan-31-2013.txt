@@ -1,0 +1,18 @@
+% January 31st 2013
+
+We briefly met to discuss some of the results. We have several examples where
+"spectral + EM" performs more reliably than EM does - and the nature of getting
+closer to the global minima for EM is very apparent. The next step, in Percy's
+perspective, is to be able to clearly show this relation between EM and
+spectral, which is certainly a very interesting contribution. I hope to get some
+tantalizing graphs soon.
+
+Over the past few days, we tried figuring out a good "monomial" basis set. It
+was quickly apparent that the behaviour of the Fourier series was no better than
+polynomials (which arguably is to be expected, given their dual nature). It
+wasn't such a difficult job to generate them ourselves of course.
+
+Random fractionals are much worse conditioned than the polynomials (to be
+expected). The hyper-surfaces for the "cubically independent" monomials was
+quite interesting.
+
