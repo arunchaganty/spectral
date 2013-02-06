@@ -1,0 +1,17 @@
+% February 04, 2013  
+
+I spent the day plotting the lines fit by EM across iterations. The
+initialization given by spectral are very interesting; they pull the curves far
+apart from each other, and prevent EM from falling into local minima.
+
+Percy and I met to discuss these curves; they are interesting enough I think to
+find a place in our paper. Next on our agenda, in terms of priority are,
+
+#. Writing!
+#. Tensor power method.
+#. Is recovering $B^{\otimes}$ using the trace method is important.
+#. What is the relation to K-Means++.
+#. Experiments over a "motion" dataset.
+
+It's hardly a week to deadline! Move move move!
+

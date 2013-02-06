@@ -1,0 +1,31 @@
+% February 05, 2013  
+
+I spent a large part of today trying to implement the tensor power method. For
+"an orthogonal tensor", i.e. $T = \sum_i \lambda_i v_i \otimes v_i \otimes v_i$
+with $v_i$ being orthogonal, the algorithm is very simple,
+
+\begin{eqnarray}
+  \theta &\gets& \textrm{Random initialization on the unit sphere} \\
+  \theta &\gets& T(I, \theta, \theta) \\
+  \theta &\gets& \frac{\theta}{\|\theta\|}.
+\end{eqnarray}
+
+And this is looped till convergence. Interestingly, the eigenvalues/eigenvectors
+of a tensor aren't unique - this is because the eigenvector equation itself
+isn't linear! 
+
+This is one of the reasons we need to take an orthogonal tensor. Even so, the
+algorithm is _not_ guaranteed to converge to the _largest_ eigenvector, so we
+need to run in a couple of times. This might be a practical problem. A possible
+solution is to run it a number of times and extract an orthogonal basis set for
+it.
+
+To extend the approach to a general symmetric tensor, we take $T \to T(W,W,W)$,
+where $W$ whitens $V = [v_1 | ... | v_n]$. The eigenvalues of this tensor are
+$\frac{1}{\sqrt{\lambda_i}}$ and eigenvectors are $W^T v_i$; we can recover
+$\lambda_i$ and $v_i$ by suitable inversions.
+
+My implementation worked perfectly fine on orthogonal tensors, but is failing
+for some reason on general tensors.
+
+
