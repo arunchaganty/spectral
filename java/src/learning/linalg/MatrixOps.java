@@ -124,10 +124,19 @@ public class MatrixOps {
     return equal( x1, x2, EPS_ZERO );
   }
 
+  public static boolean isVector( DenseMatrix64F X ) {
+    return X.numCols == 1 || X.numRows == 1;
+  }
+  public static boolean isVector( SimpleMatrix X ) {
+    return X.numCols() == 1 || X.numRows() == 1;
+  }
+
   /**
    * Test whether two matrices are within eps of each other
    */
   public static boolean allclose( DenseMatrix64F X1, DenseMatrix64F X2, double eps ) {
+    if( isVector(X1) && isVector(X2) )
+      return allclose( X1.data, X2.data, eps );
     assert( X1.numRows == X2.numRows );
     assert( X1.numCols == X2.numCols );
 
@@ -272,7 +281,7 @@ public class MatrixOps {
    * Compute the average outer product of each row of X1 and X2
    */
   public static DenseMatrix64F Pairs( DenseMatrix64F X1, DenseMatrix64F X2 ) {
-    assert( X1.numRows == X2.numCols );
+    assert( X1.numRows == X2.numRows );
 
     int nRows = X1.numRows;
     int n = X1.numCols;
@@ -589,7 +598,7 @@ public class MatrixOps {
 
   /**
    * Project each column of X onto a simplex in place
-   * @param X
+   * @param x
    * @return
    */
   public static void projectOntoSimplex( double[] x ) {
@@ -635,14 +644,13 @@ public class MatrixOps {
    */
   public static int rank( SimpleMatrix X, double eps ) {
     // HACK: X.svd().rank() does not give the right rank for some reason.
-    SimpleMatrix W = X.svd().getW(); 
+    SimpleMatrix W = X.svd().getW();
+    int upperBound = ( W.numRows() < W.numCols() ) ? W.numRows() : W.numCols();
 
-    for( int i = 0; i < W.numRows(); i++ )
-    {
+    for( int i = 0; i < upperBound; i++ )
       if( W.get( i, i ) < eps ) return i;
-    }
 
-    return W.numRows();
+    return upperBound;
   }
 
   public static int rank( SimpleMatrix X ) {

@@ -14,6 +14,9 @@ public interface Tensor {
    * @return
    */
   public SimpleMatrix project( int axis, SimpleMatrix theta );
+  public SimpleMatrix project2( int axis1, int axis2, SimpleMatrix theta1, SimpleMatrix theta2 );
+  public double project3(SimpleMatrix theta1, SimpleMatrix theta2, SimpleMatrix theta3);
   public int getDim( int axis );
+
 }
 

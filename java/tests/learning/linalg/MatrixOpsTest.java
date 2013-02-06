@@ -431,4 +431,21 @@ public class MatrixOpsTest {
     Assert.assertFalse( MatrixOps.equal( 1.0, 0.99 ) );
   }
 
+  @Test
+  public void rowStack() {
+    double[][] X_ = {
+            { 0.2740856 ,  0.61844862,  0.84960229},
+            { 0.76229792,  0.78220896, -0.32681905},
+            { 0.58632667, -0.07530232,  0.41396288}};
+    SimpleMatrix X = new SimpleMatrix(X_);
+
+    SimpleMatrix[] Xrows = new SimpleMatrix[3];
+    for( int i = 0; i < 3; i++ )
+      Xrows[i] = MatrixFactory.fromVector(X_[i]);
+    SimpleMatrix Y = MatrixFactory.rowStack(Xrows);
+    SimpleMatrix Z = MatrixFactory.columnStack(Xrows);
+
+    Assert.assertTrue( MatrixOps.allclose( X, Y ) );
+    Assert.assertTrue( MatrixOps.allclose( X.transpose(), Z ) );
+  }
 }

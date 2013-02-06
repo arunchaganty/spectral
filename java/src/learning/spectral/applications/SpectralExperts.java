@@ -186,7 +186,7 @@ public class SpectralExperts implements Runnable {
 
   public static Pair<SimpleMatrix, Tensor> computeExactMoments( SimpleMatrix weights, SimpleMatrix betas ) {
     SimpleMatrix Pairs = betas.mult( MatrixFactory.diag( weights ) ).mult( betas.transpose() );
-    ExactTensor Triples = new ExactTensor( weights, betas, betas, betas );
+    FullTensor Triples = FullTensor.fromDecomposition( weights, betas );
 
     return new Pair<SimpleMatrix, Tensor>( Pairs, Triples );
   }
@@ -462,8 +462,8 @@ public class SpectralExperts implements Runnable {
       analysis.reportBetas(betas_);
       if( runEM ) {
         learning.em.MixtureOfExperts.Parameters initState = new learning.em.MixtureOfExperts.Parameters(
-                this.K, D, MatrixFactory.ones(K).scale(1.0/K), betas_.transpose(), 0.1);
-        learning.em.MixtureOfExperts emAlgo = new learning.em.MixtureOfExperts(K, D);
+                this.K, MatrixFactory.ones(K).scale(1.0/K), betas_.transpose(), 0.1);
+        learning.em.MixtureOfExperts emAlgo = new learning.em.MixtureOfExperts(K);
         learning.em.MixtureOfExperts.Parameters params = emAlgo.run( y, X, initState);
         SimpleMatrix betasEM = (new SimpleMatrix( params.betas )).transpose();
         analysis.reportBetasEM(betasEM);

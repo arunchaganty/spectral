@@ -34,16 +34,14 @@ public class MixtureOfExperts implements Runnable {
   
   public static class Parameters {
     public int K;
-    public int D;
 
     public double[] weights;
     // Each beta is stored as a row
     public double[][] betas;
     public double sigma2;
 
-    public Parameters( int K, int D, double[] weights, double[][] betas, double sigma2 ) {
+    public Parameters( int K, double[] weights, double[][] betas, double sigma2 ) {
       this.K = K;
-      this.D = D;
       this.weights = weights;
       this.betas = betas;
       this.sigma2 = sigma2;
@@ -51,14 +49,12 @@ public class MixtureOfExperts implements Runnable {
 
     /**
      * @param K
-     * @param D
      * @param weights
      * @param betas - The regression coefficients in K x D form.
      * @param sigma2
      */
-    public Parameters( int K, int D, SimpleMatrix weights, SimpleMatrix betas, double sigma2 ) {
+    public Parameters( int K, SimpleMatrix weights, SimpleMatrix betas, double sigma2 ) {
       this.K = K;
-      this.D = D;
       this.weights = MatrixFactory.toVector( weights );
       this.betas = MatrixFactory.toArray( betas );
       this.sigma2 = sigma2;
@@ -69,7 +65,6 @@ public class MixtureOfExperts implements Runnable {
      * */
     public Parameters( int K, int D ) {
       this.K = K;
-      this.D = D;
 
       weights = new double[K];
       for( int k = 0; k < K; k++ )
@@ -91,18 +86,16 @@ public class MixtureOfExperts implements Runnable {
           betas[k][d] = RandomFactory.randn(1.0);
       double sigma2 = 1.0;
 
-      return new Parameters( K, D, weights, betas, sigma2 );
+      return new Parameters( K, weights, betas, sigma2 );
     }
   }
 
   public int K = 2;
-  public int D = 3;
 
   protected MixtureOfExperts() {}
 
-  public MixtureOfExperts( int K, int D ) {
+  public MixtureOfExperts( int K ) {
     this.K = K;
-    this.D = D;
   }
 
   /**
@@ -112,6 +105,7 @@ public class MixtureOfExperts implements Runnable {
    */
   public double[][] computeResponsibilities( double[] y, double[][] X, Parameters state ) {
     int N = X.length;
+    int D = X[0].length;
 
     double[][] R = new double[N][K]; 
 
@@ -149,6 +143,7 @@ public class MixtureOfExperts implements Runnable {
    */
   public Parameters updateParameters( double[] y, double[][] X, Parameters state, double[][] responsibilities ) {
     int N = X.length;
+    int D = X[0].length;
 
     double[] weights = new double[K];
     double[][] betas = new double[K][D];
@@ -193,7 +188,7 @@ public class MixtureOfExperts implements Runnable {
       }
     }
     
-    return new Parameters( K, D, weights, betas, sigma2 );
+    return new Parameters( K, weights, betas, sigma2 );
   }
 
   /**
@@ -202,6 +197,7 @@ public class MixtureOfExperts implements Runnable {
    */
   public double computeLogLikelihood( double[] y, double[][] X, Parameters state, double[][] responsibilities ) {
     int N = X.length;
+    int D = X[0].length;
 
     double lhood = 0.0;
 
@@ -227,7 +223,6 @@ public class MixtureOfExperts implements Runnable {
   public Parameters run( double[] y, double[][] X, Parameters state ) {
     LogInfo.begin_track( "MixtureOfExperts-em" );
     double old_lhood = Double.NEGATIVE_INFINITY;
-    Parameters old_state = state;
 
     for( int i = 0; i < iters; i++ ) {
       double[][] responsibilities = computeResponsibilities( y, X, state );
@@ -242,7 +237,6 @@ public class MixtureOfExperts implements Runnable {
         break;
 
       old_lhood = lhood;
-      old_state = state;
     }
 
     LogInfo.end_track( "MixtureOfExperts-em" );
@@ -250,7 +244,7 @@ public class MixtureOfExperts implements Runnable {
     return state;
   }
   public Parameters run( double[] y, double[][] X ) {
-    assert( D == X[0].length );
+    int D = X[0].length;
     Parameters state = Parameters.random(K, D);
     return run( y, X, state );
   }
@@ -284,7 +278,6 @@ public class MixtureOfExperts implements Runnable {
 
       // Recover paramaters
       this.K = model.getK();
-      this.D = X.numCols();
 
       Parameters params = run( y, X );
       SimpleMatrix betas_ = (new SimpleMatrix( params.betas )).transpose();

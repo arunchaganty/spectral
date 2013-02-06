@@ -6,12 +6,7 @@
 
 package learning.spectral;
 
-import learning.linalg.MatrixOps;
-import learning.linalg.MatrixFactory;
-import learning.linalg.RandomFactory;
-import learning.linalg.Tensor;
-import learning.linalg.SimpleTensor;
-import learning.linalg.ExactTensor;
+import learning.linalg.*;
 import learning.exceptions.RecoveryFailure;
 import learning.exceptions.NumericalException;
 
@@ -140,7 +135,7 @@ public class MultiViewMixture {
     // Compute the moments
     SimpleMatrix P12 = M1.mult( MatrixFactory.diag( weights ) ).mult( M2.transpose() );
     SimpleMatrix P13 = M1.mult( MatrixFactory.diag( weights ) ).mult( M3.transpose() );
-    ExactTensor P123 = new ExactTensor( weights, M1, M2, M3 );
+    FullTensor P123 = FullTensor.fromDecomposition( weights, M1, M2, M3 );
 
     return new Triplet<SimpleMatrix, SimpleMatrix, Tensor>( P12, P13, P123 );
   }
