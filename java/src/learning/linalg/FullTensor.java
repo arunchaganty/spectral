@@ -192,11 +192,19 @@ public class FullTensor implements Tensor {
    * @return
    */
   public FullTensor rotate(SimpleMatrix M1, SimpleMatrix M2, SimpleMatrix M3) {
-    FullTensor Y = this;
-    if(M1 != null) Y = Y.rotate(0, M1);
-    if(M2 != null) Y = Y.rotate(1, M1);
-    if(M3 != null) Y = Y.rotate(2, M1);
-    return Y;
+    double[][][] Y = X.clone();
+    for(int d1 = 0; d1 < D1; d1++) {
+      for(int d2 = 0; d2 < D2; d2++) {
+        for(int d3 = 0; d3 < D3; d3++) {
+          Y[d1][d2][d3] = 0;
+          for(int l1 = 0; l1 < D1; l1++)
+            for(int l2 = 0; l2 < D2; l2++)
+              for(int l3 = 0; l3 < D3; l3++)
+                Y[d1][d2][d3] += X[l1][l2][l3] * M1.get(l1, d1) * M2.get(l2, d2) * M3.get(l3, d3);
+        }
+      }
+    }
+    return new FullTensor(Y);
   }
 
   @Override

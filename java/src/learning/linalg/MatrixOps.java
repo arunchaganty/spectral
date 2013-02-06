@@ -714,6 +714,27 @@ public class MatrixOps {
   }
 
   /**
+   * Get the sqrt of a diagonal matrix
+   * @param X
+   * @return
+   */
+  public static SimpleMatrix sqrt( SimpleMatrix X ) {
+    double[] diagonal = MatrixFactory.toVector(X.extractDiag());
+    for(int i = 0; i < diagonal.length; i++) {
+      diagonal[i] = Math.sqrt(diagonal[i]);
+    }
+    return MatrixFactory.diag(MatrixFactory.fromVector(diagonal));
+  }
+
+
+  public static SimpleMatrix whitener( SimpleMatrix X ) {
+    SimpleSVD UWV = X.svd();
+    SimpleMatrix U = UWV.getU();
+    SimpleMatrix W = UWV.getW();
+    return U.mult( sqrt( W ).invert() );
+  }
+
+  /**
    * Align the rows of matrix X so that the rows/columns are matched with the
    * columns of Y
    */

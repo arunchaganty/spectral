@@ -448,4 +448,20 @@ public class MatrixOpsTest {
     Assert.assertTrue( MatrixOps.allclose( X, Y ) );
     Assert.assertTrue( MatrixOps.allclose( X.transpose(), Z ) );
   }
+
+  @Test
+  public void whitener() {
+    double[][] X_ = {
+            { 0.2740856 ,  0.61844862,  0.84960229},
+            { 0.76229792,  0.78220896, -0.32681905},
+            { 0.58632667, -0.07530232,  0.41396288}};
+    SimpleMatrix X = new SimpleMatrix(X_);
+    SimpleMatrix Y = X.mult(X.transpose());
+
+    SimpleMatrix W = MatrixOps.whitener(Y);
+    SimpleMatrix z = W.mult(X);
+    SimpleMatrix Z = z.mult(z.transpose());
+
+    Assert.assertTrue( MatrixOps.allclose( W.transpose().mult(Y).mult(W), SimpleMatrix.identity(3) ) );
+  }
 }
