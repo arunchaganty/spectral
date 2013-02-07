@@ -728,10 +728,19 @@ public class MatrixOps {
 
 
   public static SimpleMatrix whitener( SimpleMatrix X ) {
+    SimpleSVD UDV = X.svd();
+    SimpleMatrix U = UDV.getU();
+    SimpleMatrix D = UDV.getW();
+    SimpleMatrix Dsqrtinv = sqrt( D ).invert();
+//    return Dsqrtinv.mult(U.transpose());
+    return U.mult(Dsqrtinv);
+    //return (U.mult( sqrt( W ) )).invert();
+  }
+  public static SimpleMatrix colorer( SimpleMatrix X ) {
     SimpleSVD UWV = X.svd();
     SimpleMatrix U = UWV.getU();
     SimpleMatrix W = UWV.getW();
-    return U.mult( sqrt( W ).invert() );
+    return U.mult( sqrt( W ) );
   }
 
   /**

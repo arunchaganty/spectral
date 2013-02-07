@@ -1,5 +1,6 @@
 package learning.linalg;
 
+import fig.basic.LogInfo;
 import org.ejml.simple.SimpleMatrix;
 import org.ejml.simple.SimpleSVD;
 import org.javatuples.Pair;
@@ -32,7 +33,8 @@ public class TensorFactorization {
         SimpleMatrix theta_ = T.project2(1, 2, theta, theta);
         // Normalize
         theta_ = theta_.scale(1.0 / MatrixOps.norm(theta_));
-        if( MatrixOps.norm(theta_.minus(theta)) < EPS_CLOSE ) {
+        double err = MatrixOps.norm(theta_.minus(theta));
+        if( err < EPS_CLOSE ) {
           theta = theta_; break;
         } else {
           theta = theta_;
@@ -96,7 +98,7 @@ public class TensorFactorization {
     return new Pair<>(MatrixFactory.fromVector(eigenvalues), MatrixFactory.columnStack(eigenvectors));
   }
   public static Pair<SimpleMatrix, SimpleMatrix> eigendecompose( FullTensor T, int K ) {
-    return eigendecompose(T, K, 100, 10);
+    return eigendecompose(T, K, 500, 20);
   }
   public static Pair<SimpleMatrix, SimpleMatrix> eigendecompose( FullTensor T ) {
     int K = T.getDim(0);
@@ -112,7 +114,7 @@ public class TensorFactorization {
   public static Pair<SimpleMatrix, SimpleMatrix> eigendecompose( FullTensor T, SimpleMatrix P ) {
     // Whiten
     SimpleMatrix W = MatrixOps.whitener(P);
-    SimpleMatrix Wt = W.transpose();
+    SimpleMatrix Winv = MatrixOps.colorer(P);
     T = T.rotate(W,W,W);
     Pair<SimpleMatrix, SimpleMatrix> pair = eigendecompose(T);
 
@@ -120,10 +122,20 @@ public class TensorFactorization {
     SimpleMatrix eigenvalues = pair.getValue0();
     SimpleMatrix eigenvectors = pair.getValue1();
 
+    int K = eigenvalues.getNumElements();
+    int D = T.getDim(0);
+    // Scale the vectors by 1/sqrt(eigenvalues);
+    {
+      double[][] eigenvectors_ = MatrixFactory.toArray(eigenvectors);
+      for( int k = 0; k < K; k++ )
+        for( int d = 0; d < D; d++ )
+          eigenvectors.set(d,k, eigenvectors.get(d,k) * eigenvalues.get(k) ) ;
+    }
+    eigenvectors = Winv.mult( eigenvectors );
+
     // Eigenvalues are 1/sqrt(w); w is what we want.
-    for(int i = 0; i < eigenvalues.getNumElements(); i++)
+    for(int i = 0; i < K; i++)
       eigenvalues.set( i, Math.pow(eigenvalues.get(i), -2) );
-    eigenvectors = Wt.pseudoInverse().mult( eigenvectors );
 
     return new Pair<>(eigenvalues, eigenvectors);
   }

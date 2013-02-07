@@ -163,19 +163,32 @@ public class FullTensor implements Tensor {
    * @return
    */
   public FullTensor rotate(int axis, SimpleMatrix M) {
-    double[][][] Y = X.clone();
-    for(int d1 = 0; d1 < D1; d1++) {
-      for(int d2 = 0; d2 < D2; d2++) {
-        for(int d3 = 0; d3 < D3; d3++) {
-          Y[d1][d2][d3] = 0;
-          for(int k = 0; k < getDim(axis); k++)
+    assert( 0 <= axis && axis <= 2 );
+
+    int L1, L2, L3;
+    switch(axis) {
+      case 0: L1 = M.numCols(); L2 = D2; L3 = D3; break;
+      case 1: L1 = D1; L2 = M.numCols(); L3 = D3; break;
+      case 2: L1 = D1; L2 = D2; L3 = M.numCols(); break;
+      default:
+        throw new NoSuchMethodError("invalid axis");
+    }
+
+    double[][][] Y = new double[L1][L2][L3];
+    for(int l1 = 0; l1 < L1; l1++) {
+      for(int l2 = 0; l2 < L2; l2++) {
+        for(int l3 = 0; l3 < L3; l3++) {
+          Y[l1][l2][l3] = 0;
+          for(int d = 0; d < getDim(axis); d++)
             switch(axis) {
+              case 0:
+                Y[l1][l2][l3] += X[d][l2][l3] * M.get(d, l1); break;
               case 1:
-                Y[d1][d2][d3] += X[k][d2][d3] * M.get(k, d1); break;
+                Y[l1][l2][l3] += X[l1][d][l3] * M.get(d, l2); break;
               case 2:
-                Y[d1][d2][d3] += X[d1][k][d3] * M.get(k, d2); break;
-              case 3:
-                Y[d1][d2][d3] += X[d1][d2][k] * M.get(k, d3); break;
+                Y[l1][l2][l3] += X[l1][l2][d] * M.get(d, l3); break;
+              default:
+                throw new NoSuchMethodError("Invalid axis");
             }
         }
       }
@@ -192,19 +205,25 @@ public class FullTensor implements Tensor {
    * @return
    */
   public FullTensor rotate(SimpleMatrix M1, SimpleMatrix M2, SimpleMatrix M3) {
-    double[][][] Y = X.clone();
-    for(int d1 = 0; d1 < D1; d1++) {
-      for(int d2 = 0; d2 < D2; d2++) {
-        for(int d3 = 0; d3 < D3; d3++) {
-          Y[d1][d2][d3] = 0;
-          for(int l1 = 0; l1 < D1; l1++)
-            for(int l2 = 0; l2 < D2; l2++)
-              for(int l3 = 0; l3 < D3; l3++)
-                Y[d1][d2][d3] += X[l1][l2][l3] * M1.get(l1, d1) * M2.get(l2, d2) * M3.get(l3, d3);
-        }
-      }
-    }
-    return new FullTensor(Y);
+    FullTensor Y = this.rotate(0, M1);
+    Y = Y.rotate(1, M2);
+    Y = Y.rotate(2, M3);
+
+    return Y;
+
+    // Buggy method?
+//    for(int d1 = 0; d1 < D1; d1++) {
+//      for(int d2 = 0; d2 < D2; d2++) {
+//        for(int d3 = 0; d3 < D3; d3++) {
+//          Y[d1][d2][d3] = 0;
+//          for(int l1 = 0; l1 < D1; l1++)
+//            for(int l2 = 0; l2 < D2; l2++)
+//              for(int l3 = 0; l3 < D3; l3++)
+//                Y[d1][d2][d3] += X[l1][l2][l3] * M1.get(l1, d1) * M2.get(l2, d2) * M3.get(l3, d3);
+//        }
+//      }
+//    }
+//    return new FullTensor(Y);
   }
 
   @Override
