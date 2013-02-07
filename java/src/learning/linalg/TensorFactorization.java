@@ -126,14 +126,13 @@ public class TensorFactorization {
     int D = T.getDim(0);
     // Scale the vectors by 1/sqrt(eigenvalues);
     {
-      double[][] eigenvectors_ = MatrixFactory.toArray(eigenvectors);
       for( int k = 0; k < K; k++ )
         for( int d = 0; d < D; d++ )
           eigenvectors.set(d,k, eigenvectors.get(d,k) * eigenvalues.get(k) ) ;
     }
     eigenvectors = Winv.mult( eigenvectors );
 
-    // Eigenvalues are 1/sqrt(w); w is what we want.
+    // Eigenvalues are w^{-1/2}; w is what we want.
     for(int i = 0; i < K; i++)
       eigenvalues.set( i, Math.pow(eigenvalues.get(i), -2) );
 

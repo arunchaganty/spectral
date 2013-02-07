@@ -20,11 +20,11 @@ public class MultiViewMixture {
   public Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> computeSubspace( int K, SimpleMatrix P12, SimpleMatrix P13 ) {
     // Get the U_i
     LogInfo.begin_track( "subspace-computation" );
-    SimpleMatrix[] U1DU2 = MatrixOps.svdk(P12, K);
-    SimpleMatrix U1 = U1DU2[0];
-    SimpleMatrix U2 = U1DU2[2];
-    SimpleMatrix[] U1DU3 = MatrixOps.svdk(P13, K);
-    SimpleMatrix U3 = U1DU3[2];
+    Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> U1DU2 = MatrixOps.svdk(P12, K);
+    SimpleMatrix U1 = U1DU2.getValue0();
+    SimpleMatrix U2 = U1DU2.getValue2();
+    Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> U1DU3 = MatrixOps.svdk(P13, K);
+    SimpleMatrix U3 = U1DU3.getValue2();
     LogInfo.end_track( "subspace-computation" );
 
     return new Triplet<>( U1, U2, U3 );

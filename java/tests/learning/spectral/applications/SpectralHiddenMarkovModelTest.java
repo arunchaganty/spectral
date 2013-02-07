@@ -58,7 +58,7 @@ public class SpectralHiddenMarkovModelTest {
     Assert.assertTrue( MatrixOps.allclose( P13, P13_, 1e-2 ) );
 
     SimpleMatrix theta = moments_.getValue3();
-    SimpleMatrix U2 = MatrixOps.svdk( P12_, K )[2];
+    SimpleMatrix U2 = MatrixOps.svdk( P12_, K ).getValue2();
     SimpleMatrix Theta = U2.mult( theta );
 
     for( int k = 0; k < K; k++ ) {

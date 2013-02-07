@@ -210,20 +210,27 @@ public class FullTensor implements Tensor {
     Y = Y.rotate(2, M3);
 
     return Y;
+  }
 
     // Buggy method?
-//    for(int d1 = 0; d1 < D1; d1++) {
-//      for(int d2 = 0; d2 < D2; d2++) {
-//        for(int d3 = 0; d3 < D3; d3++) {
-//          Y[d1][d2][d3] = 0;
-//          for(int l1 = 0; l1 < D1; l1++)
-//            for(int l2 = 0; l2 < D2; l2++)
-//              for(int l3 = 0; l3 < D3; l3++)
-//                Y[d1][d2][d3] += X[l1][l2][l3] * M1.get(l1, d1) * M2.get(l2, d2) * M3.get(l3, d3);
-//        }
-//      }
-//    }
-//    return new FullTensor(Y);
+  @Deprecated
+  public FullTensor rotateSlow(SimpleMatrix M1, SimpleMatrix M2, SimpleMatrix M3) {
+    int L1 = M1.numCols();
+    int L2 = M2.numCols();
+    int L3 = M3.numCols();
+    double[][][] Y = new double[L1][L2][L3];
+    for(int l1 = 0; l1 < L1; l1++) {
+      for(int l2 = 0; l2 < L2; l2++) {
+        for(int l3 = 0; l3 < L3; l3++) {
+          Y[l1][l2][l3] = 0;
+          for(int d1 = 0; d1 < D1; d1++)
+            for(int d2 = 0; d2 < D2; d2++)
+              for(int d3 = 0; d3 < D3; d3++)
+                Y[l1][l2][l3] += X[d1][d2][d3] * M1.get(d1, l1) * M2.get(d2, l2) * M3.get(d3, l3);
+        }
+      }
+    }
+    return new FullTensor(Y);
   }
 
   @Override
