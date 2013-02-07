@@ -19,6 +19,16 @@ public class FullTensor implements Tensor {
     D3 = X[0][0].length;
   }
 
+  public FullTensor clone() {
+    double[][][] Y = new double[D1][D2][D3];
+    for(int d1 = 0; d1 < D1; d1++) {
+      for(int d2 = 0; d2 < D2; d2++) {
+        System.arraycopy(X[d1][d2], 0, Y[d1][d2], 0, D3);
+      }
+    }
+    return new FullTensor(Y);
+  }
+
   public static FullTensor fromUnitVector( double[] x ) {
     int D = x.length;
     double[][][] X = new double[D][D][D];
@@ -295,9 +305,9 @@ public class FullTensor implements Tensor {
             case 2: scalar *= theta2_[d3]; break;
           }
           switch(axis) {
-            case 0: y[d1] += scalar * X[d1][d2][d3];
-            case 1: y[d2] += scalar * X[d1][d2][d3];
-            case 2: y[d3] += scalar * X[d1][d2][d3];
+            case 0: y[d1] += scalar * X[d1][d2][d3]; break;
+            case 1: y[d2] += scalar * X[d1][d2][d3]; break;
+            case 2: y[d3] += scalar * X[d1][d2][d3]; break;
           }
         }
       }

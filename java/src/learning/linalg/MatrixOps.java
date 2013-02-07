@@ -444,6 +444,10 @@ public class MatrixOps {
     for( int i = 0; i < x.length; i++ )
       x[i] /= sum;
   }
+  public static SimpleMatrix normalize(SimpleMatrix x) {
+    assert( isVector( x ) );
+    return x.scale( 1.0 / x.normF() );
+  }
 
   /**
    * Normalize the rows of X to lie between -1 and 1;
@@ -777,14 +781,13 @@ public class MatrixOps {
 
     SimpleMatrix U = UDV.getValue0();
     SimpleMatrix D = UDV.getValue1();
-    SimpleMatrix Dsqrtinv = sqrt( D ).invert();
-    return U.mult(Dsqrtinv);
+    return U.mult(sqrt( D ).invert());
   }
   public static SimpleMatrix colorer( SimpleMatrix X ) {
-    SimpleSVD UWV = X.svd();
-    SimpleMatrix U = UWV.getU();
-    SimpleMatrix W = UWV.getW();
-    return U.mult(sqrt(W));
+    Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> UDV = svdk(X);
+    SimpleMatrix U = UDV.getValue0();
+    SimpleMatrix D = UDV.getValue1();
+    return U.mult(sqrt(D));
   }
 
   /**

@@ -1,6 +1,7 @@
 package learning.linalg;
 
 import fig.basic.LogInfo;
+import org.ejml.data.DenseMatrix64F;
 import org.ejml.simple.SimpleMatrix;
 import org.ejml.simple.SimpleSVD;
 import org.javatuples.Pair;
@@ -80,6 +81,9 @@ public class TensorFactorization {
     SimpleMatrix[] eigenvectors = new SimpleMatrix[K];
     double[] eigenvalues = new double[K];
 
+    // Make a copy of T because we're going to destroy it during deflation
+    T = T.clone();
+
     for( int k = 0; k < K; k++ ) {
       // Extract the top eigenvalue/vector pair
       Pair<Double, SimpleMatrix> pair = eigendecomposeStep(T, attempts, iters);
@@ -115,15 +119,23 @@ public class TensorFactorization {
     // Whiten
     SimpleMatrix W = MatrixOps.whitener(P);
     SimpleMatrix Winv = MatrixOps.colorer(P);
-    T = T.rotate(W,W,W);
-    Pair<SimpleMatrix, SimpleMatrix> pair = eigendecompose(T);
+    FullTensor Tw = T.rotate(W,W,W);
+    Pair<SimpleMatrix, SimpleMatrix> pair = eigendecompose(Tw);
 
     // Color them in again
     SimpleMatrix eigenvalues = pair.getValue0();
     SimpleMatrix eigenvectors = pair.getValue1();
 
     int K = eigenvalues.getNumElements();
-    int D = T.getDim(0);
+    int D = Tw.getDim(0);
+
+    // TODO: Remove
+    // Make sure these are eigenvectors of T
+    for( int i = 0; i < K; i++ ) {
+      SimpleMatrix v = MatrixOps.col(eigenvectors, i);
+      assert( isEigenvector(Tw, v) );
+    }
+
     // Scale the vectors by 1/sqrt(eigenvalues);
     {
       for( int k = 0; k < K; k++ )
@@ -137,6 +149,20 @@ public class TensorFactorization {
       eigenvalues.set( i, Math.pow(eigenvalues.get(i), -2) );
 
     return new Pair<>(eigenvalues, eigenvectors);
+  }
+
+  /**
+   * Check to see that v is indeed an eigenvector of T
+   * @param T
+   * @param v
+   * @return
+   */
+  protected static boolean isEigenvector( Tensor T, SimpleMatrix v ) {
+    // Firstly, normalize $v$ - to be sure.
+    v = MatrixOps.normalize(v);
+    SimpleMatrix u = T.project2( 1, 2, v, v );
+    u = MatrixOps.normalize(u);
+    return MatrixOps.allclose( u, v );
   }
 
 }

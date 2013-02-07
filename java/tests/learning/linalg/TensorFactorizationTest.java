@@ -41,20 +41,23 @@ public class TensorFactorizationTest {
     Assert.assertTrue(MatrixOps.allclose(MatrixOps.col(X,0), y));
   }
 
-  @Test
-  public void eigendecompositionIdentity() {
-    // Construct a tensor with two principal directions
-    SimpleMatrix w = new SimpleMatrix( new double[][] {{ 1.1, 0.8, 0.7 }} );
-    SimpleMatrix X = new SimpleMatrix( new double[][] {
-            {1.0, 0.0, 0.0},
-            {0.0, 1.0, 0.0},
-            {0.0, 0.0, 1.0}}
-    );
-
+  public void eigendecompositionTest(SimpleMatrix w, SimpleMatrix X, boolean whiten) {
     FullTensor T = FullTensor.fromDecomposition(w, X);
-    Pair<SimpleMatrix, SimpleMatrix> pair = TensorFactorization.eigendecompose(T);
+    SimpleMatrix P = X.mult(MatrixFactory.diag(w)).mult(X.transpose());
+    Pair<SimpleMatrix, SimpleMatrix> pair = (whiten)
+            ? TensorFactorization.eigendecompose(T, P)
+            : TensorFactorization.eigendecompose(T);
+
     SimpleMatrix w_ = pair.getValue0();
+    w_ = MatrixOps.alignMatrix( w_, w, true );
     SimpleMatrix X_ = pair.getValue1();
+    X_ = MatrixOps.alignMatrix( X_, X, true );
+
+    System.out.println( w );
+    System.out.println( w_ );
+    System.out.println( X );
+    System.out.println( X_ );
+
     System.out.println( "w: " + MatrixOps.norm(w.minus(w_)));
     System.out.println( "X: " + MatrixOps.norm(X.minus(X_)));
     Assert.assertTrue( MatrixOps.allclose(w, w_));
@@ -62,87 +65,50 @@ public class TensorFactorizationTest {
   }
 
   @Test
-  public void eigendecompositionIdentityWithWhitening() {
-    // Construct a tensor with two principal directions
+  public void eigendecompositionIdentity() {
     SimpleMatrix w = new SimpleMatrix( new double[][] {{ 1.1, 0.8, 0.7 }} );
     SimpleMatrix X = new SimpleMatrix( new double[][] {
             {1.0, 0.0, 0.0},
             {0.0, 1.0, 0.0},
             {0.0, 0.0, 1.0}}
     );
-
-    FullTensor T = FullTensor.fromDecomposition(w, X);
-    SimpleMatrix P = X.mult(MatrixFactory.diag(w)).mult(X.transpose());
-    Pair<SimpleMatrix, SimpleMatrix> pair = TensorFactorization.eigendecompose(T, P);
-
-    SimpleMatrix w_ = pair.getValue0();
-    w_ = MatrixOps.alignMatrix( w_, w, true );
-    SimpleMatrix X_ = pair.getValue1();
-    X_ = MatrixOps.alignMatrix( X_, X, true );
-
-    System.err.println( w );
-    System.err.println( w_ );
-    System.err.println( X );
-    System.err.println( X_ );
-
-    System.out.println( "w: " + MatrixOps.norm(w.minus(w_)));
-    System.out.println( "X: " + MatrixOps.norm(X.minus(X_)));
-    Assert.assertTrue( MatrixOps.allclose(w, w_));
-    Assert.assertTrue( MatrixOps.allclose(X, X_));
+    eigendecompositionTest(w,X, false);
   }
 
   @Test
   public void eigendecompositionOrthogonal() {
     for(int i = 0; i < 5; i++) {
-      // Construct a tensor with two principal directions
       SimpleMatrix w = new SimpleMatrix( new double[][] {{ 1.1, 0.8, 0.7 }} );
       SimpleMatrix X = RandomFactory.orthogonal(3);
+      eigendecompositionTest(w, X, false);
+    }
+  }
 
-      FullTensor T = FullTensor.fromDecomposition(w, X);
-      SimpleMatrix P = X.mult(MatrixFactory.diag(w)).mult(X.transpose());
-      Pair<SimpleMatrix, SimpleMatrix> pair = TensorFactorization.eigendecompose(T, P);
-      SimpleMatrix w_ = pair.getValue0();
-      w_ = MatrixOps.alignMatrix( w_, w, true );
-      SimpleMatrix X_ = pair.getValue1();
-      X_ = MatrixOps.alignMatrix( X_, X, true );
-
-      System.err.println( w );
-      System.err.println( w_ );
-      System.err.println( X );
-      System.err.println( X_ );
-
-      System.err.println( "w: " + MatrixOps.norm(w.minus(w_)));
-      System.err.println( "X: " + MatrixOps.norm(X.minus(X_)));
-
-      Assert.assertTrue( MatrixOps.allclose(w, w_));
-      Assert.assertTrue( MatrixOps.allclose(X, X_));
+  @Test
+  public void eigendecompositionOrthogonalWithWhitening() {
+    for(int i = 0; i < 5; i++) {
+      SimpleMatrix w = new SimpleMatrix( new double[][] {{ 1.1, 0.8, 0.7 }} );
+      SimpleMatrix X = RandomFactory.orthogonal(3);
+      eigendecompositionTest(w, X, true);
     }
   }
 
   @Test
   public void eigendecompositionRandom() {
-    // Construct a tensor with two principal directions
-    SimpleMatrix w = new SimpleMatrix( new double[][] {{ 1.1, 0.8, 0.7 }} );
-    SimpleMatrix X = RandomFactory.rand(3, 3);
-
-    FullTensor T = FullTensor.fromDecomposition(w, X);
-    SimpleMatrix P = X.mult(MatrixFactory.diag(w)).mult(X.transpose());
-    Pair<SimpleMatrix, SimpleMatrix> pair = TensorFactorization.eigendecompose(T, P);
-
-    SimpleMatrix w_ = pair.getValue0();
-    w_ = MatrixOps.alignMatrix( w_, w, true );
-    SimpleMatrix X_ = pair.getValue1();
-    X_ = MatrixOps.alignMatrix( X_, X, true );
-
-    System.err.println( w );
-    System.err.println( w_ );
-    System.err.println( X );
-    System.err.println( X_ );
-
-    System.out.println( "w: " + MatrixOps.norm(w.minus(w_)));
-    System.out.println( "X: " + MatrixOps.norm(X.minus(X_)));
-
-    Assert.assertTrue( MatrixOps.allclose(w, w_));
-    Assert.assertTrue( MatrixOps.allclose(X, X_));
+    for(int i = 0; i < 5; i++) {
+      SimpleMatrix w = new SimpleMatrix( new double[][] {{ 1.1, 0.8, 0.7 }} );
+      SimpleMatrix X = RandomFactory.rand(3, 3);
+      eigendecompositionTest(w, X, true);
+    }
   }
+
+  @Test
+  public void eigendecompositionRandomNonSquare() {
+    for(int i = 0; i < 5; i++) {
+      SimpleMatrix w = new SimpleMatrix( new double[][] {{ 1.1, 0.8, 0.7 }} );
+      SimpleMatrix X = RandomFactory.rand(5, 3);
+      eigendecompositionTest(w, X, true);
+    }
+  }
+
 }
