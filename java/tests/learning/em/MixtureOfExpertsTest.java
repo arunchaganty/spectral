@@ -45,7 +45,7 @@ public class MixtureOfExpertsTest {
     SimpleMatrix y = yX.getValue0();
     SimpleMatrix X = yX.getValue1();
 
-    MixtureOfExperts algo = new MixtureOfExperts( K, D );
+    MixtureOfExperts algo = new MixtureOfExperts( K );
 
     Parameters params = algo.run( y, X );
 

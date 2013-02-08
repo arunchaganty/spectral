@@ -49,7 +49,7 @@ public class MatrixFactory {
 
   /**
    * Create a simple matrix from a uni-dimensional array x
-   * @param x
+   * @param X
    * @return
    */
   public static double[] toVector( SimpleMatrix X )
@@ -67,7 +67,7 @@ public class MatrixFactory {
 
   /**
    * Create a simple matrix from a uni-dimensional array x
-   * @param x
+   * @param X
    * @return
    */
   public static double[][] toArray( SimpleMatrix X )
@@ -179,6 +179,26 @@ public class MatrixFactory {
       for( int j = 0; j < d; j++ )
         N.set(i, j, M.get(j,0));
     return N;
+  }
+
+  /**
+   * Stack an array of vectors into a matrix column wise
+   * @param M
+   * @return
+   */
+  public static SimpleMatrix rowStack( SimpleMatrix[] M ) {
+    int N = M.length;
+    assert( M[0].numRows() == 1 || M[0].numCols() == 1 );
+    int D = M[0].numRows() * M[0].numCols();
+
+    double[][] X = new double[N][D];
+    for( int n = 0; n < N; n++ ) {
+      X[n] = MatrixFactory.toVector(M[n]);
+    }
+    return new SimpleMatrix(X);
+  }
+  public static SimpleMatrix columnStack( SimpleMatrix[] M ) {
+    return rowStack(M).transpose();
   }
 
 }

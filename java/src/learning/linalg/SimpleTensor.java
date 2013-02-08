@@ -100,5 +100,15 @@ public class SimpleTensor implements Tensor {
     return project( axis, theta_ );
   }
 
+  @Override
+  public SimpleMatrix project2(int axis1, int axis2, SimpleMatrix theta1, SimpleMatrix theta2) {
+    throw new NoSuchMethodError();
+  }
+
+  @Override
+  public double project3(SimpleMatrix theta1, SimpleMatrix theta2, SimpleMatrix theta3) {
+    throw new NoSuchMethodError();
+  }
+
 }
 

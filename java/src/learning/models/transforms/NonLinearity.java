@@ -8,6 +8,7 @@ import java.io.Serializable;
 public class NonLinearity implements Serializable {
   public int getLinearDimension( int dimension  ) {return dimension;}
   public double[] getLinearEmbedding( final double[] x ) {return x;}
+  public double[][] getExponents() {return null;}
   public double[][] getLinearEmbedding( final double[][] X ) {
     int N = X.length;
     double[][] Y = new double[ N ][];

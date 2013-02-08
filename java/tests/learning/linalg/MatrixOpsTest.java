@@ -9,6 +9,7 @@ import learning.linalg.MatrixOps;
 import learning.exceptions.NumericalException;
 
 import org.ejml.simple.SimpleMatrix;
+import org.javatuples.Triplet;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.Before;
@@ -387,10 +388,10 @@ public class MatrixOpsTest {
     SimpleMatrix W = new SimpleMatrix( W_ );
     SimpleMatrix V = new SimpleMatrix( V_ );
 
-    SimpleMatrix[] UWV = MatrixOps.svdk( X1, 2 );
-    Assert.assertTrue( MatrixOps.allclose( MatrixOps.abs( U ), MatrixOps.abs( UWV[0] ) ) );
-    Assert.assertTrue( MatrixOps.allclose( MatrixOps.abs( W ), MatrixOps.abs( UWV[1] ) ) );
-    Assert.assertTrue( MatrixOps.allclose( MatrixOps.abs( V ), MatrixOps.abs( UWV[2] ) ) );
+    Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> UWV = MatrixOps.svdk( X1, 2 );
+    Assert.assertTrue( MatrixOps.allclose( MatrixOps.abs( U ), MatrixOps.abs( UWV.getValue0() ) ) );
+    Assert.assertTrue( MatrixOps.allclose( MatrixOps.abs( W ), MatrixOps.abs( UWV.getValue1() ) ) );
+    Assert.assertTrue( MatrixOps.allclose( MatrixOps.abs( V ), MatrixOps.abs( UWV.getValue2() ) ) );
   }
 
   @Test
@@ -431,4 +432,47 @@ public class MatrixOpsTest {
     Assert.assertFalse( MatrixOps.equal( 1.0, 0.99 ) );
   }
 
+  @Test
+  public void rowStack() {
+    double[][] X_ = {
+            { 0.2740856 ,  0.61844862,  0.84960229},
+            { 0.76229792,  0.78220896, -0.32681905},
+            { 0.58632667, -0.07530232,  0.41396288}};
+    SimpleMatrix X = new SimpleMatrix(X_);
+
+    SimpleMatrix[] Xrows = new SimpleMatrix[3];
+    for( int i = 0; i < 3; i++ )
+      Xrows[i] = MatrixFactory.fromVector(X_[i]);
+    SimpleMatrix Y = MatrixFactory.rowStack(Xrows);
+    SimpleMatrix Z = MatrixFactory.columnStack(Xrows);
+
+    Assert.assertTrue( MatrixOps.allclose( X, Y ) );
+    Assert.assertTrue( MatrixOps.allclose( X.transpose(), Z ) );
+  }
+
+  @Test
+  public void whitener() {
+    for( int i = 0; i < 3; i++ ) {
+      SimpleMatrix X = RandomFactory.randn( 5, 3 );
+      SimpleMatrix Y = X.mult(X.transpose());
+
+      SimpleMatrix W = MatrixOps.whitener(Y);
+      SimpleMatrix Z = W.transpose().mult(Y).mult(W);
+
+      Assert.assertTrue( MatrixOps.allclose( Z, SimpleMatrix.identity(3) ) );
+    }
+  }
+
+  @Test
+  public void colorer() {
+    for( int i = 0; i < 3; i++ ) {
+      SimpleMatrix X = RandomFactory.randn( 3, 3 );
+      SimpleMatrix Y = X.mult(X.transpose());
+
+      SimpleMatrix W = MatrixOps.whitener(Y);
+      SimpleMatrix Winv = MatrixOps.colorer(Y);
+
+      Assert.assertTrue( MatrixOps.allclose( W.transpose().mult(Winv), SimpleMatrix.identity(3) ) );
+    }
+  }
 }

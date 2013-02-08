@@ -51,25 +51,37 @@ public class MatrixOps {
   /**
    * Print entries of a arrays
    */
-  public static void printArray( double[][] X ) {
-    System.out.printf( "{ " );
+  public static String arrayToString( double[][] X ) {
+    String out = "";
+    out += "{\n";
     for( int i = 0; i < X.length; i++ ) {
-      System.out.printf( "{ " );
+      out += "{ ";
       for( int j = 0; j < X[i].length; j++ )
-        System.out.printf( "%f, ", X[i][j] );
-      System.out.printf( "}\n" );
+        out += String.valueOf(X[i][j]) + ", ";
+      out += "}\n";
     }
-    System.out.printf( "}\n" );
+    out += "}";
+
+    return out;
+  }
+  public static String arrayToString( int[][] X ) {
+    String out = "";
+    out += "{\n";
+    for( int i = 0; i < X.length; i++ ) {
+      out += "{ ";
+      for( int j = 0; j < X[i].length; j++ )
+        out += String.valueOf(X[i][j]) + ", ";
+      out += "}\n";
+    }
+    out += "}";
+
+    return out;
+  }
+  public static void printArray( double[][] X ) {
+    System.out.println( arrayToString(X));
   }
   public static void printArray( int[][] X ) {
-    System.out.printf( "{ " );
-    for( int i = 0; i < X.length; i++ ) {
-      System.out.printf( "{ " );
-      for( int j = 0; j < X[i].length; j++ )
-        System.out.printf( "%d, ", X[i][j] );
-      System.out.printf( "}\n" );
-    }
-    System.out.printf( "}\n" );
+    System.out.println( arrayToString(X));
   }
 
   /**
@@ -97,6 +109,30 @@ public class MatrixOps {
   public static boolean allclose( double[] X1, double[] X2 ) {
     return allclose( X1, X2, EPS_CLOSE );
   }
+  public static boolean allclose( double[][][] X1, double[][][] X2, double eps ) {
+    assert( X1.length == X2.length );
+    assert( X1[0].length == X2[0].length );
+    assert( X1[0][0].length == X2[0][0].length );
+
+    for( int i = 0; i < X1.length; i++ ) {
+      for( int j = 0; j < X1[0].length; j++ ) {
+        for( int k = 0; k < X1[0][0].length; k++ ) {
+          if( !equal( X1[i][j][k], X2[i][j][k], eps ) ) return false;
+        }
+      }
+    }
+
+    return true;
+  }
+  public static boolean allclose( FullTensor X1, FullTensor X2, double eps ) {
+    return allclose( X1.X, X2.X, eps );
+  }
+  public static boolean allclose( double[][][] X1, double[][][] X2 ) {
+    return allclose( X1, X2, EPS_CLOSE );
+  }
+  public static boolean allclose( FullTensor X1, FullTensor X2 ) {
+    return allclose( X1.X, X2.X );
+  }
 
   public static boolean equal( int[] X1, int[] X2 ) {
     if( X1.length != X2.length ) return false;
@@ -112,10 +148,19 @@ public class MatrixOps {
     return equal( x1, x2, EPS_ZERO );
   }
 
+  public static boolean isVector( DenseMatrix64F X ) {
+    return X.numCols == 1 || X.numRows == 1;
+  }
+  public static boolean isVector( SimpleMatrix X ) {
+    return X.numCols() == 1 || X.numRows() == 1;
+  }
+
   /**
    * Test whether two matrices are within eps of each other
    */
   public static boolean allclose( DenseMatrix64F X1, DenseMatrix64F X2, double eps ) {
+    if( isVector(X1) && isVector(X2) )
+      return allclose( X1.data, X2.data, eps );
     assert( X1.numRows == X2.numRows );
     assert( X1.numCols == X2.numCols );
 
@@ -260,7 +305,7 @@ public class MatrixOps {
    * Compute the average outer product of each row of X1 and X2
    */
   public static DenseMatrix64F Pairs( DenseMatrix64F X1, DenseMatrix64F X2 ) {
-    assert( X1.numRows == X2.numCols );
+    assert( X1.numRows == X2.numRows );
 
     int nRows = X1.numRows;
     int n = X1.numCols;
@@ -398,6 +443,10 @@ public class MatrixOps {
     double sum = sum( x );
     for( int i = 0; i < x.length; i++ )
       x[i] /= sum;
+  }
+  public static SimpleMatrix normalize(SimpleMatrix x) {
+    assert( isVector( x ) );
+    return x.scale( 1.0 / x.normF() );
   }
 
   /**
@@ -577,7 +626,7 @@ public class MatrixOps {
 
   /**
    * Project each column of X onto a simplex in place
-   * @param X
+   * @param x
    * @return
    */
   public static void projectOntoSimplex( double[] x ) {
@@ -623,14 +672,13 @@ public class MatrixOps {
    */
   public static int rank( SimpleMatrix X, double eps ) {
     // HACK: X.svd().rank() does not give the right rank for some reason.
-    SimpleMatrix W = X.svd().getW(); 
+    SimpleMatrix W = X.svd().getW();
+    int upperBound = ( W.numRows() < W.numCols() ) ? W.numRows() : W.numCols();
 
-    for( int i = 0; i < W.numRows(); i++ )
-    {
+    for( int i = 0; i < upperBound; i++ )
       if( W.get( i, i ) < eps ) return i;
-    }
 
-    return W.numRows();
+    return upperBound;
   }
 
   public static int rank( SimpleMatrix X ) {
@@ -640,7 +688,7 @@ public class MatrixOps {
   /**
    * Compute the SVD and compress it to choose the top k singular vectors
    */
-  public static SimpleMatrix[] svdk( SimpleMatrix X, int k ) {
+  public static Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> svdk( SimpleMatrix X, int K ) {
     @SuppressWarnings("unchecked")
     SimpleSVD<SimpleMatrix> UWV = X.svd(false);
     SimpleMatrix U = UWV.getU();
@@ -648,24 +696,37 @@ public class MatrixOps {
     SimpleMatrix V = UWV.getV();
 
     // Truncate U, W and V to k-rank
-    U = U.extractMatrix(0, SimpleMatrix.END, 0, k);
-    W = W.extractMatrix(0, k, 0, k);
-    V = V.extractMatrix(0, SimpleMatrix.END, 0, k);
+    U = U.extractMatrix(0, SimpleMatrix.END, 0, K);
+    W = W.extractMatrix(0, K, 0, K);
+    V = V.extractMatrix(0, SimpleMatrix.END, 0, K);
 
-    SimpleMatrix[] ret = {U, W, V};
+    return new Triplet<>(U, W, V);
+  }
+  public static Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> svdk( SimpleMatrix X ) {
+    @SuppressWarnings("unchecked")
+    SimpleSVD<SimpleMatrix> UWV = X.svd(false);
+    int K = UWV.rank();
+    SimpleMatrix U = UWV.getU();
+    SimpleMatrix W = UWV.getW();
+    SimpleMatrix V = UWV.getV();
 
-    return ret;
+    // Truncate U, W and V to k-rank
+    U = U.extractMatrix(0, SimpleMatrix.END, 0, K);
+    W = W.extractMatrix(0, K, 0, K);
+    V = V.extractMatrix(0, SimpleMatrix.END, 0, K);
+
+    return new Triplet<>(U, W, V);
   }
 
   /**
    * Compute the best k-rank approximation of the SVD
    */
   public static SimpleMatrix approxk( SimpleMatrix X, int k ) {
-    SimpleMatrix[] UWV = svdk( X, k );
+    Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> UWV = svdk( X, k );
 
-    SimpleMatrix U_ = UWV[0];
-    SimpleMatrix W_ = UWV[1];
-    SimpleMatrix V_ = UWV[2];
+    SimpleMatrix U_ = UWV.getValue0();
+    SimpleMatrix W_ = UWV.getValue1();
+    SimpleMatrix V_ = UWV.getValue2();
 
     return U_.mult( W_ ).mult( V_.transpose() );
   }
@@ -691,6 +752,42 @@ public class MatrixOps {
 
     SimpleMatrix[] LR = {L, R};
     return LR;
+  }
+
+  /**
+   * Get the sqrt of a diagonal matrix
+   * @param X
+   * @return
+   */
+  public static SimpleMatrix sqrt( SimpleMatrix X ) {
+    double[] diagonal = MatrixFactory.toVector(X.extractDiag());
+    for(int i = 0; i < diagonal.length; i++) {
+      diagonal[i] = Math.sqrt(diagonal[i]);
+    }
+    return MatrixFactory.diag(MatrixFactory.fromVector(diagonal));
+  }
+
+
+  public static SimpleMatrix whitener( SimpleMatrix X, int K ) {
+    Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> UDV = svdk(X, K);
+
+    SimpleMatrix U = UDV.getValue0();
+    SimpleMatrix D = UDV.getValue1();
+    SimpleMatrix Dsqrtinv = sqrt( D ).invert();
+    return U.mult(Dsqrtinv);
+  }
+  public static SimpleMatrix whitener( SimpleMatrix X ) {
+    Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> UDV = svdk(X);
+
+    SimpleMatrix U = UDV.getValue0();
+    SimpleMatrix D = UDV.getValue1();
+    return U.mult(sqrt( D ).invert());
+  }
+  public static SimpleMatrix colorer( SimpleMatrix X ) {
+    Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> UDV = svdk(X);
+    SimpleMatrix U = UDV.getValue0();
+    SimpleMatrix D = UDV.getValue1();
+    return U.mult(sqrt(D));
   }
 
   /**
@@ -769,8 +866,6 @@ public class MatrixOps {
     }
     return logsum;
   }
-
-
 }
 
 

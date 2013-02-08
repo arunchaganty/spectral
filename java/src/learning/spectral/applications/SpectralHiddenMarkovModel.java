@@ -83,7 +83,7 @@ public class SpectralHiddenMarkovModel implements Runnable {
     SimpleMatrix P12 = P12P13.getValue0();
     SimpleMatrix P13 = P12P13.getValue1();
 
-    SimpleMatrix U2 = MatrixOps.svdk( P12, K )[2];
+    SimpleMatrix U2 = MatrixOps.svdk( P12, K ).getValue2();
    
     SimpleMatrix Theta = U2.mult( theta );
     // Compute the projected moment 

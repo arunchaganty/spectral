@@ -1,6 +1,13 @@
 % Text
 \newcommand{\todo}[1]{\textbf{TODO: #1}}
 
+% Section macros
+\newcommand{\sectionref}[1] {\hyperref[#1]{Section \ref{#1}}}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+
+
 %Math Operators
 \DeclareMathOperator {\argmax} {argmax}
 \DeclareMathOperator {\argmin} {argmin}
@@ -10,6 +17,8 @@
 \DeclareMathOperator{\Var} {Var}
 \DeclareMathOperator{\diag} {diag}
 \DeclareMathOperator{\triu} {triu}
+\DeclareMathOperator{\mult} {Multinomial}
+\DeclareMathOperator{\normalt} {Normal}
 
 \newcommand{\ud}{\, \mathrm{d}}
 \newcommand{\diff}[1] {\frac{\partial}{\, \partial #1}}

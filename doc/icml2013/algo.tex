@@ -1,14 +1,49 @@
 \section{Algorithm}
 \label{sec:algo}
 
-Recovery of $B$, $\mathcal{B}$.
+An overview of the algorithm is as follows; use low-rank/ridge regression recovery techniques to recover the $B$ and $\mathcal{B}$ from moments of the data. Use the tensor factorization to recover the $\pi$, $\beta$ which are eigenvalues/eigenvectors.
 
-Use AHK2012
+\begin{theorem}
+  Recovery analysis of mixture of linear regressions.
+\end{theorem}
+\begin{proof}
+\end{proof}
 
-Lemma error of $B$.
+\subsection{Recovering $B$ and $\mathcal{B}$}
 
-Lemma AHK2012 error
+Writing out the regression problem.
 
-Theorem on polynomial recovery
+\begin{lemma}
+  Recovery analysis of ridge regression is $\le \Omega(\frac{d^2}{n})$.
+  Try and figure out dependence on condition numbers. It's similarly
+  $\le \Omega(\frac{d^3}{n})$.
+\end{lemma}
+\begin{proof}
+  Theorem X \cite{HsuKakadeZhang2011}.
+\end{proof}
 
+Using low-rank gradient methods. Overview SVD for 
+
+\begin{lemma}
+  Recovery analysis of nuclear-norm regression is $\le
+  \Omega(\frac{kd}{n})$. Try and figure out dependence on condition
+  numbers.
+\end{lemma}
+\begin{proof}
+  Theorem X \cite{NegahbanWainwright2009}.
+  Theorem Y \cite{Tomioka2011}.
+\end{proof}
+
+\subsection{Recovering Regression Coefficients}
+
+Write out the form of $B$ and $\mathcal{B}$ in symmetric tensor form.
+
+Use Tensor Power Method to recovery $\beta_k$.
+
+\begin{lemma}
+  Bound error in the $\beta$ based on the errors of $B$ and $\mathcal{B}$.
+\end{lemma}
+\begin{proof}
+  \cite{AnandkumarGeHsu2012}
+\end{proof}
 

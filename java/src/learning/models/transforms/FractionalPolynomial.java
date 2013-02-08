@@ -11,19 +11,49 @@ import static learning.Misc.*;
  */
 public class FractionalPolynomial extends NonLinearity {
   public int degree;
-  public double upperBound;
+  public int dimension;
+  public double[][] exponents;
 
   /**
    * Create a fractional polynomial with degree terms.
    * @param degree - the number of terms in the output term
    * @param upperBound - an upper bound on the monomial exponents.
    */
-  public FractionalPolynomial(int degree, double upperBound) {
+  public FractionalPolynomial(int degree, int dimension, double upperBound) {
     this.degree = degree;
-    this.upperBound = upperBound;
+    this.dimension = dimension;
+    // Generate exponents
+    this.exponents = computeExponents(degree, dimension, 1.2, upperBound);
   }
-  public FractionalPolynomial(int degree) {
-    this(degree, 10.0);
+  public FractionalPolynomial(int degree, int dimension ) {
+    this(degree, dimension, 10.0);
+  }
+
+  public static double[][] computeExponents( int degree, int dimension, double lowerBound, double upperBound ) {
+    int D = dimension;
+    int D_ = degree * dimension;
+    double[][] exponents = new double[ D_ ][D];
+    for(int d = 0; d < D; d++) {
+      double[] exp = new double[D]; exp[d] = 1;
+      exponents[d] = exp;
+    }
+    for( int d = D; d < D_; d++ ) {
+      double[] exp = new double[D];
+      int d1 = RandomFactory.randInt(0, D);
+      exp[d1] = RandomFactory.randUniform(1.2, upperBound);
+      if( D > 1 ) {
+        int d2 = (d1 + RandomFactory.randInt(1, D)) % D;
+        exp[d2] = RandomFactory.randUniform(1.2, upperBound);
+      }
+      exponents[d] = exp;
+    }
+
+    return exponents;
+  }
+
+  @Override
+  public double[][] getExponents() {
+    return exponents;
   }
 
   /**
@@ -32,6 +62,7 @@ public class FractionalPolynomial extends NonLinearity {
    */
   @Override
   public int getLinearDimension(int dimension) {
+    assert( dimension == this.dimension );
     return degree * dimension;
   }
 
@@ -42,19 +73,10 @@ public class FractionalPolynomial extends NonLinearity {
 
     final double[] y = new double[D_];
     // The first D rows are x itself.
-    for( int d = 0; d < D; d++ ) {
-      y[d] = x[d];
-    }
-
-    // The remaining D rows are random pairwise and increasing fractional powers
-    for( int d = D; d < D_; d++ ) {
-      int k1 = RandomFactory.randInt(0, D);
-      double p1 = RandomFactory.randUniform(1.2, upperBound);
-      y[d] = Math.signum(x[k1]) * Math.pow(Math.abs(x[k1]), p1);
-      if( D > 1 ) {
-        int k2 = (k1 + RandomFactory.randInt(1, D)) % D;
-        double p2 = RandomFactory.randUniform(1.2, upperBound);
-        y[d] *= Math.signum(x[k2]) * Math.pow(Math.abs(x[k2]), p2);
+    for( int d_ = 0; d_ < D_; d_++ ) {
+      y[d_] = 1.0;
+      for( int d = 0; d < D; d++ ) {
+        y[d_] *= Math.signum(x[d]) * Math.pow(Math.abs(x[d]), exponents[d_][d]);
       }
     }
 

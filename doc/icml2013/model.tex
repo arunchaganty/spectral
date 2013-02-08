@@ -1,7 +1,38 @@
 \section{Model}
 \label{sec:model}
 
-Mixture of Experts
+\newcommand{\xn}[1]{x^{(#1)}}
+\newcommand{\xni}{\xn{i}}
+\newcommand{\yn}[1]{y^{(#1)}}
+\newcommand{\yni}{\yn{i}}
+
+The mixture of linear regressions model describes response variables $y
+\in \Re$ dependent on covariates $x \in \Re^d$ through $K$ different
+modes. In particular, each mode occurs with a fixed probability of
+$\pi_k$, and each mode is independently described by regression
+coefficients $\beta_k$, with a common variance $\sigma^2$. Formally, the
+generative process is,
+\begin{eqnarray}
+  z &\sim& \mult(\pi) \\
+  y | z = k &\sim& \normal{ \beta_{k}^T x, \sigma^2 }.
+\end{eqnarray}
+
+We would like to recover $B = [\beta_1 | \beta_2 | \cdots | \beta_K]$
+and the mixture probabilities $\pi = [\pi_1 | \pi_2 | \cdots | \pi_K]$.
+
+\subsection{Non-linearities}
+
+Approach to handle non-linearities. 
+
+Note about dependencies in the n-th moments. 
 
 \subsection{Identifiability}
+
+The model is in general identifiable, except for a pathological case
+with how data points are placed.
+
+Plot of the above scenario.
+
+Interesting question; how do these extend in the non-linear case (which
+would be ``new'').
 

@@ -298,7 +298,7 @@ public class MixtureOfExperts implements Serializable {
       case "poly-independent":
         nl = new IndependentPolynomial( options.nlDegree, options.D ); break;
       case "random-fractional":
-        nl = new FractionalPolynomial( options.nlDegree ); break;
+        nl = new FractionalPolynomial( options.nlDegree, options.D ); break;
       default:
         throw new NoSuchMethodError();
     }
@@ -321,6 +321,8 @@ public class MixtureOfExperts implements Serializable {
     public String weights = "uniform";
     @Option(gloss="Beta distribution = eye|random") 
     public String betas = "eye";
+
+    // TODO: Get rid of these
     @Option(gloss="Mean distribution = zero|random") 
     public String mean = "zero";
     @Option(gloss="Covariance distribution = eye|spherical|random") 
