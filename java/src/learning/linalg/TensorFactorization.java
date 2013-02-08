@@ -18,7 +18,7 @@ public class TensorFactorization {
    * @param T
    * @return
    */
-  protected static Pair<Double,SimpleMatrix> eigendecomposeStep( Tensor T, int iters, int attempts ) {
+  protected static Pair<Double,SimpleMatrix> eigendecomposeStep( Tensor T, int attempts, int iters ) {
     int N = iters;
     int D = T.getDim(0);
 
@@ -102,7 +102,7 @@ public class TensorFactorization {
     return new Pair<>(MatrixFactory.fromVector(eigenvalues), MatrixFactory.columnStack(eigenvectors));
   }
   public static Pair<SimpleMatrix, SimpleMatrix> eigendecompose( FullTensor T, int K ) {
-    return eigendecompose(T, K, 500, 20);
+    return eigendecompose(T, K, 10, 100);
   }
   public static Pair<SimpleMatrix, SimpleMatrix> eigendecompose( FullTensor T ) {
     int K = T.getDim(0);
@@ -115,26 +115,26 @@ public class TensorFactorization {
    * @param P - Second-moments
    * @return
    */
-  public static Pair<SimpleMatrix, SimpleMatrix> eigendecompose( FullTensor T, SimpleMatrix P ) {
+  public static Pair<SimpleMatrix, SimpleMatrix> eigendecompose( FullTensor T, SimpleMatrix P, int K, int attempts, int iters ) {
     // Whiten
     SimpleMatrix W = MatrixOps.whitener(P);
     SimpleMatrix Winv = MatrixOps.colorer(P);
     FullTensor Tw = T.rotate(W,W,W);
-    Pair<SimpleMatrix, SimpleMatrix> pair = eigendecompose(Tw);
+    Pair<SimpleMatrix, SimpleMatrix> pair = eigendecompose(Tw, K, attempts, iters);
 
     // Color them in again
     SimpleMatrix eigenvalues = pair.getValue0();
     SimpleMatrix eigenvectors = pair.getValue1();
 
-    int K = eigenvalues.getNumElements();
+    assert( K == eigenvalues.getNumElements() );
     int D = Tw.getDim(0);
 
     // TODO: Remove
     // Make sure these are eigenvectors of T
-    for( int i = 0; i < K; i++ ) {
-      SimpleMatrix v = MatrixOps.col(eigenvectors, i);
-      assert( isEigenvector(Tw, v) );
-    }
+//    for( int i = 0; i < K; i++ ) {
+//      SimpleMatrix v = MatrixOps.col(eigenvectors, i);
+//      assert( isEigenvector(Tw, v) );
+//    }
 
     // Scale the vectors by 1/sqrt(eigenvalues);
     {
@@ -149,6 +149,13 @@ public class TensorFactorization {
       eigenvalues.set( i, Math.pow(eigenvalues.get(i), -2) );
 
     return new Pair<>(eigenvalues, eigenvectors);
+  }
+  public static Pair<SimpleMatrix, SimpleMatrix> eigendecompose( FullTensor T, SimpleMatrix P, int K ) {
+    return eigendecompose(T, P, K, 10, 100 );
+  }
+  public static Pair<SimpleMatrix, SimpleMatrix> eigendecompose( FullTensor T, SimpleMatrix P ) {
+    int K = MatrixOps.rank(P);
+    return eigendecompose(T, P, K);
   }
 
   /**

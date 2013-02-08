@@ -321,6 +321,8 @@ public class MixtureOfExperts implements Serializable {
     public String weights = "uniform";
     @Option(gloss="Beta distribution = eye|random") 
     public String betas = "eye";
+
+    // TODO: Get rid of these
     @Option(gloss="Mean distribution = zero|random") 
     public String mean = "zero";
     @Option(gloss="Covariance distribution = eye|spherical|random") 

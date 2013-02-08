@@ -18,6 +18,9 @@ public class FullTensorTest {
     SimpleMatrix W = MatrixOps.whitener(P);
 
     FullTensor T1 = T.rotate(W, W, W);
+    // This is just to verify that the two logics are identical.
+    // Never use rotateSlow
+    @SuppressWarnings("deprecation")
     FullTensor T2 = T.rotateSlow(W, W, W);
 
     Assert.assertTrue( MatrixOps.allclose(T1, T2) );
