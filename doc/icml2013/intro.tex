@@ -1,6 +1,9 @@
 \section{Introduction}
 \label{sec:intro}
 
+% Latent variables are important
+% Local optima is problem
+% Recent method of moments spectral methods sidestep local optima
 Local optima are a common problem plaguing the learning of parameters in
 latent variable models. Recently, there has been an interest in spectral
 algorithms that provide statistically consistent estimators, i.e. given
@@ -12,13 +15,29 @@ probabilistic context free grammars \cite{HsuKakadeLiang2012}, etc. In
 this work, we provide a spectral algorithm for a discriminative model,
 the mixture of linear regressions.
 
-\todo{Where are mixtures of experts used? Why are they interesting?}
+% Discriminative models work better in practice
+% Discriminative models with latent variables add expressive power (examples)
+% This paper: first step in establishing provably correct estimation with simple mixture of linear regression
 
+% Previous work: moment equations solvable by eigendecomposition or tensor factorization
+% Challenge: E[X^m Y^n] doesn't work
+% Approach: Derive moment functions based on linear regression on Y^2 and Y^3
+% Algorithm: trace norm regularization to recover tensor + tensor factorization
+% Show some identifiability results; require quadratic and cubic independence
 Our approach uses regression to recover the moments of the data from the
 scalar observable output variable. Once we recover the second and third
 moments of the regression coefficients, we use a slight modification of
 the method outlined in \citet{AnandkumarHsuKakade2012}.
 
+% Empirical evaluation
+% It works
+%  EM is sensitive to initialization (local procdure)
+%  Spectral provides good initialization
+% Intuition: basin of attraction, local methods like EM improve
+% 
+% What properties of the problem make it hard on EM versus spectral?
+%  Separation, dimensionality, number of clusters, etc.
+% Real dataset?
 We evaluate our algorithm on simulated linear and non-linear data to
 understand how well the algorithm scales with the number of components,
 dimensions and separation. To test how the algorithms perform on a more
