@@ -25,16 +25,12 @@ class TensorRecovery( ProximalGradient ):
         $\diff{L}{B_{ij}} = \sum_i (B(x^i, x^i, x^i)' - y^i^2) x^i \otimes x^i \otimes x^i 
         """ 
 
-        Q2 = self.Q2
         d = B.shape[0]
         N = len(y)
 
         # Compute x^T B x - y
         dB = zeros( (d, d, d) )
-        if Q2 is None:
-            Z = (Txyz( B, X, X, X ) - y)
-        else:
-            Z = (Txyz( B, X, X, X ) - y).dot( Q2 )
+        Z = (Txyz( B, X, X, X ) - y)
 
         for i in xrange( N ):
             x_i = X[i]
@@ -61,11 +57,8 @@ class TensorRecovery( ProximalGradient ):
             tot += (einsum( "ijk,i,j,k", B, x_i, x_i, x_i) - y_i)**2
         return tot/N
 
-    def solve( self, y, X, Q2 = None, *args, **kwargs ):
+    def solve( self, y, X, *args, **kwargs ):
         """Solve using a Q value"""
-        N = len(y)
-
-        self.Q2 = Q2
 
         return ProximalGradient.solve( self, y, X, *args, **kwargs )
 

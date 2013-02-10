@@ -26,17 +26,13 @@ class PhaseRecovery( ProximalGradient ):
         $\diff{L}{B_{ij}} = \sum_i (x^i' B x^i - y^i^2) x^i_i x^i_j
         """ 
 
-        Q2 = self.Q2
         d, _ = B.shape
         N = len(y)
 
         # Compute x^T B x - y
         dB = zeros( (d, d) )
         # Forgive me father for I have multiplied two large matrices.
-        if Q2 is None:
-            Z = ( xMy( B, X, X ) - y)
-        else:
-            Z = ( xMy( B, X, X ) - y).dot( Q2 )
+        Z = ( xMy( B, X, X ) - y)
 
         for i in xrange( N ):
             x_i = X[i]
@@ -59,11 +55,8 @@ class PhaseRecovery( ProximalGradient ):
             tot += (x_i.dot( B ).dot( x_i ) - y_i)**2
         return tot/N
 
-    def solve( self, y, X, Q2 = None, *args, **kwargs ):
+    def solve( self, y, X, *args, **kwargs ):
         """Solve using a Q value"""
-        N = len(y)
-
-        self.Q2 = Q2
 
         return ProximalGradient.solve( self, y, X, *args, **kwargs )
 

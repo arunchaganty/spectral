@@ -4,13 +4,13 @@ Generate data from a mixture of linear regressions
 
 import scipy as sc
 import scipy.linalg
-from scipy import array, zeros, ones, eye
+from scipy import array, zeros, ones, eye, rand
 from scipy.linalg import inv
 from models.Model import Model
 from util import chunked_update #, ProgressBar
 
 multinomial = sc.random.multinomial
-multivariate_normal = sc.random.multivariate_normal 
+#multivariate_normal = sc.random.multivariate_normal 
 dirichlet = sc.random.dirichlet
 
 from spectral.rand import permutation, wishart
@@ -65,7 +65,8 @@ class LinearRegressionsMixture( Model ):
             def update( start, stop ):
                 """Sample random vectors and then assign them to X in
                 order"""
-                Z = multivariate_normal( mean, sigma, int(stop - start) )
+                #Z = multivariate_normal( mean, sigma, int(stop - start) )
+                Z = 2*rand( int(stop - start), self.d ) - 1
                 # Insert into X in a shuffled order
                 p = perm[ start:stop ]
                 perm_ = p[ p < n ]
