@@ -27,6 +27,7 @@ import org.ejml.simple.SimpleMatrix;
  * Stores a corpus in an integer array
  */
 public class ProjectedCorpus extends Corpus implements Serializable {
+  private static final long serialVersionUID = 2L;
   public int projectionDim;
   protected long[] seeds;
 

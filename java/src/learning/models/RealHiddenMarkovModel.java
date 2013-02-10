@@ -30,6 +30,8 @@ import java.util.Arrays;
 public class RealHiddenMarkovModel extends HiddenMarkovModel {
   // Maps discrete feature indicies into a feature map
 	public static class Features implements Serializable {
+    private static final long serialVersionUID = 2L;
+
     int emissionCount;
     int dimension;
     public double[][] features; 
