@@ -29,6 +29,7 @@ import java.util.Random;
  * A mixture of experts model
  */
 public class MixtureOfExperts implements Serializable {
+  private static final long serialVersionUID = 2L;
 
   protected int K; // Number of experts
   protected int D; // Dimensionality of space
@@ -349,6 +350,10 @@ public class MixtureOfExperts implements Serializable {
   @SuppressWarnings("unchecked")
   public static Pair< Pair< SimpleMatrix, SimpleMatrix >, MixtureOfExperts >
   readFromFile( String filename ) throws IOException, ClassNotFoundException {
+    // Using  DecompressibleInputStream that basically ignores the
+    // version number check. Dangerous!
+    // DecompressibleInputStream in = new DecompressibleInputStream( new FileInputStream( filename ) );
+    
     ObjectInputStream in = new ObjectInputStream( new FileInputStream( filename ) );
 
     Pair<SimpleMatrix,SimpleMatrix> yX = (Pair<SimpleMatrix,SimpleMatrix>) in.readObject();

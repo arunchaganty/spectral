@@ -235,6 +235,7 @@ public class MixtureOfExperts implements Runnable {
       // epsilion.
       if( Math.abs(lhood - old_lhood) < eps )
         break;
+      Execution.putOutput( "betas" + i, (new SimpleMatrix( state.betas )).transpose() );
 
       old_lhood = lhood;
     }
@@ -284,7 +285,10 @@ public class MixtureOfExperts implements Runnable {
       betas_ = MatrixOps.alignMatrix( betas_, betas, true );
       Execution.putOutput( "betas", betas );
       Execution.putOutput( "betas_", betas_ );
+
       double err = MatrixOps.norm( betas.minus( betas_ ) );
+      Execution.putOutput( "betasErr", err );
+
       System.out.printf( "%.4f\n", err );
     } catch( ClassNotFoundException | IOException e ) {
       LogInfo.error( e.getMessage() );

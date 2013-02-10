@@ -1,7 +1,41 @@
-\section{Algorithm}
+\section{Method of Moments}
 \label{sec:algo}
 
-An overview of the algorithm is as follows; use low-rank/ridge regression recovery techniques to recover the $B$ and $\mathcal{B}$ from moments of the data. Use the tensor factorization to recover the $\pi$, $\beta$ which are eigenvalues/eigenvectors.
+\subsection{Identifiability}
+
+The model is in general identifiable, except for a pathological case
+with how data points are placed.
+
+Plot of the above scenario.
+
+Interesting question; how do these extend in the non-linear case (which
+would be ``new'').
+
+Linear independence to give intuition
+
+Quadratic and cubic independence
+
+necessary if only get low lower moments up to $p$
+
+Note about dependencies in the n-th moments. 
+
+Method of moments
+argue why naive thing doesn't work.
+
+Note: we haven't shown identifiability from all moments.
+
+\subsection{Algorithm}
+
+If knew $M_2$ and $M_3$, then can use existing techniques.
+
+We can do low-rank regression to recover $M_2$ and $M_3$.
+
+An overview of the algorithm is as follows; use low-rank/ridge regression
+recovery techniques to recover the $B$ and $\mathcal{B}$ from moments of the
+data. Use the tensor factorization to recover the $\pi$, $\beta$ which are
+eigenvalues/eigenvectors.
+
+% State algorithm
 
 \begin{theorem}
   Recovery analysis of mixture of linear regressions.

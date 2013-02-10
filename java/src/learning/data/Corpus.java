@@ -26,6 +26,7 @@ import org.ejml.simple.SimpleMatrix;
  * Stores a corpus in an integer array
  */
 public class Corpus implements Serializable {
+  private static final long serialVersionUID = 2L;
   /// Stores a list of unique vocabulary
   public String[] dict;
 
