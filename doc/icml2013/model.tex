@@ -17,22 +17,9 @@ generative process is,
   y | z = k &\sim& \normal{ \beta_{k}^T x, \sigma^2 }.
 \end{eqnarray}
 
-We would like to recover $B = [\beta_1 | \beta_2 | \cdots | \beta_K]$
-and the mixture probabilities $\pi = [\pi_1 | \pi_2 | \cdots | \pi_K]$.
+We would like to recover $B = [\beta_1 \mid \beta_2 \mid \cdots \mid \beta_K]$
+and the mixture probabilities $\pi = (\pi_1, \pi_2, \dots, \pi_K)$.
 
-\subsection{Non-linearities}
-
-Approach to handle non-linearities. 
-
-Note about dependencies in the n-th moments. 
-
-\subsection{Identifiability}
-
-The model is in general identifiable, except for a pathological case
-with how data points are placed.
-
-Plot of the above scenario.
-
-Interesting question; how do these extend in the non-linear case (which
-would be ``new'').
-
+Learning framework:
+Get $(x^{(1)},y^{(1)})$, ...
+don't observe $h$
