@@ -9,6 +9,8 @@ package learning.linalg;
 import learning.linalg.SimpleTensor;
 import learning.exceptions.NumericalException;
 
+import org.ejml.alg.dense.mult.VectorVectorMult;
+import org.ejml.ops.CommonOps;
 import org.ejml.simple.SimpleMatrix;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.simple.SimpleSVD;
@@ -93,6 +95,9 @@ public class MatrixOps {
     for( int i = 0; i < x.length; i++ )
       sum += x[i] * y[i];
     return sum;
+  }
+  public static double dot( DenseMatrix64F x, DenseMatrix64F y ) {
+    return VectorVectorMult.innerProd( x, y );
   }
 
   /**
@@ -346,10 +351,12 @@ public class MatrixOps {
   public static SimpleMatrix col( SimpleMatrix X, int col ) {
     return X.extractMatrix( 0, SimpleMatrix.END, col, col+1 );
   }
+  public static void col( DenseMatrix64F src, int col, DenseMatrix64F dest ) {
+    CommonOps.extract( src, 0, src.numRows, col, col+1, dest, 0, 0 );
+  }
   public static DenseMatrix64F col( DenseMatrix64F X, int col ) {
     DenseMatrix64F x = new DenseMatrix64F( X.numRows, 1 );
-    for( int row = 0; row < X.numRows; row++ )
-      x.set(row, X.get( X.getIndex(row, col)));
+    col(X, col, x);
     return x;
   }
 
@@ -359,10 +366,12 @@ public class MatrixOps {
   public static SimpleMatrix row( SimpleMatrix X, int row ) {
     return X.extractMatrix( row, row+1, 0, SimpleMatrix.END);
   }
+  public static void row( DenseMatrix64F src, int row, DenseMatrix64F dest ) {
+    CommonOps.extract( src, row, row+1, 0, src.numCols, dest, 0, 0 );
+  }
   public static DenseMatrix64F row( DenseMatrix64F X, int row ) {
     DenseMatrix64F x = new DenseMatrix64F( 1, X.numCols );
-    for( int col = 0; col < X.numCols; col++ )
-      x.set(col, X.get( X.getIndex(row, col)));
+    row(X, row,  x);
     return x;
   }
 
