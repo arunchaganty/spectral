@@ -8,18 +8,21 @@
 
 The mixture of linear regressions model describes response variables $y
 \in \Re$ dependent on covariates $x \in \Re^d$ through $K$ different
-modes. In particular, each mode occurs with a fixed probability of
-$\pi_k$, and each mode is independently described by regression
-coefficients $\beta_k$, with a common variance $\sigma^2$. Formally, the
-generative process is,
-\begin{eqnarray}
-  z &\sim& \mult(\pi) \\
-  y | z = k &\sim& \normal{ \beta_{k}^T x, \sigma^2 }.
-\end{eqnarray}
+modes which occur with probability $\pi_1, \dots, \pi_K$ respectively.
+Each mode is independently described by regression coefficients
+$\beta_k$ and we consider a common variance term $\sigma^2$. Given $x$,
+the generative process for the response variables is,
+\begin{eqnarray*}
+  h &\sim& \mult(\pi) \\
+  y | h = k &\sim& \normal{ \beta_{k}^T x}{ \sigma^2 },
+\end{eqnarray*}
+where $h$ is a latent variable corresponding to the mode.
 
-We would like to recover $B = [\beta_1 \mid \beta_2 \mid \cdots \mid \beta_K]$
-and the mixture probabilities $\pi = (\pi_1, \pi_2, \dots, \pi_K)$.
+Our learning framework can be described as follows; we observe $N$
+samples, $(\xn{1}, \yn{1}), \dots, (\xn{N}, \yn{N})$ and would like to
+recover the regressors, $B = [\beta_1 \mid \beta_2 \mid \cdots \mid
+\beta_K]$, and the mixture probabilities, $\pi = (\pi_1, \pi_2, \dots,
+\pi_K)$. Note that we do not observe $h$. If we did, the optimal
+solution for $\beta_k$ would be the regressor found using least squares
+on the set of points, $\{(x_i, y_i) | h_i = k \}$.
 
-Learning framework:
-Get $(x^{(1)},y^{(1)})$, ...
-don't observe $h$

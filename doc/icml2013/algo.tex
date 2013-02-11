@@ -1,83 +1,176 @@
-\section{Method of Moments}
+\section{A Method of Moments Algorithm}
 \label{sec:algo}
+
+In this section, we will outline some shortcomings of the standard
+method of moments formulation for the mixture of linear regressions
+model. We then describe how we can work around this limitation and
+reduce our problem to a known one, which can be solved using symmetric
+tensor decomposition. Finally, we will state some implications this
+reduction has regarding identifiability. 
+
+\subsection{Notation}
+
+We have already defined $y$ to be the response variable and $x \in
+\Re^d$ to be the covariates it depends on. Note that the matrix of
+regressors $B$ is a $d \times K$ matrix, where the $k$-th column is
+$\beta_k$.
+
+We will use the notation $x\tp{p}$ to describe the $p$-th order tensor
+formed by taking the outer product of $x$; i.e. $x\tp{p}_{i_1 i_2 \ldots
+i_p} = x_{i_1} x_{i_2} \cdots x_{i_p}$. We will use $\odot$ to denote
+the general dot product between $p$-th order tensors, i.e. $X \odot
+Y = \sum_{i_1, i_2, \ldots i_p} X_{i_1, i_2, \ldots i_p} Y_{i_1, i_2,
+\ldots i_p}.$ Similar to how $x^T A$ is the projection of a vector $x$
+onto the row space of a matrix $A$, when $X \in \Re^{d^p}$ and $Y \in
+\Re^{d^{p+q}}$,  with $p, q > 0$, $X \odot Y \in \Re^{d^q}$ is the
+projection of $X$ onto the first $p$ dimensions of $Y$, i.e. $(X \odot
+Y)_{i_1, \ldots, i_q} = \sum_{j_1, \ldots, j_p} X_{j_1, \ldots, j_p}
+Y_{j_1, \ldots, j_p, i_1, \ldots, i_q}$.
+
+The expected moments of the parameters $\beta_1, \dots, \beta_k$ play an
+important role in our algorithm and we will use $M_p = \E[\beta\tp{p}]
+= \sum_{k=1}^{K} \pi_k \beta_k^{\otimes p}$ to denote them.
 
 \subsection{Identifiability}
 
 The model is in general identifiable, except for a pathological case
-with how data points are placed.
+concerning how data points are placed \citationneeded.
 
-Plot of the above scenario.
 
-Interesting question; how do these extend in the non-linear case (which
-would be ``new'').
+\subsection{Overview}
 
-Linear independence to give intuition
+Conventionally, when using the method of moments, the moments of
+observed variables are expressed algebraically in terms of the model
+parameters. Using these equations, we attempt to solve for the model
+parameters using empirical estimates of the moments. 
 
-Quadratic and cubic independence
+In the case of the mixture of linear regressions, we have two observed
+quantities, $x$ and $y$. Unfortunately, because $y$ is a scalar
+quantity, we have only one equation for every moment of $y$, and with
+this naive approach, would have to consider $O( (K+1) D)$ moments to
+recover $B \in \Re{K \times D}$ and $\pi \in \Re^K$. 
 
-necessary if only get low lower moments up to $p$
+% To keep the discussion simple, we will consider the case where there is
+% no noise, i.e.  $\sigma^2 = 0$. In this case, the moments of $y$ are,
+% \begin{eqnarray*}
+%   \E[ y ] &=& (\sum_{k=1}^{K} \pi_{k} \beta_k)^T x \\
+%           &=& M_1^T \E[x] \\
+%   \E[ y^2 ] &=& \sum_{k=1}^{K} \pi_{k} \E[(\beta_k^T x)]^2 \\
+%   &=& \sum_{k=1}^{K} \pi_{k} (\beta_k\tp{2} \odot \E[x\tp{2}]) \\
+%   &=& M_2 \odot \E[x\tp{2}] \\
+%   \E[ y^p ] &=& M_p \odot \E[x\tp{p}].
+% \end{eqnarray*}
+% 
+% We note that joint moments with $x$ will not help either; consider
+% \begin{eqnarray}
+%   \E[ y^p x^q ] &=& M_p \odot E[ x\tp{p+q} ].
+% \end{eqnarray}
+% The elements of $\E[ y^p x^q ]$ are linear combinations of $\E[y^p]$,
+% and hence we do not get any new equations; \todo{This isn't exactly
+% correct; should we even be presenting this line of reasoning?}. This is
+% to be expected, since any information about the $\beta$s is really
+% encoded in $y$, and not in the $X$.
 
-Note about dependencies in the n-th moments. 
+To work around this problem, we will use regression on the conditional
+moments, $\E[y | x]$ to recover the expected moments of the regressors,
+$M_2$ and $M_3$. Recovering the $\beta_k$ and $\pi_k$ given these
+symmetric moments has been addressed in prior work
+\citep{AnandkumarHsuKakade2012, AnandkumarGeHsu2012}.  This algorithm as
+been summarized in \algorithmref{algo:spectral-experts}.
 
-Method of moments
-argue why naive thing doesn't work.
+\begin{algorithm}[t]
+  \caption{Spectral Experts}
+  \label{algo:spectral-experts}
+  \begin{algorithmic}[1]
+    \REQUIRE $\mathcal{D} = \{ (\xn{1}, \yn{1}), \cdots, (\xn{N}, \yn{N}) \}$
+    \REQUIRE $K$, the number of clusters, $\sigma^2$ 
+    \STATE Recover $M_1$ using least-squares regression on $\mathcal{D}$.
+    \STATE Recover $M_2, M_3$ using low-rank regression on $\mathcal{D}$.
+    \STATE Return the eigenvectors $\beta_k$ and eigenvalues $\pi_k$ of $M_3$ using $M_2$.
+  \end{algorithmic}
+\end{algorithm}
 
-Note: we haven't shown identifiability from all moments.
+\subsection{Recovering $M_2$ and $M_3$}
 
-\subsection{Algorithm}
+Let $\epsilon \sim \normal{0, \sigma^2}$ be independent Gaussian noise.
+we have,
+\begin{eqnarray*}
+  y &=& \sum_{k=1}^{K} \delta_{k} \beta_k^T x + \epsilon \\
+  \E[ y | x ] &=& M_1^T x \\
+  \E[ y^2 | x ] &=& \sum_{k=1}^{K} \pi_{k} (\beta_k^T x)^2 + \E[ \epsilon^2 ] \\
+  &=& M_2 \odot x^{\otimes 2} + \sigma^2 \\
+  \E[ y^3 | x ] &=& \sum_{k=1}^{K} \pi_{k} (\beta_k^T x)^3
+            + 3 \E[\epsilon^2] (\sum_{k=1}^{K} \pi_{k} \beta_k^T) x \\
+  &=& M_3 \odot x^{\otimes 3} + 3 \sigma^2 M_1.
+\end{eqnarray*}
 
-If knew $M_2$ and $M_3$, then can use existing techniques.
+% Details about low rank regression.
+The symmetric structure of $M_2$ and $M_3$ implies that there are
+$\frac{d (d-1)}{2}$ and $\frac{d (d-1) (d-2)}{6}$ degrees of freedom
+respectively. However, the moments are further constrained to have
+a rank of $K$. To exploit this property, we will use trace norm
+regularization with a proximal subgradient descent
+algorithm\citationneeded to recover $M_2$,
+\begin{eqnarray*}
+  M_2 &=& \arg\min_{M} \half \sum_{i=1}^N ((\xn{i})\tp{2} \odot M - (\yn{i})^2)^2 + \lambda \|M\|_*.
+\end{eqnarray*}
 
-We can do low-rank regression to recover $M_2$ and $M_3$.
+The analogue of trace norm regularization for higher order tensors
+corresponds to the sum of the trace norms of the mode-k unfolding of the
+tensor \cite{Tomioka2011}, $X_{(k)}$, is a $d_k \times (\prod_{k' \neq
+k} d_{k'})$ matrix obtained by concatenating the entries for all
+dimensions other than $k$. For example, the 1-mode unfolding of a 3rd
+order tensor has entries, $X_{(1)}^{i_1, (i_2, i_3)} = X_{i_1, i_2,
+i_3}$. Thus, we employ a proximal subgradient descent algorithm to solve
+the following optimization problem to recovery $M_3$.
+\begin{eqnarray*}
+  M_3 &=& \arg\min_{M} \half \sum_{i=1}^N ((\xn{i})\tp{3} \odot M - (\yn{i})^3)^2 
+          + \frac{\lambda}{3} \sum_{k=1}^{3} \|M_{(k)}\|_*.
+\end{eqnarray*}
 
-An overview of the algorithm is as follows; use low-rank/ridge regression
-recovery techniques to recover the $B$ and $\mathcal{B}$ from moments of the
-data. Use the tensor factorization to recover the $\pi$, $\beta$ which are
-eigenvalues/eigenvectors.
+In \sectionref{sec:theory}, we will show that recovery of matrices so
+constrained requires only $O(\frac{\sqrt{K} d}{\epsilon})$ samples as
+opposed to $O(\frac{d^3}{\epsilon})$ samples to recover moments within
+$\epsilon$ from their true values.
 
-% State algorithm
+\subsubsection{Implications for Identifiability}
 
-\begin{theorem}
-  Recovery analysis of mixture of linear regressions.
-\end{theorem}
-\begin{proof}
-\end{proof}
+Our approach employs regression on $x\tp{2}$ and $x\tp{3}$, and thus
+requires $\mathcal{X} \otimes \mathcal{X}$ and $\mathcal{X} \otimes
+\mathcal{X} \otimes \mathcal{X}$ to be linearly independent modulo
+symmetry. We call these condition {\em quadratic} and {\em cubic}
+independence.
 
-\subsection{Recovering $B$ and $\mathcal{B}$}
+This condition trivially holds when the space $\mathcal{X}$ consists of
+independent vectors $\{ x_1, x_2, \cdots, x_d \}$. Unfortunately, it
+places some constraints on non-linear featurizations. For example, the
+common polynomial basis expansion, $1, x_1, x_1^2, \dots, x_1^p$ is
+neither quadratically nor cubically independent because the product
+space is strictly a subset of $\Re^{\frac{d (d-1)}{2}}$ since it
+contains $x_1 \times x_1 = x_1^2 \times 1$, and $x_1 \times x_1 \times
+x_1 = x_1^2 \times x_1 \times 1 = x_1^3 \times 1 \times 1$. In fact, the
+number of unique terms in $x\tp{p}$ is only of the order of $p \times
+d$, and hence we will not have enough equations to solve for $M_2$ or
+$M_3$ unless we consider $p = d^2$ moments.
 
-Writing out the regression problem.
+{\todo Note: we haven't shown identifiability from all moments. What
+does this mean?}
 
-\begin{lemma}
-  Recovery analysis of ridge regression is $\le \Omega(\frac{d^2}{n})$.
-  Try and figure out dependence on condition numbers. It's similarly
-  $\le \Omega(\frac{d^3}{n})$.
-\end{lemma}
-\begin{proof}
-  Theorem X \cite{HsuKakadeZhang2011}.
-\end{proof}
+\subsection{Recovering $B$ and $\pi$}
 
-Using low-rank gradient methods. Overview SVD for 
+Having recovered the moments $M_2$ and $M_3$, we must now solve for the
+actual regressors $\beta_k$ and mixture weights $\pi_k$, which are the
+eigenvectors and eigenvalues of the symmetric moments respectively,
+\begin{eqnarray*}
+  M_2 &=&  \sum_{k=1}^{K} \pi_k \beta_k^{\otimes 2}\\
+  M_3 &=& \sum_{k=1}^{K} \pi_k \beta_k^{\otimes 3}.
+\end{eqnarray*}
 
-\begin{lemma}
-  Recovery analysis of nuclear-norm regression is $\le
-  \Omega(\frac{kd}{n})$. Try and figure out dependence on condition
-  numbers.
-\end{lemma}
-\begin{proof}
-  Theorem X \cite{NegahbanWainwright2009}.
-  Theorem Y \cite{Tomioka2011}.
-\end{proof}
-
-\subsection{Recovering Regression Coefficients}
-
-Write out the form of $B$ and $\mathcal{B}$ in symmetric tensor form.
-
-Use Tensor Power Method to recovery $\beta_k$.
-
-\begin{lemma}
-  Bound error in the $\beta$ based on the errors of $B$ and $\mathcal{B}$.
-\end{lemma}
-\begin{proof}
-  \cite{AnandkumarGeHsu2012}
-\end{proof}
+We note that the eigendecomposition of $M_2$ is not sufficient to
+recover the $\beta_k$ because they are not necessarily orthogonal to
+each other. \citet{AnandkumarGeHsu2012} describes an approach that uses
+rotates $M_3$ to an orthogonal basis by using the whitening transform of
+$M_2$. The eigenvectors and eigenvalues recovered from the
+eigendecomposition of $M_3(W, W, W)$ can be de-whitened to recover the
+$\beta_k$ and $\pi_k$.
 
