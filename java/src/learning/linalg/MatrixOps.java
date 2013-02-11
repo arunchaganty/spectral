@@ -10,7 +10,9 @@ import learning.linalg.SimpleTensor;
 import learning.exceptions.NumericalException;
 
 import org.ejml.alg.dense.mult.VectorVectorMult;
+import org.ejml.factory.SingularValueDecomposition;
 import org.ejml.ops.CommonOps;
+import org.ejml.ops.SpecializedOps;
 import org.ejml.simple.SimpleMatrix;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.simple.SimpleSVD;
@@ -202,6 +204,12 @@ public class MatrixOps {
   public static double norm(SimpleMatrix X) {
     return norm( X.getMatrix() );
   }
+  public static double diff(DenseMatrix64F X, DenseMatrix64F Y) {
+    return SpecializedOps.diffNormF(X, Y);
+  }
+  public static double diff(SimpleMatrix X, SimpleMatrix Y) {
+    return diff(X.getMatrix(), Y.getMatrix());
+  }
 
   /**
    * Return the absolute value of each entry in X
@@ -304,12 +312,17 @@ public class MatrixOps {
     return argmin( X.getMatrix() );
   }
 
-
-
+  /**
+   * Extract the outer product of x
+   */
+  public static void outer( DenseMatrix64F x, DenseMatrix64F y, DenseMatrix64F XY ) {
+    VectorVectorMult.outerProd(x, y, XY);
+  }
   /**
    * Compute the average outer product of each row of X1 and X2
    */
   public static DenseMatrix64F Pairs( DenseMatrix64F X1, DenseMatrix64F X2 ) {
+    // TODO: Optimize
     assert( X1.numRows == X2.numRows );
 
     int nRows = X1.numRows;
@@ -679,6 +692,12 @@ public class MatrixOps {
   /**
    * Find the rank of the matrix
    */
+  public static int rank( DenseMatrix64F X, double eps ) {
+    return rank( SimpleMatrix.wrap(X), eps );
+  }
+  public static int rank( DenseMatrix64F X ) {
+    return rank( X, EPS_ZERO );
+  }
   public static int rank( SimpleMatrix X, double eps ) {
     // HACK: X.svd().rank() does not give the right rank for some reason.
     SimpleMatrix W = X.svd().getW();
@@ -874,6 +893,33 @@ public class MatrixOps {
       logsum = logsumexp( logsum, x[i] );
     }
     return logsum;
+  }
+
+  /**
+   * Compute the quadratic form: y_i = x_i^T M x_i
+   * @param x
+   * @param M
+   * @param y
+   */
+  public static double xMy(final DenseMatrix64F x, final DenseMatrix64F M, final DenseMatrix64F y) {
+    return VectorVectorMult.innerProdA(x, M, y);
+  }
+  public static void quadraticForm(final DenseMatrix64F X, final DenseMatrix64F M, DenseMatrix64F y) {
+    int N = X.numRows;
+    int D = X.numCols;
+
+    DenseMatrix64F x = new DenseMatrix64F(1, D);
+
+    for( int n = 0; n < N; n++ ) {
+      row( X, n, x );
+      double v = VectorVectorMult.innerProdA(x, M, x);
+      y.set( n, v );
+    }
+  }
+  public static SimpleMatrix quadraticForm(SimpleMatrix X, SimpleMatrix M) {
+    DenseMatrix64F y = new DenseMatrix64F(X.numRows(), 1);
+    quadraticForm(X.getMatrix(), M.getMatrix(), y);
+    return SimpleMatrix.wrap(y);
   }
 }
 

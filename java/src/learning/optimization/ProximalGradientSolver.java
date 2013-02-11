@@ -2,15 +2,53 @@ package learning.optimization;
 
 import fig.basic.LogInfo;
 import org.ejml.data.DenseMatrix64F;
-import learning.optimization.GradientDescentSolver;
 import org.ejml.ops.CommonOps;
 
 /**
  * Represents a problem that is solved using proximal gradient descent
  */
-public class ProximalGradientSolver extends GradientDescentSolver {
+public class ProximalGradientSolver {
 
-  public static interface ProximalOptimizable extends GradientDescentSolver.Optimizable {
+  public static class LearningRate {
+    public static enum Type {
+      CONSTANT,
+      BY_T,
+      BY_SQRT_T
+    }
+
+    public Type type;
+    public double rate;
+
+    public LearningRate(Type type, double initialRate) {
+      this.type = type;
+      this.rate = initialRate;
+    }
+
+    public double getRate(double t) {
+      switch(type) {
+        case CONSTANT: return rate;
+        case BY_T: return rate/t+1;
+        case BY_SQRT_T: return rate/Math.sqrt(t + 1);
+      }
+      return rate;
+    }
+  }
+
+
+  public static interface ProximalOptimizable {
+    /**
+     * Compute the gradient at $x$ and store in $gradient$
+     * @param x
+     * @param gradient
+     */
+    public void gradient( DenseMatrix64F x, DenseMatrix64F gradient );
+
+    /**
+     * Return the loss/log-likelihood score at a particular $x$
+     * @param x
+     * @return
+     */
+    public double loss( DenseMatrix64F x );
     /**
      * Compute the gradient at $x$ and store in $gradient$
      * @param x
@@ -18,7 +56,7 @@ public class ProximalGradientSolver extends GradientDescentSolver {
     public void projectProximal( DenseMatrix64F x );
   }
 
-  public DenseMatrix64F optimize( ProximalOptimizable problem, DenseMatrix64F initial, int maxIters, double eps, LearningRate rate ) {
+  public DenseMatrix64F optimize( ProximalOptimizable problem, DenseMatrix64F initial, LearningRate rate, int maxIters, double eps ) {
     LogInfo.begin_track("proximal-optimize");
 
     double lhood = problem.loss(initial);
