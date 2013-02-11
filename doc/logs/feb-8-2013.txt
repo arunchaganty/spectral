@@ -1,0 +1,21 @@
+% February 08, 2013  
+
+I hacked together something in python to test how good the low-rank recovery
+techniques do in recovery the answer. As a sanity check, it returns the same
+result when $\lambda = 0$. Expectedly, the improvement is slight in the pairs
+case, and relatively marked in the tensor case. On the positive side, it's also
+better in the absolute sense. For tensors, some figures follow,
+
+Ridge Regression    Low-rank
+5.24662568659       0.71176336
+0.127070577963      0.166285040282
+11.8803871954       8.60234416936
+10.4856481712       3.26391827592
+
+Clearly, things aren't perfect and we might have to do some parameter search to
+improve.
+
+Later in the evening, Percy and I tried to sketch out the paper outline. We
+brought up some points about the variance, etc. which need to be worked out in
+detail. 
+
