@@ -9,6 +9,15 @@ import org.junit.Test;
  */
 public class FullTensorTest {
 
+  FullTensor randomTensor(int K, int D) {
+    SimpleMatrix w = RandomFactory.rand(1, K);
+    // Normalize
+    w = MatrixOps.normalize(w.elementMult(w));
+
+    SimpleMatrix X = RandomFactory.rand(K, D);
+    return FullTensor.fromDecomposition(w, X);
+  }
+
   @Test
   public void rotate() {
     SimpleMatrix w = new SimpleMatrix( new double[][] {{ 1.1, 0.8, 0.7 }} );
@@ -93,4 +102,16 @@ public class FullTensorTest {
     Assert.assertTrue( MatrixOps.equal( T.project3( U3, U3, U1 ), 0 ) );
     Assert.assertTrue( MatrixOps.equal( T.project3( U3, U3, U2 ), 0 ) );
   }
+
+  @Test
+  public void unfold() {
+    FullTensor T = randomTensor(3, 3);
+    // Test by unfolding and refolding - do we get the same thing back?
+    for (int i = 0; i < 3; i++ ) {
+      SimpleMatrix M = T.unfold(i);
+      FullTensor T_ = FullTensor.fold(i, M, new int[] {T.D1,T.D2,T.D3});
+      Assert.assertTrue( MatrixOps.allclose(T, T_ ));
+    }
+  }
+
 }

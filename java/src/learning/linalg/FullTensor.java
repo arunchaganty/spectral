@@ -12,6 +12,12 @@ public class FullTensor implements Tensor {
   double[][][] X;
   int D1, D2, D3;
 
+  public FullTensor( int D1, int D2, int D3 ) {
+    X = new double[D1][D2][D3];
+    this.D1 = D1;
+    this.D2 = D2;
+    this.D3 = D3;
+  }
   public FullTensor( double[][][] X ) {
     this.X = X;
     D1 = X.length;
@@ -328,6 +334,71 @@ public class FullTensor implements Tensor {
       }
     }
     return y;
+  }
+
+
+  /**
+   * Unfold the tensor along the axis and place entries in the matrix out.
+   * Use this routine if you'd like to be in control of memory usage.
+   */
+  public void unfold(int axis, DenseMatrix64F out) {
+    int[] D = {D1, D2, D3};
+    // Get axes
+    int M = D[axis]; int N = D1 * D2 * D3 / M;
+    assert( out.numRows == M && out.numCols == N );
+
+    for( int d1 = 0; d1 < D[axis]; d1++ ) {
+
+      int idx = 0;
+      // Get the axes in circular order
+      for( int d2 = 0; d2 < D[(axis + 1) % 3]; d2++ ) {
+        for( int d3 = 0; d3 < D[(axis + 2) % 3]; d3++ ) {
+          int[] idx_ = {0, 0, 0};
+          // Get the element selector for X
+          idx_[axis] = d1; idx_[(axis+1)%3] = d2; idx_[(axis+2)%3] = d3;
+          out.set( d1, idx++, X[idx_[0]][idx_[1]][idx_[2]] );
+        }
+      }
+    }
+  }
+  public SimpleMatrix unfold(int axis) {
+    int[] D = {D1, D2, D3};
+    int M = D[axis]; int N = D1 * D2 * D3 / M;
+    DenseMatrix64F out = new DenseMatrix64F(M,N);
+    unfold(axis, out);
+    return SimpleMatrix.wrap(out);
+  }
+
+  /**
+   * Fold "in" into a tensor along the axis and place entries in the tensor T.
+   * Use this routine if you'd like to be in control of memory usage.
+   */
+  public static void fold(int axis, DenseMatrix64F in, FullTensor T) {
+    int[] D = {T.D1, T.D2, T.D3};
+    // Get axes
+    int M = D[axis]; int N = T.D1 * T.D2 * T.D3 / M;
+    assert( in.numRows == M && in.numCols == N );
+
+    for( int d1 = 0; d1 < D[axis]; d1++ ) {
+      int idx = 0;
+      // Get the axes in circular order
+      for( int d2 = 0; d2 < D[(axis + 1) % 3]; d2++ ) {
+        for( int d3 = 0; d3 < D[(axis + 2) % 3]; d3++ ) {
+          int[] idx_ = {0, 0, 0};
+          // Get the element selector for X
+          idx_[axis] = d1; idx_[(axis+1)%3] = d2; idx_[(axis+2)%3] = d3;
+          T.X[idx_[0]][idx_[1]][idx_[2]] = in.get( d1, idx++ );
+        }
+      }
+    }
+  }
+  public static FullTensor fold(int axis, DenseMatrix64F in, int[] D) {
+    FullTensor T = new FullTensor(D[0], D[1], D[2]);
+    fold( axis, in, T );
+    return T;
+  }
+  public static FullTensor fold(int axis, SimpleMatrix in, int[] D) {
+    return fold( axis, in.getMatrix(), D );
   }
 
 }
