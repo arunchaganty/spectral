@@ -210,6 +210,16 @@ public class MatrixOps {
   public static double diff(SimpleMatrix X, SimpleMatrix Y) {
     return diff(X.getMatrix(), Y.getMatrix());
   }
+  public static double diff(FullTensor X, FullTensor Y) {
+    assert( X.D1 == Y.D1 ); assert( X.D2 == Y.D2 ); assert( X.D3 == Y.D3 );
+
+    double err = 0.0;
+    for(int d1 = 0; d1 < X.D1; d1++)
+      for(int d2 = 0; d2 < X.D2; d2++)
+        for(int d3 = 0; d3 < X.D3; d3++)
+          err += (X.X[d1][d2][d3] - Y.X[d1][d2][d3]) * (X.X[d1][d2][d3] - Y.X[d1][d2][d3]);
+    return Math.sqrt(err);
+  }
 
   /**
    * Return the absolute value of each entry in X

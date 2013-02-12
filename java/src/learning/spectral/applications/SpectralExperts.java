@@ -65,7 +65,7 @@ public class SpectralExperts implements Runnable {
 
     public MixtureOfExperts model;
     public SimpleMatrix Pairs;
-    public Tensor Triples;
+    public FullTensor Triples;
     public SimpleMatrix betas;
     public SimpleMatrix weights;
 
@@ -80,7 +80,7 @@ public class SpectralExperts implements Runnable {
       this.model = model;
 
       // Store the exact moments
-      Pair<SimpleMatrix, Tensor> moments = SpectralExperts.computeExactMoments( model );
+      Pair<SimpleMatrix, FullTensor> moments = SpectralExperts.computeExactMoments( model );
       Pairs = moments.getValue0();
       Triples = moments.getValue1();
       betas = model.getBetas();
@@ -102,7 +102,7 @@ public class SpectralExperts implements Runnable {
       SimpleMatrix eta = MatrixFactory.ones(D); //RandomFactory.rand(D + 1, 1);
       SimpleMatrix TriplesT = Triples.project(2, eta);
       SimpleMatrix TriplesT_ = Triples_.project(2, eta );
-      TriplesErr = MatrixOps.norm(TriplesT.minus(TriplesT_));
+      TriplesErr = MatrixOps.diff(TriplesT, TriplesT_);
       if( saveToExecution ) {
         Execution.putOutput( "eta", eta );
         Execution.putOutput( "TriplesT", TriplesT );
@@ -110,6 +110,14 @@ public class SpectralExperts implements Runnable {
         Execution.putOutput("TriplesTErr", TriplesErr);
       }
       LogInfo.logsForce("TriplesT: " + TriplesErr);
+    }
+
+    public void reportTriples( FullTensor Triples_ ) {
+      TriplesErr = MatrixOps.diff(Triples, Triples_ );
+      if( saveToExecution ) {
+        Execution.putOutput("TriplesErr", TriplesErr);
+      }
+      LogInfo.logsForce("Triples: " + TriplesErr);
     }
 
     public void reportWeights( SimpleMatrix weights_ ) {
@@ -211,14 +219,14 @@ public class SpectralExperts implements Runnable {
     this.K = K;
   }
 
-  public static Pair<SimpleMatrix, Tensor> computeExactMoments( SimpleMatrix weights, SimpleMatrix betas ) {
+  public static Pair<SimpleMatrix, FullTensor> computeExactMoments( SimpleMatrix weights, SimpleMatrix betas ) {
     SimpleMatrix Pairs = betas.mult( MatrixFactory.diag( weights ) ).mult( betas.transpose() );
     FullTensor Triples = FullTensor.fromDecomposition( weights, betas );
 
-    return new Pair<SimpleMatrix, Tensor>( Pairs, Triples );
+    return new Pair<>( Pairs, Triples );
   }
 
-  public static Pair<SimpleMatrix, Tensor> computeExactMoments( MixtureOfExperts model ) {
+  public static Pair<SimpleMatrix, FullTensor> computeExactMoments( MixtureOfExperts model ) {
     return computeExactMoments(model.getWeights(), model.getBetas());
   }
 
