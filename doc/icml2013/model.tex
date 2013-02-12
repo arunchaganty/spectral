@@ -1,3 +1,26 @@
+\subsection{Notation}
+
+%We have already defined $y$ to be the response variable and $x \in
+%\Re^d$ to be the covariates it depends on. Note that the matrix of
+%regressors $B$ is a $d \times K$ matrix, where the $k$-th column is
+%$\beta_k$.
+
+We will use the notation $x\tp{p}$ to describe the $p$-th order tensor
+formed by taking the outer product of $x$; i.e. $x\tp{p}_{i_1 i_2 \ldots
+i_p} = x_{i_1} x_{i_2} \cdots x_{i_p}$. We will use $\odot$ to denote
+the general dot product between $p$-th order tensors, i.e. $X \odot
+Y = \sum_{i_1, i_2, \ldots i_p} X_{i_1, i_2, \ldots i_p} Y_{i_1, i_2,
+\ldots i_p}.$ Similar to how $x^T A$ is the projection of a vector $x$
+onto the row space of a matrix $A$, when $X \in \Re^{d^p}$ and $Y \in
+\Re^{d^{p+q}}$,  with $p, q > 0$, $X \odot Y \in \Re^{d^q}$ is the
+projection of $X$ onto the first $p$ dimensions of $Y$, i.e. $(X \odot
+Y)_{i_1, \ldots, i_q} = \sum_{j_1, \ldots, j_p} X_{j_1, \ldots, j_p}
+Y_{j_1, \ldots, j_p, i_1, \ldots, i_q}$.
+
+The expected moments of the parameters $\beta_1, \dots, \beta_k$ play an
+important role in our algorithm and we will use $M_p = \E[\beta\tp{p}]
+= \sum_{k=1}^{K} \pi_k \beta_k^{\otimes p}$ to denote them.
+
 \section{Model}
 \label{sec:model}
 
@@ -14,7 +37,7 @@ $\beta_k$ and we consider a common variance term $\sigma^2$. Given $x$,
 the generative process for the response variables is,
 \begin{eqnarray*}
   h &\sim& \mult(\pi) \\
-  y | h = k &\sim& \normal{ \beta_{k}^T x}{ \sigma^2 },
+  y \mid h &\sim& \normal{ \beta_{h}^T x}{ \sigma^2 },
 \end{eqnarray*}
 where $h$ is a latent variable corresponding to the mode.
 
@@ -26,3 +49,8 @@ recover the regressors, $B = [\beta_1 \mid \beta_2 \mid \cdots \mid
 solution for $\beta_k$ would be the regressor found using least squares
 on the set of points, $\{(x_i, y_i) | h_i = k \}$.
 
+Typically people use EM, but the maximum marginal likelihood is non-convex.
+
+Reference mixture of experts
+
+Acknowledge that mixing proporitions can't depend on $x$

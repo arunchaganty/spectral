@@ -1,6 +1,34 @@
 \section{A Method of Moments Algorithm}
 \label{sec:algo}
 
+The goal is to recover the parameters $(\pi, B)$.
+What should the moments be?
+
+OUTLINE
+
+\subsection{Recovering $B$ and $\pi$ from $M_2,M_3$}
+
+If we knew the following quantities, then we could apply tensor factorization
+\cite{AnandkumarGeHsu2012}.
+
+Having recovered the compound parameters $M_2$ and $M_3$, we must now solve for the
+actual parameters $\{\beta_k\}$ and $\{\pi_k\}$, which are the
+eigenvectors and eigenvalues of the symmetric moments respectively,
+\begin{eqnarray*}
+  M_2 &=&  \sum_{k=1}^{K} \pi_k \beta_k^{\otimes 2}\\
+  M_3 &=& \sum_{k=1}^{K} \pi_k \beta_k^{\otimes 3}.
+\end{eqnarray*}
+
+We note that the eigendecomposition of $M_2$ is not sufficient to
+recover the $\beta_k$ because they are not necessarily orthogonal to
+each other. \citet{AnandkumarGeHsu2012} describes an approach that uses
+rotates $M_3$ to an orthogonal basis by using the whitening transform of
+$M_2$. The eigenvectors and eigenvalues recovered from the
+eigendecomposition of $M_3(W, W, W)$ can be de-whitened to recover the
+$\beta_k$ and $\pi_k$.
+
+Tensor power method
+
 In this section, we will outline some shortcomings of the standard
 method of moments formulation for the mixture of linear regressions
 model. We then describe how we can work around this limitation and
@@ -8,36 +36,11 @@ reduce our problem to a known one, which can be solved using symmetric
 tensor decomposition. Finally, we will state some implications this
 reduction has regarding identifiability. 
 
-\subsection{Notation}
+We want to estimate from low-order moments.
 
-We have already defined $y$ to be the response variable and $x \in
-\Re^d$ to be the covariates it depends on. Note that the matrix of
-regressors $B$ is a $d \times K$ matrix, where the $k$-th column is
-$\beta_k$.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-We will use the notation $x\tp{p}$ to describe the $p$-th order tensor
-formed by taking the outer product of $x$; i.e. $x\tp{p}_{i_1 i_2 \ldots
-i_p} = x_{i_1} x_{i_2} \cdots x_{i_p}$. We will use $\odot$ to denote
-the general dot product between $p$-th order tensors, i.e. $X \odot
-Y = \sum_{i_1, i_2, \ldots i_p} X_{i_1, i_2, \ldots i_p} Y_{i_1, i_2,
-\ldots i_p}.$ Similar to how $x^T A$ is the projection of a vector $x$
-onto the row space of a matrix $A$, when $X \in \Re^{d^p}$ and $Y \in
-\Re^{d^{p+q}}$,  with $p, q > 0$, $X \odot Y \in \Re^{d^q}$ is the
-projection of $X$ onto the first $p$ dimensions of $Y$, i.e. $(X \odot
-Y)_{i_1, \ldots, i_q} = \sum_{j_1, \ldots, j_p} X_{j_1, \ldots, j_p}
-Y_{j_1, \ldots, j_p, i_1, \ldots, i_q}$.
-
-The expected moments of the parameters $\beta_1, \dots, \beta_k$ play an
-important role in our algorithm and we will use $M_p = \E[\beta\tp{p}]
-= \sum_{k=1}^{K} \pi_k \beta_k^{\otimes p}$ to denote them.
-
-\subsection{Identifiability}
-
-The model is in general identifiable, except for a pathological case
-concerning how data points are placed \citationneeded.
-
-
-\subsection{Overview}
+\subsection{Recovering $M_2$ and $M_3$}
 
 Conventionally, when using the method of moments, the moments of
 observed variables are expressed algebraically in terms of the model
@@ -72,7 +75,7 @@ recover $B \in \Re{K \times D}$ and $\pi \in \Re^K$.
 % encoded in $y$, and not in the $X$.
 
 To work around this problem, we will use regression on the conditional
-moments, $\E[y | x]$ to recover the expected moments of the regressors,
+moments, $\E[y \mid x]$ to recover the expected moments of the regressors,
 $M_2$ and $M_3$. Recovering the $\beta_k$ and $\pi_k$ given these
 symmetric moments has been addressed in prior work
 \citep{AnandkumarHsuKakade2012, AnandkumarGeHsu2012}.  This algorithm as
@@ -90,12 +93,10 @@ been summarized in \algorithmref{algo:spectral-experts}.
   \end{algorithmic}
 \end{algorithm}
 
-\subsection{Recovering $M_2$ and $M_3$}
-
-Let $\epsilon \sim \normal{0, \sigma^2}$ be independent Gaussian noise.
+Let $\epsilon \sim \normal{0}{\sigma^2}$ be independent Gaussian noise.
 we have,
 \begin{eqnarray*}
-  y &=& \sum_{k=1}^{K} \delta_{k} \beta_k^T x + \epsilon \\
+  %y &=& \sum_{k=1}^{K} \delta_{k} \beta_k^T x + \epsilon \\
   \E[ y | x ] &=& M_1^T x \\
   \E[ y^2 | x ] &=& \sum_{k=1}^{K} \pi_{k} (\beta_k^T x)^2 + \E[ \epsilon^2 ] \\
   &=& M_2 \odot x^{\otimes 2} + \sigma^2 \\
@@ -105,15 +106,17 @@ we have,
 \end{eqnarray*}
 
 % Details about low rank regression.
-The symmetric structure of $M_2$ and $M_3$ implies that there are
-$\frac{d (d-1)}{2}$ and $\frac{d (d-1) (d-2)}{6}$ degrees of freedom
-respectively. However, the moments are further constrained to have
+%The symmetric structure of $M_2$ and $M_3$ implies that there are
+%$\frac{d (d-1)}{2}$ and $\frac{d (d-1) (d-2)}{6}$ degrees of freedom
+%respectively.
+However, the moments are further constrained to have
 a rank of $K$. To exploit this property, we will use trace norm
 regularization with a proximal subgradient descent
 algorithm\citationneeded to recover $M_2$,
-\begin{eqnarray*}
-  M_2 &=& \arg\min_{M} \half \sum_{i=1}^N ((\xn{i})\tp{2} \odot M - (\yn{i})^2)^2 + \lambda \|M\|_*.
-\end{eqnarray*}
+\begin{align}
+  %\hat M_2 &= \arg\min_{M_2} \frac{1}{2 N} \sum_{i=1}^N ((\xn{i})\tp{2} \odot M_2 - (\yn{i})^2)^2 + \lambda \|M\|_*.
+  \hat M_2 &= \arg\min_{M_2} \frac{1}{2 N} \sum_{(x,y) \in D} (x\tp{2} \odot M_2 - y^2)^2 + \lambda \|M\|_*.
+\end{align}
 
 The analogue of trace norm regularization for higher order tensors
 corresponds to the sum of the trace norms of the mode-k unfolding of the
@@ -133,7 +136,12 @@ constrained requires only $O(\frac{\sqrt{K} d}{\epsilon})$ samples as
 opposed to $O(\frac{d^3}{\epsilon})$ samples to recover moments within
 $\epsilon$ from their true values.
 
-\subsubsection{Implications for Identifiability}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Identifiability from moments}
+
+The model is in general identifiable, except for a pathological case
+concerning how data points are placed \citationneeded.
 
 Our approach employs regression on $x\tp{2}$ and $x\tp{3}$, and thus
 requires $\mathcal{X} \otimes \mathcal{X}$ and $\mathcal{X} \otimes
@@ -155,22 +163,3 @@ $M_3$ unless we consider $p = d^2$ moments.
 
 {\todo Note: we haven't shown identifiability from all moments. What
 does this mean?}
-
-\subsection{Recovering $B$ and $\pi$}
-
-Having recovered the moments $M_2$ and $M_3$, we must now solve for the
-actual regressors $\beta_k$ and mixture weights $\pi_k$, which are the
-eigenvectors and eigenvalues of the symmetric moments respectively,
-\begin{eqnarray*}
-  M_2 &=&  \sum_{k=1}^{K} \pi_k \beta_k^{\otimes 2}\\
-  M_3 &=& \sum_{k=1}^{K} \pi_k \beta_k^{\otimes 3}.
-\end{eqnarray*}
-
-We note that the eigendecomposition of $M_2$ is not sufficient to
-recover the $\beta_k$ because they are not necessarily orthogonal to
-each other. \citet{AnandkumarGeHsu2012} describes an approach that uses
-rotates $M_3$ to an orthogonal basis by using the whitening transform of
-$M_2$. The eigenvectors and eigenvalues recovered from the
-eigendecomposition of $M_3(W, W, W)$ can be de-whitened to recover the
-$\beta_k$ and $\pi_k$.
-
