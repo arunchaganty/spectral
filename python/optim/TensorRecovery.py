@@ -44,7 +44,7 @@ class TensorRecovery( ProximalGradient ):
         for i in xrange( B.ndim ):
             B_i = unfold( B, i+1 )
             U, S, Vt = svd( B_i, full_matrices = False )
-            S -= thresh
+            S -= thresh/B.ndim
             S[ S < 0.0 ] = 0
             B = fold( U.dot( diag( S ) ).dot( Vt ), i+1, B.shape )
         return B
