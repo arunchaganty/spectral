@@ -49,8 +49,22 @@ public class FullTensor implements Tensor {
 
     return new FullTensor(X);
   }
+  public static FullTensor fromUnitVector( DenseMatrix64F x ) {
+    int D = x.getNumElements();
+    double[][][] X = new double[D][D][D];
+
+    for(int d1 = 0; d1 < D; d1++) {
+      for(int d2 = 0; d2 < D; d2++) {
+        for(int d3 = 0; d3 < D; d3++) {
+          X[d1][d2][d3] = x.get(d1) * x.get(d2) * x.get(d3);
+        }
+      }
+    }
+
+    return new FullTensor(X);
+  }
   public static FullTensor fromUnitVector( SimpleMatrix x ) {
-    return fromUnitVector(MatrixFactory.toVector(x));
+    return fromUnitVector(x.getMatrix());
   }
 
   public static FullTensor fromDecomposition( double[] scale, double[][] X ) {
@@ -321,19 +335,26 @@ public class FullTensor implements Tensor {
     return MatrixFactory.fromVector(y);
   }
 
-  public double project3(SimpleMatrix theta1, SimpleMatrix theta2, SimpleMatrix theta3) {
-    double[] theta1_ = MatrixFactory.toVector( theta1 );
-    double[] theta2_ = MatrixFactory.toVector( theta2 );
-    double[] theta3_ = MatrixFactory.toVector( theta3 );
+  /**
+   * Project the three vectors theta1, theta2, and theta3 on to the three dimensions of the tensor
+   * @param theta1
+   * @param theta2
+   * @param theta3
+   * @return
+   */
+  public double project3(DenseMatrix64F theta1, DenseMatrix64F theta2, DenseMatrix64F theta3) {
     double y = 0.0;
     for( int d1 = 0; d1 < D1; d1++ ) {
       for( int d2 = 0; d2 < D2; d2++ ) {
         for( int d3 = 0; d3 < D3; d3++ ) {
-          y += theta1_[d1] * theta2_[d2] * theta3_[d3] * X[d1][d2][d3];
+          y += theta1.get(d1) * theta2.get(d2) * theta3.get(d3) * X[d1][d2][d3];
         }
       }
     }
     return y;
+  }
+  public double project3(SimpleMatrix theta1, SimpleMatrix theta2, SimpleMatrix theta3) {
+    return project3(theta1.getMatrix(), theta2.getMatrix(), theta3.getMatrix());
   }
 
 
@@ -367,6 +388,32 @@ public class FullTensor implements Tensor {
     DenseMatrix64F out = new DenseMatrix64F(M,N);
     unfold(axis, out);
     return SimpleMatrix.wrap(out);
+  }
+
+  /**
+   * Unfold the unit vector tensor x into the matrix out.
+   * This is supposed to be a faster routine that will consume
+   * less memory than constructing a tensor and unfolding it.
+   */
+  public static void unfoldUnit(int axis, DenseMatrix64F x, DenseMatrix64F out) {
+    int D = x.getNumElements();
+    // Get axes
+    int M = D; int N = D * D;
+    assert( out.numRows == M && out.numCols == N );
+
+    for( int d1 = 0; d1 < D; d1++ ) {
+
+      int idx = 0;
+      // Get the axes in circular order
+      for( int d2 = 0; d2 < D; d2++ ) {
+        for( int d3 = 0; d3 < D; d3++ ) {
+          int[] idx_ = {0, 0, 0};
+          // Get the element selector for X
+          idx_[axis] = d1; idx_[(axis+1)%3] = d2; idx_[(axis+2)%3] = d3;
+          out.set( d1, idx++, x.get(idx_[0]) * x.get(idx_[1]) * x.get(idx_[2]) );
+        }
+      }
+    }
   }
 
   /**

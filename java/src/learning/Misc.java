@@ -173,7 +173,7 @@ public class Misc {
           try {
               localClass = Class.forName(resultClassDescriptor.getName()); 
           } catch (ClassNotFoundException e) {
-              LogInfo.error("No local class for " + resultClassDescriptor.getName(), e);
+              LogInfo.errors("No local class for " + resultClassDescriptor.getName(), e);
               return resultClassDescriptor;
           }
           ObjectStreamClass localClassDescriptor = ObjectStreamClass.lookup(localClass);

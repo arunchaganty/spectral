@@ -1,6 +1,7 @@
 package learning.optimization;
 
 import fig.basic.LogInfo;
+import learning.linalg.FullTensor;
 import learning.linalg.MatrixOps;
 import learning.linalg.RandomFactory;
 import learning.models.MixtureOfExperts;
@@ -41,7 +42,7 @@ public class ProximalGradientDescentTest {
 
   @Test
   public void phaseRecovery() {
-    final int N = (int) 1e3; final int D = 20; final int K = 2; final double reg = 6e-4;
+    final int N = (int) 1e3; final int D = 20; final int K = 2; final double reg = 1.8e-3;
     // General phase recovery.
     // Create a rank 2 matrix
     SimpleMatrix M = RandomFactory.randn( D, D );
@@ -72,5 +73,44 @@ public class ProximalGradientDescentTest {
 
     M_ = MatrixOps.approxk( SimpleMatrix.wrap( M_ ), K ).getMatrix();
     LogInfo.logs( "Error after reducing rank to K: " + MatrixOps.diff( M.getMatrix(), M_ ) );
+  }
+
+  @Test
+  public void tensorRecovery() {
+    final int N = (int) 1e3; final int D = 3; final int K = 2; final double reg = 6e-4;
+    // General phase recovery.
+    // Create a rank K tensor
+    FullTensor T = RandomFactory.symmetricTensor(K, D);
+    DenseMatrix64F M = T.unfold(0).getMatrix();
+
+    // Create some data points
+    SimpleMatrix X = RandomFactory.rand(N, D);
+    DenseMatrix64F x = new DenseMatrix64F(1,D);
+    // Get some points
+    SimpleMatrix y = new SimpleMatrix(N, 1);
+    for(int n = 0; n < N; n++) {
+      MatrixOps.row(X.getMatrix(), n, x);
+      y.set(n, T.project3(x, x, x));
+    }
+    // Add a little noise
+    y = y.plus( 0.05, RandomFactory.randn(N, 1) );
+
+    ProximalGradientSolver solver = new ProximalGradientSolver();
+
+    // Optimize with just regression
+    SimpleMatrix initialState = RandomFactory.randn(1,D).scale(0.01);
+    initialState = FullTensor.fromUnitVector(initialState).unfold(0);
+
+    ProximalGradientSolver.ProximalOptimizable problem = new TensorRecovery(y, X, reg);
+    DenseMatrix64F M_ = solver.optimize(problem, initialState.getMatrix(),
+            new LearningRate(LearningRate.Type.BY_SQRT_T, 2.99),
+            400, 1e-6);
+    LogInfo.logs( "Solution had rank: " + MatrixOps.rank(M_) + " instead of " + MatrixOps.rank(M) );
+    LogInfo.logs( "Error: " + MatrixOps.diff( M, M_ ) );
+    Assert.assertTrue(MatrixOps.allclose( M, M_, 1e-1));
+
+    // TODO: This isn't really kosher
+    M_ = MatrixOps.approxk( SimpleMatrix.wrap( M_ ), K ).getMatrix();
+    LogInfo.logs( "Error after reducing rank to K: " + MatrixOps.diff( M, M_ ) );
   }
 }

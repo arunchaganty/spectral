@@ -39,12 +39,9 @@ public class PhaseRecovery implements ProximalGradientSolver.ProximalOptimizable
       double err = (MatrixOps.xMy(x, M, x) - y.get(n));
       // Compute average gradient increment = (err * x - gradient)/n+1
       MatrixOps.outer(x, x, dGrad);
-      CommonOps.scale(err, dGrad);
-      CommonOps.subEquals(dGrad, gradient);
-      CommonOps.scale(1.0 / (n + 1), dGrad);
 
-      // Increment gradient
-      CommonOps.addEquals( gradient, dGrad );
+      // Update gradient
+      MatrixOps.incrementalAverageUpdate( err, n, dGrad, gradient );
     }
   }
 
@@ -54,23 +51,22 @@ public class PhaseRecovery implements ProximalGradientSolver.ProximalOptimizable
    */
   @Override
   public void projectProximal( DenseMatrix64F M ) {
-    if(true) {
-      int D = M.numRows;
+    int D = M.numRows;
 
-      Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> USV = MatrixOps.svdk(SimpleMatrix.wrap(M));
-      SimpleMatrix U = USV.getValue0();
-      SimpleMatrix S = USV.getValue1();
-      SimpleMatrix V = USV.getValue2();
+    Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> USV = MatrixOps.svdk(SimpleMatrix.wrap(M));
+    SimpleMatrix U = USV.getValue0();
+    SimpleMatrix S = USV.getValue1();
+    SimpleMatrix V = USV.getValue2();
 
-      // Soft threshold the singular values
-      for(int d = 0; d < D; d++) {
-        double v = S.get(d,d);
-        v -= reg;
-        S.set(d, d, (v > 0) ? v :  0 );
-      }
-
-      M.set( U.mult( S ).mult(V.transpose()).getMatrix() );
+    // Soft threshold the singular values
+    // NOTE: Using S.numRows() because the rank of the matrix could have decreased.
+    for(int d = 0; d < S.numRows(); d++) {
+      double v = S.get(d,d);
+      v -= reg;
+      S.set(d, d, (v > 0) ? v :  0 );
     }
+
+    M.set( U.mult( S ).mult(V.transpose()).getMatrix() );
   }
 
   @Override
@@ -93,7 +89,8 @@ public class PhaseRecovery implements ProximalGradientSolver.ProximalOptimizable
 
       err += err_ * err_;
     }
-    err = 0.5 * err + reg * CommonOps.trace(M);
+    double trace = MatrixOps.svdk(M).getValue1().elementSum();
+    err = 0.5 * err + reg * trace;
 
     return err;
   }

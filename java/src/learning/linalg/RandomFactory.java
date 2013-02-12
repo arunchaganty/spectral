@@ -165,5 +165,23 @@ public class RandomFactory {
     return new SimpleMatrix( multivariateGaussian( mean_, cov_, count ) );
   }
 
+  /**
+   * Generate a D x D x D tensor of rank K (w.h.p.)
+   * @param K
+   * @param D
+   * @return
+   */
+  public static FullTensor symmetricTensor(int K, int D) {
+    SimpleMatrix w = RandomFactory.rand(1, K);
+    // Normalize
+    w = MatrixOps.normalize(w.elementMult(w));
+
+    SimpleMatrix X = RandomFactory.rand(D, K);
+    return FullTensor.fromDecomposition(w, X);
+  }
+  public static FullTensor symmetricTensor(int D) {
+    return symmetricTensor(D,D);
+  }
+
 }
 

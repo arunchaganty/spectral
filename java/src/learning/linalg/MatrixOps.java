@@ -755,6 +755,9 @@ public class MatrixOps {
 
     return new Triplet<>(U, W, V);
   }
+  public static Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> svdk( DenseMatrix64F X ) {
+    return svdk(SimpleMatrix.wrap(X));
+  }
 
   /**
    * Compute the best k-rank approximation of the SVD
@@ -930,6 +933,26 @@ public class MatrixOps {
     DenseMatrix64F y = new DenseMatrix64F(X.numRows(), 1);
     quadraticForm(X.getMatrix(), M.getMatrix(), y);
     return SimpleMatrix.wrap(y);
+  }
+
+  /**
+   * Do the incremental weighted averging step
+   * (X <- (w * dX - X)/(n+1))
+   * @param n
+   * @param w
+   * @param dX
+   * @param X
+   */
+  public static void incrementalAverageUpdate( double w, int n, DenseMatrix64F dX, DenseMatrix64F X) {
+
+    if( w != 1.0 )
+      CommonOps.scale(w, dX);
+    CommonOps.subEquals(dX, X);
+    CommonOps.scale(1.0 / (n + 1), dX);
+    CommonOps.addEquals( X, dX );
+  }
+  public static void incrementalAverageUpdate( int n, DenseMatrix64F dX, DenseMatrix64F X) {
+    incrementalAverageUpdate(1.0, n, dX, X);
   }
 }
 
