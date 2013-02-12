@@ -37,7 +37,7 @@ public class SpectralExpertsTest {
     System.out.println( algo.analysis.Pairs );
     System.out.println( Pairs_ );
     algo.analysis.reportPairs(Pairs_);
-    Tensor Triples_ = algo.recoverTriples(y, X, reg, true);
+    FullTensor Triples_ = algo.recoverTriples(y, X, reg, true);
     algo.analysis.reportTriples(Triples_);
 
     Assert.assertTrue( algo.analysis.PairsErr < 1e-2 );
@@ -104,7 +104,7 @@ public class SpectralExpertsTest {
     System.out.println( algo.analysis.Pairs );
     System.out.println( Pairs_ );
     algo.analysis.reportPairs(Pairs_);
-    Tensor Triples_ = algo.recoverTriples(y, X, reg, doScale );
+    FullTensor Triples_ = algo.recoverTriples(y, X, reg, doScale );
     algo.analysis.reportTriples(Triples_);
   }
 
