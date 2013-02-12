@@ -1,0 +1,138 @@
+\section{Recovering $M_2, M_3$ with low-rank regression}
+\label{sec:regression}
+
+In the previous section, we described an algorithm for the mixture of
+linear regressions using regression to recover $M_2$ and $M_3$,
+described by \equationref{eq:y2} and \equationref{eq:y3}, as
+a subroutine. In this section, we will characterize the rate of
+convergence of regression.
+
+Analysis for regression in the fixed and random design settings have
+been studied before\citep{HsuKakadeZhang}, however our setup differs
+substantially from the noise models assumed in the literature. In our
+scenario, the variance in the estimation comes not only from the
+Gaussian observation noise (which has been studied before), but also
+from the variance in the latent variable $h$.
+
+Let us now formally define the class of regression problems we wish to
+analyze, i.e. regression on the set $(x\tp{p}, y^p)$,
+\begin{align*}
+  y^p &= \innerp{x\tp{p}}{M_p} + (\innerp{x\tp{p}}{M_p - \beta_h\tp{p}} + \varepsilon).
+\end{align*}
+Note that the term in brackets is the error in our estimates and has
+zero mean.  A more succinct way of representing this problem is to use
+the operator $\opX(M_p) : \Re^{d\tp{p}} \to \Re^{N}$, which uses the
+input $\{ x_i \}_{i=1}^{N}$ to map $M_p$ to a vector of responses $\hat
+y_i = \opX(M_p)_i = \innerp{x_i\tp{p}}{M_p}$. We can also represent the
+errors with the vector $\vec \epsilon$. Rewriting the equation with this notation, 
+\begin{align*}
+  \vec y^p &= \opX(M_p) + \vec \epsilon.
+\end{align*}
+
+\todo{Describe/define the convex tensor stuff.} We would like to exploit
+the property that $M_p$ is low rank (as typically $K \ll D$). It has
+been shown that a convex relaxation for this problem regression with
+trace norm regularization, which can be solved using a proximal
+subgradient descent algorithm\citationneeded. The analogue of trace norm
+regularization for higher order tensors corresponds to the sum of the
+trace norms of the mode-k unfolding of the tensor \cite{Tomioka2011},
+$X_{(k)}$, is a $d_k \times (\prod_{k' \neq k} d_{k'})$ matrix obtained
+by concatenating the entries for all dimensions other than $k$. For
+example, the 1-mode unfolding of a 3rd order tensor has entries,
+$X_{(1)}^{i_1, (i_2, i_3)} = X_{i_1, i_2, i_3}$.
+
+In general, the optimization problem we'd like to solve is,
+\begin{align}
+  \hat M_p &= 
+  \arg\min_{M_p}& \frac{1}{2N} \| \vec y - \opX(M_p) \|_2^2 + \frac{\lambda_N}{K} \sum_{h=1}^K \| (M_p)_{(h)} \|_* \label{eq:regression}.
+\end{align}
+
+We begin our analysis by stating a generic theorem about convex
+optimization problem in \equationref{eq:regression}, 
+\begin{lemma}(Convergence of Trace-Norm Regularized Regression)
+  Let $\hat M_p$ be the solution of the optimization problem
+  \eqref{eq:regression} with $\lambda_N \ge 2 \frac{\| \opX^*(\epsilon)
+  \|}{N}$. Suppose $\opX$ satisfies the restricted strong convexity
+  condition, $$\frac{1}{2N} \| \opX( \Delta )\|_2^2 \ge \kappa(\opX)
+  \|\Delta\|^2_F$$, then
+  $\| \hat M_p - M_p^* \|_F \le \frac{32 \lambda_N}{\kappa(\opX)} \frac{1}{K} \sum_{k=1}^{K} \sqrt{r_k}$.
+\end{lemma}
+\begin{proof}
+  \citet{Tomioka2011}, Theorem 1.
+
+  This proof follows from convex properties \todo{elaborate}.
+  \citet{NegahbanWainwright2009} prove this theorem for matrices, i.e.
+  when $p = 2$. \citet{Tomioka2011} generalized it for arbitrary $p$.
+\end{proof}
+
+Going forward, we need to lower bound the restricted strong convexity
+parameter $\kappa(\opX)$ and upper bound the adjoint operator
+$\|\opX^*(\epsilon)\|_{2}^2$, which corresponds to a gradient update. We
+will appeal to the random design framework that models the input $x$ as
+random and show bounds that hold with high probability.
+
+\begin{lemma}(Restricted Strong Convexity)
+  Let $\opX$ be the linear operator previously defined. Then,
+  $$\kappa{\opX} \ge Y$$.
+\end{lemma}
+\begin{proof}
+  \todo{Do I need to transform rewrite $M_p$ in terms of orthogonal components?}
+
+  \begin{align*}
+    \frac{\|\opX(M_p)\|_1}{N} &= \frac{1}{N}\sum_{i=1}^{N} |\innerp{x_i\tp{p}}{M_p}| \\
+    &\ge \frac{1}{N}\sum_{i=1}^{N} \sigma_{min}( M_p ) \|x_i\|^p \\
+    &\ge \frac{\kappa(M_p)}{\sqrt{D}} \frac{\sum_{i=1}^{N} \|x_i\|^p}{N} \| M_p \|_F.
+  \end{align*}
+
+  While $\kappa(M_p)$ depends on $M_p$ we can lower bound it by
+  restricting the convex space to $\{ M_p | \kappa(M_p) \ge \kappa \}$.
+  Further, using concentration bounds, we can lower bound $\|x_i\|^p$ as
+  well. \todo{What is $\E[\|x_i\|^3]$? It is some quantity greater than
+  zero}.
+  
+  Thus, 
+  \begin{align*}
+  \frac{ \|\opX(M_p)\|_2 }{2 N} 
+  &\ge
+  \frac{ \|\opX(M_p)\|_1 }{2 \sqrt{D}N} 
+  &\ge \frac{\kappa}{2 D} (\E[\|x_i\|^p] - \frac{t}{N}) \| M_p \|_F.
+  \end{align*}
+  with high probability $1 - \delta$. \todo{The bound needs to be shown
+  for $\| \opX(M_p) \|_2^2$.}
+  
+  In other words, $\kappa(\opX)
+  = \frac{\kappa}{2 D} (\E[\|x_i\|^p] - \frac{t}{N})$ is a valid
+  lower bound.
+\end{proof}
+
+\begin{lemma}(Bounded Error)
+  Let $\opX$ be the linear operator previously defined. Then,
+  $$\opX^*(\epsilon) \le Y$$.
+\end{lemma}
+\begin{proof}
+  \begin{align*}
+    \frac{\opX^*(\epsilon)}{N} 
+    &= \frac{1}{N}\sum_{i=1}^{N} \epsilon_i \innerp{x_i\tp{p}}{M_p} \\
+    &= \frac{1}{N}\sum_{i=1}^{N} (\innerp{x_i\tp{p}}{M_p - \beta_i\tp{p}} + \varepsilon)  \innerp{x_i\tp{p}}{M_p}.
+  \end{align*}
+  Let $M_p - \beta_i\tp{p} = \tilde M_i$ and consider it to be a random
+  variable.
+  \begin{align*}
+    \frac{\opX^*(\epsilon)}{N} 
+    &= \frac{1}{N}\sum_{i=1}^{N} \innerp{\tilde M_i}{x_i\tp{2p}} + \varepsilon \innerp{M_p}{x_i\tp{p}} \\
+    &\le \frac{1}{N}\sum_{i=1}^{N} \|\tilde M_i\|_{op} \|x_i\|^{2p} + \varepsilon \|M_p\|_{op}\|x_i\|^{p} \\
+    &\le \|M_p\|_{op} ( \frac{1}{N}\sum_{i=1}^{N} \|x_i\|^{2p} + \varepsilon \|x_i\|^{p} ).
+  \end{align*}
+
+  We can probabilistically bound the above by considering the union
+  bound of $\varepsilon$ and $\|x_i\|^p$.
+
+
+  Finally,
+  \begin{align*}
+    \frac{\opX^*(\epsilon)}{N} 
+    &\le \|M_p\|_{op} (\E[\|x_i\|^{2p}] + t/N + (t/N) (\E[ \|x_i\|^{p} ] + t/N) ),
+  \end{align*}
+  with high probability. Note that this does not converge to $0$ as $N
+  \to \infty$ because of the variance of the selection probability.
+\end{proof}

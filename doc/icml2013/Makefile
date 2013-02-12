@@ -1,7 +1,7 @@
 
 LATEX = pdflatex -interaction=nonstopmode
 OUTPUT=$(shell basename `pwd`)
-SECTIONS = abstract.tex intro.tex model.tex algo.tex evaluation.tex discussion.tex proofs.tex 
+SECTIONS = abstract.tex intro.tex model.tex algo.tex regression.tex tensor-power.tex evaluation.tex discussion.tex proofs.tex 
 
 all: $(OUTPUT).pdf
 

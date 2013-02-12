@@ -1,23 +1,43 @@
 \section{A Method of Moments Algorithm}
 \label{sec:algo}
 
-The goal is to recover the parameters $(\pi, B)$.
-What should the moments be?
+In this section, we will outline an algorithm to recover the parameters
+$\pi$ and $B$ of the mixture of linear regressions model. 
 
-OUTLINE
+% Motivate how we can recover $B$ from regression by lower order moments
+Our goal is to recover the parameters $(\pi, B)$, ideally from lower
+order moments. Conventionally, when using the method of moments, the
+moments of observed variables are expressed algebraically in terms of
+the model parameters. Using these equations, we attempt to solve for the
+model parameters using empirical estimates of the moments. 
 
-\subsection{Recovering $B$ and $\pi$ from $M_2,M_3$}
+Let us consider the response variable $y$, 
+\begin{align}
+  y &=& \innerp{\beta_h}{x} + \epsilon,
+\end{align}
+where $\epsilon \sim \normal{0}{\sigma^2}$ is the observation noise.  It
+is natural to consider regression on the data $\{\xni,
+\yni\}_{i=1}^{N}$, but it would only help us find the mean regression
+coefficients, $M_1 = \E[\beta_h] = \sum_h \pi_h \beta_h$, which are insufficient to
+identify the model. Let us consider some more low powers of $y$, noting
+that taking the expectation gives us the corresponding low-order
+moments,
+\begin{align}
+  y^2 &= \innerp{\beta_h\tp{2}}{x\tp{2}} + \epsilon \innerp{\beta_h\tp{2}}{x\tp{2}} + \epsilon^2 \label{eq:y2} \\ 
+  y^3 &= \innerp{\beta_h\tp{3}}{x\tp{3}} + 3 \epsilon \innerp{\beta_h\tp{2}}{x\tp{2}} \notag \\
+  &+ 3 \epsilon^2 \innerp{\beta_h}{x} + \epsilon^3. \label{eq:y3} 
+\end{align}
+Regression with the second order moments would give us $M_2 = \E[\beta_h
+\tp{2}] = \sum_h \pi_h \beta_h\tp{2}$ which can identify $\pi$ and the
+subspace spanned the $\beta_h$, but not the $\beta_h$ themselves. To see
+this, note that the eigen-decomposition of $M_2$ is not unique.
+\todo{explain better}.
 
-If we knew the following quantities, then we could apply tensor factorization
-\cite{AnandkumarGeHsu2012}.
-
-Having recovered the compound parameters $M_2$ and $M_3$, we must now solve for the
-actual parameters $\{\beta_k\}$ and $\{\pi_k\}$, which are the
-eigenvectors and eigenvalues of the symmetric moments respectively,
-\begin{eqnarray*}
-  M_2 &=&  \sum_{k=1}^{K} \pi_k \beta_k^{\otimes 2}\\
-  M_3 &=& \sum_{k=1}^{K} \pi_k \beta_k^{\otimes 3}.
-\end{eqnarray*}
+This brings us to regression with the third order moments, giving us the
+tensor $M_3 = \E[\beta_h \tp{3}] = \sum_h \pi_h \beta_h\tp{3}$.
+\citet{AnandkumarGeHsu} show that these three moments suffice to
+identify $\pi$ and $B$ and provide an efficient algorithm to recover the
+parameters.
 
 We note that the eigendecomposition of $M_2$ is not sufficient to
 recover the $\beta_k$ because they are not necessarily orthogonal to
@@ -27,31 +47,71 @@ $M_2$. The eigenvectors and eigenvalues recovered from the
 eigendecomposition of $M_3(W, W, W)$ can be de-whitened to recover the
 $\beta_k$ and $\pi_k$.
 
-Tensor power method
+% Describe the rest of the algorithm.
+This description completes a sketch of the algorithm, described in
+\algorithmref{algo:spectral-experts}. Going ahead, we have yet to show
+that the regression is well-behaved which we will do in
+\sectionref{sec:regression}. This is of concern because the regression
+problem we have has variance introduced from component selection,
+independent of any observation noise. We will show that we can indeed
+efficiently recover $M_2$ and $M_3$ using ideas from low-rank
+regression. Finally, we will outline the tensor power method to recover
+$B$ and $\pi$ given these two quantities, $M_2$ and $M_3$ in
+\sectionref{sec:tensor-power}. 
 
-In this section, we will outline some shortcomings of the standard
-method of moments formulation for the mixture of linear regressions
-model. We then describe how we can work around this limitation and
-reduce our problem to a known one, which can be solved using symmetric
-tensor decomposition. Finally, we will state some implications this
-reduction has regarding identifiability. 
+\begin{theorem}
+  Recovery analysis of mixture of linear regressions.
+\end{theorem}
+\begin{proof}
+\end{proof}
 
-We want to estimate from low-order moments.
+\begin{algorithm}[t]
+  \caption{Spectral Experts}
+  \label{algo:spectral-experts}
+  \begin{algorithmic}[1]
+    \REQUIRE $\mathcal{D} = \{ (\xn{1}, \yn{1}), \cdots, (\xn{N}, \yn{N}) \}$
+    \REQUIRE $K$, the number of clusters, $\sigma^2$ 
+    \STATE Recover $M_1$ using least-squares regression on $\mathcal{D}$.
+    \STATE Recover $M_2, M_3$ using low-rank regression on $\mathcal{D}$.
+    \STATE Return the eigenvectors $\beta_k$ and eigenvalues $\pi_k$ of $M_3$ using $M_2$.
+  \end{algorithmic}
+\end{algorithm}
+
+We will conclude this section by
+discussing some identifiability concerns for our algorithm.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{Recovering $M_2$ and $M_3$}
+\subsection{Identifiability from moments}
 
-Conventionally, when using the method of moments, the moments of
-observed variables are expressed algebraically in terms of the model
-parameters. Using these equations, we attempt to solve for the model
-parameters using empirical estimates of the moments. 
+The mixture of linear regressions model is identifiable subject to
+permutations of the components\citationneeded. However, our approach
+employs regression on $x\tp{2}$ and $x\tp{3}$, and thus requires
+$\mathcal{X} \otimes \mathcal{X}$ and $\mathcal{X} \otimes \mathcal{X}
+\otimes \mathcal{X}$ to be linearly independent modulo symmetry. We call
+these condition {\em quadratic} and {\em cubic} independence.
 
-In the case of the mixture of linear regressions, we have two observed
-quantities, $x$ and $y$. Unfortunately, because $y$ is a scalar
-quantity, we have only one equation for every moment of $y$, and with
-this naive approach, would have to consider $O( (K+1) D)$ moments to
-recover $B \in \Re{K \times D}$ and $\pi \in \Re^K$. 
+This condition trivially holds when the space $\mathcal{X}$ consists of
+independent vectors $\{ x_1, x_2, \cdots, x_d \}$. Unfortunately, it
+places some constraints on non-linear featurizations. For example, the
+common polynomial basis expansion, $1, x_1, x_1^2, \dots, x_1^p$ is
+neither quadratically nor cubically independent because the product
+space is strictly a subset of $\Re^{\frac{d (d-1)}{2}}$ since it
+contains $x_1 \times x_1 = x_1^2 \times 1$, and $x_1 \times x_1 \times
+x_1 = x_1^2 \times x_1 \times 1 = x_1^3 \times 1 \times 1$. In fact, the
+number of unique terms in $x\tp{p}$ is only of the order of $p \times
+d$, and hence we will not have enough equations to solve for $M_2$ or
+$M_3$ unless we consider $p = d^2$ moments.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% \subsection{Recovering $M_2$ and $M_3$}
+
+% In the case of the mixture of linear regressions, we have two observed
+% quantities, $x$ and $y$. Unfortunately, because $y$ is a scalar
+% quantity, we have only one equation for every moment of $y$, and with
+% this naive approach, would have to consider $O( (K+1) D)$ moments to
+% recover $B \in \Re{K \times D}$ and $\pi \in \Re^K$. 
 
 % To keep the discussion simple, we will consider the case where there is
 % no noise, i.e.  $\sigma^2 = 0$. In this case, the moments of $y$ are,
@@ -74,92 +134,3 @@ recover $B \in \Re{K \times D}$ and $\pi \in \Re^K$.
 % to be expected, since any information about the $\beta$s is really
 % encoded in $y$, and not in the $X$.
 
-To work around this problem, we will use regression on the conditional
-moments, $\E[y \mid x]$ to recover the expected moments of the regressors,
-$M_2$ and $M_3$. Recovering the $\beta_k$ and $\pi_k$ given these
-symmetric moments has been addressed in prior work
-\citep{AnandkumarHsuKakade2012, AnandkumarGeHsu2012}.  This algorithm as
-been summarized in \algorithmref{algo:spectral-experts}.
-
-\begin{algorithm}[t]
-  \caption{Spectral Experts}
-  \label{algo:spectral-experts}
-  \begin{algorithmic}[1]
-    \REQUIRE $\mathcal{D} = \{ (\xn{1}, \yn{1}), \cdots, (\xn{N}, \yn{N}) \}$
-    \REQUIRE $K$, the number of clusters, $\sigma^2$ 
-    \STATE Recover $M_1$ using least-squares regression on $\mathcal{D}$.
-    \STATE Recover $M_2, M_3$ using low-rank regression on $\mathcal{D}$.
-    \STATE Return the eigenvectors $\beta_k$ and eigenvalues $\pi_k$ of $M_3$ using $M_2$.
-  \end{algorithmic}
-\end{algorithm}
-
-Let $\epsilon \sim \normal{0}{\sigma^2}$ be independent Gaussian noise.
-we have,
-\begin{eqnarray*}
-  %y &=& \sum_{k=1}^{K} \delta_{k} \beta_k^T x + \epsilon \\
-  \E[ y | x ] &=& M_1^T x \\
-  \E[ y^2 | x ] &=& \sum_{k=1}^{K} \pi_{k} (\beta_k^T x)^2 + \E[ \epsilon^2 ] \\
-  &=& M_2 \odot x^{\otimes 2} + \sigma^2 \\
-  \E[ y^3 | x ] &=& \sum_{k=1}^{K} \pi_{k} (\beta_k^T x)^3
-            + 3 \E[\epsilon^2] (\sum_{k=1}^{K} \pi_{k} \beta_k^T) x \\
-  &=& M_3 \odot x^{\otimes 3} + 3 \sigma^2 M_1.
-\end{eqnarray*}
-
-% Details about low rank regression.
-%The symmetric structure of $M_2$ and $M_3$ implies that there are
-%$\frac{d (d-1)}{2}$ and $\frac{d (d-1) (d-2)}{6}$ degrees of freedom
-%respectively.
-However, the moments are further constrained to have
-a rank of $K$. To exploit this property, we will use trace norm
-regularization with a proximal subgradient descent
-algorithm\citationneeded to recover $M_2$,
-\begin{align}
-  %\hat M_2 &= \arg\min_{M_2} \frac{1}{2 N} \sum_{i=1}^N ((\xn{i})\tp{2} \odot M_2 - (\yn{i})^2)^2 + \lambda \|M\|_*.
-  \hat M_2 &= \arg\min_{M_2} \frac{1}{2 N} \sum_{(x,y) \in D} (x\tp{2} \odot M_2 - y^2)^2 + \lambda \|M\|_*.
-\end{align}
-
-The analogue of trace norm regularization for higher order tensors
-corresponds to the sum of the trace norms of the mode-k unfolding of the
-tensor \cite{Tomioka2011}, $X_{(k)}$, is a $d_k \times (\prod_{k' \neq
-k} d_{k'})$ matrix obtained by concatenating the entries for all
-dimensions other than $k$. For example, the 1-mode unfolding of a 3rd
-order tensor has entries, $X_{(1)}^{i_1, (i_2, i_3)} = X_{i_1, i_2,
-i_3}$. Thus, we employ a proximal subgradient descent algorithm to solve
-the following optimization problem to recovery $M_3$.
-\begin{eqnarray*}
-  M_3 &=& \arg\min_{M} \half \sum_{i=1}^N ((\xn{i})\tp{3} \odot M - (\yn{i})^3)^2 
-          + \frac{\lambda}{3} \sum_{k=1}^{3} \|M_{(k)}\|_*.
-\end{eqnarray*}
-
-In \sectionref{sec:theory}, we will show that recovery of matrices so
-constrained requires only $O(\frac{\sqrt{K} d}{\epsilon})$ samples as
-opposed to $O(\frac{d^3}{\epsilon})$ samples to recover moments within
-$\epsilon$ from their true values.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\subsection{Identifiability from moments}
-
-The model is in general identifiable, except for a pathological case
-concerning how data points are placed \citationneeded.
-
-Our approach employs regression on $x\tp{2}$ and $x\tp{3}$, and thus
-requires $\mathcal{X} \otimes \mathcal{X}$ and $\mathcal{X} \otimes
-\mathcal{X} \otimes \mathcal{X}$ to be linearly independent modulo
-symmetry. We call these condition {\em quadratic} and {\em cubic}
-independence.
-
-This condition trivially holds when the space $\mathcal{X}$ consists of
-independent vectors $\{ x_1, x_2, \cdots, x_d \}$. Unfortunately, it
-places some constraints on non-linear featurizations. For example, the
-common polynomial basis expansion, $1, x_1, x_1^2, \dots, x_1^p$ is
-neither quadratically nor cubically independent because the product
-space is strictly a subset of $\Re^{\frac{d (d-1)}{2}}$ since it
-contains $x_1 \times x_1 = x_1^2 \times 1$, and $x_1 \times x_1 \times
-x_1 = x_1^2 \times x_1 \times 1 = x_1^3 \times 1 \times 1$. In fact, the
-number of unique terms in $x\tp{p}$ is only of the order of $p \times
-d$, and hence we will not have enough equations to solve for $M_2$ or
-$M_3$ unless we consider $p = d^2$ moments.
-
-{\todo Note: we haven't shown identifiability from all moments. What
-does this mean?}

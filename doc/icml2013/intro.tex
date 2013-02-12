@@ -9,52 +9,50 @@ Latent variable models have routinely been used in probabilistic
 modelling, (examples). Parameters for these models have been learnt
 through a variety of methods, EM, variational methods, etc. The local
 nature of these algorithms lead them to converge to local optima.
-Recently, there has been an interest in moment of methods estimators
-with polynomial sample and computational complexities. These estimators
-are statistically consistent, i.e. given sufficient data they are
-guaranteed to converge to the global optimum in an identifiable model,
-thus sidestepping the local optima issue altogether.
+Recently, there has been an interest in method of moments estimators for
+generative models such as the hidden Markov
+model\cite{AnandkumarHsuKakade2012} or probabilistic context free
+grammars\cite{HsuKakadeLiang2012}.These estimators feature polynomial
+sample and computational complexities while being statistically
+consistent, i.e. given sufficient data they are guaranteed to converge
+to the global optimum in an identifiable model, thus sidestepping the
+local optima issue altogether.
 
-% Discriminative models work better in practice
-% Discriminative models with latent variables add expressive power (examples)
-This approach has been applied to a variety of generative models, e.g.
-hidden Markov models \cite{AnandkumarHsuKakade2012}, probabilistic
-context free grammars \cite{HsuKakadeLiang2012}, etc. However, in
-practice it has been observed that discriminative models work better in
-terms of parameter recovery\citationneeded, particularly in the large
+% Discriminative models work better in practice Discriminative models
+% with latent variables add expressive power (examples)
+In practice it has been observed that discriminative models work better
+in terms of parameter recovery\citationneeded, particularly in the large
 sample regime. \todo{Examples! CRFs, etc.}
-
 % This paper: first step in establishing provably correct estimation
 % with simple mixture of linear regression
 In this work, we provide a first step in establishing provably correct
 estimation for such discriminative models by proposing an algorithm for
-the simple mixture of linear regressions. The mixture of linear
-regressions model \todo{models ?}. We describe the model formally in more
-detail in \sectionref{sec:model}.
+the simple mixture of linear regressions. We describe the model formally
+in more detail in \sectionref{sec:model}.
 
 % Previous work: moment equations solvable by eigendecomposition or
 % tensor factorization
-While method of moment estimators were \todo{described by Fisher(?)},
-they required as many moments as there were parameters, and hence deemed
-impractical. Recently, \citet{AnandkumarHsuKakade2012} showed how using
-eigendecomposition, the moment equations could be solved using just the
-first three moments of data.
+%While method of moment estimators were \todo{described by Fisher(?)},
+%they required as many moments as there were parameters, and hence deemed
+%impractical. Recently, \citet{AnandkumarHsuKakade2012} showed how using
+%eigendecomposition, the moment equations could be solved using just the
+%first three moments of data.
 
 % Challenge: E[X^m Y^n] doesn't work
-In the discriminative setting, we are trying to learn the parameters for
-a model for $y | X$. However, as the response variables are just
-scalars, it is not possible to recover the moments simply from $\E[ X^m
-y^n ].$ At the same time, knowing the $X$ should give us more
-information than the scalar $y$.
+%In the discriminative setting, we are trying to learn the parameters for
+%a model for $y | X$. However, as the response variables are just
+%scalars, it is not possible to recover the moments simply from $\E[ X^m
+%y^n ].$ At the same time, knowing the $X$ should give us more
+%information than the scalar $y$.
 
 % Approach: Derive moment functions based on linear regression on Y^2
 % and Y^3 Algorithm: trace norm regularization to recover tensor
 % + tensor factorization
 We propose an algorithm in \sectionref{sec:algo} that derives moment
-functions based on linear regression on the moments of $y$, i.e.
-$\E[y^2]$ and $\E[y^3]$. We exploit the low rank properties of the
-second and third order moments to efficiently recover parameters, and
-then recover the individual regressors, $\beta_k$, using the tensor
+functions based on linear regression on the conditional moments of $y$,
+i.e. $\E[y^2 | X]$ and $\E[y^3 | X]$. We exploit the low rank properties
+of the second and third order moments to efficiently recover parameters,
+and then recover the individual regressors, $\beta_k$, using the tensor
 factorization method \cite{AnandkumarGeHsu2012}.
 
 % Show some identifiability results; require quadratic and cubic
@@ -89,3 +87,26 @@ some of our other high-level findings.}
 
 \todo{What about talking about initialization? Generalizing and kmeans++} 
 
+\subsection{Notation}
+
+%We have already defined $y$ to be the response variable and $x \in
+%\Re^d$ to be the covariates it depends on. Note that the matrix of
+%regressors $B$ is a $d \times K$ matrix, where the $k$-th column is
+%$\beta_k$.
+
+We will use the notation $x\tp{p}$ to describe the $p$-th order tensor
+formed by taking the outer product of $x$; i.e. $x\tp{p}_{i_1 i_2 \ldots
+i_p} = x_{i_1} x_{i_2} \cdots x_{i_p}$. We will use
+$\innerp{\cdot}{\cdot}$ to denote the general dot product between $p$-th
+order tensors, i.e. $\innerp{X}{Y} = \sum_{i_1, i_2, \ldots i_p} X_{i_1,
+i_2, \ldots i_p} Y_{i_1, i_2, \ldots i_p}.$ Similar to how $x^T A$ is
+the projection of a vector $x$ onto the row space of a matrix $A$, when
+$X \in \Re^{d^p}$ and $Y \in \Re^{d^{p+q}}$,  with $p, q > 0$,
+$\innerp{X}{Y} \in \Re^{d^q}$ is the projection of $X$ onto the first
+$p$ dimensions of $Y$, i.e. $(\innerp{X}{Y})_{i_1, \ldots, i_q}
+= \sum_{j_1, \ldots, j_p} X_{j_1, \ldots, j_p} Y_{j_1, \ldots, j_p, i_1,
+\ldots, i_q}$.
+
+The expected moments of the parameters $\beta_1, \dots, \beta_k$ play an
+important role in our algorithm and we will use $M_p = \E[\beta\tp{p}]
+= \sum_{k=1}^{K} \pi_k \beta_k^{\otimes p}$ to denote them.
