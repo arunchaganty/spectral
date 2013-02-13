@@ -1,23 +1,61 @@
 \section{Empirical Evaluation}
 \label{sec:evaluation}
 
-We evaluated our algorithm on 20 different examples of a domain Y.
+\subsection{Setup}
 
-Mixture of linear regressions, 
+\paragraph{Algorithms}
 
-linear 
-quadratic
-``motion tracking data''
+Describe EM (talk about initialization, number of iterations / stopping
+condition).
 
-tensor power method get better results?
+Describe spectral (briefly pointing to algorithm);
+initialization, clipping.
 
-Point: spectral offers a good initialization to EM by finding directions which
-are far apart.
+Describe spectral+EM
+
+\paragraph{Datasets}
+Describe the Curves dataset.
+$x = (t, t^4, t^9)$
+$d = b^p$
+
+Distribution over $x$.
+
+Canonical settings:
+
+Default values:
+$n = 10^5$
+$k = 5$
+
+Dataset 1: visualization ($b = 1, p = 3$)
+
+Dataset 2: $b = 30$, $p = 1$
+
+\paragraph{Motion tracking data?}
+
+\subsection{Results}
+
+\paragraph{Basic results}
+
+Punchline: spectral by itself is medicore, offers a good initialization to EM.
+EM with random initialization is much less stable.
+
+Using canonical settings, on the various datasets
+
+Plot the parameters: the curves, three algorithms
+
+Plot: the histogram over errors
+
+\paragraph{Effect on number of data points}
+
+Curves dataset 2.
+Plot: $n$ versus error for various algorithms
+
+Point: tradeoff between statistical error and computational error;
+not enough data, spectral is actually a lot worse
+given enough data, spectral+EM is much better
 
 \paragraph{Effect of dimensionality}
 
 \paragraph{Effect of noise}
 
 \paragraph{Effect of separation between components}
-
-As the number of data points $n$ increases, ...
