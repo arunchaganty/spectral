@@ -35,6 +35,26 @@ public class FullTensor implements Tensor {
     return new FullTensor(Y);
   }
 
+  @Override
+  public String toString() {
+    StringBuilder builder = new StringBuilder();
+    builder.append( "{\n" );
+    for(int d1 = 0; d1 < D1; d1++) {
+      builder.append( "{" );
+      for(int d2 = 0; d2 < D2; d2++) {
+        builder.append( "  { " );
+        for(int d3 = 0; d3 < D3; d3++) {
+          builder.append( X[d1][d2][d3] + ", " );
+        }
+        builder.append( " }\n" );
+      }
+      builder.append( "}\n" );
+    }
+    builder.append( "}" );
+
+    return builder.toString();
+  }
+
   public static FullTensor fromUnitVector( double[] x ) {
     int D = x.length;
     double[][][] X = new double[D][D][D];
