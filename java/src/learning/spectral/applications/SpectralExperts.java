@@ -60,6 +60,8 @@ public class SpectralExperts implements Runnable {
   public boolean runEM = false;
   @Option(gloss = "Use tensor power method")
   public boolean useTensorPowerMethod = true;
+  @Option(gloss = "Use ridge regression")
+  public boolean useRidgeRegression = false;
   @Option(gloss = "Use low rank recovery")
   public boolean useLowRankRecovery = true;
   @Option(gloss = "Use low rank recovery")
@@ -262,21 +264,16 @@ public class SpectralExperts implements Runnable {
     return new Pair<>(A, b);
   }
 
-  /**
-   * Recover the second-order tensor \beta \otimes \beta by linear regression.
-   * @param y
-   * @param X
-   * @return
-   */
-  SimpleMatrix recoverPairs(SimpleMatrix y, SimpleMatrix X, double reg, boolean doScale) {
+  SimpleMatrix recoverPairsByRidgeRegression(SimpleMatrix y, SimpleMatrix X) {
     int N = X.numRows();
     int D = X.numCols();
     int D_ = D * (D+1) / 2;
+    LogInfo.begin_track("ridge-regression-pairs");
 
     // Normalize the data
     SimpleMatrix xScaling = MatrixFactory.ones(D);
     double yScaling = 1.0;
-    if(doScale) {
+    if(scaleData) {
       Pair<SimpleMatrix, SimpleMatrix> scaleInfo = MatrixOps.columnScale(X);
       X = scaleInfo.getValue0(); xScaling = scaleInfo.getValue1();
       scaleInfo = MatrixOps.rowScale(y);
@@ -302,8 +299,8 @@ public class SpectralExperts implements Runnable {
     SimpleMatrix b = y.elementMult(y).transpose();
     SimpleMatrix bEntries;
     // Regularize the matrix
-    if( reg > 0.0 ) {
-      Pair<SimpleMatrix, SimpleMatrix> Ab = regularize(A, b, reg);
+    if( ridgeReg > 0.0 ) {
+      Pair<SimpleMatrix, SimpleMatrix> Ab = regularize(A, b, ridgeReg);
       A = Ab.getValue0(); b = Ab.getValue1();
       bEntries = A.solve(b);
     }
@@ -322,7 +319,7 @@ public class SpectralExperts implements Runnable {
       }
     }
     // Rescale
-    if(doScale) { // Unscale B
+    if(scaleData) { // Unscale B
       for( int d = 0; d < D; d++ ) {
         for( int d_ = 0; d_ < D; d_++ ) {
           double scaling = (yScaling * yScaling) / (xScaling.get(d) * xScaling.get(d_));
@@ -330,12 +327,31 @@ public class SpectralExperts implements Runnable {
         }
       }
     }
+    LogInfo.end_track("ridge-regression-pairs");
 
+    return B;
+  }
+  /**
+   * Recover the second-order tensor \beta \otimes \beta by linear regression.
+   * @param y
+   * @param X
+   * @return
+   */
+  SimpleMatrix recoverPairs(SimpleMatrix y, SimpleMatrix X) {
+    int N = X.numRows();
+    int D = X.numCols();
+
+    SimpleMatrix Pairs;
+    if( useRidgeRegression ) {
+      Pairs = recoverPairsByRidgeRegression(y, X);
+    } else {
+      Pairs = new SimpleMatrix(D, D);
+    }
     if( useLowRankRecovery ) {
       // Use low rank recovery to improve estimate.
       LogInfo.begin_track("low-rank-pairs");
       // Report the performance before low-rankification
-      if( analysis != null ) analysis.reportPairs(B);
+      if( analysis != null ) analysis.reportPairs(Pairs);
 
       ProximalGradientSolver solver = new ProximalGradientSolver();
       // Tweak the response variables to give an unbiased estimate
@@ -344,17 +360,13 @@ public class SpectralExperts implements Runnable {
         CommonOps.add(y_, -analysis.model.getSigma2());
       y = SimpleMatrix.wrap(y_);
       PhaseRecovery problem = new PhaseRecovery(y, X, traceReg);
-      DenseMatrix64F Pairs_ = solver.optimize(problem, B.getMatrix(), lowRankIters);
-      B = SimpleMatrix.wrap(Pairs_);
+      DenseMatrix64F Pairs_ = solver.optimize(problem, Pairs.getMatrix(), lowRankIters);
+      Pairs = SimpleMatrix.wrap(Pairs_);
 
       LogInfo.end_track("low-rank-pairs");
     }
 
-    return B;
-  }
-
-  SimpleMatrix recoverPairs(SimpleMatrix y, SimpleMatrix X) {
-    return recoverPairs( y, X, 0.0, true );
+    return Pairs;
   }
 
   /**
@@ -363,15 +375,16 @@ public class SpectralExperts implements Runnable {
    * @param X
    * @return
    */
-  FullTensor recoverTriples(SimpleMatrix y, SimpleMatrix X, double reg, boolean  doScale) {
-
+  FullTensor recoverTriplesByRegression(SimpleMatrix y, SimpleMatrix X) {
     int N = X.numRows();
     int D = X.numCols();
     int D_ = D * (D+1) * (D+2) / 6;
 
+    LogInfo.begin_track("ridge-regression-triples");
+
     SimpleMatrix xScaling = MatrixFactory.ones(D);
     double yScaling = 1.0;
-    if(doScale) {
+    if(scaleData) {
       Pair<SimpleMatrix, SimpleMatrix> scaleInfo = MatrixOps.columnScale(X);
       X = scaleInfo.getValue0(); xScaling = scaleInfo.getValue1();
       scaleInfo = MatrixOps.rowScale(y);
@@ -402,8 +415,8 @@ public class SpectralExperts implements Runnable {
     //System.out.println(A);
     SimpleMatrix b = y.elementMult(y).elementMult(y).transpose();;
     // Regularize the matrix
-    if( reg > 0.0 ) {
-      Pair<SimpleMatrix, SimpleMatrix> Ab = regularize(A, b, reg);
+    if( ridgeReg > 0.0 ) {
+      Pair<SimpleMatrix, SimpleMatrix> Ab = regularize(A, b, ridgeReg);
       A = Ab.getValue0(); b = Ab.getValue1();
     }
     LogInfo.logsForce( "Condition Number for Triples: " + A.conditionP2());
@@ -416,7 +429,7 @@ public class SpectralExperts implements Runnable {
       for( int d2 = 0; d2 <= d1; d2++ ) {
         for( int d3 = 0; d3 <= d2; d3++ ) {
           double value = bEntries.get(idx++);
-          if(doScale)
+          if(scaleData)
             value = value * (yScaling * yScaling * yScaling) /
                     (xScaling.get(d1) * xScaling.get(d2) * xScaling.get(d2));
           B[d1][d2][d3] = B[d1][d3][d2] =
@@ -426,7 +439,21 @@ public class SpectralExperts implements Runnable {
       }
     }
 
-    FullTensor Triples = new FullTensor(B);
+    LogInfo.end_track("ridge-regression-triples");
+
+    return new FullTensor(B);
+  }
+
+  FullTensor recoverTriples(SimpleMatrix y, SimpleMatrix X) {
+    int N = X.numRows();
+    int D = X.numCols();
+
+    FullTensor Triples;
+    if( useRidgeRegression ) {
+      Triples = recoverTriplesByRegression(y, X);
+    } else {
+      Triples = new FullTensor(D,D,D);
+    }
 
     if( useLowRankRecovery ) {
       // Use low rank recovery to improve estimate.
@@ -435,18 +462,12 @@ public class SpectralExperts implements Runnable {
 
       ProximalGradientSolver solver = new ProximalGradientSolver();
       TensorRecovery problem = new TensorRecovery(y.elementMult(y).elementMult(y), X, 10 * traceReg);
-      //DenseMatrix64F Triples_ = solver.optimize(problem, new DenseMatrix64F( D, D*D ), lowRankIters);
       DenseMatrix64F Triples_ = solver.optimize(problem, Triples.unfold(0).getMatrix(), lowRankIters);
       FullTensor.fold(0, Triples_, Triples);
-
       LogInfo.end_track("low-rank-triples");
     }
 
     return Triples;
-  }
-
-  FullTensor recoverTriples(SimpleMatrix y, SimpleMatrix X) {
-    return recoverTriples( y, X, 0.0, false );
   }
 
 
@@ -464,10 +485,10 @@ public class SpectralExperts implements Runnable {
     RandomFactory.setSeed( seed );
 
     // Recover Pairs and Triples moments by linear regression
-    SimpleMatrix Pairs = recoverPairs( y, X, ridgeReg, scaleData );
+    SimpleMatrix Pairs = recoverPairs( y, X );
     if( analysis != null ) analysis.reportPairs(Pairs);
 
-    FullTensor Triples = recoverTriples(y, X, ridgeReg, scaleData );
+    FullTensor Triples = recoverTriples(y, X );
     if( analysis != null ) analysis.reportTriples(Triples);
 
     if( useTensorPowerMethod ) {
@@ -489,7 +510,7 @@ public class SpectralExperts implements Runnable {
     } else {
       // Use Algorithm B symmetric to recover the $\beta$
       MultiViewMixture algo = new MultiViewMixture();
-      SimpleMatrix betas_ = algo.algorithmB( K, Pairs,  Pairs, Triples );
+      SimpleMatrix betas_ = algo.algorithmB(K, Pairs, Pairs, Triples);
       // TODO: At some point we should compute this from betas_
       SimpleMatrix weights_ = MatrixFactory.zeros(K);
       return new Pair<>( weights_, betas_ );

@@ -11,6 +11,7 @@ import learning.linalg.MatrixFactory;
 import learning.linalg.RandomFactory;
 import learning.models.*;
 
+import learning.spectral.applications.SpectralExperts;
 import org.ejml.simple.SimpleMatrix;
 import org.ejml.data.DenseMatrix64F;
 
@@ -286,10 +287,10 @@ public class MixtureOfExperts implements Runnable {
       Execution.putOutput( "betas", betas );
       Execution.putOutput( "betas_", betas_ );
 
-      double err = MatrixOps.norm( betas.minus( betas_ ) );
+      double err = MatrixOps.diff(betas, betas_);
       Execution.putOutput( "betasErr", err );
 
-      System.out.printf( "%.4f\n", err );
+      System.out.printf( "%.4f %.4f\n", err,  SpectralExperts.SpectralExpertsAnalysis.computeLoss(y, X, betas_) );
     } catch( ClassNotFoundException | IOException e ) {
       LogInfo.error( e.getMessage() );
       return;

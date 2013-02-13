@@ -363,6 +363,27 @@ public class MixtureOfExperts implements Serializable {
     return new Pair<>( yX, model );
   }
 
+  public static void printData( SimpleMatrix y, SimpleMatrix X, MixtureOfExperts model ) {
+    double[][] exponents = model.getNonLinearity().getExponents();
+
+    // Pretty print the exponents
+    System.out.printf( "# " );
+    for( double[] exp : exponents ) {
+      for( int d = 0; d < exp.length; d++ )
+        System.out.printf( "x_" + d + "^" + exp[d] );
+      System.out.printf( " " );
+    }
+    System.out.printf( "\n" );
+
+    int N = X.numRows();
+    for( int i = 0; i < N; i++ ) {
+      for( int d = 0; d < X.numCols(); d++ )
+        System.out.printf( "%f ", X.get(i,d) );
+      System.out.printf( "%f\n", y.get(i) );
+    }
+
+  }
+
   /**
    * Generates data with given specifications to stdout. 
    */
@@ -379,13 +400,8 @@ public class MixtureOfExperts implements Serializable {
         Pair<Pair<SimpleMatrix, SimpleMatrix>, MixtureOfExperts> data = readFromFile(outOptions.inputPath);
         SimpleMatrix y = data.getValue0().getValue0();
         SimpleMatrix X = data.getValue0().getValue1();
-
-        int N = X.numRows();
-        for( int i = 0; i < N; i++ ) {
-          for( int d = 0; d < X.numCols(); d++ )
-            System.out.printf( "%f ", X.get(i,d) );
-          System.out.printf( "%f\n", y.get(i) );
-        }
+        MixtureOfExperts model = data.getValue1();
+        printData( y,  X, model );
       } catch(IOException | ClassNotFoundException e) {
         System.err.println("Corrupt or unreadable input file");
       }
@@ -399,13 +415,7 @@ public class MixtureOfExperts implements Serializable {
     if( outOptions.outputPath.equals( "-" ) ) {
       SimpleMatrix y = yX.getValue0();
       SimpleMatrix X = yX.getValue1();
-
-      // Print data
-      for( int i = 0; i < N; i++ ) {
-        for( int d = 0; d < X.numCols(); d++ )
-          System.out.printf( "%f ", X.get(i,d) );
-        System.out.printf( "%f\n", y.get(i) );
-      }
+      printData( y,  X, model );
     } else {
       try {
         ObjectOutputStream out = new ObjectOutputStream( new FileOutputStream( outOptions.outputPath ) ); 
