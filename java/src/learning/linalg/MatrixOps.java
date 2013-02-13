@@ -56,6 +56,7 @@ public class MatrixOps {
    * Print entries of a arrays
    */
   public static String arrayToString( double[][] X ) {
+    if( X == null ) return "null";
     String out = "";
     out += "{\n";
     for( int i = 0; i < X.length; i++ ) {
@@ -69,6 +70,7 @@ public class MatrixOps {
     return out;
   }
   public static String arrayToString( int[][] X ) {
+    if( X == null ) return "null";
     String out = "";
     out += "{\n";
     for( int i = 0; i < X.length; i++ ) {

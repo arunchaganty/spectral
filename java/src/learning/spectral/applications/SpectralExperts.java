@@ -142,7 +142,7 @@ public class SpectralExperts implements Runnable {
       weightsErr = MatrixOps.norm( weights.minus( weights_ ) );
 
       if( saveToExecution ) {
-        Execution.putOutput( "weights", betas );
+        Execution.putOutput( "weights", weights );
         Execution.putOutput( "weights_", weights_ );
         Execution.putOutput( "weightsErr", weightsErr);
       }
@@ -339,8 +339,7 @@ public class SpectralExperts implements Runnable {
 
       ProximalGradientSolver solver = new ProximalGradientSolver();
       // Tweak the response variables to give an unbiased estimate
-      DenseMatrix64F y_ = y.getMatrix();
-      CommonOps.elementMult(y_, y_);
+      DenseMatrix64F y_ = y.elementMult(y).getMatrix();
       if(analysis != null)
         CommonOps.add(y_, -analysis.model.getSigma2());
       y = SimpleMatrix.wrap(y_);
@@ -368,7 +367,7 @@ public class SpectralExperts implements Runnable {
 
     int N = X.numRows();
     int D = X.numCols();
-    int D_ = D * (D+1) * (D+2) / 3;
+    int D_ = D * (D+1) * (D+2) / 6;
 
     SimpleMatrix xScaling = MatrixFactory.ones(D);
     double yScaling = 1.0;
@@ -385,20 +384,22 @@ public class SpectralExperts implements Runnable {
     int idx;
     for( int n = 0; n < N; n++ ) {
       idx = 0;
-      for( int d = 0; d < D; d++ ) {
-        for( int d_ = 0; d_ <= d; d_++ ) {
-          for( int d__ = 0; d__ <= d_; d__++ ) {
+      for( int d1 = 0; d1 < D; d1++ ) {
+        for( int d2 = 0; d2 <= d1; d2++ ) {
+          for( int d3 = 0; d3 <= d2; d3++ ) {
             double multiplicity =
-                    ( d == d_ && d_ == d__ ) ? 1 :
-                            ( d == d_ || d_ == d__ || d == d__) ? 3 : 6;
-            A_[n][idx++] = X.get(n, d) * X.get(n,d_) * X.get(n,d__) * multiplicity;
+                    ( d1 == d2 && d2 == d3 ) ? 1 :
+                            ( d1 == d2 || d2 == d3 || d1 == d3) ? 3 : 6;
+            A_[n][idx++] = X.get(n, d1) * X.get(n,d2) * X.get(n,d3) * multiplicity;
           }
         }
       }
+      assert( idx == D * (D+1) * (D+2) / 6 );
     }
 
     // Solve for the matrix
     SimpleMatrix A = new SimpleMatrix( A_ );
+    //System.out.println(A);
     SimpleMatrix b = y.elementMult(y).elementMult(y).transpose();;
     // Regularize the matrix
     if( reg > 0.0 ) {
@@ -411,16 +412,16 @@ public class SpectralExperts implements Runnable {
     // Reconstruct $B$ from $x$
     double[][][] B = new double[D][D][D];
     idx = 0;
-    for( int d = 0; d < D; d++ ) {
-      for( int d_ = 0; d_ <= d; d_++ ) {
-        for( int d__ = 0; d__ <= d_; d__++ ) {
+    for( int d1 = 0; d1 < D; d1++ ) {
+      for( int d2 = 0; d2 <= d1; d2++ ) {
+        for( int d3 = 0; d3 <= d2; d3++ ) {
           double value = bEntries.get(idx++);
           if(doScale)
             value = value * (yScaling * yScaling * yScaling) /
-                    (xScaling.get(d) * xScaling.get(d_) * xScaling.get(d_));
-          B[d][d_][d__] = B[d][d__][d_] =
-             B[d_][d][d__] = B[d_][d_][d] =
-             B[d__][d][d_] = B[d__][d_][d] = value;
+                    (xScaling.get(d1) * xScaling.get(d2) * xScaling.get(d2));
+          B[d1][d2][d3] = B[d1][d3][d2] =
+             B[d2][d1][d3] = B[d3][d2][d1] =
+             B[d3][d1][d2] = B[d3][d2][d1] = value;
         }
       }
     }
@@ -434,6 +435,7 @@ public class SpectralExperts implements Runnable {
 
       ProximalGradientSolver solver = new ProximalGradientSolver();
       TensorRecovery problem = new TensorRecovery(y.elementMult(y).elementMult(y), X, 10 * traceReg);
+      //DenseMatrix64F Triples_ = solver.optimize(problem, new DenseMatrix64F( D, D*D ), lowRankIters);
       DenseMatrix64F Triples_ = solver.optimize(problem, Triples.unfold(0).getMatrix(), lowRankIters);
       FullTensor.fold(0, Triples_, Triples);
 
@@ -444,7 +446,7 @@ public class SpectralExperts implements Runnable {
   }
 
   FullTensor recoverTriples(SimpleMatrix y, SimpleMatrix X) {
-    return recoverTriples( y, X, 0.0, true );
+    return recoverTriples( y, X, 0.0, false );
   }
 
 
@@ -479,7 +481,8 @@ public class SpectralExperts implements Runnable {
       analysis.reportBetas(betas);
 
       double sum = weights.elementSum();
-      betas = betas.scale( sum );
+      // Weird
+      //betas = betas.scale( sum );
       weights = weights.scale( 1/sum );
 
       return new Pair<>(weights, betas);
