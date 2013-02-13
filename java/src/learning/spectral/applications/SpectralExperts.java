@@ -58,6 +58,8 @@ public class SpectralExperts implements Runnable {
   public boolean scaleData = false;
   @Option(gloss = "Run EM on spectral output?")
   public boolean runEM = false;
+  @Option(gloss = "Run EM on spectral output?")
+  public int emIters = 100;
   @Option(gloss = "Use tensor power method")
   public boolean useTensorPowerMethod = true;
   @Option(gloss = "Use ridge regression")
@@ -552,7 +554,7 @@ public class SpectralExperts implements Runnable {
       if( runEM ) {
         learning.em.MixtureOfExperts.Parameters initState = new learning.em.MixtureOfExperts.Parameters(
                 this.K, MatrixFactory.ones(K).scale(1.0/K), betas_.transpose(), 0.1);
-        learning.em.MixtureOfExperts emAlgo = new learning.em.MixtureOfExperts(K);
+        learning.em.MixtureOfExperts emAlgo = new learning.em.MixtureOfExperts(K); emAlgo.iters = emIters;
         learning.em.MixtureOfExperts.Parameters params = emAlgo.run( y, X, initState);
         SimpleMatrix betasEM = (new SimpleMatrix( params.betas )).transpose();
         SimpleMatrix weightsEM = MatrixFactory.fromVector(params.weights);

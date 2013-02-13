@@ -5,8 +5,10 @@
 
 \paragraph{Algorithms}
 
-Describe EM (talk about initialization, number of iterations / stopping
-condition).
+We ran expectation-maximization until the log likelihood converged
+$10^-5$. Initialized the entries of $\beta$ with a random Gaussian, $\normal{0}{1}$.
+
+In all our experiments, EM converged.
 
 Describe spectral (briefly pointing to algorithm);
 initialization, clipping.
@@ -15,7 +17,7 @@ Describe spectral+EM
 
 \paragraph{Datasets}
 Describe the Curves dataset.
-$x = (t, t^4, t^9)$
+$x = (1, t, t^4, t^9)$
 $d = b^p$
 
 Distribution over $x$.
@@ -26,9 +28,14 @@ Default values:
 $n = 10^5$
 $k = 5$
 
-Dataset 1: visualization ($b = 1, p = 3$)
+Dataset 1: visualization ($b = 1, p = 3$) (DONE)
+Plot for visualization
 
 Dataset 2: $b = 30$, $p = 1$
+
+Table on different settings: 
+  (To show that we work comparably or better to EM always)
+
 
 \paragraph{Motion tracking data?}
 
