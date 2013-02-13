@@ -10,13 +10,13 @@ val CLASSPATH = "bin:" + (new File("deps/")).listFiles().mkString( ":" )
 
 // Check arguments
 def checkArgs(args:Array[String]) {
-  if( args.length != 3 ) {
-    println("Usage: N nlType <out-directory> ");
+  if( args.length != 4 ) {
+    println("Usage: N E nlType <out-directory> ");
     System.exit(1);
   }
 }
 
-def generate( N:String, outputPath : File, d:Int, nld:Int, nlType:String, k:Int ){
+def generate( N:String, outputPath : File, d:Int, nld:Int, nlType:String, k:Int, e:Int ){
   submit("java"
     -('cp, CLASSPATH)
     -"Xmx2g"
@@ -32,7 +32,7 @@ def generate( N:String, outputPath : File, d:Int, nld:Int, nlType:String, k:Int 
     -('sigma2, 0.1)
     -('bias, false)
     -('nlType, nlType)
-    -('outputPath, outputPath.getAbsolutePath() + File.separator + d + "-" + nld + "-" + k + ".dat")
+    -('outputPath, outputPath.getAbsolutePath() + File.separator + d + "-" + nld + "-" + k + "." + e + ".dat")
     -('D, d)
     -('nlDegree, nld)
     -('K, k)
@@ -42,13 +42,14 @@ def main() {
   checkArgs(args)
 
   val N = args(0);
-  val nlType = args(1);
-  val outputPath = new File( args(2) ++ File.separator ++ nlType);
+  val E = args(1).toInt;
+  val nlType = args(2);
+  val outputPath = new File( args(3) ++ File.separator ++ nlType);
   // Make output directory
   outputPath.mkdirs();
 
   // Construct a list of D, nD, K
-  val D = List(1,2)
+  val D = List(1,2,3)
   val nlD = List(3,4,5)
   val K = List(2,3,5,7)
   val candidateTriples = 
@@ -64,12 +65,13 @@ def main() {
               case "random-fractional" => new FractionalPolynomial(nd, d)
               case "fourier" => new FourierNonLinearity(nd)
             }
-          k <= nl.getLinearDimension(d) 
+          k <= nl.getLinearDimension(d) && nl.getLinearDimension(d) <= 20
       })
   // Spawn creation jobs
   for (( d, nd, k ) <- candidateTriples ) {
     println( d, nd, k );
-    generate( N, outputPath, d, nd, nlType, k );
+    for( e <- 1 to E )
+      generate( N, outputPath, d, nd, nlType, k, e );
   }
 }
 main()
