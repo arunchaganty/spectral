@@ -11,6 +11,9 @@ import learning.exceptions.NumericalException;
 import learning.linalg.*;
 import learning.models.MixtureOfExperts;
 
+import learning.optimization.PhaseRecovery;
+import learning.optimization.ProximalGradientSolver;
+import learning.optimization.TensorRecovery;
 import learning.spectral.MultiViewMixture;
 
 import learning.data.MomentComputer;
@@ -47,14 +50,20 @@ public class SpectralExperts implements Runnable {
 	public int K = 0;
 	@Option(gloss = "Input filename", required=true)
 	public String inputPath;
-  @Option(gloss = "Regularization")
-  public double reg = 1e-1;
+  @Option(gloss = "Ridge Regression Regularization")
+  public double ridgeReg = 1e-5;
+  @Option(gloss = "Trace Norm Regularization")
+  public double traceReg = 1e-4;
   @Option(gloss = "Scale Data?")
   public boolean scaleData = false;
   @Option(gloss = "Run EM on spectral output?")
   public boolean runEM = false;
   @Option(gloss = "Use tensor power method")
   public boolean useTensorPowerMethod = true;
+  @Option(gloss = "Use low rank recovery")
+  public boolean useLowRankRecovery = true;
+  @Option(gloss = "Use low rank recovery")
+  public int lowRankIters = 20;
 	@Option(gloss = "Number of Threads to use")
 	public int nThreads = 1;
 	@Option(gloss = "Random seed")
@@ -87,8 +96,8 @@ public class SpectralExperts implements Runnable {
       weights = model.getWeights();
     }
 
-    public void reportPairs( SimpleMatrix Pairs_ ) {
-      PairsErr = MatrixOps.norm(Pairs.minus(Pairs_));
+    public void reportPairs( final SimpleMatrix Pairs_ ) {
+      PairsErr = MatrixOps.diff(Pairs, Pairs_);
       if( saveToExecution ) {
         Execution.putOutput( "Pairs", Pairs );
         Execution.putOutput( "Pairs_", Pairs_ );
@@ -97,7 +106,7 @@ public class SpectralExperts implements Runnable {
       LogInfo.logsForce("Pairs: " + PairsErr);
     }
 
-    public void reportTriples( Tensor Triples_ ) {
+    public void reportTriples( final Tensor Triples_ ) {
       int D = Triples_.getDim(0);
       SimpleMatrix eta = MatrixFactory.ones(D); //RandomFactory.rand(D + 1, 1);
       SimpleMatrix TriplesT = Triples.project(2, eta);
@@ -112,7 +121,15 @@ public class SpectralExperts implements Runnable {
       LogInfo.logsForce("TriplesT: " + TriplesErr);
     }
 
-    public void reportTriples( FullTensor Triples_ ) {
+    public void reportTriples0( final FullTensor Triples_ ) {
+      TriplesErr = MatrixOps.diff(Triples, Triples_ );
+      if( saveToExecution ) {
+        Execution.putOutput("Triples0Err", TriplesErr);
+      }
+      LogInfo.logsForce("Triples0: " + TriplesErr);
+    }
+
+    public void reportTriples( final FullTensor Triples_ ) {
       TriplesErr = MatrixOps.diff(Triples, Triples_ );
       if( saveToExecution ) {
         Execution.putOutput("TriplesErr", TriplesErr);
@@ -129,6 +146,7 @@ public class SpectralExperts implements Runnable {
         Execution.putOutput( "weights_", weights_ );
         Execution.putOutput( "weightsErr", weightsErr);
       }
+      LogInfo.logsForce("weights: " + weights_ );
       LogInfo.logsForce("weights: " + weightsErr);
     }
     public void reportBetas( SimpleMatrix betas_ ) {
@@ -313,60 +331,31 @@ public class SpectralExperts implements Runnable {
       }
     }
 
+    if( useLowRankRecovery ) {
+      // Use low rank recovery to improve estimate.
+      LogInfo.begin_track("low-rank-pairs");
+      // Report the performance before low-rankification
+      if( analysis != null ) analysis.reportPairs(B);
+
+      ProximalGradientSolver solver = new ProximalGradientSolver();
+      // Tweak the response variables to give an unbiased estimate
+      DenseMatrix64F y_ = y.getMatrix();
+      CommonOps.elementMult(y_, y_);
+      if(analysis != null)
+        CommonOps.add(y_, -analysis.model.getSigma2());
+      y = SimpleMatrix.wrap(y_);
+      PhaseRecovery problem = new PhaseRecovery(y, X, traceReg);
+      DenseMatrix64F Pairs_ = solver.optimize(problem, B.getMatrix(), lowRankIters);
+      B = SimpleMatrix.wrap(Pairs_);
+
+      LogInfo.end_track("low-rank-pairs");
+    }
+
     return B;
   }
 
   SimpleMatrix recoverPairs(SimpleMatrix y, SimpleMatrix X) {
     return recoverPairs( y, X, 0.0, true );
-  }
-
-  @Deprecated
-  SimpleMatrix recoverPairsGD(SimpleMatrix y, SimpleMatrix X, double reg, boolean  doScale ) {
-    int N = X.numRows();
-    int D = X.numCols();
-    SimpleMatrix B = new SimpleMatrix(D,D);
-    // Normalize the data
-    // Normalize the data
-    SimpleMatrix xScaling = MatrixFactory.ones(D);
-    double yScaling = 1.0;
-    if(doScale) {
-      Pair<SimpleMatrix, SimpleMatrix> scaleInfo = MatrixOps.columnScale(X);
-      X = scaleInfo.getValue0(); xScaling = scaleInfo.getValue1();
-      scaleInfo = MatrixOps.rowScale(y);
-      y = scaleInfo.getValue0(); yScaling = scaleInfo.getValue1().get(0);
-    }
-
-    double alpha = 0.5; // stepsize
-    // A single gradient step
-    for(int i = 0; i < 300; i++ ) {
-      double err = 0.0;
-      SimpleMatrix dB = new SimpleMatrix(D,D);
-      for( int n = 0; n < N; n++ ) {
-        // dB += (xBx - y^2) XX';
-        SimpleMatrix Xn = MatrixOps.row(X, n);
-        SimpleMatrix Xnt = Xn.transpose();
-        double yn = y.get(n);
-        double residual = Xn.mult(B).dot(Xn) - yn*yn;
-        err += residual;
-        dB = dB.plus( Xnt.mult(Xn).scale(residual) );
-      }
-      dB = dB.scale( 1.0/N ).plus( reg, B );
-      dB = dB.scale( alpha );
-      LogInfo.logs( i + ": " + err + " dB: " + dB.normF());
-      B = B.minus(dB);
-      if( dB.normF() < 1e-5 ) break;
-    }
-
-    if(doScale) { // Unscale B
-      for( int d = 0; d < D; d++ ) {
-        for( int d_ = 0; d_ < D; d_++ ) {
-          double scaling = (yScaling * yScaling) / (xScaling.get(d) * xScaling.get(d_));
-          B.set( d, d_, B.get(d, d_) * scaling);
-        }
-      }
-    }
-
-    return B;
   }
 
   /**
@@ -376,6 +365,7 @@ public class SpectralExperts implements Runnable {
    * @return
    */
   FullTensor recoverTriples(SimpleMatrix y, SimpleMatrix X, double reg, boolean  doScale) {
+
     int N = X.numRows();
     int D = X.numCols();
     int D_ = D * (D+1) * (D+2) / 3;
@@ -435,10 +425,25 @@ public class SpectralExperts implements Runnable {
       }
     }
 
-    return new FullTensor(B);
+    FullTensor Triples = new FullTensor(B);
+
+    if( useLowRankRecovery ) {
+      // Use low rank recovery to improve estimate.
+      LogInfo.begin_track("low-rank-triples");
+      if( analysis != null ) analysis.reportTriples0(Triples);
+
+      ProximalGradientSolver solver = new ProximalGradientSolver();
+      TensorRecovery problem = new TensorRecovery(y.elementMult(y).elementMult(y), X, 10 * traceReg);
+      DenseMatrix64F Triples_ = solver.optimize(problem, Triples.unfold(0).getMatrix(), lowRankIters);
+      FullTensor.fold(0, Triples_, Triples);
+
+      LogInfo.end_track("low-rank-triples");
+    }
+
+    return Triples;
   }
 
-  Tensor recoverTriples(SimpleMatrix y, SimpleMatrix X) {
+  FullTensor recoverTriples(SimpleMatrix y, SimpleMatrix X) {
     return recoverTriples( y, X, 0.0, true );
   }
 
@@ -451,19 +456,33 @@ public class SpectralExperts implements Runnable {
    * @throws NumericalException
    */
   public Pair<SimpleMatrix, SimpleMatrix> run(int K, SimpleMatrix y, SimpleMatrix X) throws NumericalException, RecoveryFailure {
+    int D = X.numCols();
+
     // Set the seed
     RandomFactory.setSeed( seed );
 
     // Recover Pairs and Triples moments by linear regression
-    SimpleMatrix Pairs = recoverPairs( y, X, reg, scaleData );
+    SimpleMatrix Pairs = recoverPairs( y, X, ridgeReg, scaleData );
     if( analysis != null ) analysis.reportPairs(Pairs);
-    FullTensor Triples = recoverTriples(y, X, reg, scaleData );
+
+    FullTensor Triples = recoverTriples(y, X, ridgeReg, scaleData );
     if( analysis != null ) analysis.reportTriples(Triples);
 
     if( useTensorPowerMethod ) {
       // Use the tensor power method to recover $\betas$.
       TensorMethod algo = new TensorMethod();
-      return algo.recoverParameters( K, Pairs, Triples );
+      Pair<SimpleMatrix, SimpleMatrix> pair = algo.recoverParameters( K, Pairs, Triples );
+      // Somewhat of a "hack" to try and rescale the weights to sum to 1
+      SimpleMatrix weights = pair.getValue0();
+      SimpleMatrix betas = pair.getValue1();
+      analysis.reportWeights(weights);
+      analysis.reportBetas(betas);
+
+      double sum = weights.elementSum();
+      betas = betas.scale( sum );
+      weights = weights.scale( 1/sum );
+
+      return new Pair<>(weights, betas);
     } else {
       // Use Algorithm B symmetric to recover the $\beta$
       MultiViewMixture algo = new MultiViewMixture();

@@ -33,11 +33,11 @@ public class SpectralExpertsTest {
     SimpleMatrix y = yX.getValue0();
     SimpleMatrix X = yX.getValue1();
 
-    SimpleMatrix Pairs_ = algo.recoverPairs( y, X, reg, true );
+    SimpleMatrix Pairs_ = algo.recoverPairs( y, X, ridgeReg, true );
     System.out.println( algo.analysis.Pairs );
     System.out.println( Pairs_ );
     algo.analysis.reportPairs(Pairs_);
-    FullTensor Triples_ = algo.recoverTriples(y, X, reg, true);
+    FullTensor Triples_ = algo.recoverTriples(y, X, ridgeReg, true);
     algo.analysis.reportTriples(Triples_);
 
     Assert.assertTrue( algo.analysis.PairsErr < 1e-2 );
@@ -100,11 +100,11 @@ public class SpectralExpertsTest {
     algo.analysis.checkDataSanity(y, X);
 
 //    SimpleMatrix Pairs_ = algo.recoverPairsGD( y, X, reg, doScale );
-    SimpleMatrix Pairs_ = algo.recoverPairs( y, X, reg, doScale );
+    SimpleMatrix Pairs_ = algo.recoverPairs( y, X, ridgeReg, doScale );
     System.out.println( algo.analysis.Pairs );
     System.out.println( Pairs_ );
     algo.analysis.reportPairs(Pairs_);
-    FullTensor Triples_ = algo.recoverTriples(y, X, reg, doScale );
+    FullTensor Triples_ = algo.recoverTriples(y, X, ridgeReg, doScale );
     algo.analysis.reportTriples(Triples_);
   }
 
@@ -173,6 +173,8 @@ public class SpectralExpertsTest {
 
     MixtureOfExperts model = MixtureOfExperts.generate(options);
     SpectralExperts algo = new SpectralExperts();
+    algo.ridgeReg = ridgeReg; algo.traceReg = traceReg;
+    algo.lowRankIters = (int) lowRankIters; algo.scaleData = doScale;
     algo.enableAnalysis(model);
 
     // Compute the empirical moments
@@ -191,7 +193,11 @@ public class SpectralExpertsTest {
   @Option( gloss = "Number of samples" )
   public double N = 1e4;
   @Option( gloss = "Regularization" )
-  public double reg = 1e-3;
+  public double ridgeReg = 1e-5;
+  @Option( gloss = "Regularization" )
+  public double traceReg = 1e-4;
+  @Option( gloss = "Regularization" )
+  public double lowRankIters = 1e2;
   @Option( gloss = "Scale data?" )
   public boolean doScale = false;
   @Option( gloss = "Test the moments?" )

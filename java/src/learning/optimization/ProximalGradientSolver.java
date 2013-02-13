@@ -72,7 +72,7 @@ public class ProximalGradientSolver {
 
       // Compute lhood
       double lhood_ = problem.loss(state);
-      LogInfo.logs("Iteration " + i + ": " + lhood_ );
+      //LogInfo.logs("Iteration " + i + ": " + lhood_ );
 
       // Check convergence
       if(Math.abs(lhood - lhood_) < eps) {
@@ -91,8 +91,11 @@ public class ProximalGradientSolver {
   public DenseMatrix64F optimize( ProximalOptimizable problem, DenseMatrix64F initial, LearningRate rate) {
     return optimize(problem, initial, rate, 1000);
   }
+  public DenseMatrix64F optimize( ProximalOptimizable problem, DenseMatrix64F initial, int maxIters) {
+    return optimize(problem, initial, new LearningRate(LearningRate.Type.BY_SQRT_T, 1.0),  maxIters);
+  }
   public DenseMatrix64F optimize( ProximalOptimizable problem, DenseMatrix64F initial) {
-    return optimize(problem, initial, new LearningRate(LearningRate.Type.BY_SQRT_T, 0.9));
+    return optimize(problem, initial, new LearningRate(LearningRate.Type.BY_SQRT_T, 1.0));
   }
 
 }
