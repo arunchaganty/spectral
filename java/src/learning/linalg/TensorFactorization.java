@@ -116,10 +116,12 @@ public class TensorFactorization {
    * @return
    */
   public static Pair<SimpleMatrix, SimpleMatrix> eigendecompose( FullTensor T, SimpleMatrix P, int K, int attempts, int iters ) {
+
     // Whiten
     SimpleMatrix W = MatrixOps.whitener(P);
     SimpleMatrix Winv = MatrixOps.colorer(P);
     FullTensor Tw = T.rotate(W,W,W);
+
     Pair<SimpleMatrix, SimpleMatrix> pair = eigendecompose(Tw, K, attempts, iters);
 
     // Color them in again
@@ -130,11 +132,10 @@ public class TensorFactorization {
     int D = Tw.getDim(0);
 
     // TODO: Remove
-    // Make sure these are eigenvectors of T
-//    for( int i = 0; i < K; i++ ) {
-//      SimpleMatrix v = MatrixOps.col(eigenvectors, i);
-//      assert( isEigenvector(Tw, v) );
-//    }
+    // Make sure this was a factorization
+    FullTensor Tw_ = FullTensor.fromDecomposition( eigenvalues, eigenvectors );
+    LogInfo.logs( "Tw_: " + MatrixOps.diff(Tw, Tw_) );
+
 
     // Scale the vectors by 1/sqrt(eigenvalues);
     {
@@ -147,6 +148,9 @@ public class TensorFactorization {
     // Eigenvalues are w^{-1/2}; w is what we want.
     for(int i = 0; i < K; i++)
       eigenvalues.set( i, Math.pow(eigenvalues.get(i), -2) );
+
+    FullTensor T_ = FullTensor.fromDecomposition( eigenvalues, eigenvectors );
+    LogInfo.logs( "T_: " + MatrixOps.diff(T, T_) );
 
     return new Pair<>(eigenvalues, eigenvectors);
   }

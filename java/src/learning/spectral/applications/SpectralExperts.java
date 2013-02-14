@@ -69,7 +69,7 @@ public class SpectralExperts implements Runnable {
   @Option(gloss = "Use low rank recovery")
   public boolean useLowRankRecovery = true;
   @Option(gloss = "Use low rank recovery")
-  public int lowRankIters = 20;
+  public int lowRankIters = 1000;
 	@Option(gloss = "Number of Threads to use")
 	public int nThreads = 1;
 	@Option(gloss = "Random seed")
@@ -131,6 +131,7 @@ public class SpectralExperts implements Runnable {
       TriplesErr = MatrixOps.diff(Triples, Triples_ );
       if( saveToExecution ) {
         Execution.putOutput("Triples0Err", TriplesErr);
+        Execution.putOutput( "Triples0", Triples_ );
       }
       LogInfo.logsForce("Triples0: " + TriplesErr);
     }
@@ -139,6 +140,8 @@ public class SpectralExperts implements Runnable {
       TriplesErr = MatrixOps.diff(Triples, Triples_ );
       if( saveToExecution ) {
         Execution.putOutput("TriplesErr", TriplesErr);
+        Execution.putOutput( "Triples", Triples );
+        Execution.putOutput( "Triples_", Triples_ );
       }
       LogInfo.logsForce("Triples: " + TriplesErr);
     }
@@ -500,6 +503,8 @@ public class SpectralExperts implements Runnable {
     if( useTensorPowerMethod ) {
       // Use the tensor power method to recover $\betas$.
       TensorMethod algo = new TensorMethod();
+      // Use exact moments god dammit
+//      Pairs = analysis.Pairs; Triples = analysis.Triples;
       Pair<SimpleMatrix, SimpleMatrix> pair = algo.recoverParameters( K, Pairs, Triples );
       // Somewhat of a "hack" to try and rescale the weights to sum to 1
       SimpleMatrix weights = pair.getValue0();
@@ -507,10 +512,10 @@ public class SpectralExperts implements Runnable {
       analysis.reportWeights(weights);
       analysis.reportBetas(betas);
 
-      double sum = weights.elementSum();
-      // Weird
-      //betas = betas.scale( sum );
-      weights = weights.scale( 1/sum );
+//      double sum = weights.elementSum();
+//      Weird
+//      betas = betas.scale( Math.pow(sum,1.0/3) );
+//      weights = weights.scale( 1/sum );
 
       return new Pair<>(weights, betas);
     } else {
@@ -518,7 +523,7 @@ public class SpectralExperts implements Runnable {
       MultiViewMixture algo = new MultiViewMixture();
       SimpleMatrix betas_ = algo.algorithmB(K, Pairs, Pairs, Triples);
       // TODO: At some point we should compute this from betas_
-      SimpleMatrix weights_ = MatrixFactory.zeros(K);
+      SimpleMatrix weights_ = MatrixFactory.zeros(1, K);
       return new Pair<>( weights_, betas_ );
     }
   }

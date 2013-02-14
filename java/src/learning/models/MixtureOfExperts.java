@@ -23,6 +23,7 @@ import fig.exec.Execution;
 
 import java.io.*;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 /**
@@ -45,6 +46,8 @@ public class MixtureOfExperts implements Serializable {
 
   protected boolean bias;
   protected NonLinearity nl;
+
+  protected boolean removeThirds = false;
 
   Random rnd = new Random();
 
@@ -101,8 +104,17 @@ public class MixtureOfExperts implements Serializable {
 
     // Add a bias term
     double[][] X_ = MatrixFactory.toArray( X );
+    // Remove thirds
+    if(removeThirds) {
+      X_ = MatrixOps.removeInRange(X_, -0.5, -0.25);
+      X_ = MatrixOps.removeInRange(X_, 0.25, 0.5);
+      N = X_.length;
+    }
+
+
     if( bias ) {
         for( int n = 0; n < N; n++ ) {
+          // If x in a range, just remove it
           double[] x = X_[n];
           X_[n] = new double[ D + 1 ];
           X_[n][0] = 1.0;
@@ -304,7 +316,10 @@ public class MixtureOfExperts implements Serializable {
         throw new NoSuchMethodError();
     }
 
-    return generate( options.K, options.D, options.sigma2, wDistribution, bDistribution, mDistribution, SDistribution, options.pointSigma, options.bias, nl );
+    MixtureOfExperts model =  generate( options.K, options.D, options.sigma2, wDistribution, bDistribution, mDistribution, SDistribution, options.pointSigma, options.bias, nl );
+    model.removeThirds = options.removeThirds;
+
+    return model;
   }
 
   public static class GenerationOptions {
@@ -335,6 +350,8 @@ public class MixtureOfExperts implements Serializable {
     public int nlDegree = 1;
     @Option(gloss="Non-linearity type")
     public String nlType = "poly";
+    @Option(gloss="RemoveThirds")
+    public boolean removeThirds = false;
   }
   public static class OutputOptions {
     @Option(gloss="Print binary file in plain text and exit")

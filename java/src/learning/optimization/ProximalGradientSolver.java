@@ -27,7 +27,7 @@ public class ProximalGradientSolver {
     public double getRate(double t) {
       switch(type) {
         case CONSTANT: return rate;
-        case BY_T: return rate/t+1;
+        case BY_T: return rate/(t+1);
         case BY_SQRT_T: return rate/Math.sqrt(t + 1);
       }
       return rate;
@@ -72,10 +72,10 @@ public class ProximalGradientSolver {
 
       // Compute lhood
       double lhood_ = problem.loss(state);
-      //LogInfo.logs("Iteration " + i + ": " + lhood_ );
+      LogInfo.logs("Iteration " + i + ": " + lhood_ );
 
       // Check convergence
-      if(Math.abs(lhood - lhood_) < eps) {
+      if(lhood - lhood_ < eps) {
         LogInfo.logsForce("Converged.");
         break;
       }
@@ -86,7 +86,7 @@ public class ProximalGradientSolver {
     return state;
   }
   public DenseMatrix64F optimize( ProximalOptimizable problem, DenseMatrix64F initial, LearningRate rate, int maxIters) {
-    return optimize(problem, initial, rate, maxIters, 1e-7);
+    return optimize(problem, initial, rate, maxIters, 1e-3);
   }
   public DenseMatrix64F optimize( ProximalOptimizable problem, DenseMatrix64F initial, LearningRate rate) {
     return optimize(problem, initial, rate, 1000);

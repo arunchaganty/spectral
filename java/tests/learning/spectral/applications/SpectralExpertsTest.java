@@ -23,10 +23,18 @@ import fig.basic.OptionsParser;
  */
 public class SpectralExpertsTest {
 
+  @Before
+  public void setup(){
+    LogInfo.writeToStdout = false;
+    LogInfo.init();
+  }
+
   public void testMomentRunner(MixtureOfExperts model, int N, double reg) {
     int K = model.getK(); int D = model.getD();
     SpectralExperts algo = new SpectralExperts();
+
     algo.enableAnalysis(model);
+
 
     // Compute the empirical moments
     Pair<SimpleMatrix, SimpleMatrix> yX = model.sample(N);

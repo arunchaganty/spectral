@@ -14,7 +14,7 @@ import fig.basic.LogInfo;
 public class TensorMethod {
 
   @Option
-  int iters = 100;
+  int iters = 1000;
   @Option
   int attempts = 10;
 

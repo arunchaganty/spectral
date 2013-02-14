@@ -19,6 +19,8 @@ import org.ejml.simple.SimpleSVD;
 import org.ejml.simple.SimpleEVD;
 import org.javatuples.*;
 
+import java.util.ArrayList;
+
 public class MatrixOps {
 
   public static double EPS_CLOSE = 1e-4;
@@ -951,11 +953,30 @@ public class MatrixOps {
       CommonOps.scale(w, dX);
     CommonOps.subEquals(dX, X);
     CommonOps.scale(1.0 / (n + 1), dX);
-    CommonOps.addEquals( X, dX );
+    CommonOps.addEquals(X, dX);
   }
   public static void incrementalAverageUpdate( int n, DenseMatrix64F dX, DenseMatrix64F X) {
     incrementalAverageUpdate(1.0, n, dX, X);
   }
+
+  public static double[][] removeInRange( double[][] X, double lbound, double ubound ) {
+    ArrayList<double[]> entries = new ArrayList<>();
+    for( double[] x : X ) {
+      boolean inRange = false;
+      for( double x_i : x ) if( x_i  > lbound && x_i < ubound ) inRange = true;
+      if(!inRange)
+        entries.add(x);
+    }
+
+    double[][] Y = entries.toArray(new double[][]{});
+    return Y;
+  }
+  public static SimpleMatrix removeInRange( SimpleMatrix X, double lbound, double ubound ) {
+    return new SimpleMatrix( removeInRange( MatrixFactory.toArray(X), lbound, ubound ) );
+  }
+
+
+
 }
 
 

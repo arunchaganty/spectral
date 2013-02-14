@@ -468,4 +468,23 @@ public class FullTensor implements Tensor {
     return fold( axis, in.getMatrix(), D );
   }
 
+  public static double testOrthogonality (FullTensor T, SimpleMatrix P) {
+    SimpleMatrix U = P.svd().getU();
+    SimpleMatrix W = MatrixOps.whitener(P);
+
+    T = T.rotate(W, W, W);
+
+    int K = U.numCols();
+    SimpleMatrix Ui[] = new SimpleMatrix[K];
+    for( int i = 0; i < K; i++ )
+      Ui[i] = MatrixOps.col(U, i);
+
+    double diff = 0.0;
+    for( int i = 0; i < K; i++ )
+      diff += Math.pow( T.project3( Ui[i], Ui[i], Ui[(i+1) % K] ), 2);
+
+    return Math.sqrt(diff);
+  }
+
+
 }
