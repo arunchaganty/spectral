@@ -59,7 +59,8 @@ public class ProximalGradientSolver {
   public DenseMatrix64F optimize( ProximalOptimizable problem, DenseMatrix64F initial, LearningRate rate, int maxIters, double eps ) {
     LogInfo.begin_track("proximal-optimize");
 
-    double lhood = problem.loss(initial);
+    double loss = problem.loss(initial);
+    double min_loss = Double.POSITIVE_INFINITY;
     DenseMatrix64F state = initial.copy();
     DenseMatrix64F gradient = new DenseMatrix64F(state.numRows, state.numCols);
 
@@ -70,16 +71,18 @@ public class ProximalGradientSolver {
       // Make the proximal step
       problem.projectProximal(state);
 
-      // Compute lhood
-      double lhood_ = problem.loss(state);
-      LogInfo.logs("Iteration " + i + ": " + lhood_ );
+      // Compute loss
+      double loss_ = problem.loss(state);
+      LogInfo.logs("Iteration " + i + ": " + loss_ );
 
       // Check convergence
-      if(lhood - lhood_ < eps) {
+      if( ( Math.abs( loss - loss_ ) < eps ) || ((loss_ - min_loss) > 1e-2) ) { // Limit the amount you can go backwards
         LogInfo.logsForce("Converged.");
         break;
       }
-      lhood = lhood_;
+      // Update min loss
+      min_loss = ( loss_ < min_loss ) ? loss_ : min_loss;
+      loss = loss_;
     }
     LogInfo.end_track("proximal-optimize");
 
