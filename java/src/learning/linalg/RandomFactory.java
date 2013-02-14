@@ -180,8 +180,22 @@ public class RandomFactory {
     return FullTensor.fromDecomposition(w, X);
   }
   public static FullTensor symmetricTensor(int D) {
-    return symmetricTensor(D,D);
+    return symmetricTensor(D, D);
   }
 
+  public static void symmetric(int N, DenseMatrix64F X) {
+    for( int i = 0; i < N; i++ ) {
+      for( int j = 0; j < i; j++ ) {
+        X.set(i, j, rand.nextGaussian() );
+        X.set(j, i, rand.nextGaussian() );
+      }
+      X.set(i, i, rand.nextGaussian() );
+    }
+  }
+  public static SimpleMatrix symmetric(int N) {
+    DenseMatrix64F X = new DenseMatrix64F(N,N);
+    symmetric(N, X);
+    return SimpleMatrix.wrap(X);
+  }
 }
 

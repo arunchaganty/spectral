@@ -50,6 +50,8 @@ public class SpectralExperts implements Runnable {
 	public int K = 0;
 	@Option(gloss = "Input filename", required=true)
 	public String inputPath;
+  @Option(gloss = "Number of samples to use (0 for all)")
+  public double subsampleN = 0;
   @Option(gloss = "Ridge Regression Regularization")
   public double ridgeReg = 1e-5;
   @Option(gloss = "Trace Norm Regularization")
@@ -347,7 +349,8 @@ public class SpectralExperts implements Runnable {
     if( useRidgeRegression ) {
       Pairs = recoverPairsByRidgeRegression(y, X);
     } else {
-      Pairs = new SimpleMatrix(D, D);
+      Pairs = RandomFactory.symmetric( D ).scale(0.01);
+//      Pairs = new SimpleMatrix(D, D);
     }
     if( useLowRankRecovery ) {
       // Use low rank recovery to improve estimate.
@@ -454,7 +457,8 @@ public class SpectralExperts implements Runnable {
     if( useRidgeRegression ) {
       Triples = recoverTriplesByRegression(y, X);
     } else {
-      Triples = new FullTensor(D,D,D);
+      Triples = RandomFactory.symmetricTensor( 1, D ).scale(0.01);
+      //Triples = new FullTensor(D, D, D);
     }
 
     if( useLowRankRecovery ) {
@@ -535,6 +539,13 @@ public class SpectralExperts implements Runnable {
               MixtureOfExperts.readFromFile( inputPath );
       SimpleMatrix y = data.getValue0().getValue0();
       SimpleMatrix X = data.getValue0().getValue1();
+
+      // Choose a subset of the data
+      if( subsampleN > 0 ) {
+        y = y.extractMatrix(0, SimpleMatrix.END, 0, (int) subsampleN);
+        X = X.extractMatrix(0, (int) subsampleN, 0, SimpleMatrix.END);
+      }
+
       learning.models.MixtureOfExperts model = data.getValue1();
       enableAnalysis(model, true);
       analysis.checkDataSanity(y, X);
