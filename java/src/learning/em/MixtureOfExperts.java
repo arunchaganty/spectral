@@ -264,6 +264,9 @@ public class MixtureOfExperts implements Runnable {
   @Option(gloss="Maximum iterations of EM") 
   public int iters = 100;
 
+  @Option(gloss="Number of samples to run on (0 for all)")
+  public double subsampleN = 0;
+
   @Option(gloss="Difference between iterations before stopping") 
   public double eps = 1e-3;
 
@@ -275,6 +278,13 @@ public class MixtureOfExperts implements Runnable {
               learning.models.MixtureOfExperts.readFromFile( inputPath );
       SimpleMatrix y = data.getValue0().getValue0();
       SimpleMatrix X = data.getValue0().getValue1();
+
+      // Choose a subset of the data
+      if( subsampleN > 0 ) {
+        y = y.extractMatrix(0, SimpleMatrix.END, 0, (int) subsampleN);
+        X = X.extractMatrix(0, (int) subsampleN, 0, SimpleMatrix.END);
+      }
+
       learning.models.MixtureOfExperts model = data.getValue1();
       SimpleMatrix betas = model.getBetas();
 
