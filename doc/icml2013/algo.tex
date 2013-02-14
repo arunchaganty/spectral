@@ -30,12 +30,11 @@ but this is clearly insufficient for identifying all the parameters $\theta$.
 
 %%% second moment
 Regressing on $x$ provides only first-order
-information.  The key insight is that to get more information about the
-parameters, we need to consider regressing on higher order powers,
-analogous to consider higher order moments in method of moments estimators.
-Let us then consider regressing $y^2$ on $x^\otimes$:
+information.  The key insight is that
+since higher-order moments usually yield more information,
+let us consider regressing $y^2$ on $x^{\otimes 2}$:
 \begin{align}
-  y^2 &= \innerp{\beta_h\tp{2}}{x\tp{2}} + \epsilon \innerp{\beta_h\tp{2}}{x\tp{2}} + \epsilon^2 \label{eq:y2}.
+  y^2 &= \innerp{M_2}{x\tp{2}} + \epsilon \innerp{\beta_h\tp{2} - M_2}{x\tp{2}} + \epsilon^2 \label{eq:y2}.
 \end{align}
 
 Let us consider some more low powers of $y$, noting
