@@ -1,25 +1,44 @@
-\section{A Method of Moments Algorithm}
+\section{Spectral Experts Algorithm}
 \label{sec:algo}
 
-In this section, we will outline an algorithm to recover the parameters
-$\pi$ and $B$ of the mixture of linear regressions model. 
-
+In this section, we outline our Spectral Experts algorithm
+for recover the model parameters $\theta = (\pi, B, \sigma^2)$.
+Our algorithm consists of two parts:
+(i) low-rank regression to estimate certain symmetric tensors;
+and (ii) tensor factorzation to recover the parameters.
 % Motivate how we can recover $B$ from regression by lower order moments
-Our goal is to recover the parameters $(\pi, B)$, ideally from lower
-order moments. Conventionally, when using the method of moments, the
-moments of observed variables are expressed algebraically in terms of
-the model parameters. Using these equations, we attempt to solve for the
-model parameters using empirical estimates of the moments. 
+%ideally from lower order moments.
+%Conventionally, when using the method of moments, the
+%moments of observed variables are expressed algebraically in terms of
+%the model parameters. Using these equations, we attempt to solve for the
+%model parameters using empirical estimates of the moments. 
 
-Let us consider the response variable $y$, 
+%%% first moment
+To warm-up, let us consider performing linear regression
+on the response $y$ given $x$:
 \begin{align}
-  y &=& \innerp{\beta_h}{x} + \epsilon,
+  y &= \innerp{\bar \beta}{x} + (\innerp{\bar\beta - \beta_h}{x} + \epsilon),
 \end{align}
-where $\epsilon \sim \normal{0}{\sigma^2}$ is the observation noise.  It
-is natural to consider regression on the data $\{\xni,
-\yni\}_{i=1}^{N}$, but it would only help us find the mean regression
-coefficients, $M_1 = \E[\beta_h] = \sum_h \pi_h \beta_h$, which are insufficient to
-identify the model. Let us consider some more low powers of $y$, noting
+where $\bar\beta \eqdef \sum_{h=1}^K \pi_h \beta_h$ is the average regression coefficient.
+Here, there are two noise terms:
+(i) the \emph{mixing noise} $\innerp{\bar\beta - \beta_h}{x}$
+due to the choice of the mixture component $h$
+and (ii) the \emph{observation noise} $\epsilon \sim \normal{0}{\sigma^2}$.
+Performing regression on the data $\{\xni,
+\yni\}_{i=1}^{N}$ would provide a consistent estimate of $\bar\beta$,
+but this is clearly insufficient for identifying all the parameters $\theta$.
+
+%%% second moment
+Regressing on $x$ provides only first-order
+information.  The key insight is that to get more information about the
+parameters, we need to consider regressing on higher order powers,
+analogous to consider higher order moments in method of moments estimators.
+Let us then consider regressing $y^2$ on $x^\otimes$:
+\begin{align}
+  y^2 &= \innerp{\beta_h\tp{2}}{x\tp{2}} + \epsilon \innerp{\beta_h\tp{2}}{x\tp{2}} + \epsilon^2 \label{eq:y2}.
+\end{align}
+
+Let us consider some more low powers of $y$, noting
 that taking the expectation gives us the corresponding low-order
 moments,
 \begin{align}
@@ -58,6 +77,9 @@ efficiently recover $M_2$ and $M_3$ using ideas from low-rank
 regression. Finally, we will outline the tensor power method to recover
 $B$ and $\pi$ given these two quantities, $M_2$ and $M_3$ in
 \sectionref{sec:tensor-power}. 
+
+\cite{candesPhaseLift} regresses on the square of the response,
+because that's the observation.
 
 \begin{theorem}
   Recovery analysis of mixture of linear regressions.

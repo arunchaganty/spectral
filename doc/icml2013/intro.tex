@@ -1,34 +1,73 @@
 \section{Introduction}
 \label{sec:intro}
 
-% Latent variables are important
-% Local optima is problem
-% Recent method of moments spectral methods sidestep local optima
-
-Latent variable models have routinely been used in probabilistic
-modelling, (examples). Parameters for these models have been learnt
-through a variety of methods, EM, variational methods, etc. The local
-nature of these algorithms lead them to converge to local optima.
-Recently, there has been an interest in method of moments estimators for
-generative models such as the hidden Markov
-model\cite{AnandkumarHsuKakade2012} or probabilistic context free
-grammars\cite{HsuKakadeLiang2012}.These estimators feature polynomial
-sample and computational complexities while being statistically
-consistent, i.e. given sufficient data they are guaranteed to converge
-to the global optimum in an identifiable model, thus sidestepping the
-local optima issue altogether.
-
 % Discriminative models work better in practice Discriminative models
 % with latent variables add expressive power (examples)
-In practice it has been observed that discriminative models work better
-in terms of parameter recovery\citationneeded, particularly in the large
-sample regime. \todo{Examples! CRFs, etc.}
+Discriminative latent-variable models,
+which combine the high accuracy of discriminative models
+with the compact expressiveness of latent-variable models,
+have been widely applied to many tasks, including
+object recognition \cite{quattoni04nips},
+human action recognition \cite{wang09},
+syntactic parsing \cite{petrov08discriminative},
+and machine translation \cite{liang06discrimative}.
+% http://www.cs.sfu.ca/~mori/research/papers/wang_cvpr09.pdf
+%Slav Petrov, Discriminative Log-Linear Grammars with Latent Variables
+However, parameter estimation in these models is difficult;
+past approaches have relied exclusively on local optimization (EM, 
+gradient descent) and are vulerable to local optima.
+%Our goal is to develop consistent estimators which sidestep
+
+% Goal of this paper
 % This paper: first step in establishing provably correct estimation
 % with simple mixture of linear regression
-In this work, we provide a first step in establishing provably correct
-estimation for such discriminative models by proposing an algorithm for
-the simple mixture of linear regressions. We describe the model formally
-in more detail in \sectionref{sec:model}.
+Our broad goal is to develop efficient provably consistent estimators for
+discriminative latent-variable models.
+In this paper, we provide a first step in this 
+direction by proposing a new algorithm for a simple model,
+\emph{mixture of linear regressions} (MLG) \cite{VieleTong2002}.
+%mixture of linear regressions (\sectionref{sec:model}).
+
+% Recent method of moments spectral methods sidestep local optima
+Recently, method of moments estimators have been developed for
+\emph{generative} latent-variable models, including
+mixture models, HMMs \cite{AnandkumarHsuKakade2012},
+Latent Dirichlet Allocation \cite{AnandkumarLDA},
+and parsing models \cite{HsuKakadeLiang2012}.
+The basic idea of this work is to express
+the unknown model parameters as a tensor factorization
+of the third-order moments of the model distribution, which
+can be estimated from data.
+The moments have a special symmetric structure
+which permits the factorization to be computed efficiently using the robust
+tensor power method \cite{AnandkumarGeHsu2012}.
+%\cite{hsu09spectral}
+
+% Twist
+In mixture of linear regressions, using third-order moments does not directly
+reveal the tensor structure of the problem, so we cannot directly
+apply the above tensor factorization techniques.
+Our solution is to employ low-rank linear regression \cite{NegahbanWainwright2009,Tomioka2011} on second
+and third powers of the response to first recover the appropriate symmetric
+tensors, from which we can then apply the tensor power method to retrieve the
+final parameters.
+
+% Approach: Derive moment functions based on linear regression on Y^2
+% and Y^3 Algorithm: trace norm regularization to recover tensor
+% + tensor factorization
+%We propose an algorithm in \sectionref{sec:algo} that derives moment
+%functions based on linear regression on the conditional moments of $y$,
+%i.e. $\E[y^2 | X]$ and $\E[y^3 | X]$. We exploit the low rank properties
+%of the second and third order moments to efficiently recover parameters,
+%and then recover the individual regressors, $\beta_k$, using the tensor
+%factorization method \cite{AnandkumarGeHsu2012}.
+
+
+%These estimators feature polynomial
+%sample and computational complexities while being statistically
+%consistent, i.e. given sufficient data they are guaranteed to converge
+%to the global optimum in an identifiable model, thus sidestepping the
+%local optima issue altogether.
 
 % Previous work: moment equations solvable by eigendecomposition or
 % tensor factorization
@@ -45,23 +84,15 @@ in more detail in \sectionref{sec:model}.
 %y^n ].$ At the same time, knowing the $X$ should give us more
 %information than the scalar $y$.
 
-% Approach: Derive moment functions based on linear regression on Y^2
-% and Y^3 Algorithm: trace norm regularization to recover tensor
-% + tensor factorization
-We propose an algorithm in \sectionref{sec:algo} that derives moment
-functions based on linear regression on the conditional moments of $y$,
-i.e. $\E[y^2 | X]$ and $\E[y^3 | X]$. We exploit the low rank properties
-of the second and third order moments to efficiently recover parameters,
-and then recover the individual regressors, $\beta_k$, using the tensor
-factorization method \cite{AnandkumarGeHsu2012}.
-
 % Show some identifiability results; require quadratic and cubic
 % independence
-We prove that this approach is indeed statistically consistent with
-polynomial sample complexity in \sectionref{sec:theory}. Aside from
-standard identifiability results \citationneeded, we also show that
-recovery using moments places some independence requirements on the
-variables $X$. 
+%We prove that this approach is indeed statistically consistent with
+%polynomial sample complexity.
+% PSL: leave out for now (too detailed)
+%Aside from
+%standard identifiability results \citationneeded, we also show that
+%recovery using moments places some independence requirements on the
+%variables $X$. 
 
 % Empirical evaluation
 % It works
@@ -69,23 +100,39 @@ variables $X$.
 %  Spectral provides good initialization
 % Intuition: basin of attraction, local methods like EM improve
 
-We evaluate our algorithm on simulated linear and non-linear data to
-understand how well the algorithm scales with the number of components,
-dimensions and separation. To show how robust the algorithm is to model
-misspecification, we evaluate it's performance on \todo{a motion
-tracking dataset(?)}. 
+% Results
+The result is a simple and efficient two-stage algorithm,
+which we call Spectral Experts.
+We prove that our algorithm yields consistent parameter estimates under certain
+new identifiability conditions.  We also conduct an empirical evaluation
+of our technique to understand its statistical properties (\sectionref{sec:evaluation}).
+In particular, we find that in the low data regime,
+Spectral Experts underperforms EM due to its weaker statistical efficiency,
+but in the high data regime,
+Spectral Experts outperforms EM.
+We get the best results by using Spectral Experts as an initialization
+to EM.
+
+%We evaluate our algorithm on simulated linear and non-linear data to
+%understand how well the algorithm scales with the number of components,
+%dimensions and separation.
+
+%To show how robust the algorithm is to model
+%misspecification, we evaluate it's performance on \todo{a motion
+%tracking dataset(?)}. 
 
 % What properties of the problem make it hard on EM versus spectral?
 %  Separation, dimensionality, number of clusters, etc.
 % Real dataset?
 
-We compare our approach with expectation-maximization; our results,
-presented in \sectionref{sec:evaluation} shows that spectral methods do
-indeed provide an answer close enough to the global optima that using
-a local method from there recovers the true parameters. \todo{Describe
-some of our other high-level findings.} 
+%We compare our approach with expectation-maximization; our results,
+%presented in \sectionref{sec:evaluation} shows that spectral methods do
+%indeed provide an answer close enough to the global optima that using
+%a local method from there recovers the true parameters. \todo{Describe
+%some of our other high-level findings.} 
 
-\todo{What about talking about initialization? Generalizing and kmeans++} 
+%PSL: not for this paper
+%\todo{What about talking about initialization? Generalizing and kmeans++} 
 
 \subsection{Notation}
 
@@ -94,19 +141,22 @@ some of our other high-level findings.}
 %regressors $B$ is a $d \times K$ matrix, where the $k$-th column is
 %$\beta_k$.
 
-We will use the notation $x\tp{p}$ to describe the $p$-th order tensor
-formed by taking the outer product of $x$; i.e. $x\tp{p}_{i_1 i_2 \ldots
+We use $x\tp{p}$ to represent the $p$-th order tensor
+formed by taking the outer product of $x \in \Re^d$; i.e. $x\tp{p}_{i_1 i_2 \ldots
 i_p} = x_{i_1} x_{i_2} \cdots x_{i_p}$. We will use
-$\innerp{\cdot}{\cdot}$ to denote the general dot product between $p$-th
-order tensors, i.e. $\innerp{X}{Y} = \sum_{i_1, i_2, \ldots i_p} X_{i_1,
-i_2, \ldots i_p} Y_{i_1, i_2, \ldots i_p}.$ Similar to how $x^T A$ is
-the projection of a vector $x$ onto the row space of a matrix $A$, when
-$X \in \Re^{d^p}$ and $Y \in \Re^{d^{p+q}}$,  with $p, q > 0$,
+$\innerp{\cdot}{\cdot}$ to denote the generalized dot product between two $p$-th
+order tensors: $\innerp{X}{Y} = \sum_{i_1, i_2, \ldots i_p} X_{i_1,
+i_2, \ldots i_p} Y_{i_1, i_2, \ldots i_p}.$
+For
+$X \in (\Re^d)\tp{p}$ and $Y \in (\Re^d)\tp{(p+q)}$,% $p, q > 0$,
 $\innerp{X}{Y} \in \Re^{d^q}$ is the projection of $X$ onto the first
-$p$ dimensions of $Y$, i.e. $(\innerp{X}{Y})_{i_1, \ldots, i_q}
+$p$ modes of $Y$, i.e. $\innerp{X}{Y}_{i_1, \ldots, i_q}
 = \sum_{j_1, \ldots, j_p} X_{j_1, \ldots, j_p} Y_{j_1, \ldots, j_p, i_1,
 \ldots, i_q}$.
+Let $[n] = \{ 1, \dots, n \}$ denote the first $n$ positive integers.
+%Similar to how $x^T A$ is
+%the projection of a vector $x$ onto the row space of a matrix $A$
 
-The expected moments of the parameters $\beta_1, \dots, \beta_k$ play an
-important role in our algorithm and we will use $M_p = \E[\beta\tp{p}]
-= \sum_{k=1}^{K} \pi_k \beta_k^{\otimes p}$ to denote them.
+%The expected moments of the parameters $\beta_1, \dots, \beta_k$ play an
+%important role in our algorithm and we will use $M_p = \E[\beta\tp{p}]
+%= \sum_{k=1}^{K} \pi_k \beta_k^{\otimes p}$ to denote them.
