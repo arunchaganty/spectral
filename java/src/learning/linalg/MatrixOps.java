@@ -777,6 +777,19 @@ public class MatrixOps {
   }
 
   /**
+   * This is a weak approximation, as rank-mode is an upper bound on true rank
+   * @param X
+   * @param K
+   */
+  public static void approxk( FullTensor X, int K ) {
+    for( int i = 0; i < 3; i++ ) {
+      SimpleMatrix Y = X.unfold(i);
+      Y = MatrixOps.approxk(Y, K);
+      FullTensor.fold(i, Y.getMatrix(), X);
+    }
+  }
+
+  /**
    * Compute eigenvalues and eigenvectors of X
    */
   public static SimpleMatrix[] eig( SimpleMatrix X ) throws NumericalException {

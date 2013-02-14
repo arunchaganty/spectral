@@ -373,6 +373,7 @@ public class SpectralExperts implements Runnable {
 
       LogInfo.end_track("low-rank-pairs");
     }
+    Pairs = MatrixOps.approxk(Pairs, K );
 
     return Pairs;
   }
@@ -446,7 +447,6 @@ public class SpectralExperts implements Runnable {
         }
       }
     }
-
     LogInfo.end_track("ridge-regression-triples");
 
     return new FullTensor(B);
@@ -475,6 +475,8 @@ public class SpectralExperts implements Runnable {
       FullTensor.fold(0, Triples_, Triples);
       LogInfo.end_track("low-rank-triples");
     }
+    MatrixOps.approxk(Triples,K);
+
 
     return Triples;
   }
@@ -503,8 +505,6 @@ public class SpectralExperts implements Runnable {
     if( useTensorPowerMethod ) {
       // Use the tensor power method to recover $\betas$.
       TensorMethod algo = new TensorMethod();
-      // Use exact moments god dammit
-//      Pairs = analysis.Pairs; Triples = analysis.Triples;
       Pair<SimpleMatrix, SimpleMatrix> pair = algo.recoverParameters( K, Pairs, Triples );
       // Somewhat of a "hack" to try and rescale the weights to sum to 1
       SimpleMatrix weights = pair.getValue0();
@@ -512,10 +512,9 @@ public class SpectralExperts implements Runnable {
       analysis.reportWeights(weights);
       analysis.reportBetas(betas);
 
-//      double sum = weights.elementSum();
-//      Weird
-//      betas = betas.scale( Math.pow(sum,1.0/3) );
-//      weights = weights.scale( 1/sum );
+      // Normalize the weights at the very least
+      double sum = weights.elementSum();
+      weights = weights.scale( 1/sum );
 
       return new Pair<>(weights, betas);
     } else {
