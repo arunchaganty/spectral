@@ -1,7 +1,10 @@
 \section{Conclusion}
 \label{sec:conclusion}
 
-Role of spectral algorithms in discriminative tasks.
-
-Challenges and ways forward?
-
+In this paper, we take a first step at developing computationally efficient and
+statistically consistent estimators for discriminative latent-variable models,
+by focusing on mixture of linear regressions.  We showed that by regressing on
+higher order powers of the data with a regularizer that encourages low rank
+structure, coupled with an efficient tensor power method, we obtain a very natural algorithm.
+Empirically, our algorithm can outperform EM, and when used to initialize EM,
+yields significantly more accurate and stable results.
