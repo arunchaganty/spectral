@@ -13,14 +13,14 @@ Our analysis is based on the low-rank regression framework of
 The main challenge is to control the noise $\eta_p(x)$,
 which in addition to containing the usual Gaussian part, is also dependent on
 $x$, involves the mixing noise and various cross terms.
-We first set up some notation to all three regressions (\refeqn{estimateM1}, \refeqn{estimateM2}, and \refeqn{estimateM3}).
+We first set up some notation that unifies all three regressions (\refeqn{estimateM1}, \refeqn{estimateM2}, and \refeqn{estimateM3}).
 Define the observation operator $\opX_p(M_p) : \Re^{d\tp{p}} \to \Re^{n}$
 mapping compound parameters $M_p$:
 \begin{align}
 \opX_p(M_p; \sD)_i &\eqdef \frac12 \sum_{(x,y) \in \sD} \innerp{M_p}{x\tp{p}}_i, \quad i  \in [n].
 \end{align}
 
-Let $\kappa(\opX_p)$ be the restricted strong constant,
+Let $\kappa(\opX_p)$ be the restricted strong convexity constant,
 and let $\opX^*_p(\eta_p; \sD) = \sum_{(x,y) \in \sD} \eta_p(x) x\tp{p}$
 be the adjoint.
 
