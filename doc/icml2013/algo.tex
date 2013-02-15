@@ -170,6 +170,9 @@ See \sectionref{sec:tensor-power} for details.
   \end{algorithmic}
 \end{algorithm}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Theoretical results}
+
 Our main theoretical result shows that Spectral Experts returns
 consistent parameter estimates (see Appendix
 \begin{theorem}[Convergence of Spectral Experts]
@@ -191,6 +194,7 @@ By Theorem 5.1 of \cite{AnandkumarGeHsu2012},
 \end{proof}
 
 % Method of moments interpretation
+% This is garbage
 %Though we have motivated Spectral Experts using regression on powers
 %of $y$ given powers of $x$,
 %we can also think of the algorithm in terms of
@@ -203,10 +207,14 @@ By Theorem 5.1 of \cite{AnandkumarGeHsu2012},
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{Identifiability from moments}
+\subsection{Identifiability}
+
+In ordinary linear regression, the regression coefficients are identifiable
+only if the data has full rank: $\E[x\tp{2}] \succ 0$.
+However, in mixture of linear regressions.
 
 The mixture of linear regressions model is identifiable subject to
-permutations of the components\citationneeded. However, our approach
+permutations of the components. However, our approach
 employs regression on $x\tp{2}$ and $x\tp{3}$, and thus requires
 $\mathcal{X} \otimes \mathcal{X}$ and $\mathcal{X} \otimes \mathcal{X}
 \otimes \mathcal{X}$ to be linearly independent modulo symmetry. We call
