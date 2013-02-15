@@ -7,16 +7,13 @@ Discriminative latent-variable models,
 which combine the high accuracy of discriminative models
 with the compact expressiveness of latent-variable models,
 have been widely applied to many tasks, including
-object recognition \cite{quattoni04nips},
-human action recognition \cite{wang09},
+object recognition \cite{quattoni04crf},
+human action recognition \cite{wang09crf},
 syntactic parsing \cite{petrov08discriminative},
 and machine translation \cite{liang06discrimative}.
-% http://www.cs.sfu.ca/~mori/research/papers/wang_cvpr09.pdf
-%Slav Petrov, Discriminative Log-Linear Grammars with Latent Variables
 However, parameter estimation in these models is difficult;
 past approaches have relied exclusively on local optimization (EM, 
 gradient descent) and are vulerable to local optima.
-%Our goal is to develop consistent estimators which sidestep
 
 % Goal of this paper
 % This paper: first step in establishing provably correct estimation
@@ -26,14 +23,13 @@ discriminative latent-variable models.
 In this paper, we provide a first step in this 
 direction by proposing a new algorithm for a simple model,
 \emph{mixture of linear regressions} (MLG) \cite{VieleTong2002}.
-%mixture of linear regressions (\sectionref{sec:model}).
 
 % Recent method of moments spectral methods sidestep local optima
 Recently, method of moments estimators have been developed for
 \emph{generative} latent-variable models, including
 mixture models, HMMs \cite{AnandkumarHsuKakade2012},
-Latent Dirichlet Allocation \cite{AnandkumarLDA},
-and parsing models \cite{HsuKakadeLiang2012}.
+Latent Dirichlet Allocation \cite{anandkumar12lda},
+and parsing models \cite{hsu12identifiability}.
 The basic idea of this work is to express
 the unknown model parameters as a tensor factorization
 of the third-order moments of the model distribution, which
@@ -41,13 +37,13 @@ can be estimated from data.
 The moments have a special symmetric structure
 which permits the factorization to be computed efficiently using the robust
 tensor power method \cite{AnandkumarGeHsu2012}.
-%\cite{hsu09spectral}
 
 % Twist
 In mixture of linear regressions, using third-order moments does not directly
 reveal the tensor structure of the problem, so we cannot directly
 apply the above tensor factorization techniques.
-Our solution is to employ low-rank linear regression \cite{NegahbanWainwright2009,Tomioka2011} on second
+Our solution is to employ low-rank linear regression
+\cite{NegahbanWainwright2009,Tomioka2011} on second
 and third powers of the response to first recover the appropriate symmetric
 tensors, from which we can then apply the tensor power method to retrieve the
 final parameters.
@@ -147,16 +143,24 @@ i_p} = x_{i_1} x_{i_2} \cdots x_{i_p}$. We will use
 $\innerp{\cdot}{\cdot}$ to denote the generalized dot product between two $p$-th
 order tensors: $\innerp{X}{Y} = \sum_{i_1, i_2, \ldots i_p} X_{i_1,
 i_2, \ldots i_p} Y_{i_1, i_2, \ldots i_p}.$
-For
-$X \in (\Re^d)\tp{p}$ and $Y \in (\Re^d)\tp{(p+q)}$,% $p, q > 0$,
-$\innerp{X}{Y} \in \Re^{d^q}$ is the projection of $X$ onto the first
-$p$ modes of $Y$, i.e. $\innerp{X}{Y}_{i_1, \ldots, i_q}
-= \sum_{j_1, \ldots, j_p} X_{j_1, \ldots, j_p} Y_{j_1, \ldots, j_p, i_1,
-\ldots, i_q}$.
-Let $[n] = \{ 1, \dots, n \}$ denote the first $n$ positive integers.
-%Similar to how $x^T A$ is
-%the projection of a vector $x$ onto the row space of a matrix $A$
+For a $p$-th order tensor $X \in (\Re^d)\tp{p}$, let $X_{(i)} \in \Re^{d \times d^{p-1}}$
+be the mode-$i$ unfolding of $X$.
+%For $X \in (\Re^d)\tp{p}$ and $Y \in (\Re^d)\tp{(p+q)}$,% $p, q > 0$,
+%$\innerp{X}{Y} \in \Re^{d^q}$ is the projection of $X$ onto the first
+%$p$ modes of $Y$, i.e. $\innerp{X}{Y}_{i_1, \ldots, i_q}
+%= \sum_{j_1, \ldots, j_p} X_{j_1, \ldots, j_p} Y_{j_1, \ldots, j_p, i_1,
+%\ldots, i_q}$.
 
-%The expected moments of the parameters $\beta_1, \dots, \beta_k$ play an
-%important role in our algorithm and we will use $M_p = \E[\beta\tp{p}]
-%= \sum_{k=1}^{K} \pi_k \beta_k^{\otimes p}$ to denote them.
+% Norms
+For a matrix $X$,
+let $\|X\|_*$ denote the nuclear (trace) norm (sum of singular values),
+let $\|X\|_F$ denote the Frobenius norm (square root of sum of squares of singular values),
+let $\|X\|_\text{op}$ denote the operator norm (largest singular value).
+For a rank-$K$ tensor $X$,
+let $\|X\|_* = \frac{1}{p} \sum_{i=1}^p \|X_{(i)}\|_*$ denote
+the average nuclear norm over all $p$ unfoldings,
+and let $\|X\|_\text{op} = \frac{1}{p} \sum_{i=1}^p \|X_{(i)}\|_\text{op}$
+denote the average operator norm over all $p$ unfoldings.
+Let $\unfold(X)$ be the vectorized version of $X$.
+
+Let $[n] = \{ 1, \dots, n \}$ denote the first $n$ positive integers.
