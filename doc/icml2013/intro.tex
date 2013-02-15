@@ -137,12 +137,16 @@ to EM.
 %regressors $B$ is a $d \times K$ matrix, where the $k$-th column is
 %$\beta_k$.
 
+Let $[n] = \{ 1, \dots, n \}$ denote the first $n$ positive integers.
+
 We use $x\tp{p}$ to represent the $p$-th order tensor
-formed by taking the outer product of $x \in \Re^d$; i.e. $x\tp{p}_{i_1 i_2 \ldots
-i_p} = x_{i_1} x_{i_2} \cdots x_{i_p}$. We will use
+formed by taking the outer product of $x \in \Re^d$; i.e. $x\tp{p}_{i_1 \ldots
+i_p} = x_{i_1} \cdots x_{i_p}$. We will use
 $\innerp{\cdot}{\cdot}$ to denote the generalized dot product between two $p$-th
-order tensors: $\innerp{X}{Y} = \sum_{i_1, i_2, \ldots i_p} X_{i_1,
-i_2, \ldots i_p} Y_{i_1, i_2, \ldots i_p}.$
+order tensors: $\innerp{X}{Y} = \sum_{i_1, \ldots i_p} X_{i_1,
+\ldots i_p} Y_{i_1, \ldots i_p}.$
+A tensor $X$ is symmetric if for all $i,j \in [d]^p$ which are permutations,
+$X_{i_1 \cdots i_p}$ = $X_{j_1 \cdots j_p}$ (all tensors in this paper will be symmetric).
 For a $p$-th order tensor $X \in (\Re^d)\tp{p}$, let $X_{(i)} \in \Re^{d \times d^{p-1}}$
 be the mode-$i$ unfolding of $X$.
 %For $X \in (\Re^d)\tp{p}$ and $Y \in (\Re^d)\tp{(p+q)}$,% $p, q > 0$,
@@ -161,6 +165,14 @@ let $\|X\|_* = \frac{1}{p} \sum_{i=1}^p \|X_{(i)}\|_*$ denote
 the average nuclear norm over all $p$ unfoldings,
 and let $\|X\|_\text{op} = \frac{1}{p} \sum_{i=1}^p \|X_{(i)}\|_\text{op}$
 denote the average operator norm over all $p$ unfoldings.
-Let $\unfold(X)$ be the vectorized version of $X$.
 
-Let $[n] = \{ 1, \dots, n \}$ denote the first $n$ positive integers.
+For a tensor $X \in (\Re^d)\tp{p}$,
+let $\cvec(X) \in \Re^{\sum_{i=1}^p \binom{n}{i}}$ be
+the collapsed vectorization of $X$: each component of $\cvec(X)$
+is indexed by a vector of counts $(c_1, \dots, c_d)$ with total sum $\sum_i c_i = p$.
+The value of that component is
+$\sum_{k \in K(c)} X_{k_1 \cdots k_p}$,
+where $K(c) = \{ k \in [d]^p : \forall i \in [d], c_i = |\{ j \in [p] : k_j = i \}| \}$ are the set of index vectors $k$ with that count profile.
+For example, for $X \in \Re^{d \times d}$,
+$\cvec(X) = (X_{ii} : i \in [d]; X_{ij} + X_{ji} : i,j \in [d], i<j)$.
+For symmetric tensors, $\innerp{X}{Y} = \innerp{\cvec(X)}{\cvec(Y)}$.

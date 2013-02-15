@@ -61,7 +61,10 @@ y^2 &= \innerp{M_2}{x\tp{2}} + \sigma^2 + \eta_2(x), \label{eqn:y2} \\
 \eta_2(x) &= \innerp{\beta_h\tp{2} - M_2}{x\tp{2}} + 2 \epsilon \innerp{\beta_h\tp{2}}{x\tp{2}} + (\epsilon^2 - \sigma^2). \nonumber
 \end{align}
 Again, we have expressed $y^2$ has a linear function of $x\tp{2}$
-with regression coefficients $M_2$, plus a known bias $\sigma^2$ and noise.
+with regression coefficients $M_2$, plus a known bias $\sigma^2$ and noise.\footnote{If $\sigma^2$ were not known,
+we could treat it as another coefficient
+to be estimated.  The coefficients $M_2$ and $\sigma^2$ can be estimated jointly
+provided that $x$ does not already contain a bias ($x_j$ must be non-constant for every $j \in [d]$).}
 Importantly, the noise has mean zero; 
 in fact each of the three terms has mean zero
 by (i) definition of $M_2$, (ii) independence of $\epsilon$ and $h$,
@@ -119,8 +122,21 @@ We can use the robust tensor power method to compute all the
 eigenvalues and eigenvectors of $T$, from which it is easy to recover
 the parameters $\pi$ and $\{\beta_h\}$.
 
+\paragraph{Remarks}
+
+% Spectral
+In recent years, there has a been substantial interest in ``spectral'' methods
+for learning latent-variable models.  One line of work has
+focused on observerable operator models \cite{hsu09spectral}
+in which the true parameters are not recovered, but a reparametrization is used
+which enables prediction.
+Another line of work is based on the method of moments and uses eigendecomposition of a certain tensor
+to recover the parameters \cite{anandkumar12moments,anandkumar12svd,AnandkumarHsuKakade2012}.
+Our work extends this line of work into the space of discriminative models,
+which requires regression to obtain the desired tensor.
+
 % Unmixing
-At a conceptual level, Spectral Experts bears some resemblence to the unmixing
+In spirit, Spectral Experts also bears some resemblence to the unmixing
 algorithm for estimation of restricted PCFGs
 \cite{hsu12identifiability}.
 In that work, the observations (moments) provided a linear combination over
@@ -159,27 +175,29 @@ to identify the parameters.
   \caption{Spectral Experts}
   \label{algo:spectral-experts}
   \begin{algorithmic}[1]
-    \INPUT Data $\mathcal{D}_r = \{ (\xn{1}, \yn{1}), \cdots, (\xn{n}, \yn{n}) \}$, $r = 1, 2, 3$.
+    \INPUT Three independent datasets $\mathcal{D}_r = \{ (\xn{1}, \yn{1}), \cdots, (\xn{n}, \yn{n}) \}$ for $r = 1, 2, 3$;
+    regularization strengths $\lambda_n^{(2)} = \frac{c_2}{\sqrt{n}}$, $\lambda_n^{(3)} = \frac{c_3}{\sqrt{n}}$;
+    observation noise variance $\sigma^2$.
     \OUTPUT Parameters $\hat\theta = (\hat \pi, [\hat \beta_1 \mid \cdots \mid \hat \beta_k])$.
     \STATE Estimate compound parameters $M_2, M_3$ using \textbf{low-rank regression}:
     \begin{align}
       &\hat M_1 = \arg\min_{M_1} \label{eqn:estimateM1} \\
-      &\quad\frac{1}{2n} \sum_{(x,y) \in \sD_1} (\innerp{M_1}{x\tp{2}} - y)^2, \nonumber \\
-      &\hat M_2 = \arg\min_{M_2} \label{eqn:estimateM2} \\
-      &\quad\frac{1}{2n} \sum_{(x,y) \in \sD_2} (\innerp{M_2}{x\tp{2}} + \sigma^2 - y^2)^2 + \lambda_n^{(2)} \|M_2\|_*, \nonumber \\
-      &\hat M_3 = \arg\min_{M_3} \label{eqn:estimateM3} \\
-      &\quad\frac{1}{2n} \sum_{(x,y) \in \sD_3} (\innerp{M_3}{x\tp{3}} + 3 \sigma^2\innerp{\hat M_1}{x} - y^3)^2 + \lambda_n^{(3)} \|M_3\|_*. \nonumber
+      &\quad\quad\frac{1}{2n} \sum_{(x,y) \in \sD_1} (\innerp{M_1}{x} - y)^2, \nonumber \\
+      &\hat M_2 = \arg\min_{M_2} \quad \lambda_n^{(2)} \|M_2\|_* + \label{eqn:estimateM2} \\
+      &\quad\quad\frac{1}{2n} \sum_{(x,y) \in \sD_2} (\innerp{M_2}{x\tp{2}} + \sigma^2 - y^2)^2, \nonumber \\
+      &\hat M_3 = \arg\min_{M_3} \quad \lambda_n^{(3)} \|M_3\|_* + \label{eqn:estimateM3} \\
+      &\quad\quad\frac{1}{2n} \sum_{(x,y) \in \sD_3} (\innerp{M_3}{x\tp{3}} + 3 \sigma^2\innerp{\hat M_1}{x} - y^3)^2. \nonumber
     \end{align}
     \STATE Estimate the parameters $\theta = (\pi, B)$ using \textbf{tensor factorzation}:
     \begin{enumerate}
-      \item [(a)] Compute whitening matrix $W \in \Re^{d \times k}$ (such that $W^\top
-      \hat M_2 W = I$) using SVD.
-      \item [(b)] Compute the eigenvalues $\{a_h\}_{h=1}^k$
-      and eigenvectors $\{v_h\}_{h=1}^k$
-      of the whitened tensor $M_3(W, W, W) \in \Re^{k \times k \times k}$
+      \item [(a)] Compute whitening matrix $\hat W \in \Re^{d \times k}$ (such that $\hat W^\top
+      \hat M_2 \hat W = I$) using SVD.
+      \item [(b)] Compute the eigenvalues $\{\hat a_h\}_{h=1}^k$
+      and eigenvectors $\{\hat v_h\}_{h=1}^k$
+      of the whitened tensor $\hat M_3(\hat W, \hat W, \hat W) \in \Re^{k \times k \times k}$
       by using the robust tensor power method.
-    \item [(c)] Set parameter estimates $\hat\pi_h = \frac{1}{a_h^2}$
-    and $\hat\beta_h = (W^{\top})^\dagger (a_h v_h)$.
+    \item [(c)] Set parameter estimates $\hat\pi_h = \frac{1}{\hat a_h^2}$
+    and $\hat\beta_h = (\hat W^{\top})^\dagger (\hat a_h \hat v_h)$.
     \end{enumerate}
   \end{algorithmic}
 \end{algorithm}
@@ -187,14 +205,24 @@ to identify the parameters.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Theoretical results}
 
+%Define $\sM_p = \{ \sum_{h=1}^k \pi_h \beta_h\tp{p} : \pi_h \in \R^k, \beta_h
+%\in \R^d \}$ be the set of all $p$-th order compound parameters.
+%Let $\bM_p$ be the set of 
+
+%Define the symmetric rank
+%\begin{align}
+%\E[\cvec(x\tp{p})\tp{2}] \succ 0.
+%\end{align}
+
 In this section, we conduct a theoretical analysis of Spectral Experts.
 In particular, we prove that it enjoys consistent parameter estimates.
 \begin{theorem}[Convergence of Spectral Experts]
+  \label{thm:convergence}
 Each $\sD_p$ (for $p = 1, 2, 3$) consists of $n$ i.i.d. points drawn from the mixture
 of linear regressions model with parameter $\theta^*$
 (having three independent copies simplifies the analysis).
-Assume that $\E[\unfold(x\tp{2})\tp{2}] \succ 0$ 
-and $\E[\unfold(x\tp{3})\tp{2}] \succ 0$.
+Assume that $\E[\cvec(x\tp{p})\tp{2}] \succ 0$ for each $p \in \{1,2,3\}$.
+Assume $d \ge k$.
 Let $\|x\|_2 \le R$ with probability $1$
 and let $\|\beta_h\|_2 \le L$ for all $h \in [k]$.
 There exists universal constants $c_1,c_2$ such that
@@ -218,14 +246,42 @@ hit by $(W^\top)^\dagger$
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{Identifiability}
+\subsection{Identifiability from moments}
 
-In ordinary linear regression, the regression coefficients are identifiable
-if and only if the data has full rank: $\E[x\tp{2}] \succ 0$.
-However, in mixture of linear regressions, this is insufficient.  
-For example, suppose $x = (1, t, \cdots, t^p)$, 
-the common polynomial basis expansion.
-Regressing on all powers up to $p$ yield at most $3$.
+In ordinary linear regression, the regression coefficients $\beta \in \Re^d$ are
+identifiable if and only if the data has full
+rank: $\E[x\tp{2}] \succ 0$,
+and furthermore, identifying $\beta$ requires only moments
+$\E[xy]$ and $\E[x\tp{2}]$ (by observing the optimality conditions for \refeqn{y1}).
+However, in mixture of linear regressions, these two moments only allow us to recover $M_1$.
+\refthm{convergence} shows that if we have the higher order analogues,
+$\E[x\tp{p}y\tp{p}]$ and $\E[x\tp{2p}]$ for $p \in \{1,2,3\}$,
+we can then identify the parameters $\theta = (\pi, B)$,
+provided $\E[\cvec(x\tp{p})\tp{2}] \succ 0$ for $p \in \{1,2,3\}$.
+
+We note that the positive definite constraints are more stringent.
+For example, suppose $x = (1, t, t^2)$,
+the common polynomial basis expansion, so that all the coordinates are deterministically related.
+Then $\E[x\tp{2}] \succ 0$ can easily be satisfied, say with $x \sim \normal{0}{I}$.
+However, one can verify that $\E[\cvec(x\tp{2})\tp{2}]$ is singular,
+since $\cvec(x\tp{2}) = [1 \cdot 1, t\cdot t, 2(1 \cdot t^2), 2(t \cdot t^2), (t^2 \cdot t^2)]$ contains
+components $t \cdot t$ and $2(1 \cdot t^2)$, which are linearly dependent.
+So our method would not be able to identify the parameters of a mixture of
+linear regressions for this distribution over $x$.
+
+We now show that some amount of unidentifiability is intrinsic to the model,
+not just our estimation procedure.
+Suppose $x = (t, \dots, t^d)$.
+Even if we observed all moments
+$\E[x\tp{p}y\tp{p}]$ and $\E[x\tp{2p}]$ for $p \in [r]$,
+all the coordinates would be monomials up to degree $2dr$,
+the therefore the moments live in a $2(dr)$-dimensional subspace.
+The parameters live in a subspace of at least dimension $dk$.
+Therefore, at least $r \ge k/2$ moments are required for identifiability of any
+algorithm for this monomial example.
+
+%In fact, considering moments up to power $p
+%Regressing on all powers up to $p$ yield at most $3$.
 
 %$1, x_1, x_1^2, \dots, x_1^p$ is
 %neither quadratically nor cubically independent because the product
