@@ -58,7 +58,7 @@ using the fact that $\innerp{\beta_h}{x}^p = \innerp{\beta_h\tp{p}}{x\tp{p}}$,
 we have:
 \begin{align}
 y^2 &= \innerp{M_2}{x\tp{2}} + \sigma^2 + \eta_2(x), \label{eqn:y2} \\
-\eta_2(x) &= \innerp{\beta_h\tp{2} - M_2}{x\tp{2}} + 2 \epsilon \innerp{\beta_h\tp{2}}{x\tp{2}} + (\epsilon^2 - \sigma^2). \nonumber
+\eta_2(x) &= \innerp{\beta_h\tp{2} - M_2}{x\tp{2}} + 2 \epsilon \innerp{\beta_h}{x} + (\epsilon^2 - \sigma^2). \nonumber
 \end{align}
 Again, we have expressed $y^2$ has a linear function of $x\tp{2}$
 with regression coefficients $M_2$, plus a known bias $\sigma^2$ and noise.\footnote{If $\sigma^2$ were not known,
@@ -221,27 +221,36 @@ In particular, we prove that it enjoys consistent parameter estimates.
 Each $\sD_p$ (for $p = 1, 2, 3$) consists of $n$ i.i.d. points drawn from the mixture
 of linear regressions model with parameter $\theta^*$
 (having three independent copies simplifies the analysis).
-Assume that $\E[\cvec(x\tp{p})\tp{2}] \succ 0$ for each $p \in \{1,2,3\}$.
-Assume $d \ge k$.
+Assume that $\E[\cvec(x\tp{p})\tp{2}] \succ 0$ for each $p \in \{1,2,3\}$
+and that $d \ge k$.
 Let $\|x\|_2 \le R$ with probability $1$
 and let $\|\beta_h\|_2 \le L$ for all $h \in [k]$.
-There exists universal constants $c_1,c_2$ such that
-if the number of samples is
-$n \ge \frac{c_1 k d^2 L R}{\epsilon}$
-and $\lambda_n^{(2)} \ge \frac{c_2 L R}{\sqrt{n}}$,
-and $\lambda_n^{(3)} \ge \frac{c_3 L R}{\sqrt{n}}$,
+Suppose the number of samples is
+$n = \Omega(d^p R^p \sigmamin(\Sigma_p)^{-1} \sqrt{p \log(d) \log(1/\delta)})$ and
+$n = \Omega\left( \sigma^6 L^6 R^12 k \sigmamin(\Sigma_p)^{-2} \frac{\log^3 (1/\delta)}{\epsilon^2} \right)$,
+and that the regularization strengths $\lambda_n^{(2)}$ and $\lambda_n^{(3)}$ are
+$\Omega(\sigma^3 L^3 R^6 \sqrt{\frac{\log(1/\delta)}{n}})$,
 then the parameter estimates $\hat\theta$ returned by
 \algorithmref{algo:spectral-experts} (with the columns appropriate permuted)
 satisfies 
-$\|\hat\pi - \pi^*\|_{\infty} \le \frac{\epsilon}{???}$
+$\|\hat\pi - \pi^*\|_{\infty} \le \epsilon$
 and for all $h \in [k]$,
-$\|\hat\beta_h - \beta^*_h\|_2 \le \epsilon ???$,
+$\|\hat\beta_h - \beta^*_h\|_2 \le \frac{\epsilon}{\pi_h^*}$.
 \end{theorem}
+
 \begin{proof}
-Let $T^* = M_3^*(W^*, W^*, W^*)$.
-By Theorem 5.1 of \cite{AnandkumarGeHsu2012},
-Need to convert error from $\epsilon$
-hit by $(W^\top)^\dagger$
+By \reflem{lowRank} along with \reflem{lowRankLower} and \reflem{lowRankUpper} (discussed below),
+we can control the Frobenius norm of the parameter estimates:
+If $n = \Omega(d^p R^p \sigmamin(\Sigma_p)^{-1} \sqrt{p \log(d) \log(1/\delta)})$, then
+\begin{align}
+  \|\hat M_p - M_p\|_F = O\left( \sigma^3 L^3 R^6 k^{\frac12} \sigmamin(\Sigma_p)^{-1} \sqrt{\frac{\log^3 (1/\delta)}{n}} \right).
+  %\|\hat M_p - M_p\|_F = O\left( \frac{\sigma^3 L^3 R^6 \sqrt{k} \log^3 (1/\delta)}{\sqrt{n} (\sigmamin(\Sigma_p) - d^p R^p \sqrt{\frac{p \log(d) \log(1/\delta)}{n}}} \right).
+\end{align}
+The Frobenius norm upper bounds the operator norm,
+so we can directly apply Theorem 5.1 of \cite{AnandkumarGeHsu2012}.
+%Let $T^* = M_3^*(W^*, W^*, W^*)$.
+%Need to convert error from $\epsilon$
+%hit by $(W^\top)^\dagger$
 \end{proof}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

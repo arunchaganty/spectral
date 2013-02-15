@@ -138,6 +138,9 @@ to EM.
 %$\beta_k$.
 
 Let $[n] = \{ 1, \dots, n \}$ denote the first $n$ positive integers.
+We use $O(f(n))$ to denote a function $g(n)$ such that $\lim_{n \to\infty} g(n)/f(n) < \infty$.
+We will only hide universal constants, exposing all dependence on the number of samples,
+dimension, norms, noise variance, etc.
 
 We use $x\tp{p}$ to represent the $p$-th order tensor
 formed by taking the outer product of $x \in \Re^d$; i.e. $x\tp{p}_{i_1 \ldots
@@ -165,6 +168,7 @@ let $\|X\|_* = \frac{1}{p} \sum_{i=1}^p \|X_{(i)}\|_*$ denote
 the average nuclear norm over all $p$ unfoldings,
 and let $\|X\|_\text{op} = \frac{1}{p} \sum_{i=1}^p \|X_{(i)}\|_\text{op}$
 denote the average operator norm over all $p$ unfoldings.
+Let $\sigma_\text{min}(X)$ be the smallest singular value of $X$.
 
 For a tensor $X \in (\Re^d)\tp{p}$,
 let $\cvec(X) \in \Re^{\sum_{i=1}^p \binom{n}{i}}$ be

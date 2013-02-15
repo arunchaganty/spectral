@@ -1,5 +1,5 @@
-\subsection{Low-rank Regression}
-\label{sec:regression}
+\paragraph{Low-rank Regression}
+%\label{sec:regression}
 
 The goal of this section is to bound the error of
 the compound parameter estimates,
@@ -14,27 +14,20 @@ The main challenge is to control the noise $\eta_p(x)$,
 which in addition to containing the usual Gaussian part, is also dependent on
 $x$, involves the mixing noise and various cross terms.
 We first set up some notation to all three regressions (\refeqn{estimateM1}, \refeqn{estimateM2}, and \refeqn{estimateM3}).
-Define the observation operator $\opX(M_p) : \Re^{d\tp{p}} \to \Re^{n}$
+Define the observation operator $\opX_p(M_p) : \Re^{d\tp{p}} \to \Re^{n}$
 mapping compound parameters $M_p$:
 \begin{align}
-  \opX(M_p; \sD)_i &\eqdef \frac12 \sum_{(x,y) \in \sD} \innerp{M_p}{x\tp{p}}_i, \quad i  \in [n].
+\opX_p(M_p; \sD)_i &\eqdef \frac12 \sum_{(x,y) \in \sD} \innerp{M_p}{x\tp{p}}_i, \quad i  \in [n].
 \end{align}
 
-Let $\kappa(\opX)$ be the restricted strong constant,
-and let $\opX^*(\eta_p; \sD) = \sum_{(x,y) \in \sD} \eta_p(x) x\tp{p}$
+Let $\kappa(\opX_p)$ be the restricted strong constant,
+and let $\opX^*_p(\eta_p; \sD) = \sum_{(x,y) \in \sD} \eta_p(x) x\tp{p}$
 be the adjoint.
 
 \paragraph{Restricted strong convexity}
 
 In this section, we lower bound the restricted strong convexity constant
-$\kappa(\opX)$.
-
-\paragraph{Adjoint operator}
-
-In this section, we upper bound the operator norm of the adjoint
-$\|\opX(\eta_p)\|_\text{op}$.
-
-
+$\kappa(\opX_p)$.
 
 %In the previous section, we described an algorithm for the mixture of
 %linear regressions using regression to recover $M_2$ and $M_3$,
@@ -72,12 +65,13 @@ $\|\opX(\eta_p)\|_\text{op}$.
 %In general, the optimization problem we'd like to solve is,
 %\begin{align}
 %  \hat M_p &= 
-%  \arg\min_{M_p}& \frac{1}{2N} \| \vec y - \opX(M_p) \|_2^2 + \frac{\lambda_n}{K} \sum_{h=1}^K \| (M_p)_{(h)} \|_* \label{eq:regression}.
+%  \arg\min_{M_p}& \frac{1}{2N} \| \vec y - \opX_p(M_p) \|_2^2 + \frac{\lambda_n}{K} \sum_{h=1}^K \| (M_p)_{(h)} \|_* \label{eq:regression}.
 %\end{align}
 
 \begin{lemma}[\citet{Tomioka2011}, Theorem 1]
+\label{lem:lowRank}
 Suppose there exists a restricted strong convexity constant $\kappa(\opX)$ such that
-$$\frac{1}{2n} \| \opX( \Delta )\|_2^2 \ge \kappa(\opX) \|\Delta\|^2_F \quad \text{and} \quad
+$$\frac{1}{2n} \| \opX_p( \Delta )\|_2^2 \ge \kappa(\opX) \|\Delta\|^2_F \quad \text{and} \quad
 \lambda_n \ge \frac{\|\opX^*(\eta_p)\|_2}{n}.$$
 Then the error of $\hat M_p$ is bounded as follows:
 $\| \hat M_p - M_p^* \|_F \le \frac{\lambda_n \sqrt{k}}{\kappa(\opX)}$.
@@ -85,91 +79,88 @@ $\| \hat M_p - M_p^* \|_F \le \frac{\lambda_n \sqrt{k}}{\kappa(\opX)}$.
 
 Going forward, we need to lower bound the restricted strong convexity
 parameter $\kappa(\opX)$ and upper bound the adjoint operator
-$\|\opX^*(\epsilon)\|_{2}^2$.
+$\|\opX^*(\eta_p)\|_{2}^2$.
 %We
 %will appeal to the random design framework that models the input $x$ as
 %random and show bounds that hold with high probability.
 
+%\paragraph{Adjoint operator}
+
+%In this section, we upper bound the operator norm of the adjoint
+%$\|\opX_p(\eta_p)\|_\text{op}$.
+
+First, let us lower bound the restricted strong convexity parameter $\kappa(\opX_p)$:
+
 \begin{lemma}[lower bound on restricted strong convexity]
+\label{lem:lowRankLower}
 Let $\Sigma_p \eqdef \E[\cvec(x\tp{p})\tp{2}]$.
-With high probability at least $1-\delta$,
-for some constant $c$,
-$$\kappa(\opX) \ge c \sigma_\text{min}^p(\Sigma_p)$$,
-where
-%$\sigma_\text{min}^p(\Sigma_p) = \min_{M_p \in \sM_p : \|M_p\|_F \le 1} \cvec(M_p)^\top \Sigma_p \cvec(M_p)$.
-$\sigma_\text{min}^p(\Sigma_p) = \min_{M_p \in \sM_p : \|M_p\|_F \le 1} \trace(\cvec(M_p)^{\otimes 2} \Sigma_p)$.
+With probability at least $1-\delta$,
+$$\kappa(\opX) = \Omega\left(\sigmamin(\Sigma_p) - d^p R^{p} \sqrt{\frac{p \log(d) \log (1/\delta)}{n}}\right).$$
 \end{lemma}
-Note that $\sigma_\text{min}$ 
 \begin{proof}
 Expanding the definition of the observation operator:
-$\frac{1}{2n} \|\opX(\Delta)\|_2^2
+$\frac{1}{2n} \|\opX_p(\Delta)\|_2^2
 = \frac{1}{2n} \sum_{(x,y) \in \sD} \innerp{\Delta}{x\tp{p}}^2$.
 Unfolding the tensor and letting $\hat\Sigma_p \eqdef \frac{1}{n} \sum_{(x,y) \in \sD} \cvec(x\tp{p})\tp{2}$,
 we have 
-$\frac{1}{2n} \|\opX(\Delta)\|_2^2
+$\frac{1}{2n} \|\opX_p(\Delta)\|_2^2
 \ge \frac{1}{2} \trace(\cvec(\Delta)\tp{2} \hat\Sigma_p)
-\ge \frac{1}{2} \|\Delta\|_F^2 \sigma_\text{min}^p(\hat\Sigma_p)$.
-
-%  \begin{align*}
-%    \frac{\|\opX(M_p)\|_1}{N} &= \frac{1}{N}\sum_{i=1}^{N} |\innerp{x_i\tp{p}}{M_p}| \\
-%    &\ge \frac{1}{N}\sum_{i=1}^{N} \sigma_{min}( M_p ) \|x_i\|^p \\
-%    &\ge \frac{\kappa(M_p)}{\sqrt{D}} \frac{\sum_{i=1}^{N} \|x_i\|^p}{N} \| M_p \|_F.
-%  \end{align*}
-%
-%  While $\kappa(M_p)$ depends on $M_p$ we can lower bound it by
-%  restricting the convex space to $\{ M_p | \kappa(M_p) \ge \kappa \}$.
-%  Further, using concentration bounds, we can lower bound $\|x_i\|^p$ as
-%  well. \todo{What is $\E[\|x_i\|^3]$? It is some quantity greater than
-%  zero}.
-%  
-%  Thus, 
-%  \begin{align*}
-%  \frac{ \|\opX(M_p)\|_2 }{2 N} 
-%  &\ge
-%  \frac{ \|\opX(M_p)\|_1 }{2 \sqrt{D}N} 
-%  &\ge \frac{\kappa}{2 D} (\E[\|x_i\|^p] - \frac{t}{N}) \| M_p \|_F.
-%  \end{align*}
-%  with high probability $1 - \delta$. \todo{The bound needs to be shown
-%  for $\| \opX(M_p) \|_2^2$.}
-%  
-%  In other words, $\kappa(\opX)
-%  = \frac{\kappa}{2 D} (\E[\|x_i\|^p] - \frac{t}{N})$ is a valid
-%  lower bound.
+\ge \frac{1}{2} \|\Delta\|_F^2 \sigmamin(\hat\Sigma_p)$.
+It remains to show that $\sigmamin(\hat\Sigma_p)$ and $\sigmamin(\Sigma_p)$ are close.
+To do this, we first apply Hoeffding's inequality elementwise.
+Since $\|x\| \le R$, we have that for each element $(i,j)$,
+$|(\hat\Sigma_p)_{ij} - (\Sigma_p)_{ij}| = O(R^{p}\sqrt{\frac{\log (1/\delta)}{n}})$.
+Applying the union bound over the $d^{2p}$ elements of $\hat\Sigma_p - \Sigma_p$,
+we have that the max norm is bounded:
+$\|\hat\Sigma_p - \Sigma_p\|_\text{\rm max} = O(R^{p} \sqrt{\frac{p \log(d) \log (1/\delta)}{n}})$.
+The max norm times $d^p$ upper bounds the Frobenius norm, which upper bounds the operator norm, so we have that
+$\|\hat\Sigma_p - \Sigma_p\|_\text{\rm op} = O(d^p R^{p} \sqrt{\frac{p \log(d) \log (1/\delta)}{n}})$.
+Using the fact that $\sigmamin(\hat\Sigma_p) = \sigmamin(\Sigma_p) + \|\hat\Sigma_p - \Sigma_p\|_\text{\rm op}$
+yields the result.
 \end{proof}
 
-\begin{lemma}[bounded error]
-  Let $\opX$ be the linear operator previously defined. Then,
-  $$\|\opX^*(\epsilon)\|_\text{op} \le Y$$.
+Next, let us upper bound the operator norm of the observation adjoint:
+
+\begin{lemma}[upper bound on adjoint noise]
+\label{lem:lowRankUpper}
+Let $\opX_p$ be the linear operator previously defined. Then with probability at least $1-\delta$,
+$$\frac1{n} \|\opX_p^*(\eta_p)\|_\op \le O\left(\sigma^3 L^3 R^6 \sqrt{\frac{\log^3(1/\delta)}{n}}\right).$$
+for each $p \in \{1,2,3\}$.
 \end{lemma}
 \begin{proof}
-%  \begin{align*}
-%    \frac{\opX^*(\epsilon)}{N} 
-%    &= \frac{1}{N}\sum_{i=1}^{N} \epsilon_i \innerp{x_i\tp{p}}{M_p} \\
-%    &= \frac{1}{N}\sum_{i=1}^{N} (\innerp{x_i\tp{p}}{M_p - \beta_i\tp{p}} + \varepsilon)  \innerp{x_i\tp{p}}{M_p}.
-%  \end{align*}
-%  Let $M_p - \beta_i\tp{p} = \tilde M_i$ and consider it to be a random
-%  variable.
-%  \begin{align*}
-%    \frac{\opX^*(\epsilon)}{N} 
-%    &= \frac{1}{N}\sum_{i=1}^{N} \innerp{\tilde M_i}{x_i\tp{2p}} + \varepsilon \innerp{M_p}{x_i\tp{p}} \\
-%    &\le \frac{1}{N}\sum_{i=1}^{N} \|\tilde M_i\|_{op} \|x_i\|^{2p} + \varepsilon \|M_p\|_{op}\|x_i\|^{p} \\
-%    &\le \|M_p\|_{op} ( \frac{1}{N}\sum_{i=1}^{N} \|x_i\|^{2p} + \varepsilon \|x_i\|^{p} ).
-%  \end{align*}
-%
-%  We can probabilistically bound the above by considering the union
-%  bound of $\varepsilon$ and $\|x_i\|^p$.
-%
-%
-%  Finally,
-%  \begin{align*}
-%    \frac{\opX^*(\epsilon)}{N} 
-%    &\le \|M_p\|_{op} (\E[\|x_i\|^{2p}] + t/N + (t/N) (\E[ \|x_i\|^{p} ] + t/N) ),
-%  \end{align*}
-%  with high probability. Note that this does not converge to $0$ as $N
-%  \to \infty$ because of the variance of the selection probability.
+Let $\hat\E_p[f(x,\epsilon,h)]$ denote the empirical expectation over the examples in dataset $\sD_p$
+(recall the $\sD_p$'s are independent to simplify the analysis).
+By definition,
+$\frac1n \|\opX_p^*(\eta_p)\|_\op = \hat\E_p[\eta_p(x) x\tp{p}]$
+for $p \in \{1,2,3\}$ defined in \refeqn{y1}, \refeqn{y2}, and \refeqn{y3}.
+Each $\eta_p(x)$ is composed of several zero-mean random variables,
+and since $\|A + B\|_\op \le \|A\|_\op + \|B\|_\op$,
+it suffices to consider each term in turn.
+For each term, we will condition on $x$, use a standard concentration inequality to
+bound the noise.
 
-By Lemma 19 of \cite{hsu13spherical},
-we have that $\frac{1}{n} \sum_{i=1}^n \epsilon_i^3 = O(\sqrt{\frac{\log^3(1/\delta)}{n}})$.
-with probability at least $1-\delta$.
+First, consider $\eta_1(x)$, which contains two terms.
+The first term is $\innerp{M_1 - \beta_h}{x}$.
+We have that $\|M_1 - \beta_h\|_2 \le L$,
+so by Hoeffding's inequality, and using the fact that $\|x\|_2 \le R$,
+with probability $1-\delta_1$,
+$\|\hat\E_1[\innerp{M_1 - \beta_h}{x} x]\|_\op = O(R^2 L \sqrt{\frac{\log(1/\delta_1)}{n}})$.
+The second term is $\epsilon \sim \normal{0}{\sigma^2}$,
+with probability $1-\delta_1$,
+$\|\hat\E_1[\epsilon x]\|_\op = O(R \sigma \sqrt{\frac{\log(1/\delta_1)}{n}})$.
 
+Now, consider $\eta_2(x)$, which contains three terms.
+Using similar techniques, we have that
+$\|\hat\E_2[\eta_2(x) x\tp{2}]\|_\op = O(R^2 (L^2 R^2 + \sigma L R + \sigma^2) \sqrt{\frac{\log(1/\delta_1)}{n}})$.
+
+Finally, $\eta_3(x)$ contains five terms plus an additional bias since the estimator uses $\hat M_1$ rather than $M_1$.
+There are two additional considerations.
+First, to bound $\hat\E_3[\epsilon^3]$, we use Lemma 19 of \cite{hsu13spherical}.
+Second, the additional bias is small by the previous bound (and it is constructed on $\sD_1$, which is independent of $\sD_3$
+used to contruct $\hat M_3$.
+Therefore, we incur another $O(\sigma^2 \cdot R \sigma \sqrt{\frac{\log(1/\delta_1)}{n}})$.
+Handling the other terms using conventional means
+$\|\hat\E_3[\eta_3(x) x\tp{3}]\|_\op = O(R^3 (L^3 R^3 + \sigma L^2 R^2 + \sigma^2 L R + \sigma^3 + \sigma^3 R) \sqrt{\frac{\log^3(1/\delta_1)}{n}})$.
+Finally, taking $\delta_1 = \delta/3$, and taking the union bound,
+we get our result, where we are bounding quantities fairly crudely for the sake of simplicity.
 \end{proof}
