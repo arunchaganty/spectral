@@ -16,8 +16,8 @@ final: paper.tex $(SECTIONS)
 
 bib: paper.tex $(SECTIONS)
 	$(LATEX) $< 
-	$(LATEX) $< 
 	bibtex $(subst .tex,,$<)
+	$(LATEX) $< 
 	$(LATEX) $< 
 
 clean:
