@@ -1,18 +1,17 @@
 \section{Empirical Evaluation}
 \label{sec:evaluation}
 
-\todo{Fill it up with juicy bits once we actually have them graphs.}
-
 \subsection{Experimental Setup}
 
 \paragraph{Algorithms}
 
 We implemented the low rank recovery optimization routines for $M_2$ and
-$M_3$ using a proximal subgradient descent algorithm\citationneeded. The
-algorithm was initialized with the regularized least squares solution
-and was run to convergence in each instance. Both regularization
-parameters, $\lambda_n^{(2)}$ and, $\lambda_n^{(3)}$ were annealed as
-$\frac{1}{n}$. 
+$M_3$ using a proximal subgradient descent
+algorithm.%\cite{candes11phaselift,tomioka2010estimation}. (Note sure about this citation and not required?)
+The algorithm
+was initialized with the regularized least squares solution and was run
+for 500 steps or till convergence. Both regularization parameters,
+$\lambda_n^{(2)}$ and, $\lambda_n^{(3)}$ were annealed as $\frac{1}{n}$. 
 
 As a baseline, we also implemented EM with two different
 initializations. In the first, we used $\beta$s with random standard
@@ -21,16 +20,17 @@ we initialized EM with the starting points given by Spectral Experts.
 
 \paragraph{Datasets}
 
-We generated synthetic data using covariates from the unit hyper cube
-and non-linear responses.  To conform to the identifiability criteria
-discussed in \sectionref{sec:algo}, we considered only features that
-would guarantee this condition. 
+We generated synthetic data using covariates from the $b$-dimensional
+unit hyper cube $\{-1,1\}^b$ and considered non-linear featurizations of
+this data that conformed to the identifiability criteria discussed in
+\sectionref{sec:algo}. The $\beta$ were drawn from a standard Gaussian.  
 
 As an example, one set of features we considered in the uni-dimensional
 setting were $\{1, x, x^4, x^7\}$. The data and the curves fit using
 Spectral Experts, EM with random initializations and EM initialized with
 the parameters recovered using spectral experts are shown in
-\figureref{fig:curves}.
+\figureref{fig:curves}. We note that even on well separated data such as
+this, EM converged to the global optima only 13\% of the time.
 
 \begin{figure*}[t]
   \centering
@@ -54,32 +54,40 @@ the parameters recovered using spectral experts are shown in
 %$k = 5$
 
 \begin{table*}[t]
-\caption{Parameter Recovery ($N = 500,000$).}
+\caption{Parameter Recovery Error $\|\theta^* - \hat \theta\|_F$ ($N = 500,000$).}
 \label{tbl:parameter-recovery}
 \vskip 0.15in
 \begin{center}
 \begin{small}
 \begin{sc}
 
-  \begin{tabular}{ >{\centering}p{5cm}<{\centering} r c c c }
+  \begin{tabular}{ r r r c c c }
 \hline
 \abovespace\belowspace
-Features  & $K$ & Spectral & EM & Spectral + EM \\
+Variables ($b$) & Features ($D$) & Components ($K$) & Spectral & EM & Spectral + EM \\
 \hline
 \abovespace
-$\{1$, $ x_1$, $ x_1^4\}$ 
-  & 2 & 1.52 $\pm$ 0.71 & 0.28 $\pm$ 0.82 & {\bf 0.13 $\pm$ 0.55} \\
-$\{1$, $ x_1$, $ x_2$, $ x_1^2 x_2^2\}$ 
-  & 3 & 1.87 $\pm$ 1.20 & {\bf 0.33 $\pm$ 0.96} & 0.35 $\pm$ 1.23 \\
-$\{1$, $ x_1$, $ x_2$, $ x_1 x_2^3$, $ x_1^2 x_2^2$, $ x_1^3 x_2 \}$ 
-& 5 & 5.27 $\pm$ 2.32 & 1.80 $\pm$ 1.80 & {\bf 1.51 $\pm$ 1.77} \\
-$\{1$, $ x_1$, $ x_2$, $ x_1 x_2^3$, $ x_1^2 x_2^2$, $ x_1^3 x_2$, $ x_1^3 x_2^4$, $ x_1^4 x_2^3 \}$ 
-& 7 & 8.42 $\pm$ 1.66 & 7.41 $\pm$ 2.99 & {\bf 7.31 $\pm$ 2.47} \\
-$\{1$, $ x_1$, $ x_2$, $ x_3$, $ x_1 x_2 x_3^2$, $ x_1 x_2^2 x_3$, $ x_1^2 x_2 x_3$, $ x_1^2 x_2^2$, $ x_1^2 x_3^2$, $ x_2^2 x_3^2$, $ x_3^2\}$
-& 3 & 3.78 $\pm$ 0.90 & 0.67 $\pm$ 1.49 & {\bf 0.51 $\pm$ 1.12} \\
-$\{1$, $ x_1$, $ x_2$, $ x_3$, $ x_1 x_2 x_3^2$, $ x_1 x_2^2 x_3$, $ x_1^2 x_2 x_3$, $ x_1^2 x_2^2$, $ x_1^2 x_3^2$, $ x_2^2 x_3^2$, $ x_3^2\}$
-  & 7 & 9.97 $\pm$ 3.22 & 1.43 $\pm$ 1.97 & {\bf 1.42 $\pm$ 2.17} \\
+%$\{1$, $ x_1$, $ x_1^4\}$ 
+  1 & 4 & 2 & 1.52 $\pm$ 0.71 & 0.28 $\pm$ 0.82 & {\bf 0.13 $\pm$ 0.55} \\
+%$\{1$, $ x_1$, $ x_2$, $ x_1^2 x_2^2\}$ 
+  2 & 5 & 2 & 2.92 $\pm$ 1.10 & 0.00 $\pm$ 0.00 & {\bf 0.00 $\pm$ 0.00} \\
+  2 & 5 & 3 & 3.76 $\pm$ 1.93 & 0.43 $\pm$ 1.07 & {\bf 0.23 $\pm$ 0.76} \\
+%$\{1$, $ x_1$, $ x_2$, $ x_1 x_2^3$, $ x_1^2 x_2^2$, $ x_1^3 x_2 \}$ 
+  2 & 6 & 2 & 4.52 $\pm$ 1.67 & 0.63 $\pm$ 1.29 & {\bf 0.18 $\pm$ 0.66} \\
+\belowspace
+  2 & 6 & 5 & 6.78 $\pm$ 2.18 & 2.29 $\pm$ 1.79 & {\bf 1.77 $\pm$ 1.89} \\
+
+%  2 & 5 & 3 & 1.87 $\pm$ 1.20 & {\bf 0.33 $\pm$ 0.96} & 0.35 $\pm$ 1.23 \\
+% 2 & 6 & 5 & 5.27 $\pm$ 2.32 & 1.80 $\pm$ 1.80 & {\bf 1.51 $\pm$ 1.77} \\
+%$\{1$, $ x_1$, $ x_2$, $ x_1 x_2^3$, $ x_1^2 x_2^2$, $ x_1^3 x_2$, $ x_1^3 x_2^4$, $ x_1^4 x_2^3 \}$ 
+% 2 & 8 & 7 & 8.42 $\pm$ 1.66 & 7.41 $\pm$ 2.99 & {\bf 7.31 $\pm$ 2.47} \\
+%$\{1$, $ x_1$, $ x_2$, $ x_3$, $ x_1 x_2 x_3^2$, $ x_1 x_2^2 x_3$, $ x_1^2 x_2 x_3$, $ x_1^2 x_2^2$, $ x_1^2 x_3^2$, $ x_2^2 x_3^2$, $ x_3^2\}$
+% 3 & 10 & 3 & 3.78 $\pm$ 0.90 & 0.67 $\pm$ 1.49 & {\bf 0.51 $\pm$ 1.12} \\
+%$\{1$, $ x_1$, $ x_2$, $ x_3$, $ x_1 x_2 x_3^2$, $ x_1 x_2^2 x_3$, $ x_1^2 x_2 x_3$, $ x_1^2 x_2^2$, $ x_1^2 x_3^2$, $ x_2^2 x_3^2$, $ x_3^2\}$
+% 3 & 10  & 7 & 9.97 $\pm$ 3.22 & 1.43 $\pm$ 1.97 & {\bf 1.42 $\pm$ 2.17} \\
+
 \hline
+
 \end{tabular}
 \end{sc}
 \end{small}
@@ -98,48 +106,85 @@ difference between true and estimated parameters for the model, averaged
 over 20 different random instances for each feature set and 10 attempts
 for each instance. The experiments were run using $N = 500,000$ samples.
 
-There is a lot of variation across random instances; some are easy for
-EM to find the global minima and others more difficult. Moreover, simply
-increasing the number of samples did not necessarily improve EM
-performance. In general, we found that while our spectral algorithm did
-not recover parameters extremely well, it provided a good initialization
-for EM. 
+One of the main reasons for the high variance is the variation across
+random instances; some are easy for EM to find the global minima and
+others more difficult. In general, while the spectral algorithm did not
+recover parameters extremely well, it provided a good initialization for
+EM.
 
-\todo{Plot: the histogram over errors (for EM?) Some plots I have
-doesn't really show much}.
+\begin{figure}[tb]
+  \centering
+  \includegraphics[width=0.50\textwidth]{figures/hist.pdf}
+  \caption{Histogram over recovery errors between the three algorithms. $b = 1, d = 4, k = 3, N = 500,000$}
+  \label{fig:hist}
+\end{figure}
 
-\paragraph{Misspecified Data}
-
-To evaluate how robust the algorithm was to model mis-specification, we
-removed large contiguous sections from $x \in [-0.5,-0.25] \cup
-[0.25,0.5]$. The lower half of \tableref{tbl:parameter-recovery} reports
-recovery errors in this scenario. 
+To study the stability of the solutions returned by the spectral method,
+consider the histogram in \figureref{fig:hist}, which shows the recovery
+errors of the algorithms over 170 attempts a dataset with $b = 1, d = 4,
+k = 3$. Typically, the spectral algorithm returned a stable solution.
+When these parameters were close enough to the true parameters, we found
+that EM almost always converged to the global optima. Randomly
+initialized EM only finds the true parameters a little over 10\% of the
+time and shows considerably higher variance. 
 
 \paragraph{Effect of number of data points}
 
-\begin{figure*}[t]
+\begin{figure*}[tb]
   \centering
-  \subfigure[Complete Data]{
-    \includegraphics[width=0.50\textwidth]{figures/vs-n/1-8-3-3.pdf}
+  \subfigure[Well Data]{
+    \includegraphics[width=0.50\textwidth]{figures/vs-n/1833-decay.pdf}
   }
     \hspace{-2em}
-  \subfigure[Incomplete Data]{
+  \subfigure[Misspecified Data]{
     \includegraphics[width=0.50\textwidth]{figures/vs-n/1-8-3-3-rm.pdf}
   }
-  \caption{}
+  \caption{Recovey error vs $n$  ($b = 1, d = 5, K = 3, N = 500,000$).}
   \label{fig:vs-n}
 \end{figure*}
 
-Highlight
+In \figureref{fig:vs-n}, we show how the recovery error varies as we get
+more data. Each data point shows the mean error over 10 attempts, with
+error bars. We note that the recovery performance of EM does not
+particularly improve; this is expected because of the problem of local
+optima. The spectral algorithm's error decays slowly, and as it gets
+closer to zero, EM initialized at the spectral parameters finds the true
+parameters more often as well. This behaviour highlights the trade-off
+between statistical and computational error. 
 
+\paragraph{Misspecified Data}
 
+\begin{table*}[tb]
+\caption{Parameter Recovery Error $\|\theta^* - \hat \theta\|_F$ with misspecified data ($N = 500,000$).}
+\label{tbl:parameter-recovery-mis}
+\vskip 0.15in
+\begin{center}
+\begin{small}
+\begin{sc}
 
-\todo{We see that the error of spectral is actually less than EM after a point.}
+  \begin{tabular}{ r r r c c c }
+\hline
+\abovespace\belowspace
+Variables ($b$) & Features ($d$) & Components ($K$) & Spectral & EM & Spectral + EM \\
+\hline
+\abovespace
+ 1 & 4 & 2 &  2.94 $\pm$ 1.52 & 0.29 $\pm$ 0.85 &  {\bf 0.22 $\pm$ 0.72} \\
+\belowspace
+ 2 & 5 & 3 &  3.82 $\pm$ 2.00 & 0.44 $\pm$ 1.12 &  {\bf 0.35 $\pm$ 1.00} \\
+ 2 & 6 & 5 &  9.89 $\pm$ 4.46 & {\bf 2.53 $\pm$ 1.77} &  2.69 $\pm$ 1.83 \\
+ 2 & 8 & 7 & 23.07 $\pm$ 7.10 & 9.62 $\pm$ 1.03 &  {\bf 8.16 $\pm$ 2.31}  \\
+\hline
 
-Point: tradeoff between statistical error and computational error;
-not enough data, spectral is actually a lot worse
-given enough data, spectral+EM is much better
+\end{tabular}
+\end{sc}
+\end{small}
+\end{center}
+\vskip -0.1in
+\end{table*}
 
-\paragraph{Effect of noise}
+To evaluate how robust the algorithm was to model mis-specification, we
+removed large contiguous sections from $x \in [-0.5,-0.25] \cup
+[0.25,0.5]$ and ran the algorithms again.
+\tableref{tbl:parameter-recovery-mis} reports recovery errors in this
+scenario. The error in the estimates grows larger for higher $d$.
 
-\paragraph{Effect of separation between components}
