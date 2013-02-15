@@ -4,16 +4,17 @@
 
 
 %Math Operators
-\DeclareMathOperator {\argmax} {argmax}
-\DeclareMathOperator {\argmin} {argmin}
+%\DeclareMathOperator {\argmax} {argmax}
+%\DeclareMathOperator {\argmin} {argmin}
 \DeclareMathOperator {\sgn} {sgn}
 \DeclareMathOperator {\trace} {tr}
-\DeclareMathOperator{\E} {E}
+\DeclareMathOperator{\E} {\mathbb{E}}
 \DeclareMathOperator{\Var} {Var}
 \DeclareMathOperator{\diag} {diag}
 \DeclareMathOperator{\triu} {triu}
 \DeclareMathOperator{\mult} {Multinomial}
 \DeclareMathOperator{\normalt} {Normal}
+\DeclareMathOperator{\unfold} {vec}
 
 \newcommand{\ud}{\, \mathrm{d}}
 \newcommand{\diff}[1] {\frac{\partial}{\, \partial #1}}
@@ -34,3 +35,6 @@
 \newcommand{\mL} {\mathcal{L}}
 
 \newcommand\eqdef{\ensuremath{\stackrel{\rm def}{=}}} % Equal by definition
+\newcommand\refeqn[1]{(\ref{eqn:#1})}
+\newcommand\sD{\ensuremath{\mathcal{D}}}
+\newcommand\refapp[1]{Appendix~\ref{sec:#1}}

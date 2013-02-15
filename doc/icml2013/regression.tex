@@ -1,14 +1,21 @@
 \section{Recovering $M_2, M_3$ with low-rank regression}
 \label{sec:regression}
 
-In the previous section, we described an algorithm for the mixture of
-linear regressions using regression to recover $M_2$ and $M_3$,
-described by \equationref{eq:y2} and \equationref{eq:y3}, as
-a subroutine. In this section, we will characterize the rate of
-convergence of regression.
+In this section, we analyze step 1 of the Spectral Experts
+algorithm: that of recovering the compound parameters $M_2,M_3$
+from data.
+
+%In the previous section, we described an algorithm for the mixture of
+%linear regressions using regression to recover $M_2$ and $M_3$,
+%described by \equationref{eqn:y2} and \equationref{eq:y3}, as
+%a subroutine. In this section, we will characterize the rate of
+%convergence of regression.
+
+\cite{candesPhaseLift} regresses on the square of the response,
+because that's the observation.
 
 Analysis for regression in the fixed and random design settings have
-been studied before\citep{HsuKakadeZhang}, however our setup differs
+been studied before \citep{HsuKakadeZhang}, however our setup differs
 substantially from the noise models assumed in the literature. In our
 scenario, the variance in the estimation comes not only from the
 Gaussian observation noise (which has been studied before), but also
@@ -44,7 +51,7 @@ $X_{(1)}^{i_1, (i_2, i_3)} = X_{i_1, i_2, i_3}$.
 In general, the optimization problem we'd like to solve is,
 \begin{align}
   \hat M_p &= 
-  \arg\min_{M_p}& \frac{1}{2N} \| \vec y - \opX(M_p) \|_2^2 + \frac{\lambda_N}{K} \sum_{h=1}^K \| (M_p)_{(h)} \|_* \label{eq:regression}.
+  \arg\min_{M_p}& \frac{1}{2N} \| \vec y - \opX(M_p) \|_2^2 + \frac{\lambda_n}{K} \sum_{h=1}^K \| (M_p)_{(h)} \|_* \label{eq:regression}.
 \end{align}
 
 We begin our analysis by stating a generic theorem about convex
@@ -71,9 +78,9 @@ $\|\opX^*(\epsilon)\|_{2}^2$, which corresponds to a gradient update. We
 will appeal to the random design framework that models the input $x$ as
 random and show bounds that hold with high probability.
 
-\begin{lemma}(Restricted Strong Convexity)
-  Let $\opX$ be the linear operator previously defined. Then,
-  $$\kappa{\opX} \ge Y$$.
+\begin{lemma}[restricted strong convexity]
+Let $\opX$ be the linear operator previously defined. Then,
+$$\kappa(\opX) \ge Y$$.
 \end{lemma}
 \begin{proof}
   \todo{Do I need to transform rewrite $M_p$ in terms of orthogonal components?}
@@ -105,7 +112,7 @@ random and show bounds that hold with high probability.
   lower bound.
 \end{proof}
 
-\begin{lemma}(Bounded Error)
+\begin{lemma}[bounded error]
   Let $\opX$ be the linear operator previously defined. Then,
   $$\opX^*(\epsilon) \le Y$$.
 \end{lemma}

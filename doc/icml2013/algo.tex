@@ -1,9 +1,9 @@
 \section{Spectral Experts Algorithm}
 \label{sec:algo}
 
-In this section, we outline our Spectral Experts algorithm
-for recover the model parameters $\theta = (\pi, B, \sigma^2)$.
-Our algorithm consists of two parts:
+In this section, we describe our Spectral Experts algorithm
+for estimating model parameters $\theta = (\pi, B, \sigma^2)$.
+Our algorithm consists of two steps:
 (i) low-rank regression to estimate certain symmetric tensors;
 and (ii) tensor factorzation to recover the parameters.
 % Motivate how we can recover $B$ from regression by lower order moments
@@ -14,92 +14,192 @@ and (ii) tensor factorzation to recover the parameters.
 %model parameters using empirical estimates of the moments. 
 
 %%% first moment
-To warm-up, let us consider performing linear regression
-on the response $y$ given $x$:
+To warm up, let us consider linear regression
+on the response $y$ given $x$.
+From the model definition, we have $y = \beta_h^\top x + \epsilon$ where
+$\epsilon \sim \normal{0}{\sigma^2}$, and $h$ is a random quantity
+independent of $x$.
+We can average over this randomness by defining
+the average regression coefficients
+$M_1 \eqdef \sum_{h=1}^k \pi_h \beta_h$.
+Now we can express $y$ as a linear function of $x$ with coefficients $M_1$
+plus some noise $\eta_1(x)$:
 \begin{align}
-  y &= \innerp{\bar \beta}{x} + (\innerp{\bar\beta - \beta_h}{x} + \epsilon),
+  y &= \innerp{M_1}{x} +
+  \underbrace{(\innerp{M_1 - \beta_h}{x} + \epsilon)}_{\eqdef \eta_1(x)}.
 \end{align}
-where $\bar\beta \eqdef \sum_{h=1}^K \pi_h \beta_h$ is the average regression coefficient.
-Here, there are two noise terms:
-(i) the \emph{mixing noise} $\innerp{\bar\beta - \beta_h}{x}$
-due to the choice of the mixture component $h$
+The noise $\eta_1(x)$ is the sum of two terms:
+(i) the \emph{mixing noise} $\innerp{M_1 - \beta_h}{x}$
+due to the random choice of the mixture component $h$,
 and (ii) the \emph{observation noise} $\epsilon \sim \normal{0}{\sigma^2}$.
-Performing regression on the data $\{\xni,
-\yni\}_{i=1}^{N}$ would provide a consistent estimate of $\bar\beta$,
-but this is clearly insufficient for identifying all the parameters $\theta$.
+Although the noise depends on $x$,
+it still has zero mean conditioned on $x$.
+We will later show that we can
+perform linear regression on the data $\{\xni,
+\yni\}_{i=1}^{n}$ to produce a consistent estimate of $M_1$
+under identifiability conditions.
+But clearly, knowing $M_1$ is insufficient
+for identifying all the parameters $\theta$.
 
-%%% second moment
-Regressing on $x$ provides only first-order
-information.  The key insight is that
-since higher-order moments usually yield more information,
-let us consider regressing $y^2$ on $x^{\otimes 2}$:
+%%% second moments
+Intuitively, performing regression on only $y$ given $x$ provides only first-order
+information.  The key insight is that we can perform regression
+on higher order powers to obtain more information about the parameters.
+Specifically, for an integer $p \ge 1$, let us define the average
+$m$-th order tensor power of the parameters as follows:
 \begin{align}
-  y^2 &= \innerp{M_2}{x\tp{2}} + \epsilon \innerp{\beta_h\tp{2} - M_2}{x\tp{2}} + \epsilon^2 \label{eq:y2}.
+M_p &\eqdef \sum_{h=1}^k \pi_h \beta_h\tp{p}. \label{eqn:Mp} % \in (\Re^{d})\tp{p}.
 \end{align}
-
-Let us consider some more low powers of $y$, noting
-that taking the expectation gives us the corresponding low-order
-moments,
+Now consider performing regression on $y^2$ given $x\tp{2}$.
+Expanding $y^2 = (\innerp{\beta_h}{x} + \epsilon)^2$,
+using the fact that $\innerp{\beta_h}{x}^p = \innerp{\beta_h\tp{p}}{x\tp{p}}$,
+we have:
 \begin{align}
-  y^2 &= \innerp{\beta_h\tp{2}}{x\tp{2}} + \epsilon \innerp{\beta_h\tp{2}}{x\tp{2}} + \epsilon^2 \label{eq:y2} \\ 
-  y^3 &= \innerp{\beta_h\tp{3}}{x\tp{3}} + 3 \epsilon \innerp{\beta_h\tp{2}}{x\tp{2}} \notag \\
-  &+ 3 \epsilon^2 \innerp{\beta_h}{x} + \epsilon^3. \label{eq:y3} 
+y^2 &= \innerp{M_2}{x\tp{2}} + \sigma^2 + \eta_2(x), \label{eqn:y2} \\
+\eta_2(x) &= \innerp{\beta_h\tp{2} - M_2}{x\tp{2}} + \epsilon \innerp{\beta_h\tp{2}}{x\tp{2}} + (\epsilon^2 - \sigma^2). \nonumber
+%y^2 &= \innerp{M_2}{x\tp{2}} + \sigma^2 + \underbrace{\innerp{\beta_h\tp{2} - M_2}{x\tp{2}} + \epsilon \innerp{\beta_h\tp{2}}{x\tp{2}}}_{\eqdef \eta_2(x)} + (\epsilon^2 - \sigma^2) \label{eq:y2}, \\
 \end{align}
-Regression with the second order moments would give us $M_2 = \E[\beta_h
-\tp{2}] = \sum_h \pi_h \beta_h\tp{2}$ which can identify $\pi$ and the
-subspace spanned the $\beta_h$, but not the $\beta_h$ themselves. To see
-this, note that the eigen-decomposition of $M_2$ is not unique.
-\todo{explain better}.
+Again, we have expressed $y^2$ has a linear function of $[x\tp{2}, 1]$
+with regression coefficients $[M_2, \sigma^2]$, plus noise.
+Importantly, the noise has mean zero; 
+in fact each of the three terms has mean zero
+by (i) definition of $M_2$, (ii) independence of $\epsilon$ and $h$,
+and (iii) the fact that $\E[\epsilon^2] = \sigma^2$.
 
-This brings us to regression with the third order moments, giving us the
-tensor $M_3 = \E[\beta_h \tp{3}] = \sum_h \pi_h \beta_h\tp{3}$.
-\citet{AnandkumarGeHsu} show that these three moments suffice to
-identify $\pi$ and $B$ and provide an efficient algorithm to recover the
-parameters.
+Performing regression yields a consistent estimate of $[M_2, \sigma^2]$,
+but does not identify all the parameters $\theta$.
+In particular, $B$ is only identified up to rotation:
+if $B = [\beta_1 \mid \cdots \mid \beta_k]$ satisfies
+$B \diag(\pi) B^\top = M_2$, then $(B Q) \diag(\pi) (Q B^\top)$
+for any orthogonal matrix $Q$.
+%Regression with the second order moments would give us $M_2 = \E[\beta_h
+%\tp{2}] = \sum_h \pi_h \beta_h\tp{2}$ which can identify $\pi$ and the
+%subspace spanned the $\beta_h$, but not the $\beta_h$ themselves. To see
+%this, note that the eigen-decomposition of $M_2$ is not unique.
+%\todo{explain better}.
 
-We note that the eigendecomposition of $M_2$ is not sufficient to
-recover the $\beta_k$ because they are not necessarily orthogonal to
-each other. \citet{AnandkumarGeHsu2012} describes an approach that uses
-rotates $M_3$ to an orthogonal basis by using the whitening transform of
-$M_2$. The eigenvectors and eigenvalues recovered from the
-eigendecomposition of $M_3(W, W, W)$ can be de-whitened to recover the
-$\beta_k$ and $\pi_k$.
+%%% third moment
+Let us now proceed to the third moment with the hope that it will
+provide additional information.
+We can write $y^3$ as a linear function of $x\tp{3}$ plus zero mean noise:
+\begin{align}
+y^3 &= \innerp{M_3}{x\tp{3}} + 3\sigma^2 \innerp{M_1}{x} + \eta_3(x), \label{eqn:y3} \\
+\eta_3(x) &= \innerp{\beta_h\tp{3} - M_3}{x\tp{3}}
++ 3 \epsilon \innerp{\beta_h\tp{2}}{x\tp{2}} \nonumber \\
+&+ 3(\epsilon^2 \innerp{\beta_h}{x} - \sigma^2 \innerp{M_1}{x})
++ \epsilon^3, \nonumber
+\end{align}
+where $\E[\eta_3(x) \mid x] = 0$.
+Performing regression on our data yields estimates $M_3$ and $\sigma^2 M_1$.
+It turns out that knowledge of $M_2$ and $M_3$ are sufficient to recover
+all the parameters.
+
+%We note that the eigendecomposition of $M_2$ is not sufficient to
+%recover the $\beta_k$ because they are not necessarily orthogonal to
+%each other.
+
+% Full algorithm
+Now we are ready to state our full algorithm, which we call Spectral Experts.
+The full algorithm is described in \algorithmref{sec:algo}.
+First, we perform two regressions according to \refeqn{y2}
+and \refeqn{y3} to recover the compound parameters $M_2$ and $M_3$.
+The first regression \refeqn{estimateM2}
+produces estimates of $\hat M_2$ and $\hat\sigma^2$;
+the second regression \refeqn{estimateM3} produces $\hat M_3$ (we ignore $\hat S_1$).
+Since $M_2$ and $M_3$ have low rank structure,
+we use nuclear norm regularization \cite{Tomioka2011,NegahbanWainwright2009}
+to exploit this structure.
+The regularization strengths $\lambda_n^{(2)}$ and $\lambda_n^{(2)}$
+are set to $O(\frac{1}{\sqrt{n}})$.
+See \sectionref{sec:regression} for more details.
+
+Second, given a matrix $M_2$ and tensor $M_3$ of the form in \refeqn{Mp},
+\citet{AnandkumarGeHsu2012} showed that due to symmetry of $M_2$ and $M_3$,
+we can efficiently perform tensor factorization of the whitened
+version of $M_3$.  The eigenvalues and eigenvectors
+directly yield the parameters $\pi$ and
+$\{\beta_h\}$.
+See \sectionref{sec:tensor-power} for details.
+%\citet{AnandkumarGeHsu2012} showed that given $M_2$ and $M_3$
+%of the form in \refeqn{Mp},
+%the robust tensor power method can be employed to recover $\pi$ and
+%$\{\beta_h\}$.
+
+%\citet{AnandkumarGeHsu2012} describes an approach that uses
+%rotates $M_3$ to an orthogonal basis by using the whitening transform of
+%$M_2$. The eigenvectors and eigenvalues recovered from the
+%eigendecomposition of $M_3(W, W, W)$ can be de-whitened to recover the
+%$\beta_k$ and $\pi_k$.
 
 % Describe the rest of the algorithm.
-This description completes a sketch of the algorithm, described in
-\algorithmref{algo:spectral-experts}. Going ahead, we have yet to show
-that the regression is well-behaved which we will do in
-\sectionref{sec:regression}. This is of concern because the regression
-problem we have has variance introduced from component selection,
-independent of any observation noise. We will show that we can indeed
-efficiently recover $M_2$ and $M_3$ using ideas from low-rank
-regression. Finally, we will outline the tensor power method to recover
-$B$ and $\pi$ given these two quantities, $M_2$ and $M_3$ in
-\sectionref{sec:tensor-power}. 
-
-\cite{candesPhaseLift} regresses on the square of the response,
-because that's the observation.
-
-\begin{theorem}
-  Recovery analysis of mixture of linear regressions.
-\end{theorem}
-\begin{proof}
-\end{proof}
+%This description completes a sketch of the algorithm, described in
+%\algorithmref{algo:spectral-experts}. Going ahead, we have yet to show
+%that the regression is well-behaved which we will do in
+%\sectionref{sec:regression}. This is of concern because the regression
+%problem we have has variance introduced from component selection,
+%independent of any observation noise. We will show that we can indeed
+%efficiently recover $M_2$ and $M_3$ using ideas from low-rank
+%regression. Finally, we will outline the tensor power method to recover
+%$B$ and $\pi$ given these two quantities, $M_2$ and $M_3$ in
+%\sectionref{sec:tensor-power}. 
 
 \begin{algorithm}[t]
   \caption{Spectral Experts}
   \label{algo:spectral-experts}
   \begin{algorithmic}[1]
-    \REQUIRE $\mathcal{D} = \{ (\xn{1}, \yn{1}), \cdots, (\xn{N}, \yn{N}) \}$
-    \REQUIRE $K$, the number of clusters, $\sigma^2$ 
-    \STATE Recover $M_1$ using least-squares regression on $\mathcal{D}$.
-    \STATE Recover $M_2, M_3$ using low-rank regression on $\mathcal{D}$.
-    \STATE Return the eigenvectors $\beta_k$ and eigenvalues $\pi_k$ of $M_3$ using $M_2$.
+    \INPUT Data $\mathcal{D} = \{ (\xn{1}, \yn{1}), \cdots, (\xn{n}, \yn{n}) \}$.
+    \OUTPUT Parameters $\hat\theta = (\hat \pi, [\hat \beta_1 \mid \cdots \mid \hat \beta_k], \hat\sigma^2)$.
+    \STATE Estimate compound parameters $M_2, M_3$ using \textbf{low-rank regression}:
+    \begin{align}
+      &[\hat M_2, \hat \sigma^2] = \arg\min_{M_2,\sigma^2} \label{eqn:estimateM2} \\
+      &\quad\frac{1}{2n} \sum_{(x,y) \in \sD} (\innerp{M_2}{x\tp{2}} + \sigma^2 - y^2)^2 + \lambda_n^{(2)} \|M_2\|_*, \nonumber \\
+       &[\hat M_3, \hat S_1] = \arg\min_{M_3,S_1} \label{eqn:estimateM3} \\
+       &\quad\frac{1}{2n} \sum_{(x,y) \in \sD} (\innerp{M_3}{x\tp{3}} + \innerp{S_1}{x} - y^3)^2 + \lambda_n^{(3)} \|M_3\|_*. \nonumber
+    \end{align}
+    \STATE Estimate the coefficients $\{\beta_h\}$ using \textbf{tensor factorzation}:
+    \begin{enumerate}
+      \item [(a)] Compute whitening matrix $W \in \Re^{d \times k}$ (such that $W^\top
+      \hat M_2 W = I$) using SVD.
+      \item [(b)] Compute the eigenvalues $\{\lambda_h\}_{h=1}^k$
+      and eigenvectors $\{v_h\}_{h=1}^k$
+      of the whitened tensor $M_3(W, W, W) \in \Re^{k \times k \times k}$
+      by using the robust tensor power method.
+    \item [(c)] Set parameter estimates $\hat\pi_h = \frac{1}{\lambda_h^2}$
+    and $\hat\beta_h = (W^{\top})^\dagger (\lambda_h v_h)$.
+    \end{enumerate}
   \end{algorithmic}
 \end{algorithm}
 
-We will conclude this section by
-discussing some identifiability concerns for our algorithm.
+Our main theoretical result shows that Spectral Experts returns
+consistent parameter estimates (see Appendix
+\begin{theorem}[Convergence of Spectral Experts]
+Let $\sD$ consist of $n$ i.i.d. points drawn from the mixture
+of linear regressions model with parameter $\theta^*$.
+Assume that $\E[[1,\unfold(x\tp{2})]\tp{2}] \succ 0$ 
+and $\E[[x,\unfold(x\tp{3})]\tp{2}] \succ 0$.
+Then the parameter estimates $\hat\theta$ returned by
+\algorithmref{algo:spectral-experts}, with the columns appropriate permuted,
+satisfies $\sigma^2 \le \epsilon$,
+$\|\hat\pi - \pi^*\|_{\infty} \le \epsilon$
+and for all $h \in [k]$,
+$\|\hat\beta_h - \beta^*_h\| \le \epsilon$,
+for some error tolerance $\epsilon = O(\frac{kd^2}{n (\min_h \pi_h^*)})$.
+\end{theorem}
+\begin{proof}
+Let $T^* = M_3^*(W^*, W^*, W^*)$.
+By Theorem 5.1 of \cite{AnandkumarGeHsu2012},
+\end{proof}
+
+% Method of moments interpretation
+%Though we have motivated Spectral Experts using regression on powers
+%of $y$ given powers of $x$,
+%we can also think of the algorithm in terms of
+%the method of moments.  Specifically,
+%the optimality conditions for the regression of $M_2$ and $M_3$ are:
+%\begin{align}
+%\E[x\tp{2} (\innerp{M_2}{x\tp{2}} + \sigma^2 - y^2)] = 0, \\
+%\E[x\tp{3} (\innerp{M_3}{x\tp{3}} + 3 \sigma^2 \innerp{M_1}{x} - y^3)] = 0.
+%\end{align}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -131,16 +231,16 @@ $M_3$ unless we consider $p = d^2$ moments.
 % In the case of the mixture of linear regressions, we have two observed
 % quantities, $x$ and $y$. Unfortunately, because $y$ is a scalar
 % quantity, we have only one equation for every moment of $y$, and with
-% this naive approach, would have to consider $O( (K+1) D)$ moments to
-% recover $B \in \Re{K \times D}$ and $\pi \in \Re^K$. 
+% this naive approach, would have to consider $O( (k+1) D)$ moments to
+% recover $B \in \Re{k \times D}$ and $\pi \in \Re^k$. 
 
 % To keep the discussion simple, we will consider the case where there is
 % no noise, i.e.  $\sigma^2 = 0$. In this case, the moments of $y$ are,
 % \begin{eqnarray*}
-%   \E[ y ] &=& (\sum_{k=1}^{K} \pi_{k} \beta_k)^T x \\
+%   \E[ y ] &=& (\sum_{k=1}^{k} \pi_{k} \beta_k)^T x \\
 %           &=& M_1^T \E[x] \\
-%   \E[ y^2 ] &=& \sum_{k=1}^{K} \pi_{k} \E[(\beta_k^T x)]^2 \\
-%   &=& \sum_{k=1}^{K} \pi_{k} (\beta_k\tp{2} \odot \E[x\tp{2}]) \\
+%   \E[ y^2 ] &=& \sum_{k=1}^{k} \pi_{k} \E[(\beta_k^T x)]^2 \\
+%   &=& \sum_{k=1}^{k} \pi_{k} (\beta_k\tp{2} \odot \E[x\tp{2}]) \\
 %   &=& M_2 \odot \E[x\tp{2}] \\
 %   \E[ y^p ] &=& M_p \odot \E[x\tp{p}].
 % \end{eqnarray*}
