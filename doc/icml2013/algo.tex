@@ -48,7 +48,7 @@ Intuitively, performing regression on only $y$ given $x$ provides only first-ord
 information.  The key insight is that we can perform regression
 on higher order powers to obtain more information about the parameters.
 Specifically, for an integer $p \ge 1$, let us define the average
-$m$-th order tensor power of the parameters as follows:
+$p$-th order tensor power of the parameters as follows:
 \begin{align}
 M_p &\eqdef \sum_{h=1}^k \pi_h \beta_h\tp{p}. \label{eqn:Mp} % \in (\Re^{d})\tp{p}.
 \end{align}
@@ -79,8 +79,8 @@ for any orthogonal matrix $Q$.
 
 %%% third moment
 Let us look to the third moment for additional information.
-We can write $y^3$ as a linear function of $x\tp{3}$ with coefficients $M_3$
-plus a bias $3 \sigma^2 \innerp{M_1}{x}$ that can be estimated from \refeqn{y1} and zero mean noise $\eta_3(x)$:
+We can write $y^3$ as a linear function of $x\tp{3}$ with coefficients $M_3$,
+a bias $3 \sigma^2 \innerp{M_1}{x}$ that can be estimated from \refeqn{y1}, and zero mean noise $\eta_3(x)$:
 \begin{align}
 y^3 &= \innerp{M_3}{x\tp{3}} + 3\sigma^2 \innerp{M_1}{x} + \eta_3(x), \label{eqn:y3} \\
 \eta_3(x) &= \innerp{\beta_h\tp{3} - M_3}{x\tp{3}}
@@ -103,7 +103,7 @@ Since $M_2$ and $M_3$ both only have rank $k$,
 we can use nuclear norm regularization
 \cite{Tomioka2011,NegahbanWainwright2009}
 to exploit this low-rank structure and improve our compound parameter estimates.
-In the algorithm, the regularization strengths $\lambda_n^{(2)}$ and $\lambda_n^{(2)}$
+In the algorithm, the regularization strengths $\lambda_n^{(2)}$ and $\lambda_n^{(3)}$
 are set to $\frac{1}{\sqrt{n}}$.
 The resulting semidefinite program is a standard one which has received
 much attention in recent years.
@@ -116,7 +116,7 @@ Having estimated the compound parameters $M_2$ and $M_3$,
 it remains to recover the original parameters $\theta$.
 \citet{AnandkumarGeHsu2012} showed that for $M_2$ and $M_3$ of
 the forms in \refeqn{Mp}, it is possible to efficiently accomplish this.
-Specifically, we first compute a whitening matrix based on the SVD of $M_2$
+Specifically, we first compute a whitening matrix $W$ based on the SVD of $M_2$
 and use that to construct a tensor $T = M_3(W, W, W)$ whose factors are orthogonal.
 We can use the robust tensor power method to compute all the
 eigenvalues and eigenvectors of $T$, from which it is easy to recover
@@ -218,7 +218,7 @@ In this section, we conduct a theoretical analysis of Spectral Experts.
 In particular, we prove that it enjoys consistent parameter estimates.
 \begin{theorem}[Convergence of Spectral Experts]
   \label{thm:convergence}
-Each $\sD_p$ (for $p = 1, 2, 3$) consists of $n$ i.i.d. points drawn from the mixture
+Each dataset $\sD_p$ (for $p = 1, 2, 3$) consists of $n$ i.i.d. points drawn from the mixture
 of linear regressions model with parameter $\theta^*$
 (having three independent copies simplifies the analysis).
 Assume that $\E[\cvec(x\tp{p})\tp{2}] \succ 0$ for each $p \in \{1,2,3\}$
