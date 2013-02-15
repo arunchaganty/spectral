@@ -33,6 +33,7 @@ import fig.basic.Option;
 import fig.basic.OptionsParser;
 import fig.exec.Execution;
 
+import java.lang.ref.SoftReference;
 import java.util.Date;
 import java.io.IOException;
 import java.io.FileNotFoundException;
@@ -52,6 +53,9 @@ public class SpectralExperts implements Runnable {
 	public String inputPath;
   @Option(gloss = "Number of samples to use (0 for all)")
   public double subsampleN = 0;
+
+  @Option(gloss = "Adjust the regularizer to be 1/sqrt(N) of the given number")
+  public boolean adjustReg = true;
   @Option(gloss = "Ridge Regression Regularization")
   public double ridgeReg = 1e-5;
   @Option(gloss = "Trace Norm Regularization")
@@ -70,6 +74,8 @@ public class SpectralExperts implements Runnable {
   public boolean useLowRankRecovery = true;
   @Option(gloss = "Use low rank recovery")
   public int lowRankIters = 1000;
+  @Option(gloss = "Adjust the bias factor of <M_1, x>")
+  public boolean adjustBias = true;
 	@Option(gloss = "Number of Threads to use")
 	public int nThreads = 1;
 	@Option(gloss = "Random seed")
@@ -79,11 +85,13 @@ public class SpectralExperts implements Runnable {
     public boolean saveToExecution = false;
 
     public MixtureOfExperts model;
+    public SimpleMatrix avgBetas;
     public SimpleMatrix Pairs;
     public FullTensor Triples;
     public SimpleMatrix betas;
     public SimpleMatrix weights;
 
+    public double avgBetasErr;
     public double PairsErr;
     public double TriplesErr;
     public double betasErr;
@@ -96,10 +104,22 @@ public class SpectralExperts implements Runnable {
 
       // Store the exact moments
       Pair<SimpleMatrix, FullTensor> moments = SpectralExperts.computeExactMoments( model );
+
+      avgBetas = model.getWeights().mult( model.getBetas().transpose() ).transpose();
       Pairs = moments.getValue0();
       Triples = moments.getValue1();
       betas = model.getBetas();
       weights = model.getWeights();
+    }
+
+    public void reportAvg( final SimpleMatrix avgBetas_ ) {
+      avgBetasErr = MatrixOps.diff(avgBetas, avgBetas_);
+      if( saveToExecution ) {
+        Execution.putOutput( "avgBetas", avgBetas );
+        Execution.putOutput( "avgBetas_", avgBetas_ );
+        Execution.putOutput( "avgBetasErr", avgBetasErr );
+      }
+      LogInfo.logsForce("avgBetas: " + avgBetasErr);
     }
 
     public void reportPairs( final SimpleMatrix Pairs_ ) {
@@ -271,8 +291,24 @@ public class SpectralExperts implements Runnable {
     return new Pair<>(A, b);
   }
 
+  SimpleMatrix recoverMeans(SimpleMatrix y, SimpleMatrix X) {
+    return X.solve(y.transpose());
+  }
+
+  /**
+   *
+   * @param y is expect to have already been squared
+   * @param X
+   * @return
+   */
   SimpleMatrix recoverPairsByRidgeRegression(SimpleMatrix y, SimpleMatrix X) {
     int N = X.numRows();
+    // We can't handle extracting whole of X, so let's just take a smaller subsdet, since this is for initialization anyways.
+    if( N > (int)1e6 ) {
+      N = (int) 1e6;
+      y = y.extractMatrix(0, SimpleMatrix.END, 0, N);
+    }
+
     int D = X.numCols();
     int D_ = D * (D+1) / 2;
     LogInfo.begin_track("ridge-regression-pairs");
@@ -303,7 +339,7 @@ public class SpectralExperts implements Runnable {
 
     // Solve for the matrix
     SimpleMatrix A = new SimpleMatrix( A_ );
-    SimpleMatrix b = y.elementMult(y).transpose();
+    SimpleMatrix b = y.transpose();
     SimpleMatrix bEntries;
     // Regularize the matrix
     if( ridgeReg > 0.0 ) {
@@ -349,11 +385,20 @@ public class SpectralExperts implements Runnable {
     int D = X.numCols();
 
     SimpleMatrix Pairs;
+    {
+      y = y.elementMult(y);
+      double sigma2 = (analysis != null) ? analysis.model.getSigma2() : 0.0;
+      if( sigma2 != 0 ) {
+        DenseMatrix64F y_ = y.getMatrix();
+        CommonOps.add(y_, -sigma2);
+        y = SimpleMatrix.wrap(y_);
+      }
+    }
+
     if( useRidgeRegression ) {
       Pairs = recoverPairsByRidgeRegression(y, X);
     } else {
       Pairs = RandomFactory.symmetric( D ).scale(0.01);
-//      Pairs = new SimpleMatrix(D, D);
     }
     if( useLowRankRecovery ) {
       // Use low rank recovery to improve estimate.
@@ -363,10 +408,6 @@ public class SpectralExperts implements Runnable {
 
       ProximalGradientSolver solver = new ProximalGradientSolver();
       // Tweak the response variables to give an unbiased estimate
-      DenseMatrix64F y_ = y.elementMult(y).getMatrix();
-      if(analysis != null)
-        CommonOps.add(y_, -analysis.model.getSigma2());
-      y = SimpleMatrix.wrap(y_);
       PhaseRecovery problem = new PhaseRecovery(y, X, traceReg);
       DenseMatrix64F Pairs_ = solver.optimize(problem, Pairs.getMatrix(), lowRankIters);
       Pairs = SimpleMatrix.wrap(Pairs_);
@@ -380,12 +421,17 @@ public class SpectralExperts implements Runnable {
 
   /**
    * Recover the second-order tensor \beta \otimes \beta by linear regression.
-   * @param y
+   * @param y - assume you have y^3
    * @param X
    * @return
    */
   FullTensor recoverTriplesByRegression(SimpleMatrix y, SimpleMatrix X) {
     int N = X.numRows();
+    // We can't handle extracting whole of X, so let's just take a smaller subsdet, since this is for initialization anyways.
+    if( N > (int)1e6 ) {
+      N = (int) 1e6;
+      y = y.extractMatrix(0, SimpleMatrix.END, 0, N);
+    }
     int D = X.numCols();
     int D_ = D * (D+1) * (D+2) / 6;
 
@@ -422,7 +468,7 @@ public class SpectralExperts implements Runnable {
     // Solve for the matrix
     SimpleMatrix A = new SimpleMatrix( A_ );
     //System.out.println(A);
-    SimpleMatrix b = y.elementMult(y).elementMult(y).transpose();;
+    SimpleMatrix b = y.transpose();
     // Regularize the matrix
     if( ridgeReg > 0.0 ) {
       Pair<SimpleMatrix, SimpleMatrix> Ab = regularize(A, b, ridgeReg);
@@ -452,16 +498,22 @@ public class SpectralExperts implements Runnable {
     return new FullTensor(B);
   }
 
-  FullTensor recoverTriples(SimpleMatrix y, SimpleMatrix X) {
+  FullTensor recoverTriples(SimpleMatrix y, SimpleMatrix X, SimpleMatrix avgBetas) {
     int N = X.numRows();
     int D = X.numCols();
 
     FullTensor Triples;
+    // Adjust y
+    {
+      y = y.elementMult(y).elementMult(y);
+      double sigma2 = (adjustBias && analysis != null) ? analysis.model.getSigma2() : 0.0;
+      SimpleMatrix bias = X.mult(avgBetas).transpose();
+      y = y.plus( -3*sigma2, bias );
+    }
     if( useRidgeRegression ) {
       Triples = recoverTriplesByRegression(y, X);
     } else {
       Triples = RandomFactory.symmetricTensor( 1, D ).scale(0.01);
-      //Triples = new FullTensor(D, D, D);
     }
 
     if( useLowRankRecovery ) {
@@ -470,7 +522,7 @@ public class SpectralExperts implements Runnable {
       if( analysis != null ) analysis.reportTriples0(Triples);
 
       ProximalGradientSolver solver = new ProximalGradientSolver();
-      TensorRecovery problem = new TensorRecovery(y.elementMult(y).elementMult(y), X, 10 * traceReg);
+      TensorRecovery problem = new TensorRecovery(y, X, 10 * traceReg);
       DenseMatrix64F Triples_ = solver.optimize(problem, Triples.unfold(0).getMatrix(), lowRankIters);
       FullTensor.fold(0, Triples_, Triples);
       LogInfo.end_track("low-rank-triples");
@@ -490,16 +542,27 @@ public class SpectralExperts implements Runnable {
    * @throws NumericalException
    */
   public Pair<SimpleMatrix, SimpleMatrix> run(int K, SimpleMatrix y, SimpleMatrix X) throws NumericalException, RecoveryFailure {
+    int N = X.numRows();
     int D = X.numCols();
+
+    // Adjust the regularizer for N
+    if(adjustReg) {
+      ridgeReg /= Math.sqrt(N);
+      traceReg /= Math.sqrt(N);
+    }
 
     // Set the seed
     RandomFactory.setSeed( seed );
+
+    // Recover the first moment
+    SimpleMatrix avgBetas = recoverMeans(y, X);
+    if( analysis != null ) analysis.reportAvg(avgBetas);
 
     // Recover Pairs and Triples moments by linear regression
     SimpleMatrix Pairs = recoverPairs( y, X );
     if( analysis != null ) analysis.reportPairs(Pairs);
 
-    FullTensor Triples = recoverTriples(y, X );
+    FullTensor Triples = recoverTriples(y, X, avgBetas);
     if( analysis != null ) analysis.reportTriples(Triples);
 
     if( useTensorPowerMethod ) {
@@ -535,6 +598,16 @@ public class SpectralExperts implements Runnable {
     enableAnalysis(model, false);
   }
 
+//  // Save data to a file
+//  private void setData(SimpleMatrix y, SimpleMatrix X) {
+//
+//  }
+//
+//  private Pair<SimpleMatrix, SimpleMatrix> getData() {
+//
+//
+//  }
+
 	@Override
 	public void run() {
     try {
@@ -543,15 +616,22 @@ public class SpectralExperts implements Runnable {
               MixtureOfExperts.readFromFile( inputPath );
       SimpleMatrix y = data.getValue0().getValue0();
       SimpleMatrix X = data.getValue0().getValue1();
+      learning.models.MixtureOfExperts model = data.getValue1();
+      enableAnalysis(model, true);
+      data = null;
 
       // Choose a subset of the data
-      if( subsampleN > 0 ) {
+      int N = X.numRows();
+      if( subsampleN > N ) {
+        y = null; X = null; data = null;
+        Pair<SimpleMatrix, SimpleMatrix> yX = model.sample( (int) subsampleN );
+        y = yX.getValue0();
+        X = yX.getValue1();
+      } else if( subsampleN > 0 ) {
         y = y.extractMatrix(0, SimpleMatrix.END, 0, (int) subsampleN);
         X = X.extractMatrix(0, (int) subsampleN, 0, SimpleMatrix.END);
       }
-
-      learning.models.MixtureOfExperts model = data.getValue1();
-      enableAnalysis(model, true);
+      N = X.numRows();
       analysis.checkDataSanity(y, X);
 
       LogInfo.logs("basis", MatrixOps.arrayToString(model.getNonLinearity().getExponents()));

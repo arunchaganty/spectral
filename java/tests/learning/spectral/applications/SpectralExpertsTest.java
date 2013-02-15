@@ -41,11 +41,12 @@ public class SpectralExpertsTest {
     SimpleMatrix y = yX.getValue0();
     SimpleMatrix X = yX.getValue1();
 
+    SimpleMatrix avgBetas = algo.recoverMeans(y, X);
     SimpleMatrix Pairs_ = algo.recoverPairs( y, X);
     System.out.println( algo.analysis.Pairs );
     System.out.println( Pairs_ );
     algo.analysis.reportPairs(Pairs_);
-    FullTensor Triples_ = algo.recoverTriples(y, X);
+    FullTensor Triples_ = algo.recoverTriples(y, X, avgBetas);
     algo.analysis.reportTriples(Triples_);
 
     Assert.assertTrue( algo.analysis.PairsErr < 1e-2 );
@@ -107,12 +108,12 @@ public class SpectralExpertsTest {
     SimpleMatrix X = yX.getValue1();
     algo.analysis.checkDataSanity(y, X);
 
-//    SimpleMatrix Pairs_ = algo.recoverPairsGD( y, X, reg, doScale );
+    SimpleMatrix avgBetas = algo.recoverMeans(y, X);
     SimpleMatrix Pairs_ = algo.recoverPairs( y, X);
     System.out.println( algo.analysis.Pairs );
     System.out.println( Pairs_ );
     algo.analysis.reportPairs(Pairs_);
-    FullTensor Triples_ = algo.recoverTriples(y, X);
+    FullTensor Triples_ = algo.recoverTriples(y, X, avgBetas);
     algo.analysis.reportTriples(Triples_);
   }
 
