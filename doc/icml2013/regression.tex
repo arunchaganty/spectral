@@ -10,6 +10,10 @@ and $\Delta_3 \eqdef \hat M_3 - M_3$.
 Our analysis is based on the low-rank regression framework of
 \citet{Tomioka2011} for tensors, which builds off of
 \citet{NegahbanWainwright2009} for matrices.
+The main challenge is to control the noise $\eta_p(x)$,
+which in addition to containing the usual Gaussian part, is also dependent on
+$x$, involves the mixing noise and various cross terms.
+We first set up some notation to all three regressions (\refeqn{estimateM1}, \refeqn{estimateM2}, and \refeqn{estimateM3}).
 Define the observation operator $\opX(M_p) : \Re^{d\tp{p}} \to \Re^{n}$
 mapping compound parameters $M_p$:
 \begin{align}
@@ -74,7 +78,7 @@ $\|\opX(\eta_p)\|_\text{op}$.
 \begin{lemma}[\citet{Tomioka2011}, Theorem 1]
 Suppose there exists a restricted strong convexity constant $\kappa(\opX)$ such that
 $$\frac{1}{2n} \| \opX( \Delta )\|_2^2 \ge \kappa(\opX) \|\Delta\|^2_F \quad \text{and} \quad
-\lambda_n \ge \frac{|\opX^*(\eta_p)|}{n}.$$
+\lambda_n \ge \frac{\|\opX^*(\eta_p)\|_2}{n}.$$
 Then the error of $\hat M_p$ is bounded as follows:
 $\| \hat M_p - M_p^* \|_F \le \frac{\lambda_n \sqrt{k}}{\kappa(\opX)}$.
 \end{lemma}
@@ -87,23 +91,23 @@ $\|\opX^*(\epsilon)\|_{2}^2$.
 %random and show bounds that hold with high probability.
 
 \begin{lemma}[lower bound on restricted strong convexity]
-Let $\Sigma_p \eqdef \E[\unfold(x\tp{p})\tp{2}]$.
+Let $\Sigma_p \eqdef \E[\cvec(x\tp{p})\tp{2}]$.
 With high probability at least $1-\delta$,
 for some constant $c$,
 $$\kappa(\opX) \ge c \sigma_\text{min}^p(\Sigma_p)$$,
 where
-%$\sigma_\text{min}^p(\Sigma_p) = \min_{M_p \in \sM_p : \|M_p\|_F \le 1} \unfold(M_p)^\top \Sigma_p \unfold(M_p)$.
-$\sigma_\text{min}^p(\Sigma_p) = \min_{M_p \in \sM_p : \|M_p\|_F \le 1} \trace(\unfold(M_p)^{\otimes 2} \Sigma_p)$.
+%$\sigma_\text{min}^p(\Sigma_p) = \min_{M_p \in \sM_p : \|M_p\|_F \le 1} \cvec(M_p)^\top \Sigma_p \cvec(M_p)$.
+$\sigma_\text{min}^p(\Sigma_p) = \min_{M_p \in \sM_p : \|M_p\|_F \le 1} \trace(\cvec(M_p)^{\otimes 2} \Sigma_p)$.
 \end{lemma}
 Note that $\sigma_\text{min}$ 
 \begin{proof}
 Expanding the definition of the observation operator:
 $\frac{1}{2n} \|\opX(\Delta)\|_2^2
 = \frac{1}{2n} \sum_{(x,y) \in \sD} \innerp{\Delta}{x\tp{p}}^2$.
-Unfolding the tensor and letting $\hat\Sigma_p \eqdef \frac{1}{n} \sum_{(x,y) \in \sD} \unfold(x\tp{p})\tp{2}$,
+Unfolding the tensor and letting $\hat\Sigma_p \eqdef \frac{1}{n} \sum_{(x,y) \in \sD} \cvec(x\tp{p})\tp{2}$,
 we have 
 $\frac{1}{2n} \|\opX(\Delta)\|_2^2
-\ge \frac{1}{2} \trace(\unfold(\Delta)\tp{2} \hat\Sigma_p)
+\ge \frac{1}{2} \trace(\cvec(\Delta)\tp{2} \hat\Sigma_p)
 \ge \frac{1}{2} \|\Delta\|_F^2 \sigma_\text{min}^p(\hat\Sigma_p)$.
 
 %  \begin{align*}
