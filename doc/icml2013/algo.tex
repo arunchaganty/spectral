@@ -5,7 +5,7 @@ In this section, we describe our Spectral Experts algorithm
 for estimating model parameters $\theta = (\pi, B)$.
 The algorithm consists of two steps:
 (i) low-rank regression to estimate certain symmetric tensors;
-and (ii) tensor factorzation to recover the parameters.
+and (ii) tensor factorization to recover the parameters.
 The two steps can be performed efficiently using
 convex optimization and tensor power method, respectively.
 % Motivate how we can recover $B$ from regression by lower order moments
@@ -127,7 +127,7 @@ the parameters $\pi$ and $\{\beta_h\}$.
 % Spectral
 In recent years, there has a been substantial interest in ``spectral'' methods
 for learning latent-variable models.  One line of work has
-focused on observerable operator models \cite{hsu09spectral}
+focused on observable operator models \cite{hsu09spectral}
 in which the true parameters are not recovered, but a reparametrization is used
 which enables prediction.
 Another line of work is based on the method of moments and uses eigendecomposition of a certain tensor
@@ -136,7 +136,7 @@ Our work extends this line of work into the space of discriminative models,
 which requires regression to obtain the desired tensor.
 
 % Unmixing
-In spirit, Spectral Experts also bears some resemblence to the unmixing
+In spirit, Spectral Experts also bears some resemblance to the unmixing
 algorithm for estimation of restricted PCFGs
 \cite{hsu12identifiability}.
 In that work, the observations (moments) provided a linear combination over
@@ -150,7 +150,7 @@ The idea of performing low-rank regression on $y^2$ has been explored
 in the context of signal recovery from magnitude measurements
 \cite{candes11phaselift,ohlsson12phase}.
 There, the actual observed response was $y^2$,
-whereas in our case, we delibrately construct powers $y,y^2,y^3$
+whereas in our case, we deliberately construct powers $y,y^2,y^3$
 to identify the parameters.
 
 %\citet{AnandkumarGeHsu2012} describes an approach that uses
@@ -188,7 +188,7 @@ to identify the parameters.
       &\hat M_3 = \arg\min_{M_3} \quad \lambda_n^{(3)} \|M_3\|_* + \label{eqn:estimateM3} \\
       &\quad\quad\frac{1}{2n} \sum_{(x,y) \in \sD_3} (\innerp{M_3}{x\tp{3}} + 3 \sigma^2\innerp{\hat M_1}{x} - y^3)^2. \nonumber
     \end{align}
-    \STATE Estimate the parameters $\theta = (\pi, B)$ using \textbf{tensor factorzation}:
+    \STATE Estimate the parameters $\theta = (\pi, B)$ using \textbf{tensor factorization}:
     \begin{enumerate}
       \item [(a)] Compute whitening matrix $\hat W \in \Re^{d \times k}$ (such that $\hat W^\top
       \hat M_2 \hat W = I$) using SVD.
