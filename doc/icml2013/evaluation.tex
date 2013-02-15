@@ -38,7 +38,6 @@ the parameters recovered using spectral experts are shown in
     \hspace{-2em}
   \subfigure[EM]{
     \includegraphics[width=0.50\textwidth]{figures/curves-vis/1-8-3-em.pdf}}
-    \hspace{-2em}
 %  \subfigure[Spectral + EM]{
 %    \includegraphics[width=0.34\textwidth]{figures/curves-vis/1-8-3-spem.png}}
   \caption{A comparison between SpectralExperts and EM. The dashed lines
@@ -87,11 +86,9 @@ $\{1$, $ x_1$, $ x_2$, $ x_3$, $ x_1 x_2 x_3^2$, $ x_1 x_2^2 x_3$, $ x_1^2 x_2 x
 \vskip -0.1in
 \end{table*}
 
-\todo{Dataset 2}: $b = 30$, $p = 1$ [TODO]
-
-
-
-\paragraph{Motion tracking data?}
+\todo{Dataset 2: $b = 30$, $p = 1$. I'm unclear as to what we can show
+on this sort of data set. EM works extremely well, and the spectral
+methods do not converge easily.}
 
 \subsection{Results}
 
@@ -100,11 +97,9 @@ $\{1$, $ x_1$, $ x_2$, $ x_3$, $ x_1 x_2 x_3^2$, $ x_1 x_2^2 x_3$, $ x_1^2 x_2 x
 Punchline: spectral by itself is medicore, offers a good initialization to EM.
 EM with random initialization is much less stable. (by table)
 
-Using canonical settings, on the various datasets
+Using canonical settings, on the various datasets: \tableref{tbl:parameter-recovery}.
 
-Plot the parameters: the curves, three algorithms (DONE)
-
-Plot: the histogram over errors (for EM?)
+Plot: the histogram over errors (for EM?) \todo{Some plots I have doesn't really show much}.
 
 \paragraph{Misspecified Data}
 
@@ -114,12 +109,18 @@ segments removed from the generated data. \todo{Table X shows figures}.
 
 \paragraph{Effect on number of data points}
 
-\begin{figure}[t]
+\begin{figure*}[t]
   \centering
-  \includegraphics[width=0.45\textwidth]{figures/vs-n/1-8-3-3.pdf}
+  \subfigure[Complete Data]{
+    \includegraphics[width=0.50\textwidth]{figures/vs-n/1-8-3-3.pdf}
+  }
+    \hspace{-2em}
+  \subfigure[Incomplete Data]{
+    \includegraphics[width=0.50\textwidth]{figures/vs-n/1-8-3-3-rm.pdf}
+  }
   \caption{}
   \label{fig:vs-n}
-\end{figure}
+\end{figure*}
 
 \todo{We see that the error of spectral is actually less than EM after a point.}
 
