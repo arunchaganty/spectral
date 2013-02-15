@@ -11,10 +11,11 @@ We implemented the low rank recovery optimization routines for $M_2$ and
 $M_3$ using a proximal subgradient descent algorithm\citationneeded. The
 algorithm was initialized with the regularized least squares solution
 and was run to convergence in each instance. Both regularization
-parameters were annealed as $\frac{1}{T}$. 
+parameters, $\lambda_n^{(2)}$ and, $\lambda_n^{(3)}$ were annealed as
+$\frac{1}{n}$. 
 
 As a baseline, we also implemented EM with two different
-initializations. For the first, we used $\beta$s with random standard
+initializations. In the first, we used $\beta$s with random standard
 Gaussian entries and uniform mixture probabilities, $\pi$. In the other,
 we initialized EM with the starting points given by Spectral Experts. 
 
@@ -67,17 +68,17 @@ Features  & $K$ & Spectral & EM & Spectral + EM \\
 \hline
 \abovespace
 $\{1$, $ x_1$, $ x_1^4\}$ 
-  & 2 & 2.54 $\pm$ 2.81 & 0.28 $\pm$ 0.82 & 0.13 $\pm$ 0.55 \\
+  & 2 & 1.52 $\pm$ 0.71 & 0.28 $\pm$ 0.82 & {\bf 0.13 $\pm$ 0.55} \\
 $\{1$, $ x_1$, $ x_2$, $ x_1^2 x_2^2\}$ 
-  & 3 & 3.93 $\pm$ 5.82 & 0.33 $\pm$ 0.96 & 0.35 $\pm$ 1.23 \\
+  & 3 & 1.87 $\pm$ 1.20 & {\bf 0.33 $\pm$ 0.96} & 0.35 $\pm$ 1.23 \\
 $\{1$, $ x_1$, $ x_2$, $ x_1 x_2^3$, $ x_1^2 x_2^2$, $ x_1^3 x_2 \}$ 
-  & 5 & 5.27 $\pm$ 2.32 & 1.80 $\pm$ 1.80 & 1.51 $\pm$ 1.77 \\
+& 5 & 5.27 $\pm$ 2.32 & 1.80 $\pm$ 1.80 & {\bf 1.51 $\pm$ 1.77} \\
 $\{1$, $ x_1$, $ x_2$, $ x_1 x_2^3$, $ x_1^2 x_2^2$, $ x_1^3 x_2$, $ x_1^3 x_2^4$, $ x_1^4 x_2^3 \}$ 
-  & 7 & 8.42 $\pm$ 1.66 & 7.41 $\pm$ 2.99 & 7.31 $\pm$ 2.47 \\
+& 7 & 8.42 $\pm$ 1.66 & 7.41 $\pm$ 2.99 & {\bf 7.31 $\pm$ 2.47} \\
 $\{1$, $ x_1$, $ x_2$, $ x_3$, $ x_1 x_2 x_3^2$, $ x_1 x_2^2 x_3$, $ x_1^2 x_2 x_3$, $ x_1^2 x_2^2$, $ x_1^2 x_3^2$, $ x_2^2 x_3^2$, $ x_3^2\}$
-  & 3 & 3.78 $\pm$ 0.90 & 0.67 $\pm$ 1.49 & 0.51 $\pm$ 1.12 \\
+& 3 & 3.78 $\pm$ 0.90 & 0.67 $\pm$ 1.49 & {\bf 0.51 $\pm$ 1.12} \\
 $\{1$, $ x_1$, $ x_2$, $ x_3$, $ x_1 x_2 x_3^2$, $ x_1 x_2^2 x_3$, $ x_1^2 x_2 x_3$, $ x_1^2 x_2^2$, $ x_1^2 x_3^2$, $ x_2^2 x_3^2$, $ x_3^2\}$
-  & 7 & 9.97 $\pm$ 3.22 & 1.43 $\pm$ 1.97 & 1.42 $\pm$ 2.17 \\
+  & 7 & 9.97 $\pm$ 3.22 & 1.43 $\pm$ 1.97 & {\bf 1.42 $\pm$ 2.17} \\
 \hline
 \end{tabular}
 \end{sc}
@@ -86,28 +87,35 @@ $\{1$, $ x_1$, $ x_2$, $ x_3$, $ x_1 x_2 x_3^2$, $ x_1 x_2^2 x_3$, $ x_1^2 x_2 x
 \vskip -0.1in
 \end{table*}
 
-\todo{Dataset 2: $b = 30$, $p = 1$. I'm unclear as to what we can show
-on this sort of data set. EM works extremely well, and the spectral
-methods do not converge easily.}
+% \todo{Dataset 2: $b = 30$, $p = 1$. I'm unclear as to what we can show
+% on this sort of data set. EM works extremely well, and the spectral
+% methods do not converge easily.}
 
 \subsection{Results}
 
-\paragraph{Basic results}
+\tableref{tbl:parameter-recovery} presents the Fro\"ebenius norm of the
+difference between true and estimated parameters for the model, averaged
+over 20 different random instances for each feature set and 10 attempts
+for each instance. The experiments were run using $N = 500,000$ samples.
 
-Punchline: spectral by itself is medicore, offers a good initialization to EM.
-EM with random initialization is much less stable. (by table)
+There is a lot of variation across random instances; some are easy for
+EM to find the global minima and others more difficult. Moreover, simply
+increasing the number of samples did not necessarily improve EM
+performance. In general, we found that while our spectral algorithm did
+not recover parameters extremely well, it provided a good initialization
+for EM. 
 
-Using canonical settings, on the various datasets: \tableref{tbl:parameter-recovery}.
-
-Plot: the histogram over errors (for EM?) \todo{Some plots I have doesn't really show much}.
+\todo{Plot: the histogram over errors (for EM?) Some plots I have
+doesn't really show much}.
 
 \paragraph{Misspecified Data}
 
-To show how well spectral methods can handle mis-specification, we
-compared the performance of the different algorithms with entire
-segments removed from the generated data. \todo{Table X shows figures}.
+To evaluate how robust the algorithm was to model mis-specification, we
+removed large contiguous sections from $x \in [-0.5,-0.25] \cup
+[0.25,0.5]$. The lower half of \tableref{tbl:parameter-recovery} reports
+recovery errors in this scenario. 
 
-\paragraph{Effect on number of data points}
+\paragraph{Effect of number of data points}
 
 \begin{figure*}[t]
   \centering
@@ -121,6 +129,10 @@ segments removed from the generated data. \todo{Table X shows figures}.
   \caption{}
   \label{fig:vs-n}
 \end{figure*}
+
+Highlight
+
+
 
 \todo{We see that the error of spectral is actually less than EM after a point.}
 
