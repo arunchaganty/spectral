@@ -1,5 +1,6 @@
 
-LATEX = pdflatex -interaction=nonstopmode
+LATEX = pdflatex
+#LATEX = pdflatex -interaction=nonstopmode
 OUTPUT=$(shell basename `pwd`)
 SECTIONS = abstract.tex intro.tex model.tex algo.tex regression.tex tensor-power.tex evaluation.tex discussion.tex proofs.tex macros.tex spectral-macros.tex
 
