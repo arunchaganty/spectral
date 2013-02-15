@@ -39,14 +39,13 @@ which permits the factorization to be computed efficiently using the robust
 tensor power method \cite{AnandkumarGeHsu2012}.
 
 % Twist
-In mixture of linear regressions, using third-order moments does not directly
-reveal the tensor structure of the problem, so we cannot directly
-apply the above tensor factorization techniques.
-Our solution is to employ low-rank linear regression
-\cite{NegahbanWainwright2009,Tomioka2011} on second
-and third powers of the response to first recover the appropriate symmetric
-tensors, from which we can then apply the tensor power method to retrieve the
-final parameters.
+In mixture of linear regressions, using third-order moments does not
+directly reveal the tensor structure of the problem, so we cannot
+directly apply the above tensor factorization techniques.  Our solution
+is to employ low-rank linear regression
+\cite{NegahbanWainwright2009,Tomioka2011} on second and third powers of
+the response to recover the appropriate symmetric tensors, from which we
+can then apply the tensor power method to retrieve the final parameters.
 
 % Approach: Derive moment functions based on linear regression on Y^2
 % and Y^3 Algorithm: trace norm regularization to recover tensor
@@ -145,7 +144,7 @@ i_p} = x_{i_1} \cdots x_{i_p}$. We will use
 $\innerp{\cdot}{\cdot}$ to denote the generalized dot product between two $p$-th
 order tensors: $\innerp{X}{Y} = \sum_{i_1, \ldots i_p} X_{i_1,
 \ldots i_p} Y_{i_1, \ldots i_p}.$
-A tensor $X$ is symmetric if for all $i,j \in [d]^p$ which are permutations,
+A tensor $X$ is symmetric if for all $i,j \in [d]^p$ which are permutations of each other,
 $X_{i_1 \cdots i_p}$ = $X_{j_1 \cdots j_p}$ (all tensors in this paper will be symmetric).
 For a $p$-th order tensor $X \in (\Re^d)\tp{p}$, let $X_{(i)} \in \Re^{d \times d^{p-1}}$
 be the mode-$i$ unfolding of $X$.
@@ -175,4 +174,4 @@ $\sum_{k \in K(c)} X_{k_1 \cdots k_p}$,
 where $K(c) = \{ k \in [d]^p : \forall i \in [d], c_i = |\{ j \in [p] : k_j = i \}| \}$ are the set of index vectors $k$ with that count profile.
 For example, for $X \in \Re^{d \times d}$,
 $\cvec(X) = (X_{ii} : i \in [d]; X_{ij} + X_{ji} : i,j \in [d], i<j)$.
-For symmetric tensors, $\innerp{X}{Y} = \innerp{\cvec(X)}{\cvec(Y)}$.
+%For symmetric tensors, $\innerp{X}{Y} = \innerp{\cvec(X)}{\cvec(Y)}$.

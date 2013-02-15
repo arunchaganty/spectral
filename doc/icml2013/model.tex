@@ -22,7 +22,7 @@ The parameters of the model are $\theta = (\pi, B)$,
 where $\pi \in \Re^d$ are the mixture proportions and
 $B = [\beta_1 \mid \dots \mid \beta_K] \in \Re^{d \times K}$
 are the regression coefficients.
-We assume the variance of the observation noise $\sigma^2$ is known.
+We assume the variance of the observation noise $\sigma^2$ is known and that the mixture components are independent.
 The learning problem is stated as follows:
 given $n$ i.i.d. samples $(\xn{1}, \yn{1}), \dots, (\xn{n}, \yn{n})$
 drawn from the model with some unknown parameters $\theta^*$,
