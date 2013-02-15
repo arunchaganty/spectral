@@ -1,9 +1,29 @@
 \subsection{Low-rank Regression}
 \label{sec:regression}
 
-In this section, we analyze step 1 of the Spectral Experts
-algorithm: that of recovering the compound parameters $M_2,M_3$
-from data.
+The goal of this section is to bound the error of
+the compound parameter estimates,
+specifically $\|\Delta_2\|_F^2$ and $\|\Delta_3\|_F^2$,
+where $\Delta_2 \eqdef \hat M_2 - M_2$
+and $\Delta_3 \eqdef \hat M_3 - M_3$.
+
+Our analysis is based on the low-rank regression framework of
+\citet{Tomioka2011} for tensors, which builds off of
+\citet{NegahbanWainwright2009} for matrices.
+Define the observation operator $\opX(M_p) : \Re^{d\tp{p}} \to \Re^{n}$
+mapping compound parameters $M_p$:
+\begin{align}
+  \opX(M_p; \sD)_i &\eqdef \frac12 \sum_{(x,y) \in \sD} \innerp{M_p}{x\tp{p}}_i, \quad i  \in [n].
+\end{align}
+
+Let $\kappa(\opX)$ be the restricted strong constant,
+and let $\opX^*(\eta_p; \sD) = \sum_{(x,y) \in \sD} \eta_p(x) x\tp{p}$
+be the adjoint.
+
+\paragraph{Restricted strong convexity}
+
+In this section, we compute the restricted strong convexity constant
+$\kappa(\opX)$ for our problem.
 
 %In the previous section, we described an algorithm for the mixture of
 %linear regressions using regression to recover $M_2$ and $M_3$,
@@ -11,58 +31,47 @@ from data.
 %a subroutine. In this section, we will characterize the rate of
 %convergence of regression.
 
-\cite{candesPhaseLift} regresses on the square of the response,
-because that's the observation.
+%Analysis for regression in the fixed and random design settings have
+%been studied before \citep{HsuKakadeZhang}, however our setup differs
+%substantially from the noise models assumed in the literature. In our
+%scenario, the variance in the estimation comes not only from the
+%Gaussian observation noise (which has been studied before), but also
+%from the variance in the latent variable $h$.
 
-Analysis for regression in the fixed and random design settings have
-been studied before \citep{HsuKakadeZhang}, however our setup differs
-substantially from the noise models assumed in the literature. In our
-scenario, the variance in the estimation comes not only from the
-Gaussian observation noise (which has been studied before), but also
-from the variance in the latent variable $h$.
+%Let us now formally define the class of regression problems we wish to
+%analyze, i.e. regression on the set $(x\tp{p}, y^p)$,
+%\begin{align*}
+%  y^p &= \innerp{x\tp{p}}{M_p} + (\innerp{x\tp{p}}{M_p - \beta_h\tp{p}} + \varepsilon).
+%\end{align*}
 
-Let us now formally define the class of regression problems we wish to
-analyze, i.e. regression on the set $(x\tp{p}, y^p)$,
-\begin{align*}
-  y^p &= \innerp{x\tp{p}}{M_p} + (\innerp{x\tp{p}}{M_p - \beta_h\tp{p}} + \varepsilon).
-\end{align*}
-Note that the term in brackets is the error in our estimates and has
-zero mean.  A more succinct way of representing this problem is to use
-the operator $\opX(M_p) : \Re^{d\tp{p}} \to \Re^{N}$, which uses the
-input $\{ x_i \}_{i=1}^{N}$ to map $M_p$ to a vector of responses $\hat
-y_i = \opX(M_p)_i = \innerp{x_i\tp{p}}{M_p}$. We can also represent the
-errors with the vector $\vec \epsilon$. Rewriting the equation with this notation, 
-\begin{align*}
-  \vec y^p &= \opX(M_p) + \vec \epsilon.
-\end{align*}
+%\todo{Describe/define the convex tensor stuff.}
+%We would like to exploit
+%the property that $M_p$ is low rank (as typically $K \ll D$). It has
+%been shown that a convex relaxation for this problem regression with
+%trace norm regularization, which can be solved using a proximal
+%subgradient descent algorithm\citationneeded.
+%The analogue of trace norm
+%regularization for higher order tensors corresponds to the sum of the
+%trace norms of the mode-k unfolding of the tensor \cite{Tomioka2011},
+%$X_{(k)}$, is a $d_k \times (\prod_{k' \neq k} d_{k'})$ matrix obtained
+%by concatenating the entries for all dimensions other than $k$. For
+%example, the 1-mode unfolding of a 3rd order tensor has entries,
+%$X_{(1)}^{i_1, (i_2, i_3)} = X_{i_1, i_2, i_3}$.
 
-\todo{Describe/define the convex tensor stuff.} We would like to exploit
-the property that $M_p$ is low rank (as typically $K \ll D$). It has
-been shown that a convex relaxation for this problem regression with
-trace norm regularization, which can be solved using a proximal
-subgradient descent algorithm\citationneeded. The analogue of trace norm
-regularization for higher order tensors corresponds to the sum of the
-trace norms of the mode-k unfolding of the tensor \cite{Tomioka2011},
-$X_{(k)}$, is a $d_k \times (\prod_{k' \neq k} d_{k'})$ matrix obtained
-by concatenating the entries for all dimensions other than $k$. For
-example, the 1-mode unfolding of a 3rd order tensor has entries,
-$X_{(1)}^{i_1, (i_2, i_3)} = X_{i_1, i_2, i_3}$.
+%In general, the optimization problem we'd like to solve is,
+%\begin{align}
+%  \hat M_p &= 
+%  \arg\min_{M_p}& \frac{1}{2N} \| \vec y - \opX(M_p) \|_2^2 + \frac{\lambda_n}{K} \sum_{h=1}^K \| (M_p)_{(h)} \|_* \label{eq:regression}.
+%\end{align}
 
-In general, the optimization problem we'd like to solve is,
-\begin{align}
-  \hat M_p &= 
-  \arg\min_{M_p}& \frac{1}{2N} \| \vec y - \opX(M_p) \|_2^2 + \frac{\lambda_n}{K} \sum_{h=1}^K \| (M_p)_{(h)} \|_* \label{eq:regression}.
-\end{align}
-
-We begin our analysis by stating a generic theorem about convex
-optimization problem in \equationref{eq:regression}, 
-\begin{lemma}(Convergence of Trace-Norm Regularized Regression)
-  Let $\hat M_p$ be the solution of the optimization problem
-  \eqref{eq:regression} with $\lambda_N \ge 2 \frac{\| \opX^*(\epsilon)
-  \|}{N}$. Suppose $\opX$ satisfies the restricted strong convexity
-  condition, $$\frac{1}{2N} \| \opX( \Delta )\|_2^2 \ge \kappa(\opX)
-  \|\Delta\|^2_F$$, then
-  $\| \hat M_p - M_p^* \|_F \le \frac{32 \lambda_N}{\kappa(\opX)} \frac{1}{K} \sum_{k=1}^{K} \sqrt{r_k}$.
+%We begin our analysis by stating a generic theorem about convex
+%optimization problem in \equationref{eq:regression}, 
+\begin{lemma}[convergence of low-rank regression]
+If restricted strong convexity holds
+$$\frac{1}{2n} \| \opX( \Delta )\|_2^2 \ge \kappa(\opX) \|\Delta\|^2_F \quad \text{and} \quad
+\lambda_n \ge \frac{|\opX^*(\eta_p)|}{n}.$$
+Then the error of $\hat M_p$ is bounded as follows:
+$\| \hat M_p - M_p^* \|_F \le \frac{\lambda_n \sqrt{k}}{\kappa(\opX)}$.
 \end{lemma}
 \begin{proof}
   \citet{Tomioka2011}, Theorem 1.
@@ -111,6 +120,10 @@ $$\kappa(\opX) \ge Y$$.
   = \frac{\kappa}{2 D} (\E[\|x_i\|^p] - \frac{t}{N})$ is a valid
   lower bound.
 \end{proof}
+
+By Lemma 19 of \cite{hsu13spherical},
+we have that $\frac{1}{n} \sum_{i=1}^n \epsilon_i^3 = O(\sqrt{\frac{\log^3(1/\delta)}{n}})$.
+with probability at least $1-\delta$.
 
 \begin{lemma}[bounded error]
   Let $\opX$ be the linear operator previously defined. Then,

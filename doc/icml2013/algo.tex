@@ -2,10 +2,12 @@
 \label{sec:algo}
 
 In this section, we describe our Spectral Experts algorithm
-for estimating model parameters $\theta = (\pi, B, \sigma^2)$.
-Our algorithm consists of two steps:
+for estimating model parameters $\theta = (\pi, B)$.
+The algorithm consists of two steps:
 (i) low-rank regression to estimate certain symmetric tensors;
 and (ii) tensor factorzation to recover the parameters.
+The two steps can be performed efficiently using
+convex optimization and tensor power method, respectively.
 % Motivate how we can recover $B$ from regression by lower order moments
 %ideally from lower order moments.
 %Conventionally, when using the method of moments, the
@@ -26,7 +28,7 @@ Now we can express $y$ as a linear function of $x$ with coefficients $M_1$
 plus some noise $\eta_1(x)$:
 \begin{align}
   y &= \innerp{M_1}{x} +
-  \underbrace{(\innerp{M_1 - \beta_h}{x} + \epsilon)}_{\eqdef \eta_1(x)}.
+  \underbrace{(\innerp{M_1 - \beta_h}{x} + \epsilon)}_{\eqdef \eta_1(x)}. \label{eqn:y1}
 \end{align}
 The noise $\eta_1(x)$ is the sum of two terms:
 (i) the \emph{mixing noise} $\innerp{M_1 - \beta_h}{x}$
@@ -56,74 +58,84 @@ using the fact that $\innerp{\beta_h}{x}^p = \innerp{\beta_h\tp{p}}{x\tp{p}}$,
 we have:
 \begin{align}
 y^2 &= \innerp{M_2}{x\tp{2}} + \sigma^2 + \eta_2(x), \label{eqn:y2} \\
-\eta_2(x) &= \innerp{\beta_h\tp{2} - M_2}{x\tp{2}} + \epsilon \innerp{\beta_h\tp{2}}{x\tp{2}} + (\epsilon^2 - \sigma^2). \nonumber
-%y^2 &= \innerp{M_2}{x\tp{2}} + \sigma^2 + \underbrace{\innerp{\beta_h\tp{2} - M_2}{x\tp{2}} + \epsilon \innerp{\beta_h\tp{2}}{x\tp{2}}}_{\eqdef \eta_2(x)} + (\epsilon^2 - \sigma^2) \label{eq:y2}, \\
+\eta_2(x) &= \innerp{\beta_h\tp{2} - M_2}{x\tp{2}} + 2 \epsilon \innerp{\beta_h\tp{2}}{x\tp{2}} + (\epsilon^2 - \sigma^2). \nonumber
 \end{align}
-Again, we have expressed $y^2$ has a linear function of $[x\tp{2}, 1]$
-with regression coefficients $[M_2, \sigma^2]$, plus noise.
+Again, we have expressed $y^2$ has a linear function of $x\tp{2}$
+with regression coefficients $M_2$, plus a known bias $\sigma^2$ and noise.
 Importantly, the noise has mean zero; 
 in fact each of the three terms has mean zero
 by (i) definition of $M_2$, (ii) independence of $\epsilon$ and $h$,
 and (iii) the fact that $\E[\epsilon^2] = \sigma^2$.
 
-Performing regression yields a consistent estimate of $[M_2, \sigma^2]$,
+Performing regression yields a consistent estimate of $M_2$,
 but does not identify all the parameters $\theta$.
 In particular, $B$ is only identified up to rotation:
 if $B = [\beta_1 \mid \cdots \mid \beta_k]$ satisfies
 $B \diag(\pi) B^\top = M_2$, then $(B Q) \diag(\pi) (Q B^\top)$
 for any orthogonal matrix $Q$.
-%Regression with the second order moments would give us $M_2 = \E[\beta_h
-%\tp{2}] = \sum_h \pi_h \beta_h\tp{2}$ which can identify $\pi$ and the
-%subspace spanned the $\beta_h$, but not the $\beta_h$ themselves. To see
-%this, note that the eigen-decomposition of $M_2$ is not unique.
-%\todo{explain better}.
 
 %%% third moment
-Let us now proceed to the third moment with the hope that it will
-provide additional information.
-We can write $y^3$ as a linear function of $x\tp{3}$ plus zero mean noise:
+Let us look to the third moment for additional information.
+We can write $y^3$ as a linear function of $x\tp{3}$ with coefficients $M_3$
+plus a bias $3 \sigma^2 \innerp{M_1}{x}$ that can be estimated from \refeqn{y1} and zero mean noise $\eta_3(x)$:
 \begin{align}
 y^3 &= \innerp{M_3}{x\tp{3}} + 3\sigma^2 \innerp{M_1}{x} + \eta_3(x), \label{eqn:y3} \\
 \eta_3(x) &= \innerp{\beta_h\tp{3} - M_3}{x\tp{3}}
 + 3 \epsilon \innerp{\beta_h\tp{2}}{x\tp{2}} \nonumber \\
-&+ 3(\epsilon^2 \innerp{\beta_h}{x} - \sigma^2 \innerp{M_1}{x})
-+ \epsilon^3, \nonumber
+&\quad + 3(\epsilon^2 \innerp{\beta_h}{x} - \sigma^2 \innerp{M_1}{x})
++ \epsilon^3. \nonumber
 \end{align}
-where $\E[\eta_3(x) \mid x] = 0$.
-Performing regression on our data yields estimates $M_3$ and $\sigma^2 M_1$.
+Performing regression yields estimates for $M_3$.
 It turns out that knowledge of $M_2$ and $M_3$ are sufficient to recover
 all the parameters.
 
-%We note that the eigendecomposition of $M_2$ is not sufficient to
-%recover the $\beta_k$ because they are not necessarily orthogonal to
-%each other.
-
 % Full algorithm
-Now we are ready to state our full algorithm, which we call Spectral Experts.
-The full algorithm is described in \algorithmref{sec:algo}.
-First, we perform two regressions according to \refeqn{y2}
-and \refeqn{y3} to recover the compound parameters $M_2$ and $M_3$.
-The first regression \refeqn{estimateM2}
-produces estimates of $\hat M_2$ and $\hat\sigma^2$;
-the second regression \refeqn{estimateM3} produces $\hat M_3$ (we ignore $\hat S_1$).
-Since $M_2$ and $M_3$ have low rank structure,
-we use nuclear norm regularization \cite{Tomioka2011,NegahbanWainwright2009}
-to exploit this structure.
-The regularization strengths $\lambda_n^{(2)}$ and $\lambda_n^{(2)}$
-are set to $O(\frac{1}{\sqrt{n}})$.
-See \sectionref{sec:regression} for more details.
+Now we are ready to state our full algorithm, which we call Spectral Experts
+(\algorithmref{sec:algo}).
+First, we perform three regressions to recover the compound parameters
+$M_1$ \refeqn{y1},
+$M_2$ \refeqn{y2}, and
+$M_3$ \refeqn{y3}.
+Since $M_2$ and $M_3$ both only have rank $k$,
+we can use nuclear norm regularization
+\cite{Tomioka2011,NegahbanWainwright2009}
+to exploit this low-rank structure and improve our compound parameter estimates.
+In the algorithm, the regularization strengths $\lambda_n^{(2)}$ and $\lambda_n^{(2)}$
+are set to $\frac{1}{\sqrt{n}}$.
+The resulting semidefinite program is a standard one which has received
+much attention in recent years.
+We use a rather simple gradient-based approach,
+where the nuclear norm is handled in closed form by taking an SVD
+and soft-thresholding the eigenvalues \cite{donoho95soft,cai10soft}.
 
-Second, given a matrix $M_2$ and tensor $M_3$ of the form in \refeqn{Mp},
-\citet{AnandkumarGeHsu2012} showed that due to symmetry of $M_2$ and $M_3$,
-we can efficiently perform tensor factorization of the whitened
-version of $M_3$.  The eigenvalues and eigenvectors
-directly yield the parameters $\pi$ and
-$\{\beta_h\}$.
-See \sectionref{sec:tensor-power} for details.
-%\citet{AnandkumarGeHsu2012} showed that given $M_2$ and $M_3$
-%of the form in \refeqn{Mp},
-%the robust tensor power method can be employed to recover $\pi$ and
-%$\{\beta_h\}$.
+% Tensor factorization
+Having estimated the compound parameters $M_2$ and $M_3$,
+it remains to recover the original parameters $\theta$.
+\citet{AnandkumarGeHsu2012} showed that for $M_2$ and $M_3$ of
+the forms in \refeqn{Mp}, it is possible to efficiently accomplish this.
+Specifically, we first compute a whitening matrix based on the SVD of $M_2$
+and use that to construct a tensor $T = M_3(W, W, W)$ whose factors are orthogonal.
+We can use the robust tensor power method to compute all the
+eigenvalues and eigenvectors of $T$, from which it is easy to recover
+the parameters $\pi$ and $\{\beta_h\}$.
+
+% Unmixing
+At a conceptual level, Spectral Experts bears some resemblence to the unmixing
+algorithm for estimation of restricted PCFGs
+\cite{hsu12identifiability}.
+In that work, the observations (moments) provided a linear combination over
+the compound parameters.  ``Unmixing'' involves solving for the compound
+parameters by inverting a mixing matrix.  In this work,
+each data point (appropriately transformed) provides a noisy slice of the
+compound parameters; retrieving the compound parameters is more involved.
+
+% Signal
+The idea of performing low-rank regression on $y^2$ has been explored
+in the context of signal recovery from magnitude measurements
+\cite{candes11phaselift,ohlsson12phase}.
+There, the actual observed response was $y^2$,
+whereas in our case, we delibrately construct powers $y,y^2,y^3$
+to identify the parameters.
 
 %\citet{AnandkumarGeHsu2012} describes an approach that uses
 %rotates $M_3$ to an orthogonal basis by using the whitening transform of
@@ -147,25 +159,27 @@ See \sectionref{sec:tensor-power} for details.
   \caption{Spectral Experts}
   \label{algo:spectral-experts}
   \begin{algorithmic}[1]
-    \INPUT Data $\mathcal{D} = \{ (\xn{1}, \yn{1}), \cdots, (\xn{n}, \yn{n}) \}$.
-    \OUTPUT Parameters $\hat\theta = (\hat \pi, [\hat \beta_1 \mid \cdots \mid \hat \beta_k], \hat\sigma^2)$.
+    \INPUT Data $\mathcal{D}_r = \{ (\xn{1}, \yn{1}), \cdots, (\xn{n}, \yn{n}) \}$, $r = 1, 2, 3$.
+    \OUTPUT Parameters $\hat\theta = (\hat \pi, [\hat \beta_1 \mid \cdots \mid \hat \beta_k])$.
     \STATE Estimate compound parameters $M_2, M_3$ using \textbf{low-rank regression}:
     \begin{align}
-      &[\hat M_2, \hat \sigma^2] = \arg\min_{M_2,\sigma^2} \label{eqn:estimateM2} \\
-      &\quad\frac{1}{2n} \sum_{(x,y) \in \sD} (\innerp{M_2}{x\tp{2}} + \sigma^2 - y^2)^2 + \lambda_n^{(2)} \|M_2\|_*, \nonumber \\
-       &[\hat M_3, \hat S_1] = \arg\min_{M_3,S_1} \label{eqn:estimateM3} \\
-       &\quad\frac{1}{2n} \sum_{(x,y) \in \sD} (\innerp{M_3}{x\tp{3}} + \innerp{S_1}{x} - y^3)^2 + \lambda_n^{(3)} \|M_3\|_*. \nonumber
+      &\hat M_1 = \arg\min_{M_1} \label{eqn:estimateM1} \\
+      &\quad\frac{1}{2n} \sum_{(x,y) \in \sD_1} (\innerp{M_1}{x\tp{2}} - y)^2, \nonumber \\
+      &\hat M_2 = \arg\min_{M_2} \label{eqn:estimateM2} \\
+      &\quad\frac{1}{2n} \sum_{(x,y) \in \sD_2} (\innerp{M_2}{x\tp{2}} + \sigma^2 - y^2)^2 + \lambda_n^{(2)} \|M_2\|_*, \nonumber \\
+      &\hat M_3 = \arg\min_{M_3} \label{eqn:estimateM3} \\
+      &\quad\frac{1}{2n} \sum_{(x,y) \in \sD_3} (\innerp{M_3}{x\tp{3}} + 3 \sigma^2\innerp{\hat M_1}{x} - y^3)^2 + \lambda_n^{(3)} \|M_3\|_*. \nonumber
     \end{align}
-    \STATE Estimate the coefficients $\{\beta_h\}$ using \textbf{tensor factorzation}:
+    \STATE Estimate the parameters $\theta = (\pi, B)$ using \textbf{tensor factorzation}:
     \begin{enumerate}
       \item [(a)] Compute whitening matrix $W \in \Re^{d \times k}$ (such that $W^\top
       \hat M_2 W = I$) using SVD.
-      \item [(b)] Compute the eigenvalues $\{\lambda_h\}_{h=1}^k$
+      \item [(b)] Compute the eigenvalues $\{a_h\}_{h=1}^k$
       and eigenvectors $\{v_h\}_{h=1}^k$
       of the whitened tensor $M_3(W, W, W) \in \Re^{k \times k \times k}$
       by using the robust tensor power method.
-    \item [(c)] Set parameter estimates $\hat\pi_h = \frac{1}{\lambda_h^2}$
-    and $\hat\beta_h = (W^{\top})^\dagger (\lambda_h v_h)$.
+    \item [(c)] Set parameter estimates $\hat\pi_h = \frac{1}{a_h^2}$
+    and $\hat\beta_h = (W^{\top})^\dagger (a_h v_h)$.
     \end{enumerate}
   \end{algorithmic}
 \end{algorithm}
@@ -173,64 +187,66 @@ See \sectionref{sec:tensor-power} for details.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Theoretical results}
 
-Our main theoretical result shows that Spectral Experts returns
-consistent parameter estimates (see Appendix
+In this section, we conduct a theoretical analysis of Spectral Experts.
+In particular, we prove that it enjoys consistent parameter estimates.
 \begin{theorem}[Convergence of Spectral Experts]
-Let $\sD$ consist of $n$ i.i.d. points drawn from the mixture
-of linear regressions model with parameter $\theta^*$.
-Assume that $\E[[1,\unfold(x\tp{2})]\tp{2}] \succ 0$ 
-and $\E[[x,\unfold(x\tp{3})]\tp{2}] \succ 0$.
-Then the parameter estimates $\hat\theta$ returned by
-\algorithmref{algo:spectral-experts}, with the columns appropriate permuted,
-satisfies $\sigma^2 \le \epsilon$,
-$\|\hat\pi - \pi^*\|_{\infty} \le \epsilon$
+Each $\sD_p$ (for $p = 1, 2, 3$) consists of $n$ i.i.d. points drawn from the mixture
+of linear regressions model with parameter $\theta^*$
+(having three independent copies simplifies the analysis).
+Assume that $\E[\unfold(x\tp{2})\tp{2}] \succ 0$ 
+and $\E[\unfold(x\tp{3})\tp{2}] \succ 0$.
+Let $\|x\|_2 \le R$ with probability $1$
+and let $\|\beta_h\|_2 \le L$ for all $h \in [k]$.
+There exists universal constants $c_1,c_2$ such that
+if the number of samples is
+$n \ge \frac{c_1 k d^2 L R}{\epsilon}$
+and $\lambda_n^{(2)} \ge \frac{c_2 L R}{\sqrt{n}}$,
+and $\lambda_n^{(3)} \ge \frac{c_3 L R}{\sqrt{n}}$,
+then the parameter estimates $\hat\theta$ returned by
+\algorithmref{algo:spectral-experts} (with the columns appropriate permuted)
+satisfies 
+$\|\hat\pi - \pi^*\|_{\infty} \le \frac{\epsilon}{???}$
 and for all $h \in [k]$,
-$\|\hat\beta_h - \beta^*_h\| \le \epsilon$,
-for some error tolerance $\epsilon = O(\frac{kd^2}{n (\min_h \pi_h^*)})$.
+$\|\hat\beta_h - \beta^*_h\|_2 \le \epsilon ???$,
 \end{theorem}
 \begin{proof}
 Let $T^* = M_3^*(W^*, W^*, W^*)$.
 By Theorem 5.1 of \cite{AnandkumarGeHsu2012},
+Need to convert error from $\epsilon$
+hit by $(W^\top)^\dagger$
 \end{proof}
-
-% Method of moments interpretation
-% This is garbage
-%Though we have motivated Spectral Experts using regression on powers
-%of $y$ given powers of $x$,
-%we can also think of the algorithm in terms of
-%the method of moments.  Specifically,
-%the optimality conditions for the regression of $M_2$ and $M_3$ are:
-%\begin{align}
-%\E[x\tp{2} (\innerp{M_2}{x\tp{2}} + \sigma^2 - y^2)] = 0, \\
-%\E[x\tp{3} (\innerp{M_3}{x\tp{3}} + 3 \sigma^2 \innerp{M_1}{x} - y^3)] = 0.
-%\end{align}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Identifiability}
 
 In ordinary linear regression, the regression coefficients are identifiable
-only if the data has full rank: $\E[x\tp{2}] \succ 0$.
-However, in mixture of linear regressions.
+if and only if the data has full rank: $\E[x\tp{2}] \succ 0$.
+However, in mixture of linear regressions, this is insufficient.  
+For example, suppose $x = (1, t, \cdots, t^p)$, 
+the common polynomial basis expansion.
+Regressing on all powers up to $p$ yield at most $3$.
 
-The mixture of linear regressions model is identifiable subject to
-permutations of the components. However, our approach
-employs regression on $x\tp{2}$ and $x\tp{3}$, and thus requires
-$\mathcal{X} \otimes \mathcal{X}$ and $\mathcal{X} \otimes \mathcal{X}
-\otimes \mathcal{X}$ to be linearly independent modulo symmetry. We call
-these condition {\em quadratic} and {\em cubic} independence.
+%$1, x_1, x_1^2, \dots, x_1^p$ is
+%neither quadratically nor cubically independent because the product
+%space is strictly a subset of $\Re^{\frac{d (d-1)}{2}}$ since it
+%contains $x_1 \times x_1 = x_1^2 \times 1$, and $x_1 \times x_1 \times
+%x_1 = x_1^2 \times x_1 \times 1 = x_1^3 \times 1 \times 1$.
+%In fact, the
+%number of unique terms in $x\tp{p}$ is only of the order of $p \times
+%d$, and hence we will not have enough equations to solve for $M_2$ or
+%$M_3$ unless we consider $p = d^2$ moments.
 
-This condition trivially holds when the space $\mathcal{X}$ consists of
-independent vectors $\{ x_1, x_2, \cdots, x_d \}$. Unfortunately, it
-places some constraints on non-linear featurizations. For example, the
-common polynomial basis expansion, $1, x_1, x_1^2, \dots, x_1^p$ is
-neither quadratically nor cubically independent because the product
-space is strictly a subset of $\Re^{\frac{d (d-1)}{2}}$ since it
-contains $x_1 \times x_1 = x_1^2 \times 1$, and $x_1 \times x_1 \times
-x_1 = x_1^2 \times x_1 \times 1 = x_1^3 \times 1 \times 1$. In fact, the
-number of unique terms in $x\tp{p}$ is only of the order of $p \times
-d$, and hence we will not have enough equations to solve for $M_2$ or
-$M_3$ unless we consider $p = d^2$ moments.
+%The mixture of linear regressions model is identifiable subject to
+%permutations of the components. However, our approach
+%employs regression on $x\tp{2}$ and $x\tp{3}$, and thus requires
+%$\mathcal{X} \otimes \mathcal{X}$ and $\mathcal{X} \otimes \mathcal{X}
+%\otimes \mathcal{X}$ to be linearly independent modulo symmetry. We call
+%these condition {\em quadratic} and {\em cubic} independence.
+
+%This condition trivially holds when the space $\mathcal{X}$ consists of
+%independent vectors $\{ x_1, x_2, \cdots, x_d \}$. Unfortunately, it
+%places some constraints on non-linear featurizations.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
