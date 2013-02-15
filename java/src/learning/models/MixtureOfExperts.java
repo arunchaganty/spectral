@@ -47,7 +47,7 @@ public class MixtureOfExperts implements Serializable {
   protected boolean bias;
   protected NonLinearity nl;
 
-  protected boolean removeThirds = false;
+  public boolean removeThirds = false;
 
   Random rnd = new Random();
 

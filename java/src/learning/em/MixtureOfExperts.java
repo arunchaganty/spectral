@@ -266,6 +266,8 @@ public class MixtureOfExperts implements Runnable {
 
   @Option(gloss="Number of samples to run on (0 for all)")
   public double subsampleN = 0;
+	@Option(gloss = "Remove Thirds")
+	public boolean removeThirds = false;
 
   @Option(gloss="Difference between iterations before stopping") 
   public double eps = 1e-3;
@@ -278,14 +280,24 @@ public class MixtureOfExperts implements Runnable {
               learning.models.MixtureOfExperts.readFromFile( inputPath );
       SimpleMatrix y = data.getValue0().getValue0();
       SimpleMatrix X = data.getValue0().getValue1();
+      learning.models.MixtureOfExperts model = data.getValue1();
+      data = null;
 
       // Choose a subset of the data
-      if( subsampleN > 0 ) {
+      int N = X.numRows();
+      if( removeThirds || subsampleN > N ) {
+        // Possibly sample data with thirds removed
+        model.removeThirds = removeThirds;
+        y = null; X = null; data = null;
+        Pair<SimpleMatrix, SimpleMatrix> yX = model.sample( (int) subsampleN );
+        y = yX.getValue0();
+        X = yX.getValue1();
+      } else if( subsampleN > 0 ) {
         y = y.extractMatrix(0, SimpleMatrix.END, 0, (int) subsampleN);
         X = X.extractMatrix(0, (int) subsampleN, 0, SimpleMatrix.END);
       }
+      N = X.numRows();
 
-      learning.models.MixtureOfExperts model = data.getValue1();
       SimpleMatrix betas = model.getBetas();
 
       // Recover paramaters

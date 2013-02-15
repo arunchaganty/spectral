@@ -56,10 +56,14 @@ public class SpectralExperts implements Runnable {
 
   @Option(gloss = "Adjust the regularizer to be 1/sqrt(N) of the given number")
   public boolean adjustReg = true;
-  @Option(gloss = "Ridge Regression Regularization")
-  public double ridgeReg = 1e-5;
-  @Option(gloss = "Trace Norm Regularization")
-  public double traceReg = 1e-4;
+  @Option(gloss = "Ridge Regression Regularization (Pairs)")
+  public double ridgeReg2 = 5e1;
+  @Option(gloss = "Ridge Regression Regularization (Triples) (<0 => ridgeReg2*10)")
+  public double ridgeReg3 = -1;
+  @Option(gloss = "Trace Norm Regularization (Pairs)")
+  public double traceReg2 = 1e0;
+  @Option(gloss = "Trace Norm Regularization (Triples)")
+  public double traceReg3 = -1;
   @Option(gloss = "Scale Data?")
   public boolean scaleData = false;
   @Option(gloss = "Run EM on spectral output?")
@@ -76,6 +80,10 @@ public class SpectralExperts implements Runnable {
   public int lowRankIters = 1000;
   @Option(gloss = "Adjust the bias factor of <M_1, x>")
   public boolean adjustBias = true;
+
+	@Option(gloss = "Remove Thirds")
+	public boolean removeThirds = false;
+
 	@Option(gloss = "Number of Threads to use")
 	public int nThreads = 1;
 	@Option(gloss = "Random seed")
@@ -342,8 +350,8 @@ public class SpectralExperts implements Runnable {
     SimpleMatrix b = y.transpose();
     SimpleMatrix bEntries;
     // Regularize the matrix
-    if( ridgeReg > 0.0 ) {
-      Pair<SimpleMatrix, SimpleMatrix> Ab = regularize(A, b, ridgeReg);
+    if( ridgeReg2 > 0.0 ) {
+      Pair<SimpleMatrix, SimpleMatrix> Ab = regularize(A, b, ridgeReg2);
       A = Ab.getValue0(); b = Ab.getValue1();
       bEntries = A.solve(b);
     }
@@ -408,7 +416,7 @@ public class SpectralExperts implements Runnable {
 
       ProximalGradientSolver solver = new ProximalGradientSolver();
       // Tweak the response variables to give an unbiased estimate
-      PhaseRecovery problem = new PhaseRecovery(y, X, traceReg);
+      PhaseRecovery problem = new PhaseRecovery(y, X, traceReg2);
       DenseMatrix64F Pairs_ = solver.optimize(problem, Pairs.getMatrix(), lowRankIters);
       Pairs = SimpleMatrix.wrap(Pairs_);
 
@@ -470,8 +478,8 @@ public class SpectralExperts implements Runnable {
     //System.out.println(A);
     SimpleMatrix b = y.transpose();
     // Regularize the matrix
-    if( ridgeReg > 0.0 ) {
-      Pair<SimpleMatrix, SimpleMatrix> Ab = regularize(A, b, ridgeReg);
+    if( ridgeReg3 > 0.0 ) {
+      Pair<SimpleMatrix, SimpleMatrix> Ab = regularize(A, b, ridgeReg3);
       A = Ab.getValue0(); b = Ab.getValue1();
     }
     LogInfo.logsForce( "Condition Number for Triples: " + A.conditionP2());
@@ -522,7 +530,7 @@ public class SpectralExperts implements Runnable {
       if( analysis != null ) analysis.reportTriples0(Triples);
 
       ProximalGradientSolver solver = new ProximalGradientSolver();
-      TensorRecovery problem = new TensorRecovery(y, X, 10 * traceReg);
+      TensorRecovery problem = new TensorRecovery(y, X, traceReg3);
       DenseMatrix64F Triples_ = solver.optimize(problem, Triples.unfold(0).getMatrix(), lowRankIters);
       FullTensor.fold(0, Triples_, Triples);
       LogInfo.end_track("low-rank-triples");
@@ -545,10 +553,15 @@ public class SpectralExperts implements Runnable {
     int N = X.numRows();
     int D = X.numCols();
 
+    if( ridgeReg3 < 0 ) ridgeReg3 = ridgeReg2 * 10;
+    if( traceReg3 < 0 ) traceReg3 = traceReg2 * 10;
     // Adjust the regularizer for N
     if(adjustReg) {
-      ridgeReg /= Math.sqrt(N);
-      traceReg /= Math.sqrt(N);
+      // AH don't scale ridgeReg!
+      //ridgeReg2 /= Math.sqrt(N); //Math.pow(N, 1.0/2);
+      //ridgeReg3 /= Math.sqrt(N); //Math.pow(N, 1.0/2);
+      traceReg2 /= Math.sqrt(N); //N; //Math.pow(N, 1.0/3);
+      traceReg3 /= Math.sqrt(N); //N; //Math.pow(N, 1.0/3);
     }
 
     // Set the seed
@@ -622,7 +635,9 @@ public class SpectralExperts implements Runnable {
 
       // Choose a subset of the data
       int N = X.numRows();
-      if( subsampleN > N ) {
+      if( removeThirds || subsampleN > N ) {
+        // Possibly sample data with thirds removed
+        model.removeThirds = removeThirds;
         y = null; X = null; data = null;
         Pair<SimpleMatrix, SimpleMatrix> yX = model.sample( (int) subsampleN );
         y = yX.getValue0();
