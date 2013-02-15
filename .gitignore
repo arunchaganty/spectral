@@ -33,7 +33,7 @@ data/
 java/data
 doc/logs/render
 *.dot
-*.png
+#*.png
 *.hmm
 *.mat
 *.dat
