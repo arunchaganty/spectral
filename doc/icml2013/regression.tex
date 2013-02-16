@@ -94,8 +94,9 @@ First, let us lower bound the restricted strong convexity parameter $\kappa(\opX
 \begin{lemma}[lower bound on restricted strong convexity]
 \label{lem:lowRankLower}
 Let $\Sigma_p \eqdef \E[\cvec(x\tp{p})\tp{2}]$.
-With probability at least $1-\delta$,
-$$\kappa(\opX) = \Omega\left(\sigmamin(\Sigma_p) - d^p R^{p} \sqrt{\frac{p \log(d) \log (1/\delta)}{n}}\right).$$
+If $$n = \Omega \left( p ~ d^{2p} \log(d) \frac{R^{2p} \log(1/\delta)}{\sigmamin(\Sigma_p)^2} \right),$$
+with probability at least $1-\delta$,
+$$\kappa(\opX) \ge \frac{\sigmamin(\Sigma_p)}{2}.$$
 \end{lemma}
 \begin{proof}
 Expanding the definition of the observation operator:
@@ -108,14 +109,14 @@ $\frac{1}{2n} \|\opX_p(\Delta)\|_2^2
 \ge \frac{1}{2} \|\Delta\|_F^2 \sigmamin(\hat\Sigma_p)$.
 It remains to show that $\sigmamin(\hat\Sigma_p)$ and $\sigmamin(\Sigma_p)$ are close.
 To do this, we first apply Hoeffding's inequality elementwise.
-Since $\|x\| \le R$, we have that for each element $(i,j)$,
-$|(\hat\Sigma_p)_{ij} - (\Sigma_p)_{ij}| = O(R^{p}\sqrt{\frac{\log (1/\delta)}{n}})$.
+Since $\|x\|_2 \le R$, we have that for each element $(i,j)$,
+$|(\hat\Sigma_p)_{ij} - (\Sigma_p)_{ij}| = O(R^{2p}\sqrt{\frac{\log (1/\delta)}{n}})$.
 Applying the union bound over the $d^{2p}$ elements of $\hat\Sigma_p - \Sigma_p$,
 we have that the max norm is bounded:
-$\|\hat\Sigma_p - \Sigma_p\|_\text{\rm max} = O(R^{p} \sqrt{\frac{p \log(d) \log (1/\delta)}{n}})$.
+$\|\hat\Sigma_p - \Sigma_p\|_\text{\rm max} = O(R^{2p} \sqrt{\frac{p \log(d) \log (1/\delta)}{n}})$.
 The max norm times $d^p$ upper bounds the Frobenius norm, which upper bounds the operator norm, so we have that
-$\|\hat\Sigma_p - \Sigma_p\|_\text{\rm op} = O(d^p R^{p} \sqrt{\frac{p \log(d) \log (1/\delta)}{n}})$.
-Using the fact that $\sigmamin(\hat\Sigma_p) = \sigmamin(\Sigma_p) + \|\hat\Sigma_p - \Sigma_p\|_\text{\rm op}$
+$\|\hat\Sigma_p - \Sigma_p\|_\text{\rm op} = O(d^p R^{2p} \sqrt{\frac{p \log(d) \log (1/\delta)}{n}})$.
+Using the fact that $\sigmamin(\hat\Sigma_p) \ge \sigmamin(\Sigma_p) - \|\hat\Sigma_p - \Sigma_p\|_\text{\rm op}$
 yields the result.
 \end{proof}
 
