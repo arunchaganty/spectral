@@ -101,12 +101,12 @@ which we call Spectral Experts.
 We prove that our algorithm yields consistent parameter estimates under certain
 new identifiability conditions.  We also conduct an empirical evaluation
 of our technique to understand its statistical properties (\sectionref{sec:evaluation}).
-In particular, we find that in the low data regime,
-Spectral Experts underperforms EM due to its weaker statistical efficiency,
-but in the high data regime,
-Spectral Experts outperforms EM.
-We get the best results by using Spectral Experts as an initialization
-to EM.
+%In particular, we find that in the low data regime,
+%but in the high data regime,
+%Spectral Experts outperforms EM.
+While Spectral Experts generally does not outperform EM, presumably due to its
+weaker statistical efficiency, it serves as an effective initialization for EM,
+significantly outperforming EM with random initialization.
 
 %We evaluate our algorithm on simulated linear and non-linear data to
 %understand how well the algorithm scales with the number of components,
