@@ -10,7 +10,7 @@ $M_3$ using a proximal subgradient descent
 algorithm.%\cite{candes11phaselift,tomioka2010estimation}. (Note sure about this citation and not required?)
 The algorithm
 was initialized with the regularized least squares solution and was run
-for 500 steps or till convergence. Both regularization parameters,
+for 500 iterations or until convergence up to a tolerance of $10^{-3}$. Both regularization parameters,
 $\lambda_n^{(2)}$ and, $\lambda_n^{(3)}$ were annealed as $\frac{1}{n}$. 
 
 As a baseline, we also implemented EM with two different
@@ -20,10 +20,10 @@ we initialized EM with the starting points given by Spectral Experts.
 
 \paragraph{Datasets}
 
-We generated synthetic data using covariates from the $b$-dimensional
-unit hyper cube $\{-1,1\}^b$ and considered non-linear featurizations of
+We generated synthetic data using covariates $x$ sampled uniformly over the $b$-dimensional
+unit hypercube $[-1,1]^b$ and considered non-linear featurizations of
 this data that conformed to the identifiability criteria discussed in
-\sectionref{sec:algo}. The $\beta$ were drawn from a standard Gaussian.  
+\sectionref{sec:algo}. The coefficients $\{\beta_h\}$ were drawn from a standard Gaussian.  
 
 As an example, one set of features we considered in the uni-dimensional
 setting were $\{1, x, x^4, x^7\}$. The data and the curves fit using
@@ -41,7 +41,7 @@ this, EM converged to the global optima only 13\% of the time.
     \includegraphics[width=0.50\textwidth]{figures/curves-vis/1-8-3-em.pdf}}
 %  \subfigure[Spectral + EM]{
 %    \includegraphics[width=0.34\textwidth]{figures/curves-vis/1-8-3-spem.png}}
-  \caption{A comparison between SpectralExperts and EM. The dashed lines
+  \caption{A comparison between Spectral Experts and EM. The dashed lines
   on the left denote the solution recovered by Spectral Experts. Whilst
   not a perfect fit, it provides an good initialization for EM to find
   the true global minima. The dotted lines on the right show different
