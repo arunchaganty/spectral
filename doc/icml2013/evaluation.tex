@@ -57,7 +57,7 @@ this, EM converged to the correct basin of attraction only 13\% of the time.
 %$k = 5$
 
 \begin{table*}[p]
-\caption{Parameter Recovery Error $\|\theta^* - \hat \theta\|_F$ ($N = 500,000$).}
+\caption{Parameter Recovery Error $\|\theta^* - \hat \theta\|_F$ ($n = 500,000$).}
 \label{tbl:parameter-recovery}
 \vskip 0.15in
 \begin{center}
@@ -67,7 +67,7 @@ this, EM converged to the correct basin of attraction only 13\% of the time.
   \begin{tabular}{ r r r c c c }
 \hline
 \abovespace\belowspace
-Variables ($b$) & Features ($D$) & Components ($K$) & Spectral & EM & Spectral + EM \\
+Variables ($b$) & Features ($d$) & Components ($k$) & Spectral & EM & Spectral + EM \\
 \hline
 \abovespace
 %$\{1$, $ x_1$, $ x_1^4\}$ 
@@ -107,7 +107,7 @@ Variables ($b$) & Features ($D$) & Components ($K$) & Spectral & EM & Spectral +
 \tableref{tbl:parameter-recovery} presents the Frobenius norm of the
 difference between true and estimated parameters for the model, averaged
 over 20 different random instances for each feature set and 10 attempts
-for each instance. The experiments were run using $N = 500,000$ samples.
+for each instance. The experiments were run using $n = 500,000$ samples.
 
 One of the main reasons for the high variance is the variation across
 random instances; some are easy for EM to find the global minima and
@@ -118,7 +118,7 @@ EM.
 \begin{figure}[th]
   \centering
   \includegraphics[width=0.50\textwidth]{figures/hist.pdf}
-  \caption{Histogram over recovery errors between the three algorithms. $b = 1, d = 4, k = 3, N = 500,000$}
+  \caption{Histogram over recovery errors between the three algorithms. $b = 1, d = 4, k = 3, n = 500,000$}
   \label{fig:hist}
 \end{figure}
 
@@ -142,7 +142,7 @@ time and shows considerably higher variance.
   \subfigure[Misspecified Data]{
     \includegraphics[width=0.50\textwidth]{figures/vs-n/1-8-3-3-rm.pdf}
   }
-  \caption{Recovery error vs $n$  ($b = 1, d = 5, K = 3, N = 500,000$).}
+  \caption{Recovery error vs $n$  ($b = 1, d = 5, k = 3, n = 500,000$).}
   \label{fig:vs-n}
 \end{figure*}
 
@@ -158,7 +158,7 @@ trade-off between statistical and computational error.
 \paragraph{Misspecified Data}
 
 \begin{table*}[t]
-\caption{Parameter Recovery Error $\|\theta^* - \hat \theta\|_F$ with misspecified data ($N = 500,000$).}
+\caption{Parameter Recovery Error $\|\theta^* - \hat \theta\|_F$ with misspecified data ($n = 500,000$).}
 \label{tbl:parameter-recovery-mis}
 \vskip 0.15in
 \begin{center}
@@ -168,7 +168,7 @@ trade-off between statistical and computational error.
   \begin{tabular}{ r r r c c c }
 \hline
 \abovespace\belowspace
-Variables ($b$) & Features ($d$) & Components ($K$) & Spectral & EM & Spectral + EM \\
+Variables ($b$) & Features ($d$) & Components ($k$) & Spectral & EM & Spectral + EM \\
 \hline
 \abovespace
  1 & 4 & 2 &  2.94 $\pm$ 1.52 & 0.29 $\pm$ 0.85 &  {\bf 0.22 $\pm$ 0.72} \\
