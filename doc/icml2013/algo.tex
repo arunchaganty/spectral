@@ -214,16 +214,17 @@ Each dataset $\sD_p$ (for $p = 1, 2, 3$) consists of $n$ i.i.d. points drawn fro
 of linear regressions model with parameter $\theta^*$
 (having three independent copies simplifies the analysis).
 Let $\|x\|_2 \le R$ with probability $1$
-and let $\|\beta_h\|_2 \le L$ for all $h \in [k]$.
+and let $\|\beta_h^*\|_2 \le L$ for all $h \in [k]$.
 Let $\Sigma_p \eqdef \E[\cvec(x\tp{p})\tp{2}]$, 
 and assume $\Sigma_p \succ 0$ for each $p \in \{1,2,3\}$.
 Assume $d \ge k$.
 Suppose the number of samples is
-$n = \Omega(d^p R^p \sigmamin(\Sigma_p)^{-1} \sqrt{p \log(d) \log(1/\delta)})$ and
-$n = \Omega\left( \sigma^6 L^6 R^12 k \sigmamin(\Sigma_p)^{-2} \frac{\log^3 (1/\delta)}{\epsilon^2} \right)$,
-and that the regularization strengths $\lambda_n^{(2)}$ and $\lambda_n^{(3)}$ are
-$\Omega(\sigma^3 L^3 R^6 \sqrt{\frac{\log(1/\delta)}{n}})$,
-then the parameter estimates $\hat\theta$ returned by
+$n = \max(n_1,n_2)$
+where $n_1 = \Omega(d^p R^p \sigmamin(\Sigma_p)^{-1} \sqrt{p \log(d) \log(1/\delta)})$ and
+$n_2 = \Omega\left( \sigma^6 L^6 R^12 k \sigmamin(\Sigma_p)^{-2} \frac{\log^3 (1/\delta)}{\epsilon^2} \right)$.
+If the regularization strengths $\lambda_n^{(2)}$ and $\lambda_n^{(3)}$ are
+set to $\Omega(\sigma^3 L^3 R^6 \sqrt{\frac{\log(1/\delta)}{n}})$,
+then the parameter estimates $\hat\theta = (\hat\pi, \hat B)$ returned by
 \algorithmref{algo:spectral-experts} (with the columns appropriate permuted)
 satisfies 
 $\|\hat\pi - \pi^*\|_{\infty} \le \epsilon$
@@ -234,7 +235,7 @@ $\|\hat\beta_h - \beta^*_h\|_2 \le \frac{\epsilon}{\pi_h^*}$.
 \begin{proof}
 By \reflem{lowRank} along with \reflem{lowRankLower} and \reflem{lowRankUpper} (discussed below),
 we can control the Frobenius norm of the parameter estimates:
-If $n = \Omega(d^p R^p \sigmamin(\Sigma_p)^{-1} \sqrt{p \log(d) \log(1/\delta)})$, then
+If $n \ge n_1$, then
 \begin{align}
   \|\hat M_p - M_p\|_F = O\left( \sigma^3 L^3 R^6 k^{\frac12} \sigmamin(\Sigma_p)^{-1} \sqrt{\frac{\log^3 (1/\delta)}{n}} \right).
   %\|\hat M_p - M_p\|_F = O\left( \frac{\sigma^3 L^3 R^6 \sqrt{k} \log^3 (1/\delta)}{\sqrt{n} (\sigmamin(\Sigma_p) - d^p R^p \sqrt{\frac{p \log(d) \log(1/\delta)}{n}}} \right).
