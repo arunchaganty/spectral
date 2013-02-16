@@ -35,7 +35,7 @@ the parameters recovered using Spectral Experts are shown in
 \figureref{fig:curves}. We note that even on well-separated data such as
 this, EM converged to the correct basin of attraction only 13\% of the time.
 
-\begin{figure*}[t]
+\begin{figure*}[p]
   \centering
   \subfigure[Spectral]{
     \includegraphics[width=0.50\textwidth]{figures/curves-vis/1-8-3-specm.pdf}}
@@ -56,7 +56,7 @@ this, EM converged to the correct basin of attraction only 13\% of the time.
 %$n = 10^6$
 %$k = 5$
 
-\begin{table*}[t]
+\begin{table*}[p]
 \caption{Parameter Recovery Error $\|\theta^* - \hat \theta\|_F$ ($N = 500,000$).}
 \label{tbl:parameter-recovery}
 \vskip 0.15in
@@ -115,7 +115,7 @@ others more difficult. In general, while the spectral algorithm did not
 recover parameters extremely well, it provided a good initialization for
 EM.
 
-\begin{figure}[tb]
+\begin{figure}[th]
   \centering
   \includegraphics[width=0.50\textwidth]{figures/hist.pdf}
   \caption{Histogram over recovery errors between the three algorithms. $b = 1, d = 4, k = 3, N = 500,000$}
@@ -124,7 +124,7 @@ EM.
 
 To study the stability of the solutions returned by the spectral method,
 consider the histogram in \figureref{fig:hist}, which shows the recovery
-errors of the algorithms over 170 attempts a dataset with $b = 1, d = 4,
+errors of the algorithms over 170 attempts on a dataset with $b = 1, d = 4,
 k = 3$. Typically, the spectral algorithm returned a stable solution.
 When these parameters were close enough to the true parameters, we found
 that EM almost always converged to the global optima. Randomly
@@ -133,7 +133,7 @@ time and shows considerably higher variance.
 
 \paragraph{Effect of number of data points}
 
-\begin{figure*}[tb]
+\begin{figure*}[p]
   \centering
   \subfigure[Well Data]{
     \includegraphics[width=0.50\textwidth]{figures/vs-n/1833-decay.pdf}
@@ -149,15 +149,15 @@ time and shows considerably higher variance.
 In \figureref{fig:vs-n}, we show how the recovery error varies as we get
 more data. Each data point shows the mean error over 10 attempts, with
 error bars. We note that the recovery performance of EM does not
-particularly improve; this is expected because of the problem of local
-optima. The spectral algorithm's error decays slowly, and as it gets
-closer to zero, EM initialized at the spectral parameters finds the true
-parameters more often as well. This behavior highlights the trade-off
-between statistical and computational error. 
+particularly improve; this suggests that EM continues to get stuck in
+a local optima. The spectral algorithm's error decays slowly, and as it
+gets closer to zero, EM initialized at the spectral parameters finds the
+true parameters more often as well. This behavior highlights the
+trade-off between statistical and computational error. 
 
 \paragraph{Misspecified Data}
 
-\begin{table*}[tb]
+\begin{table*}[t]
 \caption{Parameter Recovery Error $\|\theta^* - \hat \theta\|_F$ with misspecified data ($N = 500,000$).}
 \label{tbl:parameter-recovery-mis}
 \vskip 0.15in
