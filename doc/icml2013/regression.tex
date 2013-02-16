@@ -159,10 +159,13 @@ First, to bound $\hat\E_3[\epsilon^3]$, we use Lemma 19 of \cite{hsu13spherical}
 Second, the additional bias is small by the previous bound (and it is constructed on $\sD_1$, which is independent of $\sD_3$
 used to construct $\hat M_3$.
 Therefore, we incur another $O(\sigma^2 \cdot R \sigma \sqrt{\frac{\log(1/\delta_1)}{n}})$.
-Handling the other terms using conventional means
+We can handle the other terms using conventional means.
+Combining everything, we obtain
 $\|\hat\E_3[\eta_3(x) x\tp{3}]\|_\op = O(R^3 (L^3 R^3 + \sigma L^2 R^2 + \sigma^2 L R + \sigma^3 + \sigma^3 R) \sqrt{\frac{\log^3(1/\delta_1)}{n}})$.
-Finally, taking $\delta_1 = \delta/3$, and taking the union bound,
-we get our result, where we are bounding quantities fairly crudely for the sake of simplicity.
+
+Finally, taking $\delta_1 = \delta/3$, and taking the union bound over the bounds for $p \in \{1,2,3\}$,
+we get our result.
+Note that we are bounding quantities fairly crudely for the sake of simplicity.
 \end{proof}
 
 With these lemmas in hand, we now give the proof of \refthm{convergence}.
