@@ -1,4 +1,4 @@
-\paragraph{Low-rank Regression}
+\paragraph{Low-rank regression}
 %\label{sec:regression}
 
 We now bound the error of
@@ -164,3 +164,20 @@ $\|\hat\E_3[\eta_3(x) x\tp{3}]\|_\op = O(R^3 (L^3 R^3 + \sigma L^2 R^2 + \sigma^
 Finally, taking $\delta_1 = \delta/3$, and taking the union bound,
 we get our result, where we are bounding quantities fairly crudely for the sake of simplicity.
 \end{proof}
+
+With these lemmas in hand, we now give the proof of \refthm{convergence}.
+\begin{proof}
+By \reflem{lowRank} along with \reflem{lowRankLower} and \reflem{lowRankUpper} (discussed below),
+we can control the Frobenius norm of the parameter estimates:
+If $n \ge n_1$, then
+\begin{align}
+  \|\hat M_p - M_p\|_F = O\left( \sigma^3 L^3 R^6 k^{\frac12} \sigmamin(\Sigma_p)^{-1} \sqrt{\frac{\log^3 (1/\delta)}{n}} \right).
+  %\|\hat M_p - M_p\|_F = O\left( \frac{\sigma^3 L^3 R^6 \sqrt{k} \log^3 (1/\delta)}{\sqrt{n} (\sigmamin(\Sigma_p) - d^p R^p \sqrt{\frac{p \log(d) \log(1/\delta)}{n}}} \right).
+\end{align}
+The Frobenius norm upper bounds the operator norm,
+so we can directly apply Theorem 5.1 of \cite{AnandkumarGeHsu2012}.
+%Let $T^* = M_3^*(W^*, W^*, W^*)$.
+%Need to convert error from $\epsilon$
+%hit by $(W^\top)^\dagger$
+\end{proof}
+
