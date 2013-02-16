@@ -10,8 +10,8 @@ $M_3$ using a proximal subgradient descent
 algorithm.%\cite{candes11phaselift,tomioka2010estimation}. (Note sure about this citation and not required?)
 The algorithm
 was initialized with the regularized least squares solution and was run
-for 500 iterations or until convergence up to a tolerance of $10^{-3}$. Both regularization parameters,
-$\lambda_n^{(2)}$ and, $\lambda_n^{(3)}$ were annealed as $\frac{1}{n}$. 
+for 500 iterations or until convergence up to a tolerance of $10^{-3}$.
+%Both regularization parameters, $\lambda_n^{(2)}$ and, $\lambda_n^{(3)}$ were annealed as $\frac{1}{n}$. 
 
 As a baseline, we also implemented EM with two different
 initializations. In the first, we used $\beta$s with random standard
@@ -37,18 +37,17 @@ this, EM converged to the correct basin of attraction only 13\% of the time.
 
 \begin{figure*}[p]
   \centering
-  \subfigure[Spectral]{
+  \subfigure[Spectral, Spectral+EM]{
     \includegraphics[width=0.50\textwidth]{figures/curves-vis/1-8-3-specm.pdf}}
     \hspace{-2em}
   \subfigure[EM]{
     \includegraphics[width=0.50\textwidth]{figures/curves-vis/1-8-3-em.pdf}}
 %  \subfigure[Spectral + EM]{
 %    \includegraphics[width=0.34\textwidth]{figures/curves-vis/1-8-3-spem.png}}
-  \caption{A comparison between Spectral Experts and EM. The dashed lines
-  on the left denote the solution recovered by Spectral Experts. While
-  not a perfect fit, it provides an good initialization for EM to find
-  the true global minima. The dotted lines on the right show different
-  local optima found by EM on this example.}
+  \caption{Visualization of the parameters estimated by Spectral Experts versus EM.
+  (a) The dashed lines denote the solution recovered by Spectral Experts. While
+  not a perfect fit, it provides an good initialization for EM to further improve the solution (solid lines).
+  (b) The dotted lines show different local optima found by EM.}
   \label{fig:curves}
 \end{figure*}
 
@@ -57,7 +56,11 @@ this, EM converged to the correct basin of attraction only 13\% of the time.
 %$k = 5$
 
 \begin{table*}[p]
-\caption{Parameter Recovery Error $\|\theta^* - \hat \theta\|_F$ ($n = 500,000$).}
+\caption{Parameter error $\|\theta^* - \hat \theta\|_F$ ($n = 500,000$)
+as the number of variables $b$, number of features $d$ and the number of components $k$ increases.
+While Spectral by itself does not produce good parameter estimates, Spectral+EM improves
+over EM significantly.
+}
 \label{tbl:parameter-recovery}
 \vskip 0.15in
 \begin{center}
@@ -135,14 +138,14 @@ time and shows considerably higher variance.
 
 \begin{figure*}[p]
   \centering
-  \subfigure[Well Data]{
+  \subfigure[Well-specified data]{
     \includegraphics[width=0.50\textwidth]{figures/vs-n/1833-decay.pdf}
   }
     \hspace{-2em}
-  \subfigure[Misspecified Data]{
+  \subfigure[Misspecified data]{
     \includegraphics[width=0.50\textwidth]{figures/vs-n/1-8-3-3-rm.pdf}
   }
-  \caption{Recovery error vs $n$  ($b = 1, d = 5, k = 3, n = 500,000$).}
+  \caption{Learning curves: parameter error as a function of the number of samples $n$ ($b = 1, d = 5, k = 3$).}
   \label{fig:vs-n}
 \end{figure*}
 
@@ -158,7 +161,9 @@ trade-off between statistical and computational error.
 \paragraph{Misspecified Data}
 
 \begin{table*}[t]
-\caption{Parameter Recovery Error $\|\theta^* - \hat \theta\|_F$ with misspecified data ($n = 500,000$).}
+\caption{Parameter rrror $\|\theta^* - \hat \theta\|_F$ when the data is misspecified ($n = 500,000$).
+Spectral+EM degrades slightly, but still outperforms EM overall.
+}
 \label{tbl:parameter-recovery-mis}
 \vskip 0.15in
 \begin{center}

@@ -1,10 +1,11 @@
 \section{Conclusion}
 \label{sec:conclusion}
 
-In this paper, we take a first step at developing computationally efficient and
-statistically consistent estimators for discriminative latent-variable models
-by focusing on mixture of linear regressions. We showed that by regressing on
-higher-order powers of the data with a regularizer that encourages low rank
-structure, coupled with an efficient tensor power method, we obtain a very natural algorithm.
-Empirically, our algorithm can outperform EM, and when used to initialize EM,
-yields significantly more accurate and stable results.
+In this paper, we developed a computationally efficient and statistically
+consistent estimator for mixture of linear regressions, a first step at
+tackling discriminative latent-variable models.  Our algorithm, Specral
+Experts, regresses on higher-order powers of the data with a regularizer that
+encourages low rank structure, followed by tensor factorization to recover the
+actual parameters.  Empirically, Spectral Experts generally does not outperform
+EM, but when used to initialize EM, yields significantly more accurate and
+stable results than EM.
