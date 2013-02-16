@@ -24,10 +24,10 @@ Let $\kappa(\opX_p)$ be the restricted strong convexity constant,
 and let $\opX^*_p(\eta_p; \sD) = \sum_{(x,y) \in \sD} \eta_p(x) x\tp{p}$
 be the adjoint.
 
-\paragraph{Restricted strong convexity}
+%\paragraph{Restricted strong convexity}
 
-In this section, we lower bound the restricted strong convexity constant
-$\kappa(\opX_p)$.
+%Let us first lower bound the restricted strong convexity constant
+%$\kappa(\opX_p)$:
 
 %In the previous section, we described an algorithm for the mixture of
 %linear regressions using regression to recover $M_2$ and $M_3$,
@@ -168,9 +168,10 @@ we get our result.
 Note that we are bounding quantities fairly crudely for the sake of simplicity.
 \end{proof}
 
-With these lemmas in hand, we now give the proof of \refthm{convergence}.
+These lemmas allow us to control the compound parameter error.
+We now apply them in the proof of \refthm{convergence}:
 \begin{proof}
-By \reflem{lowRank} along with \reflem{lowRankLower} and \reflem{lowRankUpper} (discussed below),
+By \reflem{lowRank} along with \reflem{lowRankLower} and \reflem{lowRankUpper},
 we can control the Frobenius norm of the parameter estimates:
 If $n \ge n_1$, then
 \begin{align}
@@ -178,7 +179,7 @@ If $n \ge n_1$, then
   %\|\hat M_p - M_p\|_F = O\left( \frac{\sigma^3 L^3 R^6 \sqrt{k} \log^3 (1/\delta)}{\sqrt{n} (\sigmamin(\Sigma_p) - d^p R^p \sqrt{\frac{p \log(d) \log(1/\delta)}{n}}} \right).
 \end{align}
 The Frobenius norm upper bounds the operator norm,
-so we can directly apply Theorem 5.1 of \cite{AnandkumarGeHsu2012}.
+so we can directly apply Theorem 5.1 of \citet{AnandkumarGeHsu2012}.
 %Let $T^* = M_3^*(W^*, W^*, W^*)$.
 %Need to convert error from $\epsilon$
 %hit by $(W^\top)^\dagger$
