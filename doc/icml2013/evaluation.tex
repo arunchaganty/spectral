@@ -20,17 +20,20 @@ we initialized EM with the starting points given by Spectral Experts.
 
 \paragraph{Datasets}
 
-We generated synthetic data using covariates $x$ sampled uniformly over the $b$-dimensional
-unit hypercube $[-1,1]^b$ and considered non-linear featurizations of
-this data that conformed to the identifiability criteria discussed in
-\sectionref{sec:algo}. The coefficients $\{\beta_h\}$ were drawn from a standard Gaussian.  
+We generated synthetic data as follows:
+First, we generated a vector $t$ sampled uniformly over the $b$-dimensional
+unit hypercube $[-1,1]^b$.
+Then, to get the actual covariates $x$, we applied a non-linear function of $t$
+that conformed to the identifiability criteria discussed in
+\sectionref{sec:algo}.
+The coefficients $\{\beta_h\}$ were drawn from a standard Gaussian.  
 
-As an example, one set of features we considered in the uni-dimensional
-setting were $\{1, x, x^4, x^7\}$. The data and the curves fit using
+As an example, one feature map we considered in the one-dimensional
+setting was $x = (1, t, t^4, t^7)$. The data and the curves fit using
 Spectral Experts, EM with random initializations and EM initialized with
-the parameters recovered using spectral experts are shown in
-\figureref{fig:curves}. We note that even on well separated data such as
-this, EM converged to the global optima only 13\% of the time.
+the parameters recovered using Spectral Experts are shown in
+\figureref{fig:curves}. We note that even on well-separated data such as
+this, EM converged to the correct basin of attraction only 13\% of the time.
 
 \begin{figure*}[t]
   \centering
@@ -42,7 +45,7 @@ this, EM converged to the global optima only 13\% of the time.
 %  \subfigure[Spectral + EM]{
 %    \includegraphics[width=0.34\textwidth]{figures/curves-vis/1-8-3-spem.png}}
   \caption{A comparison between Spectral Experts and EM. The dashed lines
-  on the left denote the solution recovered by Spectral Experts. Whilst
+  on the left denote the solution recovered by Spectral Experts. While
   not a perfect fit, it provides an good initialization for EM to find
   the true global minima. The dotted lines on the right show different
   local optima found by EM on this example.}
@@ -101,7 +104,7 @@ Variables ($b$) & Features ($D$) & Components ($K$) & Spectral & EM & Spectral +
 
 \subsection{Results}
 
-\tableref{tbl:parameter-recovery} presents the Fro\"ebenius norm of the
+\tableref{tbl:parameter-recovery} presents the Frobenius norm of the
 difference between true and estimated parameters for the model, averaged
 over 20 different random instances for each feature set and 10 attempts
 for each instance. The experiments were run using $N = 500,000$ samples.
