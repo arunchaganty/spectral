@@ -10,7 +10,7 @@ $M_3$ using a proximal subgradient descent
 algorithm.%\cite{candes11phaselift,tomioka2010estimation}. (Note sure about this citation and not required?)
 The algorithm
 was initialized with the regularized least squares solution and was run
-for 500 steps or till convergence. Both regularization parameters,
+for 500 iterations or until convergence up to a tolerance of $10^{-3}$. Both regularization parameters,
 $\lambda_n^{(2)}$ and, $\lambda_n^{(3)}$ were annealed as $\frac{1}{n}$. 
 
 As a baseline, we also implemented EM with two different
@@ -20,10 +20,10 @@ we initialized EM with the starting points given by Spectral Experts.
 
 \paragraph{Datasets}
 
-We generated synthetic data using covariates from the $b$-dimensional
-unit hyper cube $\{-1,1\}^b$ and considered non-linear featurizations of
+We generated synthetic data using covariates $x$ sampled uniformly over the $b$-dimensional
+unit hypercube $[-1,1]^b$ and considered non-linear featurizations of
 this data that conformed to the identifiability criteria discussed in
-\sectionref{sec:algo}. The $\beta$ were drawn from a standard Gaussian.  
+\sectionref{sec:algo}. The coefficients $\{\beta_h\}$ were drawn from a standard Gaussian.  
 
 As an example, one set of features we considered in the uni-dimensional
 setting were $\{1, x, x^4, x^7\}$. The data and the curves fit using
