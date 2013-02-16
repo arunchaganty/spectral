@@ -1,4 +1,4 @@
-\paragraph{Low-rank Regression}
+\paragraph{Low-rank regression}
 %\label{sec:regression}
 \vspace{-0.5em}
 We now bound the error of
@@ -24,10 +24,10 @@ Let $\kappa(\opX_p)$ be the restricted strong convexity constant,
 and let $\opX^*_p(\eta_p; \sD) = \sum_{(x,y) \in \sD} \eta_p(x) x\tp{p}$
 be the adjoint.
 
-\paragraph{Restricted strong convexity}
+%\paragraph{Restricted strong convexity}
 
-In this section, we lower bound the restricted strong convexity constant
-$\kappa(\opX_p)$.
+%Let us first lower bound the restricted strong convexity constant
+%$\kappa(\opX_p)$:
 
 %In the previous section, we described an algorithm for the mixture of
 %linear regressions using regression to recover $M_2$ and $M_3$,
@@ -160,8 +160,29 @@ First, to bound $\hat\E_3[\epsilon^3]$, we use Lemma 19 of \cite{hsu13spherical}
 Second, the additional bias is small by the previous bound (and it is constructed on $\sD_1$, which is independent of $\sD_3$
 used to construct $\hat M_3$.
 Therefore, we incur another $O(\sigma^2 \cdot R \sigma \sqrt{\frac{\log(1/\delta_1)}{n}})$.
-Handling the other terms using conventional means
+We can handle the other terms using conventional means.
+Combining everything, we obtain
 $\|\hat\E_3[\eta_3(x) x\tp{3}]\|_\op = O(R^3 (L^3 R^3 + \sigma L^2 R^2 + \sigma^2 L R + \sigma^3 + \sigma^3 R) \sqrt{\frac{\log^3(1/\delta_1)}{n}})$.
-Finally, taking $\delta_1 = \delta/3$, and taking the union bound,
-we get our result, where we are bounding quantities fairly crudely for the sake of simplicity.
+
+Finally, taking $\delta_1 = \delta/3$, and taking the union bound over the bounds for $p \in \{1,2,3\}$,
+we get our result.
+Note that we are bounding quantities fairly crudely for the sake of simplicity.
 \end{proof}
+
+These lemmas allow us to control the compound parameter error.
+We now apply them in the proof of \refthm{convergence}:
+\begin{proof}
+By \reflem{lowRank} along with \reflem{lowRankLower} and \reflem{lowRankUpper},
+we can control the Frobenius norm of the parameter estimates:
+If $n \ge n_1$, then
+\begin{align}
+  \|\hat M_p - M_p\|_F = O\left( \sigma^3 L^3 R^6 k^{\frac12} \sigmamin(\Sigma_p)^{-1} \sqrt{\frac{\log^3 (1/\delta)}{n}} \right).
+  %\|\hat M_p - M_p\|_F = O\left( \frac{\sigma^3 L^3 R^6 \sqrt{k} \log^3 (1/\delta)}{\sqrt{n} (\sigmamin(\Sigma_p) - d^p R^p \sqrt{\frac{p \log(d) \log(1/\delta)}{n}}} \right).
+\end{align}
+The Frobenius norm upper bounds the operator norm,
+so we can directly apply Theorem 5.1 of \citet{AnandkumarGeHsu2012}.
+%Let $T^* = M_3^*(W^*, W^*, W^*)$.
+%Need to convert error from $\epsilon$
+%hit by $(W^\top)^\dagger$
+\end{proof}
+
