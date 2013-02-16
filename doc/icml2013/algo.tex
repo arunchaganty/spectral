@@ -104,12 +104,12 @@ we can use nuclear norm regularization
 \cite{Tomioka2011,NegahbanWainwright2009}
 to exploit this low-rank structure and improve our compound parameter estimates.
 In the algorithm, the regularization strengths $\lambda_n^{(2)}$ and $\lambda_n^{(3)}$
-are set to $\frac{1}{\sqrt{n}}$.
+are set to $\frac{c}{\sqrt{n}}$ for some constant $c$.
 The resulting semidefinite program is a standard one which has received
 much attention in recent years.
-We use a rather simple gradient-based approach,
-where the nuclear norm is handled in closed form by taking an SVD
-and soft-thresholding the eigenvalues \cite{donoho95soft,cai10soft}.
+We use a rather simple proximal gradient-based approach,
+in which the nuclear norm is handled in closed form by taking an SVD
+and soft-thresholding the singular values \cite{donoho95soft,cai10soft}.
 
 % Tensor factorization
 Having estimated the compound parameters $M_2$ and $M_3$,
@@ -136,14 +136,14 @@ Our work extends this line of work into the space of discriminative models,
 which requires regression to obtain the desired tensor.
 
 % Unmixing
-In spirit, Spectral Experts also bears some resemblance to the unmixing
+In spirit, Spectral Experts bears some resemblance to the unmixing
 algorithm for estimation of restricted PCFGs
 \cite{hsu12identifiability}.
 In that work, the observations (moments) provided a linear combination over
 the compound parameters.  ``Unmixing'' involves solving for the compound
 parameters by inverting a mixing matrix.  In this work,
-each data point (appropriately transformed) provides a noisy slice of the
-compound parameters; retrieving the compound parameters is more involved.
+each data point (appropriately transformed) provides a different noisy projection of
+the compound parameters.
 
 % Signal
 The idea of performing low-rank regression on $y^2$ has been explored
@@ -151,7 +151,7 @@ in the context of signal recovery from magnitude measurements
 \cite{candes11phaselift,ohlsson12phase}.
 There, the actual observed response was $y^2$,
 whereas in our case, we deliberately construct powers $y,y^2,y^3$
-to identify the parameters.
+to identify the underlying parameters.
 
 %\citet{AnandkumarGeHsu2012} describes an approach that uses
 %rotates $M_3$ to an orthogonal basis by using the whitening transform of
