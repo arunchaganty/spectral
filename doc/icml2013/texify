@@ -18,6 +18,7 @@ rgx = {
 #"single" : re.compile(r"\$[^$]"),
 "double" : re.compile(r"\$\$"),
 "eqnarray" : re.compile(r"\\(begin|end){eqnarray\*?}"),
+"align" : re.compile(r"\\(begin|end){align\*?}"),
 "IEEE" : re.compile(r"\\(begin|end){IEEEeqnarray\*?}"),
 "input" : re.compile(r"^\\input{([^}]*)}"),
 }

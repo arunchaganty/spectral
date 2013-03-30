@@ -88,7 +88,7 @@ all the parameters.
 
 % Full algorithm
 Now we are ready to state our full algorithm, which we call Spectral Experts
-(\algorithmref{sec:algo}).
+(\algorithmref{algo:spectral-experts}).
 First, we perform three regressions to recover the compound parameters
 $M_1$ \refeqn{y1},
 $M_2$ \refeqn{y2}, and
@@ -215,8 +215,8 @@ and assume $\Sigma_p \succ 0$ for each $p \in \{1,2,3\}$.
 Assume $d \ge k$.
 Suppose the number of samples is
 $n = \max(n_1,n_2)$
-where $n_1 = \Omega(d^p R^p \sigmamin(\Sigma_p)^{-1} \sqrt{p \log(d) \log(1/\delta)})$ and
-$n_2 = \Omega\left( \sigma^6 L^6 R^{12} k \sigmamin(\Sigma_p)^{-2} \frac{\log^3 (1/\delta)}{\epsilon^2} \right)$.
+where $n_1 = \Omega\left(d^6 R^12 (\max_{p \in [3]} \sigmamin(\Sigma_p)^{-2}) \log(d) \log(1/\delta)\right)$ and
+$n_2 = \Omega\left( \sigma^6 L^6 R^{12} k (\max_{p \in [3]} \sigmamin(\Sigma_p)^{-1}) \frac{\log^3 (1/\delta)}{\epsilon^2} \right)$.
 If the regularization strengths $\lambda_n^{(2)}$ and $\lambda_n^{(3)}$ are
 set to $\Omega(\sigma^3 L^3 R^6 \sqrt{\frac{\log(1/\delta)}{n}})$,
 then the parameter estimates $\hat\theta = (\hat\pi, \hat B)$ returned by

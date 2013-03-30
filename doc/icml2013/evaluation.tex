@@ -55,7 +55,7 @@ this, EM converged to the correct basin of attraction only 13\% of the time.
 %$n = 10^6$
 %$k = 5$
 
-\begin{table*}[p]
+\begin{table*}[tbhp]
 \caption{Parameter error $\|\theta^* - \hat \theta\|_F$ ($n = 500,000$)
 as the number of variables $b$, number of features $d$ and the number of components $k$ increases.
 While Spectral by itself does not produce good parameter estimates, Spectral+EM improves
@@ -118,7 +118,7 @@ others more difficult. In general, while the spectral algorithm did not
 recover parameters extremely well, it provided a good initialization for
 EM.
 
-\begin{figure}[th]
+\begin{figure}[tbhp]
   \centering
   \includegraphics[width=0.50\textwidth]{figures/hist.pdf}
   \caption{Histogram over recovery errors between the three algorithms. $b = 1, d = 4, k = 3, n = 500,000$}
@@ -136,7 +136,7 @@ time and shows considerably higher variance.
 
 \paragraph{Effect of number of data points}
 
-\begin{figure*}[p]
+\begin{figure*}[tbhp]
   \centering
   \subfigure[Well-specified data]{
     \includegraphics[width=0.50\textwidth]{figures/vs-n/1833-decay.pdf}
@@ -160,8 +160,8 @@ trade-off between statistical and computational error.
 
 \paragraph{Misspecified data}
 
-\begin{table*}[t]
-\caption{Parameter rrror $\|\theta^* - \hat \theta\|_F$ when the data is misspecified ($n = 500,000$).
+\begin{table*}[tbhp]
+\caption{Parameter error $\|\theta^* - \hat \theta\|_F$ when the data is misspecified ($n = 500,000$).
 Spectral+EM degrades slightly, but still outperforms EM overall.
 }
 \label{tbl:parameter-recovery-mis}

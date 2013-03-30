@@ -1,3 +1,58 @@
-\section{Proofs}
+\section{Proof of Lemma 4}
 \label{sec:proofs}
+
+\begin{proof}
+
+For notational convenience, let $\epsilon_{X} \eqdef \|\hat X - X\|_{op}$ be
+the error of the object $X$ in the sequel. Let $\hat W$ be the whitening
+matrix computed using the empirical moments $\hat M_2$, and let $\hat
+\Winv$ be it's inverse. Basic perturbation theory gives that 
+\begin{align*}
+\|\hat W - W\|_{op} &= O(\sigmamin(M_2)^{-0.5} \epsilon)\\
+\|\hat \Winv - \Winv\|_{op} &= O(\|M_2\|_{op}^{0.5} \epsilon)\\ 
+\|\hat W\|_2 \le \sqrt{2} \|W\| &= O(\sigmamin(M_2)^{-0.5}) \\ 
+\|\hat \Winv\|_2 \le \sqrt\frac{3}{2} \|\Winv\| &= O(\|M_2\|_{op}^{0.5}). 
+\end{align*}
+
+The error of the whitened tensor $T = M_3(W,W,W)$ is then,
+\begin{align*}
+\epsilon_T 
+&= O\left( \|\hat W\|_{op} \epsilon_{M_3} + 3 \|T\|_{op} \|\hat W\|_{op}^2 \epsilon_{W} \right ) \\
+  &= O\left(\sigmamin(M_2)^{-0.5} (1 + \|M_3\|_{op} \sigmamin(M_2)^{-1} )~\epsilon\right).
+\end{align*}
+
+$T$ is, by construction, a symmetric tensor with orthogonal
+eigenvectors; thus we can use the robust tensor power method and apply
+Theorem 5.1 of \citet{AnandkumarGeHsu2012} to analyze the error of it's
+output. We have the following bounds on the eigenvectors and eigenvalues
+of the whitened tensor, $\tilde \lambda$ and $\tilde \beta_h$ respectively, 
+\begin{align*}
+  \|\tilde \lambda - \hat {\tilde \lambda} \|_{\infty} 
+    &\le \frac{5 k \epsilon_T}{\tilde \lambda_{\min}} \\
+    \|\tilde \beta_h - \hat {\tilde \beta}_h \|_2 
+    &\le \frac{8 k \epsilon_T}{\tilde \lambda_{\min}^2},
+\end{align*}
+for all $h \in [k]$, where $\tilde \lambda_{min}$ is the smallest
+eigenvalue of $T$. Note that $\tilde \lambda_h = \pi_h^{-0.5}$ and that
+the assumptions on $\epsilon$ imply that $\epsilon_{\tilde \lambda}
+< \frac{\tilde \lambda_{min}}{2}$.
+
+Finally, we need to invert the whitening transformation to get bounds on
+the original $\pi$ and $\beta_h$,
+\begin{align*}
+  \|\hat \beta_h - \beta_h\|_2
+  &= \| \pinv{\hat W} \hat {\tilde \beta}_h - \pinv{W} {\tilde \beta}_h \|_2 \\
+  &= O( \epsilon_{\pinv{W}} \|\hat{\tilde \beta_h}\|_2 + \|\pinv{W}\|_2 \|\hat {\tilde \beta}_h - {\tilde \beta}_h\|_2 )\\
+  &= O(\|M_2\|_{op}^{0.5} \epsilon + \|M_2\|_{op}^{0.5} \frac{k \epsilon_{T}}{\tilde \lambda_{min}^2}) \\
+  &= O( k \pi_{max} \sigmamin(M_2)^{-1.5} \|M_2\|_{op}^{0.5} \|M_3\|_{op} \epsilon ) \\
+  |\hat \pi_h - \pi_h |
+  &= |\frac{1}{(\hat{\tilde{\lambda}}_h)^2} - \frac{1}{({\tilde{\lambda}}_h)^2}| \\
+  &= O( \frac{|2 {\tilde \lambda}_h \epsilon_{\tilde{\lambda}} - \epsilon_{\tilde{\lambda}}^2 |}{({\tilde \lambda}_{\min}^4 - {\tilde \lambda}_{\min}^2 \epsilon_{\tilde \lambda})} ) \\
+  &= O( \frac{{\tilde \lambda}_{max} \epsilon_{\tilde \lambda}}{{\tilde\lambda}_{min}^4} ) \\
+  &= O( k \pi_{max}^{2.5} \pi_{min}^{-0.5} \sigmamin(M_2)^{-1.5} \|M_3\|_{op} \epsilon ).
+\end{align*}
+
+\end{proof}
+
+
 
