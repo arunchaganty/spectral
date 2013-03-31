@@ -913,7 +913,7 @@ public class MatrixOps {
   public static double logsumexp(double x, double y) {
     double min_ = ( x < y ) ? x : y;
     double max_ = ( x < y ) ? y : x;
-    return Math.log( 1 + Math.exp( max_ - min_ ) ) + min_;
+    return Math.log( 1 + Math.exp( min_ - max_ ) ) + max_;
   }
 
   public static double logsumexp(final double[] x) {

@@ -1,5 +1,3 @@
-* Test the multi-view algorithm with random Gaussian inputs
-* Implement algorithm A for multiview
 * Test the multi-view algorithm with random HMMs
-* Test the various EM techniques.
-
+* See what output 
+* Does the possible positive-semi-definitess in the mean adjusted cases matter?

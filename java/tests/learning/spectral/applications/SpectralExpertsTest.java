@@ -182,7 +182,8 @@ public class SpectralExpertsTest {
 
     MixtureOfExperts model = MixtureOfExperts.generate(options);
     SpectralExperts algo = new SpectralExperts();
-    algo.ridgeReg = ridgeReg; algo.traceReg = traceReg;
+    algo.ridgeReg2 = algo.ridgeReg3 = ridgeReg; 
+    algo.traceReg2 = algo.traceReg3 = traceReg;
     algo.lowRankIters = (int) lowRankIters; algo.scaleData = doScale;
     algo.enableAnalysis(model);
 
