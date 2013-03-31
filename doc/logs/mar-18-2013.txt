@@ -1,0 +1,35 @@
+% March 18, 2013  
+
+We spoke about various projects
+
+## Directions forward for spectral methods
+
+i) Clean up the ICML submission, in particular,
+  a) Avoid the excessive $d$'s cropping up in the analysis
+  b) Include the more detailed analysis for the algorithm including whitening (*)
+  c) Redo some of the experiments to get more robust results (might take more
+  than this week).
+ii) An asymptotic study, which involves computed the Jacobian of the moment map.
+iii) How might we derive predictive algorithms for spectral techniques? These
+would not be troubled by (model) non-identifiability and we might get better
+bounds.
+iv) Can we "regularize" the estimator?
+v) Handling model mis-specification / the strength of bounds.
+
+## Program Analysis for Machine Learning
+
+* We could probably handle spectral algorithms and online learning / ERM
+  + Immediate horizon - maybe I could write a parser?
+
+## Distantly Supervised via Logic
+
+* Still too hard of a problem. Consider deferring.
+* What is a suitable logic? Natural logic? (MacCartney and Manning; Natural
+  Logic for Textual Inference; ACL 2007)
+
+## Vague jottings
+
+* I should look at the Newton polytope I had read about in the algebraic
+  statistics paper. It seems like there is some 
+* My first priority is to find a research direction.
+

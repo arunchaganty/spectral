@@ -1,0 +1,8 @@
+% March 15, 2013  
+
+Caught Percy.
+
+High-level ideas:
+  + Program analysis - preconditions and postconditions for algorithms in terms of error bounds.
+  + Proof carrying code - spectral stuff.
+
