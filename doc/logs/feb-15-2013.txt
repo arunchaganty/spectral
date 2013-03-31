@@ -1,0 +1,12 @@
+% February 15, 2013  
+
+After the ICML submission, Percy talked about a problem that might(?) be
+interesting, $p(y|X) = \sigma( \langle (yX)^{\otimes}, M_2 \rangle )$, only that
+$M_2$ is low rank. Something like a convex neural network.
+
+Why is this interesting?
+
+Much later, I've learned that the discussion was about how we might be able to
+use a quadratic function (as a very very rough approximation to a sigmoid), with
+an appropriate regularizer.
+
