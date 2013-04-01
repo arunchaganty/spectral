@@ -1,0 +1,73 @@
+Thank you for your constructive comments and suggestions; we will try to
+respond to your questions below.
+
+# Major Comments:
+
+## Reviewer 30 (Regarding Lemma 3):
+The $O(1/\sqrt{n})$ convergence follows from applying Hoeffding's
+inequality on each term of the random vectors $\eta_p(x) x$, which have
+zero mean when taking expectation over $h$ and $\epsilon$. For example,
+in $\eta_2(x) x$, we have three terms (Equation 3), which each have
+expectation zero by independence of $x$, $h$ and $\epsilon$.
+
+This does not require that the $x$ have zero mean, and note that we do
+not take expectations over $x$ at any point in our analysis.
+
+## Reviewer 4 (Regarding analysis with whitening):
+Your point is well noted; results from standard techniques (Hsu
+& Kakade, 2013) show that the whitening step introduces an additional
+factor of $O(\sigma_{min}(M_2)^{-1.5} \|M_2\|_{op}^{0.5} \|M_3\|_{op})$.
+We will include this as a lemma in the final version as we can not
+upload an updated version in the rebuttal phase.
+
+## Reviewer 30 (Regarding convergence rate in experiments): 
+
+One of the obstacles in applying the bounds we derived is that it
+requires the error of the empirical moment estimates to be less than
+$\sigma_{\min}(M_2)/2$, a condition that did not hold true for our
+experiments. For the data in Figure 3, this condition required the
+moment errors to be less than 0.15, while the error in estimates we
+recovered were at least 0.9. We have also identified that one major
+reason for this was that the proximal gradient algorithm we used did not
+converge in the specified number of iterations (i.e. 500). 
+
+# Minor Comments:
+
+## Reviewer 30 (Regarding Identifiability):
+Identifiability is only a problem when the input features are not
+algebraically independent, i.e. each coordinate can not be expressed as
+a deterministic analytic function of the remaining coordinates. Thus, it
+is identifiable when the coordinates are generated from a random
+Gaussian (or any other distribution).
+
+## Reviewer 4 (Regarding Lemma 3):
+We do not need to know $h$; in fact we are trying to bound the
+difference between mean, $M_1$ which we recover by regression, and the
+actual value of $\beta_h$ at each data point; it is useful to think of
+it as bounding the variance of the zero-mean term $M_1 - \beta_h$.
+
+## Reviewer 30 (Regarding operator norm for vectors):
+This was a typo, and we meant the 2-norm.
+  
+## Reviewer 4 (Regarding references):
+Thank you, we will include them in the final version.
+
+## Reviewer 4 (Regarding $\sigma$):
+We used $\sigma = 0.1$ for the results we presented, but found that they
+were not very sensitive to the noise level.
+
+## Reviewer 4 (Regarding Regularization):
+We set the regularization parameters by grid search for $n = 10^5$ and
+used the $1/\sqrt{n}$ rate to extrapolate for other $n$.
+
+## Reviewer 7 (Regarding Generality of Experiments):
+We found that robust initialization happened for almost all inputs. The
+cases where we did not get robust initialization occurred when we did
+not have good enough moment estimates and thus poor parameter estimates.
+Furthermore, this problem went away when we used more samples.
+
+## Reviewer 7 (Regarding Plot of Convergence):
+We have compared the convergence of spectral experts and EM to the exact
+parameters for increasing values of $n$ in Figure 3 in terms of the parameter
+error. 
+

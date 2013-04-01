@@ -1,0 +1,7 @@
+* Replacing the $p$ in Theorem 1 with a max over values.
+* Corrected $n_1$ in Theorem 1.
+* Correction in (8) - removal of $i$.
+* Various fixes of $\mathcal{X} \to \mathcal{X}_p$.
+* Account for a factor of 2 in the lower bound on $\kappa(\opX_p)$.
+* In proof of Lemma 2, $\frac{1}{2n} \|\opX(\Delta)\|_2^2 = \frac{1}{2} \tr(\cvec(\Delta)...). instead of just $\ge$.
+*  Added a factor of 2 to bounds on $\|\beta\|$.
