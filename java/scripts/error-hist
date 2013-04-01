@@ -1,0 +1,57 @@
+#!/usr/bin/env python
+# vim:ft=python
+
+# Average over files specified in argument
+# Assumes first 'n' (default=1) columns are keys
+
+import sys
+import numpy as np
+
+def read_from_files(files):
+    # Store for the files
+
+    values = []
+    for f in files:
+        if f == "-":
+            f = sys.stdin
+        else:
+            f = open( f )
+        for line in f.xreadlines():
+            values.append( np.array( map( float, line.split() ) ) )
+
+    return np.array( values )
+
+def plot_hist( values, bins = 10, out = None ):
+    import matplotlib.pyplot as plt
+
+    bins = np.linspace( 0, max( [ vs.max() for vs in values ] ), bins )
+
+    plt.grid()
+    labels = ["Spectral+EM", "Spectral", "EM"]
+    hatches = ["*", ".", "/"]
+    for (label, vs, hatch) in zip(labels, values, hatches):
+        plt.hist( vs, bins=bins, label=label, hatch=hatch, alpha=0.9 )
+    plt.legend()
+    #plt.savefig( "hist.png" )
+    plt.show()
+    #plt.savefig( "hist.pdf" )
+
+def main(*args):
+    if len(args) == 0 or args[0] == "-h":
+        print "Usage avrg [-h] [-bins x] <list-of-files>" 
+        sys.exit(1)
+
+    if args[0] == "-bins" or args[0] == "-b" :
+        bins = int( args[1] )
+        files = args[2:]
+    else:
+        bins = 10
+        files = args
+
+    values = [ read_from_files( [f] ) for f in files ]
+    plot_hist( values, bins )
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])
+
