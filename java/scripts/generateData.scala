@@ -49,9 +49,9 @@ def main() {
   outputPath.mkdirs();
 
   // Construct a list of D, nD, K
-  val D = List(1,2,3)
-  val nlD = List(3,4,5)
-  val K = List(2,3,5,7)
+  val D = List(20, 25, 30)
+  val nlD = List(1) // List(3,4,5)
+  val K = List(5,9)
   val candidateTriples = 
     (for (d <- D; nld <- nlD; k <- K) yield (d, nld, k))
     .filter( x  => 
@@ -65,7 +65,7 @@ def main() {
               case "random-fractional" => new FractionalPolynomial(nd, d)
               case "fourier" => new FourierNonLinearity(nd)
             }
-          k <= nl.getLinearDimension(d) && nl.getLinearDimension(d) <= 20
+          k <= nl.getLinearDimension(d) //&& nl.getLinearDimension(d) <= 20
       })
   // Spawn creation jobs
   for (( d, nd, k ) <- candidateTriples ) {

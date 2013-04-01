@@ -66,6 +66,8 @@ public class SpectralExperts implements Runnable {
   public double traceReg3 = -1;
   @Option(gloss = "Scale Data?")
   public boolean scaleData = false;
+  @Option(gloss = "Run spectral? (if false, just compute the moments)")
+  public boolean runSpectral = true;
   @Option(gloss = "Run EM on spectral output?")
   public boolean runEM = false;
   @Option(gloss = "Run EM on spectral output?")
@@ -83,6 +85,8 @@ public class SpectralExperts implements Runnable {
 
 	@Option(gloss = "Remove Thirds")
 	public boolean removeThirds = false;
+	@Option(gloss = "Adjust noise")
+	public double adjustNoise = -1;
 
 	@Option(gloss = "Number of Threads to use")
 	public int nThreads = 1;
@@ -126,8 +130,21 @@ public class SpectralExperts implements Runnable {
         Execution.putOutput( "avgBetas", avgBetas );
         Execution.putOutput( "avgBetas_", avgBetas_ );
         Execution.putOutput( "avgBetasErr", avgBetasErr );
+      } else {
+        LogInfo.logsForce( "avgBetas: " + avgBetas );
+        LogInfo.logsForce( "avgBetas_: " + avgBetas_ );
+        LogInfo.logsForce( "avgBetasErr: " + avgBetasErr );
       }
       LogInfo.logsForce("avgBetas: " + avgBetasErr);
+    }
+
+    public void reportPairs0( final SimpleMatrix Pairs_ ) {
+      PairsErr = MatrixOps.diff(Pairs, Pairs_ );
+      if( saveToExecution ) {
+        Execution.putOutput("Pairs0Err", PairsErr);
+        Execution.putOutput( "Pairs0", Pairs_ );
+      }
+      LogInfo.logsForce("Pairs0: " + PairsErr);
     }
 
     public void reportPairs( final SimpleMatrix Pairs_ ) {
@@ -136,6 +153,10 @@ public class SpectralExperts implements Runnable {
         Execution.putOutput( "Pairs", Pairs );
         Execution.putOutput( "Pairs_", Pairs_ );
         Execution.putOutput( "PairsErr", PairsErr );
+      } else {
+        LogInfo.logsForce( "Pairs: " + Pairs );
+        LogInfo.logsForce( "Pairs_: " + Pairs_ );
+        LogInfo.logsForce( "PairsErr: " + PairsErr );
       }
       LogInfo.logsForce("Pairs: " + PairsErr);
     }
@@ -412,7 +433,7 @@ public class SpectralExperts implements Runnable {
       // Use low rank recovery to improve estimate.
       LogInfo.begin_track("low-rank-pairs");
       // Report the performance before low-rankification
-      if( analysis != null ) analysis.reportPairs(Pairs);
+      if( analysis != null ) analysis.reportPairs0(Pairs);
 
       ProximalGradientSolver solver = new ProximalGradientSolver();
       // Tweak the response variables to give an unbiased estimate
@@ -531,7 +552,7 @@ public class SpectralExperts implements Runnable {
 
       ProximalGradientSolver solver = new ProximalGradientSolver();
       TensorRecovery problem = new TensorRecovery(y, X, traceReg3);
-      DenseMatrix64F Triples_ = solver.optimize(problem, Triples.unfold(0).getMatrix(), lowRankIters);
+      DenseMatrix64F Triples_ = solver.optimize(problem, Triples.unfold(0).getMatrix(), new LearningRate(LearningRate.Type.CONSTANT, 1.0), owRankIters);
       FullTensor.fold(0, Triples_, Triples);
       LogInfo.end_track("low-rank-triples");
     }
@@ -557,12 +578,12 @@ public class SpectralExperts implements Runnable {
     if( traceReg3 < 0 ) traceReg3 = traceReg2 * 10;
     // Adjust the regularizer for N
     if(adjustReg) {
-      // AH don't scale ridgeReg!
-      //ridgeReg2 /= Math.sqrt(N); //Math.pow(N, 1.0/2);
-      //ridgeReg3 /= Math.sqrt(N); //Math.pow(N, 1.0/2);
-      traceReg2 /= Math.sqrt(N); //N; //Math.pow(N, 1.0/3);
-      traceReg3 /= Math.sqrt(N); //N; //Math.pow(N, 1.0/3);
+      // Ridge regression is auto-scaled because we add lambda to XX^T
+      traceReg2 /= Math.sqrt(N); //N; 
+      traceReg3 /= Math.sqrt(N); //N; 
     }
+    LogInfo.logs("Ridge Reg: " + ridgeReg2 + ", " + ridgeReg3 );
+    LogInfo.logs("Trace Reg: " + traceReg2 + ", " + traceReg3 );
 
     // Set the seed
     RandomFactory.setSeed( seed );
@@ -578,29 +599,32 @@ public class SpectralExperts implements Runnable {
     FullTensor Triples = recoverTriples(y, X, avgBetas);
     if( analysis != null ) analysis.reportTriples(Triples);
 
-    if( useTensorPowerMethod ) {
-      // Use the tensor power method to recover $\betas$.
-      TensorMethod algo = new TensorMethod();
-      Pair<SimpleMatrix, SimpleMatrix> pair = algo.recoverParameters( K, Pairs, Triples );
-      // Somewhat of a "hack" to try and rescale the weights to sum to 1
-      SimpleMatrix weights = pair.getValue0();
-      SimpleMatrix betas = pair.getValue1();
-      analysis.reportWeights(weights);
-      analysis.reportBetas(betas);
+    if( runSpectral ) {
+      if( useTensorPowerMethod ) {
+        // Use the tensor power method to recover $\betas$.
+        TensorMethod algo = new TensorMethod();
+        Pair<SimpleMatrix, SimpleMatrix> pair = algo.recoverParameters( K, Pairs, Triples );
+        // Somewhat of a "hack" to try and rescale the weights to sum to 1
+        SimpleMatrix weights = pair.getValue0();
+        SimpleMatrix betas = pair.getValue1();
+        analysis.reportWeights(weights);
+        analysis.reportBetas(betas);
 
-      // Normalize the weights at the very least
-      double sum = weights.elementSum();
-      weights = weights.scale( 1/sum );
+        // Normalize the weights at the very least
+        double sum = weights.elementSum();
+        weights = weights.scale( 1/sum );
 
-      return new Pair<>(weights, betas);
-    } else {
-      // Use Algorithm B symmetric to recover the $\beta$
-      MultiViewMixture algo = new MultiViewMixture();
-      SimpleMatrix betas_ = algo.algorithmB(K, Pairs, Pairs, Triples);
-      // TODO: At some point we should compute this from betas_
-      SimpleMatrix weights_ = MatrixFactory.zeros(1, K);
-      return new Pair<>( weights_, betas_ );
+        return new Pair<>(weights, betas);
+      } else {
+        // Use Algorithm B symmetric to recover the $\beta$
+        MultiViewMixture algo = new MultiViewMixture();
+        SimpleMatrix betas_ = algo.algorithmB(K, Pairs, Pairs, Triples);
+        // TODO: At some point we should compute this from betas_
+        SimpleMatrix weights_ = MatrixFactory.zeros(1, K);
+        return new Pair<>( weights_, betas_ );
+      }
     }
+    else return null;
   }
 
   public void enableAnalysis(MixtureOfExperts model, boolean saveToExecution) {
@@ -635,9 +659,10 @@ public class SpectralExperts implements Runnable {
 
       // Choose a subset of the data
       int N = X.numRows();
-      if( removeThirds || subsampleN > N ) {
+      if( removeThirds || adjustNoise > 0 || subsampleN > N ) {
         // Possibly sample data with thirds removed
         model.removeThirds = removeThirds;
+        model.sigma2 = adjustNoise;
         y = null; X = null; data = null;
         Pair<SimpleMatrix, SimpleMatrix> yX = model.sample( (int) subsampleN );
         y = yX.getValue0();
@@ -657,30 +682,32 @@ public class SpectralExperts implements Runnable {
       int D = X.numCols();
 
       Pair<SimpleMatrix, SimpleMatrix> pi_betas_ = run( K, y, X );
-      SimpleMatrix weights_ = pi_betas_.getValue0();
-      SimpleMatrix betas_ = pi_betas_.getValue1();
-      analysis.reportBetas(betas_);
-      analysis.reportWeights(weights_);
-      if( runEM ) {
-        learning.em.MixtureOfExperts.Parameters initState = new learning.em.MixtureOfExperts.Parameters(
-                this.K, MatrixFactory.ones(K).scale(1.0/K), betas_.transpose(), 0.1);
-        learning.em.MixtureOfExperts emAlgo = new learning.em.MixtureOfExperts(K); emAlgo.iters = emIters;
-        learning.em.MixtureOfExperts.Parameters params = emAlgo.run( y, X, initState);
-        SimpleMatrix betasEM = (new SimpleMatrix( params.betas )).transpose();
-        SimpleMatrix weightsEM = MatrixFactory.fromVector(params.weights);
-        analysis.reportBetasEM(betasEM);
-        analysis.reportWeightsEM(weightsEM);
-        System.out.printf( "%.4f %.4f %.4f %.4f %.4f\n",
-                analysis.betasErr, analysis.betasEMErr,
-                SpectralExpertsAnalysis.computeLoss(y, X, model.getBetas()),
-                SpectralExpertsAnalysis.computeLoss(y, X, betas_),
-                SpectralExpertsAnalysis.computeLoss(y, X, betasEM) );
-      } else {
-        System.out.printf( "%.4f %.4f %.4f\n", analysis.betasErr,
-                SpectralExpertsAnalysis.computeLoss(y, X, model.getBetas()),
-                SpectralExpertsAnalysis.computeLoss(y, X, betas_) );
+      if( runSpectral ) {
+        SimpleMatrix weights_ = pi_betas_.getValue0();
+        SimpleMatrix betas_ = pi_betas_.getValue1();
+        analysis.reportBetas(betas_);
+        analysis.reportWeights(weights_);
+        if( runEM ) {
+          learning.em.MixtureOfExperts.Parameters initState = new learning.em.MixtureOfExperts.Parameters(
+                  this.K, MatrixFactory.ones(K).scale(1.0/K), betas_.transpose(), 0.1);
+          learning.em.MixtureOfExperts emAlgo = new learning.em.MixtureOfExperts(K); emAlgo.iters = emIters;
+          learning.em.MixtureOfExperts.Parameters params = emAlgo.run( y, X, initState);
+          SimpleMatrix betasEM = (new SimpleMatrix( params.betas )).transpose();
+          SimpleMatrix weightsEM = MatrixFactory.fromVector(params.weights);
+          analysis.reportBetasEM(betasEM);
+          analysis.reportWeightsEM(weightsEM);
+          System.out.printf( "%.4f %.4f %.4f %.4f %.4f\n",
+                  analysis.betasErr, analysis.betasEMErr,
+                  SpectralExpertsAnalysis.computeLoss(y, X, model.getBetas()),
+                  SpectralExpertsAnalysis.computeLoss(y, X, betas_),
+                  SpectralExpertsAnalysis.computeLoss(y, X, betasEM) );
+        } else {
+          System.out.printf( "%.4f %.4f %.4f\n", analysis.betasErr,
+                  SpectralExpertsAnalysis.computeLoss(y, X, model.getBetas()),
+                  SpectralExpertsAnalysis.computeLoss(y, X, betas_) );
+        }
       }
-      } catch( ClassNotFoundException | IOException |  NumericalException | RecoveryFailure e ) {
+    } catch( ClassNotFoundException | IOException |  NumericalException | RecoveryFailure e ) {
       System.err.println( e.getMessage() );
       return;
     }

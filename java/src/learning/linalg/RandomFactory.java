@@ -183,6 +183,16 @@ public class RandomFactory {
     return symmetricTensor(D, D);
   }
 
+  public static FullTensor uniformTensor(int D1, int D2, int D3) {
+    // Normalize
+    FullTensor X = new FullTensor(D1, D2, D3);
+    for( int d1 = 0; d1 < D1; d1++ )
+      for( int d2 = 0; d2 < D2; d2++ )
+        for( int d3 = 0; d3 < D3; d3++ )
+          X.X[d1][d2][d3] = randUniform(-1, 1);
+    return X;
+  }
+
   public static void symmetric(int N, DenseMatrix64F X) {
     for( int i = 0; i < N; i++ ) {
       for( int j = 0; j < i; j++ ) {

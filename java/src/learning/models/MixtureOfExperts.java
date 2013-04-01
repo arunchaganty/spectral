@@ -38,7 +38,7 @@ public class MixtureOfExperts implements Serializable {
   // Model parameters
   protected SimpleMatrix weights;
   protected SimpleMatrix betas;
-  protected double sigma2;
+  public double sigma2;
 
   // Point generator
   protected SimpleMatrix mean;

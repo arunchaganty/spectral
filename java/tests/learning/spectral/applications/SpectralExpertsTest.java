@@ -32,9 +32,9 @@ public class SpectralExpertsTest {
   public void testMomentRunner(MixtureOfExperts model, int N, double reg) {
     int K = model.getK(); int D = model.getD();
     SpectralExperts algo = new SpectralExperts();
+    algo.K = K;
 
     algo.enableAnalysis(model);
-
 
     // Compute the empirical moments
     Pair<SimpleMatrix, SimpleMatrix> yX = model.sample(N);
@@ -93,14 +93,18 @@ public class SpectralExpertsTest {
     int N = (int) 1e5; double reg = 1e-2;
     testMomentRunner(model, N, reg);
   }
-  public void arbitraryMomentsTest(MixtureOfExperts.GenerationOptions options) throws NumericalException {
-
+  public void arbitraryMomentsTest(SpectralExperts algo, MixtureOfExperts.GenerationOptions options) throws NumericalException {
     LogInfo.writeToStdout = true;
     LogInfo.init();
 
     MixtureOfExperts model = MixtureOfExperts.generate(options);
-    SpectralExperts algo = new SpectralExperts();
+    algo.K = model.getK();
     algo.enableAnalysis(model);
+    if (algo.adjustReg) {
+      algo.traceReg2 /= Math.sqrt(N); //N; //Math.pow(N, 1.0/3);
+      algo.traceReg3 /= Math.sqrt(N); //N; //Math.pow(N, 1.0/3);
+    }
+
 
     // Compute the empirical moments
     Pair<SimpleMatrix, SimpleMatrix> yX = model.sample((int)N);
@@ -113,8 +117,9 @@ public class SpectralExpertsTest {
     System.out.println( algo.analysis.Pairs );
     System.out.println( Pairs_ );
     algo.analysis.reportPairs(Pairs_);
-    FullTensor Triples_ = algo.recoverTriples(y, X, avgBetas);
-    algo.analysis.reportTriples(Triples_);
+    System.out.println( Pairs_.get(0,0) );
+    //FullTensor Triples_ = algo.recoverTriples(y, X, avgBetas);
+    //algo.analysis.reportTriples(Triples_);
   }
 
   public void testRecoveryRunner(MixtureOfExperts model, int N, double reg) throws NumericalException, RecoveryFailure {
@@ -176,14 +181,11 @@ public class SpectralExpertsTest {
     int N = (int) 1e5; double reg = 1e-2;
     testRecoveryRunner(model, N, reg);
   }
-  public void arbitraryRecoveryTest(MixtureOfExperts.GenerationOptions options) throws NumericalException, RecoveryFailure {
+  public void arbitraryRecoveryTest(SpectralExperts algo, MixtureOfExperts.GenerationOptions options) throws NumericalException, RecoveryFailure {
     LogInfo.writeToStdout = true;
     LogInfo.init();
 
     MixtureOfExperts model = MixtureOfExperts.generate(options);
-    SpectralExperts algo = new SpectralExperts();
-    algo.ridgeReg = ridgeReg; algo.traceReg = traceReg;
-    algo.lowRankIters = (int) lowRankIters; algo.scaleData = doScale;
     algo.enableAnalysis(model);
 
     // Compute the empirical moments
@@ -201,27 +203,21 @@ public class SpectralExpertsTest {
 
   @Option( gloss = "Number of samples" )
   public double N = 1e4;
-  @Option( gloss = "Regularization" )
-  public double ridgeReg = 1e-5;
-  @Option( gloss = "Regularization" )
-  public double traceReg = 1e-4;
-  @Option( gloss = "Regularization" )
-  public double lowRankIters = 1e2;
-  @Option( gloss = "Scale data?" )
-  public boolean doScale = false;
   @Option( gloss = "Test the moments?" )
   public boolean testMoments = false;
 
   public static void main( String[] args ) throws RecoveryFailure, NumericalException {
     SpectralExpertsTest test = new SpectralExpertsTest();
+    SpectralExperts algo = new SpectralExperts();
+
     MixtureOfExperts.GenerationOptions options = new MixtureOfExperts.GenerationOptions();
-    OptionsParser parser = new OptionsParser( test, options );
+    OptionsParser parser = new OptionsParser( test, algo, options );
 
     if( parser.parse( args ) ) {
       if( test.testMoments )
-        test.arbitraryMomentsTest(options);
+        test.arbitraryMomentsTest(algo, options);
       else
-        test.arbitraryRecoveryTest(options);
+        test.arbitraryRecoveryTest(algo, options);
     }
   }
 
