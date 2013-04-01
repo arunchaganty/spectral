@@ -116,6 +116,7 @@ public class TensorFactorization {
    * @return
    */
   public static Pair<SimpleMatrix, SimpleMatrix> eigendecompose( FullTensor T, SimpleMatrix P, int K, int attempts, int iters ) {
+    LogInfo.begin_track("tensor-eigendecomposition");
 
     // Whiten
     SimpleMatrix W = MatrixOps.whitener(P);
@@ -152,6 +153,7 @@ public class TensorFactorization {
     FullTensor T_ = FullTensor.fromDecomposition( eigenvalues, eigenvectors );
     LogInfo.logs( "T_: " + MatrixOps.diff(T, T_) );
 
+    LogInfo.end_track("tensor-eigendecomposition");
     return new Pair<>(eigenvalues, eigenvectors);
   }
   public static Pair<SimpleMatrix, SimpleMatrix> eigendecompose( FullTensor T, SimpleMatrix P, int K ) {

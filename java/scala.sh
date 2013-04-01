@@ -1,11 +1,11 @@
 #!/bin/bash
 
-JAVA_PATH=/usr/bin
+SCALA_PATH=/user/angeli/programs/scala/bin
 
 deps=
 for f in deps/*.jar; do
   deps=$f:$deps;
 done;
 
-scala -cp $deps:bin/production/spectral/:bin/production/spectral-test $@
+$SCALA_PATH/scala -cp $deps:bin/ $@
 

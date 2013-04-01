@@ -1,11 +1,11 @@
 #!/bin/bash
 
-JAVA_PATH=/usr/bin
+JAVA_PATH=$JAVA_HOME/bin
 
 deps=
 for f in deps/*.jar; do
   deps=$f:$deps;
 done;
 
-$JAVA_PATH/java -ea -Xms2g -Xmx2g -cp $deps:bin/production/spectral/:bin/production/spectral-test $@
+$JAVA_PATH/java -ea -Xms20g -Xmx25g -cp $deps:bin $@
 
