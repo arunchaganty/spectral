@@ -13,6 +13,7 @@ import learning.models.MixtureOfExperts;
 
 import learning.optimization.PhaseRecovery;
 import learning.optimization.ProximalGradientSolver;
+import learning.optimization.ProximalGradientSolver.LearningRate;
 import learning.optimization.TensorRecovery;
 import learning.spectral.MultiViewMixture;
 
@@ -417,7 +418,9 @@ public class SpectralExperts implements Runnable {
       ProximalGradientSolver solver = new ProximalGradientSolver();
       // Tweak the response variables to give an unbiased estimate
       PhaseRecovery problem = new PhaseRecovery(y, X, traceReg2);
-      DenseMatrix64F Pairs_ = solver.optimize(problem, Pairs.getMatrix(), lowRankIters);
+      DenseMatrix64F Pairs_ = solver.optimize(problem, Pairs.getMatrix(),
+          new LearningRate(LearningRate.Type.BY_SQRT_T, 1.0),
+          lowRankIters);
       Pairs = SimpleMatrix.wrap(Pairs_);
 
       LogInfo.end_track("low-rank-pairs");
@@ -531,7 +534,9 @@ public class SpectralExperts implements Runnable {
 
       ProximalGradientSolver solver = new ProximalGradientSolver();
       TensorRecovery problem = new TensorRecovery(y, X, traceReg3);
-      DenseMatrix64F Triples_ = solver.optimize(problem, Triples.unfold(0).getMatrix(), lowRankIters);
+      DenseMatrix64F Triples_ = solver.optimize(problem, Triples.unfold(0).getMatrix(), 
+          new LearningRate(LearningRate.Type.BY_SQRT_T, 4.0),
+          lowRankIters);
       FullTensor.fold(0, Triples_, Triples);
       LogInfo.end_track("low-rank-triples");
     }
