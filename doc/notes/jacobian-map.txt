@@ -1,0 +1,77 @@
+% The Jacobian of the Moment Map
+
+This document summarizes the exploration of the Jacobian of the moment map. 
+
+# Introduction
+
+Why 
+
+# Symmetric Mixture of Components
+
+Consider the mixture model described in \cite{AnandkumarHsuKakade2012}, namely
+a model with conditional means $\E[x | h] = \beta_h$ and mixture probabilities
+$\pi$. For brevity, we write $\beta = [\beta_1 | ... | \beta_K]$. Let $\theta
+\in \Re^p$ be all the parameters and $m \in \Re^m$ the moments. Then, the moment
+map $\mM$ is,
+\begin{align}
+  \mM_2(\theta) &= \sum_{a} \pi_a \mu_a^{\otimes 2} \\
+  \mM_3(\theta) &= \sum_{a} \pi_a \mu_a^{\otimes 3} \\
+  \mM(\theta) &= (\mM_2; \mM_3).
+\end{align}
+
+The Jacobian is then,
+\begin{align}
+  \diff{\mM_2}{\mu_{ad}} &= \pi_a ( \mu_a \otimes e_k + e_k \otimes \mu_a ) \\
+  \diff{\mM_3}{\mu_{ad}} &= \pi_a ( \mu_a \otimes \mu_a \otimes e_k 
+      + \mu_a \otimes e_k \otimes \mu_a  + e_k \otimes \mu_a \otimes \mu_a ) \\
+  \diff{\mM_2}{\pi_{a}} &= \mu_a \otimes \mu_a \\
+  \diff{\mM_3}{\pi_{a}} &= \mu_a \otimes \mu_a \otimes \mu_a.
+\end{align}
+
+Finally, we can write $J$ as a large matrix by unrolling the above derivatives,
+\begin{align}
+  J^{(2)}_{ {\mM_2}_{ij}, \theta_{\mu_{ad}} } &= (\diff{\mM_2}{\mu_{ad}})_{ij} \\
+  J^{(2)}_{ {\mM_3}_{ijk}, \theta_{\mu_{ad}} } &= (\diff{\mM_3}{\mu_{ad}})_{ijk} \\
+  J^{(3)}_{ {\mM_2}_{ij}, \theta_{\pi_{a}} } &= (\diff{\mM_2}{\pi_{a}})_{ij} \\
+  J^{(3)}_{ {\mM_3}_{ijk}, \theta_{\pi_{a}} } &= (\diff{\mM_3}{\pi_{a}})_{ijk} \\
+  J &= \begin{bmatrix} J^{(2)} \\ J^{(3)} \end{bmatrix}.
+\end{align}
+
+Our objective is to compute a lower bound on the least singular value of the
+Jacobian. To do so, we can use the following variational formulation,
+\begin{align}
+  \sigma_n(J)^2 &= \min_{\|v\| = 1} \| J^T v \|^2 \\
+              &= \min_{\|v_2\| + \|v_3\| = 1} \| J^{(2) T} v_2 + J^{(3) T} v_3 \|^2 \\
+              &\ge \min_{\|v_2\| + \|v_3\| = 1} \| J^{(2) T} v_2 \|^2 + \| J^{(3) T} v_3 \|^2 - 2 \| J^{(2) T} v_2 \| \| J^{(3) T} v_3 \| \\
+              &\ge \min_{\lambda} \lambda \min_{\|v_2\| = 1} \| J^{(2) T} v_2 \|^2 + (1-\lambda) \min_{\|v_3\| = 1}  \| J^{(3) T} v_3 \|^2 \\
+              &- 2 \lambda (1-\lambda) \max_{\|v_2\| = 1} \| J^{(2) T} v_2 \| \max_{\|v_3\| = 1} \| J^{(3) T} v_3 \|.
+\end{align}
+where $v \in \Re^{d^2 + d^3}, v_2 \in \Re^{d^2}, v_3 \in \Re^{d^3}$. We can now
+exploit the structure of $J^{(2) T}$ and  $J^{(3) T}$; namely we find that ever
+row of these two matrices is a matrix and tensor respectively. Finally, we can write,
+\begin{align}
+  \| J^{(2) T} v_2 \|^2 &= \sum_k^{p} (J^{(2) T}_k \circ X)^2 \\
+  \| J^{(3) T} v_3 \|^2 &= \sum_k^{p} (J^{(3) T}_k \circ Y)^2,
+\end{align}
+where $X \in \Re^{d \times d}, Y \in \Re^{d \times d \times d}$, and $\circ$ is
+the Hadamard product.
+
+## Single Component
+
+To begin with, let us consider the case where there is only a single component,
+$K=1$. We can find the following bounds on the individual $J$.
+\begin{align}
+  \| J^{(2) T} v_2 \|^2 
+    &= \sum_k^{p} (J^{(2) T}_k \circ X)^2 \\
+    &= \sum_k^{p} ((\mu \otimes e_k + e_k \otimes \mu) \circ X)^2 \\
+    &= \sum_k^{p} (\mu^T (X + X^T) e_k)^2 \\
+    &= \| \mu^T (X + X^T) \|^2 \\
+  \| J^{(3) T} v_3 \|^2 
+    &= \sum_k^{p} (J^{(3) T}_k \circ Y)^2 \\
+    &= \sum_k^{p} ((\mu \otimes \mu \otimes e_k + \mu \otimes e_k \otimes \mu + e_k \otimes \mu \otimes \mu) \circ Y)^2 \\
+    &= \sum_k^{p} ((\mu \otimes \mu \otimes e_k) \cdot (Y + Y' + Y''))^2 \\
+    &= \| (Y + Y' + Y'') \cdot (\mu \otimes \mu) \|^2,
+\end{align}
+where $Y'$ and $Y''$, are copies of $Y$ with indices suitably rotated.
+
+
