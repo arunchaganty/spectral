@@ -1,0 +1,36 @@
+% April 08, 2013  
+
+# SDP Optimization 
+
+I was trying to formulate the following optimization problem as an SDP,
+\begin{align}
+  \mL &= \min_{B \ge 0} \sum_{i=0}^{N} (\Tr(\oft{X}{i} B) - \oft{y}{i})^2 + \|B\|_*.
+\end{align}
+
+With some help from Jacob, we've reduced it to the following two forms,
+\begin{align}
+  \mL &= \min_{B,s,t,r} s + r \\
+  \Tr(\oft{X}{i} B) - y_i - t_i &\le 0 \\
+  -\Tr(\oft{X}{i} B) + y_i - t_i &\le 0 \\
+  B \ge 0 \\
+  s - t' t \ge 0.
+\end{align}
+This potentially has $O(4N + D^2)$ constraints (in block diagonal form).
+
+A much more efficient reduction can be formulated by completing the squares as
+follows,
+\begin{align}
+  \sum_i (\Tr(\oft{X}{i} B) - \oft{y}{i})^2 
+    &= \sum_i \Tr(\oft{X}{i} B)^2 - 2\Tr(\oft{y}{i} \oft{X}{i} B) + \oft{y}{i}^2 \\
+    &= \Tr( (\sum_i \oft{X}{i} \otimes \oft{X}{i}) B\otimes B)^2 - 2\Tr((\sum_i \oft{y}{i} \oft{X}{i}) B) + \sum_i \oft{y}{i}^2.
+\end{align}
+
+We can complete the squares of the first term, noting that 
+\begin{align}
+  (\sum_i^N \oft{X}{i} \otimes \oft{X}{i}) &= \sum_{j}^{D^2} V_j \otimes V_j.
+\end{align}
+
+This will only have $O(D^2)$ constraints.
+
+
+
