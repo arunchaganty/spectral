@@ -125,6 +125,17 @@ public class SpectralExperts implements Runnable {
       weights = model.getWeights();
     }
 
+    public void reportCnd() {
+      double cnd = MatrixOps.conditionNumber(Pairs, model.getK());
+      double sk = MatrixOps.sigmak(Pairs, model.getK());
+      Execution.putOutput( "cnd(M_2)",  cnd);
+      Execution.putOutput( "sigma_k(M_2)", sk);
+
+      LogInfo.logs( "cnd(M_2) " + cnd);
+      LogInfo.logs( "sigma_k(M_2) " + sk);
+    }
+
+
     public void reportAvg( final SimpleMatrix avgBetas_ ) {
       avgBetasErr = MatrixOps.diff(avgBetas, avgBetas_);
       if( saveToExecution ) {
@@ -428,7 +439,8 @@ public class SpectralExperts implements Runnable {
     if( useRidgeRegression ) {
       Pairs = recoverPairsByRidgeRegression(y, X);
     } else {
-      Pairs = RandomFactory.symmetric( D ).scale(0.01);
+      //Pairs = RandomFactory.symmetric( D ).scale(0.01);
+      Pairs = analysis.Pairs; //RandomFactory.symmetric( D ).scale(0.01);
     }
     if( useLowRankRecovery ) {
       // Use low rank recovery to improve estimate.
@@ -440,6 +452,9 @@ public class SpectralExperts implements Runnable {
       // Tweak the response variables to give an unbiased estimate
       PhaseRecovery problem = new PhaseRecovery(y, X, traceReg2);
       DenseMatrix64F Pairs_ = solver.optimize(problem, Pairs.getMatrix(),
+          new LearningRate(LearningRate.Type.CONSTANT, 0.1),
+          (int) (lowRankIters * 0.1), 1e0);
+      Pairs_ = solver.optimize(problem, Pairs_,
           new LearningRate(LearningRate.Type.BY_SQRT_T, 1.0),
           lowRankIters);
       Pairs = SimpleMatrix.wrap(Pairs_);
@@ -545,7 +560,8 @@ public class SpectralExperts implements Runnable {
     if( useRidgeRegression ) {
       Triples = recoverTriplesByRegression(y, X);
     } else {
-      Triples = RandomFactory.symmetricTensor( 1, D ).scale(0.01);
+      //Triples = RandomFactory.symmetricTensor( 1, D ).scale(0.01);
+      Triples = analysis.Triples;
     }
 
     if( useLowRankRecovery ) {
@@ -556,7 +572,10 @@ public class SpectralExperts implements Runnable {
       ProximalGradientSolver solver = new ProximalGradientSolver();
       TensorRecovery problem = new TensorRecovery(y, X, traceReg3);
       DenseMatrix64F Triples_ = solver.optimize(problem, Triples.unfold(0).getMatrix(), 
-          new LearningRate(LearningRate.Type.BY_SQRT_T, 4.0),
+          new LearningRate(LearningRate.Type.CONSTANT, 0.1),
+          (int) (lowRankIters * 0.1), 1e0);
+      Triples_ = solver.optimize(problem, Triples_, 
+          new LearningRate(LearningRate.Type.BY_SQRT_T, 1.0),
           lowRankIters);
       FullTensor.fold(0, Triples_, Triples);
       LogInfo.end_track("low-rank-triples");
@@ -681,6 +700,7 @@ public class SpectralExperts implements Runnable {
 
       LogInfo.logs("basis", MatrixOps.arrayToString(model.getNonLinearity().getExponents()));
 
+      analysis.reportCnd();
       // Set K from the model if it hasn't been provided
       if( K < 1 )
         K = model.getK();
