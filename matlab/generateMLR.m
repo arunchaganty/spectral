@@ -1,6 +1,6 @@
 % Generate data from a mixture of linear regressions
 
-function [y, X, B, pi] = mixtureOfLinearRegressions( N, K, D, sigma2 )
+function [y, X, B, pi] = generateMLR( N, K, D, sigma2 )
   B = rand( D, K );
 
   pi = ones( K, 1 ) / K;
@@ -9,7 +9,7 @@ function [y, X, B, pi] = mixtureOfLinearRegressions( N, K, D, sigma2 )
   y = zeros( N, 1 );
 
   % Choose the different distributions
-  Pr = mnrnd( N, P );
+  Pr = mnrnd( N, pi );
   noffset = 1;
   for i = 1:K;
     n = Pr(i);
