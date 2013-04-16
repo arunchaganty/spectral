@@ -1,16 +1,15 @@
 % Recover the second moments, B2.
-function [B2, sigma2] = recoverB2( y, X, sigma2 )
+function [B2] = recoverB2( y, X, sigma2, lambda )
   [N, d] = size( X );
-  y2 = y.^2;
+  y = y.^2 - sigma2;
 
-  cvx_begin quiet;
+  cvx_begin sdp quiet;
     variables B2(d, d);
     variables W1(d, d);
     variables W2(d, d);
-%    variables sigma2;
     variables t;
 
-    minimize ( 1e-3 * t + 0.5 * norm( y2 - diag( X * B2 * X' ) - sigma2 ) );
+    minimize ( lambda * t + 0.5/N * norm( y - diag( X * B2 * X' ) ) );
     subject to 
       B2 == semidefinite( d );
       0.5 * trace(W1) + 0.5 * trace(W2) <= t;

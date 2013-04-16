@@ -1,5 +1,11 @@
 % Recover the second moments, B3.
-function B = recoverB3( y, X, sigma2, lambda )
+function sdpB3(path)
+  % Load data
+  y = load( strcat(path,'/y.txt'), '-ascii' );
+  X = load( strcat(path,'/X.txt'), '-ascii' );
+  sigma2 = load( strcat(path,'/sigma2.txt'), '-ascii' );
+  lambda = load( strcat(path,'/lambda2.txt'), '-ascii' );
+
   [N, d] = size( X );
   avgBetas = X\y;
   y = y.^3 - 3 * sigma2 * X * avgBetas;
@@ -33,5 +39,11 @@ function B = recoverB3( y, X, sigma2, lambda )
       0.5 * trace(W31) + 0.5 * trace(W32) <= t3;
       [W31, mode_unfold(B,3); mode_unfold(B,3)', W32] == semidefinite(d.^2 + d);
   cvx_end;
+
+  % Save as a vector because matlab cant write tensors to file.
+  B = vec(B);
+
+  save( strcat(path,'/B3.txt'), '-ascii', 'B' );
+
 end
 
