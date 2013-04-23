@@ -215,38 +215,56 @@ for $p \in \{1,2,3\}$ defined in \refeqn{y1}, \refeqn{y2}, and
 \refeqn{y3}. Each $\eta_p(x)$ is composed of several zero-mean random
 variables, and since $\|A + B\|_\op \le \|A\|_\op + \|B\|_\op$, it
 suffices to consider each term in turn. For each term, we will
-condition on $x$ and use a standard concentration inequality to bound
-the noise.
-
-%\begin{align}
-%  \| \hat\E_1[ \eta_1(x) x ] \|_{op} &\le 
-%  \underbrace{ \|\hat\E_1[\innerp{M_1 - \beta_h}{x} x]\|_\op }_{ O(R^2 L \sqrt{\frac{\log(1/\delta_1)}{n}}) } +
-%  \underbrace{ \|\hat\E_1[\epsilon x]\|_\op }_{ O(R^2 L \sqrt{\frac{\log(1/\delta_1)}{n}}) } +
-%\end{align}
-
-First, consider $\eta_1(x)$, which contains two terms.
-The first term is $\innerp{M_1 - \beta_h}{x}$.
-We have that $\|M_1 - \beta_h\|_2 \le 2L$,
-so by Hoeffding's inequality, and using the fact that $\|x\|_2 \le R$,
-with probability $1-\delta_1$,
-$\|\hat\E_1[\innerp{M_1 - \beta_h}{x} x]\|_\op = O(R^2 L \sqrt{\frac{\log(1/\delta_1)}{n}})$.
-The second term is $\epsilon \sim \normal{0}{\sigma^2}$,
-with probability $1-\delta_1$,
-$\|\hat\E_1[\epsilon x]\|_\op = O(R \sigma \sqrt{\frac{\log(1/\delta_1)}{n}})$.
-
-Now, consider $\eta_2(x)$, which contains three terms.
-Using similar techniques, we have that
-$\|\hat\E_2[\eta_2(x) x\tp{2}]\|_\op = O(R^2 (L^2 R^2 + \sigma L R + \sigma^2) \sqrt{\frac{\log(1/\delta_1)}{n}})$.
-
-Finally, $\eta_3(x)$ contains five terms plus an additional bias since the estimator uses $\hat M_1$ rather than $M_1$.
-There are two additional considerations.
+condition on $x$ and use standard concentration inequalities to bound
+the noise with probability atleast $1-\delta_1$,
+{\scriptsize
+\begin{align*}
+  \| \hat\E_1[ \eta_1(x) x ] \|_{op} &\le 
+            \underbrace{ \|\hat\E_1[\innerp{M_1 - \beta_h}{x} x]\|_\op  }_{ O\left( L R^2     \sqrt{\frac{\log(1/\delta_1)}{n}} \right) } +
+            \underbrace{ \|\hat\E_1[\epsilon x]\|_\op                   }_{ O\left( R \sigma  \sqrt{\frac{\log(1/\delta_1)}{n}} \right) } \\
+  %  &= O\left( \sigma L R^2 \sqrt{\frac{\log(1/\delta_1)}{n}} \right) \\
+    \| \hat\E_2[ \eta_2(x) x\tp{2} ] \|_{op} &\le 
+            \underbrace{ \|\hat\E_2[\innerp{\beta_h\tp{2} - M_2}{x\tp{2}} x\tp{2}]\|_\op }_{ O\left( L^2 R^4      \sqrt{\frac{\log^2(1/\delta_1)}{n}} \right) } \\
+   &\quad + \underbrace{ \|\hat\E_2[2 \epsilon \innerp{\beta_h}{x} x\tp{2}]\|_\op        }_{ O\left( \sigma L R^3 \sqrt{\frac{\log  (1/\delta_1)}{n}} \right) } 
+          + \underbrace{ \|\hat\E_2[(\epsilon^2 - \sigma^2) x\tp{2}]\|_\op               }_{ O\left( \sigma^2 R^2 \sqrt{\frac{\log^2(1/\delta_1)}{n}} \right) } \\
+  %&= O\left( \sigma^2 L^2 R^4 \sqrt{\frac{\log^2(1/\delta_1)}{n}} \right) \\
+  \| \hat\E_3[ \eta_3(x) x\tp{3} ] \|_{op} &\le 
+            \underbrace{ \|\hat\E_3[\innerp{\beta_h\tp{3} - M_3}{x\tp{3}}                      x\tp{3}]\|_\op }_{O\left( L^3 R^6        \sqrt{\frac{\log  (1/\delta_1)}{n}} \right) } \\
+   &\quad + \underbrace{ \|\hat\E_3[3 \epsilon \innerp{\beta_h\tp{2}}{x\tp{2}}                 x\tp{3}]\|_\op }_{O\left( \sigma L^2 R^5 \sqrt{\frac{\log^2(1/\delta_1)}{n}} \right) } 
+          + \underbrace{ \|\hat\E_3[\epsilon^3                                  x\tp{3}]\|_\op }_{O\left( \sigma^3 R^3   \sqrt{\frac{\log  (1/\delta_1)}{n}} \right) } \\
+   &\quad + \underbrace{ \|\hat\E_3[3(\epsilon^2 \innerp{\beta_h}{x} -\sigma^2 \innerp{\hat M_1}{x}) x\tp{3}]\|_\op }_{O\left( (\sigma^3 L R^4 + \sigma^3 R^4) \sqrt{\frac{\log^3(1/\delta_1)}{n}} \right) } \\
+  %&= O\left( \sigma^3 L^3 R^6 \sqrt{\frac{\log^3(1/\delta_1)}{n}} \right).
+\end{align*}
+}
+There are two additional considerations when bounding the terms in $\eta_3$.
 First, to bound $\hat\E_3[\epsilon^3]$, we use Lemma 19 of \cite{hsu13spherical}.
-Second, the additional bias is small by the previous bound (and it is constructed on $\sD_1$, which is independent of $\sD_3$
-used to construct $\hat M_3$.
+Second, there is an additional bias since the estimator uses $\hat M_1$ instead of $M_1$; this bias is small by the previous bound (and is constructed on an independent dataset, $\sD_1$).
 Therefore, we incur another $O(\sigma^2 \cdot R \sigma \sqrt{\frac{\log(1/\delta_1)}{n}})$.
-We can handle the other terms using conventional means.
-Combining everything, we obtain
-$\|\hat\E_3[\eta_3(x) x\tp{3}]\|_\op = O(R^3 (L^3 R^3 + \sigma L^2 R^2 + \sigma^2 L R + \sigma^3 + \sigma^3 R) \sqrt{\frac{\log^3(1/\delta_1)}{n}})$.
+We can handle the other terms using conventional means, the details of which can be found in \todo{Appendix B}.
+
+%First, consider $\eta_1(x)$, which contains two terms.
+%The first term is $\innerp{M_1 - \beta_h}{x}$.
+%We have that $\|M_1 - \beta_h\|_2 \le 2L$,
+%so by Hoeffding's inequality, and using the fact that $\|x\|_2 \le R$,
+%with probability $1-\delta_1$,
+%$\|\hat\E_1[\innerp{M_1 - \beta_h}{x} x]\|_\op = O(R^2 L \sqrt{\frac{\log(1/\delta_1)}{n}})$.
+%The second term is $\epsilon \sim \normal{0}{\sigma^2}$,
+%with probability $1-\delta_1$,
+%$\|\hat\E_1[\epsilon x]\|_\op = O(R \sigma \sqrt{\frac{\log(1/\delta_1)}{n}})$.
+%
+%Now, consider $\eta_2(x)$, which contains three terms.
+%Using similar techniques, we have that
+%$\|\hat\E_2[\eta_2(x) x\tp{2}]\|_\op = O(R^2 (L^2 R^2 + \sigma L R + \sigma^2) \sqrt{\frac{\log(1/\delta_1)}{n}})$.
+
+% Finally, $\eta_3(x)$ contains five terms plus an additional bias since the estimator uses $\hat M_1$ rather than $M_1$.
+% There are two additional considerations.
+% First, to bound $\hat\E_3[\epsilon^3]$, we use Lemma 19 of \cite{hsu13spherical}.
+% Second, the additional bias is small by the previous bound (and it is constructed on $\sD_1$, which is independent of $\sD_3$
+% used to construct $\hat M_3$.
+% Therefore, we incur another $O(\sigma^2 \cdot R \sigma \sqrt{\frac{\log(1/\delta_1)}{n}})$.
+% We can handle the other terms using conventional means.
+% Combining everything, we obtain
+% $\|\hat\E_3[\eta_3(x) x\tp{3}]\|_\op = O(R^3 (L^3 R^3 + \sigma L^2 R^2 + \sigma^2 L R + \sigma^3 + \sigma^3 R) \sqrt{\frac{\log^3(1/\delta_1)}{n}})$.
 
 Finally, taking $\delta_1 = \delta/3$, and taking the union bound over the bounds for $p \in \{1,2,3\}$,
 we get our result.
@@ -257,15 +275,16 @@ Note that we are bounding quantities fairly crudely for the sake of simplicity.
 
 Now that we have bounds on the errors of recovering $M_2$ and $M_3$ from
 the data, we will extend the analysis of the robust tensor method in
-\citet{AnandkumarGeHsu2012} to bound the error on the parameters
-$\theta$. 
+\citet{AnandkumarGeHsu2012} to include the whitening and unwhitening
+steps, 2(a) and 2(c) respectively, of
+\algorithmref{algo:spectral-experts}.
 \begin{lemma}
   \label{lem:tensorPower} Let $\|\hat M_2 - M_2\|_{op} \le \epsilon$ and
   $\|\hat M_3 - M_3\|_{op} \le \epsilon$, for some $\epsilon$ such that 
   $$\epsilon < \min\{\sigmamin(M_2)/2,O(k \sigmamin(M_2)^{1.5} \|M_3\|_{op}^{-1})\}.$$ 
-  Then, for some permutation of indices, the parameter estimates found
-  in part 2 of \algorithmref{algo:spectral-experts} satisfy the
-  following with probability atleast $1 - \delta$,
+  Then, there exists a permutation of indices such that  the parameter
+  estimates found in step 2 of \algorithmref{algo:spectral-experts}
+  satisfy the following with probability atleast $1 - \delta$,
   \begin{align*}
   \|\hat \pi - \pi \|_{\infty}
     &= O( k \pi_{max}^{2.5} \pi_{min}^{-0.5} \sigmamin(M_2)^{-1.5} \|M_3\|_{op} \epsilon ) \\
@@ -274,8 +293,11 @@ $\theta$.
   \end{align*}
   for all $h \in [k]$.
 \end{lemma}
-The proof of the above lemma has been deferred to
-\appendixref{sec:proofs}. 
+\begin{proof}
+  The proof follows by applying standard matrix perturbation results for
+  the whitening and unwhitening operators, and has been deferred
+  \appendixref{sec:proofs}. 
+\end{proof}
 
 \paragraph{Synthesis}
 Together, these lemmas allow us to control the compound parameter error
