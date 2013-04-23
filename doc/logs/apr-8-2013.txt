@@ -21,8 +21,8 @@ A much more efficient reduction can be formulated by completing the squares as
 follows,
 \begin{align}
   \sum_i (\Tr(\oft{X}{i} B) - \oft{y}{i})^2 
-    &= \sum_i \Tr(\oft{X}{i} B)^2 - 2\Tr(\oft{y}{i} \oft{X}{i} B) + \oft{y}{i}^2 \\
-    &= \Tr( (\sum_i \oft{X}{i} \otimes \oft{X}{i}) B\otimes B)^2 - 2\Tr((\sum_i \oft{y}{i} \oft{X}{i}) B) + \sum_i \oft{y}{i}^2.
+    &= \sum_i \Tr(\oft{X}{i} B)^2 - 2\Tr(\oft{y}{i} \oft{X}{i} B) + (\oft{y}{i})^2 \\
+    &= \Tr( (\sum_i \oft{X}{i} \otimes \oft{X}{i}) B\otimes B)^2 - 2\Tr((\sum_i \oft{y}{i} \oft{X}{i}) B) + \sum_i (\oft{y}{i})^2.
 \end{align}
 
 We can complete the squares of the first term, noting that 

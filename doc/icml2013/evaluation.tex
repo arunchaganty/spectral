@@ -26,7 +26,10 @@ unit hypercube $[-1,1]^b$.
 Then, to get the actual covariates $x$, we applied a non-linear function of $t$
 that conformed to the identifiability criteria discussed in
 \sectionref{sec:algo}.
-The coefficients $\{\beta_h\}$ were drawn from a standard Gaussian.  
+The coefficients $\{\beta_h\}$ were drawn from a standard Gaussian. The
+results presented below use $\sigma^2 = 0.1$; we did not observe any
+qualitatively different behaviour for choices of $\sigma^2$ in the range
+$[0.01, 0.4]$.  
 
 As an example, one feature map we considered in the one-dimensional
 setting was $x = (1, t, t^4, t^7)$. The data and the curves fit using
