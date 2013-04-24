@@ -17,7 +17,7 @@ and assume $\Sigma_p \succ 0$ for each $p \in \{1,2,3\}$.
 Assume $d \ge k$.
 Suppose the number of samples is
 $n = \max(n_1,n_2)$
-where $n_1 = \Omega\left(d^6 R^{12} (\max_{p \in [3]} \sigmamin(\Sigma_p)^{-2}) \log(d) \log(1/\delta)\right)$ and
+where $n_1 = \Omega\left(R^{12} (\max_{p \in [3]} \sigmamin(\Sigma_p)^{-2}) \log(1/\delta)\right)$ and
 $n_2 = \Omega\left( \sigma^6 L^6 R^{12} k (\max_{p \in [3]} \sigmamin(\Sigma_p)^{-1}) \frac{\log^3 (1/\delta)}{\epsilon^2} \right)$.
 If the regularization strengths $\lambda_n^{(2)}$ and $\lambda_n^{(3)}$ are
 set to $\Omega\left(\sigma^3 L^3 R^6 \sqrt{\frac{\log(1/\delta)}{n}}\right)$,
@@ -171,7 +171,7 @@ First, let us lower bound the restricted strong convexity parameter $\kappa(\opX
 \begin{lemma}[lower bound on restricted strong convexity]
 \label{lem:lowRankLower}
 Let $\Sigma_p \eqdef \E[\cvec(x\tp{p})\tp{2}]$.
-If $$n = \Omega \left( p ~ d^{2p} \log(d) \frac{R^{4p} \log(1/\delta)}{\sigmamin(\Sigma_p)^2} \right),$$
+If $$n = \Omega \left( \frac{R^{4p} \log(1/\delta)}{\sigmamin(\Sigma_p)^2} \right),$$
 with probability at least $1-\delta$,
 $$\kappa(\opX_p) \ge \frac{\sigmamin(\Sigma_p)}{4}.$$
 \end{lemma}
@@ -184,17 +184,22 @@ we have
 $\frac{1}{2n} \|\opX_p(\Delta)\|_2^2
 = \frac{1}{2} \trace(\cvec(\Delta)\tp{2} \hat\Sigma_p)
 \ge \frac{1}{2} \|\Delta\|_F^2 \sigmamin(\hat\Sigma_p)$.
-It remains to show that $\sigmamin(\hat\Sigma_p)$ and $\sigmamin(\Sigma_p)$ are close.
-To do this, we first apply Hoeffding's inequality elementwise.
-Since $\|x\|_2 \le R$, we have that for each element $(i,j)$,
-$|(\hat\Sigma_p)_{ij} - (\Sigma_p)_{ij}| = O(R^{2p}\sqrt{\frac{\log (1/\delta)}{n}})$.
-Applying the union bound over the $d^{2p}$ elements of $\hat\Sigma_p - \Sigma_p$,
-we have that the max norm is bounded:
-$\|\hat\Sigma_p - \Sigma_p\|_\text{\rm max} = O(R^{2p} \sqrt{\frac{p \log(d) \log (1/\delta)}{n}})$.
-The max norm times $d^p$ upper bounds the Frobenius norm, which upper bounds the operator norm, so we have that
-$\|\hat\Sigma_p - \Sigma_p\|_\text{\rm op} = O(d^p R^{2p} \sqrt{\frac{p \log(d) \log (1/\delta)}{n}})$.
-Using the fact that $\sigmamin(\hat\Sigma_p) \ge \sigmamin(\Sigma_p) - \|\hat\Sigma_p - \Sigma_p\|_\text{\rm op}$
-yields the result.
+By Weyl's theorem, $\sigmamin(\hat\Sigma_p) \ge \sigmamin(\Sigma_p) - \|\hat\Sigma_p - \Sigma_p\|_{op}$. 
+Thus, it remains to show that $\|\hat\Sigma_p - \Sigma_p\|_{op} \le \|\hat\Sigma_p - \Sigma_p\|_{F}$ is small. 
+To do so, we apply a matrix concentration result for the Frobenius norm\citationneeded; with probability at least $1 - \delta$, 
+$\| \hat\Sigma_p - \Sigma_p \|_F = O\left( M \sqrt{\frac{\log(1/\delta)}{n}} \right)$,
+where $M$ is an upper bound on $\| \Sigma_p \|_F$. Since $\|x\|_2 \le R$, we can use the bound $\| \Sigma_p \|_F \le R^{2p}$ in the above to get the stated result. 
+
+%To do this, we first apply Hoeffding's inequality elementwise.
+%Since $\|x\|_2 \le R$, we have that for each element $(i,j)$,
+%$|(\hat\Sigma_p)_{ij} - (\Sigma_p)_{ij}| = O(R^{2p}\sqrt{\frac{\log (1/\delta)}{n}})$.
+%Applying the union bound over the $d^{2p}$ elements of $\hat\Sigma_p - \Sigma_p$,
+%we have that the max norm is bounded:
+%$\|\hat\Sigma_p - \Sigma_p\|_\text{\rm max} = O(R^{2p} \sqrt{\frac{p \log(d) \log (1/\delta)}{n}})$.
+%The max norm times $d^p$ upper bounds the Frobenius norm, which upper bounds the operator norm, so we have that
+%$\|\hat\Sigma_p - \Sigma_p\|_\text{\rm op} = O(d^p R^{2p} \sqrt{\frac{p \log(d) \log (1/\delta)}{n}})$.
+%Using the fact that $\sigmamin(\hat\Sigma_p) \ge \sigmamin(\Sigma_p) - \|\hat\Sigma_p - \Sigma_p\|_\text{\rm op}$
+%yields the result.
 \end{proof}
 
 Next, let us upper bound the operator norm of the observation adjoint:
@@ -214,14 +219,20 @@ $\frac1n \|\opX_p^*(\eta_p)\|_\op = \hat\E_p[\eta_p(x) x\tp{p}]$
 for $p \in \{1,2,3\}$ defined in \refeqn{y1}, \refeqn{y2}, and
 \refeqn{y3}. Each $\eta_p(x)$ is composed of several zero-mean random
 variables, and since $\|A + B\|_\op \le \|A\|_\op + \|B\|_\op$, it
-suffices to consider each term in turn. For each term, we will
+suffices to consider each term in turn. 
+For each term, we will
 condition on $x$ and use standard concentration inequalities to bound
-the noise with probability atleast $1-\delta_1$,
+the noise. 
+
+For example, consider $\eta_1(x)$, which has two terms. 
+The first term is $\innerp{M_1 - \beta_h}{x}$.  We have that $\|M_1 - \beta_h\|_2 \le 2L$, so by Hoeffding's inequality, and using the fact that $\|x\|_2 \le R$, with probability $1-\delta_1$, $\|\hat\E_1[\innerp{M_1 - \beta_h}{x} x]\|_2 = O(R^2 L \sqrt{\frac{\log(1/\delta_1)}{n}})$. 
+The second term is $\epsilon \sim \normal{0}{\sigma^2}$, thus with probability $1-\delta_1$, $\|\hat\E_1[\epsilon x]\|_2 = O(R \sigma \sqrt{\frac{\log(1/\delta_1)}{n}})$. 
+The bounds on the terms presented below hold with probability atleast $1-\delta_1$ and are proved similarly.
 {\scriptsize
 \begin{align*}
-  \| \hat\E_1[ \eta_1(x) x ] \|_{op} &\le 
-            \underbrace{ \|\hat\E_1[\innerp{M_1 - \beta_h}{x} x]\|_\op  }_{ O\left( L R^2     \sqrt{\frac{\log(1/\delta_1)}{n}} \right) } +
-            \underbrace{ \|\hat\E_1[\epsilon x]\|_\op                   }_{ O\left( R \sigma  \sqrt{\frac{\log(1/\delta_1)}{n}} \right) } \\
+%   \| \hat\E_1[ \eta_1(x) x ] \|_{op} &\le 
+%             \underbrace{ \|\hat\E_1[\innerp{M_1 - \beta_h}{x} x]\|_\op  }_{ O\left( L R^2     \sqrt{\frac{\log(1/\delta_1)}{n}} \right) } +
+%             \underbrace{ \|\hat\E_1[\epsilon x]\|_\op                   }_{ O\left( R \sigma  \sqrt{\frac{\log(1/\delta_1)}{n}} \right) } \\
   %  &= O\left( \sigma L R^2 \sqrt{\frac{\log(1/\delta_1)}{n}} \right) \\
     \| \hat\E_2[ \eta_2(x) x\tp{2} ] \|_{op} &\le 
             \underbrace{ \|\hat\E_2[\innerp{\beta_h\tp{2} - M_2}{x\tp{2}} x\tp{2}]\|_\op }_{ O\left( L^2 R^4      \sqrt{\frac{\log^2(1/\delta_1)}{n}} \right) } \\
@@ -240,31 +251,7 @@ There are two additional considerations when bounding the terms in $\eta_3$.
 First, to bound $\hat\E_3[\epsilon^3]$, we use Lemma 19 of \cite{hsu13spherical}.
 Second, there is an additional bias since the estimator uses $\hat M_1$ instead of $M_1$; this bias is small by the previous bound (and is constructed on an independent dataset, $\sD_1$).
 Therefore, we incur another $O(\sigma^2 \cdot R \sigma \sqrt{\frac{\log(1/\delta_1)}{n}})$.
-We can handle the other terms using conventional means, the details of which can be found in \todo{Appendix B}.
-
-%First, consider $\eta_1(x)$, which contains two terms.
-%The first term is $\innerp{M_1 - \beta_h}{x}$.
-%We have that $\|M_1 - \beta_h\|_2 \le 2L$,
-%so by Hoeffding's inequality, and using the fact that $\|x\|_2 \le R$,
-%with probability $1-\delta_1$,
-%$\|\hat\E_1[\innerp{M_1 - \beta_h}{x} x]\|_\op = O(R^2 L \sqrt{\frac{\log(1/\delta_1)}{n}})$.
-%The second term is $\epsilon \sim \normal{0}{\sigma^2}$,
-%with probability $1-\delta_1$,
-%$\|\hat\E_1[\epsilon x]\|_\op = O(R \sigma \sqrt{\frac{\log(1/\delta_1)}{n}})$.
-%
-%Now, consider $\eta_2(x)$, which contains three terms.
-%Using similar techniques, we have that
-%$\|\hat\E_2[\eta_2(x) x\tp{2}]\|_\op = O(R^2 (L^2 R^2 + \sigma L R + \sigma^2) \sqrt{\frac{\log(1/\delta_1)}{n}})$.
-
-% Finally, $\eta_3(x)$ contains five terms plus an additional bias since the estimator uses $\hat M_1$ rather than $M_1$.
-% There are two additional considerations.
-% First, to bound $\hat\E_3[\epsilon^3]$, we use Lemma 19 of \cite{hsu13spherical}.
-% Second, the additional bias is small by the previous bound (and it is constructed on $\sD_1$, which is independent of $\sD_3$
-% used to construct $\hat M_3$.
-% Therefore, we incur another $O(\sigma^2 \cdot R \sigma \sqrt{\frac{\log(1/\delta_1)}{n}})$.
-% We can handle the other terms using conventional means.
-% Combining everything, we obtain
-% $\|\hat\E_3[\eta_3(x) x\tp{3}]\|_\op = O(R^3 (L^3 R^3 + \sigma L^2 R^2 + \sigma^2 L R + \sigma^3 + \sigma^3 R) \sqrt{\frac{\log^3(1/\delta_1)}{n}})$.
+%We can handle the other terms using conventional means, the details of which can be found in \appendixref{sec:proofs}.
 
 Finally, taking $\delta_1 = \delta/3$, and taking the union bound over the bounds for $p \in \{1,2,3\}$,
 we get our result.
