@@ -5,14 +5,14 @@
 
 \paragraph{Algorithms}
 
-We implemented the low rank recovery optimization routines for $M_2$ and
-$M_3$ using a proximal subgradient descent
-algorithm.%\cite{candes11phaselift,tomioka2010estimation}. (Note sure about this citation and not required?)
-The algorithm
-was initialized with the regularized least squares solution and was run
-for 500 iterations or until convergence up to a tolerance of $10^{-3}$.
+We solved the low rank recovery optimization routines for $M_2$ and
+$M_3$ using \texttt{cvx}\citationneeded. 
+%ainterior point method an interior proximal subgradient descent
+%algorithm.%\cite{candes11phaselift,tomioka2010estimation}. (Note sure about this citation and not required?)
+%The algorithm was initialized with the regularized least squares
+%solution and was run for 500 iterations or until convergence up to
+%a tolerance of $10^{-3}$.
 %Both regularization parameters, $\lambda_n^{(2)}$ and, $\lambda_n^{(3)}$ were annealed as $\frac{1}{n}$. 
-
 As a baseline, we also implemented EM with two different
 initializations. In the first, we used $\beta$s with random standard
 Gaussian entries and uniform mixture probabilities, $\pi$. In the other,
@@ -38,7 +38,7 @@ the parameters recovered using Spectral Experts are shown in
 \figureref{fig:curves}. We note that even on well-separated data such as
 this, EM converged to the correct basin of attraction only 13\% of the time.
 
-\begin{figure}[h]
+\begin{figure}[t]
   \centering
   \includegraphics[width=0.50\textwidth]{figures/hist.pdf}
   \caption{Histogram over recovery errors between the three algorithms. $b = 1, d = 4, k = 3, n = 500,000$}
