@@ -789,6 +789,20 @@ public class MatrixOps {
     }
   }
 
+  public static double conditionNumber( SimpleMatrix X, int k ) {
+    Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> UDV = svdk( X, k );
+    SimpleMatrix D = UDV.getValue1();
+    double[] diagonal = MatrixFactory.toVector(D.extractDiag());
+    return diagonal[0]/diagonal[k-1];
+  }
+
+  public static double sigmak( SimpleMatrix X, int k ) {
+    Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> UDV = svdk( X, k );
+    SimpleMatrix D = UDV.getValue1();
+    double[] diagonal = MatrixFactory.toVector(D.extractDiag());
+    return diagonal[k-1];
+  }
+
   /**
    * Compute eigenvalues and eigenvectors of X
    */
