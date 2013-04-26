@@ -7,14 +7,12 @@ In particular, the following theorem provides a rate of convergence:
 
 \begin{theorem}[Convergence of Spectral Experts]
 \label{thm:convergence}
-Each dataset $\sD_p$ (for $p = 1, 2, 3$) consists of $n$ i.i.d.\ points drawn from a mixture
-of linear regressions model with parameter $\theta^*$
-(having three independent copies simplifies the analysis).
-Let $\|x\|_2 \le R$ with probability $1$
-and let $\|\beta_h^*\|_2 \le L$ for all $h \in [k]$.
+Assume each dataset $\sD_p$ (for $p = 1, 2, 3$) consists of $n$ i.i.d.\ points independently drawn from a mixture
+of linear regressions model with parameter $\theta^*$\footnote{Having three independent copies simplifies the analysis}.
+Further, assume $\|x\|_2 \le R$ with probability $1$, $\|\beta_h^*\|_2
+\le L$ for all $h \in [k]$ and $B$ is full rank.
 Let $\Sigma_p \eqdef \E[\cvec(x\tp{p})\tp{2}]$, 
 and assume $\Sigma_p \succ 0$ for each $p \in \{1,2,3\}$.
-Assume $d \ge k$.
 Suppose the number of samples is
 $n = \max(n_1,n_2)$
 where $n_1 = \Omega\left(R^{12} (\max_{p \in [3]} \sigmamin(\Sigma_p)^{-2}) \log(1/\delta)\right)$ and

@@ -1,4 +1,4 @@
-\section{Spectral Experts Algorithm}
+\section{Spectral Experts algorithm}
 \label{sec:algo}
 
 In this section, we describe our Spectral Experts algorithm
@@ -86,6 +86,39 @@ Performing regression yields estimates for $M_3$.
 It turns out that knowledge of $M_2$ and $M_3$ are sufficient to recover
 all the parameters.
 
+\begin{algorithm}[t]
+  \caption{Spectral Experts}
+  \label{algo:spectral-experts}
+  \begin{algorithmic}[1]
+    \INPUT Three datasets $\mathcal{D}_r = \{ (\xn{1}, \yn{1}), \cdots, (\xn{n}, \yn{n}) \}$ for $r = 1, 2, 3$;
+    %regularization strengths $\lambda_n^{(2)} = \frac{c_2}{\sqrt{n}}$, $\lambda_n^{(3)} = \frac{c_3}{\sqrt{n}}$;
+    regularization strengths $\lambda_n^{(2)}$, $\lambda_n^{(3)}$;
+    observation noise variance $\sigma^2$.
+    \OUTPUT Parameters $\hat\theta = (\hat \pi, [\hat \beta_1 \mid \cdots \mid \hat \beta_k])$.
+    \STATE Estimate compound parameters $M_2, M_3$ using \textbf{low-rank regression}:
+    \begin{align}
+      &\hat M_1 = \arg\min_{M_1} \label{eqn:estimateM1} \\
+      &\quad\quad\frac{1}{2n} \sum_{(x,y) \in \sD_1} (\innerp{M_1}{x} - y)^2, \nonumber \\
+      &\hat M_2 = \arg\min_{M_2} \quad \lambda_n^{(2)} \|M_2\|_* + \label{eqn:estimateM2} \\
+      &\quad\quad\frac{1}{2n} \sum_{(x,y) \in \sD_2} (\innerp{M_2}{x\tp{2}} + \sigma^2 - y^2)^2, \nonumber \\
+      &\hat M_3 = \arg\min_{M_3} \quad \lambda_n^{(3)} \|M_3\|_* + \label{eqn:estimateM3} \\
+      &\quad\quad\frac{1}{2n} \sum_{(x,y) \in \sD_3} (\innerp{M_3}{x\tp{3}} + 3 \sigma^2\innerp{\hat M_1}{x} - y^3)^2. \nonumber
+    \end{align}
+    \STATE Estimate the parameters $\theta = (\pi, B)$ using \textbf{tensor factorization}:
+    \begin{enumerate}
+      \item [(a)] Compute whitening matrix $\hat W \in \Re^{d \times k}$ (such that $\hat W^\top
+      \hat M_2 \hat W = I$) using SVD.
+      \item [(b)] Compute the eigenvalues $\{\hat a_h\}_{h=1}^k$
+      and eigenvectors $\{\hat v_h\}_{h=1}^k$
+      of the whitened tensor $\hat M_3(\hat W, \hat W, \hat W) \in \Re^{k \times k \times k}$
+      by using the robust tensor power method.
+    \item [(c)] Set parameter estimates $\hat\pi_h = \frac{1}{\hat a_h^2}$
+    and $\hat\beta_h = (\hat W^{\top})^\dagger (\hat a_h \hat v_h)$.
+    \end{enumerate}
+  \end{algorithmic}
+\end{algorithm}
+
+
 % Full algorithm
 Now we are ready to state our full algorithm, which we call Spectral Experts
 (\algorithmref{algo:spectral-experts}).
@@ -164,36 +197,4 @@ to identify the underlying parameters.
 %regression. Finally, we will outline the tensor power method to recover
 %$B$ and $\pi$ given these two quantities, $M_2$ and $M_3$ in
 %\sectionref{sec:tensor-power}. 
-
-\begin{algorithm}[t]
-  \caption{Spectral Experts}
-  \label{algo:spectral-experts}
-  \begin{algorithmic}[1]
-    \INPUT Three independent datasets $\mathcal{D}_r = \{ (\xn{1}, \yn{1}), \cdots, (\xn{n}, \yn{n}) \}$ for $r = 1, 2, 3$;
-    %regularization strengths $\lambda_n^{(2)} = \frac{c_2}{\sqrt{n}}$, $\lambda_n^{(3)} = \frac{c_3}{\sqrt{n}}$;
-    regularization strengths $\lambda_n^{(2)}$, $\lambda_n^{(3)}$;
-    observation noise variance $\sigma^2$.
-    \OUTPUT Parameters $\hat\theta = (\hat \pi, [\hat \beta_1 \mid \cdots \mid \hat \beta_k])$.
-    \STATE Estimate compound parameters $M_2, M_3$ using \textbf{low-rank regression}:
-    \begin{align}
-      &\hat M_1 = \arg\min_{M_1} \label{eqn:estimateM1} \\
-      &\quad\quad\frac{1}{2n} \sum_{(x,y) \in \sD_1} (\innerp{M_1}{x} - y)^2, \nonumber \\
-      &\hat M_2 = \arg\min_{M_2} \quad \lambda_n^{(2)} \|M_2\|_* + \label{eqn:estimateM2} \\
-      &\quad\quad\frac{1}{2n} \sum_{(x,y) \in \sD_2} (\innerp{M_2}{x\tp{2}} + \sigma^2 - y^2)^2, \nonumber \\
-      &\hat M_3 = \arg\min_{M_3} \quad \lambda_n^{(3)} \|M_3\|_* + \label{eqn:estimateM3} \\
-      &\quad\quad\frac{1}{2n} \sum_{(x,y) \in \sD_3} (\innerp{M_3}{x\tp{3}} + 3 \sigma^2\innerp{\hat M_1}{x} - y^3)^2. \nonumber
-    \end{align}
-    \STATE Estimate the parameters $\theta = (\pi, B)$ using \textbf{tensor factorization}:
-    \begin{enumerate}
-      \item [(a)] Compute whitening matrix $\hat W \in \Re^{d \times k}$ (such that $\hat W^\top
-      \hat M_2 \hat W = I$) using SVD.
-      \item [(b)] Compute the eigenvalues $\{\hat a_h\}_{h=1}^k$
-      and eigenvectors $\{\hat v_h\}_{h=1}^k$
-      of the whitened tensor $\hat M_3(\hat W, \hat W, \hat W) \in \Re^{k \times k \times k}$
-      by using the robust tensor power method.
-    \item [(c)] Set parameter estimates $\hat\pi_h = \frac{1}{\hat a_h^2}$
-    and $\hat\beta_h = (\hat W^{\top})^\dagger (\hat a_h \hat v_h)$.
-    \end{enumerate}
-  \end{algorithmic}
-\end{algorithm}
 
