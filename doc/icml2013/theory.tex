@@ -30,7 +30,15 @@ $\|\hat\beta_h - \beta^*_h\|_2 \le \frac{\epsilon}{\sqrt{\pi_h^*}}$.
 The proof of the theorem has two parts.
 First, we bound the error in the compound parameters estimates $\hat M_2,\hat M_3$
 using results from \citet{Tomioka2011}.
-Then, we use results from \citet{AnandkumarGeHsu2012} to convert this error
+While the $R^{12}$ term looks formidable, it is unavoidable since we
+perform regression on the third moment of the data. Classically, the
+number of samples required is norm squared of the covariance matrix,
+which itself is bounded by the norm squared of the data, $R^3$. This
+third-order dependence also shows up in the rate the regression
+coefficients are annealed; the cubic terms bound each of $\epsilon^3$,
+$\beta_h^3$ and $\|(x\tp{3})\tp{2}\|_F$ with high probability. 
+
+Next, we use results from \citet{AnandkumarGeHsu2012} to convert this error
 into a bound on the actual parameter estimates $\hat\theta = (\hat\pi, \hat B)$
 derived from the robust tensor power method.
 But first, let us study a more basic property: identifiability.

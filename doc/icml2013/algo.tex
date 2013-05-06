@@ -134,9 +134,10 @@ In the algorithm, the regularization strengths $\lambda_n^{(2)}$ and $\lambda_n^
 are set to $\frac{c}{\sqrt{n}}$ for some constant $c$.
 The resulting semidefinite program is a standard one which has received
 much attention in recent years.
-We use a rather simple proximal gradient-based approach,
-in which the nuclear norm is handled in closed form by taking an SVD
-and soft-thresholding the singular values \cite{donoho95soft,cai10soft}.
+% We use a standard off-the-shelf SDP solver, CVX, to solve .
+% We use a rather simple proximal gradient-based approach,
+% in which the nuclear norm is handled in closed form by taking an SVD
+% and soft-thresholding the singular values \cite{donoho95soft,cai10soft}.
 
 % Tensor factorization
 Having estimated the compound parameters $M_1$, $M_2$ and $M_3$, it
