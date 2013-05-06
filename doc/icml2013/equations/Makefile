@@ -1,7 +1,7 @@
-
-LATEX = pdflatex -interaction=nonstopmode
+LATEX = pdflatex
+#LATEX = pdflatex -interaction=nonstopmode
 OUTPUT=$(shell basename `pwd`)
-SECTIONS = 
+SECTIONS = $(wildcard *.tex)
 
 all: $(OUTPUT).pdf
 
@@ -9,10 +9,15 @@ $(OUTPUT).pdf: paper.tex $(SECTIONS)
 	$(LATEX) $<
 	mv $(subst .tex,.pdf,$<) $@
 
+final: paper.tex $(SECTIONS)
+	texify < $< > $(subst .tex,.tmp.tex,$<)
+	$(LATEX) $(subst .tex,.tmp.tex,$<)
+	mv $(subst .tex,.tmp.pdf,$<) $(OUTPUT).pdf
+
 bib: paper.tex $(SECTIONS)
 	$(LATEX) $< 
+	bibtex $(subst .tex,,$<)
 	$(LATEX) $< 
-	biblatex $(subst .tex,,$<)
 	$(LATEX) $< 
 
 clean:
@@ -20,4 +25,4 @@ clean:
 	rm -rf $(OUTPUT).pdf
 
 
-.PHONY: clean bib
+.PHONY: clean bib final

@@ -3,7 +3,7 @@
 \usepackage{booktabs}
 \usepackage{ctable}
 
-\title{Proofs}
+\title{Detailed Proofs for Spectal Experts}
 
 \author{\Name{Arun Tejasvi Chaganty} \Email{chaganty@stanford.edu}}
 
@@ -30,27 +30,125 @@
 
 \maketitle
 
-\paragraph{Lemma 2}
+\begin{lemma}(Concentration of Vector Norms)
+  \label{lemma:conc-norms}
+  Let $X_1, \cdots, X_n \in \Re^d$ be i.i.d. samples of the random
+  variable $X$, where $\|X\|_2 \le M$ with probability 1. Then, with
+  probability at least $1 - \delta$,
+  \begin{align}
+    \| \frac{1}{n} \sum_{i=1}^{n} X_i - \E[X] \|_2 &\le \frac{4\sqrt{2}}{\sqrt{n}} M (1 + \sqrt{\log(1/\delta)}).
+  \end{align}
+\end{lemma}
+\begin{proof}
+  Let $Z_i = X_i - \E[X]$. By Jensen's inequality, $\|\E[X]\| \le \E[\|X\|] \le M$; thus $\|Z_i\| \le 2M$. The proof follows from McDiarmid's inequality on the function $f(Z_1, Z_2, \cdots, Z_n) = \| \sum_{i=0}^n Z_i - n\E[Z] \|$, noting that $|f(Z_1, \cdots, Z_i, \cdots, Z_n) - f(Z_1, \cdots, Z_i', \cdots, Z_n)| \le \|Z_i - Z_i'\| \le 4M$; with probability at least $1 - \delta$,
+  \begin{align}
+    \|\frac{1}{n}\sum_{i=1}^n Z_i\| 
+    &\le \frac{1}{n} \E[ \| \sum_{i=1}^n Z_i \| ] + 4M\sqrt{\frac{2\log{1/\delta}}{n}}.
+  \end{align}
+
+  $\E[ \| \sum_{i=1}^n Z_i \| ]$ is easy to bound by exploiting the independence between the $Z_i$, 
+  \begin{align}
+    \E[ \| \sum_{i=1}^n Z_i \|^2 ] &\le \E[ \sum_{i=1}^n \|Z_i\|^2 ] + \E[ \sum_{i\neq j} \innerp{Z_i}{Z_j} ] \\ 
+                                    &\le n (2M)^2 + 0 \\
+    \E[ \| \sum_{i=1}^n Z_i \| ] &\le 2\sqrt{n}M.
+  \end{align}
+
+  Thus, we have the bound,
+  \begin{align}
+    \|\frac{1}{n}\sum_{i=1}^n Z_i\| &\le 2M \frac{1}{\sqrt{n}} + 4M\sqrt{\frac{2\log{1/\delta}}{n}}.
+  \end{align}
+\end{proof}
+
+Note that the above result holds for the Frobenius norm of a matrix,
+$M$, because $\|M\|_F = \|\vvec(M)\|_2$.
+
+\begin{lemma}(Concentration of Independent Products)
+  \label{lemma:conc-prod}
+  Let $X$ and $Y$ be independent random variables, such that $X$ and $Y^2$ are subgaussian with parameters $\sigma^2_X$ and $\sigma^2_{Y^2}$ respectively.
+  Then, 
+  \begin{align}
+    \Pr[ X - \E[X] \ge \epsilon ] 
+      &\le \exp( -\frac{3}{4} (\frac{2\epsilon^4}{\sigma^4_X \sigma^2_{Y^2}} )^{1/3} ).
+  \end{align}
+\end{lemma}
+\begin{proof}
+  We begin by bounding the moment generating function of $XY$, using the property that $X$ and $Y$ are independent,
+  \begin{align}
+    \E[ \exp(t X Y) ] 
+      &= \E[ \E[ \exp(t X Y) | Y ] ] \\
+      &\le \E[ \exp(\frac{(tY)^2 \sigma^2_X}{2}) ] \\
+      &\le \exp(\frac{t^4 \sigma^4_X \sigma^2_{Y^2} }{8}).
+  \end{align}
+
+  By Markov's inequality, we have that,
+  \begin{align}
+    \Pr[ XY \ge \epsilon ] 
+      &\le \inf_t \frac{\E[\exp(t XY)]}{\exp{t\epsilon}} \\
+      &\le \inf_t \exp(\frac{t^4 \sigma^4_X \sigma^2_{Y^2} }{8} - t\epsilon).
+  \end{align}
+  Setting $t = (\frac{2\epsilon}{\sigma^4_X \sigma^2_{Y^2}})^{1/3}$ minimizes the above expression, thus,
+  \begin{align}
+    \Pr[ XY \ge \epsilon ] 
+      &\le \exp( -\frac{3}{4} (\frac{2\epsilon^4}{\sigma^4_X \sigma^4_{Y^2}} )^{1/3} ).
+  \end{align}
+\end{proof}
+
+\begin{corollary}
+  Let $\{X_i\}_{i=1}^n$ and $\{Y_i\}_{i=1}^n$ be $n$ iid
+  samples of $X$ and $Y$, such that $X$ is subgaussian with parameter
+  $\sigma^2$ and $Y \le R$ with probability 1. Then, 
+  \begin{align}
+    \Pr[ \hat\E[ X Y ] - \E[ X Y ] \ge \epsilon ] 
+      &\le 
+  \end{align}
+\end{corollary}
+\begin{proof}
+  Firstly, we will show that $Y^2$ is subgaussian; 
+  \begin{align}
+    \E[ \exp(t X Y) ] 
+      &= \E[ \E[ \exp(t X Y) | Y ] ] \\
+      &\le \E[ \exp(\frac{(tY)^2 \sigma^2_X}{2}) ] \\
+      &\le \exp(\frac{t^4 \sigma^4_X \sigma^2_{Y^2} }{8} + \frac{t^2 \E[Y^2] \sigma^2_X }{2}).
+  \end{align}
+
+
+  \begin{align}
+    \Pr[ XY \ge \epsilon - \E[Y^2] ] 
+      &\le \inf_t \frac{\E[\exp(t XY)]}{\exp{t\epsilon}} \\
+      &\le \inf_t \exp(\frac{t^4 \sigma^4_X \sigma^2_{Y^2} }{8} - t(\epsilon - \E[Y^2])  ).
+  \end{align}
+
+
+\end{proof}
+
+\begin{lemma}[lower bound on restricted strong convexity]
+\label{lem:lowRankLower}
+Let $\Sigma_p \eqdef \E[\cvec(x\tp{p})\tp{2}]$.
+If $$n \ge \frac{12^2 (p!)^2 R^{4p} \log(1/\delta)}{\sigmamin(\Sigma_p)^2},$$
+with probability at least $1-\delta$,
+$$\kappa(\opX_p) \ge \frac{\sigmamin(\Sigma_p)}{2}.$$
+\end{lemma}
 
 \begin{proof}
 Expanding the definition of the observation operator:
-$$\frac{1}{2n} \|\opX_p(\Delta)\|_2^2 = \frac{1}{2n} \sum_{(x,y) \in \sD} \innerp{\Delta}{x\tp{p}}^2.$$
-Unfolding the tensor and letting $$\hat\Sigma_p \eqdef \frac{1}{n} \sum_{(x,y) \in \sD} \cvec(x\tp{p})\tp{2},$$
-we have 
+$$\frac{1}{n} \|\opX_p(\Delta)\|_2^2 = \frac{1}{n} \sum_{(x,y) \in \sD} \innerp{\Delta}{x\tp{p}}^2.$$
+Unfolding the tensors, letting $\hat\Sigma_p \eqdef \frac{1}{n}
+\sum_{(x,y) \in \sD} \cvec(x\tp{p})\tp{2}$, $\frac{1}{n}
+\|\opX_p(\Delta)\|_2^2 = \trace(\cvec(\Delta)\tp{2} \hat\Sigma_p)$. 
+We recall that each element of $\cvec(\Delta)$ aggregates elements with
+permuted indices, so $\|\vvec(\Delta)\|_2 \le \|\cvec(\Delta)\|_2 \le p!
+\|\vvec(\Delta)\|_2$. Then, we have 
 \begin{align}
-\frac{1}{2n} \|\opX_p(\Delta)\|_2^2 
-  &= \frac{1}{2} \trace(\cvec(\Delta)\tp{2} \hat\Sigma_p) \\
-  &\ge \frac{p!}{2} \|\Delta\|_F^2 \sigmamin(\hat\Sigma_p).
+\frac{1}{n} \|\opX_p(\Delta)\|_2^2 
+  &= \trace(\cvec(\Delta)\tp{2} \hat\Sigma_p) \\
+  &\ge \|\Delta\|_F^2 \sigmamin(\hat\Sigma_p).
 \end{align}
-The last line follows because $\|\cvec(\Delta)\|_2 \ge
-p! \|\vvec(\Delta)\|_2$.  By Weyl's theorem, $$\sigmamin(\hat\Sigma_p) \ge
+By Weyl's theorem, $$\sigmamin(\hat\Sigma_p) \ge
 \sigmamin(\Sigma_p) - \|\hat\Sigma_p - \Sigma_p\|_\Lop.$$ Thus, it
 remains to show that $$\|\hat\Sigma_p - \Sigma_p\|_\Lop \le
-\|\hat\Sigma_p - \Sigma_p\|_{F}$$ is small.  To do so, we apply a matrix
-concentration result for the Frobenius norm\citationneeded; with
+\|\hat\Sigma_p - \Sigma_p\|_{F}$$ is small. Applying \reflem{lemma:conc-norms}, with
 probability at least $1 - \delta$, $$\| \hat\Sigma_p - \Sigma_p \|_F
-= O\left( M \sqrt{\frac{\log(1/\delta)}{n}} \right),$$ where $M$ is an
-upper bound on $\| \Sigma_p \|_F$. Since $\|x\|_2 \le R$, we can use the
+\le 6 \|\Sigma_p\|_F \sqrt{\frac{\log(1/\delta)}{n}}.$$ Since $\|x\|_2 \le R$, we can use the
 bound $\| \Sigma_p \|_F \le p! \| \vvec(x\tp{p})\tp{2} \|_F \le p!
 R^{2p}$ in the above to get the stated result. 
 
@@ -66,7 +164,13 @@ R^{2p}$ in the above to get the stated result.
 %yields the result.
 \end{proof}
 
-\paragraph{Lemma 3}
+\begin{lemma}[upper bound on adjoint noise]
+\label{lem:lowRankUpper}
+Let $\opX_p$ be the linear operator previously defined. Then with
+probability at least $1-\delta$,
+$$\frac1{n} \|\opX_p^*(\eta_p)\|_\op \le O(\sigma^3 L^3 R^6 \sqrt{\frac{\log^3(1/\delta)}{n}}).$$
+for each $p \in \{1,2,3\}$.
+\end{lemma}
 
 \begin{proof}
 Let $\hat\E_p[f(x,\epsilon,h)]$ denote the empirical expectation over
@@ -88,20 +192,20 @@ The bounds on the terms presented below hold with probability at least $1-\delta
 {
 \begin{align*}
 %   \| \hat\E_1[ \eta_1(x) x ] \|_\Lop &\le 
-%             \underbrace{ \|\hat\E_1[\innerp{M_1 - \beta_h}{x} x]\|_\op  }_{ O\left( L R^2     \sqrt{\frac{\log(1/\delta_1)}{n}} \right) } +
-%             \underbrace{ \|\hat\E_1[\epsilon x]\|_\op                   }_{ O\left( R \sigma  \sqrt{\frac{\log(1/\delta_1)}{n}} \right) } \\
-  %  &= O\left( \sigma L R^2 \sqrt{\frac{\log(1/\delta_1)}{n}} \right) \\
+%             \underbrace{ \|\hat\E_1[\innerp{M_1 - \beta_h}{x} x]\|_\op  }_{ O( L R^2     \sqrt{\frac{\log(1/\delta_1)}{n}} ) } +
+%             \underbrace{ \|\hat\E_1[\epsilon x]\|_\op                   }_{ O( R \sigma  \sqrt{\frac{\log(1/\delta_1)}{n}} ) } \\
+  %  &= O( \sigma L R^2 \sqrt{\frac{\log(1/\delta_1)}{n}} ) \\
     \| \hat\E_2[ \eta_2(x) x\tp{2} ] \|_\Lop &\le 
-            \underbrace{ \|\hat\E_2[\innerp{\beta_h\tp{2} - M_2}{x\tp{2}} x\tp{2}]\|_\op }_{ O\left( L^2 R^4      \sqrt{\frac{\log(1/\delta_1)}{n}} \right) } \\
-   &\quad + \underbrace{ \|\hat\E_2[2 \epsilon \innerp{\beta_h}{x} x\tp{2}]\|_\op        }_{ O\left( \sigma L R^3 \sqrt{\frac{\log(1/\delta_1)}{n}} \right) } 
-          + \underbrace{ \|\hat\E_2[(\epsilon^2 - \sigma^2) x\tp{2}]\|_\op               }_{ O\left( \sigma^2 R^2 \sqrt{\frac{\log(1/\delta_1)}{n}} \right) } \\
-  %&= O\left( \sigma^2 L^2 R^4 \sqrt{\frac{\log^2(1/\delta_1)}{n}} \right) \\
+            \underbrace{ \|\hat\E_2[\innerp{\beta_h\tp{2} - M_2}{x\tp{2}} x\tp{2}]\|_\op }_{ O( L^2 R^4      \sqrt{\frac{\log(1/\delta_1)}{n}} ) } \\
+   &\quad + \underbrace{ \|\hat\E_2[2 \epsilon \innerp{\beta_h}{x} x\tp{2}]\|_\op        }_{ O( \sigma L R^3 \sqrt{\frac{\log(1/\delta_1)}{n}} ) } 
+          + \underbrace{ \|\hat\E_2[(\epsilon^2 - \sigma^2) x\tp{2}]\|_\op               }_{ O( \sigma^2 R^2 \sqrt{\frac{\log(1/\delta_1)}{n}} ) } \\
+  %&= O( \sigma^2 L^2 R^4 \sqrt{\frac{\log^2(1/\delta_1)}{n}} ) \\
   \| \hat\E_3[ \eta_3(x) x\tp{3} ] \|_\Lop &\le 
-            \underbrace{ \|\hat\E_3[\innerp{\beta_h\tp{3} - M_3}{x\tp{3}}                      x\tp{3}]\|_\op }_{O\left( L^3 R^6        \sqrt{\frac{\log(1/\delta_1)}{n}} \right) } \\
-   &\quad + \underbrace{ \|\hat\E_3[3 \epsilon \innerp{\beta_h\tp{2}}{x\tp{2}}                 x\tp{3}]\|_\op }_{O\left( \sigma L^2 R^5 \sqrt{\frac{\log(1/\delta_1)}{n}} \right) } 
-          + \underbrace{ \|\hat\E_3[\epsilon^3                                                 x\tp{3}]\|_\op }_{O\left( \sigma^3 R^3   \sqrt{\frac{\log (1/\delta_1)}{n}} \right) } \\
-   &\quad + \underbrace{ \|\hat\E_3[3(\epsilon^2 \innerp{\beta_h}{x} -\sigma^2 \innerp{\hat M_1}{x}) x\tp{3}]\|_\op }_{O\left( (\sigma^2 L R^4 + \sigma^2 R^4) \sqrt{\frac{\log(1/\delta_1)}{n}} \right) } \\
-  %&= O\left( \sigma^3 L^3 R^6 \sqrt{\frac{\log^3(1/\delta_1)}{n}} \right).
+            \underbrace{ \|\hat\E_3[\innerp{\beta_h\tp{3} - M_3}{x\tp{3}}                      x\tp{3}]\|_\op }_{O( L^3 R^6        \sqrt{\frac{\log(1/\delta_1)}{n}} ) } \\
+   &\quad + \underbrace{ \|\hat\E_3[3 \epsilon \innerp{\beta_h\tp{2}}{x\tp{2}}                 x\tp{3}]\|_\op }_{O( \sigma L^2 R^5 \sqrt{\frac{\log(1/\delta_1)}{n}} ) } 
+          + \underbrace{ \|\hat\E_3[\epsilon^3                                                 x\tp{3}]\|_\op }_{O( \sigma^3 R^3   \sqrt{\frac{\log (1/\delta_1)}{n}} ) } \\
+   &\quad + \underbrace{ \|\hat\E_3[3(\epsilon^2 \innerp{\beta_h}{x} -\sigma^2 \innerp{\hat M_1}{x}) x\tp{3}]\|_\op }_{O( (\sigma^2 L R^4 + \sigma^2 R^4) \sqrt{\frac{\log(1/\delta_1)}{n}} ) } \\
+  %&= O( \sigma^3 L^3 R^6 \sqrt{\frac{\log^3(1/\delta_1)}{n}} ).
 \end{align*}
 }
 There are two additional considerations when bounding the terms in $\eta_3$.
@@ -137,8 +241,8 @@ Basic perturbation theory gives that, if $\epsilon \le \frac{\sigmamin(M_2)}{2}$
 The error of the whitened tensor $T = M_3(W,W,W)$ is then, 
 
 \begin{align}
-\epsilon_T &= O\left( \|\hat W\|_\Lop \epsilon_{M_3} + 3 \|T\|_\Lop \|\hat W\|_\Lop^2 \epsilon_{W} \right )  \\
-  &= O\left(\sigmamin(M_2)^{-0.5} (1 + \|M_3\|_\Lop \sigmamin(M_2)^{-1} )~\epsilon\right).
+\epsilon_T &= O( \|\hat W\|_\Lop \epsilon_{M_3} + 3 \|T\|_\Lop \|\hat W\|_\Lop^2 \epsilon_{W}  )  \\
+  &= O(\sigmamin(M_2)^{-0.5} (1 + \|M_3\|_\Lop \sigmamin(M_2)^{-1} )~\epsilon).
 \end{align}
 
 By construction, $T$ is a symmetric tensor with orthogonal eigenvectors;
@@ -169,9 +273,5 @@ the original $\pi$ and $\beta_h$,
 \end{align*}
 
 \end{proof}
-
-
-
-
 
 \end{document}
