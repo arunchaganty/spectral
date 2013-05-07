@@ -43,6 +43,8 @@ output/
 output-*/
 data-*/
 results/
+logs-*/
+results-*/
 
 # Temporary stuff
 *.sh

@@ -100,7 +100,7 @@ public class MixtureOfExperts implements Serializable {
    */
   public Pair<SimpleMatrix, SimpleMatrix> sample( int N ) {
     // Generate n random points
-    SimpleMatrix X = RandomFactory.rand( N, D ); X = X.scale( 1.0 );
+    SimpleMatrix X = RandomFactory.rand( N, D ); //X = X.scale( 1.0 );
 
     // Add a bias term
     double[][] X_ = MatrixFactory.toArray( X );
@@ -110,7 +110,6 @@ public class MixtureOfExperts implements Serializable {
       X_ = MatrixOps.removeInRange(X_, 0.25, 0.5);
       N = X_.length;
     }
-
 
     if( bias ) {
         for( int n = 0; n < N; n++ ) {
@@ -131,7 +130,7 @@ public class MixtureOfExperts implements Serializable {
 
     double[] y = new double[ N ];
     for( int n = 0; n < N; n++ ) {
-      // Sample the coordinates $z$
+      // Sample the components $z$
       int z = (int) RandomFactory.multinomial( weights );
 
       // Generate the y's

@@ -6,11 +6,7 @@
 package learning;
 
 import java.util.Comparator;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InvalidClassException;
-import java.io.ObjectInputStream;
-import java.io.ObjectStreamClass;
+import java.io.*;
 
 import fig.basic.LogInfo;
 
@@ -191,6 +187,28 @@ public class Misc {
           }
           return resultClassDescriptor;
       }
+  }
+
+  public static double[] unbox( Double[] x ) {
+    double[] y = new double[x.length];
+    for( int i = 0; i < x.length; i++ ) {
+      y[i] = x[i];
+    }
+    return y;
+  }
+
+  public static File createTemporaryDirectory(String prefix)
+    throws IOException
+  {
+    final File temp;
+    temp = File.createTempFile(prefix + "-tmp", Long.toString(System.nanoTime()));
+    if(!(temp.delete())) {
+      throw new IOException("Could not delete file: " + temp.getAbsolutePath());
+    }
+    if(!(temp.mkdir())) {
+      throw new IOException("Could not create directory: " + temp.getAbsolutePath());
+    }
+    return (temp);
   }
 
 }

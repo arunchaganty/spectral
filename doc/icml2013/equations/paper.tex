@@ -30,37 +30,73 @@
 
 \maketitle
 
-\begin{lemma}(Concentration of Vector Norms)
+\begin{lemma}[Concentration of vector norms]
   \label{lemma:conc-norms}
-  Let $X_1, \cdots, X_n \in \Re^d$ be i.i.d.\ samples of the random
-  variable $X$, where $\|X\|_2 \le M$ with probability 1. Then, with
-  probability at least $1 - \delta$,
+  Let $X, X_1, \cdots, X_n \in \Re^d$ be i.i.d.\ samples
+  from some distribution with bounded support
+  ($\|X\|_2 \le M$ with probability 1).
+  Then with probability at least $1 - \delta$,
   \begin{align}
-    \| \frac{1}{n} \sum_{i=1}^{n} X_i - \E[X] \|_2 &\le \frac{4\sqrt{2}}{\sqrt{n}} M (1 + \sqrt{\log(1/\delta)}).
+    \left\| \frac{1}{n} \sum_{i=1}^{n} X_i - \E[X] \right\|_2 &
+    \le \frac{2 M (1 + \sqrt{\log(1/\delta)})}{\sqrt{n}}.
   \end{align}
 \end{lemma}
 \begin{proof}
-  Let $Z_i = X_i - \E[X]$. By Jensen's inequality, $\|\E[X]\| \le \E[\|X\|] \le M$; thus $\|Z_i\| \le 2M$. The proof follows from McDiarmid's inequality on the function $f(Z_1, Z_2, \cdots, Z_n) = \| \sum_{i=0}^n Z_i - n\E[Z] \|$, noting that $|f(Z_1, \cdots, Z_i, \cdots, Z_n) - f(Z_1, \cdots, Z_i', \cdots, Z_n)| \le \|Z_i - Z_i'\| \le 4M$; with probability at least $1 - \delta$,
+  Define $Z_i = X_i - \E[X]$.
+
+%  First, $\|Z_i\|_2 \le \|X_i\|_2 + \|\E[X_i]\|_2 \le 2M$,
+%  where the first inequality is due to the triangle inequality,
+%  and the second follows by Jensen's inequality on $\|\cdot\|_2$
+%  and the boundedness assumption on $X_i$.
+
+The quantity we want to bound can be expressed as follows:
   \begin{align}
-    \|\frac{1}{n}\sum_{i=1}^n Z_i\| 
-    &\le \frac{1}{n} \E[ \| \sum_{i=1}^n Z_i \| ] + 4M\sqrt{\frac{2\log{1/\delta}}{n}}.
+  f(Z_1, Z_2, \cdots, Z_n) = \left\| \frac1n \sum_{i=1}^n Z_i \right\|_2.
   \end{align}
 
-  $\E[ \| \sum_{i=1}^n Z_i \| ]$ is easy to bound by exploiting the independence between the $Z_i$, 
+Let us check that $f$ satisfies the bounded differences inequality:
   \begin{align}
-    \E[ \| \sum_{i=1}^n Z_i \|^2 ] &\le \E[ \sum_{i=1}^n \|Z_i\|^2 ] + \E[ \sum_{i\neq j} \innerp{Z_i}{Z_j} ] \\ 
-                                    &\le n (2M)^2 + 0 \\
-    \E[ \| \sum_{i=1}^n Z_i \| ] &\le 2\sqrt{n}M.
+|f(Z_1, \cdots, Z_i, \cdots, Z_n) - f(Z_1, \cdots, Z_i', \cdots, Z_n)|
+& \le \frac1n \|Z_i - Z_i'\|_2 \\
+& = \frac1n \|X_i - X_i'\|_2 \\
+&\le \frac{2M}{n},
   \end{align}
+  by the bounded assumption of $X_i$ and the triangle inequality.
 
-  Thus, we have the bound,
-  \begin{align}
-    \|\frac{1}{n}\sum_{i=1}^n Z_i\| &\le 2M \frac{1}{\sqrt{n}} + 4M\sqrt{\frac{2\log{1/\delta}}{n}}.
-  \end{align}
+By McDiarmid's inequality,
+with probability at least $1 - \delta$,
+we have:
+\begin{align}
+\Pr[f - \E[f] \ge \epsilon] \le
+\exp\left(\frac{-2 \epsilon^2}{\sum_{i=1}^n (2M/n)^2}\right).
+\end{align}
+Re-arranging:
+\begin{align}
+  \left\|\frac{1}{n}\sum_{i=1}^n Z_i\right\|_2
+  &\le \E\left[ \left\| \frac{1}{n} \sum_{i=1}^n Z_i \right\|_2 \right]
+  + M\sqrt{\frac{2\log(1/\delta)}{n}}.
+\end{align}
+
+Now it remains to bound $\E[f]$.
+By Jensen's inequality, $\E[f] \le \sqrt{\E[f^2]}$,
+so it suffices to bound $\E[f^2]$:
+\begin{align}
+  \E\left[ \frac1{n^2} \left\| \sum_{i=1}^n Z_i \right\|^2 \right]
+  &= \E\left[ \frac1{n^2} \sum_{i=1}^n \|Z_i\|_2^2 \right] +
+\E\left[ \frac1{n^2} \sum_{i\neq j} \innerp{Z_i}{Z_j} \right] \\ 
+& \le \frac{4M^2}{n} + 0,
+\end{align}
+where the cross terms are zero by independence of the $Z_i$'s.
+
+Putting everything together, we obtain the desired bound:
+\begin{align}
+\|\frac{1}{n}\sum_{i=1}^n Z_i\|
+&\le \frac{2M}{\sqrt{n}} + M \sqrt{\frac{2\log(1/\delta)}{n}}.
+\end{align}
 \end{proof}
 
-Note that the above result extends to the Frobenius norm of a matrix,
-$M$, because $\|M\|_F = \|\vvec(M)\|_2$.
+Note that the above result holds for the Frobenius norm of a matrix
+$M$ because $\|M\|_F = \|\vvec(M)\|_2$.
 
 \begin{lemma}(Concentration of Independent Products)
   \label{lemma:conc-prod}

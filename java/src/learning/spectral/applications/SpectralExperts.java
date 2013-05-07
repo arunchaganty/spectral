@@ -8,6 +8,7 @@ package learning.spectral.applications;
 import learning.exceptions.RecoveryFailure;
 import learning.exceptions.NumericalException;
 
+import learning.Misc;
 import learning.linalg.*;
 import learning.models.MixtureOfExperts;
 
@@ -15,6 +16,7 @@ import learning.optimization.PhaseRecovery;
 import learning.optimization.ProximalGradientSolver;
 import learning.optimization.ProximalGradientSolver.LearningRate;
 import learning.optimization.TensorRecovery;
+import learning.optimization.MatlabProxy;
 import learning.spectral.MultiViewMixture;
 
 import learning.data.MomentComputer;
@@ -36,13 +38,8 @@ import fig.exec.Execution;
 
 import java.lang.ref.SoftReference;
 import java.util.Date;
-import java.io.IOException;
-import java.io.FileNotFoundException;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.lang.ClassNotFoundException;
+import java.io.*;
 
 /**
  * Spectral Experts.
@@ -54,6 +51,8 @@ public class SpectralExperts implements Runnable {
 	public String inputPath;
   @Option(gloss = "Number of samples to use (0 for all)")
   public double subsampleN = 0;
+  @Option(gloss = "Forced Resample")
+  public boolean forceResample = false;
 
   @Option(gloss = "Adjust the regularizer to be 1/sqrt(N) of the given number")
   public boolean adjustReg = true;
@@ -62,25 +61,38 @@ public class SpectralExperts implements Runnable {
   @Option(gloss = "Ridge Regression Regularization (Triples) (<0 => ridgeReg2*10)")
   public double ridgeReg3 = -1;
   @Option(gloss = "Trace Norm Regularization (Pairs)")
-  public double traceReg2 = 1e0;
+  public double traceReg2 = 1e-4;
   @Option(gloss = "Trace Norm Regularization (Triples)")
   public double traceReg3 = -1;
   @Option(gloss = "Scale Data?")
   public boolean scaleData = false;
   @Option(gloss = "Run spectral? (if false, just compute the moments)")
   public boolean runSpectral = true;
+
   @Option(gloss = "Run EM on spectral output?")
   public boolean runEM = false;
   @Option(gloss = "Run EM on spectral output?")
   public int emIters = 100;
+
   @Option(gloss = "Use tensor power method")
   public boolean useTensorPowerMethod = true;
+  @Option(gloss = "Iterations for the tensor method")
+  public int tensorMethodIters = 1000;
+  @Option(gloss = "Attempts for the tensor method")
+  public int tensorMethodAttempts = 10;
+
   @Option(gloss = "Use ridge regression")
   public boolean useRidgeRegression = false;
   @Option(gloss = "Use low rank recovery")
   public boolean useLowRankRecovery = true;
   @Option(gloss = "Use low rank recovery")
   public int lowRankIters = 1000;
+
+  @Option(gloss = "Use Matlab for low rank recovery")
+  public boolean useMatlab = true;
+  @Option(gloss = "Path for matlab")
+  public String matlabPath = System.getenv().get("HOME") + "/scr/spectral/matlab/";
+
   @Option(gloss = "Adjust the bias factor of <M_1, x>")
   public boolean adjustBias = true;
 
@@ -134,7 +146,6 @@ public class SpectralExperts implements Runnable {
       LogInfo.logs( "cnd(M_2) " + cnd);
       LogInfo.logs( "sigma_k(M_2) " + sk);
     }
-
 
     public void reportAvg( final SimpleMatrix avgBetas_ ) {
       avgBetasErr = MatrixOps.diff(avgBetas, avgBetas_);
@@ -346,6 +357,7 @@ public class SpectralExperts implements Runnable {
     int N = X.numRows();
     // We can't handle extracting whole of X, so let's just take a smaller subsdet, since this is for initialization anyways.
     if( N > (int)1e6 ) {
+      LogInfo.logsForce("Ridge regression can handle only 1e6, so truncating and using that much data" );
       N = (int) 1e6;
       y = y.extractMatrix(0, SimpleMatrix.END, 0, N);
     }
@@ -476,6 +488,7 @@ public class SpectralExperts implements Runnable {
     int N = X.numRows();
     // We can't handle extracting whole of X, so let's just take a smaller subsdet, since this is for initialization anyways.
     if( N > (int)1e6 ) {
+      LogInfo.logsForce("Ridge regression can handle only 1e6, so truncating and using that much data" );
       N = (int) 1e6;
       y = y.extractMatrix(0, SimpleMatrix.END, 0, N);
     }
@@ -535,7 +548,7 @@ public class SpectralExperts implements Runnable {
             value = value * (yScaling * yScaling * yScaling) /
                     (xScaling.get(d1) * xScaling.get(d2) * xScaling.get(d2));
           B[d1][d2][d3] = B[d1][d3][d2] =
-             B[d2][d1][d3] = B[d3][d2][d1] =
+             B[d2][d1][d3] = B[d2][d3][d1] =
              B[d3][d1][d2] = B[d3][d2][d1] = value;
         }
       }
@@ -586,6 +599,44 @@ public class SpectralExperts implements Runnable {
     return Triples;
   }
 
+  /**
+   * Recover Pairs and Triples via a system call to Matlab
+   */
+  public Pair<SimpleMatrix, FullTensor> recoverMomentsByMatlab( SimpleMatrix y, SimpleMatrix X ) {
+    int N = X.numRows();
+    int D = X.numCols();
+    double sigma2 = (analysis != null) ? analysis.model.getSigma2() : 0.0;
+
+    try {
+    // Create a temporary directory for all this stuff
+    File dir = Misc.createTemporaryDirectory( "spectral-experts" );
+
+    // Save matrices
+    MatlabProxy.save( new File( dir, "y.txt" ), y.transpose() );
+    MatlabProxy.save( new File( dir, "X.txt" ), X );
+    MatlabProxy.save( new File( dir, "lambda2.txt" ), traceReg2 );
+    MatlabProxy.save( new File( dir, "lambda3.txt" ), traceReg3 );
+    MatlabProxy.save( new File( dir, "sigma2.txt" ), sigma2 );
+
+    // Run matlab
+    MatlabProxy.run( matlabPath, String.format("sdpB2('%s')", dir) );
+    MatlabProxy.run( matlabPath, String.format("sdpB3('%s')", dir) );
+
+    // Get output
+    SimpleMatrix B2 = MatlabProxy.load( new File( dir, "B2.txt" ) );
+    SimpleMatrix B3_ = MatlabProxy.load( new File( dir, "B3.txt" ) );
+    FullTensor B3 = FullTensor.reshape( B3_, new int[]{ D, D, D } );
+
+    dir.delete();
+   
+    return new Pair<>(B2, B3); 
+    } catch( IOException e ) {
+      throw new RuntimeException();
+    } catch( InterruptedException e ) {
+      throw new RuntimeException();
+    }
+  }
+
 
   /**
    * Run the SpectralExperts algorithm on data $y$, $X$.
@@ -612,21 +663,32 @@ public class SpectralExperts implements Runnable {
     // Set the seed
     RandomFactory.setSeed( seed );
 
-    // Recover the first moment
-    SimpleMatrix avgBetas = recoverMeans(y, X);
-    if( analysis != null ) analysis.reportAvg(avgBetas);
+    SimpleMatrix Pairs;
+    FullTensor Triples;
+    if( useMatlab ) {
+      Pair<SimpleMatrix,FullTensor> moments = recoverMomentsByMatlab( y, X );
+      Pairs = moments.getValue0();
+      if( analysis != null ) analysis.reportPairs(Pairs);
 
-    // Recover Pairs and Triples moments by linear regression
-    SimpleMatrix Pairs = recoverPairs( y, X );
-    if( analysis != null ) analysis.reportPairs(Pairs);
+      Triples = moments.getValue1();
+      if( analysis != null ) analysis.reportTriples(Triples);
+    } else {
+      // Recover the first moment
+      SimpleMatrix avgBetas = recoverMeans(y, X);
+      if( analysis != null ) analysis.reportAvg(avgBetas);
 
-    FullTensor Triples = recoverTriples(y, X, avgBetas);
-    if( analysis != null ) analysis.reportTriples(Triples);
+      // Recover Pairs and Triples moments by linear regression
+      Pairs = recoverPairs( y, X );
+      if( analysis != null ) analysis.reportPairs(Pairs);
+
+      Triples = recoverTriples(y, X, avgBetas);
+      if( analysis != null ) analysis.reportTriples(Triples);
+    }
 
     if( runSpectral ) {
       if( useTensorPowerMethod ) {
         // Use the tensor power method to recover $\betas$.
-        TensorMethod algo = new TensorMethod();
+        TensorMethod algo = new TensorMethod( tensorMethodIters, tensorMethodAttempts );
         Pair<SimpleMatrix, SimpleMatrix> pair = algo.recoverParameters( K, Pairs, Triples );
         // Somewhat of a "hack" to try and rescale the weights to sum to 1
         SimpleMatrix weights = pair.getValue0();
@@ -683,7 +745,7 @@ public class SpectralExperts implements Runnable {
 
       // Choose a subset of the data
       int N = X.numRows();
-      if( removeThirds || adjustNoise > 0 || subsampleN > N ) {
+      if( removeThirds || adjustNoise > 0 || forceResample || subsampleN > N ) {
         // Possibly sample data with thirds removed
         model.removeThirds = removeThirds;
         model.sigma2 = adjustNoise;
@@ -721,15 +783,21 @@ public class SpectralExperts implements Runnable {
           SimpleMatrix weightsEM = MatrixFactory.fromVector(params.weights);
           analysis.reportBetasEM(betasEM);
           analysis.reportWeightsEM(weightsEM);
-          System.out.printf( "%.4f %.4f %.4f %.4f %.4f\n",
+          System.out.printf( "%.4f %.4f %.4f %.4f %.4f %.4f %.4f\n",
                   analysis.betasErr, analysis.betasEMErr,
                   SpectralExpertsAnalysis.computeLoss(y, X, model.getBetas()),
                   SpectralExpertsAnalysis.computeLoss(y, X, betas_),
-                  SpectralExpertsAnalysis.computeLoss(y, X, betasEM) );
+                  SpectralExpertsAnalysis.computeLoss(y, X, betasEM),
+                  analysis.PairsErr,
+                  analysis.TriplesErr
+              );
         } else {
-          System.out.printf( "%.4f %.4f %.4f\n", analysis.betasErr,
+          System.out.printf( "%.4f %.4f %.4f %.4f %.4f\n", analysis.betasErr,
                   SpectralExpertsAnalysis.computeLoss(y, X, model.getBetas()),
-                  SpectralExpertsAnalysis.computeLoss(y, X, betas_) );
+                  SpectralExpertsAnalysis.computeLoss(y, X, betas_),
+                  analysis.PairsErr,
+                  analysis.TriplesErr
+              );
         }
       }
     } catch( ClassNotFoundException | IOException |  NumericalException | RecoveryFailure e ) {

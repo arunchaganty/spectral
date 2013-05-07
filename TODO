@@ -1,3 +1,4 @@
 * Test the multi-view algorithm with random HMMs
 * See what output 
 * Does the possible positive-semi-definitess in the mean adjusted cases matter?
+* Clean up all the experiments in the 'java/' folder!

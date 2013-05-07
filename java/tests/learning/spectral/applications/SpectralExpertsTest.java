@@ -10,6 +10,7 @@ import learning.models.MixtureOfExperts;
 
 import org.javatuples.*;
 import org.ejml.simple.SimpleMatrix;
+import org.ejml.data.DenseMatrix64F;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.Before;
@@ -27,6 +28,92 @@ public class SpectralExpertsTest {
   public void setup(){
     LogInfo.writeToStdout = false;
     LogInfo.init();
+  }
+
+  public void testRegressionRunner(MixtureOfExperts model, int N, double reg) {
+    int K = model.getK(); int D = model.getD();
+    SpectralExperts algo = new SpectralExperts();
+    algo.K = K;
+    algo.enableAnalysis(model);
+
+    // Set up the regression problem.
+    SimpleMatrix B = model.getBetas();
+    Pair<SimpleMatrix, FullTensor> moments = SpectralExperts.computeExactMoments( model );
+    SimpleMatrix Pairs = moments.getValue0();
+    FullTensor Triples = moments.getValue1();
+
+    // Compute X's 
+    SimpleMatrix X = RandomFactory.rand( N, D );
+
+    // Compute y2, y3's
+    SimpleMatrix y2 = MatrixFactory.zeros(N);
+    SimpleMatrix y3 = MatrixFactory.zeros(N);
+    for( int n = 0; n < N; n++ ) {
+      DenseMatrix64F Xn = MatrixOps.row(X.getMatrix(), n );
+      y2.set( n, MatrixOps.xMy( Xn, Pairs.getMatrix(), Xn ) );
+      y3.set( n, Triples.project3( Xn, Xn, Xn ) );
+    }
+
+    // Regress to get Pairs_ and Triples_
+    SimpleMatrix Pairs_ = algo.recoverPairsByRidgeRegression( y2, X );
+    FullTensor Triples_ = algo.recoverTriplesByRegression( y3, X );
+
+    System.out.println( algo.analysis.Pairs );
+    System.out.println( Pairs_ );
+    algo.analysis.reportPairs(Pairs_);
+    algo.analysis.reportTriples(Triples_);
+
+    Assert.assertTrue( algo.analysis.PairsErr < 1e-2 );
+    Assert.assertTrue( algo.analysis.TriplesErr < 1e-1 );
+  }
+
+  public void arbitraryRegressionTest(SpectralExperts algo, MixtureOfExperts.GenerationOptions options) throws NumericalException {
+    LogInfo.writeToStdout = true;
+    LogInfo.init();
+
+    MixtureOfExperts model = MixtureOfExperts.generate(options);
+    int K = model.getK(); int D = model.getD();
+    algo.K = K;
+    algo.enableAnalysis(model);
+    if (algo.adjustReg) {
+      algo.traceReg2 /= Math.sqrt(N); //N; //Math.pow(N, 1.0/3);
+      algo.traceReg3 /= Math.sqrt(N); //N; //Math.pow(N, 1.0/3);
+    }
+
+    // Set up the regression problem.
+    SimpleMatrix B = model.getBetas();
+    Pair<SimpleMatrix, FullTensor> moments = SpectralExperts.computeExactMoments( model );
+    SimpleMatrix Pairs = moments.getValue0();
+    FullTensor Triples = moments.getValue1();
+
+    // Compute X's 
+    Pair<SimpleMatrix, SimpleMatrix> yX = model.sample((int) N);
+    SimpleMatrix X = yX.getValue1();
+
+    // Compute y2, y3's
+    SimpleMatrix y2 = MatrixFactory.zeros((int) N);
+    SimpleMatrix y3 = MatrixFactory.zeros((int) N);
+    for( int n = 0; n < N; n++ ) {
+      DenseMatrix64F Xn = MatrixOps.row(X.getMatrix(), n );
+      y2.set( n, MatrixOps.xMy( Xn, Pairs.getMatrix(), Xn ) );
+      y3.set( n, Triples.project3( Xn, Xn, Xn ) );
+    }
+    y2 = y2.transpose().plus( RandomFactory.randn(1, (int)N).scale(model.sigma2)) ;
+    y3 = y3.transpose().plus( RandomFactory.randn(1, (int)N).scale(model.sigma2)) ;
+
+    // Regress to get Pairs_ and Triples_
+    MatrixOps.printSize(y2);
+    MatrixOps.printSize(y3);
+    MatrixOps.printSize(X);
+    SimpleMatrix Pairs_ = algo.recoverPairsByRidgeRegression( y2, X );
+    FullTensor Triples_ = algo.recoverTriplesByRegression( y3, X );
+
+    System.out.println( algo.analysis.Pairs );
+    System.out.println( Pairs_ );
+    algo.analysis.reportPairs(Pairs_);
+    algo.analysis.reportTriples(Triples_);
+
+    System.out.printf( "%.4f %.4f\n", algo.analysis.PairsErr, algo.analysis.TriplesErr );
   }
 
   public void testMomentRunner(MixtureOfExperts model, int N, double reg) {
@@ -98,6 +185,7 @@ public class SpectralExpertsTest {
     LogInfo.init();
 
     MixtureOfExperts model = MixtureOfExperts.generate(options);
+    int K = model.getK(); int D = model.getD();
     algo.K = model.getK();
     algo.enableAnalysis(model);
     if (algo.adjustReg) {
@@ -112,14 +200,30 @@ public class SpectralExpertsTest {
     SimpleMatrix X = yX.getValue1();
     algo.analysis.checkDataSanity(y, X);
 
-    SimpleMatrix avgBetas = algo.recoverMeans(y, X);
-    SimpleMatrix Pairs_ = algo.recoverPairs( y, X);
-    System.out.println( algo.analysis.Pairs );
-    System.out.println( Pairs_ );
-    algo.analysis.reportPairs(Pairs_);
-    System.out.println( Pairs_.get(0,0) );
-    //FullTensor Triples_ = algo.recoverTriples(y, X, avgBetas);
-    //algo.analysis.reportTriples(Triples_);
+    SimpleMatrix Pairs;
+    FullTensor Triples;
+
+    if( algo.useMatlab ) {
+      Pair<SimpleMatrix,FullTensor> moments = algo.recoverMomentsByMatlab( y, X );
+      Pairs = moments.getValue0();
+      if( algo.analysis != null ) algo.analysis.reportPairs(Pairs);
+
+      Triples = moments.getValue1();
+      if( algo.analysis != null ) algo.analysis.reportTriples(Triples);
+    } else {
+      // Recover the first moment
+      SimpleMatrix avgBetas = algo.recoverMeans(y, X);
+      if( algo.analysis != null ) algo.analysis.reportAvg(avgBetas);
+
+      // Recover Pairs and Triples moments by linear regression
+      Pairs = algo.recoverPairs( y, X );
+      if( algo.analysis != null ) algo.analysis.reportPairs(Pairs);
+
+      Triples = algo.recoverTriples(y, X, avgBetas);
+      if( algo.analysis != null ) algo.analysis.reportTriples(Triples);
+    }
+
+    System.out.printf( "%.4f %.4f\n", algo.analysis.PairsErr, algo.analysis.TriplesErr );
   }
 
   public void testRecoveryRunner(MixtureOfExperts model, int N, double reg) throws NumericalException, RecoveryFailure {
@@ -203,6 +307,8 @@ public class SpectralExpertsTest {
 
   @Option( gloss = "Number of samples" )
   public double N = 1e4;
+  @Option( gloss = "Test the Regression?" )
+  public boolean testRegression = false;
   @Option( gloss = "Test the moments?" )
   public boolean testMoments = false;
 
@@ -214,7 +320,9 @@ public class SpectralExpertsTest {
     OptionsParser parser = new OptionsParser( test, algo, options );
 
     if( parser.parse( args ) ) {
-      if( test.testMoments )
+      if( test.testRegression )
+        test.arbitraryRegressionTest(algo, options);
+      else if( test.testMoments )
         test.arbitraryMomentsTest(algo, options);
       else
         test.arbitraryRecoveryTest(algo, options);

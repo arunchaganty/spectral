@@ -119,8 +119,9 @@ public class TensorFactorization {
     LogInfo.begin_track("tensor-eigendecomposition");
 
     // Whiten
-    SimpleMatrix W = MatrixOps.whitener(P);
-    SimpleMatrix Winv = MatrixOps.colorer(P);
+    SimpleMatrix W = MatrixOps.whitener(P, K);
+    LogInfo.logs( "W: " + W );
+    SimpleMatrix Winv = MatrixOps.colorer(P, K);
     FullTensor Tw = T.rotate(W,W,W);
 
     Pair<SimpleMatrix, SimpleMatrix> pair = eigendecompose(Tw, K, attempts, iters);

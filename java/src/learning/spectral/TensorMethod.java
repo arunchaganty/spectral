@@ -18,6 +18,12 @@ public class TensorMethod {
   @Option
   int attempts = 10;
 
+  public TensorMethod() {}
+  public TensorMethod(int iters, int attempts) {
+    this.iters = iters;
+    this.attempts = attempts;
+  }
+
   /**
    * The tensor factorization method is just finding
    * the eigenvalues/eigenvectors of the tensor Triples.

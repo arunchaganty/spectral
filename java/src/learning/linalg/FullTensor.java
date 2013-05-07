@@ -35,6 +35,24 @@ public class FullTensor implements Tensor {
     return new FullTensor(Y);
   }
 
+  public static FullTensor reshape(SimpleMatrix V, int[] D) {
+    int D1 = D[0];
+    int D2 = D[1];
+    int D3 = D[2];
+
+    double[][][] X = new double[D1][D2][D3];
+
+    for(int d1 = 0; d1 < D1; d1++) {
+      for(int d2 = 0; d2 < D2; d2++) {
+        for(int d3 = 0; d3 < D3; d3++) {
+          X[d1][d2][d3] = V.get( d1*(D2 + D3) + d2*(D3) + d3 );
+        }
+      }
+    }
+
+    return new FullTensor(X);
+  }
+
   @Override
   public String toString() {
     StringBuilder builder = new StringBuilder();
