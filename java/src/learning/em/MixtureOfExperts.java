@@ -89,6 +89,18 @@ public class MixtureOfExperts implements Runnable {
 
       return new Parameters( K, weights, betas, sigma2 );
     }
+
+    public boolean isValid() {
+      boolean weightsInSimplex = MatrixOps.equal( MatrixOps.sum( weights ), 1.0 );
+      boolean betasFinite = (MatrixOps.sum( betas ) != Double.POSITIVE_INFINITY) && (MatrixOps.sum( betas ) != Double.NEGATIVE_INFINITY);
+      boolean sigma2Positive = (sigma2 >= 0.0);
+      LogInfo.logsForce( "Valid: " + weightsInSimplex + " " + betasFinite + " " + sigma2Positive );
+      if ( !weightsInSimplex ) return false;
+      if ( !betasFinite ) return false;
+      if ( !sigma2Positive  ) return false;
+
+      return true;
+    }
   }
 
   public int K = 2;
@@ -129,6 +141,7 @@ public class MixtureOfExperts implements Runnable {
         MatrixOps.minus( R[n], Z );
         MatrixOps.exp( R[n] );
       }
+      MatrixOps.normalize( R[n] );
       assert( MatrixOps.equal( MatrixOps.sum( R[n] ), 1.0 ) );
     }
 
@@ -224,6 +237,8 @@ public class MixtureOfExperts implements Runnable {
   public Parameters run( double[] y, double[][] X, Parameters state ) {
     LogInfo.begin_track( "MixtureOfExperts-em" );
     double old_lhood = Double.NEGATIVE_INFINITY;
+
+    assert( state.isValid() );
 
     for( int i = 0; i < iters; i++ ) {
       double[][] responsibilities = computeResponsibilities( y, X, state );
