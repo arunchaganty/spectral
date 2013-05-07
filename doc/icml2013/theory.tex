@@ -1,3 +1,241 @@
-\section{Theoretical Properties}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Theoretical results}
 \label{sec:theory}
+
+In this section, we provide theoretical guarantees for our Spectral Experts algorithm.
+In particular, the following theorem provides a rate of convergence:
+
+\begin{theorem}[Convergence of Spectral Experts]
+\label{thm:convergence}
+Assume each dataset $\sD_p$ (for $p = 1, 2, 3$) consists of $n$ i.i.d.\ points independently drawn from a mixture
+of linear regressions model with parameter $\theta^*$\footnote{Having three independent copies simplifies the analysis}.
+Further, assume $\|x\|_2 \le R$ with probability $1$, $\|\beta_h^*\|_2
+\le L$ for all $h \in [k]$ and $B$ is full rank.
+Let $\Sigma_p \eqdef \E[\cvec(x\tp{p})\tp{2}]$, 
+and assume $\Sigma_p \succ 0$ for each $p \in \{1,2,3\}$.
+Suppose the number of samples is
+$n = \max(n_1,n_2)$
+where $n_1 = \Omega\left(R^{12} (\max_{p \in [3]} \sigmamin(\Sigma_p)^{-2}) \log(1/\delta)\right)$ and
+$n_2 = \Omega\left( \sigma^6 L^6 R^{12} k (\max_{p \in [3]} \sigmamin(\Sigma_p)^{-1}) \frac{\log^3 (1/\delta)}{\epsilon^2} \right)$.
+If the regularization strengths $\lambda_n^{(2)}$ and $\lambda_n^{(3)}$ are
+set to $\Omega\left(\sigma^3 L^3 R^6 \sqrt{\frac{\log(1/\delta)}{n}}\right)$,
+then the parameter estimates $\hat\theta = (\hat\pi, \hat B)$ returned by
+\algorithmref{algo:spectral-experts} (with the columns appropriate permuted)
+satisfies 
+$\|\hat\pi - \pi^*\|_{\infty} \le \epsilon$
+and for all $h \in [k]$,
+$\|\hat\beta_h - \beta^*_h\|_2 \le \frac{\epsilon}{\sqrt{\pi_h^*}}$.
+\end{theorem}
+
+The proof of the theorem has two parts.
+First, we bound the error in the compound parameters estimates $\hat M_2,\hat M_3$
+using results from \citet{Tomioka2011}.
+While the $R^{12}$ term looks formidable, it is unavoidable since we
+perform regression on the third moment of the data. Classically, the
+number of samples required is norm squared of the covariance matrix,
+which itself is bounded by the norm squared of the data, $R^3$. This
+third-order dependence also shows up in the rate the regression
+coefficients are annealed; the cubic terms bound each of $\epsilon^3$,
+$\beta_h^3$ and $\|(x\tp{3})\tp{2}\|_F$ with high probability. 
+
+Next, we use results from \citet{AnandkumarGeHsu2012} to convert this error
+into a bound on the actual parameter estimates $\hat\theta = (\hat\pi, \hat B)$
+derived from the robust tensor power method.
+But first, let us study a more basic property: identifiability.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Identifiability from moments}
+
+In ordinary linear regression, the regression coefficients $\beta \in
+\Re^d$ are identifiable if and only if the data has full rank:
+$\E[x\tp{2}] \succ 0$, and furthermore, identifying $\beta$ requires
+only moments $\E[xy]$ and $\E[x\tp{2}]$ (by observing the optimality
+conditions for \refeqn{y1}).  However, in mixture of linear regressions,
+these two moments only allow us to recover $M_1$.  \refthm{convergence}
+shows that if we have the higher order analogues, $\E[x\tp{p}y\tp{p}]$
+and $\E[x\tp{2p}]$ for $p \in \{1,2,3\}$, we can then identify the
+parameters $\theta = (\pi, B)$, provided $\E[\cvec(x\tp{p})\tp{2}] \succ
+0$ for $p \in \{1,2,3\}$.
+
+We note that this requires more stringent positive definite constraints
+when using features. For example, suppose $x = (1, t, t^2)$, the common
+polynomial basis expansion, so that all the coordinates are
+deterministically related.  Then $\E[x\tp{2}] \succ 0$ can easily be
+satisfied. 
+%, say with $x \sim \normal{0}{I}$.
+However, one can verify that $\E[\cvec(x\tp{2})\tp{2}]$ is singular for
+any data distribution, since $\cvec(x\tp{2}) = [1 \cdot 1, t\cdot t, 2(1
+\cdot t^2), 2(t \cdot t^2), (t^2 \cdot t^2)]$ contains components $t
+\cdot t$ and $2(1 \cdot t^2)$, which are linearly dependent.  Therefore,
+Spectral Experts would not be able to identify the parameters of
+a mixture of linear regressions for this distribution over $x$.
+
+We now show that some amount of unidentifiability is intrinsic to
+estimation from low-order moments, not just an artifact of our
+estimation procedure.  Suppose $x = (t, \dots, t^d)$.  Even if we
+observed all moments $\E[x\tp{p}y\tp{p}]$ and $\E[x\tp{2p}]$ for $p \in
+[r]$, all the resulting coordinates would be monomials up to degree
+$2dr$, and thus the moments live in a $2dr$-dimensional subspace.  On
+the other hand, the parameters $\theta$ live in a subspace of at least
+dimension $dk$.  Therefore, at least $r \ge k/2$ moments are required
+for identifiability of any algorithm for this monomial example.
+
+\paragraph{Low-rank regression}
+%\label{sec:regression}
+\vspace{-0.5em}
+We now bound the error of
+the compound parameter estimates,
+$\|\Delta_2\|_F^2$ and $\|\Delta_3\|_F^2$,
+where $\Delta_2 \eqdef \hat M_2 - M_2$
+and $\Delta_3 \eqdef \hat M_3 - M_3$.
+
+Our analysis is based on the low-rank regression framework of
+\citet{Tomioka2011} for tensors, which builds off of
+\citet{NegahbanWainwright2009} for matrices.
+The main challenge is to control the noise $\eta_p(x)$,
+which in addition to containing the usual Gaussian part, is also dependent on
+$x$, involves the mixing noise and various cross terms.
+We first set up some notation that unifies all three regressions (\refeqn{estimateM1}, \refeqn{estimateM2}, and \refeqn{estimateM3}).
+Define the observation operator $\opX_p(M_p) : \Re^{d\tp{p}} \to \Re^{n}$
+mapping compound parameters $M_p$:
+\begin{align}
+\opX_p(M_p; \sD)_i &\eqdef \innerp{M_p}{x\tp{p}_i}, & (x_i, y_i) \in \sD.
+\end{align}
+
+Let $\kappa(\opX_p)$ be the restricted strong convexity constant,
+and let $\opX^*_p(\eta_p; \sD) = \sum_{(x,y) \in \sD} \eta_p(x) x\tp{p}$
+be the adjoint.
+
+%\paragraph{Restricted strong convexity}
+
+%Let us first lower bound the restricted strong convexity constant
+%$\kappa(\opX_p)$:
+
+%In the previous section, we described an algorithm for the mixture of
+%linear regressions using regression to recover $M_2$ and $M_3$,
+%described by \equationref{eqn:y2} and \equationref{eq:y3}, as
+%a subroutine. In this section, we will characterize the rate of
+%convergence of regression.
+
+%Analysis for regression in the fixed and random design settings have
+%been studied before \citep{HsuKakadeZhang}, however our setup differs
+%substantially from the noise models assumed in the literature. In our
+%scenario, the variance in the estimation comes not only from the
+%Gaussian observation noise (which has been studied before), but also
+%from the variance in the latent variable $h$.
+
+%Let us now formally define the class of regression problems we wish to
+%analyze, i.e. regression on the set $(x\tp{p}, y^p)$,
+%\begin{align*}
+%  y^p &= \innerp{x\tp{p}}{M_p} + (\innerp{x\tp{p}}{M_p - \beta_h\tp{p}} + \varepsilon).
+%\end{align*}
+
+%\todo{Describe/define the convex tensor stuff.}
+%We would like to exploit
+%the property that $M_p$ is low rank (as typically $k \ll D$). It has
+%been shown that a convex relaxation for this problem regression with
+%trace norm regularization, which can be solved using a proximal
+%subgradient descent algorithm\citationneeded.
+%The analogue of trace norm
+%regularization for higher order tensors corresponds to the sum of the
+%trace norms of the mode-k unfolding of the tensor \cite{Tomioka2011},
+%$X_{(k)}$, is a $d_k \times (\prod_{k' \neq k} d_{k'})$ matrix obtained
+%by concatenating the entries for all dimensions other than $k$. For
+%example, the 1-mode unfolding of a 3rd order tensor has entries,
+%$X_{(1)}^{i_1, (i_2, i_3)} = X_{i_1, i_2, i_3}$.
+
+%In general, the optimization problem we'd like to solve is,
+%\begin{align}
+%  \hat M_p &= 
+%  \arg\min_{M_p}& \frac{1}{2N} \| \vec y - \opX_p(M_p) \|_2^2 + \frac{\lambda_n}{k} \sum_{h=1}^k \| (M_p)_{(h)} \|_* \label{eq:regression}.
+%\end{align}
+
+\begin{lemma}[\citet{Tomioka2011}, Theorem 1]
+\label{lem:lowRank}
+Suppose there exists a restricted strong convexity constant $\kappa(\opX_p)$ such that
+$$\frac{1}{2n} \| \opX_p( \Delta )\|_2^2 \ge \kappa(\opX_p) \|\Delta\|^2_F \quad \text{and} \quad
+\lambda_n \ge \frac{\|\opX_p^*(\eta_p)\|_\Lop}{n}.$$
+Then the error of $\hat M_p$ is bounded as follows:
+$\| \hat M_p - M_p^* \|_F \le \frac{\lambda_n \sqrt{k}}{\kappa(\opX_p)}$.
+\end{lemma}
+
+Going forward, we need to lower bound the restricted strong convexity
+parameter $\kappa(\opX_p)$ and upper bound the adjoint operator
+$\|\opX_p^*(\eta_p)\|_\Lop$. The proofs of the following lemmas follow
+from standard concentration inequalities, and have been deferred to
+\appendixref{sec:proofs}. 
+
+%We will appeal to the random design framework that models the input $x$
+%as random and show bounds that hold with high probability.
+%\paragraph{Adjoint operator}
+%In this section, we upper bound the operator norm of the adjoint
+%$\|\opX_p(\eta_p)\|_\Lop$.
+
+% First, let us lower bound the restricted strong convexity parameter $\kappa(\opX_p)$:
+
+\begin{lemma}[lower bound on restricted strong convexity]
+\label{lem:lowRankLower}
+Let $\Sigma_p \eqdef \E[\cvec(x\tp{p})\tp{2}]$.
+If $$n = \Omega \left( \frac{R^{4p} \log(1/\delta)}{\sigmamin(\Sigma_p)^2} \right),$$
+with probability at least $1-\delta$,
+$$\kappa(\opX_p) \ge \frac{\sigmamin(\Sigma_p)}{4}.$$
+\end{lemma}
+
+% Next, let us upper bound the operator norm of the observation adjoint:
+
+\begin{lemma}[upper bound on adjoint noise]
+\label{lem:lowRankUpper}
+Let $\opX_p$ be the linear operator previously defined. Then with
+probability at least $1-\delta$,
+$$\frac1{n} \|\opX_p^*(\eta_p)\|_\op \le O\left(\sigma^3 L^3 R^6 \sqrt{\frac{\log^3(1/\delta)}{n}}\right).$$
+for each $p \in \{1,2,3\}$.
+\end{lemma}
+
+\paragraph{Method of Moments} 
+
+Now that we have bounds on the errors of recovering $M_2$ and $M_3$ from
+the data, we will extend the analysis of the robust tensor method in
+\citet{AnandkumarGeHsu2012} to include the whitening and unwhitening
+steps, 2(a) and 2(c) respectively, of
+\algorithmref{algo:spectral-experts}.
+\begin{lemma}
+  \label{lem:tensorPower} Let $\|\hat M_2 - M_2\|_\Lop \le \epsilon$ and
+  $\|\hat M_3 - M_3\|_\Lop \le \epsilon$, for some $\epsilon$ such that 
+  $$\epsilon < \min\{\sigmamin(M_2)/2,O(k \sigmamin(M_2)^{1.5} \|M_3\|_\Lop^{-1})\}.$$ 
+  Then, there exists a permutation of indices such that  the parameter
+  estimates found in step 2 of \algorithmref{algo:spectral-experts}
+  satisfy the following with probability at least $1 - \delta$,
+  \begin{align*}
+  \|\hat \pi - \pi \|_{\infty}
+    &= O( k \pi_{max}^{2.5} \pi_{min}^{-0.5} \sigmamin(M_2)^{-1.5} \|M_3\|_\Lop \epsilon ) \\
+  \|\hat \beta_h - \beta_h\|_2
+    &= O( k \pi_{max} \sigmamin(M_2)^{-1.5} \|M_2\|_\Lop^{0.5} \|M_3\|_\Lop \epsilon ).
+  \end{align*}
+  for all $h \in [k]$.
+\end{lemma}
+
+The proof follows by applying standard matrix perturbation results for
+the whitening and unwhitening operators, and has again been deferred
+\appendixref{sec:proofs}. 
+
+\paragraph{Synthesis}
+Together, these lemmas allow us to control the compound parameter error
+and the recovery error. We now apply them in the proof of
+\refthm{convergence}:
+
+\begin{proof}(Theorem 1)
+By \reflem{lowRank} along with \reflem{lowRankLower} and
+\reflem{lowRankUpper}, we can control the operator norm of the parameter
+estimates which are directly upper bounded by the Frobenius norm: If $n
+\ge n_1$, then
+\begin{align}
+  \|\hat M_p - M_p\|_\Lop = O\left( \sigma^3 L^3 R^6 k^{\frac12} \sigmamin(\Sigma_p)^{-1} \sqrt{\frac{\log^3 (1/\delta)}{n}} \right).
+  %\|\hat M_p - M_p\|_F = O\left( \frac{\sigma^3 L^3 R^6 \sqrt{k} \log^3 (1/\delta)}{\sqrt{n} (\sigmamin(\Sigma_p) - d^p R^p \sqrt{\frac{p \log(d) \log(1/\delta)}{n}}} \right).
+\end{align}
+
+We complete the proof by applying \reflem{tensorPower} with the above
+bound on $\|\hat M_p - M_p\|_\Lop$.
+
+\end{proof}
 

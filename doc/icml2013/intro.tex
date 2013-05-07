@@ -22,7 +22,7 @@ Our broad goal is to develop efficient provably consistent estimators for
 discriminative latent-variable models.
 In this paper, we provide a first step in this 
 direction by proposing a new algorithm for a simple model,
-\emph{mixture of linear regressions} (MLG) \cite{VieleTong2002}.
+\emph{a mixture of linear regressions} (MLG) \cite{VieleTong2002}.
 
 % Recent method of moments spectral methods sidestep local optima
 Recently, method of moments estimators have been developed for
@@ -39,7 +39,7 @@ which permits the factorization to be computed efficiently using the robust
 tensor power method \cite{AnandkumarGeHsu2012}.
 
 % Twist
-In mixture of linear regressions, using third-order moments does not
+In a mixture of linear regressions, using third-order moments does not
 directly reveal the tensor structure of the problem, so we cannot
 directly apply the above tensor factorization techniques.  Our solution
 is to employ low-rank linear regression
@@ -133,7 +133,7 @@ significantly outperforming EM with random initialization.
 
 %We have already defined $y$ to be the response variable and $x \in
 %\Re^d$ to be the covariates it depends on. Note that the matrix of
-%regressors $B$ is a $d \times K$ matrix, where the $k$-th column is
+%regressors $B$ is a $d \times k$ matrix, where the $k$-th column is
 %$\beta_k$.
 
 Let $[n] = \{ 1, \dots, n \}$ denote the first $n$ positive integers.
@@ -141,42 +141,43 @@ We use $O(f(n))$ to denote a function $g(n)$ such that $\lim_{n \to\infty} g(n)/
 We will only hide universal constants, exposing all dependence on the number of samples,
 dimension, norms, noise variance, etc.
 
-We use $x\tp{p}$ to represent the $p$-th order tensor
-formed by taking the outer product of $x \in \Re^d$; i.e. $x\tp{p}_{i_1 \ldots
-i_p} = x_{i_1} \cdots x_{i_p}$. We will use
-$\innerp{\cdot}{\cdot}$ to denote the generalized dot product between two $p$-th
-order tensors: $\innerp{X}{Y} = \sum_{i_1, \ldots i_p} X_{i_1,
-\ldots i_p} Y_{i_1, \ldots i_p}.$
-A tensor $X$ is symmetric if for all $i,j \in [d]^p$ which are permutations of each other,
-$X_{i_1 \cdots i_p}$ = $X_{j_1 \cdots j_p}$ (all tensors in this paper will be symmetric).
-For a $p$-th order tensor $X \in (\Re^d)\tp{p}$, let $X_{(i)} \in \Re^{d \times d^{p-1}}$
-be the mode-$i$ unfolding of $X$.
+We use $x\tp{p}$ to represent the $p$-th order tensor formed by taking
+the outer product of $x \in \Re^d$; i.e. $x\tp{p}_{i_1 \ldots i_p}
+= x_{i_1} \cdots x_{i_p}$. We will use $\innerp{\cdot}{\cdot}$ to denote
+the generalized dot product between two $p$-th order tensors:
+$\innerp{X}{Y} = \sum_{i_1, \ldots i_p} X_{i_1, \ldots i_p} Y_{i_1,
+\ldots i_p}$.  A tensor $X$ is symmetric if for all $i,j \in [d]^p$
+which are permutations of each other, $X_{i_1 \cdots i_p}$ = $X_{j_1
+\cdots j_p}$ (all tensors in this paper will be symmetric).  For
+a $p$-th order tensor $X \in (\Re^d)\tp{p}$, the mode-$i$ unfolding of
+$X$ is a matrix, $X_{(i)} \in \Re^{d \times d^{p-1}}$, whose $j$-th row contains all the elements of $X$ whose
+$i$-th index is equal to $j$. 
 %For $X \in (\Re^d)\tp{p}$ and $Y \in (\Re^d)\tp{(p+q)}$,% $p, q > 0$,
 %$\innerp{X}{Y} \in \Re^{d^q}$ is the projection of $X$ onto the first
-%$p$ modes of $Y$, i.e. $\innerp{X}{Y}_{i_1, \ldots, i_q}
-%= \sum_{j_1, \ldots, j_p} X_{j_1, \ldots, j_p} Y_{j_1, \ldots, j_p, i_1,
-%\ldots, i_q}$.
+%$p$ modes of $Y$, i.e. $\innerp{X}{Y}_{i_1, \ldots, i_q} = \sum_{j_1,
+%\ldots, j_p} X_{j_1, \ldots, j_p} Y_{j_1, \ldots, j_p, i_1, \ldots,
+%i_q}$.
 
 % Norms
 For a matrix $X$,
 let $\|X\|_*$ denote the nuclear (trace) norm (sum of singular values),
 let $\|X\|_F$ denote the Frobenius norm (square root of sum of squares of singular values),
 let $\|X\|_{\max}$ denote the max norm (elementwise maximum),
-let $\|X\|_\text{op}$ denote the operator norm (largest singular value).
-For a rank-$K$ tensor $X$,
+let $\|X\|_\Lop$ denote the operator norm (largest singular value),
+let $\sigma_\text{min}(X)$ be the smallest singular value of $X$.
+For a tensor $X$,
 let $\|X\|_* = \frac{1}{p} \sum_{i=1}^p \|X_{(i)}\|_*$ denote
 the average nuclear norm over all $p$ unfoldings,
-and let $\|X\|_\text{op} = \frac{1}{p} \sum_{i=1}^p \|X_{(i)}\|_\text{op}$
+and let $\|X\|_\Lop = \frac{1}{p} \sum_{i=1}^p \|X_{(i)}\|_\Lop$
 denote the average operator norm over all $p$ unfoldings.
-Let $\sigma_\text{min}(X)$ be the smallest singular value of $X$.
 
-For a tensor $X \in (\Re^d)\tp{p}$,
-let $\cvec(X) \in \Re^{\sum_{i=1}^p \binom{n}{i}}$ be
-the collapsed vectorization of $X$: each component of $\cvec(X)$
-is indexed by a vector of counts $(c_1, \dots, c_d)$ with total sum $\sum_i c_i = p$.
-The value of that component is
-$\sum_{k \in K(c)} X_{k_1 \cdots k_p}$,
-where $K(c) = \{ k \in [d]^p : \forall i \in [d], c_i = |\{ j \in [p] : k_j = i \}| \}$ are the set of index vectors $k$ with that count profile.
-For example, for $X \in \Re^{d \times d}$,
-$\cvec(X) = (X_{ii} : i \in [d]; X_{ij} + X_{ji} : i,j \in [d], i<j)$.
+For a symmetric tensor $X \in (\Re^d)\tp{p}$, let $\cvec(X) \in
+\Re^{C_{d,p}}, C_{d,p} = \binom{d + p + 1}{p}$ be the collapsed vectorization of distinct
+elements in $X$, for example, for $X \in \Re^{d \times d}$, $\cvec(X)
+= (X_{ii} : i \in [d]; X_{ij} + X_{ji} : i,j \in [d], i<j)$.
+In general, each component of $\cvec(X)$ is indexed by a vector of
+counts $(c_1, \dots, c_d)$ with total sum $\sum_i c_i = p$.  The value
+of that component is $\sum_{k \in K(c)} X_{k_1 \cdots k_p}$, where $K(c)
+= \{ k \in [d]^p : \forall i \in [d], c_i = |\{ j \in [p] : k_j = i \}|
+\}$ are the set of index vectors $k$ with that count profile.  
 %For symmetric tensors, $\innerp{X}{Y} = \innerp{\cvec(X)}{\cvec(Y)}$.

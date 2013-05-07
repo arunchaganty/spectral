@@ -1,4 +1,3 @@
-
 LATEX = pdflatex
 #LATEX = pdflatex -interaction=nonstopmode
 OUTPUT=$(shell basename `pwd`)
@@ -11,7 +10,7 @@ $(OUTPUT).pdf: paper.tex $(SECTIONS)
 	mv $(subst .tex,.pdf,$<) $@
 
 final: paper.tex $(SECTIONS)
-	./texify < $< > $(subst .tex,.tmp.tex,$<)
+	texify < $< > $(subst .tex,.tmp.tex,$<)
 	$(LATEX) $(subst .tex,.tmp.tex,$<)
 	mv $(subst .tex,.tmp.pdf,$<) $(OUTPUT).pdf
 

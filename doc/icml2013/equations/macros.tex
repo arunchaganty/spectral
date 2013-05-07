@@ -1,0 +1,53 @@
+% Text
+\newcommand{\todo}[1]{\hl{\textbf{TODO:} #1}}
+\newcommand{\citationneeded} {\ensuremath{^{[\textrm{citation needed}]}}}
+
+% Probability/Statistics
+\DeclareMathOperator{\E} {\mathbb{E}}
+\renewcommand{\Pr} {\mathbb{P}}
+\DeclareMathOperator{\Var} {Var}
+\newcommand{\normal}[2] {\mathcal{N}(#1, #2)}
+
+% Constants/etc.
+\renewcommand{\Re} {\mathbb{R}}
+\newcommand{\Cm} {\mathbb{C}}
+\newcommand{\Qm} {\mathbb{Q}}
+\newcommand{\Sm} {\mathbb{S}}
+\newcommand{\half} {\frac{1}{2}}
+
+% Calculus
+\newcommand{\ud}{\, \mathrm{d}}
+\newcommand{\diff}[2] {\frac{\partial #1}{\, \partial #2}}
+\newcommand{\difff}[2] {\frac{\partial^2}{\, \partial #1\, \partial #2}}
+\newcommand{\diffn}[2] {\frac{\partial^{#2}}{\, \partial {#1}^{#2}}}
+\newcommand{\grad}{\nabla}
+
+% Optimization
+\newcommand{\mL} {\mathcal{L}}
+\newcommand {\argmax} {\arg\max}
+\newcommand {\argmin} {\arg\min}
+\DeclareMathOperator {\subjecto} {\textrm{subject to}}
+
+% Linear Algebra
+\newcommand{\hprod} {\circ} % Hadamard
+\newcommand{\inv}[1] {{#1}^{-1}}
+\newcommand{\pinv}[1] {{#1}^{\dagger}}
+\newcommand{\innerp}[2] {\langle #1, #2 \rangle}
+\DeclareMathOperator{\diag} {diag}
+\DeclareMathOperator{\triu} {triu}
+\DeclareMathOperator {\trace} {tr}
+\DeclareMathOperator {\Tr} {tr}
+
+% Convex Geometry
+\DeclareMathOperator{\conv} {\textrm{conv}}
+\DeclareMathOperator{\dist} {\textrm{dist}}
+\DeclareMathOperator{\cone} {\textrm{cone}}
+
+% Misc
+\DeclareMathOperator {\sgn} {sgn}
+\newcommand{\oft}[2] {{#1}^{(#2)}}
+\newcommand{\oneby}[1] {\frac{1}{#1}}
+
+\newcommand{\mM} {\mathcal{M}}
+\newcommand{\tuple}[1] {\langle #1 \rangle}
+

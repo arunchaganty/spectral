@@ -10,8 +10,8 @@ The mixture of linear regressions model \citep{VieleTong2002} defines
 a conditional distribution over a response $y \in \Re$
 given covariates $x \in \Re^d$.
 The generation of $y$ given $x$ involves two steps:
-(i) draw the mixture component $h \in [K]$ according to mixture proportions
-$\pi = (\pi_1, \dots, \pi_K)$;
+(i) draw the mixture component $h \in [k]$ according to mixture proportions
+$\pi = (\pi_1, \dots, \pi_k)$;
 and (ii) generate $y$ from a Gaussian centered at $\beta_h^\top x$ with
 variance $\sigma^2$.
 \begin{eqnarray*}
@@ -20,7 +20,7 @@ variance $\sigma^2$.
 \end{eqnarray*}
 The parameters of the model are $\theta = (\pi, B)$,
 where $\pi \in \Re^d$ are the mixture proportions and
-$B = [\beta_1 \mid \dots \mid \beta_K] \in \Re^{d \times K}$
+$B = [\beta_1 \mid \dots \mid \beta_k] \in \Re^{d \times k}$
 are the regression coefficients.
 We assume the variance of the observation noise $\sigma^2$ is known and that the mixture components are independent.
 The learning problem is stated as follows:
@@ -34,7 +34,7 @@ in the statistics literature for modeling music perception, where $x$ is the
 actual tone and $y$ is the tone perceived by a musician \cite{VieleTong2002}.
 % Reference mixture of experts.
 % Acknowledge that mixture proportions % can't depend on $x$
-The model is an instance of hierarchical mixture of experts
+The model is an instance of the hierarchical mixture of experts
 \cite{jacobs91experts}, in which the mixture proportions are allowed to depend
 on $x$, known as a gating function.
 This dependence allow the experts to be localized in input space,
@@ -42,7 +42,7 @@ providing more flexibility, but we do not consider this dependence in our model.
 
 % Typically people use EM, but the maximum marginal likelihood is
 % non-convex.
-The estimation problem for mixture of linear regressions is difficult because
+The estimation problem for a mixture of linear regressions is difficult because
 the mixture components $h$ are unobserved,
 resulting in a non-convex log marginal likelihood.
 The parameters are typically learned using

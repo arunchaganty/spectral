@@ -1,55 +1,127 @@
-\section{Proof of Lemma 4}
+\section{Proofs}
 \label{sec:proofs}
 
+\paragraph{Lemma 2}
+
 \begin{proof}
+Expanding the definition of the observation operator:
+$\frac{1}{2n} \|\opX_p(\Delta)\|_2^2
+= \frac{1}{2n} \sum_{(x,y) \in \sD} \innerp{\Delta}{x\tp{p}}^2$.
+Unfolding the tensor and letting $\hat\Sigma_p \eqdef \frac{1}{n} \sum_{(x,y) \in \sD} \cvec(x\tp{p})\tp{2}$,
+we have 
+$\frac{1}{2n} \|\opX_p(\Delta)\|_2^2
+= \frac{1}{2} \trace(\cvec(\Delta)\tp{2} \hat\Sigma_p)
+\ge \frac{1}{2} \|\Delta\|_F^2 \sigmamin(\hat\Sigma_p)$.
+By Weyl's theorem, $\sigmamin(\hat\Sigma_p) \ge \sigmamin(\Sigma_p) - \|\hat\Sigma_p - \Sigma_p\|_\Lop$. 
+Thus, it remains to show that $\|\hat\Sigma_p - \Sigma_p\|_\Lop \le \|\hat\Sigma_p - \Sigma_p\|_{F}$ is small. 
+To do so, we apply a matrix concentration result for the Frobenius norm\citationneeded; with probability at least $1 - \delta$, 
+$\| \hat\Sigma_p - \Sigma_p \|_F = O\left( M \sqrt{\frac{\log(1/\delta)}{n}} \right)$,
+where $M$ is an upper bound on $\| \Sigma_p \|_F$. Since $\|x\|_2 \le R$, we can use the bound $\| \Sigma_p \|_F \le R^{2p}$ in the above to get the stated result. 
 
-For notational convenience, let $\epsilon_{X} \eqdef \|\hat X - X\|_{op}$ be
-the error of the object $X$ in the sequel. Let $\hat W$ be the whitening
-matrix computed using the empirical moments $\hat M_2$, and let $\hat
-\Winv$ be it's inverse. Basic perturbation theory gives that 
-\begin{align*}
-\|\hat W - W\|_{op} &= O(\sigmamin(M_2)^{-0.5} \epsilon)\\
-\|\hat \Winv - \Winv\|_{op} &= O(\|M_2\|_{op}^{0.5} \epsilon)\\ 
-\|\hat W\|_2 \le \sqrt{2} \|W\| &= O(\sigmamin(M_2)^{-0.5}) \\ 
-\|\hat \Winv\|_2 \le \sqrt\frac{3}{2} \|\Winv\| &= O(\|M_2\|_{op}^{0.5}). 
-\end{align*}
+%To do this, we first apply Hoeffding's inequality elementwise.
+%Since $\|x\|_2 \le R$, we have that for each element $(i,j)$,
+%$|(\hat\Sigma_p)_{ij} - (\Sigma_p)_{ij}| = O(R^{2p}\sqrt{\frac{\log (1/\delta)}{n}})$.
+%Applying the union bound over the $d^{2p}$ elements of $\hat\Sigma_p - \Sigma_p$,
+%we have that the max norm is bounded:
+%$\|\hat\Sigma_p - \Sigma_p\|_\text{\rm max} = O(R^{2p} \sqrt{\frac{p \log(d) \log (1/\delta)}{n}})$.
+%The max norm times $d^p$ upper bounds the Frobenius norm, which upper bounds the operator norm, so we have that
+%$\|\hat\Sigma_p - \Sigma_p\|_\text{\rm op} = O(d^p R^{2p} \sqrt{\frac{p \log(d) \log (1/\delta)}{n}})$.
+%Using the fact that $\sigmamin(\hat\Sigma_p) \ge \sigmamin(\Sigma_p) - \|\hat\Sigma_p - \Sigma_p\|_\text{\rm op}$
+%yields the result.
+\end{proof}
 
-The error of the whitened tensor $T = M_3(W,W,W)$ is then,
-\begin{align*}
-\epsilon_T 
-&= O\left( \|\hat W\|_{op} \epsilon_{M_3} + 3 \|T\|_{op} \|\hat W\|_{op}^2 \epsilon_{W} \right ) \\
-  &= O\left(\sigmamin(M_2)^{-0.5} (1 + \|M_3\|_{op} \sigmamin(M_2)^{-1} )~\epsilon\right).
-\end{align*}
+\paragraph{Lemma 3}
 
-$T$ is, by construction, a symmetric tensor with orthogonal
-eigenvectors; thus we can use the robust tensor power method and apply
-Theorem 5.1 of \citet{AnandkumarGeHsu2012} to analyze the error of it's
-output. We have the following bounds on the eigenvectors and eigenvalues
-of the whitened tensor, $\tilde \lambda$ and $\tilde \beta_h$ respectively, 
+\begin{proof}
+Let $\hat\E_p[f(x,\epsilon,h)]$ denote the empirical expectation over
+the examples in dataset $\sD_p$ (recall the $\sD_p$'s are independent to
+simplify the analysis).  By definition,
+$\frac1n \|\opX_p^*(\eta_p)\|_\op = \hat\E_p[\eta_p(x) x\tp{p}]$
+for $p \in \{1,2,3\}$ defined in \refeqn{y1}, \refeqn{y2}, and
+\refeqn{y3}. Each $\eta_p(x)$ is composed of several zero-mean random
+variables, and since $\|A + B\|_\op \le \|A\|_\op + \|B\|_\op$, it
+suffices to consider each term in turn. 
+For each term, we will
+condition on $x$ and use standard concentration inequalities to bound
+the noise. 
+
+For example, consider $\eta_1(x)$, which has two terms. 
+The first term is $\innerp{M_1 - \beta_h}{x}$.  We have that $\|M_1 - \beta_h\|_2 \le 2L$, so by Hoeffding's inequality, and using the fact that $\|x\|_2 \le R$, with probability $1-\delta_1$, $\|\hat\E_1[\innerp{M_1 - \beta_h}{x} x]\|_2 = O(R^2 L \sqrt{\frac{\log(1/\delta_1)}{n}})$. 
+The second term is $\epsilon \sim \normal{0}{\sigma^2}$, thus with probability $1-\delta_1$, $\|\hat\E_1[\epsilon x]\|_2 = O(R \sigma \sqrt{\frac{\log(1/\delta_1)}{n}})$. 
+The bounds on the terms presented below hold with probability at least $1-\delta_1$ and are proved similarly.
+{\scriptsize
 \begin{align*}
-  \|\tilde \lambda - \hat {\tilde \lambda} \|_{\infty} 
-    &\le \frac{5 k \epsilon_T}{\tilde \lambda_{\min}} \\
-    \|\tilde \beta_h - \hat {\tilde \beta}_h \|_2 
-    &\le \frac{8 k \epsilon_T}{\tilde \lambda_{\min}^2},
+%   \| \hat\E_1[ \eta_1(x) x ] \|_\Lop &\le 
+%             \underbrace{ \|\hat\E_1[\innerp{M_1 - \beta_h}{x} x]\|_\op  }_{ O\left( L R^2     \sqrt{\frac{\log(1/\delta_1)}{n}} \right) } +
+%             \underbrace{ \|\hat\E_1[\epsilon x]\|_\op                   }_{ O\left( R \sigma  \sqrt{\frac{\log(1/\delta_1)}{n}} \right) } \\
+  %  &= O\left( \sigma L R^2 \sqrt{\frac{\log(1/\delta_1)}{n}} \right) \\
+    \| \hat\E_2[ \eta_2(x) x\tp{2} ] \|_\Lop &\le 
+            \underbrace{ \|\hat\E_2[\innerp{\beta_h\tp{2} - M_2}{x\tp{2}} x\tp{2}]\|_\op }_{ O\left( L^2 R^4      \sqrt{\frac{\log^2(1/\delta_1)}{n}} \right) } \\
+   &\quad + \underbrace{ \|\hat\E_2[2 \epsilon \innerp{\beta_h}{x} x\tp{2}]\|_\op        }_{ O\left( \sigma L R^3 \sqrt{\frac{\log  (1/\delta_1)}{n}} \right) } 
+          + \underbrace{ \|\hat\E_2[(\epsilon^2 - \sigma^2) x\tp{2}]\|_\op               }_{ O\left( \sigma^2 R^2 \sqrt{\frac{\log^2(1/\delta_1)}{n}} \right) } \\
+  %&= O\left( \sigma^2 L^2 R^4 \sqrt{\frac{\log^2(1/\delta_1)}{n}} \right) \\
+  \| \hat\E_3[ \eta_3(x) x\tp{3} ] \|_\Lop &\le 
+            \underbrace{ \|\hat\E_3[\innerp{\beta_h\tp{3} - M_3}{x\tp{3}}                      x\tp{3}]\|_\op }_{O\left( L^3 R^6        \sqrt{\frac{\log  (1/\delta_1)}{n}} \right) } \\
+   &\quad + \underbrace{ \|\hat\E_3[3 \epsilon \innerp{\beta_h\tp{2}}{x\tp{2}}                 x\tp{3}]\|_\op }_{O\left( \sigma L^2 R^5 \sqrt{\frac{\log^2(1/\delta_1)}{n}} \right) } 
+          + \underbrace{ \|\hat\E_3[\epsilon^3                                  x\tp{3}]\|_\op }_{O\left( \sigma^3 R^3   \sqrt{\frac{\log  (1/\delta_1)}{n}} \right) } \\
+   &\quad + \underbrace{ \|\hat\E_3[3(\epsilon^2 \innerp{\beta_h}{x} -\sigma^2 \innerp{\hat M_1}{x}) x\tp{3}]\|_\op }_{O\left( (\sigma^3 L R^4 + \sigma^3 R^4) \sqrt{\frac{\log^3(1/\delta_1)}{n}} \right) } \\
+  %&= O\left( \sigma^3 L^3 R^6 \sqrt{\frac{\log^3(1/\delta_1)}{n}} \right).
 \end{align*}
+}
+There are two additional considerations when bounding the terms in $\eta_3$.
+First, to bound $\hat\E_3[\epsilon^3]$, we use Lemma 19 of \cite{hsu13spherical}.
+Second, there is an additional bias since the estimator uses $\hat M_1$ instead of $M_1$; this bias is small by the previous bound (and is constructed on an independent dataset, $\sD_1$).
+Therefore, we incur another $O(\sigma^2 \cdot R \sigma \sqrt{\frac{\log(1/\delta_1)}{n}})$.
+%We can handle the other terms using conventional means, the details of which can be found in \appendixref{sec:proofs}.
+
+Finally, taking $\delta_1 = \delta/3$, and taking the union bound over the bounds for $p \in \{1,2,3\}$,
+we get our result.
+Note that we are bounding quantities fairly crudely for the sake of simplicity.
+\end{proof}
+
+\paragraph{Lemma 4}
+
+\begin{proof}
+Let 
+$\epsilon_{X} \eqdef \|\hat X - X\|_\Lop$,
+$\epsilon_W \eqdef \|\hat W - W\|_\Lop$ and
+$\epsilon_{\Winv} \eqdef \|\hat \Winv - \Winv\|_\Lop$, where
+$\hat W$ is the whitening
+matrix for $\hat M_2$, and $\hat \Winv$ its inverse. 
+Basic perturbation theory gives that $\epsilon_W
+= O(\sigmamin(M_2)^{-0.5} \epsilon)$, $\epsilon_{\Winv}
+= O(\|M_2\|_\Lop^{0.5} \epsilon)$, $\|\hat W\|_2 \le \sqrt{2} \|W\|$ and
+$\|\hat \Winv\|_2 \le \sqrt\frac{3}{2} \|\Winv\|$.
+The error of the whitened tensor $T = M_3(W,W,W)$ is then, $\epsilon_T
+= O\left( \|\hat W\|_\Lop \epsilon_{M_3} + 3 \|T\|_\Lop \|\hat
+W\|_\Lop^2 \epsilon_{W} \right ) = O\left(\sigmamin(M_2)^{-0.5} (1
++ \|M_3\|_\Lop \sigmamin(M_2)^{-1} )~\epsilon\right)$.
+
+By construction, $T$ is a symmetric tensor with orthogonal eigenvectors;
+thus we can apply the results Theorem 5.1 of \citet{AnandkumarGeHsu2012}
+to bound the error in the eigenvalues, $\tilde \lambda$, and eigenvectors, $\tilde \beta_h$, returned by the
+robust tensor power method; 
+$\|\tilde \lambda - \hat {\tilde \lambda} \|_{\infty} \le \frac{5 k \epsilon_T}{\tilde \lambda_{\min}}$ 
+and
+$\|\tilde \beta_h - \hat {\tilde \beta}_h \|_2 \le \frac{8 k \epsilon_T}{\tilde \lambda_{\min}^2}$,
 for all $h \in [k]$, where $\tilde \lambda_{min}$ is the smallest
 eigenvalue of $T$. Note that $\tilde \lambda_h = \pi_h^{-0.5}$ and that
-the assumptions on $\epsilon$ imply that $\epsilon_{\tilde \lambda}
-< \frac{\tilde \lambda_{min}}{2}$.
+the assumptions on $\epsilon$ imply that $\|\tilde \lambda - \hat
+{\tilde \lambda} \|_{\infty} < \frac{\tilde \lambda_{min}}{2}$
 
 Finally, we need to invert the whitening transformation to get bounds on
 the original $\pi$ and $\beta_h$,
 \begin{align*}
   \|\hat \beta_h - \beta_h\|_2
   &= \| \pinv{\hat W} \hat {\tilde \beta}_h - \pinv{W} {\tilde \beta}_h \|_2 \\
-  &= O( \epsilon_{\pinv{W}} \|\hat{\tilde \beta_h}\|_2 + \|\pinv{W}\|_2 \|\hat {\tilde \beta}_h - {\tilde \beta}_h\|_2 )\\
-  &= O(\|M_2\|_{op}^{0.5} \epsilon + \|M_2\|_{op}^{0.5} \frac{k \epsilon_{T}}{\tilde \lambda_{min}^2}) \\
-  &= O( k \pi_{max} \sigmamin(M_2)^{-1.5} \|M_2\|_{op}^{0.5} \|M_3\|_{op} \epsilon ) \\
+  &= O( \epsilon_{\pinv{W}} \|\hat{\tilde \beta}_h\|_2 + \|\pinv{W}\|_2 \|\hat {\tilde \beta}_h - {\tilde \beta}_h\|_2 )\\
+  &= O(\|M_2\|_\Lop^{0.5} \epsilon + \|M_2\|_\Lop^{0.5} \frac{k \epsilon_{T}}{\tilde \lambda_{min}^2}) \\
+  &= O( k \pi_{max} \sigmamin(M_2)^{-1.5} \|M_2\|_\Lop^{0.5} \|M_3\|_\Lop \epsilon ) \\
   |\hat \pi_h - \pi_h |
   &= |\frac{1}{(\hat{\tilde{\lambda}}_h)^2} - \frac{1}{({\tilde{\lambda}}_h)^2}| \\
   &= O( \frac{|2 {\tilde \lambda}_h \epsilon_{\tilde{\lambda}} - \epsilon_{\tilde{\lambda}}^2 |}{({\tilde \lambda}_{\min}^4 - {\tilde \lambda}_{\min}^2 \epsilon_{\tilde \lambda})} ) \\
   &= O( \frac{{\tilde \lambda}_{max} \epsilon_{\tilde \lambda}}{{\tilde\lambda}_{min}^4} ) \\
-  &= O( k \pi_{max}^{2.5} \pi_{min}^{-0.5} \sigmamin(M_2)^{-1.5} \|M_3\|_{op} \epsilon ).
+  &= O( k \pi_{max}^{2.5} \pi_{min}^{-0.5} \sigmamin(M_2)^{-1.5} \|M_3\|_\Lop \epsilon ).
 \end{align*}
 
 \end{proof}

@@ -11,6 +11,7 @@ mode = {
 #"single" : False, # $
 "double" : False, # $$
 "eqnarray" : False,
+"align" : False,
 "IEEE" : False,
 }
 
