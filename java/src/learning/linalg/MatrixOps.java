@@ -44,6 +44,9 @@ public class MatrixOps {
   public static void printSize( SimpleMatrix X ) {
     System.out.printf( "(%d, %d)\n", X.numRows(), X.numCols() );
   }
+  public static void printSize( DenseMatrix64F X ) {
+    System.out.printf( "(%d, %d)\n", X.numRows, X.numCols );
+  }
   public static void printSize( Tensor X ) {
     System.out.printf( "(%d, %d, %d)\n", X.getDim(0), X.getDim(1), X.getDim(2) );
   }
@@ -471,7 +474,13 @@ public class MatrixOps {
       sum += x[i];
     return sum;
   }
-
+  public static double sum(double[][] x ) {
+    double sum = 0.0;
+    for( int i = 0; i < x.length; i++ )
+      for( int j = 0; j < x[i].length; j++ )
+        sum += x[i][j];
+    return sum;
+  }
   /**
    * Find the sum of a vector
    */
@@ -857,6 +866,12 @@ public class MatrixOps {
   }
   public static SimpleMatrix colorer( SimpleMatrix X ) {
     Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> UDV = svdk(X);
+    SimpleMatrix U = UDV.getValue0();
+    SimpleMatrix D = UDV.getValue1();
+    return U.mult(sqrt(D));
+  }
+  public static SimpleMatrix colorer( SimpleMatrix X, int K ) {
+    Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> UDV = svdk(X, K);
     SimpleMatrix U = UDV.getValue0();
     SimpleMatrix D = UDV.getValue1();
     return U.mult(sqrt(D));
