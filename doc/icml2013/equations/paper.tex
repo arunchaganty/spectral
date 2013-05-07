@@ -32,7 +32,7 @@
 
 \begin{lemma}(Concentration of Vector Norms)
   \label{lemma:conc-norms}
-  Let $X_1, \cdots, X_n \in \Re^d$ be i.i.d. samples of the random
+  Let $X_1, \cdots, X_n \in \Re^d$ be i.i.d.\ samples of the random
   variable $X$, where $\|X\|_2 \le M$ with probability 1. Then, with
   probability at least $1 - \delta$,
   \begin{align}
@@ -59,12 +59,12 @@
   \end{align}
 \end{proof}
 
-Note that the above result holds for the Frobenius norm of a matrix,
+Note that the above result extends to the Frobenius norm of a matrix,
 $M$, because $\|M\|_F = \|\vvec(M)\|_2$.
 
 \begin{lemma}(Concentration of Independent Products)
   \label{lemma:conc-prod}
-  Let $X$ and $Y$ be independent random variables, such that $X$ and $Y^2$ are subgaussian with parameters $\sigma^2_X$ and $\sigma^2_{Y^2}$ respectively.
+  Let $X$ and $Y$ be independent random variables, such that $X$ and $Y^2 - \E[Y^2]$ are subgaussian with parameters $\sigma^2_X$ and $\sigma^2_{Y^2}$ respectively.
   Then, 
   \begin{align}
     \Pr[ X - \E[X] \ge \epsilon ] 
@@ -77,48 +77,52 @@ $M$, because $\|M\|_F = \|\vvec(M)\|_2$.
     \E[ \exp(t X Y) ] 
       &= \E[ \E[ \exp(t X Y) | Y ] ] \\
       &\le \E[ \exp(\frac{(tY)^2 \sigma^2_X}{2}) ] \\
-      &\le \exp(\frac{t^4 \sigma^4_X \sigma^2_{Y^2} }{8}).
+      &\le \E[ \exp(\frac{(tY)^2 \sigma^2_X}{2} + \frac{t^2 \E[Y^2] \sigma^2_X}{2}) ] \\
+      &\le \exp(\frac{t^4 \sigma^4_X \sigma^2_{Y^2} }{8}  + \frac{t^2 \E[Y^2] \sigma^2_X}{2}) \\
+      &\le \exp(\frac{t^4 \sigma^4_X \sigma^2_{Y^2} }{8}  + \frac{t^2 R^2 \sigma^2_X}{2}).
   \end{align}
 
   By Markov's inequality, we have that,
   \begin{align}
     \Pr[ XY \ge \epsilon ] 
       &\le \inf_t \frac{\E[\exp(t XY)]}{\exp{t\epsilon}} \\
-      &\le \inf_t \exp(\frac{t^4 \sigma^4_X \sigma^2_{Y^2} }{8} - t\epsilon).
+      &\le \inf_t \exp(\frac{t^4 \sigma^4_X \sigma^2_{Y^2} }{8} + \frac{t^2 R^2 \sigma^2_X}{2} - t\epsilon).
   \end{align}
-  Setting $t = (\frac{2\epsilon}{\sigma^4_X \sigma^2_{Y^2}})^{1/3}$ minimizes the above expression, thus,
+  %Setting $t = (\frac{2\epsilon}{\sigma^4_X \sigma^2_{Y^2}})^{1/3}$ and
+  %$t = \frac{\epsilon}{\sigma^2_X R^2 }$, we get two upper bounds on the
+  %above expression, thus,
+  %\begin{align}
+  %  \Pr[ XY \ge \epsilon ] 
+  %    &\le \min\{
+  %      \exp( -(\frac{54}{64 (\sigma^4_X \sigma^4_{Y^2})})^{1/3} \epsilon^{4/3} 
+  %          + (\frac{1}{2 (\sigma^2_X \sigma^4_{Y^2})})^{1/3} R^2 \epsilon^{2/3} ), \\
+  %    &\quad
+  %      \exp( - \frac{1}{\sigma^2_X R^2} \epsilon^{2} 
+  %        + \frac{\sigma^2_{Y^2}}{8 (\sigma^4_X R^8)} \epsilon^{4} ) \}.
+  %\end{align}
+
+  Setting $t = \frac{\epsilon}{\sigma^2_X R^2 }$, we get the bound,
   \begin{align}
     \Pr[ XY \ge \epsilon ] 
-      &\le \exp( -\frac{3}{4} (\frac{2\epsilon^4}{\sigma^4_X \sigma^4_{Y^2}} )^{1/3} ).
+      &\le 
+        \exp( - \frac{1}{\sigma^2_X R^2} \epsilon^{2} 
+          + \frac{\sigma^2_{Y^2}}{8 (\sigma^4_X R^8)} \epsilon^{4} ).
   \end{align}
+
 \end{proof}
 
 \begin{corollary}
   Let $\{X_i\}_{i=1}^n$ and $\{Y_i\}_{i=1}^n$ be $n$ iid
   samples of $X$ and $Y$, such that $X$ is subgaussian with parameter
-  $\sigma^2$ and $Y \le R$ with probability 1. Then, 
+  $\sigma^2$ and $Y \le R$ with probability 1. Then, if $\epsilon \le 4 \sigma_X R$,
   \begin{align}
     \Pr[ \hat\E[ X Y ] - \E[ X Y ] \ge \epsilon ] 
-      &\le 
+    &\le \exp( - \frac{n \epsilon^2}{2 \sigma^2_X R^2 } ).
   \end{align}
 \end{corollary}
 \begin{proof}
-  Firstly, we will show that $Y^2$ is subgaussian; 
-  \begin{align}
-    \E[ \exp(t X Y) ] 
-      &= \E[ \E[ \exp(t X Y) | Y ] ] \\
-      &\le \E[ \exp(\frac{(tY)^2 \sigma^2_X}{2}) ] \\
-      &\le \exp(\frac{t^4 \sigma^4_X \sigma^2_{Y^2} }{8} + \frac{t^2 \E[Y^2] \sigma^2_X }{2}).
-  \end{align}
-
-
-  \begin{align}
-    \Pr[ XY \ge \epsilon - \E[Y^2] ] 
-      &\le \inf_t \frac{\E[\exp(t XY)]}{\exp{t\epsilon}} \\
-      &\le \inf_t \exp(\frac{t^4 \sigma^4_X \sigma^2_{Y^2} }{8} - t(\epsilon - \E[Y^2])  ).
-  \end{align}
-
-
+  Observe that $Y^2 - \E[Y^2]$ is subgaussian with parameter $\frac{R^4}{4}$. Using the assumed bound on $\epsilon$, we get,
+  $\frac{\sigma^2_{Y^2}}{8 (\sigma^4_X R^8)} \epsilon^{4} \le \frac{1}{2\sigma^2_X R^2} \epsilon^{2}$.
 \end{proof}
 
 \begin{lemma}[lower bound on restricted strong convexity]
