@@ -548,7 +548,7 @@ public class SpectralExperts implements Runnable {
             value = value * (yScaling * yScaling * yScaling) /
                     (xScaling.get(d1) * xScaling.get(d2) * xScaling.get(d2));
           B[d1][d2][d3] = B[d1][d3][d2] =
-             B[d2][d1][d3] = B[d3][d2][d1] =
+             B[d2][d1][d3] = B[d2][d3][d1] =
              B[d3][d1][d2] = B[d3][d2][d1] = value;
         }
       }

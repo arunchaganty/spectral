@@ -200,13 +200,28 @@ public class SpectralExpertsTest {
     SimpleMatrix X = yX.getValue1();
     algo.analysis.checkDataSanity(y, X);
 
-    SimpleMatrix avgBetas = algo.recoverMeans(y, X);
-    SimpleMatrix Pairs_ = algo.recoverPairs( y, X);
-    System.out.println( algo.analysis.Pairs );
-    System.out.println( Pairs_ );
-    algo.analysis.reportPairs(Pairs_);
-    FullTensor Triples_ = algo.recoverTriples(y, X, avgBetas);
-    algo.analysis.reportTriples(Triples_);
+    SimpleMatrix Pairs;
+    FullTensor Triples;
+
+    if( algo.useMatlab ) {
+      Pair<SimpleMatrix,FullTensor> moments = algo.recoverMomentsByMatlab( y, X );
+      Pairs = moments.getValue0();
+      if( algo.analysis != null ) algo.analysis.reportPairs(Pairs);
+
+      Triples = moments.getValue1();
+      if( algo.analysis != null ) algo.analysis.reportTriples(Triples);
+    } else {
+      // Recover the first moment
+      SimpleMatrix avgBetas = algo.recoverMeans(y, X);
+      if( algo.analysis != null ) algo.analysis.reportAvg(avgBetas);
+
+      // Recover Pairs and Triples moments by linear regression
+      Pairs = algo.recoverPairs( y, X );
+      if( algo.analysis != null ) algo.analysis.reportPairs(Pairs);
+
+      Triples = algo.recoverTriples(y, X, avgBetas);
+      if( algo.analysis != null ) algo.analysis.reportTriples(Triples);
+    }
 
     System.out.printf( "%.4f %.4f\n", algo.analysis.PairsErr, algo.analysis.TriplesErr );
   }
