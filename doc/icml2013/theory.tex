@@ -58,11 +58,11 @@ and $\E[x\tp{2p}]$ for $p \in \{1,2,3\}$, we can then identify the
 parameters $\theta = (\pi, B)$, provided $\E[\cvec(x\tp{p})\tp{2}] \succ
 0$ for $p \in \{1,2,3\}$.
 
-We note that this requires more stringent positive definite constraints
-when using features. For example, suppose $x = (1, t, t^2)$, the common
-polynomial basis expansion, so that all the coordinates are
-deterministically related.  Then $\E[x\tp{2}] \succ 0$ can easily be
-satisfied. 
+While this is not a concern for independent dimensions, we note that
+this requires more stringent positive definite constraints when using
+features. For example, suppose $x = (1, t, t^2)$, the common polynomial
+basis expansion, so that all the coordinates are deterministically
+related.  Then $\E[x\tp{2}] \succ 0$ can easily be satisfied. 
 %, say with $x \sim \normal{0}{I}$.
 However, one can verify that $\E[\cvec(x\tp{2})\tp{2}]$ is singular for
 any data distribution, since $\cvec(x\tp{2}) = [1 \cdot 1, t\cdot t, 2(1
@@ -155,22 +155,23 @@ be the adjoint.
 \label{lem:lowRank}
 Suppose there exists a restricted strong convexity constant $\kappa(\opX_p)$ such that
 $$\frac{1}{2n} \| \opX_p( \Delta )\|_2^2 \ge \kappa(\opX_p) \|\Delta\|^2_F \quad \text{and} \quad
-\lambda_n \ge \frac{\|\opX_p^*(\eta_p)\|_\Lop}{n}.$$
+\lambda_n \ge \frac{\|\opX_p^*(\eta_p)\|_\op}{n}.$$
 Then the error of $\hat M_p$ is bounded as follows:
 $\| \hat M_p - M_p^* \|_F \le \frac{\lambda_n \sqrt{k}}{\kappa(\opX_p)}$.
 \end{lemma}
 
 Going forward, we need to lower bound the restricted strong convexity
 parameter $\kappa(\opX_p)$ and upper bound the adjoint operator
-$\|\opX_p^*(\eta_p)\|_\Lop$. The proofs of the following lemmas follow
-from standard concentration inequalities, and have been deferred to
-\appendixref{sec:proofs}. 
+$\|\opX_p^*(\eta_p)\|_\op$. The proofs of the following lemmas follow
+from standard concentration inequalities and appear in detail in the
+supplementary material.
+%have been deferred to \appendixref{sec:proofs}. 
 
 %We will appeal to the random design framework that models the input $x$
 %as random and show bounds that hold with high probability.
 %\paragraph{Adjoint operator}
 %In this section, we upper bound the operator norm of the adjoint
-%$\|\opX_p(\eta_p)\|_\Lop$.
+%$\|\opX_p(\eta_p)\|_\op$.
 
 % First, let us lower bound the restricted strong convexity parameter $\kappa(\opX_p)$:
 
@@ -200,42 +201,43 @@ the data, we will extend the analysis of the robust tensor method in
 steps, 2(a) and 2(c) respectively, of
 \algorithmref{algo:spectral-experts}.
 \begin{lemma}
-  \label{lem:tensorPower} Let $\|\hat M_2 - M_2\|_\Lop \le \epsilon$ and
-  $\|\hat M_3 - M_3\|_\Lop \le \epsilon$, for some $\epsilon$ such that 
-  $$\epsilon < \min\{\sigmamin(M_2)/2,O(k \sigmamin(M_2)^{1.5} \|M_3\|_\Lop^{-1})\}.$$ 
+  \label{lem:tensorPower} Let $\|\hat M_2 - M_2\|_\op \le \epsilon$ and
+  $\|\hat M_3 - M_3\|_\op \le \epsilon$, for some $\epsilon$ such that 
+  $$\epsilon < \min\{\sigmamin(M_2)/2,O(k \sigmamin(M_2)^{1.5} \|M_3\|_\op^{-1})\}.$$ 
   Then, there exists a permutation of indices such that  the parameter
   estimates found in step 2 of \algorithmref{algo:spectral-experts}
   satisfy the following with probability at least $1 - \delta$,
   \begin{align*}
   \|\hat \pi - \pi \|_{\infty}
-    &= O( k \pi_{max}^{2.5} \pi_{min}^{-0.5} \sigmamin(M_2)^{-1.5} \|M_3\|_\Lop \epsilon ) \\
+    &= O( k \pi_{max}^{2.5} \pi_{min}^{-0.5} \sigmamin(M_2)^{-1.5} \|M_3\|_\op \epsilon ) \\
   \|\hat \beta_h - \beta_h\|_2
-    &= O( k \pi_{max} \sigmamin(M_2)^{-1.5} \|M_2\|_\Lop^{0.5} \|M_3\|_\Lop \epsilon ).
+    &= O( k \pi_{max} \sigmamin(M_2)^{-1.5} \|M_2\|_\op^{0.5} \|M_3\|_\op \epsilon ).
   \end{align*}
   for all $h \in [k]$.
 \end{lemma}
 
 The proof follows by applying standard matrix perturbation results for
-the whitening and unwhitening operators, and has again been deferred
-\appendixref{sec:proofs}. 
+the whitening and unwhitening operators and has again been deferred
+to the supplementary material.
+%\appendixref{sec:proofs}. 
 
 \paragraph{Synthesis}
 Together, these lemmas allow us to control the compound parameter error
 and the recovery error. We now apply them in the proof of
 \refthm{convergence}:
 
-\begin{proof}(Theorem 1)
-By \reflem{lowRank} along with \reflem{lowRankLower} and
-\reflem{lowRankUpper}, we can control the operator norm of the parameter
-estimates which are directly upper bounded by the Frobenius norm: If $n
-\ge n_1$, then
+\begin{proof}[Proof of Theorem 1]
+By \reflem{lowRank}, \reflem{lowRankLower} and \reflem{lowRankUpper}, we
+can control the Frobenius norm of the error in the moments, which
+directly upper bounds the operator norm: If $n \ge \max\{n_1, n_2\}$,
+then
 \begin{align}
-  \|\hat M_p - M_p\|_\Lop = O\left( \sigma^3 L^3 R^6 k^{\frac12} \sigmamin(\Sigma_p)^{-1} \sqrt{\frac{\log^3 (1/\delta)}{n}} \right).
+  \|\hat M_p - M_p\|_\op = O\left( \sigma^3 L^3 R^6 k^{\frac12} \sigmamin(\Sigma_p)^{-1} \sqrt{\frac{\log^3 (1/\delta)}{n}} \right).
   %\|\hat M_p - M_p\|_F = O\left( \frac{\sigma^3 L^3 R^6 \sqrt{k} \log^3 (1/\delta)}{\sqrt{n} (\sigmamin(\Sigma_p) - d^p R^p \sqrt{\frac{p \log(d) \log(1/\delta)}{n}}} \right).
 \end{align}
 
 We complete the proof by applying \reflem{tensorPower} with the above
-bound on $\|\hat M_p - M_p\|_\Lop$.
+bound on $\|\hat M_p - M_p\|_\op$.
 
 \end{proof}
 

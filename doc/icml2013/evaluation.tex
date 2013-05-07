@@ -1,19 +1,19 @@
-\section{Empirical Evaluation}
+\section{Empirical evaluation}
 \label{sec:evaluation}
 
 In the previous section, we showed that Spectral Experts is a consistent
-algorithm that converges to the global solution at a $\frac{1}{\sqrt}$
+algorithm that converges to the global solution at a $\frac{1}{\sqrt n}$
 rate. In this section, we will support these theoretical results with
 experiments on simulated data. We will see that in the finite sample
 regime, even when Spectral Experts does not converge to the optimal
 answer, it provides robust initialization for local methods like EM.
 
-\subsection{Experimental Setup}
+\subsection{Experimental setup}
 
 \paragraph{Algorithms}
 
 We solved the low rank recovery optimization routines for $M_2$ and
-$M_3$ using \texttt{cvx}\citationneeded. 
+$M_3$ using an off-the-shelf solver for convex programs, CVX\cite{cvx}.
 %ainterior point method an interior proximal subgradient descent
 %algorithm.%\cite{candes11phaselift,tomioka2010estimation}. (Note sure about this citation and not required?)
 %The algorithm was initialized with the regularized least squares
