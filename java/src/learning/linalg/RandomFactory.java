@@ -48,8 +48,8 @@ public class RandomFactory {
    * @param sigma - noise
    * @return
    */
-  public static double randn(double sigma) {
-    return rand.nextGaussian() * sigma;
+  public static double randn(double sigma2) {
+    return rand.nextGaussian() * Math.sqrt(sigma2);
   }
 
   /**
