@@ -8,7 +8,7 @@ Our main result shows that our parameter estimates $\hat\theta$ converge to $\th
 
 In particular, the following theorem provides a rate of convergence:
 
-\begin{theorem}[convergence of Spectral Experts]
+\begin{theorem}[Convergence of Spectral Experts]
 \label{thm:convergence}
 Assume each dataset $\sD_p$ (for $p = 1, 2, 3$) consists of $n$ i.i.d.\ points independently drawn from a mixture
 of linear regressions model with parameter $\theta^*$.\footnote{Having three independent copies simplifies the analysis.}
@@ -19,30 +19,29 @@ $|\epsilon| \le S$
 and $B$ is rank $k$.
 Let $\Sigma_p \eqdef \E[\cvec(x\tp{p})\tp{2}]$, 
 and assume $\Sigma_p \succ 0$ for each $p \in \{1,2,3\}$.
+Let $\epsilon$ be such that, 
+$$\epsilon = O\left( \min\left\{ \frac{k\|M_3\|_\op \pi_{\max}}{\sigma_k(M_2)^{3/2}}, \half \right\}\right).$$ 
 Suppose the number of samples is
 $n = \max(n_1,n_2)$
 where 
-%\begin{align*}
-$$n_1 = \Omega \left(\max_{p \in [3]} \frac{R^{4p} (p!)^2 \log(1/\delta)}{\sigmamin(\Sigma_p)^2} \right),$$
-$$n_2 = \Omega \left(\max_{p\in [3]} \frac{L^{2p} S^{2p} R^{4p} \log(1/\delta)}{\left(\lambda_n^{(p)}\right)^2} \right).$$
-%\end{align*}
-Let $\epsilon$ be 
-$$O\left( \min\left\{ 
-    \frac{\sigma_k(M_2)}{2}, 
-    \frac{\sigma_k(M_2)^{3/2}}{k \pi_{\max} \|M_3\|_\op},
-    \frac{\sigma_k(M_2)^{5/2}}{k \pi_{\max} \|M_3\|_\op} 
-    \right\}\right).$$ 
-If the regularization strengths $\lambda_n^{(2)}$ and $\lambda_n^{(3)}$ are
-set to $O\left(\frac{\sigmamin(\Sigma_p)}{\sqrt{k}}~ \epsilon \right)$, 
+\begin{align*}
+n_1 &= \Omega \left(\frac{R^{12} \log(1/\delta)}{\min_{p \in [3]} \sigmamin(\Sigma_p)^2} \right) \\
+n_2 &= \Omega \left(\epsilon^{-2}~ \frac{k^2 \pi^2_{\max} \|M_3\|_\op^2}{\sigma_k(M_2)^{5}} L^{6} S^{6} R^{12} \log(1/\delta) \right).
+\end{align*}
+If the regularization strengths $\lambda_n^{(p)}$ are
+set to 
+$$\Theta\left( L^p S^p R^{2p} \sqrt{\frac{\log(1/\delta)}{n}} \right),$$
+for $p \in 2, 3$,
+%$O\left(\frac{\sigmamin(\Sigma_p)}{\sqrt{k}}~ \epsilon \right)$, 
 %$\Omega\left(\sigma^3 L^3 R^6 \sqrt{\frac{\log(1/\delta)}{n}}\right)$,
 then the parameter estimates $\hat\theta = (\hat\pi, \hat B)$ returned by
 \algorithmref{algo:spectral-experts} (with the columns appropriately permuted)
 satisfies 
   \begin{align*}
-  \|\hat \pi - \pi \|_{\infty}
-  &= O\left(\frac{k \pi_1^{5/2}\| {M_3} \|_\op}{\min\{ \sigma_k(M_2)^{3/2}, \sigma_k(M_2)^{5/2} \}} ~ \epsilon \right) \\
-  \|\hat \beta_h - \beta_h\|_2
-  &= O\left( \frac{k \pi_1 \|M_2\|_\op^{1/2} \| {M_3} \|_\op}{\min\{ \sigma_k(M_2), \sigma_k(M_2)^{5/2} \}}~ \epsilon \right),
+  \|\hat \pi - \pi \|_{\infty} &\le \epsilon \\
+  %&= O\left(\frac{k \pi_{\max}^{5/2}\| {M_3} \|_\op}{\sigma_k(M_2)^{5/2}} ~ \epsilon \right) \\
+  \|\hat \beta_h - \beta_h\|_2 &\le \epsilon \\
+  %&= O\left( \frac{k \pi_{\max} \|M_2\|_\op^{1/2} \| {M_3} \|_\op}{\sigma_k(M_2)^{5/2}}~ \epsilon \right),
   \end{align*}
   for all $h \in [k]$.
 %$\|\hat\pi - \pi^*\|_{\infty} \le \epsilon$
@@ -233,7 +232,6 @@ and unwhitening.
   $\|\hat M_3 - M_3\|_\op \le \epsilon$, for some $\epsilon$ in
   $$O\left( \min\left\{ 
     \frac{\sigma_k(M_2)}{2}, 
-    \frac{\sigma_k(M_2)^{3/2}}{k \pi_{\max} \|M_3\|_\op},
     \frac{\sigma_k(M_2)^{5/2}}{k \pi_{\max} \|M_3\|_\op} 
     \right\}\right).$$ 
   Then, there exists a permutation of indices such that  the parameter
@@ -241,9 +239,9 @@ and unwhitening.
   satisfy the following with probability at least $1 - \delta$:
   \begin{align*}
   \|\hat \pi - \pi \|_{\infty}
-  &= O\left(\frac{k \pi_1^{5/2}\| {M_3} \|_\op}{\min\{ \sigma_k(M_2)^{3/2}, \sigma_k(M_2)^{5/2} \}} ~ \epsilon \right) \\
+  &= O\left(\frac{k \pi_1^{5/2}\| {M_3} \|_\op}{\sigma_k(M_2)^{5/2}} ~ \epsilon \right) \\
   \|\hat \beta_h - \beta_h\|_2
-  &= O\left( \frac{k \pi_1 \|M_2\|_\op^{1/2} \| {M_3} \|_\op}{\min\{ \sigma_k(M_2), \sigma_k(M_2)^{5/2} \}}~ \epsilon \right),
+  &= O\left( \frac{k \pi_1 \|M_2\|_\op^{1/2} \| {M_3} \|_\op}{ \sigma_k(M_2)^{5/2} }~ \epsilon \right),
   \end{align*}
   for all $h \in [k]$.
 \end{lemma}
