@@ -202,9 +202,10 @@ supplementary material.
 \begin{lemma}[lower bound on restricted strong convexity constant]
 \label{lem:lowRankLower}
 %Let $\Sigma_p \eqdef \E[\cvec(x\tp{p})\tp{2}]$.
-If $$n = \Omega \left(\frac{R^{4p} (p!)^2 \log(1/\delta)}{\sigmamin(\Sigma_p)^2} \right),$$
+If $$n = \Omega \left(\max_{p\in [3]} \frac{R^{4p} (p!)^2 \log(1/\delta)}{\sigmamin(\Sigma_p)^2} \right),$$
 then with probability at least $1-\delta$:
-$$\kappa(\opX_p) \ge \frac{\sigmamin(\Sigma_p)}{2}.$$
+$$\kappa(\opX_p) \ge \frac{\sigmamin(\Sigma_p)}{2},$$
+for each $p \in [3]$.
 \end{lemma}
 
 % Next, let us upper bound the operator norm of the observation adjoint:
@@ -215,7 +216,7 @@ $$\kappa(\opX_p) \ge \frac{\sigmamin(\Sigma_p)}{2}.$$
 If $$n = \Omega \left(\max_{p\in [3]} \frac{L^{2p} S^{2p} R^{4p} \log(1/\delta)}{\left(\lambda_n^{(p)}\right)^2} \right),$$
 then with probability at least $1-\delta$:
 $$\lambda_n^{(p)} \ge \frac1{n} \|\opX_p^*(\eta_p)\|_\op,$$
-for each $p \in \{1,2,3\}$.
+for each $p \in [3]$.
 \end{lemma}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
