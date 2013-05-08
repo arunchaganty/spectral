@@ -21,9 +21,11 @@ bib: paper.tex $(SECTIONS)
 	$(LATEX) $< 
 	$(LATEX) $< 
 
+run:
+	go icml2013.pdf
+
 clean:
 	rm -rf *.{aux,bbl,blg,log,out}
 	rm -rf $(OUTPUT).pdf
-
 
 .PHONY: clean bib final
