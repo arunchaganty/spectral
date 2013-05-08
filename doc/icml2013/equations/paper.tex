@@ -32,7 +32,51 @@
 
 \maketitle
 
-\todo{Refresh notation.}
+\section{Notation}
+Let $[n] = \{ 1, \dots, n \}$ denote the first $n$ positive integers.
+
+We use $x\tp{p}$ to represent the $p$-th order tensor formed by taking
+the outer product of $x \in \Re^d$; i.e. $x\tp{p}_{i_1 \ldots i_p}
+= x_{i_1} \cdots x_{i_p}$. We will use $\innerp{\cdot}{\cdot}$ to denote
+the generalized dot product between two $p$-th order tensors:
+$\innerp{X}{Y} = \sum_{i_1, \ldots i_p} X_{i_1, \ldots i_p} Y_{i_1,
+\ldots i_p}$.  A tensor $X$ is symmetric if for all $i,j \in [d]^p$
+which are permutations of each other, $X_{i_1 \cdots i_p}$ = $X_{j_1
+\cdots j_p}$ (all tensors in this paper will be symmetric).  For
+a $p$-th order tensor $X \in (\Re^d)\tp{p}$, the mode-$i$ unfolding of
+$X$ is a matrix, $X_{(i)} \in \Re^{d \times d^{p-1}}$, whose $j$-th row contains all the elements of $X$ whose
+$i$-th index is equal to $j$. 
+%For $X \in (\Re^d)\tp{p}$ and $Y \in (\Re^d)\tp{(p+q)}$,% $p, q > 0$,
+%$\innerp{X}{Y} \in \Re^{d^q}$ is the projection of $X$ onto the first
+%$p$ modes of $Y$, i.e. $\innerp{X}{Y}_{i_1, \ldots, i_q} = \sum_{j_1,
+%\ldots, j_p} X_{j_1, \ldots, j_p} Y_{j_1, \ldots, j_p, i_1, \ldots,
+%i_q}$.
+
+% Norms
+For a vector $X$,
+let $\|X\|_\op$ denote the 2-norm.
+For a matrix $X$,
+let $\|X\|_*$ denote the nuclear (trace) norm (sum of singular values),
+let $\|X\|_F$ denote the Frobenius norm (square root of sum of squares of singular values),
+let $\|X\|_{\max}$ denote the max norm (elementwise maximum),
+let $\|X\|_\op$ denote the operator norm (largest singular value),
+let $\sigma_\text{min}(X)$ be the smallest singular value of $X$.
+For a tensor $X$,
+let $\|X\|_* = \frac{1}{p} \sum_{i=1}^p \|X_{(i)}\|_*$ denote
+the average nuclear norm over all $p$ unfoldings,
+and let $\|X\|_\op = \frac{1}{p} \sum_{i=1}^p \|X_{(i)}\|_\op$
+denote the average operator norm over all $p$ unfoldings.
+
+For a symmetric tensor $X \in (\Re^d)\tp{p}$, let $\cvec(X) \in
+\Re^{C_{d,p}}, C_{d,p} = \binom{d + p + 1}{p}$ be the collapsed vectorization of distinct
+elements in $X$, for example, for $X \in \Re^{d \times d}$, $\cvec(X)
+= (X_{ii} : i \in [d]; X_{ij} + X_{ji} : i,j \in [d], i<j)$.
+In general, each component of $\cvec(X)$ is indexed by a vector of
+counts $(c_1, \dots, c_d)$ with total sum $\sum_i c_i = p$.  The value
+of that component is $\sum_{k \in K(c)} X_{k_1 \cdots k_p}$, where $K(c)
+= \{ k \in [d]^p : \forall i \in [d], c_i = |\{ j \in [p] : k_j = i \}|
+\}$ are the set of index vectors $k$ with that count profile.  
+%For symmetric tensors, $\innerp{X}{Y} = \innerp{\cvec(X)}{\cvec(Y)}$.
 
 \section{Regression}
 
@@ -133,71 +177,101 @@ $$n \ge \frac{64 (p!)^2 R^{4p}}{\sigmamin(\Sigma_p)^2} \left(1 + \sqrt{\frac{\lo
 
 \begin{lemma}[Upper bound on adjoint noise]
 \label{lem:lowRankUpper}
-With probability at least $1-\delta$,
-$$\frac1{n} \|\opX_p^*(\eta_p)\|_\op = O\left(S^p L^3 R^{2p} \sqrt{\frac{\log(1/\delta)}{n}}\right).$$
-for each $p \in \{1,2,3\}$.
+With probability at least $1-\delta$, the following holds,
+\begin{align*}
+    \left\|\hat\E_1[\eta_1(x) x] \right\|_2
+      &\le \frac{2R (2LR + S)}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(3/\delta)}{2}} \right) \\
+  \left\|\hat\E_2[\eta_2(x) x\tp{2}] \right\|_F
+      &\le \frac{(4L^2 R^2 + 2 S L R + 4S^2)R^2}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(3/\delta)}{2}} \right) \\
+  \left\|\hat\E_3[\eta_3(x) x\tp{3}] \right\|_F
+      &\le \frac{(8L^3 R^3 + 3 L^2 R^2 S + 6 L R S^2 + 2S^3) R^3}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(3/\delta)}{2}} \right).
+\end{align*}
 \end{lemma}
+
+It follows that, with probability at least $1-\delta$,
+\begin{align*}
+  \left\|\hat\E_p[\eta_p(x) x\tp{p}] \right\|_2
+  &= O\left( \frac{L^p S^p R^{2p}}{\sqrt{n}} \sqrt{\log(1/\delta)} \right),
+\end{align*}
+for each $p \in \{1,2,3\}$.
 
 \begin{proof}
 Let $\hat\E_p[f(x,\epsilon,h)]$ denote the empirical expectation over
 the examples in dataset $\sD_p$ (recall the $\sD_p$'s are independent to
 simplify the analysis).  By definition,
-$$\frac1n \|\opX_p^*(\eta_p)\|_\op = \| \hat\E_p[\eta_p(x) x\tp{p}] \|_\op $$
-for $p \in \{1,2,3\}$.
+$$\frac1n \|\opX_p^*(\eta_p)\|_\op = \left\| \hat\E_p[\eta_p(x) x\tp{p}] \right\|_\op $$
+for $p \in \{1,2,3\}$. To proceed, we will bound each $\eta_p(x)$, defined in \refeqn{eta1},
+\refeqn{eta2} and \refeqn{eta3} and use \reflem{conc-norms} to bound $\|
+\hat\E_p[\eta_p(x) x\tp{p}] \|_F$. The Frobenius norm to bounds the
+operator norm, completing the proof.
 
-Each $\eta_p(x)$, defined in \refeqn{eta1}, \refeqn{eta2} and
-\refeqn{eta3}, is composed of several zero-mean random variables, and
-since $\|A + B\|_\op \le \|A\|_\op + \|B\|_\op$, it suffices to consider
-each term in turn. 
-For each term, we will condition on $x$ and use standard concentration
-inequalities and \reflem{conc-norms} to bound the Frobenius norm of the
-noise, which in turn bounds the operator norm. 
+%composed of several zero-mean random variables, and
+%since $\|A + B\|_\op \le \|A\|_\op + \|B\|_\op$, it suffices to consider
+%each term in turn. 
 
-\paragraph{Bounding $\eta_1(x)$.}
-Recall the definition of $\eta_1(x)$, $$\eta_1(x) = \innerp{\beta_h
-- M_1}{x} + \epsilon.$$ The first term is $\innerp{M_1 - \beta_h}{x}$.
-We have that $\|M_1 - \beta_h\|_2 \le 2L$ and $\|x\|_2 \le R$, so $$\|
-\innerp{\beta_h - M_1}{x} x \|_2 \le 2L R^2.$$ By \reflem{conc-norms},
-we have that with probability atleast $1-\delta_1$,
+\paragraph{Bounding $\eta_p(x)$.}
+Using the assumptions that $\|\beta_h\|_2 \le L$, $\|x\|_2 \le R$ and
+$|\epsilon| \le S$, it is easy to bound each $\eta_p(x)$,
 \begin{align*}
-  \|\hat\E_1[\innerp{M_1 - \beta_h}{x} x]\|_2 &\le 
-  \frac{2 (2L R^2)}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(1/\delta_1)}{2}} \right).
+  \eta_1(x) &= \innerp{\beta_h - M_1}{x} + \epsilon \\
+            &\le \|\beta_h - M_1\|_2 \|x\|_2 + |\epsilon| \\
+            &\le 2LR + S \\
+  \eta_2(x) 
+    &= \innerp{\beta_h\tp{2} - M_2}{x\tp{2}} + 2 \epsilon \innerp{\beta_h}{x} + (\epsilon^2 - \E[\epsilon^2]) \\
+    &\le \|\beta_h\tp{2} - M_2\|_F \|x\tp{2}\|_F + 2 |\epsilon| \|\beta_h\|_2\|x\|_2 + |\epsilon^2 - \E[\epsilon^2]| \\
+    &\le (2L)^2 R^2 + 2 S L R + (2S)^2 \\
+  \eta_3(x) &= \innerp{\beta_h\tp{3} - M_3}{x\tp{3}}
+        + 3 \epsilon \innerp{\beta_h\tp{2}}{x\tp{2}} \\
+        &\quad + 3\left(\epsilon^2 \innerp{\beta_h}{x} - \E[\epsilon^2] \innerp{M_1}{x}\right)
+        + (\epsilon^3 - \E[\epsilon^3]) \\
+  &\le \|\beta_h\tp{3} - M_3\|_F\|x\tp{3}\|_F
+        + 3 |\epsilon| \|\beta_h\tp{2}\|_F \|x\tp{2}\|_F  \\
+        &\quad + 3 \left( |\epsilon^2|~\|\beta_h\|_F\|x\|_F + \left|\E[\epsilon^2]\right|~\|M_1\|_2\|x\|_2 \right)
+        + |\epsilon^3| + \left| \E[\epsilon^3] \right| \\
+  &\le (2L)^3 R^3 + 3 S L^2 R^2 + 3 ( S^2 L R + S^2 L R ) + 2S^3.
 \end{align*}
-The second term is $\epsilon$. We have that $|\epsilon| \le S$, so $\|\epsilon x\|_2 \le RS$. Applying \reflem{conc-norms} again, we have, with probability atleast $1-\delta_1$,
-\begin{align*}
-  \|\hat\E_1[\epsilon x]\|_2 &\le 
-  \frac{2 (R S)}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(1/\delta_1)}{2}} \right).
-\end{align*}
-Taking a union bound of these two quantities, we get an overall bound on $\| \opX_1^* \|_{op}$.
+We have used inequality $\|M_1 - \beta_h\|_2 \le 2L$ above. 
 
-{%
+\paragraph{Bounding $\left\| \hat\E[\eta_p(x)x\tp{p}] \right\|_F$.}
+We may now apply the above bounds on $\eta_p(x)$ to bound $\|\eta_p(x) x\tp{p}\|_F$, using the fact that $\|c X\|_F \le c\|X\|_F$.
+By \reflem{conc-norms}, each of the following hold with probability at least $1-\delta_1$,
 \begin{align*}
-%   \| \hat\E_1[ \eta_1(x) x ] \|_\Lop &\le 
-%             \underbrace{ \|\hat\E_1[\innerp{M_1 - \beta_h}{x} x]\|_\op  }_{ O( L R^2     \sqrt{\frac{\log(1/\delta_1)}{n}} ) } +
-%             \underbrace{ \|\hat\E_1[\epsilon x]\|_\op                   }_{ O( R S  \sqrt{\frac{\log(1/\delta_1)}{n}} ) } \\
-  %  &= O( S L R^2 \sqrt{\frac{\log(1/\delta_1)}{n}} ) \\
-    \| \hat\E_2[ \eta_2(x) x\tp{2} ] \|_\Lop &\le 
-            \underbrace{ \|\hat\E_2[\innerp{\beta_h\tp{2} - M_2}{x\tp{2}} x\tp{2}]\|_\op }_{ O( L^2 R^4      \sqrt{\frac{\log(1/\delta_1)}{n}} ) } \\
-   &\quad + \underbrace{ \|\hat\E_2[2 \epsilon \innerp{\beta_h}{x} x\tp{2}]\|_\op        }_{ O( S L R^3 \sqrt{\frac{\log(1/\delta_1)}{n}} ) } 
-          + \underbrace{ \|\hat\E_2[(\epsilon^2 - S^2) x\tp{2}]\|_\op               }_{ O( S^2 R^2 \sqrt{\frac{\log(1/\delta_1)}{n}} ) } \\
-  %&= O( S^2 L^2 R^4 \sqrt{\frac{\log^2(1/\delta_1)}{n}} ) \\
-  \| \hat\E_3[ \eta_3(x) x\tp{3} ] \|_\Lop &\le 
-            \underbrace{ \|\hat\E_3[\innerp{\beta_h\tp{3} - M_3}{x\tp{3}}                      x\tp{3}]\|_\op }_{O( L^3 R^6        \sqrt{\frac{\log(1/\delta_1)}{n}} ) } \\
-   &\quad + \underbrace{ \|\hat\E_3[3 \epsilon \innerp{\beta_h\tp{2}}{x\tp{2}}                 x\tp{3}]\|_\op }_{O( S L^2 R^5 \sqrt{\frac{\log(1/\delta_1)}{n}} ) } 
-          + \underbrace{ \|\hat\E_3[\epsilon^3                                                 x\tp{3}]\|_\op }_{O( S^3 R^3   \sqrt{\frac{\log (1/\delta_1)}{n}} ) } \\
-   &\quad + \underbrace{ \|\hat\E_3[3(\epsilon^2 \innerp{\beta_h}{x} -S^2 \innerp{\hat M_1}{x}) x\tp{3}]\|_\op }_{O( (S^2 L R^4 + S^2 R^4) \sqrt{\frac{\log(1/\delta_1)}{n}} ) } \\
-  %&= O( S^3 L^3 R^6 \sqrt{\frac{\log^3(1/\delta_1)}{n}} ).
+    \left\|\hat\E_1[\eta_1(x) x] \right\|_2
+      &\le \frac{2R (2LR + S)}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(1/\delta_1)}{2}} \right) \\
+  \left\|\hat\E_2[\eta_2(x) x\tp{2}] \right\|_F
+      &\le \frac{(4L^2 R^2 + 2 S L R + 4S^2)R^2}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(1/\delta_1)}{2}} \right) \\
+  \left\|\hat\E_3[\eta_3(x) x\tp{3}] \right\|_F
+      &\le \frac{(8L^3 R^3 + 3 L^2 R^2 S + 6 L R S^2 + 2S^3) R^3}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(1/\delta_1)}{2}} \right).
 \end{align*}
-}
-There are two additional considerations when bounding the terms in $\eta_3$.
-First, to bound $\hat\E_3[\epsilon^3]$, we use Lemma 19 of \cite{hsu13spherical}.
-Second, there is an additional bias since the estimator uses $\hat M_1$ instead of $M_1$; this bias is small by the previous bound (and is constructed on an independent dataset, $\sD_1$).
-Therefore, we incur another $O(S^2 \cdot R^4 \sqrt{\frac{\log(1/\delta_1)}{n}})$.
+
+% {%
+% \begin{align*}
+% %   \| \hat\E_1[ \eta_1(x) x ] \|_\Lop &\le 
+% %             \underbrace{ \|\hat\E_1[\innerp{M_1 - \beta_h}{x} x]\|_\op  }_{ O( L R^2     \sqrt{\frac{\log(1/\delta_1)}{n}} ) } +
+% %             \underbrace{ \|\hat\E_1[\epsilon x]\|_\op                   }_{ O( R S  \sqrt{\frac{\log(1/\delta_1)}{n}} ) } \\
+%   %  &= O( S L R^2 \sqrt{\frac{\log(1/\delta_1)}{n}} ) \\
+%     \| \hat\E_2[ \eta_2(x) x\tp{2} ] \|_\Lop &\le 
+%             \underbrace{ \|\hat\E_2[\innerp{\beta_h\tp{2} - M_2}{x\tp{2}} x\tp{2}]\|_\op }_{ O( L^2 R^4      \sqrt{\frac{\log(1/\delta_1)}{n}} ) } \\
+%    &\quad + \underbrace{ \|\hat\E_2[2 \epsilon \innerp{\beta_h}{x} x\tp{2}]\|_\op        }_{ O( S L R^3 \sqrt{\frac{\log(1/\delta_1)}{n}} ) } 
+%           + \underbrace{ \|\hat\E_2[(\epsilon^2 - S^2) x\tp{2}]\|_\op               }_{ O( S^2 R^2 \sqrt{\frac{\log(1/\delta_1)}{n}} ) } \\
+%   %&= O( S^2 L^2 R^4 \sqrt{\frac{\log^2(1/\delta_1)}{n}} ) \\
+%   \| \hat\E_3[ \eta_3(x) x\tp{3} ] \|_\Lop &\le 
+%             \underbrace{ \|\hat\E_3[\innerp{\beta_h\tp{3} - M_3}{x\tp{3}}                      x\tp{3}]\|_\op }_{O( L^3 R^6        \sqrt{\frac{\log(1/\delta_1)}{n}} ) } \\
+%    &\quad + \underbrace{ \|\hat\E_3[3 \epsilon \innerp{\beta_h\tp{2}}{x\tp{2}}                 x\tp{3}]\|_\op }_{O( S L^2 R^5 \sqrt{\frac{\log(1/\delta_1)}{n}} ) } 
+%           + \underbrace{ \|\hat\E_3[\epsilon^3                                                 x\tp{3}]\|_\op }_{O( S^3 R^3   \sqrt{\frac{\log (1/\delta_1)}{n}} ) } \\
+%    &\quad + \underbrace{ \|\hat\E_3[3(\epsilon^2 \innerp{\beta_h}{x} -S^2 \innerp{\hat M_1}{x}) x\tp{3}]\|_\op }_{O( (S^2 L R^4 + S^2 R^4) \sqrt{\frac{\log(1/\delta_1)}{n}} ) } \\
+%   %&= O( S^3 L^3 R^6 \sqrt{\frac{\log^3(1/\delta_1)}{n}} ).
+% \end{align*}
+% }
+% There are two additional considerations when bounding the terms in $\eta_3$.
+% First, to bound $\hat\E_3[\epsilon^3]$, we use Lemma 19 of \cite{hsu13spherical}.
+% Second, there is an additional bias since the estimator uses $\hat M_1$ instead of $M_1$; this bias is small by the previous bound (and is constructed on an independent dataset, $\sD_1$).
+% Therefore, we incur another $O(S^2 \cdot R^4 \sqrt{\frac{\log(1/\delta_1)}{n}})$.
 %We can handle the other terms using conventional means, the details of which can be found in \appendixref{sec:proofs}.
+%Note that we are bounding quantities fairly crudely for the sake of simplicity.
 
 Finally, taking $\delta_1 = \delta/3$, and taking the union bound over the bounds for $p \in \{1,2,3\}$,
 we get our result.
-Note that we are bounding quantities fairly crudely for the sake of simplicity.
 \end{proof}
 
 %%%%%%%%%%%%
