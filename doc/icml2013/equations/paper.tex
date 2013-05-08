@@ -17,8 +17,8 @@
 \newcommand\sM{\ensuremath{\mathcal{M}}}
 \newcommand\refapp[1]{Appendix~\ref{sec:#1}}
 \newcommand\refthm[1]{Theorem~\ref{thm:#1}}
-\newcommand\sigmamin{\sigma_\textrm{min}}
-\newcommand\sigmamax{\sigma_\textrm{max}}
+\newcommand\sigmamin{\sigma_\text{\rm min}}
+\newcommand\sigmamax{\sigma_\text{\rm max}}
 \newcommand\op{{\text{\rm op}}}
 \newcommand\BP{\ensuremath{\mathbb{P}}}
 \newcommand\reflem[1]{Lemma~\ref{lem:#1}}
@@ -38,7 +38,7 @@
   Then with probability at least $1 - \delta$,
   \begin{align}
     \left\| \frac{1}{n} \sum_{i=1}^{n} X_i - \E[X] \right\|_2 &
-    \le \frac{2 M (1 + \sqrt{\log(1/\delta)})}{\sqrt{n}}.
+    \le \frac{M(2 + \sqrt{2 \log(1/\delta)})}{\sqrt{n}}.
   \end{align}
 \end{lemma}
 \begin{proof}
@@ -113,7 +113,7 @@ $M$ because $\|M\|_F = \|\vvec(M)\|_2$.
   \end{align*}
 \end{lemma}
 \begin{proof}
-  We begin by bounding the moment generating function of $XY$, using the property that $X$ and $Y$ are independent,
+  We begin by bounding the moment generating function of $XY$. Using the property that $X$ and $Y$ are independent,
   \begin{align*}
     \E[ \exp(t X Y) ] 
       &= \E\left[ \E[ \exp(t X Y) \mid Y ] \right] \\
@@ -217,10 +217,11 @@ $$n \ge \frac{64 (p!)^2 L^{4p}}{\sigmamin(\Sigma_p)^2} \left(1 + \sqrt{\frac{\lo
 
 \begin{lemma}[Upper bound on adjoint noise]
 \label{lem:lowRankUpper}
-Let $\opX_p$ be the linear operator previously defined. Then with
+Let $\opX_p^*$ be the adjoint defined as TODO. Then with
 probability at least $1-\delta$,
 $$\frac1{n} \|\opX_p^*(\eta_p)\|_\op = O\left(\sigma^3 L^3 R^6 \sqrt{\frac{\log^3(1/\delta)}{n}}\right).$$
 for each $p \in \{1,2,3\}$.
+TODO: fill in exact dependence on $p$
 \end{lemma}
 
 \begin{proof}
@@ -282,7 +283,7 @@ Note that we are bounding quantities fairly crudely for the sake of simplicity.
   satisfy the following with probability at least $1 - \delta$,
   \begin{align*}
   \|\hat \pi - \pi \|_{\infty}
-    &= O( k \pi_{max}^{2.5} \pi_{min}^{-0.5} \sigmamin(M_2)^{-1.5} \|M_3\|_\op \epsilon ) \\
+    &= O( k \pi_\text{max}^{2.5} \pi_{min}^{-0.5} \sigmamin(M_2)^{-1.5} \|M_3\|_\op \epsilon ) \\
   \|\hat \beta_h - \beta_h\|_2
     &= O( k \pi_{max} \sigmamin(M_2)^{-1.5} \|M_2\|_\op^{0.5} \|M_3\|_\op \epsilon ).
   \end{align*}
