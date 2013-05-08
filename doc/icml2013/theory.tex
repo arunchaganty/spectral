@@ -19,17 +19,16 @@ $|\epsilon| \le S$
 and $B$ is rank $k$.
 Let $\Sigma_p \eqdef \E[\cvec(x\tp{p})\tp{2}]$, 
 and assume $\Sigma_p \succ 0$ for each $p \in \{1,2,3\}$.
-Let $\epsilon$ be such that, 
-$$\epsilon = O\left( \min\left\{ \frac{k\|M_3\|_\op \pi_{\max}}{\sigma_k(M_2)^{3/2}}, \half \right\}\right).$$ 
+Let $\epsilon < \half$.
 Suppose the number of samples is
 $n = \max(n_1,n_2)$
 where 
 \begin{align*}
 n_1 &= \Omega \left(\frac{R^{12} \log(1/\delta)}{\min_{p \in [3]} \sigmamin(\Sigma_p)^2} \right) \\
-n_2 &= \Omega \left(\epsilon^{-2}~ \frac{k^2 \pi^2_{\max} \|M_3\|_\op^2}{\sigma_k(M_2)^{5} }\frac{ L^{6} S^{6} R^{12}}{\sigmamin(\Sigma_1)^2} \log(1/\delta) \right).
+n_2 &= \Omega \left(\epsilon^{-2}~ \frac{k^2 \pi^2_{\max} \|M_2\|_\op^{1/2} \|M_3\|_\op^2 { L^{6} S^{6} R^{12}}}{\sigma_k(M_2)^{5} {\sigmamin(\Sigma_1)^2}} \log(1/\delta) \right).
 \end{align*}
 If each regularization strength $\lambda_n^{(p)}$ is set to 
-$$\Theta\left( L^p S^p R^{2p} \sqrt{\frac{\log(1/\delta)}{n}} \right),$$
+$$\Theta\left( \frac{L^p S^p R^{2p}}{\sigmamin(\Sigma_1)^2} \sqrt{\frac{\log(1/\delta)}{n}} \right),$$
 for $p \in 2, 3$,
 %$O\left(\frac{\sigmamin(\Sigma_p)}{\sqrt{k}}~ \epsilon \right)$, 
 %$\Omega\left(\sigma^3 L^3 R^6 \sqrt{\frac{\log(1/\delta)}{n}}\right)$,
@@ -228,20 +227,18 @@ we will now study how this error propagates through the tensor factorization ste
 which includes whitening, applying the robust tensor power method \cite{AnandkumarGeHsu2012},
 and unwhitening.
 \begin{lemma}
-  \label{lem:tensorPower} Let $\|\hat M_2 - M_2\|_\op \le \epsilon$ and
-  $\|\hat M_3 - M_3\|_\op \le \epsilon$, for some $\epsilon$ in
-  $$O\left( \min\left\{ 
-    \frac{\sigma_k(M_2)}{2}, 
-    \frac{\sigma_k(M_2)^{5/2}}{k \pi_{\max} \|M_3\|_\op} 
-    \right\}\right).$$ 
+  \label{lem:tensorPower} Let $\|\hat M_2 - M_2\|_\op$ and $\|\hat M_3 - M_3\|_\op$ both be less than
+  \vspace{-0.5em}
+  $$\frac{\sigma_k(M_2)^{5/2}}{k \pi_{\max} \|M_2\|_\op^{1/2} \| {M_3} \|_\op}~ \epsilon,$$
+  for some $\epsilon < \half$. 
   Then, there exists a permutation of indices such that  the parameter
   estimates found in step 2 of \algorithmref{algo:spectral-experts}
   satisfy the following with probability at least $1 - \delta$:
   \begin{align*}
-  \|\hat \pi - \pi \|_{\infty}
-  &= O\left(\frac{k \pi_{\max}^{5/2}\| {M_3} \|_\op}{\sigma_k(M_2)^{5/2}} ~ \epsilon \right) \\
-  \|\hat \beta_h - \beta_h\|_2
-  &= O\left( \frac{k \pi_{\max} \|M_2\|_\op^{1/2} \| {M_3} \|_\op}{ \sigma_k(M_2)^{5/2} }~ \epsilon \right),
+  \|\hat \pi - \pi \|_{\infty} &\le \epsilon \\
+  %&= O\left(\frac{k \pi_{\max}^{5/2}\| {M_3} \|_\op}{\sigma_k(M_2)^{5/2}} ~ \epsilon \right) \\
+  \|\hat \beta_h - \beta_h\|_2 &\le \epsilon.
+  %&= O\left( \frac{k \pi_{\max} \|M_2\|_\op^{1/2} \| {M_3} \|_\op}{ \sigma_k(M_2)^{5/2} }~ \epsilon \right),
   \end{align*}
   for all $h \in [k]$.
 \end{lemma}
