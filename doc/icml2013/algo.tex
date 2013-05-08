@@ -107,7 +107,8 @@ all the parameters.
       &\hat M_2 = \arg\min_{M_2} \quad \lambda_n^{(2)} \|M_2\|_* + \label{eqn:estimateM2} \\
       &\quad\frac{1}{2n}\sum_{(x,y) \in \sD_2} (\innerp{M_2}{x\tp{2}} + \E[\epsilon^2] - y^2)^2, \nonumber \\
       &\hat M_3 = \arg\min_{M_3} \quad \lambda_n^{(3)} \|M_3\|_* + \label{eqn:estimateM3} \\
-      &\quad\frac{1}{2n}\sum_{(x,y) \in \sD_3} (\innerp{M_3}{x\tp{3}} + 3 \E[\epsilon^2]\innerp{\hat M_1}{x} + \E[\epsilon^3] - y^3)^2. \nonumber
+      % NOTE: hspace added to make ICML accept our paper.
+      &{\frac{1}{2n} \hspace{-0.5em}\sum_{(x,y) \in \sD_3} \hspace{-1em}(\innerp{M_3}{x\tp{3}} + 3 \E[\epsilon^2]\innerp{\hat M_1}{x} + \E[\epsilon^3] - y^3)^2}. \nonumber
     \end{align}
     \STATE Estimate parameters $\theta = (\pi, B)$ using \textbf{tensor factorization}:
     \begin{enumerate}

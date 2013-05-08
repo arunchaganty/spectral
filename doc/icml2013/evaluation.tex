@@ -47,7 +47,7 @@ this, EM converged to the correct basin of attraction only 13\% of the time.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=0.50\textwidth]{figures/hist.pdf}
+  \includegraphics[width=0.50\textwidth]{figures/hist.png}
   \caption{Histogram over recovery errors between the three algorithms. $b = 1, d = 4, k = 3, n = 500,000$}
   \label{fig:hist}
 \end{figure}
@@ -56,10 +56,10 @@ this, EM converged to the correct basin of attraction only 13\% of the time.
 \begin{figure*}[p]
   \centering
   \subfigure[Spectral, Spectral+EM]{
-    \includegraphics[width=0.50\textwidth]{figures/curves-vis/1-8-3-specm.pdf}}
+    \includegraphics[width=0.50\textwidth]{figures/curves-vis/1-8-3-specm.png}}
     \hspace{-2em}
   \subfigure[EM]{
-    \includegraphics[width=0.50\textwidth]{figures/curves-vis/1-8-3-em.pdf}}
+    \includegraphics[width=0.50\textwidth]{figures/curves-vis/1-8-3-em.png}}
 %  \subfigure[Spectral + EM]{
 %    \includegraphics[width=0.34\textwidth]{figures/curves-vis/1-8-3-spem.png}}
   \caption{Visualization of the parameters estimated by Spectral Experts versus EM.
@@ -92,8 +92,8 @@ Variables ($b$) & Features ($d$) & Components ($k$) & Spectral & EM & Spectral +
 \hline
 \abovespace
 %$\{1$, $ x_1$, $ x_1^4\}$ 
-  1 & 4 & 2 & 1.53 $\pm$ 0.80 & 0.28 $\pm$ 0.82 & {\bf 0.04 $\pm$ 0.16} \\
-% 1-5-2 1.536268 (+/- 0.801009) 0.038972 (+/- 0.156762) 0.006160 (+/- 0.000962) 0.377981 (+/- 0.585395) 0.006819 (+/- 0.002960)
+  1 & 4 & 2 & 2.45 $\pm$ 3.68 & 0.28 $\pm$ 0.82 & {\bf 0.17 $\pm$ 0.57} \\
+% 1-5-2 2.451423 (+/- 3.686348) 0.176685 (+/- 0.579108) 0.007634 (+/- 0.001706) 0.341620 (+/- 0.584178) 0.010296 (+/- 0.007839)
 %$\{1$, $ x_1$, $ x_2$, $ x_1^2 x_2^2\}$ 
 2 & 5 & 2 & 1.38 $\pm$ 0.84 & {\bf 0.00 $\pm$ 0.00} & {\bf 0.00 $\pm$ 0.00} \\
 % 2-3-2 1.383626 (+/- 0.840325) 0.001416 (+/- 0.000083) 0.003312 (+/- 0.000399) 0.454076 (+/- 0.758689) 0.003340 (+/- 0.000397)
@@ -130,11 +130,11 @@ Variables ($b$) & Features ($d$) & Components ($k$) & Spectral & EM & Spectral +
 \begin{figure*}[tbhp]
   \centering
   \subfigure[Well-specified data]{
-    \includegraphics[width=0.50\textwidth]{figures/vs-n/1833-decay.pdf}
+    \includegraphics[width=0.50\textwidth]{figures/vs-n/1833-decay.png}
   }
     \hspace{-2em}
   \subfigure[Misspecified data]{
-    \includegraphics[width=0.50\textwidth]{figures/vs-n/1-8-3-3-rm.pdf}
+    \includegraphics[width=0.50\textwidth]{figures/vs-n/1-8-3-3-rm.png}
   }
   \caption{Learning curves: parameter error as a function of the number of samples $n$ ($b = 1, d = 5, k = 3$).}
   \label{fig:vs-n}
@@ -164,8 +164,8 @@ Variables ($b$) & Features ($d$) & Components ($k$) & Spectral & EM & Spectral +
 %\belowspace
  2 & 5 & 3 &  1.37 $\pm$ 0.85 & 0.44 $\pm$ 1.12 &  {\bf 0.00 $\pm$ 0.00} \\
 % 2-3-2 1.373689 (+/- 0.849721) 0.002074 (+/- 0.000116) 0.004720 (+/- 0.000000) 0.501348 (+/- 0.656840) 0.004702 (+/- 0.000009)
-% 2 & 6 & 5 &  9.89 $\pm$ 4.46 & {\bf 2.53 $\pm$ 1.77} &  2.69 $\pm$ 1.83 \\
-% 2 & 8 & 7 & 23.07 $\pm$ 7.10 & 9.62 $\pm$ 1.03 &  {\bf 8.16 $\pm$ 2.31}  \\
+ 2 & 6 & 5 &  9.89 $\pm$ 4.46 & {\bf 2.53 $\pm$ 1.77} &  2.69 $\pm$ 1.83 \\
+ 2 & 8 & 7 & 23.07 $\pm$ 7.10 & 9.62 $\pm$ 1.03 &  {\bf 8.16 $\pm$ 2.31}  \\
 \hline
 
 \end{tabular}

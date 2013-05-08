@@ -1,12 +1,17 @@
 \documentclass[tablecaption=bottom]{jmlr}
 
 \usepackage{booktabs}
-\usepackage{ctable}
+%\usepackage{ctable}
 \usepackage{soul}
 
-\title{Detailed Proofs for Spectal Experts}
+\title[Spectral Experts (Supplementary Material)]{Supplementary Material for Spectral Experts for Estimating
+Mixtures of Linear Regressions }
 
-\author{\Name{Arun Tejasvi Chaganty} \Email{chaganty@stanford.edu}}
+\author{%
+\Name{Arun Tejasvi Chaganty} \Email{chaganty@cs.stanford.edu} \\
+\Name{Percy Liang} \Email{pliang@cs.stanford.edu}
+}
+%\institute{Stanford University, Stanford, CA 94305 USA}
 
 \input{macros}
 \input{spectral-macros}
@@ -32,7 +37,7 @@
 
 \maketitle
 
-\section{Notation}
+\section{Review of Notation}
 Let $[n] = \{ 1, \dots, n \}$ denote the first $n$ positive integers.
 
 We use $x\tp{p}$ to represent the $p$-th order tensor formed by taking
@@ -239,20 +244,27 @@ We have used inequality $\|M_1 - \beta_h\|_2 \le 2L$ above.
 \paragraph{Bounding $\left\| \hat\E[\eta_p(x)x\tp{p}] \right\|_F$.}
 We may now apply the above bounds on $\eta_p(x)$ to bound $\|\eta_p(x) x\tp{p}\|_F$, using the fact that $\|c X\|_F \le c\|X\|_F$.
 By \reflem{conc-norms}, each of the following holds with probability at least $1-\delta_1$,
-\begin{align*}
+\begin{align}
     \left\|\hat\E_1[\eta_1(x) x] \right\|_2
-      &\le \frac{2R (2LR + S)}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(1/\delta_1)}{2}} \right) \\
+    &\le \frac{2R (2LR + S)}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(1/\delta_1)}{2}} \right) \label{eqn:est-M1} \\
   \left\|\hat\E_2[\eta_2(x) x\tp{2}] \right\|_F
-      &\le \frac{(4L^2 R^2 + 2 S L R + 4S^2)R^2}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(1/\delta_1)}{2}} \right) \\
+      &\le \frac{(4L^2 R^2 + 2 S L R + 4S^2)R^2}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(1/\delta_1)}{2}} \right) \nonumber \\
   \left\|\hat\E_3[\eta_3(x) x\tp{3}] - \E[\eta_3(x) x\tp{3} \mid x] \right\|_F
-      &\le \frac{(8L^3 R^3 + 3 L^2 R^2 S + 6 L R S^2 + 2S^3) R^3}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(1/\delta_1)}{2}} \right).
-\end{align*}
+      &\le \frac{(8L^3 R^3 + 3 L^2 R^2 S + 6 L R S^2 + 2S^3) R^3}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(1/\delta_1)}{2}} \right) \nonumber.
+\end{align}
 
 Recall that $\eta_3(x)$ does not have zero mean, so we must bound the bias:
 \begin{align*}
-  \E[\eta_3(x) x\tp{3} \mid x] = 3 \E[\epsilon^2] \innerp{M_1 - \hat M_1}{x}.
+  \E[\eta_3(x) x\tp{3} \mid x] &= 3 \E[\epsilon^2] \innerp{M_1 - \hat M_1}{x} \\
+    &\le 3 \E[\epsilon^2] \|M_1 - \hat M_1\|_2 \|x\|_2.
 \end{align*}
-Note that in all of this, both $\hat M_1$ and $M_1$ are treated as constants.
+Note that in all of this, both $\hat M_1$ and $M_1$ are treated as
+constants. Further, by \refeqn{est-M1}, we have a bound on $\|M_1 - \hat
+M_1\|_2$. So,
+%\begin{align*}
+%  \E[\eta_3(x) x\tp{3} \mid x] 
+%    &\le 3 \E[\epsilon^2] \|x\|_2.
+%\end{align*}
 
 % {%
 % \begin{align*}
@@ -583,6 +595,21 @@ $M$ because $\|M\|_F = \|\vvec(M)\|_2$.
     &\le 2 \|\Winv\|_\op \sqrt{1 + \serr{A}} \frac{\serr{A}}{1 - \serr{A}}.
   \end{align*}
 \end{proof}
+
+% \section{Scratch}
+% 
+% \begin{align}
+%   \epsilon &\ge \frac{\sqrt{k}}{\sigmamin(\Sigma_p)} L^p S^p R^2p \sqrt{\frac{\log(1/\delta)}{n}} \\
+%   n &\ge \frac{k L^p S^p R^{2p} \log(1/\delta)}{\epsilon^2 \sigmamin(\Sigma_p)^2} \\
+% \end{align}
+% 
+% The conditions on $\aerr{\pi}$ give us that, if $\gamma = k \sigma_k(M_2)^{-5/2} \|M_3\|_\op \pi_{\max} \epsilon$,
+% $\aerr{\pi} \le \gamma$, $\aerr{\beta} \le \gamma$
+% 
+% \begin{align}
+%   n &\ge \frac{k^2\|M_3\|_\op^2 \pi_{\max}^2  L^p S^p R^{2p} \log(1/\delta) }{\epsilon^2 \sigma_k(M_2)^{5} \sigmamin(\Sigma_p)^2} \\
+% \end{align}
+
 
 \bibliography{../ref,../pliang}
 
