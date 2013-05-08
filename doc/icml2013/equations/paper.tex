@@ -179,19 +179,19 @@ $$n \ge \frac{64 (p!)^2 R^{4p}}{\sigmamin(\Sigma_p)^2} \left(1 + \sqrt{\frac{\lo
 \label{lem:lowRankUpper}
 With probability at least $1-\delta$, the following holds,
 \begin{align*}
-    \left\|\hat\E_1[\eta_1(x) x] \right\|_2
+  \frac{1}{n} \|\opX_1^*(\eta_1)\|_\op
       &\le \frac{2R (2LR + S)}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(3/\delta)}{2}} \right) \\
-  \left\|\hat\E_2[\eta_2(x) x\tp{2}] \right\|_F
+  \frac{1}{n}  \|\opX_2^*(\eta_2)\|_\op 
       &\le \frac{(4L^2 R^2 + 2 S L R + 4S^2)R^2}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(3/\delta)}{2}} \right) \\
-  \left\|\hat\E_3[\eta_3(x) x\tp{3}] \right\|_F
+  \frac{1}{n} \|\opX_3^*(\eta_3)\|_\op 
       &\le \frac{(8L^3 R^3 + 3 L^2 R^2 S + 6 L R S^2 + 2S^3) R^3}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(3/\delta)}{2}} \right).
 \end{align*}
 \end{lemma}
 
 It follows that, with probability at least $1-\delta$,
 \begin{align*}
-  \left\|\hat\E_p[\eta_p(x) x\tp{p}] \right\|_2
-  &= O\left( \frac{L^p S^p R^{2p}}{\sqrt{n}} \sqrt{\log(1/\delta)} \right),
+  \frac{1}{n} \|\opX_p^*(\eta_p)\|_\op
+  &= O\left( L^p S^p R^{2p} \sqrt{\frac{\log(1/\delta)}{n}} \right),
 \end{align*}
 for each $p \in \{1,2,3\}$.
 
@@ -294,7 +294,7 @@ Once we have estimated the moments from the data through regression, we apply th
   satisfy the following with probability at least $1 - \delta$,
   \begin{align*}
   \|\hat \pi - \pi \|_{\infty}
-  &\le \frac{10}{3} \pi_1^{5/2} k \pi_1 
+  &\le \frac{10}{3} \pi_1^{5/2} k 
     \sigma_k(M_2)^{-3/2}
       \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right)
     \epsilon \\
