@@ -19,7 +19,7 @@
 \newcommand\refthm[1]{Theorem~\ref{thm:#1}}
 \newcommand\sigmamin{\sigma_\textrm{min}}
 \newcommand\sigmamax{\sigma_\textrm{max}}
-\newcommand\op{{\textrm{op}}}
+\newcommand\op{{\text{\rm op}}}
 \newcommand\BP{\ensuremath{\mathbb{P}}}
 \newcommand\reflem[1]{Lemma~\ref{lem:#1}}
 \newcommand{\Lop}{\textrm{op}}
@@ -95,10 +95,13 @@ Putting everything together, we obtain the desired bound:
 \end{align}
 \end{proof}
 
-Note that the above result holds for the Frobenius norm of a matrix
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\textbf{Remark}: The above result can be directly
+applied to the Frobenius norm of a matrix
 $M$ because $\|M\|_F = \|\vvec(M)\|_2$.
 
-\begin{lemma}(Concentration of Independent Products)
+\begin{lemma}[Concentration of Independent Products]
   \label{lemma:conc-prod}
   Let $X$ and $Y$ be independent random variables, such that $X$ and $Y^2 - \E[Y^2]$ are subgaussian with parameters $\sigma^2_X$ and $\sigma^2_{Y^2}$ respectively.
   Then, 
@@ -204,11 +207,11 @@ R^{2p}$ in the above to get the stated result.
 %yields the result.
 \end{proof}
 
-\begin{lemma}[upper bound on adjoint noise]
+\begin{lemma}[Upper bound on adjoint noise]
 \label{lem:lowRankUpper}
 Let $\opX_p$ be the linear operator previously defined. Then with
 probability at least $1-\delta$,
-$$\frac1{n} \|\opX_p^*(\eta_p)\|_\op \le O(\sigma^3 L^3 R^6 \sqrt{\frac{\log^3(1/\delta)}{n}}).$$
+$$\frac1{n} \|\opX_p^*(\eta_p)\|_\op = O\left(\sigma^3 L^3 R^6 \sqrt{\frac{\log^3(1/\delta)}{n}}\right).$$
 for each $p \in \{1,2,3\}$.
 \end{lemma}
 
@@ -225,7 +228,8 @@ For each term, we will
 condition on $x$ and use standard concentration inequalities to bound
 the noise. 
 
-For example, consider $\eta_1(x)$, which has two terms. 
+\paragraph{Bounding $\eta_1(x)$.}
+Consider $\eta_1(x)$, which has two terms. 
 The first term is $\innerp{M_1 - \beta_h}{x}$.  We have that $\|M_1 - \beta_h\|_2 \le 2L$, so by Hoeffding's inequality, and using the fact that $\|x\|_2 \le R$ a.s., with probability $1-\delta_1$, $$\|\hat\E_1[\innerp{M_1 - \beta_h}{x} x]\|_2 = O(R^2 L \sqrt{\frac{\log(1/\delta_1)}{n}})$$. 
 The second term is $\epsilon \sim \normal{0}{\sigma^2}$, thus with probability $1-\delta_1$, $$\|\hat\E_1[\epsilon x]\|_2 = O(R \sigma \sqrt{\frac{\log(1/\delta_1)}{n}})$$. 
 The bounds on the terms presented below hold with probability at least $1-\delta_1$ and are proved similarly, using union bounds to bound the products of independent zero-mean variables,
