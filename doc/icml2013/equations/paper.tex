@@ -158,7 +158,7 @@ Once we have estimated the moments from the data through regression, we apply th
     \right\}.$$ 
 
   Then, there exists a permutation of indices such that  the parameter
-  estimates found in step 2 of \algorithmref{algo:spectral-experts}
+  estimates found in step 2 of \citet[Algorithm 1]{ChagantyLiang2013}
   satisfy the following with probability at least $1 - \delta$,
   \begin{align*}
   \|\hat \pi - \pi \|_{\infty}
@@ -178,7 +178,7 @@ Once we have estimated the moments from the data through regression, we apply th
 
 \begin{proof}
 We will use the general notation, $\aerr{X} \eqdef \|\hat X - X\|_\Lop$
-to represent the error of the estimate $\hat X$ of $X$ in the operator
+to represent the error of the estimate, $\hat X$, of $X$ in the operator
 norm. 
 \paragraph{Step 1: Whitening}
 Let $W$ and $\hat W$ be the whitening matrices for $M_2$ and $\hat M_2$
