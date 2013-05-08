@@ -1,31 +1,43 @@
 \section{Empirical evaluation}
 \label{sec:evaluation}
 
-In the previous section, we showed that Spectral Experts is a consistent
-algorithm that converges to the global solution at a $\frac{1}{\sqrt n}$
-rate. In this section, we will support these theoretical results with
-experiments on simulated data. We will see that in the finite sample
-regime, even when Spectral Experts does not converge to the optimal
-answer, it provides robust initialization for local methods like EM.
+In the previous section, we showed that Spectral Experts provides a consistent
+estimator.  %that converges a $\frac{1}{\sqrt n}$
+In this section, we explore the empirical properties of our algorithm on simulated data.
+Our main finding is that Spectral Experts alone attains higher parameter error than EM,
+but this is not the complete story.
+If we initialize EM with the estimates returned by Spectral Experts,
+then we end up with much better estimates than EM from a random initialization.
+%In this section, we will support these theoretical results with
+%experiments on simulated data.
+%We will see that in the finite sample
+%regime, even when Spectral Experts does not converge to the optimal
+%answer, it provides robust initialization for local methods like EM.
 
 \subsection{Experimental setup}
 
 \paragraph{Algorithms}
 
-We solved the low rank recovery optimization routines for $M_2$ and
-$M_3$ using an off-the-shelf solver for convex programs, CVX\cite{cvx}.
+We experimented with three algorithms.
+The first algorithm (Spectral) is simply the Spectral Experts.
+We set the regularization strengths $\lambda_n^{(2)} = \frac{1}{10^{5} \sqrt{n}}$
+and $\lambda_n^{(3)} = \frac{1}{10^{3} \sqrt{n}}$;
+the algorithm was not very sensitive to these choices.
+We solved the low-rank regression to estimate $M_2$ and
+$M_3$ using an off-the-shelf convex optimizer, CVX~\cite{cvx}.
 %ainterior point method an interior proximal subgradient descent
 %algorithm.%\cite{candes11phaselift,tomioka2010estimation}. (Note sure about this citation and not required?)
 %The algorithm was initialized with the regularized least squares
 %solution and was run for 500 iterations or until convergence up to
 %a tolerance of $10^{-3}$.
 %Both regularization parameters, $\lambda_n^{(2)}$ and, $\lambda_n^{(3)}$ were annealed as $\frac{1}{n}$. 
-As a baseline, we also implemented EM with two different
-initializations. In the first, we used $\beta$s with random standard
-Gaussian entries and uniform mixture probabilities, $\pi$. In the other,
-we initialized EM with the starting points given by Spectral Experts. 
+The second algorithm (EM) is EM where the $\beta$'s are initialized from a standard normal
+and $\pi$ was set to the uniform distribution plus some small perturbations.
+We ran EM for 1000 iterations.
+In the final algorithm (Spectral+EM),
+we initialized EM with the output of Spectral Experts.
 
-\paragraph{Datasets}
+\paragraph{Data}
 
 We generated synthetic data as follows:
 First, we generated a vector $t$ sampled uniformly over the $b$-dimensional
@@ -33,13 +45,15 @@ unit hypercube $[-1,1]^b$.
 Then, to get the actual covariates $x$, we applied a non-linear function of $t$
 that conformed to the identifiability criteria discussed in
 \sectionref{sec:algo}.
-The coefficients $\{\beta_h\}$ were drawn from a standard Gaussian. The
-results presented below use $\sigma^2 = 0.1$; we did not observe any
+The true regression coefficients $\{\beta_h\}$ were drawn from a standard normal
+and $\pi$ is set to the uniform distribution.
+The observation noise $\epsilon$ is drawn from a normal with variance $\sigma^2$.
+Results are presented below for $\sigma^2 = 0.1$, but we did not observe any
 qualitatively different behaviour for choices of $\sigma^2$ in the range
 $[0.01, 0.4]$.  
 
 As an example, one feature map we considered in the one-dimensional
-setting was $x = (1, t, t^4, t^7)$. The data and the curves fit using
+setting $(b=1)$ was $x = (1, t, t^4, t^7)$. The data and the curves fit using
 Spectral Experts, EM with random initializations and EM initialized with
 the parameters recovered using Spectral Experts are shown in
 \figureref{fig:curves}. We note that even on well-separated data such as
