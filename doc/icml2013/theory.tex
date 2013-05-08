@@ -2,18 +2,21 @@
 \section{Theoretical results}
 \label{sec:theory}
 
-In this section, we provide theoretical guarantees for our Spectral Experts algorithm.
+In this section, we provide theoretical guarantees for the Spectral Experts algorithm.
+Our main result shows that our parameter estimates $\hat\theta$ converge to $\theta$
+
+
 In particular, the following theorem provides a rate of convergence:
 
-\begin{theorem}[Convergence of Spectral Experts]
+\begin{theorem}[convergence of Spectral Experts]
 \label{thm:convergence}
 Assume each dataset $\sD_p$ (for $p = 1, 2, 3$) consists of $n$ i.i.d.\ points independently drawn from a mixture
-of linear regressions model with parameter $\theta^*$\footnote{Having three independent copies simplifies the analysis}.
+of linear regressions model with parameter $\theta^*$.\footnote{Having three independent copies simplifies the analysis.}
 Further, assume 
 $\|x\|_2 \le R$ with probability $1$, 
 $\|\beta_h^*\|_2 \le L$ for all $h \in [k]$,
 $|\epsilon| \le S$
-and $B$ is full rank.
+and $B$ is rank $k$.
 Let $\Sigma_p \eqdef \E[\cvec(x\tp{p})\tp{2}]$, 
 and assume $\Sigma_p \succ 0$ for each $p \in \{1,2,3\}$.
 Suppose the number of samples is
@@ -75,48 +78,49 @@ conditions for \refeqn{y1}).  However, in mixture of linear regressions,
 these two moments only allow us to recover $M_1$.  \refthm{convergence}
 shows that if we have the higher order analogues, $\E[x\tp{p}y\tp{p}]$
 and $\E[x\tp{2p}]$ for $p \in \{1,2,3\}$, we can then identify the
-parameters $\theta = (\pi, B)$, provided $\E[\cvec(x\tp{p})\tp{2}] \succ
+parameters $\theta = (\pi, B)$,
+provided the following \emph{identifiability condition} holds: $\E[\cvec(x\tp{p})\tp{2}] \succ
 0$ for $p \in \{1,2,3\}$.
 
-While this is not a concern for independent dimensions, we note that
-this requires more stringent positive definite constraints when using
-features. For example, suppose $x = (1, t, t^2)$, the common polynomial
+This identifiability condition warrants a little care,
+as we can run into trouble when components of $x$ are dependent on each other
+in a particular algebraic way.
+For example, suppose $x = (1, t, t^2)$, the common polynomial
 basis expansion, so that all the coordinates are deterministically
-related.  Then $\E[x\tp{2}] \succ 0$ can easily be satisfied. 
-%, say with $x \sim \normal{0}{I}$.
-However, one can verify that $\E[\cvec(x\tp{2})\tp{2}]$ is singular for
-any data distribution, since $\cvec(x\tp{2}) = [1 \cdot 1, t\cdot t, 2(1
+related.  While $\E[x\tp{2}] \succ 0$ might be satisfied (sufficient for ordinary linear regression),
+$\E[\cvec(x\tp{2})\tp{2}]$ is singular for
+any data distribution.
+To see this, note that $\cvec(x\tp{2}) = [1 \cdot 1, t\cdot t, 2(1
 \cdot t^2), 2(t \cdot t^2), (t^2 \cdot t^2)]$ contains components $t
 \cdot t$ and $2(1 \cdot t^2)$, which are linearly dependent.  Therefore,
 Spectral Experts would not be able to identify the parameters of
-a mixture of linear regressions for this distribution over $x$.
+a mixture of linear regressions for this data distribution.
 
-We now show that some amount of unidentifiability is intrinsic to
+We can show that some amount of unidentifiability is intrinsic to
 estimation from low-order moments, not just an artifact of our
 estimation procedure.  Suppose $x = (t, \dots, t^d)$.  Even if we
 observed all moments $\E[x\tp{p}y\tp{p}]$ and $\E[x\tp{2p}]$ for $p \in
-[r]$, all the resulting coordinates would be monomials up to degree
+[r]$ for some $r$, all the resulting coordinates would be monomials of $t$ up to only degree
 $2dr$, and thus the moments live in a $2dr$-dimensional subspace.  On
 the other hand, the parameters $\theta$ live in a subspace of at least
 dimension $dk$.  Therefore, at least $r \ge k/2$ moments are required
 for identifiability of any algorithm for this monomial example.
 
-\paragraph{Low-rank regression}
-%\label{sec:regression}
-\vspace{-0.5em}
-We now bound the error of
-the compound parameter estimates,
-$\|\Delta_2\|_F^2$ and $\|\Delta_3\|_F^2$,
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Analysis of low-rank regression}
+\label{sec:regression}
+
+In this section, we will bound the error of
+the compound parameter estimates $\|\Delta_2\|_F^2$ and $\|\Delta_3\|_F^2$,
 where $\Delta_2 \eqdef \hat M_2 - M_2$
 and $\Delta_3 \eqdef \hat M_3 - M_3$.
-
 Our analysis is based on the low-rank regression framework of
-\citet{Tomioka2011} for tensors, which builds off of
+\citet{Tomioka2011} for tensors, which builds on
 \citet{NegahbanWainwright2009} for matrices.
-The main challenge is to control the noise $\eta_p(x)$,
-which in addition to containing the usual Gaussian part, is also dependent on
-$x$, involves the mixing noise and various cross terms.
-We first set up some notation that unifies all three regressions (\refeqn{estimateM1}, \refeqn{estimateM2}, and \refeqn{estimateM3}).
+The main calculation involved is controling the noise $\eta_p(x)$,
+which involves various polynomial combinations of the mixing noise and observation noise.
+
+Let us first establish some notation that unifies the three regressions (\refeqn{estimateM1}, \refeqn{estimateM2}, and \refeqn{estimateM3}).
 Define the observation operator $\opX_p(M_p) : \Re^{d\tp{p}} \to \Re^{n}$
 mapping compound parameters $M_p$:
 \begin{align}
@@ -175,13 +179,13 @@ be the adjoint.
 \label{lem:lowRank}
 Suppose there exists a restricted strong convexity constant $\kappa(\opX_p)$ such that
 $$\frac{1}{n} \| \opX_p( \Delta )\|_2^2 \ge \kappa(\opX_p) \|\Delta\|^2_F \quad \text{and} \quad
-\lambda^{(p)}_n \ge \frac{\|\opX_p^*(\eta_p)\|_\op}{n}.$$
+\lambda^{(p)}_n \ge \frac{2 \|\opX_p^*(\eta_p)\|_\op}{n}.$$
 Then the error of $\hat M_p$ is bounded as follows:
-$\| \hat M_p - M_p^* \|_F \le \frac{\lambda^{(p)}_n \sqrt{k}}{\kappa(\opX_p)}$.
+$$\| \hat M_p - M_p \|_F \le \frac{32 \lambda^{(p)}_n \sqrt{k}}{\kappa(\opX_p)}.$$
 \end{lemma}
 
 Going forward, we need to lower bound the restricted strong convexity
-parameter $\kappa(\opX_p)$ and upper bound the adjoint operator
+constant $\kappa(\opX_p)$ and upper bound the operator norm of the adjoint operator
 $\|\opX_p^*(\eta_p)\|_\op$. The proofs of the following lemmas follow
 from standard concentration inequalities and appear in detail in the
 supplementary material.
@@ -195,32 +199,34 @@ supplementary material.
 
 % First, let us lower bound the restricted strong convexity parameter $\kappa(\opX_p)$:
 
-\begin{lemma}[lower bound on restricted strong convexity]
+\begin{lemma}[lower bound on restricted strong convexity constant]
 \label{lem:lowRankLower}
-Let $\Sigma_p \eqdef \E[\cvec(x\tp{p})\tp{2}]$.
-If $$n_1 = \Omega \left(\frac{R^{4p} (p!)^2 \log(1/\delta)}{\sigmamin(\Sigma_p)^2} \right),$$
-with probability at least $1-\delta$,
+%Let $\Sigma_p \eqdef \E[\cvec(x\tp{p})\tp{2}]$.
+If $$n = \Omega \left(\frac{R^{4p} (p!)^2 \log(1/\delta)}{\sigmamin(\Sigma_p)^2} \right),$$
+then with probability at least $1-\delta$:
 $$\kappa(\opX_p) \ge \frac{\sigmamin(\Sigma_p)}{2}.$$
 \end{lemma}
 
 % Next, let us upper bound the operator norm of the observation adjoint:
 
-\begin{lemma}[upper bound on adjoint noise]
+\begin{lemma}[upper bound on adjoint operator]
 \label{lem:lowRankUpper}
 % Let $\opX_p$ be the linear operator previously defined. 
-If $$n_2 = \Omega \left(\max_{p\in [3]} \frac{L^{2p} S^{2p} R^{4p} \log(1/\delta)}{\left(\lambda_n^{(p)}\right)^2} \right),$$
-then with probability at least $1-\delta$,
+If $$n = \Omega \left(\max_{p\in [3]} \frac{L^{2p} S^{2p} R^{4p} \log(1/\delta)}{\left(\lambda_n^{(p)}\right)^2} \right),$$
+then with probability at least $1-\delta$:
 $$\lambda_n^{(p)} \ge \frac1{n} \|\opX_p^*(\eta_p)\|_\op,$$
 for each $p \in \{1,2,3\}$.
 \end{lemma}
 
-\paragraph{Method of Moments} 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Analysis of the tensor factorization} 
+\label{sec:tensorError}
 
-Now that we have bounds on the errors of recovering $M_2$ and $M_3$ from
-the data, we will extend the analysis of the robust tensor method in
-\citet{AnandkumarGeHsu2012} to include the whitening and unwhitening
-steps, 2(a) and 2(c) respectively, of
-\algorithmref{algo:spectral-experts}.
+Having bounded the error of the compound parameter estimates $\hat M_2$ and $\hat M_3$,
+we will now study how this error propagates through the tensor factorization step of 
+\algorithmref{algo:spectral-experts},
+which includes whitening, applying the robust tensor power method \cite{AnandkumarGeHsu2012},
+and unwhitening.
 \begin{lemma}
   \label{lem:tensorPower} Let $\|\hat M_2 - M_2\|_\op \le \epsilon$ and
   $\|\hat M_3 - M_3\|_\op \le \epsilon$, for some $\epsilon$ in
@@ -231,7 +237,7 @@ steps, 2(a) and 2(c) respectively, of
     \right\}\right).$$ 
   Then, there exists a permutation of indices such that  the parameter
   estimates found in step 2 of \algorithmref{algo:spectral-experts}
-  satisfy the following with probability at least $1 - \delta$,
+  satisfy the following with probability at least $1 - \delta$:
   \begin{align*}
   \|\hat \pi - \pi \|_{\infty}
   &= O\left(\frac{k \pi_1^{5/2}\| {M_3} \|_\op}{\min\{ \sigma_k(M_2)^{3/2}, \sigma_k(M_2)^{5/2} \}} ~ \epsilon \right) \\
@@ -246,7 +252,8 @@ the whitening and unwhitening operators and has again been deferred
 to the supplementary material.
 %\appendixref{sec:proofs}. 
 
-\paragraph{Synthesis}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Synthesis}
 Together, these lemmas allow us to control the compound parameter error
 and the recovery error. We now apply them in the proof of
 \refthm{convergence}:

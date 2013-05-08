@@ -100,11 +100,11 @@ all the parameters.
     \STATE Estimate compound parameters $M_2, M_3$ using \textbf{low-rank regression}:
     \begin{align}
       &\hat M_1 = \arg\min_{M_1} \label{eqn:estimateM1} \\
-      &\quad\sum_{(x,y) \in \sD_1} (\innerp{M_1}{x} - y)^2, \nonumber \\
+      &\quad\frac{1}{2n}\sum_{(x,y) \in \sD_1} (\innerp{M_1}{x} - y)^2, \nonumber \\
       &\hat M_2 = \arg\min_{M_2} \quad \lambda_n^{(2)} \|M_2\|_* + \label{eqn:estimateM2} \\
-      &\quad\sum_{(x,y) \in \sD_2} (\innerp{M_2}{x\tp{2}} + \E[\epsilon^2] - y^2)^2, \nonumber \\
+      &\quad\frac{1}{2n}\sum_{(x,y) \in \sD_2} (\innerp{M_2}{x\tp{2}} + \E[\epsilon^2] - y^2)^2, \nonumber \\
       &\hat M_3 = \arg\min_{M_3} \quad \lambda_n^{(3)} \|M_3\|_* + \label{eqn:estimateM3} \\
-      &\quad\sum_{(x,y) \in \sD_3} (\innerp{M_3}{x\tp{3}} + 3 \E[\epsilon^2]\innerp{\hat M_1}{x} + \E[\epsilon^3] - y^3)^2. \nonumber
+      &\quad\frac{1}{2n}\sum_{(x,y) \in \sD_3} (\innerp{M_3}{x\tp{3}} + 3 \E[\epsilon^2]\innerp{\hat M_1}{x} + \E[\epsilon^3] - y^3)^2. \nonumber
     \end{align}
     \STATE Estimate parameters $\theta = (\pi, B)$ using \textbf{tensor factorization}:
     \begin{enumerate}
