@@ -3,17 +3,17 @@
 \label{sec:theory}
 
 In this section, we provide theoretical guarantees for the Spectral Experts algorithm.
-Our main result shows that our parameter estimates $\hat\theta$ converge to $\theta$
-
-
-In particular, the following theorem provides a rate of convergence:
+Our main result shows that the parameter estimates $\hat\theta$ converge to $\theta$
+at a $\frac{1}{\sqrt{n}}$ rate that depends polynomially on the bounds on the
+parameters, covariates, and noise, as well the $k$-th smallest singular values
+of the compound parameters and various covariance matrices.
 
 \begin{theorem}[Convergence of Spectral Experts]
 \label{thm:convergence}
 Assume each dataset $\sD_p$ (for $p = 1, 2, 3$) consists of $n$ i.i.d.\ points independently drawn from a mixture
 of linear regressions model with parameter $\theta^*$.\footnote{Having three independent copies simplifies the analysis.}
 Further, assume 
-$\|x\|_2 \le R$ with probability $1$, 
+$\|x\|_2 \le R$, 
 $\|\beta_h^*\|_2 \le L$ for all $h \in [k]$,
 $|\epsilon| \le S$
 and $B$ is rank $k$.
@@ -28,8 +28,7 @@ where
 n_1 &= \Omega \left(\frac{R^{12} \log(1/\delta)}{\min_{p \in [3]} \sigmamin(\Sigma_p)^2} \right) \\
 n_2 &= \Omega \left(\epsilon^{-2}~ \frac{k^2 \pi^2_{\max} \|M_3\|_\op^2}{\sigma_k(M_2)^{5}} L^{6} S^{6} R^{12} \log(1/\delta) \right).
 \end{align*}
-If the regularization strengths $\lambda_n^{(p)}$ are
-set to 
+If each regularization strength $\lambda_n^{(p)}$ is set to 
 $$\Theta\left( L^p S^p R^{2p} \sqrt{\frac{\log(1/\delta)}{n}} \right),$$
 for $p \in 2, 3$,
 %$O\left(\frac{\sigmamin(\Sigma_p)}{\sqrt{k}}~ \epsilon \right)$, 
@@ -38,9 +37,9 @@ then the parameter estimates $\hat\theta = (\hat\pi, \hat B)$ returned by
 \algorithmref{algo:spectral-experts} (with the columns appropriately permuted)
 satisfies 
   \begin{align*}
-  \|\hat \pi - \pi \|_{\infty} &\le \epsilon \\
+  \|\hat \pi - \pi \|_{\infty} \le \epsilon \quad\quad 
   %&= O\left(\frac{k \pi_{\max}^{5/2}\| {M_3} \|_\op}{\sigma_k(M_2)^{5/2}} ~ \epsilon \right) \\
-  \|\hat \beta_h - \beta_h\|_2 &\le \epsilon \\
+  \|\hat \beta_h - \beta_h\|_2 \le \epsilon
   %&= O\left( \frac{k \pi_{\max} \|M_2\|_\op^{1/2} \| {M_3} \|_\op}{\sigma_k(M_2)^{5/2}}~ \epsilon \right),
   \end{align*}
   for all $h \in [k]$.
@@ -49,18 +48,19 @@ satisfies
 %$\|\hat\beta_h - \beta^*_h\|_2 \le \frac{\epsilon}{\sqrt{\pi_h^*}}$.
 \end{theorem}
 
+While the dependence on some of the norms ($L^6,S^6,R^{12}$) looks formidable,
+it is in some sense unavoidable, since we
+need to perform regression on third-order moments.
+Classically, the number of samples required is squared norm of the covariance matrix,
+which itself is bounded by the squared norm of the data, $R^3$. This
+third-order dependence also shows up in the regularization strengths;
+the cubic terms bound each of $\epsilon^3$,
+$\beta_h^3$ and $\|(x\tp{3})\tp{2}\|_F$ with high probability. 
+
 The proof of the theorem has two parts.
 First, we bound the error in the compound parameters estimates $\hat M_2,\hat M_3$
 using results from \citet{Tomioka2011}.
-While the $R^{12}$ term looks formidable, it is unavoidable since we
-perform regression on the third moment of the data. Classically, the
-number of samples required is norm squared of the covariance matrix,
-which itself is bounded by the norm squared of the data, $R^3$. This
-third-order dependence also shows up in the rate the regression
-coefficients are annealed; the cubic terms bound each of $\epsilon^3$,
-$\beta_h^3$ and $\|(x\tp{3})\tp{2}\|_F$ with high probability. 
-
-Next, we use results from \citet{AnandkumarGeHsu2012} to convert this error
+Then we use results from \citet{AnandkumarGeHsu2012} to convert this error
 into a bound on the actual parameter estimates $\hat\theta = (\hat\pi, \hat B)$
 derived from the robust tensor power method.
 But first, let us study a more basic property: identifiability.
@@ -186,7 +186,7 @@ $$\| \hat M_p - M_p \|_F \le \frac{32 \lambda^{(p)}_n \sqrt{k}}{\kappa(\opX_p)}.
 Going forward, we need to lower bound the restricted strong convexity
 constant $\kappa(\opX_p)$ and upper bound the operator norm of the adjoint operator
 $\|\opX_p^*(\eta_p)\|_\op$. The proofs of the following lemmas follow
-from standard concentration inequalities and appear in detail in the
+from standard concentration inequalities and are detailed in the
 supplementary material.
 %have been deferred to \appendixref{sec:proofs}. 
 
