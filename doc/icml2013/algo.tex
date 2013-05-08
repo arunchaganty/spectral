@@ -76,14 +76,17 @@ for any orthogonal matrix $Q$.
 %%% third moment
 Let us now look to the third moment for additional information.
 We can write $y^3$ as a linear function of $x\tp{3}$ with coefficients $M_3$,
-a bias $3 \E[\epsilon^2] \innerp{M_1}{x} + \E[\epsilon^3]$ that can be estimated from \refeqn{y1}, and zero mean noise $\eta_3(x)$:
+a known bias $3 \E[\epsilon^2] \innerp{\hat M_1}{x} + \E[\epsilon^3]$ and some noise $\eta_3(x)$:
 \begin{align}
-  y^3 &= \innerp{M_3}{x\tp{3}} + 3\E[\epsilon^2] \innerp{M_1}{x} + \E[\epsilon^3] + \eta_3(x), \nonumber \\
+  y^3 &= \innerp{M_3}{x\tp{3}} + 3\E[\epsilon^2] \innerp{\hat M_1}{x} + \E[\epsilon^3] + \eta_3(x), \nonumber \\
 \eta_3(x) &= \innerp{\beta_h\tp{3} - M_3}{x\tp{3}}
 + 3 \epsilon \innerp{\beta_h\tp{2}}{x\tp{2}} \label{eqn:y3} \\
-&\quad + 3(\epsilon^2 \innerp{\beta_h}{x} - \E[\epsilon^2] \innerp{M_1}{x})
+&\quad + 3(\epsilon^2 \innerp{\beta_h}{x} - \E[\epsilon^2] \innerp{\hat M_1}{x})
 + (\epsilon^3 - \E[\epsilon^3]). \nonumber
 \end{align}
+The only wrinkle here is that $\eta_3(x)$ does not quite have zero mean.
+It would if $\hat M_1$ were replaced with $M_1$, but $M_1$ is not available to us.
+Nonetheless, as $\hat M_1$ concentrates around $M_1$, the noise bias will go to zero.
 Performing this regression yields an estimate of $M_3$.
 We will see shortly that knowledge of $M_2$ and $M_3$ are sufficient to recover
 all the parameters.

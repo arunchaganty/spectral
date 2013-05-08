@@ -132,7 +132,7 @@ a lower bound on $\frac{1}{n} \| \opX_p^*(\eta_p) \|_\op$.
 \begin{lemma}[Lower bound on restricted strong convexity]
 \label{lem:lowRankLower}
 Let $\Sigma_p \eqdef \E[\cvec(x\tp{p})\tp{2}]$.
-If $$n \ge \frac{64 (p!)^2 R^{4p}}{\sigmamin(\Sigma_p)^2} \left(1 + \sqrt{\frac{\log(1/\delta)}{2}}\right)^2,$$
+If $$n \ge \frac{16 (p!)^2 R^{4p}}{\sigmamin(\Sigma_p)^2} \left(1 + \sqrt{\frac{\log(1/\delta)}{2}}\right)^2,$$
 then, with probability at least $1-\delta$,
 $$\kappa(\opX_p) \ge \frac{\sigmamin(\Sigma_p)}{2}.$$
 \end{lemma}
@@ -154,14 +154,18 @@ permuted indices, so $\|\vvec(\Delta)\|_2 \le \|\cvec(\Delta)\|_2 \le p!
   &\ge \sigmamin(\hat\Sigma_p) \|\Delta\|_F^2 .
 \end{align}
 By Weyl's theorem, $$\sigmamin(\hat\Sigma_p) \ge
-\sigmamin(\Sigma_p) - \|\hat\Sigma_p - \Sigma_p\|_\Lop.$$ Thus, it
-remains to show that $$\|\hat\Sigma_p - \Sigma_p\|_\Lop \le
-\|\hat\Sigma_p - \Sigma_p\|_{F}$$ is small. Applying \reflem{conc-norms}, with
+\sigmamin(\Sigma_p) - \|\hat\Sigma_p - \Sigma_p\|_\Lop.$$
+Since $\|\hat\Sigma_p - \Sigma_p\|_\Lop \le \|\hat\Sigma_p - \Sigma_p\|_{F}$,
+it suffices to show that the empirical covariance concentrates in Frobenius norm.
+Applying \reflem{conc-norms}, with
 probability at least $1 - \delta$, $$\| \hat\Sigma_p - \Sigma_p \|_F
-\le \frac{2 \|\Sigma_p\|_F}{\sqrt n} \left( 1 + \sqrt{\frac{\log(1/\delta)}{2}} \right).$$ Since $\|x\|_2 \le R$, we can use the
-bound $\| \Sigma_p \|_F \le p! \| \vvec(x\tp{p})\tp{2} \|_F \le p!
-R^{2p}$. Then, $\|\hat\Sigma_p - \Sigma_p\|_\op \le \sigmamin(\Sigma_p)/2$ with probability at least $1 - \delta$ if,
-$$n \ge \frac{64 (p!)^2 R^{4p}}{\sigmamin(\Sigma_p)^2} \left(1 + \sqrt{\frac{\log(1/\delta)}{2}}\right)^2.$$
+\le \frac{2 \|\Sigma_p\|_F}{\sqrt n} \left( 1 + \sqrt{\frac{\log(1/\delta)}{2}} \right).$$
+Now we seek to control $\|\Sigma_p\|_F$.
+Since $\|x\|_2 \le R$, we can use the
+bound $$\| \Sigma_p \|_F \le p! \| \vvec(x\tp{p})\tp{2} \|_F \le p! R^{2p}.$$
+
+Finally, $\|\hat\Sigma_p - \Sigma_p\|_\op \le \sigmamin(\Sigma_p)/2$ with probability at least $1 - \delta$ if,
+$$n \ge \frac{16 (p!)^2 R^{4p}}{\sigmamin(\Sigma_p)^2} \left(1 + \sqrt{\frac{\log(1/\delta)}{2}}\right)^2.$$
 
 %To do this, we first apply Hoeffding's inequality elementwise.
 %Since $\|x\|_2 \le R$, we have that for each element $(i,j)$,
@@ -175,7 +179,7 @@ $$n \ge \frac{64 (p!)^2 R^{4p}}{\sigmamin(\Sigma_p)^2} \left(1 + \sqrt{\frac{\lo
 %yields the result.
 \end{proof}
 
-\begin{lemma}[Upper bound on adjoint noise]
+\begin{lemma}[Upper bound on adjoint operator]
 \label{lem:lowRankUpper}
 With probability at least $1-\delta$, the following holds,
 \begin{align*}
@@ -222,11 +226,11 @@ $|\epsilon| \le S$, it is easy to bound each $\eta_p(x)$,
     &\le (2L)^2 R^2 + 2 S L R + (2S)^2 \\
   \eta_3(x) &= \innerp{\beta_h\tp{3} - M_3}{x\tp{3}}
         + 3 \epsilon \innerp{\beta_h\tp{2}}{x\tp{2}} \\
-        &\quad + 3\left(\epsilon^2 \innerp{\beta_h}{x} - \E[\epsilon^2] \innerp{M_1}{x}\right)
+        &\quad + 3\left(\epsilon^2 \innerp{\beta_h}{x} - \E[\epsilon^2] \innerp{\hat M_1}{x}\right)
         + (\epsilon^3 - \E[\epsilon^3]) \\
   &\le \|\beta_h\tp{3} - M_3\|_F\|x\tp{3}\|_F
         + 3 |\epsilon| \|\beta_h\tp{2}\|_F \|x\tp{2}\|_F  \\
-        &\quad + 3 \left( |\epsilon^2|~\|\beta_h\|_F\|x\|_F + \left|\E[\epsilon^2]\right|~\|M_1\|_2\|x\|_2 \right)
+        &\quad + 3 \left( |\epsilon^2|~\|\beta_h\|_F\|x\|_F + \left|\E[\epsilon^2]\right|~\|\hat M_1\|_2\|x\|_2 \right)
         + |\epsilon^3| + \left| \E[\epsilon^3] \right| \\
   &\le (2L)^3 R^3 + 3 S L^2 R^2 + 3 ( S^2 L R + S^2 L R ) + 2S^3.
 \end{align*}
@@ -234,15 +238,21 @@ We have used inequality $\|M_1 - \beta_h\|_2 \le 2L$ above.
 
 \paragraph{Bounding $\left\| \hat\E[\eta_p(x)x\tp{p}] \right\|_F$.}
 We may now apply the above bounds on $\eta_p(x)$ to bound $\|\eta_p(x) x\tp{p}\|_F$, using the fact that $\|c X\|_F \le c\|X\|_F$.
-By \reflem{conc-norms}, each of the following hold with probability at least $1-\delta_1$,
+By \reflem{conc-norms}, each of the following holds with probability at least $1-\delta_1$,
 \begin{align*}
     \left\|\hat\E_1[\eta_1(x) x] \right\|_2
       &\le \frac{2R (2LR + S)}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(1/\delta_1)}{2}} \right) \\
   \left\|\hat\E_2[\eta_2(x) x\tp{2}] \right\|_F
       &\le \frac{(4L^2 R^2 + 2 S L R + 4S^2)R^2}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(1/\delta_1)}{2}} \right) \\
-  \left\|\hat\E_3[\eta_3(x) x\tp{3}] \right\|_F
+  \left\|\hat\E_3[\eta_3(x) x\tp{3}] - \E[\eta_3(x) x\tp{3} \mid x] \right\|_F
       &\le \frac{(8L^3 R^3 + 3 L^2 R^2 S + 6 L R S^2 + 2S^3) R^3}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(1/\delta_1)}{2}} \right).
 \end{align*}
+
+Recall that $\eta_3(x)$ does not have zero mean, so we must bound the bias:
+\begin{align*}
+  \E[\eta_3(x) x\tp{3} \mid x] = 3 \E[\epsilon^2] \innerp{M_1 - \hat M_1}{x}.
+\end{align*}
+Note that in all of this, both $\hat M_1$ and $M_1$ are treated as constants.
 
 % {%
 % \begin{align*}
