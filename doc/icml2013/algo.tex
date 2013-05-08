@@ -12,14 +12,15 @@ convex optimization and tensor power method, respectively.
 %%% first moment
 To warm up, let us consider linear regression
 on the response $y$ given $x$.
-From the model definition, we have $y = \beta_h^\top x + \epsilon$ where
-$\epsilon \sim \normal{0}{\sigma^2}$, and $h$ is a random quantity
-independent of $x$.
-We can average over this randomness by defining
-the average regression coefficients
+From the model definition, we have $y = \beta_h^\top x + \epsilon$.
+The challenge is that the regression coefficients $\beta_h$ depend on the random $h$.
+%$\epsilon \sim \normal{0}{\E[\epsilon^2]}$, and $h$ is a random quantity
+%independent of $x$.
+The first key step is to average over this randomness by defining
+average regression coefficients
 $M_1 \eqdef \sum_{h=1}^k \pi_h \beta_h$.
-Now we can express $y$ as a linear function of $x$ with coefficients $M_1$
-plus some noise $\eta_1(x)$:
+Now we can express $y$ as a linear function of $x$ with non-random coefficients $M_1$
+plus some a new noise term $\eta_1(x)$:
 \begin{align}
   y &= \innerp{M_1}{x} +
   \underbrace{(\innerp{\beta_h - M_1}{x} + \epsilon)}_{\eqdef \eta_1(x)}. \label{eqn:y1}
@@ -27,20 +28,22 @@ plus some noise $\eta_1(x)$:
 The noise $\eta_1(x)$ is the sum of two terms:
 (i) the \emph{mixing noise} $\innerp{M_1 - \beta_h}{x}$
 due to the random choice of the mixture component $h$,
-and (ii) the \emph{observation noise} $\epsilon \sim \normal{0}{\sigma^2}$.
+and (ii) the \emph{observation noise} $\epsilon \sim \sE$.
 Although the noise depends on $x$,
 it still has zero mean conditioned on $x$.
 We will later show that we can
 perform linear regression on the data $\{\xni,
-\yni\}_{i=1}^{n}$ to produce a consistent estimate of $M_1$
-under identifiability conditions.
+\yni\}_{i=1}^{n}$ to produce a consistent estimate of $M_1$.
+%under identifiability conditions.
 But clearly, knowing $M_1$ is insufficient
-for identifying all the parameters $\theta$.
+for identifying all the parameters $\theta$,
+as
+$M_1$ only contains $d$ degrees of freedom whereas $\theta$ contains $O(kd)$.
 
 %%% second moments
-Intuitively, performing regression on only $y$ given $x$ provides only first-order
-information.  The key insight is that we can perform regression
-on higher order powers to obtain more information about the parameters.
+Intuitively, performing regression on $y$ given $x$ provides only first-order
+information.  The second key insight is that we can perform regression
+on higher-order powers to obtain more information about the parameters.
 Specifically, for an integer $p \ge 1$, let us define the average
 $p$-th order tensor power of the parameters as follows:
 \begin{align}
@@ -51,39 +54,38 @@ Expanding $y^2 = (\innerp{\beta_h}{x} + \epsilon)^2$,
 using the fact that $\innerp{\beta_h}{x}^p = \innerp{\beta_h\tp{p}}{x\tp{p}}$,
 we have:
 \begin{align}
-y^2 &= \innerp{M_2}{x\tp{2}} + \sigma^2 + \eta_2(x), \label{eqn:y2} \\
-\eta_2(x) &= \innerp{\beta_h\tp{2} - M_2}{x\tp{2}} + 2 \epsilon \innerp{\beta_h}{x} + (\epsilon^2 - \sigma^2). \nonumber
+  y^2 &= \innerp{M_2}{x\tp{2}} + \E[\epsilon^2] + \eta_2(x), \label{eqn:y2} \\
+\eta_2(x) &= \innerp{\beta_h\tp{2} - M_2}{x\tp{2}} + 2 \epsilon \innerp{\beta_h}{x} + (\epsilon^2 - \E[\epsilon^2]). \nonumber
 \end{align}
 Again, we have expressed $y^2$ has a linear function of $x\tp{2}$
-with regression coefficients $M_2$, plus a known bias $\sigma^2$ and noise.\footnote{If $\sigma^2$ were not known,
+with regression coefficients $M_2$, plus a known bias $\E[\epsilon^2]$ and noise.\footnote{If $\E[\epsilon^2]$ were not known,
 we could treat it as another coefficient
-to be estimated.  The coefficients $M_2$ and $\sigma^2$ can be estimated jointly
+to be estimated.  The coefficients $M_2$ and $\E[\epsilon^2]$ can be estimated jointly
 provided that $x$ does not already contain a bias ($x_j$ must be non-constant for every $j \in [d]$).}
 Importantly, the noise has mean zero; 
-in fact each of the three terms has mean zero
-by (i) definition of $M_2$, (ii) independence of $\epsilon$ and $h$,
-and (iii) the fact that $\E[\epsilon^2] = \sigma^2$.
+in fact each of the three terms has zero mean
+by definition of $M_2$ and independence of $\epsilon$ and $h$.
 
 Performing regression yields a consistent estimate of $M_2$,
-but does not identify all the parameters $\theta$.
+but still does not identify all the parameters $\theta$.
 In particular, $B$ is only identified up to rotation:
 if $B = [\beta_1 \mid \cdots \mid \beta_k]$ satisfies
-$B \diag(\pi) B^\top = M_2$, then $(B Q) \diag(\pi) (Q B^\top)$
+$B \diag(\pi) B^\top = M_2$ and $\pi$ is uniform, then $(B Q) \diag(\pi) (Q^\top B^\top) = M_2$
 for any orthogonal matrix $Q$.
 
 %%% third moment
-Let us look to the third moment for additional information.
+Let us now look to the third moment for additional information.
 We can write $y^3$ as a linear function of $x\tp{3}$ with coefficients $M_3$,
-a bias $3 \sigma^2 \innerp{M_1}{x}$ that can be estimated from \refeqn{y1}, and zero mean noise $\eta_3(x)$:
+a bias $3 \E[\epsilon^2] \innerp{M_1}{x} + \E[\epsilon^3]$ that can be estimated from \refeqn{y1}, and zero mean noise $\eta_3(x)$:
 \begin{align}
-y^3 &= \innerp{M_3}{x\tp{3}} + 3\sigma^2 \innerp{M_1}{x} + \eta_3(x), \label{eqn:y3} \\
+  y^3 &= \innerp{M_3}{x\tp{3}} + 3\E[\epsilon^2] \innerp{M_1}{x} + \E[\epsilon^3] + \eta_3(x), \nonumber \\
 \eta_3(x) &= \innerp{\beta_h\tp{3} - M_3}{x\tp{3}}
-+ 3 \epsilon \innerp{\beta_h\tp{2}}{x\tp{2}} \nonumber \\
-&\quad + 3(\epsilon^2 \innerp{\beta_h}{x} - \sigma^2 \innerp{M_1}{x})
-+ \epsilon^3. \nonumber
++ 3 \epsilon \innerp{\beta_h\tp{2}}{x\tp{2}} \label{eqn:y3} \\
+&\quad + 3(\epsilon^2 \innerp{\beta_h}{x} - \E[\epsilon^2] \innerp{M_1}{x})
++ (\epsilon^3 - \E[\epsilon^3]). \nonumber
 \end{align}
-Performing regression yields estimates for $M_3$.
-It turns out that knowledge of $M_2$ and $M_3$ are sufficient to recover
+Performing this regression yields an estimate of $M_3$.
+We will see shortly that knowledge of $M_2$ and $M_3$ are sufficient to recover
 all the parameters.
 
 \begin{algorithm}[t]
@@ -93,16 +95,16 @@ all the parameters.
     \INPUT Three datasets $\mathcal{D}_r = \{ (\xn{1}, \yn{1}), \cdots, (\xn{n}, \yn{n}) \}$ for $r = 1, 2, 3$;
     %regularization strengths $\lambda_n^{(2)} = \frac{c_2}{\sqrt{n}}$, $\lambda_n^{(3)} = \frac{c_3}{\sqrt{n}}$;
     regularization strengths $\lambda_n^{(2)}$, $\lambda_n^{(3)}$;
-    observation noise variance $\sigma^2$.
+    observation noise variance $\E[\epsilon^2]$.
     \OUTPUT Parameters $\hat\theta = (\hat \pi, [\hat \beta_1 \mid \cdots \mid \hat \beta_k])$.
     \STATE Estimate compound parameters $M_2, M_3$ using \textbf{low-rank regression}:
     \begin{align}
       &\hat M_1 = \arg\min_{M_1} \label{eqn:estimateM1} \\
       &\quad\quad\frac{1}{2n} \sum_{(x,y) \in \sD_1} (\innerp{M_1}{x} - y)^2, \nonumber \\
       &\hat M_2 = \arg\min_{M_2} \quad \lambda_n^{(2)} \|M_2\|_* + \label{eqn:estimateM2} \\
-      &\quad\quad\frac{1}{2n} \sum_{(x,y) \in \sD_2} (\innerp{M_2}{x\tp{2}} + \sigma^2 - y^2)^2, \nonumber \\
+      &\quad\quad\frac{1}{2n} \sum_{(x,y) \in \sD_2} (\innerp{M_2}{x\tp{2}} + \E[\epsilon^2] - y^2)^2, \nonumber \\
       &\hat M_3 = \arg\min_{M_3} \quad \lambda_n^{(3)} \|M_3\|_* + \label{eqn:estimateM3} \\
-      &\quad\quad\frac{1}{2n} \sum_{(x,y) \in \sD_3} (\innerp{M_3}{x\tp{3}} + 3 \sigma^2\innerp{\hat M_1}{x} - y^3)^2. \nonumber
+      &\quad\quad\frac{1}{2n} \sum_{(x,y) \in \sD_3} (\innerp{M_3}{x\tp{3}} + 3 \E[\epsilon^2]\innerp{\hat M_1}{x} - y^3)^2. \nonumber
     \end{align}
     \STATE Estimate the parameters $\theta = (\pi, B)$ using \textbf{tensor factorization}:
     \begin{enumerate}
@@ -122,7 +124,7 @@ all the parameters.
 % Full algorithm
 Now we are ready to state our full algorithm, which we call Spectral Experts
 (\algorithmref{algo:spectral-experts}).
-First, we perform three regressions to recover the compound parameters
+First, we perform three regressions to recover the \emph{compound parameters}
 $M_1$ \refeqn{y1},
 $M_2$ \refeqn{y2}, and
 $M_3$ \refeqn{y3}.
@@ -132,8 +134,8 @@ we can use nuclear norm regularization
 to exploit this low-rank structure and improve our compound parameter estimates.
 In the algorithm, the regularization strengths $\lambda_n^{(2)}$ and $\lambda_n^{(3)}$
 are set to $\frac{c}{\sqrt{n}}$ for some constant $c$.
-The resulting semidefinite program is a standard one which has received
-much attention in recent years.
+%The resulting semidefinite program is a standard one which has received
+%much attention in recent years.
 % We use a standard off-the-shelf SDP solver, CVX, to solve .
 % We use a rather simple proximal gradient-based approach,
 % in which the nuclear norm is handled in closed form by taking an SVD

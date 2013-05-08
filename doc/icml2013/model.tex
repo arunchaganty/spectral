@@ -10,20 +10,23 @@ The mixture of linear regressions model \citep{VieleTong2002} defines
 a conditional distribution over a response $y \in \Re$
 given covariates $x \in \Re^d$.
 Let $k$ be the number of mixture components.
-The generation of $y$ given $x$ involves two steps:
+The generation of $y$ given $x$ involves three steps:
 (i) draw a mixture component $h \in [k]$ according to mixture proportions
 $\pi = (\pi_1, \dots, \pi_k)$;
-and (ii) set $y$ to $\beta_h^\top x$ plus some observation noise $\epsilon$.
+(ii) draw observation noise $\epsilon$ from a known zero-mean noise distribution $\sE$,
+and (ii) set $y$ deterministically based on $h$ and $\epsilon$.
+More compactly: %to $\beta_h^\top x$ plus some observation noise $\epsilon$.
 \begin{eqnarray}
   h &\sim& \mult(\pi), \\
-  y \mid h &=& \beta_{h}^T x + \epsilon.
+  \epsilon &\sim& \sE, \\
+  y &=& \beta_{h}^T x + \epsilon.
 \end{eqnarray}
 The parameters of the model are $\theta = (\pi, B)$,
 where $\pi \in \Re^d$ are the mixture proportions and
 $B = [\beta_1 \mid \dots \mid \beta_k] \in \Re^{d \times k}$
 are the regression coefficients.
-Note that the choice of mixture component $h$ and the noise $\epsilon$ are independent.
-We also assume the distribution of the observation noise is known and has bounded support.
+Note that the choice of mixture component $h$ and the observation noise $\epsilon$ are independent.
+%We also assume the distribution of the observation noise is known and has bounded support.
 The learning problem is stated as follows:
 given $n$ i.i.d. samples $(\xn{1}, \yn{1}), \dots, (\xn{n}, \yn{n})$
 drawn from the model with some unknown parameters $\theta^*$,
