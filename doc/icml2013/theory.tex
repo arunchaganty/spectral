@@ -26,7 +26,7 @@ $n = \max(n_1,n_2)$
 where 
 \begin{align*}
 n_1 &= \Omega \left(\frac{R^{12} \log(1/\delta)}{\min_{p \in [3]} \sigmamin(\Sigma_p)^2} \right) \\
-n_2 &= \Omega \left(\epsilon^{-2}~ \frac{k^2 \pi^2_{\max} \|M_3\|_\op^2}{\sigma_k(M_2)^{5}} L^{6} S^{6} R^{12} \log(1/\delta) \right).
+n_2 &= \Omega \left(\epsilon^{-2}~ \frac{k^2 \pi^2_{\max} \|M_3\|_\op^2}{\sigma_k(M_2)^{5} }\frac{ L^{6} S^{6} R^{12}}{\sigmamin(\Sigma_1)^2} \log(1/\delta) \right).
 \end{align*}
 If the regularization strengths $\lambda_n^{(p)}$ are
 set to 
@@ -212,7 +212,7 @@ for each $p \in [3]$.
 \begin{lemma}[upper bound on adjoint operator]
 \label{lem:lowRankUpper}
 % Let $\opX_p$ be the linear operator previously defined. 
-If $$n = \Omega \left(\max_{p\in [3]} \frac{L^{2p} S^{2p} R^{4p} \log(1/\delta)}{\left(\lambda_n^{(p)}\right)^2} \right),$$
+If $$n = \Omega \left(\max_{p\in [3]} \frac{L^{2p} S^{2p} R^{4p} \log(1/\delta)}{ \sigmamin(\Sigma_1)^2 \left(\lambda_n^{(p)}\right)^2} \right),$$
 then with probability at least $1-\delta$:
 $$\lambda_n^{(p)} \ge \frac1{n} \|\opX_p^*(\eta_p)\|_\op,$$
 for each $p \in [3]$.
@@ -239,9 +239,9 @@ and unwhitening.
   satisfy the following with probability at least $1 - \delta$:
   \begin{align*}
   \|\hat \pi - \pi \|_{\infty}
-  &= O\left(\frac{k \pi_1^{5/2}\| {M_3} \|_\op}{\sigma_k(M_2)^{5/2}} ~ \epsilon \right) \\
+  &= O\left(\frac{k \pi_{\max}^{5/2}\| {M_3} \|_\op}{\sigma_k(M_2)^{5/2}} ~ \epsilon \right) \\
   \|\hat \beta_h - \beta_h\|_2
-  &= O\left( \frac{k \pi_1 \|M_2\|_\op^{1/2} \| {M_3} \|_\op}{ \sigma_k(M_2)^{5/2} }~ \epsilon \right),
+  &= O\left( \frac{k \pi_{\max} \|M_2\|_\op^{1/2} \| {M_3} \|_\op}{ \sigma_k(M_2)^{5/2} }~ \epsilon \right),
   \end{align*}
   for all $h \in [k]$.
 \end{lemma}

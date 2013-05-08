@@ -193,14 +193,15 @@ With probability at least $1-\delta$, the following holds,
   \frac{1}{n}  \|\opX_2^*(\eta_2)\|_\op 
       &\le \frac{(4L^2 R^2 + 2 S L R + 4S^2)R^2}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(3/\delta)}{2}} \right) \\
   \frac{1}{n} \|\opX_3^*(\eta_3)\|_\op 
-      &\le \frac{(8L^3 R^3 + 3 L^2 R^2 S + 6 L R S^2 + 2S^3) R^3}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(3/\delta)}{2}} \right).
+      &\le \frac{(8L^3 R^3 + 3 L^2 R^2 S + 6 L R S^2 + 2S^3) R^3}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(6/\delta)}{2}} \right) \\
+  &\quad + 3 R^4 S^2 \left(\frac{4R(2LR+S)}{\sigmamin(\Sigma_1) \sqrt{n}} \left(1 + \sqrt{\frac{\log(6/\delta)}{2}} \right) \right).
 \end{align*}
 \end{lemma}
 
 It follows that, with probability at least $1-\delta$,
 \begin{align*}
   \frac{1}{n} \|\opX_p^*(\eta_p)\|_\op
-  &= O\left( L^p S^p R^{2p} \sqrt{\frac{\log(1/\delta)}{n}} \right),
+  &= O\left( L^p S^p R^{2p} \sigmamin(\Sigma_1)^{-1} \sqrt{\frac{\log(1/\delta)}{n}} \right),
 \end{align*}
 for each $p \in \{1,2,3\}$.
 
@@ -244,27 +245,27 @@ We have used inequality $\|M_1 - \beta_h\|_2 \le 2L$ above.
 \paragraph{Bounding $\left\| \hat\E[\eta_p(x)x\tp{p}] \right\|_F$.}
 We may now apply the above bounds on $\eta_p(x)$ to bound $\|\eta_p(x) x\tp{p}\|_F$, using the fact that $\|c X\|_F \le c\|X\|_F$.
 By \reflem{conc-norms}, each of the following holds with probability at least $1-\delta_1$,
-\begin{align}
+\begin{align*}
     \left\|\hat\E_1[\eta_1(x) x] \right\|_2
-    &\le \frac{2R (2LR + S)}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(1/\delta_1)}{2}} \right) \label{eqn:est-M1} \\
+    &\le \frac{2R (2LR + S)}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(1/\delta_1)}{2}} \right) \\
   \left\|\hat\E_2[\eta_2(x) x\tp{2}] \right\|_F
-      &\le \frac{(4L^2 R^2 + 2 S L R + 4S^2)R^2}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(1/\delta_1)}{2}} \right) \nonumber \\
+      &\le \frac{(4L^2 R^2 + 2 S L R + 4S^2)R^2}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(1/\delta_2)}{2}} \right) \\
   \left\|\hat\E_3[\eta_3(x) x\tp{3}] - \E[\eta_3(x) x\tp{3} \mid x] \right\|_F
-      &\le \frac{(8L^3 R^3 + 3 L^2 R^2 S + 6 L R S^2 + 2S^3) R^3}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(1/\delta_1)}{2}} \right) \nonumber.
-\end{align}
+      &\le \frac{(8L^3 R^3 + 3 L^2 R^2 S + 6 L R S^2 + 2S^3) R^3}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(1/\delta_3)}{2}} \right).
+\end{align*}
 
 Recall that $\eta_3(x)$ does not have zero mean, so we must bound the bias:
 \begin{align*}
-  \E[\eta_3(x) x\tp{3} \mid x] &= 3 \E[\epsilon^2] \innerp{M_1 - \hat M_1}{x} \\
-    &\le 3 \E[\epsilon^2] \|M_1 - \hat M_1\|_2 \|x\|_2.
+  \| \E[\eta_3(x) x\tp{3} \mid x] \|_F &= \|3 \E[\epsilon^2] \innerp{M_1 - \hat M_1}{x} x\tp{3} \|_F \\
+    &\le 3 \E[\epsilon^2] \|M_1 - \hat M_1\|_2 \|x\|_2 \|x\tp{3}\|_F.
 \end{align*}
 Note that in all of this, both $\hat M_1$ and $M_1$ are treated as
-constants. Further, by \refeqn{est-M1}, we have a bound on $\|M_1 - \hat
-M_1\|_2$. So,
-%\begin{align*}
-%  \E[\eta_3(x) x\tp{3} \mid x] 
-%    &\le 3 \E[\epsilon^2] \|x\|_2.
-%\end{align*}
+constants. Further, by applying \reflem{lowRank}, we have a bound on $\|M_1 - \hat
+M_1\|_2$. So, with probability at least $1 - \delta_3$,
+\begin{align*}
+  \| \E[\eta_3(x) x\tp{3} \mid x] \|_F
+  &\le 3 R^4 S^2 \left(\frac{4R(2LR+S)}{\sigmamin(\Sigma_1) \sqrt{n}} \left(1 + \sqrt{\frac{\log(1/\delta_3)}{2}} \right) \right).
+\end{align*}
 
 % {%
 % \begin{align*}
@@ -292,8 +293,9 @@ M_1\|_2$. So,
 %We can handle the other terms using conventional means, the details of which can be found in \appendixref{sec:proofs}.
 %Note that we are bounding quantities fairly crudely for the sake of simplicity.
 
-Finally, taking $\delta_1 = \delta/3$, and taking the union bound over the bounds for $p \in \{1,2,3\}$,
-we get our result.
+Finally, taking $\delta_1 = \delta/3, \delta_2 = \delta/3, \delta_3
+= \delta/6$, and taking the union bound over the bounds for $p \in
+\{1,2,3\}$, we get our result.
 \end{proof}
 
 %%%%%%%%%%%%
@@ -307,7 +309,7 @@ Once we have estimated the moments from the data through regression, we apply th
   $$\epsilon < 
     \min\left\{
       \frac{\sigmamin(M_2)}{2},
-      \frac{1}{10 k \pi_1 \sigma_k(M_2)^{-3/2}
+      \frac{1}{10 k \pi_{\max} \sigma_k(M_2)^{-3/2}
       \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right)}
     \right\}.$$ 
 
@@ -316,13 +318,13 @@ Once we have estimated the moments from the data through regression, we apply th
   satisfy the following with probability at least $1 - \delta$,
   \begin{align*}
   \|\hat \pi - \pi \|_{\infty}
-  &\le \frac{10}{3} \pi_1^{5/2} k 
+  &\le \frac{10}{3} \pi_{\max}^{5/2} k 
     \sigma_k(M_2)^{-3/2}
       \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right)
     \epsilon \\
   \|\hat \beta_h - \beta_h\|_2
     &\le 4\sqrt{3/2} \|M_2\|_\op^{1/2} \sigma_k(M_2)^{-1} \epsilon  \\
-  &\quad + 8 \|M_2\|_\op^{1/2} k \pi_1 
+    &\quad + 8 \|M_2\|_\op^{1/2} k \pi_{\max} 
     \sigma_k(M_2)^{-3/2}
       \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right)
     \epsilon.
@@ -437,7 +439,7 @@ Thus,
   &\le 4\sqrt{3/2} \|M_2\|_\op^{1/2} \sigma_k(M_2)^{-1} \epsilon 
     + 8 \|M_2\|_\op^{1/2} \frac{k \epsilon_{T}}{(\lW)_{min}^2} \\
   &\le 4\sqrt{3/2} \|M_2\|_\op^{1/2} \sigma_k(M_2)^{-1} \epsilon  \\
-  &\quad + 8 \|M_2\|_\op^{1/2} k \pi_1 
+  &\quad + 8 \|M_2\|_\op^{1/2} k \pi_{\max} 
     \sigma_k(M_2)^{-3/2}
       \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right)
    \epsilon.
@@ -452,13 +454,13 @@ Next, let us bound the error in $\pi$,
   &\le \frac{( 2(\lW)_h - \|\lW - \lhW\|_{\infty} )}{(\lW)_h^2 \left( (\lW)_h + \|\lW - \lhW\|_{\infty} \right)^2} \|\lW - \lhW\|_{\infty}.
 \end{align*}
 Recall that $(\lW)_h = \pi_h^{-1/2}$, so the
-assumptions that $\epsilon$ imply that $\aerr{T} \le \frac{1}{10 k \pi_1}$, and thus, $\|\lW - \lhW \|_{\infty} \le (\lW)_{\min}/2$. This allows us to simplify the above expression as follows,
+assumptions that $\epsilon$ imply that $\aerr{T} \le \frac{1}{10 k \pi_{\max}}$, and thus, $\|\lW - \lhW \|_{\infty} \le (\lW)_{\min}/2$. This allows us to simplify the above expression as follows,
 \begin{align*}
   |\hat \pi_h - \pi_h |
   &\le \frac{(3/2)(\lW)_h}{(3/2)^2 (\lW)_h^4}
   \|\lW - \lhW\|_{\infty} \\
   &\le \frac{2}{3(\lW)_h^3} \frac{5 k \aerr{T}}{(\lW)_{\min}^2} \\
- &\le \frac{2 \pi_1^{3/2}}{3} 5 k \pi_1 
+  &\le \frac{2 \pi_{\max}^{3/2}}{3} 5 k \pi_{\max} 
     \sigma_k(M_2)^{-3/2}
       \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right)  \epsilon.
 \end{align*}
