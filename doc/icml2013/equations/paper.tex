@@ -90,7 +90,7 @@ where the cross terms are zero by independence of the $Z_i$'s.
 
 Putting everything together, we obtain the desired bound:
 \begin{align}
-\|\frac{1}{n}\sum_{i=1}^n Z_i\|
+\left\|\frac{1}{n}\sum_{i=1}^n Z_i \right\|
 &\le \frac{2M}{\sqrt{n}} + M \sqrt{\frac{2\log(1/\delta)}{n}}.
 \end{align}
 \end{proof}
@@ -100,30 +100,33 @@ $M$ because $\|M\|_F = \|\vvec(M)\|_2$.
 
 \begin{lemma}(Concentration of Independent Products)
   \label{lemma:conc-prod}
-  Let $X$ and $Y$ be independent random variables, such that $X$ and $Y^2 - \E[Y^2]$ are subgaussian with parameters $\sigma^2_X$ and $\sigma^2_{Y^2}$ respectively.
+  Let $X$ and $Y$ be independent random variables, such that $X$ is subgaussian with parameter $\sigma^2$ and $|Y| \le L$.
   Then, 
-  \begin{align}
-    \Pr[ X - \E[X] \ge \epsilon ] 
-      &\le \exp( -\frac{3}{4} (\frac{2\epsilon^4}{\sigma^4_X \sigma^2_{Y^2}} )^{1/3} ).
-  \end{align}
+  \begin{align*}
+    \Pr[ XY \ge \epsilon ] 
+      &\le 
+        \exp\left( - \frac{1}{\sigma^2 L^2} \epsilon^{2} 
+          + \frac{1}{16 (\sigma^4_X L^4)} \epsilon^{4} \right),
+  \end{align*}
 \end{lemma}
 \begin{proof}
   We begin by bounding the moment generating function of $XY$, using the property that $X$ and $Y$ are independent,
-  \begin{align}
+  \begin{align*}
     \E[ \exp(t X Y) ] 
-      &= \E[ \E[ \exp(t X Y) | Y ] ] \\
-      &\le \E[ \exp(\frac{(tY)^2 \sigma^2_X}{2}) ] \\
-      &\le \E[ \exp(\frac{(tY)^2 \sigma^2_X}{2} + \frac{t^2 \E[Y^2] \sigma^2_X}{2}) ] \\
-      &\le \exp(\frac{t^4 \sigma^4_X \sigma^2_{Y^2} }{8}  + \frac{t^2 \E[Y^2] \sigma^2_X}{2}) \\
-      &\le \exp(\frac{t^4 \sigma^4_X \sigma^2_{Y^2} }{8}  + \frac{t^2 R^2 \sigma^2_X}{2}).
-  \end{align}
+      &= \E\left[ \E[ \exp(t X Y) \mid Y ] \right] \\
+      &\le \E\left[ \exp\left(\frac{(tY)^2 \sigma^2}{2}\right) \right] \\
+      &\le \E\left[ \exp\left(\frac{t \sigma^2}{2} (Y^2 - \E[Y^2]) + \frac{t^2 \E[Y^2] \sigma^2}{2}\right) \right] \\
+      &\le \exp\left(\frac{t^4 \sigma^4}{8} \frac{L^4}{2}  + \frac{t^2\sigma^2 L^2}{2}\right) \\
+      &\le \exp\left(\frac{t^4 \sigma^4 L^4}{16}  + \frac{t^2 \sigma^2 L^2}{2}\right),
+  \end{align*}
+  where we used the fact that $Y^2 - \E[Y^2]$ is subgaussian with parameter $L^2/2$ because $0 \le Y^2 \le L$.
 
   By Markov's inequality, we have that,
-  \begin{align}
+  \begin{align*}
     \Pr[ XY \ge \epsilon ] 
-      &\le \inf_t \frac{\E[\exp(t XY)]}{\exp{t\epsilon}} \\
-      &\le \inf_t \exp(\frac{t^4 \sigma^4_X \sigma^2_{Y^2} }{8} + \frac{t^2 R^2 \sigma^2_X}{2} - t\epsilon).
-  \end{align}
+      &\le \inf_t \frac{\E[\exp(t XY)]}{\exp(t\epsilon)} \\
+      &\le \inf_t \exp\left(\frac{t^4 \sigma^4 \L^4 }{16} + \frac{t^2 L^2 \sigma^2_X}{2} - t\epsilon\right).
+  \end{align*}
   %Setting $t = (\frac{2\epsilon}{\sigma^4_X \sigma^2_{Y^2}})^{1/3}$ and
   %$t = \frac{\epsilon}{\sigma^2_X R^2 }$, we get two upper bounds on the
   %above expression, thus,
@@ -137,28 +140,30 @@ $M$ because $\|M\|_F = \|\vvec(M)\|_2$.
   %        + \frac{\sigma^2_{Y^2}}{8 (\sigma^4_X R^8)} \epsilon^{4} ) \}.
   %\end{align}
 
-  Setting $t = \frac{\epsilon}{\sigma^2_X R^2 }$, we get the bound,
-  \begin{align}
+  Setting $t = \frac{\epsilon}{\sigma^2_X L^2 }$, we get the bound,
+  \begin{align*}
     \Pr[ XY \ge \epsilon ] 
       &\le 
-        \exp( - \frac{1}{\sigma^2_X R^2} \epsilon^{2} 
-          + \frac{\sigma^2_{Y^2}}{8 (\sigma^4_X R^8)} \epsilon^{4} ).
-  \end{align}
-
+        \exp\left( - \frac{1}{\sigma^2 L^2} \epsilon^{2} 
+          + \frac{1}{16 (\sigma^4_X L^4)} \epsilon^{4} \right),
+  \end{align*}
+  which is dominated by the $-\epsilon^2$ term for small $\epsilon$.
 \end{proof}
 
+In practice, we will use the following corollary that directly follows from the above lemma,
 \begin{corollary}
-  Let $\{X_i\}_{i=1}^n$ and $\{Y_i\}_{i=1}^n$ be $n$ iid
-  samples of $X$ and $Y$, such that $X$ is subgaussian with parameter
-  $\sigma^2$ and $Y \le R$ with probability 1. Then, if $\epsilon \le 4 \sigma_X R$,
+  Let $\{X_i\}_{i=1}^n$ and $\{Y_i\}_{i=1}^n$ be $n$ i.i.d.\
+  samples from distributions $X$ and $Y$, such that $X$ is subgaussian with parameter
+  $\sigma^2$ and $Y \le L$ with probability 1. Then, if $\epsilon \le 4\sqrt{2} \sigma_X L$,
   \begin{align}
-    \Pr[ \hat\E[ X Y ] - \E[ X Y ] \ge \epsilon ] 
-    &\le \exp( - \frac{n \epsilon^2}{2 \sigma^2_X R^2 } ).
+    \Pr\left[ \hat\E[ X Y ] - \E[ X Y ] \ge \epsilon \right] 
+    &\le \exp\left( - \frac{n \epsilon^2}{2 \sigma^2 R^2 } \right).
   \end{align}
 \end{corollary}
+%% TODO: Is this ``proof'' even required?
 \begin{proof}
-  Observe that $Y^2 - \E[Y^2]$ is subgaussian with parameter $\frac{R^4}{4}$. Using the assumed bound on $\epsilon$, we get,
-  $\frac{\sigma^2_{Y^2}}{8 (\sigma^4_X R^8)} \epsilon^{4} \le \frac{1}{2\sigma^2_X R^2} \epsilon^{2}$.
+  Using the assumed bound on $\epsilon$, we get,
+  $\frac{\sigma^2_{Y^2}}{16 (\sigma^4_X R^8)} \epsilon^{4} \le \frac{1}{2\sigma^2_X R^2} \epsilon^{2}$.
 \end{proof}
 
 \begin{lemma}[lower bound on restricted strong convexity]
