@@ -9,22 +9,42 @@ In particular, the following theorem provides a rate of convergence:
 \label{thm:convergence}
 Assume each dataset $\sD_p$ (for $p = 1, 2, 3$) consists of $n$ i.i.d.\ points independently drawn from a mixture
 of linear regressions model with parameter $\theta^*$\footnote{Having three independent copies simplifies the analysis}.
-Further, assume $\|x\|_2 \le R$ with probability $1$, $\|\beta_h^*\|_2
-\le L$ for all $h \in [k]$ and $B$ is full rank.
+Further, assume 
+$\|x\|_2 \le R$ with probability $1$, 
+$\|\beta_h^*\|_2 \le L$ for all $h \in [k]$,
+$|\epsilon| \le S$
+and $B$ is full rank.
 Let $\Sigma_p \eqdef \E[\cvec(x\tp{p})\tp{2}]$, 
 and assume $\Sigma_p \succ 0$ for each $p \in \{1,2,3\}$.
 Suppose the number of samples is
 $n = \max(n_1,n_2)$
-where $n_1 = \Omega\left(R^{12} (\max_{p \in [3]} \sigmamin(\Sigma_p)^{-2}) \log(1/\delta)\right)$ and
-$n_2 = \Omega\left( \sigma^6 L^6 R^{12} k (\max_{p \in [3]} \sigmamin(\Sigma_p)^{-1}) \frac{\log^3 (1/\delta)}{\epsilon^2} \right)$.
+where 
+%\begin{align*}
+$$n_1 = \Omega \left(\max_{p \in [3]} \frac{R^{4p} (p!)^2 \log(1/\delta)}{\sigmamin(\Sigma_p)^2} \right),$$
+$$n_2 = \Omega \left(\max_{p\in [3]} \frac{L^{2p} S^{2p} R^{4p} \log(1/\delta)}{\left(\lambda_n^{(p)}\right)^2} \right).$$
+%\end{align*}
+Let $\epsilon$ be 
+$$O\left( \min\left\{ 
+    \frac{\sigma_k(M_2)}{2}, 
+    \frac{\sigma_k(M_2)^{3/2}}{k \pi_{\max} \|M_3\|_\op},
+    \frac{\sigma_k(M_2)^{5/2}}{k \pi_{\max} \|M_3\|_\op} 
+    \right\}\right).$$ 
 If the regularization strengths $\lambda_n^{(2)}$ and $\lambda_n^{(3)}$ are
-set to $\Omega\left(\sigma^3 L^3 R^6 \sqrt{\frac{\log(1/\delta)}{n}}\right)$,
+set to $O\left(\frac{\sigmamin(\Sigma_p)}{\sqrt{k}}~ \epsilon \right)$, 
+%$\Omega\left(\sigma^3 L^3 R^6 \sqrt{\frac{\log(1/\delta)}{n}}\right)$,
 then the parameter estimates $\hat\theta = (\hat\pi, \hat B)$ returned by
-\algorithmref{algo:spectral-experts} (with the columns appropriate permuted)
+\algorithmref{algo:spectral-experts} (with the columns appropriately permuted)
 satisfies 
-$\|\hat\pi - \pi^*\|_{\infty} \le \epsilon$
-and for all $h \in [k]$,
-$\|\hat\beta_h - \beta^*_h\|_2 \le \frac{\epsilon}{\sqrt{\pi_h^*}}$.
+  \begin{align*}
+  \|\hat \pi - \pi \|_{\infty}
+  &= O\left(\frac{k \pi_1^{5/2}\| {M_3} \|_\op}{\min\{ \sigma_k(M_2)^{3/2}, \sigma_k(M_2)^{5/2} \}} ~ \epsilon \right) \\
+  \|\hat \beta_h - \beta_h\|_2
+  &= O\left( \frac{k \pi_1 \|M_2\|_\op^{1/2} \| {M_3} \|_\op}{\min\{ \sigma_k(M_2), \sigma_k(M_2)^{5/2} \}}~ \epsilon \right),
+  \end{align*}
+  for all $h \in [k]$.
+%$\|\hat\pi - \pi^*\|_{\infty} \le \epsilon$
+%and for all $h \in [k]$,
+%$\|\hat\beta_h - \beta^*_h\|_2 \le \frac{\epsilon}{\sqrt{\pi_h^*}}$.
 \end{theorem}
 
 The proof of the theorem has two parts.
@@ -154,10 +174,10 @@ be the adjoint.
 \begin{lemma}[\citet{Tomioka2011}, Theorem 1]
 \label{lem:lowRank}
 Suppose there exists a restricted strong convexity constant $\kappa(\opX_p)$ such that
-$$\frac{1}{2n} \| \opX_p( \Delta )\|_2^2 \ge \kappa(\opX_p) \|\Delta\|^2_F \quad \text{and} \quad
-\lambda_n \ge \frac{\|\opX_p^*(\eta_p)\|_\op}{n}.$$
+$$\frac{1}{n} \| \opX_p( \Delta )\|_2^2 \ge \kappa(\opX_p) \|\Delta\|^2_F \quad \text{and} \quad
+\lambda^{(p)}_n \ge \frac{\|\opX_p^*(\eta_p)\|_\op}{n}.$$
 Then the error of $\hat M_p$ is bounded as follows:
-$\| \hat M_p - M_p^* \|_F \le \frac{\lambda_n \sqrt{k}}{\kappa(\opX_p)}$.
+$\| \hat M_p - M_p^* \|_F \le \frac{\lambda^{(p)}_n \sqrt{k}}{\kappa(\opX_p)}$.
 \end{lemma}
 
 Going forward, we need to lower bound the restricted strong convexity
@@ -178,18 +198,19 @@ supplementary material.
 \begin{lemma}[lower bound on restricted strong convexity]
 \label{lem:lowRankLower}
 Let $\Sigma_p \eqdef \E[\cvec(x\tp{p})\tp{2}]$.
-If $$n = \Omega \left( \frac{R^{4p} \log(1/\delta)}{\sigmamin(\Sigma_p)^2} \right),$$
+If $$n_1 = \Omega \left(\frac{R^{4p} (p!)^2 \log(1/\delta)}{\sigmamin(\Sigma_p)^2} \right),$$
 with probability at least $1-\delta$,
-$$\kappa(\opX_p) \ge \frac{\sigmamin(\Sigma_p)}{4}.$$
+$$\kappa(\opX_p) \ge \frac{\sigmamin(\Sigma_p)}{2}.$$
 \end{lemma}
 
 % Next, let us upper bound the operator norm of the observation adjoint:
 
 \begin{lemma}[upper bound on adjoint noise]
 \label{lem:lowRankUpper}
-Let $\opX_p$ be the linear operator previously defined. Then with
-probability at least $1-\delta$,
-$$\frac1{n} \|\opX_p^*(\eta_p)\|_\op \le O\left(\sigma^3 L^3 R^6 \sqrt{\frac{\log^3(1/\delta)}{n}}\right).$$
+% Let $\opX_p$ be the linear operator previously defined. 
+If $$n_2 = \Omega \left(\max_{p\in [3]} \frac{L^{2p} S^{2p} R^{4p} \log(1/\delta)}{\left(\lambda_n^{(p)}\right)^2} \right),$$
+then with probability at least $1-\delta$,
+$$\lambda_n^{(p)} \ge \frac1{n} \|\opX_p^*(\eta_p)\|_\op,$$
 for each $p \in \{1,2,3\}$.
 \end{lemma}
 
@@ -202,16 +223,20 @@ steps, 2(a) and 2(c) respectively, of
 \algorithmref{algo:spectral-experts}.
 \begin{lemma}
   \label{lem:tensorPower} Let $\|\hat M_2 - M_2\|_\op \le \epsilon$ and
-  $\|\hat M_3 - M_3\|_\op \le \epsilon$, for some $\epsilon$ such that 
-  $$\epsilon < \min\{\sigmamin(M_2)/2,O(k \sigmamin(M_2)^{1.5} \|M_3\|_\op^{-1})\}.$$ 
+  $\|\hat M_3 - M_3\|_\op \le \epsilon$, for some $\epsilon$ in
+  $$O\left( \min\left\{ 
+    \frac{\sigma_k(M_2)}{2}, 
+    \frac{\sigma_k(M_2)^{3/2}}{k \pi_{\max} \|M_3\|_\op},
+    \frac{\sigma_k(M_2)^{5/2}}{k \pi_{\max} \|M_3\|_\op} 
+    \right\}\right).$$ 
   Then, there exists a permutation of indices such that  the parameter
   estimates found in step 2 of \algorithmref{algo:spectral-experts}
   satisfy the following with probability at least $1 - \delta$,
   \begin{align*}
   \|\hat \pi - \pi \|_{\infty}
-    &= O( k \pi_{max}^{2.5} \pi_{min}^{-0.5} \sigmamin(M_2)^{-1.5} \|M_3\|_\op \epsilon ) \\
+  &= O\left(\frac{k \pi_1^{5/2}\| {M_3} \|_\op}{\min\{ \sigma_k(M_2)^{3/2}, \sigma_k(M_2)^{5/2} \}} ~ \epsilon \right) \\
   \|\hat \beta_h - \beta_h\|_2
-    &= O( k \pi_{max} \sigmamin(M_2)^{-1.5} \|M_2\|_\op^{0.5} \|M_3\|_\op \epsilon ).
+  &= O\left( \frac{k \pi_1 \|M_2\|_\op^{1/2} \| {M_3} \|_\op}{\min\{ \sigma_k(M_2), \sigma_k(M_2)^{5/2} \}}~ \epsilon \right),
   \end{align*}
   for all $h \in [k]$.
 \end{lemma}
@@ -232,7 +257,8 @@ can control the Frobenius norm of the error in the moments, which
 directly upper bounds the operator norm: If $n \ge \max\{n_1, n_2\}$,
 then
 \begin{align}
-  \|\hat M_p - M_p\|_\op = O\left( \sigma^3 L^3 R^6 k^{\frac12} \sigmamin(\Sigma_p)^{-1} \sqrt{\frac{\log^3 (1/\delta)}{n}} \right).
+  \|\hat M_p - M_p\|_\op = O\left( \lambda_n^{(p)} \sqrt{k} \sigmamin(\Sigma_p)^{-1} \right).
+  %\|\hat M_p - M_p\|_\op = O\left( \sigma^3 L^3 R^6 k^{\frac12} \sigmamin(\Sigma_p)^{-1} \sqrt{\frac{\log^3 (1/\delta)}{n}} \right).
   %\|\hat M_p - M_p\|_F = O\left( \frac{\sigma^3 L^3 R^6 \sqrt{k} \log^3 (1/\delta)}{\sqrt{n} (\sigmamin(\Sigma_p) - d^p R^p \sqrt{\frac{p \log(d) \log(1/\delta)}{n}}} \right).
 \end{align}
 
