@@ -92,29 +92,29 @@ all the parameters.
   \caption{Spectral Experts}
   \label{algo:spectral-experts}
   \begin{algorithmic}[1]
-    \INPUT Three datasets $\mathcal{D}_r = \{ (\xn{1}, \yn{1}), \cdots, (\xn{n}, \yn{n}) \}$ for $r = 1, 2, 3$;
+    \INPUT Datasets $\mathcal{D}_p = \{ (\xn{1}, \yn{1}), \cdots, (\xn{n}, \yn{n}) \}$ for $p = 1, 2, 3$;
     %regularization strengths $\lambda_n^{(2)} = \frac{c_2}{\sqrt{n}}$, $\lambda_n^{(3)} = \frac{c_3}{\sqrt{n}}$;
     regularization strengths $\lambda_n^{(2)}$, $\lambda_n^{(3)}$;
-    observation noise variance $\E[\epsilon^2]$.
+    observation noise moments $\E[\epsilon^2], \E[\epsilon^3]$.
     \OUTPUT Parameters $\hat\theta = (\hat \pi, [\hat \beta_1 \mid \cdots \mid \hat \beta_k])$.
     \STATE Estimate compound parameters $M_2, M_3$ using \textbf{low-rank regression}:
     \begin{align}
       &\hat M_1 = \arg\min_{M_1} \label{eqn:estimateM1} \\
-      &\quad\quad\frac{1}{2n} \sum_{(x,y) \in \sD_1} (\innerp{M_1}{x} - y)^2, \nonumber \\
+      &\quad\sum_{(x,y) \in \sD_1} (\innerp{M_1}{x} - y)^2, \nonumber \\
       &\hat M_2 = \arg\min_{M_2} \quad \lambda_n^{(2)} \|M_2\|_* + \label{eqn:estimateM2} \\
-      &\quad\quad\frac{1}{2n} \sum_{(x,y) \in \sD_2} (\innerp{M_2}{x\tp{2}} + \E[\epsilon^2] - y^2)^2, \nonumber \\
+      &\quad\sum_{(x,y) \in \sD_2} (\innerp{M_2}{x\tp{2}} + \E[\epsilon^2] - y^2)^2, \nonumber \\
       &\hat M_3 = \arg\min_{M_3} \quad \lambda_n^{(3)} \|M_3\|_* + \label{eqn:estimateM3} \\
-      &\quad\quad\frac{1}{2n} \sum_{(x,y) \in \sD_3} (\innerp{M_3}{x\tp{3}} + 3 \E[\epsilon^2]\innerp{\hat M_1}{x} - y^3)^2. \nonumber
+      &\quad\sum_{(x,y) \in \sD_3} (\innerp{M_3}{x\tp{3}} + 3 \E[\epsilon^2]\innerp{\hat M_1}{x} + \E[\epsilon^3] - y^3)^2. \nonumber
     \end{align}
-    \STATE Estimate the parameters $\theta = (\pi, B)$ using \textbf{tensor factorization}:
+    \STATE Estimate parameters $\theta = (\pi, B)$ using \textbf{tensor factorization}:
     \begin{enumerate}
       \item [(a)] Compute whitening matrix $\hat W \in \Re^{d \times k}$ (such that $\hat W^\top
       \hat M_2 \hat W = I$) using SVD.
-      \item [(b)] Compute the eigenvalues $\{\hat a_h\}_{h=1}^k$
+      \item [(b)] Compute eigenvalues $\{\hat a_h\}_{h=1}^k$
       and eigenvectors $\{\hat v_h\}_{h=1}^k$
       of the whitened tensor $\hat M_3(\hat W, \hat W, \hat W) \in \Re^{k \times k \times k}$
       by using the robust tensor power method.
-    \item [(c)] Set parameter estimates $\hat\pi_h = \frac{1}{\hat a_h^2}$
+    \item [(c)] Return parameter estimates $\hat\pi_h = \hat a_h^{-2}$
     and $\hat\beta_h = (\hat W^{\top})^\dagger (\hat a_h \hat v_h)$.
     \end{enumerate}
   \end{algorithmic}
@@ -152,18 +152,18 @@ We can use the robust tensor power method to compute all the
 eigenvalues and eigenvectors of $T$, from which it is easy to recover
 the parameters $\pi$ and $\{\beta_h\}$.
 
-\paragraph{Remarks}
+\paragraph{Related work}
 
 % Spectral
-In recent years, there has a been substantial interest in ``spectral'' methods
+In recent years, there has a been a surge of interest in ``spectral'' methods
 for learning latent-variable models.  One line of work has
-focused on observable operator models \cite{hsu09spectral}
-in which the true parameters are not recovered, but a reparametrization is used
-which enables prediction.
+focused on observable operator models \cite{hsu09spectral,song10kernel,parikh12spectral,cohen12pcfg,balle11transducer,balle12automata}
+in which a reparametrization of the true parameters are recovered,
+which suffices for prediction and density estimation.
 Another line of work is based on the method of moments and uses eigendecomposition of a certain tensor
-to recover the parameters \cite{anandkumar12lda,anandkumar12moments}.
-Our work extends this line of work into the space of discriminative models,
-which requires regression to obtain the desired tensor.
+to recover the parameters \cite{anandkumar12moments,anandkumar12lda,hsu12identifiability,hsu13spherical}.
+Our work extends this second line of work to models that
+require regression to obtain the desired tensor.
 
 % Unmixing
 In spirit, Spectral Experts bears some resemblance to the unmixing
@@ -171,9 +171,21 @@ algorithm for estimation of restricted PCFGs
 \cite{hsu12identifiability}.
 In that work, the observations (moments) provided a linear combination over
 the compound parameters.  ``Unmixing'' involves solving for the compound
-parameters by inverting a mixing matrix.  In this work,
+parameters by inverting a mixing matrix.
+In this work,
 each data point (appropriately transformed) provides a different noisy projection of
 the compound parameters.
+
+% 
+%Previous work has focused on using spectral methods to learn finite state automata and transducers.
+Other work has focused on learning discriminative models,
+notably \citet{balle11transducer} for finite state transducers (functions from strings to strings),
+and \citet{balle12automata} for weighted finite state automata (functions from strings to real numbers).
+Similar to Spectral Experts,
+\citet{balle12automata} used a two-step approach,
+where convex optimization is first used to estimate moments (the Hankel matrix in their case),
+after which these moments are subjected to spectral decomposition.  
+However, these methods are developed in the observable operator framework, whereas we consider parameter estimation.
 
 % Signal
 The idea of performing low-rank regression on $y^2$ has been explored
