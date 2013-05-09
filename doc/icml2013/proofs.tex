@@ -1,4 +1,4 @@
-\section{Regression}
+\section{Proofs: Regression}
 \label{sec:proofs:regression}
 
 \iftoggle{withappendix}{}{
@@ -218,7 +218,7 @@ Finally, taking $\delta_1 = \delta/3, \delta_2 = \delta/3, \delta_3
 
 %%%%%%%%%%%%
 
-\section{Tensor Decomposition}
+\section{Proofs: Tensor Decomposition}
 \label{sec:proofs:tensors}
 
 Once we have estimated the moments from the data through regression, we apply the robust tensor eigen-decomposition algorithm to recover the parameters, $\beta_h$ and $\pi$. However, the algorithm is guaranteed to work only for symmetric matrices with (nearly) orthogonal eigenvectors, so as a first step, we will need to whiten the third-order moment tensor using the second moments. Once we get the eigenvalues and eigenvectors from this orthogonal tensor, we have to undo the transformation by applying an un-whitening step. In this section, we present error bounds for each step, and combine them to prove the following lemma,
