@@ -185,8 +185,12 @@ $$\| \hat M_p - M_p \|_F \le \frac{32 \lambda^{(p)}_n \sqrt{k}}{\kappa(\opX_p)}.
 Going forward, we need to lower bound the restricted strong convexity
 constant $\kappa(\opX_p)$ and upper bound the operator norm of the adjoint operator
 $\|\opX_p^*(\eta_p)\|_\op$. The proofs of the following lemmas follow
-from standard concentration inequalities and are detailed in the
-supplementary material.
+from standard concentration inequalities and are detailed in 
+\iftoggle{withappendix}{
+\appendixref{sec:proofs:regression}.
+}{
+the supplementary material.
+}
 %have been deferred to \appendixref{sec:proofs}. 
 
 %We will appeal to the random design framework that models the input $x$
@@ -246,8 +250,12 @@ and unwhitening.
 \end{lemma}
 
 The proof follows by applying standard matrix perturbation results for
-the whitening and unwhitening operators and has again been deferred
-to the supplementary material.
+the whitening and unwhitening operators and 
+\iftoggle{withappendix}{
+can be found in \appendixref{sec:proofs:tensors}.
+}{
+has again been deferred to the supplementary material.
+}
 %\appendixref{sec:proofs}. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

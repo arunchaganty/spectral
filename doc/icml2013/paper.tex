@@ -13,9 +13,7 @@
 \usepackage{amsthm}
 
 % For algorithms
-\usepackage{algorithm}
-\usepackage{algorithmic}
-
+\usepackage{algorithm,algorithmic}
 
 \usepackage{hyperref}
 
@@ -32,18 +30,20 @@
 \icmltitlerunning{Spectral Experts}
 
 % Math
-\usepackage{amsmath}
-\usepackage{amssymb}
-%\usepackage{soul}
+\usepackage{amsmath,amssymb}
+\usepackage{soul}
 
 \input{macros}
 \input{section-macros}
 \input{spectral-macros}
 
+%\DeclareMathSizes{8}{8}{6}{4}
 
-\DeclareMathSizes{8}{8}{6}{4}
-%\DeclareMathSizes{10}{8}{6}{4}
-%\DeclareMathSizes{10}{10}{8}{6}
+\usepackage{etoolbox}
+% This flag is used to include the appendix for the ArXiv version
+\newtoggle{withappendix}
+\toggletrue{withappendix}
+%\togglefalse{withappendix}
 
 \begin{document} 
 
@@ -83,9 +83,11 @@ models, machine learning, ICML}
 \bibliography{ref,pliang}
 \bibliographystyle{icml2013}
 
+\iftoggle{withappendix}{
 \appendix
 \onecolumn
 \input{proofs}
+}{}
 
 \end{document} 
 
