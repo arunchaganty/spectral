@@ -54,7 +54,7 @@ $[0.01, 0.4]$.
 
 As an example, one feature map we considered in the one-dimensional
 setting $(b=1)$ was $x = (1, t, t^4, t^7)$. The data and the curves fit using
-Spectral Experts, EM with random initializations and EM initialized with
+Spectral Experts, EM with random initialization and EM initialized with
 the parameters recovered using Spectral Experts are shown in
 \figureref{fig:curves}. We note that even on well-separated data such as
 this, EM converged to the correct basin of attraction only 13\% of the time.
@@ -62,7 +62,7 @@ this, EM converged to the correct basin of attraction only 13\% of the time.
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.50\textwidth]{figures/hist.png}
-  \caption{Histogram over recovery errors between the three algorithms. $b = 1, d = 4, k = 3, n = 500,000$}
+  \caption{Histogram over recovery errors between the three algorithms when $b = 1, d = 4, k = 3, n = 500,000$.}
   \label{fig:hist}
 \end{figure}
 
@@ -89,7 +89,7 @@ this, EM converged to the correct basin of attraction only 13\% of the time.
 
 \begin{table*}[tbhp]
 \caption{Parameter error $\|\theta^* - \hat \theta\|_F$ ($n = 500,000$)
-as the number of variables $b$, number of features $d$ and the number of components $k$ increases.
+as the number of base variables $b$, number of features $d$ and the number of components $k$ increases.
 While Spectral by itself does not produce good parameter estimates, Spectral+EM improves
 over EM significantly.
 }
@@ -197,14 +197,14 @@ for each instance. The experiments were run using $n = 500,000$ samples.
 
 One of the main reasons for the high variance is the variation across
 random instances; some are easy for EM to find the global minima and
-others more difficult. In general, while the spectral algorithm did not
-recover parameters extremely well, it provided a good initialization for
+others more difficult. In general, while Spectral Experts did not
+recover parameters by itself extremely well, it provided a good initialization for
 EM.
 
-To study the stability of the solutions returned by the spectral method,
+To study the stability of the solutions returned by Spectral Experts,
 consider the histogram in \figureref{fig:hist}, which shows the recovery
 errors of the algorithms over 170 attempts on a dataset with $b = 1, d = 4,
-k = 3$. Typically, the spectral algorithm returned a stable solution.
+k = 3$. Typically, Spectral Experts returned a stable solution.
 When these parameters were close enough to the true parameters, we found
 that EM almost always converged to the global optima. Randomly
 initialized EM only finds the true parameters a little over 10\% of the
