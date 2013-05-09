@@ -20,7 +20,7 @@ The first key step is to average over this randomness by defining
 average regression coefficients
 $M_1 \eqdef \sum_{h=1}^k \pi_h \beta_h$.
 Now we can express $y$ as a linear function of $x$ with non-random coefficients $M_1$
-plus some a new noise term $\eta_1(x)$:
+plus a noise term $\eta_1(x)$:
 \begin{align}
   y &= \innerp{M_1}{x} +
   \underbrace{(\innerp{\beta_h - M_1}{x} + \epsilon)}_{\eqdef \eta_1(x)}. \label{eqn:y1}
@@ -162,7 +162,7 @@ the parameters $\pi$ and $\{\beta_h\}$.
 In recent years, there has a been a surge of interest in ``spectral'' methods
 for learning latent-variable models.  One line of work has
 focused on observable operator models \cite{hsu09spectral,song10kernel,parikh12spectral,cohen12pcfg,balle11transducer,balle12automata}
-in which a reparametrization of the true parameters are recovered,
+in which a re-parametrization of the true parameters are recovered,
 which suffices for prediction and density estimation.
 Another line of work is based on the method of moments and uses eigendecomposition of a certain tensor
 to recover the parameters \cite{anandkumar12moments,anandkumar12lda,hsu12identifiability,hsu13spherical}.
