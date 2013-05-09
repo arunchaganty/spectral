@@ -2,10 +2,10 @@
 \label{sec:conclusion}
 
 In this paper, we developed a computationally efficient and statistically
-consistent estimator for mixture of linear regressions, a first step at
-tackling discriminative latent-variable models.  Our algorithm, Specral
+consistent estimator for mixture of linear regressions.
+Our algorithm, Spectral
 Experts, regresses on higher-order powers of the data with a regularizer that
 encourages low rank structure, followed by tensor factorization to recover the
-actual parameters.  Empirically, Spectral Experts generally does not outperform
-EM, but when used to initialize EM, yields significantly more accurate and
-stable results than EM.
+actual parameters.  Empirically, we found Spectral Experts 
+to be an excellent initializer for EM.
+%yielding significantly more accurate and stable results than EM.
