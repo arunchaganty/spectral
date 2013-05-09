@@ -227,7 +227,9 @@ we will now study how this error propagates through the tensor factorization ste
 which includes whitening, applying the robust tensor power method \cite{AnandkumarGeHsu2012},
 and unwhitening.
 \begin{lemma}
-  \label{lem:tensorPower} Let $\|\hat M_2 - M_2\|_\op$ and $\|\hat M_3 - M_3\|_\op$ both be less than
+  \label{lem:tensorPower}
+  Let $M_3 = \sum_{h=1}^{k} \pi_h \beta_h\tp{3}$.
+  Let $\|\hat M_2 - M_2\|_\op$ and $\|\hat M_3 - M_3\|_\op$ both be less than
   \vspace{-0.5em}
   $$\frac{\sigma_k(M_2)^{5/2}}{k \pi_{\max} \|M_2\|_\op^{1/2} \| {M_3} \|_\op}~ \epsilon,$$
   for some $\epsilon < \half$. 

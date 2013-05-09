@@ -304,30 +304,42 @@ Finally, taking $\delta_1 = \delta/3, \delta_2 = \delta/3, \delta_3
 
 Once we have estimated the moments from the data through regression, we apply the robust tensor eigen-decomposition algorithm to recover the parameters, $\beta_h$ and $\pi$. However, the algorithm is guaranteed to work only for symmetric matrices with (nearly) orthogonal eigenvectors, so as a first step, we will need to whiten the third-order moment tensor using the second moments. Once we get the eigenvalues and eigenvectors from this orthogonal tensor, we have to undo the transformation by applying an un-whitening step. In this section, we present error bounds for each step, and combine them to prove the following lemma,
 \begin{lemma}[Tensor Decomposition with Whitening]
-  \label{lem:tensorPower} Let $\|\hat M_2 - M_2\|_\op \le \epsilon$ and
-  $\|\hat M_3 - M_3\|_\op \le \epsilon$, for some $\epsilon$ such that 
-  $$\epsilon < 
-    \min\left\{
-      \frac{\sigmamin(M_2)}{2},
-      \frac{1}{10 k \pi_{\max} \sigma_k(M_2)^{-3/2}
-      \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right)}
-    \right\}.$$ 
+  \label{lem:tensorPower} 
+  Let $M_3 = \sum_{h=1}^{k} \pi_h \beta_h\tp{3}$.
+  Let $\|\hat M_2 - M_2\|_\op$ and
+  $\|\hat M_3 - M_3\|_\op$ both be less than
+  \begin{align*}
+    \frac{3\sigma_k(M_2)^{3/2}}{10 k \pi_{\max}^{5/2}
+    \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right)}~ \epsilon,
+  \end{align*}
+  and,
+\begin{align*}
+  \frac{\sigma_k(M_2)}
+    {\|M_2\|_\op^{1/2} \left(
+    4\sqrt{3/2} + 8 k \pi_{\max} 
+    \sigma_k(M_2)^{-1/2}
+    \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right) \right) }~ \epsilon,
+\end{align*}
+for some $\epsilon$ such that 
+\begin{align}
+  \epsilon &\le 
+    \min\Bigg\{
+      \Bigg( 4\sqrt{3/2} \|M_2\|_\op^{1/2} \sigma_k(M_2)^{-1} \aerr{M_2} \\
+     &\quad + 8 \|M_2\|_\op^{1/2} k \pi_{\max} \sigma_k(M_2)^{-3/2}
+        \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right) \Bigg) \frac{\sigma_k(M_2)}{2}, \\
+  &\quad \left( \frac{2 \pi_{\max}^{3/2}}{3} 5 k \pi_{\max} 
+    \sigma_k(M_2)^{-3/2}
+    \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right)  \right) \frac{\sigma_k(M_2)}{2}, \\
+      &\quad \frac{1}{2\sqrt{\pi_{\max}}} \\
+   &\quad \Bigg\}.
+\end{align}
 
   Then, there exists a permutation of indices such that  the parameter
   estimates found in step 2 of \citet[Algorithm 1]{ChagantyLiang2013}
   satisfy the following with probability at least $1 - \delta$,
   \begin{align*}
-  \|\hat \pi - \pi \|_{\infty}
-  &\le \frac{10}{3} \pi_{\max}^{5/2} k 
-    \sigma_k(M_2)^{-3/2}
-      \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right)
-    \epsilon \\
-  \|\hat \beta_h - \beta_h\|_2
-    &\le 4\sqrt{3/2} \|M_2\|_\op^{1/2} \sigma_k(M_2)^{-1} \epsilon  \\
-    &\quad + 8 \|M_2\|_\op^{1/2} k \pi_{\max} 
-    \sigma_k(M_2)^{-3/2}
-      \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right)
-    \epsilon.
+  \|\hat \pi - \pi \|_{\infty} &\le \epsilon \\
+  \|\hat \beta_h - \beta_h\|_2 &\le \epsilon.
   \end{align*}
   for all $h \in [k]$.
 \end{lemma}
@@ -373,8 +385,9 @@ break the difference into a number of simple terms,
            \| {M_3} \|_\op (\|W\|^2_\op + \|\hat W\|_\op \|W\|_\op + \|\hat W\|^2_\op) \aerr{W} +
             \aerr{M_3} \|\hat W\|^3_\op 
 \end{align*}
-We can relate $\|\hat W\|$ and $\aerr{W}$ to $\aerr{M_2}$ using 
-using \refprop{white}. By the assumption that $\epsilon < \sigma_k/2$, we have,
+We can relate $\|\hat W\|$ and $\aerr{W}$ to $\aerr{M_2}$ using using
+\refprop{white}. The conditions on $\aerr{M_2}$ imply that $\aerr{M_2}
+< \sigma_k(M_2)/2$, giving us,
 \begin{align*}
   \|\hat W\|_\op &\le \sqrt{2} \sigma_k(M_2)^{-1/2} \\
   \aerr{W} &\le 4 \sigma_k(M_2)^{-3/2} \aerr{M_2}.
@@ -390,7 +403,7 @@ Thus,
   &\le 
     \sigma_k(M_2)^{-3/2}
       \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right)
-    \epsilon.
+      \max\{ \aerr{M_2}, \aerr{M_3} \}.
 \end{align*}
 
 \paragraph{Step 2: Decomposition}
@@ -406,9 +419,9 @@ power method;
 \newcommand{\mhW}{{\hat\omega}}
 \begin{align}
   \|\lW - \lhW \|_{\infty} 
-  &\le \frac{5 k \epsilon_T}{(\lW)_{\min}} \\
+  &\le \frac{5 k \aerr{T}}{(\lW)_{\min}} \\
 \|\mW_h -\mhW_h \|_2 
-  &\le \frac{8 k \epsilon_T}{(\lW)_{\min}^2},
+&\le \frac{8 k \aerr{T}}{(\lW)_{\min}^2},
 \end{align}
 for all $h \in [k]$, where $(\lW)_{min}$ is the smallest
 eigenvalue of $T$. 
@@ -427,7 +440,7 @@ First, we will bound the error in the $\beta$s,
   &\le \aerr{\Winv} \|\mhW_h\|_2 + \|\Winv\|_2 \|\mhW_h - \mW_h \|_2. \comment{Triangle inequality}
 \end{align*}
 
-Once more, we can apply the results of \refprop{white}, with the assumptions on $\epsilon$, to get, 
+Once more, we can apply the results of \refprop{white}, with the assumptions on $\aerr{M_2}$, to get, 
 \begin{align*}
   \|\Whinv\|_\op &\le \sqrt{3/2} \|M_2\|_\op^{1/2} \\
   \aerr{\Winv} &\le 4\sqrt{3/2} \|M_2\|_\op^{1/2} \sigma_k(M_2)^{-1} \aerr{M_2}.
@@ -436,13 +449,13 @@ Once more, we can apply the results of \refprop{white}, with the assumptions on 
 Thus,
 \begin{align*}
   \|\hat \beta_h - \beta_h\|_2
-  &\le 4\sqrt{3/2} \|M_2\|_\op^{1/2} \sigma_k(M_2)^{-1} \epsilon 
-    + 8 \|M_2\|_\op^{1/2} \frac{k \epsilon_{T}}{(\lW)_{min}^2} \\
-  &\le 4\sqrt{3/2} \|M_2\|_\op^{1/2} \sigma_k(M_2)^{-1} \epsilon  \\
+  &\le 4\sqrt{3/2} \|M_2\|_\op^{1/2} \sigma_k(M_2)^{-1} \aerr{M_2} 
+    + 8 \|M_2\|_\op^{1/2} \frac{k \aerr{T}}{(\lW)_{min}^2} \\
+    &\le 4\sqrt{3/2} \|M_2\|_\op^{1/2} \sigma_k(M_2)^{-1} \aerr{M_2} \\
   &\quad + 8 \|M_2\|_\op^{1/2} k \pi_{\max} 
     \sigma_k(M_2)^{-3/2}
       \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right)
-   \epsilon.
+      \max\{\aerr{M_2}, \aerr{M_3}\}.
 \end{align*}
 
 Next, let us bound the error in $\pi$,
@@ -454,7 +467,9 @@ Next, let us bound the error in $\pi$,
   &\le \frac{( 2(\lW)_h - \|\lW - \lhW\|_{\infty} )}{(\lW)_h^2 \left( (\lW)_h + \|\lW - \lhW\|_{\infty} \right)^2} \|\lW - \lhW\|_{\infty}.
 \end{align*}
 Recall that $(\lW)_h = \pi_h^{-1/2}$, so the
-assumptions that $\epsilon$ imply that $\aerr{T} \le \frac{1}{10 k \pi_{\max}}$, and thus, $\|\lW - \lhW \|_{\infty} \le (\lW)_{\min}/2$. This allows us to simplify the above expression as follows,
+assumptions that $\epsilon$ imply that $\|\lW - \lhW \|_{\infty} \le
+(\lW)_{\min}/2$. This allows us to simplify the above expression as
+follows,
 \begin{align*}
   |\hat \pi_h - \pi_h |
   &\le \frac{(3/2)(\lW)_h}{(3/2)^2 (\lW)_h^4}
@@ -462,8 +477,28 @@ assumptions that $\epsilon$ imply that $\aerr{T} \le \frac{1}{10 k \pi_{\max}}$,
   &\le \frac{2}{3(\lW)_h^3} \frac{5 k \aerr{T}}{(\lW)_{\min}^2} \\
   &\le \frac{2 \pi_{\max}^{3/2}}{3} 5 k \pi_{\max} 
     \sigma_k(M_2)^{-3/2}
-      \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right)  \epsilon.
+    \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right) \max\{\aerr{M_2}, \aerr{M_3}\}.
 \end{align*}
+
+We complete the proof by requiring that the bounds $\aerr{M_2}$ and
+$\aerr{M_3}$ imply that $\|\hat \pi - \pi \|_{\infty} \le \epsilon$ and
+$\|\hat \beta_h - \beta_h\|_2 \le \epsilon$, i.e.
+\begin{align*}
+  \max\{\aerr{M_2}, \aerr{M_3}\} &\le 
+  \frac{3\sigma_k(M_2)^{3/2}}{10 k \pi_{\max}^{5/2}
+  \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right)}~ \epsilon,
+\end{align*}
+as well as,
+\begin{align*}
+  \max\{\aerr{M_2}, \aerr{M_3}\} 
+  &\le 
+  \frac{\sigma_k(M_2)}
+    {\|M_2\|_\op^{1/2} \left(
+    4\sqrt{3/2} + 8 k \pi_{\max} 
+    \sigma_k(M_2)^{-1/2}
+    \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right) \right) }~ \epsilon.
+\end{align*}
+
 
 \end{proof}
 
@@ -597,20 +632,6 @@ $M$ because $\|M\|_F = \|\vvec(M)\|_2$.
     &\le 2 \|\Winv\|_\op \sqrt{1 + \serr{A}} \frac{\serr{A}}{1 - \serr{A}}.
   \end{align*}
 \end{proof}
-
-% \section{Scratch}
-% 
-% \begin{align}
-%   \epsilon &\ge \frac{\sqrt{k}}{\sigmamin(\Sigma_p)} L^p S^p R^2p \sqrt{\frac{\log(1/\delta)}{n}} \\
-%   n &\ge \frac{k L^p S^p R^{2p} \log(1/\delta)}{\epsilon^2 \sigmamin(\Sigma_p)^2} \\
-% \end{align}
-% 
-% The conditions on $\aerr{\pi}$ give us that, if $\gamma = k \sigma_k(M_2)^{-5/2} \|M_3\|_\op \pi_{\max} \epsilon$,
-% $\aerr{\pi} \le \gamma$, $\aerr{\beta} \le \gamma$
-% 
-% \begin{align}
-%   n &\ge \frac{k^2\|M_3\|_\op^2 \pi_{\max}^2  L^p S^p R^{2p} \log(1/\delta) }{\epsilon^2 \sigma_k(M_2)^{5} \sigmamin(\Sigma_p)^2} \\
-% \end{align}
 
 
 \bibliography{../ref,../pliang}
