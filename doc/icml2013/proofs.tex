@@ -49,7 +49,8 @@ $$\frac{1}{2n} \| \opX_p( \Delta )\|_2^2 \ge \kappa(\opX_p) \|\Delta\|^2_F \quad
 Then the error of $\hat M_p$ is bounded as follows:
 $\| \hat M_p - M_p^* \|_F \le \frac{\lambda_n \sqrt{k}}{\kappa(\opX_p)}$.
 \end{lemma}
-}
+} % endif
+%%%%%%%%%%%%%%%
 In this section, we will derive an upper bound on $\kappa(\opX_p)$ and
 a lower bound on $\frac{1}{n} \| \opX_p^*(\eta_p) \|_\op$.
 
@@ -62,12 +63,14 @@ $$\kappa(\opX_p) \ge \frac{\sigmamin(\Sigma_p)}{2}.$$
 \end{lemma}
 
 \begin{proof}
-  Recall the definition of $\kappa(\opX_p)$, 
-  $$\frac{1}{n} \|\opX_p(\Delta)\|_2^2 \ge \kappa(\opX_p) \|\Delta\|^2_F.$$
-Expanding the definition of the observation operator:
-$$\frac{1}{n} \|\opX_p(\Delta)\|_2^2 = \frac{1}{n} \sum_{(x,y) \in \sD_p} \innerp{\Delta}{x\tp{p}}^2.$$
-Unfolding the tensors, letting $\hat\Sigma_p \eqdef \frac{1}{n}
-\sum_{(x,y) \in \sD_p} \cvec(x\tp{p})\tp{2}$, $\frac{1}{n}
+  Recall that $\kappa(\opX_p)$ is defined to be a constant such that the following inequality holds, 
+  $$\frac{1}{n} \|\opX_p(\Delta)\|_2^2 \ge \kappa(\opX_p) \|\Delta\|^2_F,$$
+where
+$$\|\opX_p(\Delta)\|_2^2 = \sum_{(x,y) \in \sD_p} \innerp{\Delta}{x\tp{p}}^2.$$
+To proceed, we will unfold the tensors $\Delta$ and $x\tp{p}$ to get a lower bound in terms of $\|\Delta\|^2_F$. This will allow us to choose an appropriate value for $\kappa(\opX_p)$ that will hold with high probability.
+
+Let $\hat\Sigma_p \eqdef \frac{1}{n}
+\sum_{(x,y) \in \sD_p} \cvec(x\tp{p})\tp{2}$, so that $\frac{1}{n}
 \|\opX_p(\Delta)\|_2^2 = \trace(\cvec(\Delta)\tp{2} \hat\Sigma_p)$. 
 We recall that each element of $\cvec(\Delta)$ aggregates elements with
 permuted indices, so $\|\vvec(\Delta)\|_2 \le \|\cvec(\Delta)\|_2 \le p!
