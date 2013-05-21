@@ -1,0 +1,30 @@
+\section{Experiments} \label{sec:experiments}
+
+\subsection{Basic mixture model}
+
+Show simple mixture model works on artifical data.
+
+Show EM/gradient gets stuck in local optima.
+
+spectral methods are not statistically efficient (especially with parameter sharing).
+
+\subsection{Measurements}
+
+For models in \reffig{generalModels}, do experiments.
+
+Show that the non-convexity decreases.
+
+\subsection{Factorial models}
+
+Show that the unshuffling basically works with near infinite data, while EM gets stuck in local optima.
+
+\subsection{Part-of-speech induction}
+
+\cite{kirkpatrick10painless} trains for 1,000 iterations, which takes a long time.
+63.1\% Basic HMM
+68.1\% EM, L-BFGS 75.5\%
+
+Can we match the performance?
+
+Also, since method of moments doesn't require inference, can we use a much larger corpus
+and get better results.
