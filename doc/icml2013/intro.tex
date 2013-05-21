@@ -173,15 +173,21 @@ the average nuclear norm over all $p$ unfoldings,
 and let $\|X\|_\op = \frac{1}{p} \sum_{i=1}^p \|X_{(i)}\|_\op$
 denote the average operator norm over all $p$ unfoldings.
 
+
+Let $\vvec(X)$ be the vectorization of a $p$-th order tensor. For
+example, if $X \in (\Re^{2})\tp{3}$, $\vvec(X) = (X_{111}, X_{112},
+\cdots, X_{222})$.
 For a tensor $X \in (\Re^d)\tp{p}$, let $\cvec(X) \in
 \Re^{N(d,p)}, N(d,p) = \binom{d + p - 1}{p}$ be the collapsed vectorization of
 $X$. For example, if $X \in \Re^{d \times d}$, $\cvec(X)
-= (X_{ii} : i \in [d]; X_{ij} + X_{ji} : i,j \in [d], i<j)$.
+= (X_{ii} : i \in [d]; \frac{X_{ij} + X_{ji}}{\sqrt{2}} : i,j \in [d], i<j)$.
 In general, each component of $\cvec(X)$ is indexed by a vector of
 counts $(c_1, \dots, c_d)$ with total sum $\sum_i c_i = p$.  The value
-of that component is $\sum_{k \in K(c)} X_{k_1 \cdots k_p}$, where $K(c)
+of that component is $\frac{1}{\sqrt{|K(c)|}} \sum_{k \in K(c)} X_{k_1 \cdots k_p}$, where $K(c)
 = \{ k \in [d]^p : \forall i \in [d], c_i = |\{ j \in [p] : k_j = i \}|
 \}$ are the set of index vectors $k$ whose count profile is $c$.
-For symmetric tensors $X$ and $Y$, $\innerp{X}{Y} = \innerp{\cvec(X)}{\cvec(Y)}$.
+We note that for a symmetric tensor $X$ and any tensor $Y$,
+$\innerp{X}{Y} = \innerp{\cvec(X)}{\cvec(Y)}$; this property is not true
+in general though.
 Later, we'll see that vectorization allow us to perform regression on tensors,
 and collapsing simplifies our identifiability condition.

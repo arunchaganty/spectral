@@ -49,7 +49,11 @@ $$\frac{1}{2n} \| \opX_p( \Delta )\|_2^2 \ge \kappa(\opX_p) \|\Delta\|^2_F \quad
 Then the error of $\hat M_p$ is bounded as follows:
 $\| \hat M_p - M_p^* \|_F \le \frac{\lambda_n \sqrt{k}}{\kappa(\opX_p)}$.
 \end{lemma}
-}
+} % endif
+
+%%%%%%%%%%%%%%%
+
+
 In this section, we will derive an upper bound on $\kappa(\opX_p)$ and
 a lower bound on $\frac{1}{n} \| \opX_p^*(\eta_p) \|_\op$.
 
@@ -62,20 +66,31 @@ $$\kappa(\opX_p) \ge \frac{\sigmamin(\Sigma_p)}{2}.$$
 \end{lemma}
 
 \begin{proof}
-  Recall the definition of $\kappa(\opX_p)$, 
-  $$\frac{1}{n} \|\opX_p(\Delta)\|_2^2 \ge \kappa(\opX_p) \|\Delta\|^2_F.$$
-Expanding the definition of the observation operator:
-$$\frac{1}{n} \|\opX_p(\Delta)\|_2^2 = \frac{1}{n} \sum_{(x,y) \in \sD_p} \innerp{\Delta}{x\tp{p}}^2.$$
-Unfolding the tensors, letting $\hat\Sigma_p \eqdef \frac{1}{n}
-\sum_{(x,y) \in \sD_p} \cvec(x\tp{p})\tp{2}$, $\frac{1}{n}
+  Recall that $\kappa(\opX_p)$ is defined to be a constant such that the following inequality holds, 
+  $$\frac{1}{n} \|\opX_p(\Delta)\|_2^2 \ge \kappa(\opX_p) \|\Delta\|^2_F,$$
+where
+$$\|\opX_p(\Delta)\|_2^2 = \sum_{(x,y) \in \sD_p} \innerp{\Delta}{x\tp{p}}^2.$$
+To proceed, we will unfold the tensors $\Delta$ and $x\tp{p}$ to get a lower bound in terms of $\|\Delta\|^2_F$. This will allow us to choose an appropriate value for $\kappa(\opX_p)$ that will hold with high probability.
+
+First, note that $x\tp{p}$ is symmetric, and thus
+$\innerp{\Delta}{x\tp{p}} = \innerp{\cvec{\Delta}}{\cvec{x\tp{p}}}$.
+This allows us to simplify $\|\opX_p(\Delta)\|_2^2$ as follows,
+\begin{align*}
+  \frac{1}{n} \|\opX_p(\Delta)\|_2^2 
+    &= \frac{1}{n} \sum_{(x,y) \in \sD_p} \innerp{\Delta}{x\tp{p}}^2 \\
+    &= \frac{1}{n} \sum_{(x,y) \in \sD_p} \innerp{\cvec(\Delta)}{\cvec(x\tp{p})}^2 \\
+    &= \frac{1}{n} \sum_{(x,y) \in \sD_p} \trace( \cvec(\Delta)\tp{2} \cvec(x\tp{p})\tp{2} ) \\
+    &= \trace\left( \cvec(\Delta)\tp{2} \frac{1}{n} \sum_{(x,y) \in \sD_p} \cvec(x\tp{p})\tp{2} \right).
+\end{align*}
+Let $\hat\Sigma_p \eqdef \frac{1}{n}
+\sum_{(x,y) \in \sD_p} \cvec(x\tp{p})\tp{2}$, so that $\frac{1}{n}
 \|\opX_p(\Delta)\|_2^2 = \trace(\cvec(\Delta)\tp{2} \hat\Sigma_p)$. 
-We recall that each element of $\cvec(\Delta)$ aggregates elements with
-permuted indices, so $\|\vvec(\Delta)\|_2 \le \|\cvec(\Delta)\|_2 \le p!
-\|\vvec(\Delta)\|_2$. Then, we have 
+For symmetric $\Delta$, $\|\cvec(\Delta)\|_2 = \|\Delta\|_F$. \todo{How can we make this assumption?}
+Then, we have 
 \begin{align*}
 \frac{1}{n} \|\opX_p(\Delta)\|_2^2 
   &= \trace(\cvec(\Delta)\tp{2} \hat\Sigma_p) \\
-  &\ge \sigmamin(\hat\Sigma_p) \|\Delta\|_F^2 .
+  &\ge \sigmamin(\hat\Sigma_p) \|\Delta\|_F^2.
 \end{align*}
 By Weyl's theorem, $$\sigmamin(\hat\Sigma_p) \ge
 \sigmamin(\Sigma_p) - \|\hat\Sigma_p - \Sigma_p\|_\Lop.$$
@@ -91,16 +106,16 @@ bound $$\| \Sigma_p \|_F \le p! \| \vvec(x\tp{p})\tp{2} \|_F \le p! R^{2p}.$$
 Finally, $\|\hat\Sigma_p - \Sigma_p\|_\op \le \sigmamin(\Sigma_p)/2$ with probability at least $1 - \delta$ if,
 $$n \ge \frac{16 (p!)^2 R^{4p}}{\sigmamin(\Sigma_p)^2} \left(1 + \sqrt{\frac{\log(1/\delta)}{2}}\right)^2.$$
 
-%To do this, we first apply Hoeffding's inequality elementwise.
-%Since $\|x\|_2 \le R$, we have that for each element $(i,j)$,
-%$|(\hat\Sigma_p)_{ij} - (\Sigma_p)_{ij}| = O(R^{2p}\sqrt{\frac{\log (1/\delta)}{n}})$.
-%Applying the union bound over the $d^{2p}$ elements of $\hat\Sigma_p - \Sigma_p$,
-%we have that the max norm is bounded:
-%$\|\hat\Sigma_p - \Sigma_p\|_\text{\rm max} = O(R^{2p} \sqrt{\frac{p \log(d) \log (1/\delta)}{n}})$.
-%The max norm times $d^p$ upper bounds the Frobenius norm, which upper bounds the operator norm, so we have that
-%$\|\hat\Sigma_p - \Sigma_p\|_\text{\rm op} = O(d^p R^{2p} \sqrt{\frac{p \log(d) \log (1/\delta)}{n}})$.
-%Using the fact that $\sigmamin(\hat\Sigma_p) \ge \sigmamin(\Sigma_p) - \|\hat\Sigma_p - \Sigma_p\|_\text{\rm op}$
-%yields the result.
+% To do this, we first apply Hoeffding's inequality elementwise.
+% Since $\|x\|_2 \le R$, we have that for each element $(i,j)$,
+% $|(\hat\Sigma_p)_{ij} - (\Sigma_p)_{ij}| = O(R^{2p}\sqrt{\frac{\log (1/\delta)}{n}})$.
+% Applying the union bound over the $d^{2p}$ elements of $\hat\Sigma_p - \Sigma_p$,
+% we have that the max norm is bounded:
+% $\|\hat\Sigma_p - \Sigma_p\|_\text{\rm max} = O(R^{2p} \sqrt{\frac{p \log(d) \log (1/\delta)}{n}})$.
+% The max norm times $d^p$ upper bounds the Frobenius norm, which upper bounds the operator norm, so we have that
+% $\|\hat\Sigma_p - \Sigma_p\|_\text{\rm op} = O(d^p R^{2p} \sqrt{\frac{p \log(d) \log (1/\delta)}{n}})$.
+% Using the fact that $\sigmamin(\hat\Sigma_p) \ge \sigmamin(\Sigma_p) - \|\hat\Sigma_p - \Sigma_p\|_\text{\rm op}$
+% yields the result.
 \end{proof}
 
 \begin{lemma}[Upper bound on adjoint operator]
@@ -108,12 +123,12 @@ $$n \ge \frac{16 (p!)^2 R^{4p}}{\sigmamin(\Sigma_p)^2} \left(1 + \sqrt{\frac{\lo
 With probability at least $1-\delta$, the following holds,
 \begin{align*}
   \frac{1}{n} \|\opX_1^*(\eta_1)\|_\op
-      &\le \frac{2R (2LR + S)}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(3/\delta)}{2}} \right) \\
+      &\le 2 \frac{R (2LR + S)}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(3/\delta)}{2}} \right) \\
   \frac{1}{n}  \|\opX_2^*(\eta_2)\|_\op 
-      &\le \frac{(4L^2 R^2 + 2 S L R + 4S^2)R^2}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(3/\delta)}{2}} \right) \\
+      &\le 2 \frac{(4L^2 R^2 + 2 S L R + 4S^2)R^2}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(3/\delta)}{2}} \right) \\
   \frac{1}{n} \|\opX_3^*(\eta_3)\|_\op 
-      &\le \frac{(8L^3 R^3 + 3 L^2 R^2 S + 6 L R S^2 + 2S^3) R^3}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(6/\delta)}{2}} \right) \\
-  &\quad + 3 R^4 S^2 \left(\frac{4R(2LR+S)}{\sigmamin(\Sigma_1) \sqrt{n}} \left(1 + \sqrt{\frac{\log(6/\delta)}{2}} \right) \right).
+      &\le 2 \frac{(8L^3 R^3 + 3 L^2 R^2 S + 6 L R S^2 + 2S^3) R^3}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(6/\delta)}{2}} \right) \\
+  &\quad + 3 R^4 S^2 \left(\frac{128R(2LR+S)}{\sigmamin(\Sigma_1) \sqrt{n}} \left(1 + \sqrt{\frac{\log(6/\delta)}{2}} \right) \right).
 \end{align*}
 \end{lemma}
 
@@ -167,11 +182,11 @@ We may now apply the above bounds on $\eta_p(x)$ to bound $\|\eta_p(x) x\tp{p}\|
 By \reflem{conc-norms}, each of the following holds with probability at least $1-\delta_1$,
 \begin{align*}
     \left\|\hat\E_1[\eta_1(x) x] \right\|_2
-    &\le \frac{2R (2LR + S)}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(1/\delta_1)}{2}} \right) \\
+    &\le 2 \frac{R (2LR + S)}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(1/\delta_1)}{2}} \right) \\
   \left\|\hat\E_2[\eta_2(x) x\tp{2}] \right\|_F
-      &\le \frac{(4L^2 R^2 + 2 S L R + 4S^2)R^2}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(1/\delta_2)}{2}} \right) \\
+      &\le 2 \frac{(4L^2 R^2 + 2 S L R + 4S^2)R^2}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(1/\delta_2)}{2}} \right) \\
   \left\|\hat\E_3[\eta_3(x) x\tp{3}] - \E[\eta_3(x) x\tp{3} \mid x] \right\|_F
-      &\le \frac{(8L^3 R^3 + 3 L^2 R^2 S + 6 L R S^2 + 2S^3) R^3}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(1/\delta_3)}{2}} \right).
+      &\le 2 \frac{(8L^3 R^3 + 3 L^2 R^2 S + 6 L R S^2 + 2S^3) R^3}{\sqrt{n}} \left( 1 + \sqrt{\frac{\log(1/\delta_3)}{2}} \right).
 \end{align*}
 
 Recall that $\eta_3(x)$ does not have zero mean, so we must bound the bias:
@@ -180,11 +195,18 @@ Recall that $\eta_3(x)$ does not have zero mean, so we must bound the bias:
     &\le 3 \E[\epsilon^2] \|M_1 - \hat M_1\|_2 \|x\|_2 \|x\tp{3}\|_F.
 \end{align*}
 Note that in all of this, both $\hat M_1$ and $M_1$ are treated as
-constants. Further, by applying \reflem{lowRank}, we have a bound on $\|M_1 - \hat
-M_1\|_2$. So, with probability at least $1 - \delta_3$,
+constants. Further, by applying standard results for ordinary least-squares linear regression (e.g. \todo{Find citation}), we have a bound on $\|M_1 - \hat
+M_1\|_2$; with probability at least $1-\delta_3$,
+\begin{align*}
+  \| M_1 - \hat M_1 |_2
+  &\le \frac{32 \lambda^{(1)}_n}{\kappa(\opX_1)} \\
+  &\le 32 \frac{2R(2LR+S)}{\sqrt{n}}\left(1 + \sqrt{\frac{\log(1/\delta_3)}{2}}\right) \frac{2}{\sigmamin(\Sigma_1)}.
+\end{align*}
+
+So, with probability at least $1 - \delta_3$,
 \begin{align*}
   \| \E[\eta_3(x) x\tp{3} \mid x] \|_F
-  &\le 3 R^4 S^2 \left(\frac{4R(2LR+S)}{\sigmamin(\Sigma_1) \sqrt{n}} \left(1 + \sqrt{\frac{\log(1/\delta_3)}{2}} \right) \right).
+  &\le 3 R^4 S^2 \left(\frac{128 R(2LR+S)}{\sigmamin(\Sigma_1) \sqrt{n}} \left(1 + \sqrt{\frac{\log(1/\delta_3)}{2}} \right) \right).
 \end{align*}
 
 % {%
@@ -223,36 +245,53 @@ Finally, taking $\delta_1 = \delta/3, \delta_2 = \delta/3, \delta_3
 \section{Proofs: Tensor Decomposition}
 \label{sec:proofs:tensors}
 
-Once we have estimated the moments from the data through regression, we apply the robust tensor eigen-decomposition algorithm to recover the parameters, $\beta_h$ and $\pi$. However, the algorithm is guaranteed to work only for symmetric matrices with (nearly) orthogonal eigenvectors, so as a first step, we will need to whiten the third-order moment tensor using the second moments. Once we get the eigenvalues and eigenvectors from this orthogonal tensor, we have to undo the transformation by applying an un-whitening step. In this section, we present error bounds for each step, and combine them to prove the following lemma,
+Once we have estimated the moments from the data through regression, we apply the robust tensor eigen-decomposition algorithm to recover the parameters, $\beta_h$ and $\pi$. However, the algorithm is guaranteed to work only for symmetric matrices with (nearly) orthogonal eigenvectors, so, as a first step, we will need to whiten the third-order moment tensor using the second moments. We then apply the tensor decomposition algorithm to get the eigenvalues and eigenvectors. Finally, we will have to undo the transformation by applying an un-whitening step. In this section, we present error bounds for each step, and combine them to prove the following lemma,
 \begin{lemma}[Tensor Decomposition with Whitening]
   \label{lem:tensorPower} 
-  Let $M_3 = \sum_{h=1}^{k} \pi_h \beta_h\tp{3}$.
-  Let $\|\hat M_2 - M_2\|_\op$ and
-  $\|\hat M_3 - M_3\|_\op$ both be less than
-  \begin{align*}
-    \frac{3\sigma_k(M_2)^{3/2}}{10 k \pi_{\max}^{5/2}
-    \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right)}~ \epsilon,
-  \end{align*}
-  and,
+  Let $M_2 = \sum_{h=1}^{k} \pi_h \beta_h\tp{2}$,
+  $M_3 = \sum_{h=1}^{k} \pi_h \beta_h\tp{3}$.
+  Let $\aerr{M_2} \eqdef \|\hat M_2 - M_2\|_\op$ and
+  $\aerr{M_3} \eqdef \|\hat M_3 - M_3\|_\op$ both be such that,
+
 \begin{align*}
-  \frac{\sigma_k(M_2)}
-    {\|M_2\|_\op^{1/2} \left(
-    4\sqrt{3/2} + 8 k \pi_{\max} 
-    \sigma_k(M_2)^{-1/2}
-    \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right) \right) }~ \epsilon,
+  \max\{\aerr{M_2}, \aerr{M_3}\} &\le \min\Bigg\{
+    \frac{\sigma_k(M_2)}{2},
+      \left(\frac{15 k \pi_{\max}^{5/2}
+      \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right)}{2\sigma_k(M_2)^{3/2}} \right)^{-1} \epsilon,\\
+     &\quad 
+      \left(
+      4\sqrt{3/2} \|M_2\|_\op^{1/2} \sigma_k(M_2)^{-1} + 8 k \pi_{\max} 
+      \|M_2\|_\op^{1/2} \sigma_k(M_2)^{-3/2}
+      \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right) \right)^{-1} \epsilon
+  \Bigg\}
 \end{align*}
-for some $\epsilon$ such that 
-\begin{align*}
-  \epsilon &\le 
-    \min\Bigg\{
-      \Bigg( 4\sqrt{3/2} \|M_2\|_\op^{1/2} \sigma_k(M_2)^{-1} \aerr{M_2} \\
-     &\quad + 8 \|M_2\|_\op^{1/2} k \pi_{\max} \sigma_k(M_2)^{-3/2}
-        \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right) \Bigg) \frac{\sigma_k(M_2)}{2}, \\
-  &\quad \left( \frac{2 \pi_{\max}^{3/2}}{3} 5 k \pi_{\max} 
-    \sigma_k(M_2)^{-3/2}
-    \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right)  \right) \frac{\sigma_k(M_2)}{2}, \\
-      &\quad \frac{1}{2\sqrt{\pi_{\max}}} \Bigg\}.
-\end{align*}
+  
+%  less than $\frac{1}{2 \sigma_k(M_2)}$
+%  \begin{align*}
+%    \frac{2\sigma_k(M_2)^{3/2}}{15 k \pi_{\max}^{5/2}
+%    \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right)}~ \epsilon
+%  \end{align*}
+%  and
+%\begin{align*}
+%    \left(
+%    4\sqrt{3/2} \|M_2\|_\op^{1/2} \sigma_k(M_2)^{-1} + 8 k \pi_{\max} 
+%    \|M_2\|_\op^{1/2} \sigma_k(M_2)^{-3/2}
+%    \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right) \right)^{-1}~ \epsilon,
+%\end{align*}
+for some $\epsilon < \frac{1}{2\sqrt{\pi_{\max}}}$.
+%\begin{align*}
+%  \epsilon &\le 
+%    \min\Bigg\{
+%    \left(
+%    4\sqrt{3/2} \|M_2\|_\op^{1/2} \sigma_k(M_2)^{-1} + 8 k \pi_{\max} 
+%    \|M_2\|_\op^{1/2} \sigma_k(M_2)^{-3/2}
+%    \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right) \right) \frac{\sigma_k(M_2)}{2}, \\
+%  &\quad 
+%    \frac{10 k \pi_{\max}^{5/2}
+%    \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right)}
+%    {3\sigma_k(M_2)^{3/2}}~ \frac{\sigma_k(M_2)}{2}, 
+%    \frac{1}{2\sqrt{\pi_{\max}}} \Bigg\}.
+%\end{align*}
 
   Then, there exists a permutation of indices such that  the parameter
   estimates found in step 2 of 
@@ -273,26 +312,42 @@ for some $\epsilon$ such that
 We will use the general notation, $\aerr{X} \eqdef \|\hat X - X\|_\Lop$
 to represent the error of the estimate, $\hat X$, of $X$ in the operator
 norm. 
+
+Through the course of the proof, we will make some assumptions on errors
+that allow us simplify portions of the expressions. At the end of
+the proof, we will collect these conditions together to state the
+assumptions on $\epsilon$ above.
+
 \paragraph{Step 1: Whitening}
+Much of this matter has been presented in \citet[Lemma 11, 12]{hsu13spherical}. We present our own version for completeness.
+
 Let $W$ and $\hat W$ be the whitening matrices for $M_2$ and $\hat M_2$
 respectively. Also define $\Winv$ and $\Whinv$ to be their
 pseudo-inverses.
 
-We will first show that the whitened tensors $T = M_3(W,W,W)$ and $\hat
-T = \hat M_3(\hat W, \hat W, \hat W)$ are symmetric with orthogonal
-eigenvectors. Recall that $M_2 = \sum_h \pi_h \beta_h\tp{2}$, and thus
-$W \beta_h = \frac{v_h}{\sqrt{\pi_h}}$, where $v_h$ form an orthonormal
-basis. Applying the whitening transform to $M_3$, we get, 
+We will first show that the whitened tensor $T = M_3(W,W,W)$ is symmetric with orthogonal
+eigenvectors. Recall that $M_2 = \sum_h \pi_h \beta_h\tp{2}$, so,
+\begin{align*}
+  I 
+    &= W^T M_2 W\\
+    &= \sum_h \pi_h W^T \beta_h\tp{2} W\\
+    &= \sum_h (\underbrace{\sqrt{\pi_h} W^T \beta_h}_{v_h})\tp{2}.
+\end{align*}
+Thus $W \beta_h = \frac{v_h}{\sqrt{\pi_h}}$,
+where $v_h$ form an orthonormal
+basis. Applying the same whitening transform to $M_3$, we get, 
 \begin{align*}
   M_3 &= \sum_h \pi_h \beta_h\tp{3} \\
-  M_3(W,W,W) &= \sum_h \pi_h (W\beta_h)\tp{3} \\
+  M_3(W,W,W) &= \sum_h \pi_h (W^T \beta_h)\tp{3} \\
   &= \sum_h \frac{1}{\sqrt{\pi_h}} v_h\tp{3}.
 \end{align*}
-Consequently, $T$ has orthogonal eigenvectors, with eigenvalues $1/\sqrt{\pi_h}$.
+Consequently, $T$ has an orthogonal decomposition with eigenvectors $v_h$ and eigenvalues $1/\sqrt{\pi_h}$.
 
-Let us now study how far $\hat T$ differs from $T$, in terms of the
-errors of $M_2$ and $M_3$. To do so, we use the triangle inequality to
-break the difference into a number of simple terms,
+Let us now study how far $\hat T = \hat M_3(\hat W, \hat W, \hat W)$ differs from $T$, in terms of the
+errors of $M_2$ and $M_3$, following \citet{AnandkumarGeHsu2012}. We note that while $\hat T$ is also symmetric, it may not have an orthogonal decomposition. 
+To do so, we use the triangle inequality to
+break the difference into a number of simple terms, that differ in exactly one element. \todo{We will then apply $\|M_3(W,W,W-\hat W)\|_\op \le \|M_3\|_\op \|W\|_\op \|W\|_\op \|\hat W\|_\op$}.
+
 \begin{align*}
   \aerr{T} &= \|M_3(W,W,W) - \hat M_3(\hat W,\hat W, \hat W)\|_\op \\
            &\le 
@@ -300,7 +355,11 @@ break the difference into a number of simple terms,
            + \| {M_3}(W,W,\hat W) - {M_3}(W, \hat W, \hat W)\|_\op \\
            &\quad 
            + \|{M_3}(W,\hat W,\hat W) - {M_3}(\hat W, \hat W, \hat W)\|_\op 
-           + \|{M_3}(\hat W,\hat W,\hat W) - - \hat {M_3}(\hat W,\hat W, \hat W)\|_\op \\
+           + \|{M_3}(\hat W,\hat W,\hat W) - \hat {M_3}(\hat W,\hat W, \hat W)\|_\op \\
+           &\le 
+           \| {M_3}(W,W,W - \hat W) \|_\op
+           + \| {M_3}(W,W - \hat W,\hat W) |_\op 
+           + \|{M_3}(W - \hat W,\hat W,\hat W) |_\op \\
            &\le
            \| {M_3} \|_\op \|W\|^2_\op \aerr{W} +
             \| {M_3} \|_\op \|\hat W\|_\op \|W\|_\op \aerr{W} +
@@ -310,9 +369,21 @@ break the difference into a number of simple terms,
            \| {M_3} \|_\op (\|W\|^2_\op + \|\hat W\|_\op \|W\|_\op + \|\hat W\|^2_\op) \aerr{W} +
             \aerr{M_3} \|\hat W\|^3_\op 
 \end{align*}
-We can relate $\|\hat W\|$ and $\aerr{W}$ to $\aerr{M_2}$ using using
-\refprop{white}. The conditions on $\aerr{M_2}$ imply that $\aerr{M_2}
-< \sigma_k(M_2)/2$, giving us,
+We can relate $\|\hat W\|$ and $\aerr{W}$ to $\aerr{M_2}$ using 
+\reflem{white}. 
+\begin{align*}
+  \|\hat W\|_\op 
+  &\le \frac{\sigma_k(M_2)^{-1/2}}{\sqrt{1 - \frac{\aerr{M_2}}{\sigma_k(M_2)} }} \\
+  \aerr{W} 
+  &\le 2 \sigma_k(M_2)^{-1/2} \frac{\frac{\aerr{M_2}}{\sigma_k(M_2)}}{1 - \frac{\aerr{M_2}}{\sigma_k(M_2)}}.
+\end{align*}
+
+To apply \reflem{white} though, we need the following condition,
+\begin{condition}
+  Let $\aerr{M_2} < \sigma_k(M_2)/3$.
+\end{condition}
+
+This allows us to simplify the expression,
 \begin{align*}
   \|\hat W\|_\op &\le \sqrt{2} \sigma_k(M_2)^{-1/2} \\
   \aerr{W} &\le 4 \sigma_k(M_2)^{-3/2} \aerr{M_2}.
@@ -348,7 +419,7 @@ power method;
 \|\mW_h -\mhW_h \|_2 
 &\le \frac{8 k \aerr{T}}{(\lW)_{\min}^2},
 \end{align*}
-for all $h \in [k]$, where $(\lW)_{min}$ is the smallest
+for all $h \in [k]$, where $(\lW)_{\min}$ is the smallest
 eigenvalue of $T$. 
 
 \paragraph{Step 3: Unwhitening}
@@ -365,7 +436,14 @@ First, we will bound the error in the $\beta$s,
   &\le \aerr{\Winv} \|\mhW_h\|_2 + \|\Winv\|_2 \|\mhW_h - \mW_h \|_2. \comment{Triangle inequality}
 \end{align*}
 
-Once more, we can apply the results of \refprop{white}, with the assumptions on $\aerr{M_2}$, to get, 
+Once more, we can apply the results of \reflem{white}, 
+\begin{align*}
+  \|\Whinv\|_\op 
+    &\le \sqrt{\sigma_1(M_2)} \sqrt{1 + \frac{\aerr{M_2}}{\sigma_k(M_2)} } \\
+    \aerr{\Winv} 
+    &\le 2 \sqrt{\sigma_1(M_2)} \left(\sqrt{1 + \frac{\aerr{M_2}}{\sigma_1(M_2)}}\right) \frac{\frac{\aerr{M_2}}{\sigma_k(M_2)}}{1 - \frac{\aerr{M_2}}{\sigma_k(M_2)}}.
+\end{align*}
+Using Condition 1, this simplifies to, 
 \begin{align*}
   \|\Whinv\|_\op &\le \sqrt{3/2} \|M_2\|_\op^{1/2} \\
   \aerr{\Winv} &\le 4\sqrt{3/2} \|M_2\|_\op^{1/2} \sigma_k(M_2)^{-1} \aerr{M_2}.
@@ -391,39 +469,59 @@ Next, let us bound the error in $\pi$,
   {(\lW)_h^2(\lhW)_h^2} \right| \\
   &\le \frac{( 2(\lW)_h - \|\lW - \lhW\|_{\infty} )}{(\lW)_h^2 \left( (\lW)_h + \|\lW - \lhW\|_{\infty} \right)^2} \|\lW - \lhW\|_{\infty}.
 \end{align*}
-Recall that $(\lW)_h = \pi_h^{-1/2}$, so the
-assumptions that $\epsilon$ imply that $\|\lW - \lhW \|_{\infty} \le
-(\lW)_{\min}/2$. This allows us to simplify the above expression as
-follows,
+To simplify the above expression, we would like that $\|\lW - \lhW
+\|_{\infty} \le (\lW)_{\min}/2$ or $\|\lW - \lhW \|_{\infty} \le
+\frac{1}{2\sqrt{\pi_h}}$, recalling that $(\lW)_h = \pi_h^{-1/2}$. Thus,
+we would like to require the following condition to hold on $\epsilon$;  
+\begin{condition}
+  $\epsilon \le \frac{1}{2\sqrt{\pi_{\min}}}$.
+\end{condition}
+
+Now,
 \begin{align*}
   |\hat \pi_h - \pi_h |
-  &\le \frac{(3/2)(\lW)_h}{(3/2)^2 (\lW)_h^4}
+  &\le \frac{(3/2)(\lW)_h}{(\lW)_h^4}
   \|\lW - \lhW\|_{\infty} \\
-  &\le \frac{2}{3(\lW)_h^3} \frac{5 k \aerr{T}}{(\lW)_{\min}^2} \\
-  &\le \frac{2 \pi_{\max}^{3/2}}{3} 5 k \pi_{\max} 
+  &\le \frac{3}{2(\lW)_h^3} \frac{5 k \aerr{T}}{(\lW)_{\min}^2} \\
+  &\le \frac{3 \pi_{\max}^{3/2}}{2} 5 k \pi_{\max} 
+    \sigma_k(M_2)^{-3/2}
+    \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right) \max\{\aerr{M_2}, \aerr{M_3}\} \\
+    &\le \frac{15}{2} \pi_{\max}^{5/2} k 
     \sigma_k(M_2)^{-3/2}
     \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right) \max\{\aerr{M_2}, \aerr{M_3}\}.
 \end{align*}
 
-We complete the proof by requiring that the bounds $\aerr{M_2}$ and
+Finally, we complete the proof by requiring that the bounds $\aerr{M_2}$ and
 $\aerr{M_3}$ imply that $\|\hat \pi - \pi \|_{\infty} \le \epsilon$ and
 $\|\hat \beta_h - \beta_h\|_2 \le \epsilon$, i.e.
 \begin{align*}
-  \max\{\aerr{M_2}, \aerr{M_3}\} &\le 
-  \frac{3\sigma_k(M_2)^{3/2}}{10 k \pi_{\max}^{5/2}
-  \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right)}~ \epsilon,
+%  \frac{15}{2} \pi_{\max}^{5/2} k 
+%  \sigma_k(M_2)^{-3/2}
+%  \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right) \max\{\aerr{M_2}, \aerr{M_3}\} \le \epsilon \\
+  \max\{\aerr{M_2}, \aerr{M_3}\} &\le
+  \left( \frac{15}{2} \pi_{\max}^{5/2} k 
+  \sigma_k(M_2)^{-3/2}
+  \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right) \right)^{-1} \epsilon \\
+%  \frac{%
+%    2 \sigma_k(M_2)^{3/2}
+%   }{%
+%    15 k \pi_{\max}^{5/2} \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right)
+%   }~ \epsilon \\
+% \end{align*}
+% and
+% \begin{align*}
+%   4\sqrt{3/2} \|M_2\|_\op^{1/2} \sigma_k(M_2)^{-1} \aerr{M_2}
+%     + 8 \|M_2\|_\op^{1/2} k \pi_{\max} 
+%       \sigma_k(M_2)^{-3/2}
+%         \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right)
+%       \max\{\aerr{M_2}, \aerr{M_3}\} \le \epsilon \\
+  \max\{\aerr{M_2}, \aerr{M_3}\} &\le
+  \left( 4\sqrt{3/2} \|M_2\|_\op^{1/2} \sigma_k(M_2)^{-1} \aerr{M_2}
+    + 8 \|M_2\|_\op^{1/2} k \pi_{\max} 
+      \sigma_k(M_2)^{-3/2}
+        \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right)
+        \right)^{-1} \epsilon.
 \end{align*}
-as well as,
-\begin{align*}
-  \max\{\aerr{M_2}, \aerr{M_3}\} 
-  &\le 
-  \frac{\sigma_k(M_2)}
-    {\|M_2\|_\op^{1/2} \left(
-    4\sqrt{3/2} + 8 k \pi_{\max} 
-    \sigma_k(M_2)^{-1/2}
-    \left(24 \frac{\| {M_3} \|_\op}{\sigma_k(M_2)} + 2\sqrt{2} \right) \right) }~ \epsilon.
-\end{align*}
-
 
 \end{proof}
 
@@ -502,63 +600,91 @@ Putting everything together, we obtain the desired bound:
 applied to the Frobenius norm of a matrix
 $M$ because $\|M\|_F = \|\vvec(M)\|_2$.
 
-\begin{proposition}[Perturbation Bounds on Whitening Matrices]
-  \label{prop:white}
+\begin{lemma}[Perturbation Bounds on Whitening Matrices]
+  \label{lem:white}
   Let $A$ be a rank-k $d\times d$ matrix, $\Wp$ be a $d \times k$ matrix that
   whitens $\hat A$, i.e. $\Wp^T \Ap \Wp = I$.  Suppose $\Wp^T A \Wp
   = U D U^T$, then define $W = \hat{W} U D^{-\half} U^T$. Note that $W$
-  is also a $d \times k$ matrix that whitens $A$. Let $\serr{A}
-  = \frac{\aerr{A}}{\sigma_k(A)}$. 
-
-  Then, 
+  is also a $d \times k$ matrix that whitens $A$. If $\serr{A}
+  = \frac{\aerr{A}}{\sigma_k(A)} < \frac{1}{3}$ 
+  then, 
   \begin{align*}
     \|\hat W\|_\op 
       &\le \frac{\|W\|_\op}{\sqrt{1 - \serr{A}} } \\
   \|\Whinv\|_\op 
     &\le \|\Winv\|_\op \sqrt{1 + \serr{A}} \\
     \aerr{W} 
-      &\le 2 \|W\|_\op \frac{\serr{A}}{1 - \serr{A}} \\
+      &\le \|W\|_\op \frac{\serr{A}}{1 - \serr{A}} \\
     \aerr{\Winv} 
-      &\le 2 \|\Winv\|_\op \sqrt{1 + \serr{A}} \frac{\serr{A}}{1 - \serr{A}}.
+      &\le \|\Winv\|_\op \sqrt{1 + \serr{A}} \frac{\serr{A}}{1 - \serr{A}}.
   \end{align*}
-\end{proposition}
+\end{lemma}
 \begin{proof}
+  This lemma has also been proved in \citet[Lemma 10]{hsu13spherical},
+  but we present it differently here for completeness.
   First, note that for a matrix $W$ that whitens $A = V \Sigma V^T$,
-  $W = V \Sigma^{-\half} V^T$ and $\Winv = V \Sigma^{-\half} V^T$.
+  $W = V \Sigma^{-\half} V^T$ and $\Winv = V \Sigma^{\half} V^T$. Thus, by rotational invariance,
+  \begin{align*}
+    \|W\|_\op &= \frac{1}{\sqrt{\sigma_k(A)}} \\
+    \|\Winv\|_\op &= \sqrt{\sigma_1(A)} \\
+  \end{align*}
   This allows us to bound the operator norms of $\hat W$ and $\Whinv$ in
   terms of $W$ and $\Winv$,
   \begin{align*}
     \|\hat W\|_\op &= \frac{1}{\sqrt{\sigma_k(\hat A)}} \\
     &\le \frac{1}{\sqrt{\sigma_k({A}) - \aerr{A}} } \comment{By Weyl's Theorem} \\
-    &\le \frac{\|W\|_\op}{\sqrt{1 - \serr{A}} } \\
+    &\le \frac{1}{1 - \serr{A}} \frac{1}{\sqrt{\sigma_k(A)}} \\
+    &= \frac{\|W\|_\op}{\sqrt{1 - \serr{A}} } \\
     \|\Whinv\|_\op &= \sqrt{\sigma_1(\hat A)} \\
-    &\le \sqrt{\sigmamax({A}) + \aerr{A}}  \comment{By Weyl's Theorem} \\
-    &\le \sqrt{1 + \serr{A}} \|\Winv\|_\op.
+    &\le \sqrt{\sigma_1({A}) + \aerr{A}}  \comment{By Weyl's Theorem} \\
+    &\le \sqrt{1 + \serr{A}} \sqrt{\sigma_1(A)} \\
+    &= \sqrt{1 + \serr{A}} \|\Winv\|_\op.
   \end{align*}
 
   To find $\aerr{W}$, we will exploit the rotational invariance of the operator norm. 
   \begin{align*}
     \aerr{W} &= \| \Wp - W \|_\op \\
-    &= \| W U D^{\half} U^T - W \|_\op  \comment{$W = U D^{-\half} U^T$}\\
-    &\le \|W\|_\op \| I - U D^{\half} U^T \|_\op \comment{Sub-multiplicativity}\\
-    &\le \|W\|_\op \| I - D \|_\op \\
-    &= \|W\|_\op \| I - U D U^T \|_\op \comment{Rotational invariance}\\
-    &\le \|W\|_\op \| \Wp^T \Ap_k \Wp - \Wp^T A \Wp \|_\op \comment{By definition}\\
-    &\le \|W\|_\op ( \| \Wp^T (\Ap_k - \Ap) \Wp \|_\op + \| \Wp^T (\Ap - A) \Wp \|_\op) \\
-    &\le \|W\|_\op \|\Wp\|_\op^2 (\sigma_{k+1}(\Ap) + \aerr{A}) \\
-    &\le 2 \|W\|_\op \|\Wp\|_\op^2 \aerr{A}  \comment{Since $\sigma_{k+1}(A) = 0$}\\
-    &\le 2 \|W\|_\op \frac{\serr{A}}{1 - \serr{A}} \comment{Using bound on $\|\hat W\|_\op$}.
+    &= \| W U D^{\half} U^T - W \|_\op  \comment{$\hat W = W U D^{-\half} U^T$}\\
+    &\le \|W\|_\op \| I - U D^{\half} U^T \|_\op \comment{Sub-multiplicativity}.
+  \end{align*}
+
+  We will now bound $\| I - U D^{\half} U^T \|_\op$. Note that by
+  rotational invariance, $\| I - U D^{\half} U^T \|_\op = \|
+  I - D^{\half} \|_\op$. By Weyl's inequality, $|1 - \sqrt{D_{ii}}| \le
+  \| I - D^{\half} \|_\op$; put differently, $\| I - D^{\half} \|_\op$
+  bounds the amount $\sqrt{D_{ii}}$ can diverge from $1$. Using the
+  property that $|(1+x)^{-1/2} - 1| \le |x|$ for all $|x| \le 1/2$, we
+  will take an alternate approach and bound $D_{ii}$ separately, and use
+  it to bound $\| I - D^{\half} \|_\op$.
+  \begin{align*}
+    \| I - D \|_\op 
+    &= \| I - U D U^T \|_\op \comment{Rotational invariance} \\
+    &= \| \hat W^T \hat A \hat W - \hat W^T A \hat W \|_\op \comment{By definition} \\
+    &= \| \hat W^T (\hat A - A) \hat W \|_\op \\
+    &\le \|\hat W\|_\op^2 \aerr{A} \\
+    &\le \frac{1}{\sigma_k(A)} \frac{\aerr{A}}{1 - \serr{A}} \\
+    &\le \frac{\serr{A}}{1 - \serr{A}}.
+  \end{align*}
+
+  Therefore, if $\frac{\serr{A}}{1 - \aerr{A}} < 1/2$, or $\aerr{A} < \frac{\sigma_k(A)}{3}$,
+  \begin{align*}
+    \| I - U D^{1/2} U^T \|_\op &\le \frac{\serr{A}}{1 - \serr{A}}.
+  \end{align*}
+
+  We can now complete the proof of the bound on $\aerr{W}$, 
+  \begin{align*}
+    \aerr{W} 
+    &= \|W\|_\op \| I - U D^{1/2} U^T \|_\op \comment{Rotational invariance}\\
+    &\le \|W\|_\op \frac{\serr{A}}{1 - \serr{A}}.
   \end{align*}
 
   Similarly, we can bound the error on the un-whitening transform, $\Winv$,
   \begin{align*}
     \aerr{\pinv{W}} &= \| \pinv{\Wp} - \pinv{W} \|_\op \\
-    &= \| \pinv{\Wp} U D^{\half} U^T - \pinv{W} \|_\op \\
+    &= \| \pinv{\Wp} - U D^{\half} U^T \pinv{\Wp} \|_\op \comment{$\pinv{W} = U D^{1/2} U^T \pinv{\Wp}$} \\
     &\le \|\pinv{\Wp}\|_\op \| I - U D^{\half} U^T \|_\op \\
-    &\le 2 \|\pinv{\Wp}\|_\op \|\Wp\|_\op^2 \aerr{A} \comment{From derivation of $\aerr{W}$}\\
-    &\le 2 \|\Winv\|_\op \sqrt{1 + \serr{A}} \frac{\serr{A}}{1 - \serr{A}}.
+    &\le \|\pinv{W}\|_\op \sqrt{1+\serr{A}} \frac{\serr{A}}{1 - \serr{A}}.
   \end{align*}
 \end{proof}
 
-
-
+ 
