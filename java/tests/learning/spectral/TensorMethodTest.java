@@ -43,6 +43,12 @@ public class TensorMethodTest {
     Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> moments = 
         model.computeExactMoments();
 
+    //Triplet<Pair<SimpleMatrix, FullTensor>,
+    //    Pair<SimpleMatrix, FullTensor>,
+    //    Pair<SimpleMatrix, FullTensor>>
+    //    symmetricMoments = model.computeSymmetricMoments();
+    Pair<SimpleMatrix,FullTensor> symmetricMoments = model.computeSymmetricMoments().getValue2();
+
     TensorMethod algo = new TensorMethod();
     Pair<SimpleMatrix, FullTensor> symmetrizedMoments = TensorMethod.symmetrizeViews( 
         K,
@@ -54,6 +60,7 @@ public class TensorMethodTest {
     SimpleMatrix Pairs = symmetrizedMoments.getValue0();
     FullTensor Triples = symmetrizedMoments.getValue1();
 
+    // Property tests
     Assert.assertTrue( Pairs.numRows() == D ) ; 
     Assert.assertTrue( Pairs.numCols() == D ) ; 
     Assert.assertTrue( Triples.D1 == D ) ; 
@@ -62,6 +69,10 @@ public class TensorMethodTest {
 
     Assert.assertTrue( MatrixOps.isSymmetric( Pairs ) );
     Assert.assertTrue( MatrixOps.isSymmetric( Triples ) );
+
+    // Equality Tests
+    Assert.assertTrue( MatrixOps.allclose( symmetricMoments.getValue0(), Pairs ) );
+    Assert.assertTrue( MatrixOps.allclose( symmetricMoments.getValue1(), Triples ) );
   }
 
   @Test

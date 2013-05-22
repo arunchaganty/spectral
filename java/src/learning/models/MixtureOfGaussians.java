@@ -11,7 +11,9 @@ import learning.linalg.*;
 import org.ejml.simple.SimpleMatrix;
 import org.ejml.data.DenseMatrix64F;
 
-import fig.basic.*;
+import fig.basic.Option;
+import fig.basic.OptionsParser;
+import fig.basic.LogInfo;
 import fig.prob.MultGaussian;
 
 import java.io.FileOutputStream;
@@ -81,7 +83,33 @@ public class MixtureOfGaussians {
       computeExactMoments() {
     return computeExactMoments( weights, means[0], means[1], means[2] ); 
   }
+  public static Triplet<
+        Pair<SimpleMatrix, FullTensor>,
+        Pair<SimpleMatrix, FullTensor>,
+        Pair<SimpleMatrix, FullTensor>>
+      computeSymmetricMoments( SimpleMatrix weights, 
+        SimpleMatrix M1, SimpleMatrix M2, SimpleMatrix M3 ) {
+    // Compute the moments
+    SimpleMatrix M11 = M1.mult( MatrixFactory.diag( weights ) ).mult( M1.transpose() );
+    FullTensor M111 = FullTensor.fromDecomposition( weights, M1, M1, M1 );
+    SimpleMatrix M22 = M2.mult( MatrixFactory.diag( weights ) ).mult( M2.transpose() );
+    FullTensor M222 = FullTensor.fromDecomposition( weights, M2, M2, M2 );
+    SimpleMatrix M33 = M3.mult( MatrixFactory.diag( weights ) ).mult( M3.transpose() );
+    FullTensor M333 = FullTensor.fromDecomposition( weights, M3, M3, M3 );
 
+    return new Triplet<>( 
+        new Pair<>(M11,M111),
+        new Pair<>(M22,M222),
+        new Pair<>(M33,M333)
+        );
+  }
+  public Triplet<
+        Pair<SimpleMatrix, FullTensor>,
+        Pair<SimpleMatrix, FullTensor>,
+        Pair<SimpleMatrix, FullTensor>>
+      computeSymmetricMoments() {
+    return computeSymmetricMoments( weights, means[0], means[1], means[2] ); 
+  }
 
   /**
    * Sample N points from a particular cluster
@@ -334,7 +362,6 @@ public class MixtureOfGaussians {
       }
     }
   }
-
 
 }
 
