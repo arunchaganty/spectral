@@ -27,6 +27,12 @@ public class MixtureOfGaussiansTest {
         means, 
         CovarianceDistribution.Spherical, 1.0);
   }
+  public static MixtureOfGaussians generateSmallSymmetric() {
+		int K = 2;
+		int D = 3;
+		int V = 3;
+    return generateMultiView( K, D, V, MeanDistribution.Identical );
+  }
   public static MixtureOfGaussians generateSmallEye() {
 		int K = 2;
 		int D = 3;
@@ -38,6 +44,12 @@ public class MixtureOfGaussiansTest {
 		int D = 3;
 		int V = 3;
     return generateMultiView( K, D, V, MeanDistribution.Random );
+  }
+  public static MixtureOfGaussians generateMediumSymmetric() {
+		int K = 4;
+		int D = 6;
+		int V = 3;
+    return generateMultiView( K, D, V, MeanDistribution.Identical );
   }
   public static MixtureOfGaussians generateMediumEye() {
 		int K = 4;

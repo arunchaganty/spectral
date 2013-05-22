@@ -32,7 +32,7 @@ public class TensorMethodTest {
 
   @Before 
   public void setUp() {
-    //LogInfo.writeToStdout = false;
+    LogInfo.writeToStdout = false;
     LogInfo.init();
   }
   // Actual tests
@@ -84,23 +84,90 @@ public class TensorMethodTest {
   @Test
   public void testSymmetrizationMediumRandom() {  testSymmetrization( generateMediumRandom() ); }
 
-  public void testExactRunner( int K, int D, int V, MixtureOfGaussians model ) {
-    // SimpleMatrix M3 = model.getMeans()[V-1];
-    // SimpleMatrix[] M = model.getMeans();
-    // Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> moments = 
-    //     model.computeExactMoments();
-    // try {
-    //   TensorMethod algo = new TensorMethod();
-    //   SimpleMatrix M3_ = algo.algorithmB( K, moments.getValue0(), moments.getValue1(), moments.getValue2() );
-    //   M3_ = MatrixOps.alignMatrix( M3_, M3, true );
+  public void testExactSymmetricRunner( MixtureOfGaussians model ) {
+    int K = model.getK();
+    int D = model.getD();
+    int V = model.getV();
 
-    //   Assert.assertTrue( MatrixOps.allclose( M3, M3_) );
-    // } catch( RecoveryFailure e) {
-    //   System.out.println( e.getMessage() );
-    // }
+    Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> moments = 
+        model.computeExactMoments();
+    SimpleMatrix Pairs = moments.getValue0();
+    FullTensor Triples = moments.getValue3();
+    TensorMethod algo = new TensorMethod();
+    Pair<SimpleMatrix, SimpleMatrix> params = algo.recoverParameters( K, Pairs, Triples  );
+    SimpleMatrix weights_ = params.getValue0();
+    SimpleMatrix M_ = params.getValue1();
+
+    // Properties
+
+    Assert.assertTrue( weights_.numRows() == 1 );
+    Assert.assertTrue( weights_.numCols() == K );
+
+    Assert.assertTrue( M_.numRows() == D );
+    Assert.assertTrue( M_.numCols() == K );
+
+    // Exact values
+    SimpleMatrix weights = model.getWeights();
+    SimpleMatrix M = model.getMeans()[0];
+
+    M_ = MatrixOps.alignMatrix( M_, M, true ); 
+
+    Assert.assertTrue( MatrixOps.allclose( weights, weights_) );
+    Assert.assertTrue( MatrixOps.allclose( M, M_) );
   }
-  // @Test
-  public void testExact() {};
+
+  @Test
+  public void testExactSmallSymmetric() { testExactSymmetricRunner( generateSmallSymmetric() ); }
+  @Test
+  public void testExactMediumSymmetric() { testExactSymmetricRunner( generateMediumSymmetric() ); }
+
+  public void testExactRunner( MixtureOfGaussians model ) {
+    int K = model.getK();
+    int D = model.getD();
+    int V = model.getV();
+
+    Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> moments = 
+        model.computeExactMoments();
+
+    TensorMethod algo = new TensorMethod();
+    Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, SimpleMatrix> params = algo.recoverParameters( K, moments );
+    SimpleMatrix weights_ = params.getValue0();
+    SimpleMatrix M1_ = params.getValue1();
+    SimpleMatrix M2_ = params.getValue2();
+    SimpleMatrix M3_ = params.getValue3();
+
+    // Properties
+
+    Assert.assertTrue( weights_.numRows() == 1 );
+    Assert.assertTrue( weights_.numCols() == K );
+    Assert.assertTrue( M1_.numRows() == D );
+    Assert.assertTrue( M1_.numCols() == K );
+    Assert.assertTrue( M2_.numRows() == D );
+    Assert.assertTrue( M2_.numRows() == D );
+    Assert.assertTrue( M3_.numCols() == K );
+    Assert.assertTrue( M3_.numCols() == K );
+
+    // Exact values
+    SimpleMatrix weights = model.getWeights();
+    SimpleMatrix M1 = model.getMeans()[0];
+    SimpleMatrix M2 = model.getMeans()[1];
+    SimpleMatrix M3 = model.getMeans()[2];
+
+    M1_ = MatrixOps.alignMatrix( M1_, M1, true ); 
+    M2_ = MatrixOps.alignMatrix( M2_, M2, true ); 
+    M3_ = MatrixOps.alignMatrix( M3_, M3, true ); 
+
+    Assert.assertTrue( MatrixOps.allclose( weights, weights_) );
+    Assert.assertTrue( MatrixOps.allclose( M1, M1_) );
+    Assert.assertTrue( MatrixOps.allclose( M2, M2_) );
+    Assert.assertTrue( MatrixOps.allclose( M3, M3_) );
+  }
+
+  @Test
+  public void testExactSmallSymmetric_() { testExactRunner( generateSmallSymmetric() ); }
+  @Test
+  public void testExactMediumSymmetric_() { testExactRunner( generateMediumSymmetric() ); }
+
 
   public void testSampleRunner( int n, int K, int D, int V, MixtureOfGaussians model ) {
   }

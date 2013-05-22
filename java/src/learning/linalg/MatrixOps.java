@@ -848,7 +848,6 @@ public class MatrixOps {
     return MatrixFactory.diag(MatrixFactory.fromVector(diagonal));
   }
 
-
   public static SimpleMatrix whitener( SimpleMatrix X, int K ) {
     Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> UDV = svdk(X, K);
 
@@ -1047,6 +1046,22 @@ public class MatrixOps {
     }
 
     return true;
+  }
+
+  /**
+   * Computes the reciprocal of a vector;
+   * w_{ii} <- 1/w_{ii}
+   */
+  public static void reciprocal( DenseMatrix64F X ) {
+    assert( isVector(X) );
+    int D = (X.numRows == 1) ? X.numCols : X.numRows;
+    for( int d = 0; d < D; d++ )
+      X.set( d, 1/X.get(d) );
+  }
+  public static SimpleMatrix reciprocal( SimpleMatrix X ) {
+    DenseMatrix64F Y = X.getMatrix().copy();
+    reciprocal(Y);
+    return SimpleMatrix.wrap( Y ) ;
   }
 
 }

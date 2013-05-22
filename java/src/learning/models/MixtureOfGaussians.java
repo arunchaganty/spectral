@@ -157,6 +157,7 @@ public class MixtureOfGaussians {
   }
 
   public static enum MeanDistribution {
+		Identical,
 		Hypercube,
       Random
   }
@@ -194,6 +195,22 @@ public class MixtureOfGaussians {
     }
 
     switch( mDistribution ) {
+      case Identical:
+        // Generate each gaussian randomly of unit norm
+        for(int k = 0; k < K; k++) {
+          for(int d = 0; d < D; d++) {
+            M[0][k][d] = RandomFactory.randn(1.0);
+          }
+          MatrixOps.normalize(M[0][k]);
+          // Copy to the remaining views
+          for(int v = 1; v < V; v++) {
+            for(int d = 0; d < D; d++) {
+              M[v][k][d] = M[0][k][d];
+            }
+          }
+        }
+        break;
+
       case Hypercube:
         int bits = Misc.log2( K ) + 1;
         for(int v = 0; v < V; v++) {
@@ -278,6 +295,8 @@ public class MixtureOfGaussians {
     }
 
     switch( options.means.toLowerCase() ) {
+      case "identical":
+        mDistribution = MeanDistribution.Identical; break;
       case "hypercube":
         mDistribution = MeanDistribution.Hypercube; break;
       case "random":
@@ -310,7 +329,7 @@ public class MixtureOfGaussians {
     
     @Option(gloss="Weight distribution = uniform|random") 
     public String weights = "uniform";
-    @Option(gloss="Mean distribution = hypercube|random") 
+    @Option(gloss="Mean distribution = identical|hypercube|random") 
     public String means = "hypercube";
     @Option(gloss="Covariance distribution = eye|spherical|random") 
     public String covs = "eye";
