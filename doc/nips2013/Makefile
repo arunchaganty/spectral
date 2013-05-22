@@ -1,27 +1,29 @@
-LATEX = pdflatex -interaction=nonstopmode
-OUTPUT=$(shell basename `pwd`)
-SECTIONS = 
+default: main.pdf
 
-all: $(OUTPUT).pdf
+texfiles := $(wildcard *.tex) $(wildcard figures/*.tex)
 
-$(OUTPUT).pdf: paper.tex $(SECTIONS)
-	$(LATEX) $<
-	mv $(subst .tex,.pdf,$<) $@
+sfig:
+	git clone https://github.com/percyliang/sfig
 
-final: paper.tex $(SECTIONS)
-	./texify < $< > $(subst .tex,.tmp.tex,$<)
-	$(LATEX) $(subst .tex,.tmp.tex,$<)
-	mv $(subst .tex,.tmp.pdf,$<) $(OUTPUT).pdf
+figures: sfig figures.js utils.js
+	node figures.js
+	touch figures
 
-bib: paper.tex $(SECTIONS)
-	$(LATEX) $< 
-	$(LATEX) $< 
-	biblatex $(subst .tex,,$<)
-	$(LATEX) $< 
+main.pdf: $(texfiles) figures main.bbl
+	@pdflatex main < /dev/null > /dev/null || true
+	@grep -A 4 "Emergency stop" main.log || grep Warning main.log || true
+main.bbl: pliang.bib
+	pdflatex main
+	bibtex main
+	pdflatex main
+	pdflatex main
+
+run:
+	go main.pdf
 
 clean:
-	rm -rf *.{aux,bbl,blg,log,out}
-	rm -rf $(OUTPUT).pdf
+	rm -f main.aux main.bbl main.blg main.log main.pdf
 
-
-.PHONY: clean bib final
+split: main.pdf
+	pdftk main.pdf cat 1-9 output main-primary.pdf
+	pdftk main.pdf cat 10-13 output main-supplementary.pdf

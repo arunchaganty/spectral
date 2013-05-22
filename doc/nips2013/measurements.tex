@@ -1,0 +1,122 @@
+\section{Measurements: partial information from moments} \label{sec:generalModels}
+
+Our learning algorithm for three-view mixture models relies on the fact that the hidden moments we can recover
+are exactly the sufficient statistics of the exponential family model.
+Of course, these conditions do not hold for general log-linear models.
+Rather than falling back on local optimization of the likelihood in these cases, we would still like
+to use the \emph{partial information} offered by the hidden moments provide we
+\emph{can} recover in some way.  We will show how to incorporate these moments
+into a likelihood-based objective.
+
+Partial information is available when the following holds:
+\begin{property}
+  There exists some latent variable $h_{j_0} \in [\nh]$ (the bottleneck)
+  and three conditionally independent observed variables $x_{j_1},x_{j_2},x_{j_3}$ (views) such that
+  each conditional mean matrix $\E[\phix(x_{j}) \mid h_{j_0}] \in \R^{\nphix \times \nh}$ ($j \in \{ j_1, j_2, j_3 \}$) has full column rank $\nh$,
+  for some transformation $\phix$.
+\end{property}
+
+% Examples
+\reffig{generalModels} shows examples of log-linear models.
+For simplicitly, assume each hidden variable $h_j \in [\nh]$ and each observed
+variable $x_j \in \R^\ell$ are indicator vectors encoding one of $\ell$ possible values.
+
+\Fig{figures/generalModels}{0.3}{generalModels}{
+Three examples of undirected log-linear models.  In each of these cases,
+we can recover hidden moments, which are themselves not sufficient to identify the parameters,
+but provide partial information which leads to a more well-behaved likelihood function.
+}
+
+\paragraph{(a) HMM}
+Following the reduction in \citet{anandkumar12moments},
+take $h_2$ as the bottleneck and $x_1, x_2, x_3$ as the three views.
+Define $\pi = (\BP[h_1]) \in \R^{\nh}$,
+transition matrix $T = (\BP[h_3 \mid h_2]) \in \R^{\nh \times \nh}$
+and observation matrix $O = (\E[x_2 \mid h_2]) \in \R^{\nphix \times \nh}$.
+$\TensorFactorize$ recovers the marginal probability of the bottleneck
+$T \pi$ and conditional means of the three views
+$O T^\top \diag(T \pi)^{-1}$,
+$O$,
+and $O T$.
+Note that we can recover $T = O^\dagger(OT)$ and $\pi = T^{-1} (T\pi)$,
+from which we can compute the hidden moments/sufficient statistics $\mu = \E[\phi(x,h)]$.
+
+However, this model only uses the first three observations,
+which doesn't use all the information available.
+Let us consider a new reduction:
+Let $h_j$ be the bottleneck where $j$ is chosen uniformly at random over $\{2,
+\dots, T-1\}$, where $L$ is the number of time steps; let $x_{j-1},x_j,x_{j+1}$ be the three views.\footnote{
+When we actually estimate the observed moments, we simply average over the choice of $j$.}
+Now, note that we can recover $O = \inv{L-2} \sum_{j=2}^{L-1} \E[x_j \mid h_j]$ from the second view,
+but using the data more fully.  The first and third views are unfortunately now
+quite complex due to marginalization over the rest of the variables.
+
+\paragraph{(b) Tall mixture model}
+Let $h_0$ be the bottleneck and $x_1,x_2,x_3$ be the three
+views.  The conditional means that $\TensorFactorize$ reveals are $\E[x_j \mid h_0]$, which are not even
+expectations over features in the original model, let alone sufficient
+statistics.\footnote{Note that if the features were arbitrary, then the
+parameters would not be identifiable, but because log-linear models permit
+parameter sharing, then identifiability is still possible and therefore
+parameter estimation in this model is still meaningful.}
+
+\paragraph{(c) Grid model}
+As in the HMM example, choose a random $h_{ij}$ as the bottleneck,
+$x_{ij}^a,x_{ij}^b$ as two of the views, and any other observed variable as the third view.
+$\TensorFactorize$ would reveal conditional means $\E[x_{ij}^a \mid h_{ij}]$ and $\E[x_{ij}^b \mid h_{ij}]$,
+and a third quantity that involves the hidden-to-hidden features and the observation features.
+Unfortunately, this quantity involves marginalizing out the rest of the graph,
+and therefore impossible to extract something useful like $\BP[h_{ij}, h_{i(j+1)}]$
+in closed form.
+Note that the analog of this was still possible in the first HMM reduction that used only the first three observations,
+but not in the second one.
+
+In each of these three models, we could extract marginals $\pi = \BP[h_j] \in \R^{\nh}$
+and some conditional mean matrix $B = \E[x_{j'} \mid h_j] \in \R^{\nphix \times \nh}$,
+but that it was insufficient to identify the parameters.  How can we still use this partial information $(\pi,B)$?
+To this end, we adopt the measurements framework of \citet{liang09measurements},
+which allows us to incorporate moment constraints into a likelihood-based objective in a coherent way.
+The basic idea is to define two families of distributions: $\sQ$ which are
+consistent with all information and $\sP$ the exponential family.  The
+framework essentially tries to choose $q \in \sQ$ and $p \in \sP$ to minimize
+$\KL{q}{p}$.
+
+Specifically,
+let $\bx = (x^{(1)}, \dots, x^{(n)})$ be the vector of observed variables
+$\bh = (h^{(1)}, \dots, h^{(n)})$ be the vector of latent variables.
+Our model family $\sP$ is defined by product distributions
+$p_\theta(\bx,\bh) = \prod_{i=1}^n p_\theta(x^{(i)}, h^{(i)})$ as $\theta \in \R^d$.
+Suppose our observations are $(\tilde x^{(1)}, \dots, \tilde x^{(n)})$
+and we have recovered $(\pi,B)$, where $\pi$ is the marginal of the bottleneck $h_j$ and $B$ is the conditional mean of $x_{j'}$.
+
+We introduce the following constraints on each $q \in \sQ$:\footnote{We use a hard constraint
+for expository clarity, but in practice, we use a quadratic penalty.  See
+\citet{liang09measurements} for details.}
+\begin{align}
+  q(x^{(i)} = \tilde x^{(i)}) &= 1, \quad i \in [n] \label{eqn:exConstraint} \\
+  \inv{n} \sum_{i \in [n]} q(x_{j'}^{(i)} = v, h_j^{(i)} = u) &= \pi_u B_{v u}, \quad u \in [\nh], v \in [\nphix]. \label{eqn:momentConstraint}
+\end{align}
+The first constraint $\sQ$ encodes our observed examples
+and the second puts additional constraints on the latent variables.
+Our final objective function is as follows:
+\begin{align}
+  \min_{q \in \sQ} \min_{\theta \in \R^d} \KL{q(\bx, \bh)}{p_\theta(\bx, \bh)}. \label{eqn:minKL}
+\end{align}
+\paragraph{Intuitions.}
+With only the first constraint \refeqn{exConstraint}, the objective
+\refeqn{minKL} is equivalent to our original maximum (empirical) marginal
+likelihood problem, which is non-convex.  If the second constraint
+\refeqn{momentConstraint} are exactly the features/sufficient statistics of the
+model (as in the three-view mixture model from \refsec{threeViewMixtureModel}),
+then \refeqn{minKL} is always convex and
+converges to the (expected) maximum likelihood objective function as the number of examples $n \to\infty$.
+
+% Optimization
+We optimize \refeqn{minKL} using a variant of EM.
+Briefly, the E-step is equivalent to a generalized maximum entropy problem,
+which we solve by taking the dual, resulting in a parameter for each moment constraint \refeqn{momentConstraint}.
+In the M-step, we maximize the expected log-likelihood with respect to $q$.
+
+%$\beta = \argmax_{q} H(q) \tau^\top\beta - B(\beta, \theta) + r(\beta)$
+%E-step: $\beta = \arg\max_{\beta} \tau^\top\beta - B(\beta, \theta) - r(\beta)$
+%M-step: $\theta = \arg\max_\theta \E_q[\phi(\bx,\bh)^\top - A(\theta)]$.

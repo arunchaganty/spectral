@@ -9,8 +9,8 @@ import org.javatuples.Triplet;
   A Tensor constructed with a full DxDxD matrix
  */
 public class FullTensor implements Tensor {
-  double[][][] X;
-  int D1, D2, D3;
+  public double[][][] X;
+  public int D1, D2, D3;
 
   public FullTensor( int D1, int D2, int D3 ) {
     X = new double[D1][D2][D3];
