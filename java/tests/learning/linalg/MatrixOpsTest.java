@@ -24,6 +24,9 @@ public class MatrixOpsTest {
   SimpleMatrix X3;
   SimpleMatrix X4;
 
+  FullTensor T; // Random tensor
+  FullTensor symT; // Random symmetric tensor
+
   static double EPS_ZERO = 1e-7;
   static double EPS_CLOSE = 1e-4;
 
@@ -52,10 +55,40 @@ public class MatrixOpsTest {
       { 0.32112581,  0.59689873, -1.05131256},
       { 0.61709072, -0.26502982, -0.83136217}};
 
+    double [][][] T_ = {
+      { { 0.602906, 0.621318, 0.259487 },
+        { 0.980476, 0.096308, 0.763573 },
+        { 0.642083, 0.543104, 0.142096 } },
+      { { 0.257114, 0.148483, 0.788865 },
+          { 0.226163, 0.372460, 0.065712 },
+          { 0.853019, 0.343047, 0.794350 } },
+      { { 0.091767, 0.159335, 0.594195 },
+        { 0.483753, 0.914964, 0.282069 },
+        { 0.973374, 0.956173, 0.545773 } }
+    };
+
+    double [][][] symT_ = {
+      {
+        { 8.0386e-01, 5.3795e-03, 2.7792e-01 },
+        { 5.3795e-03, 3.6000e-05, 1.8599e-03 },
+        { 2.7792e-01, 1.8599e-03, 9.6089e-02 } },
+      {
+        { 5.3795e-03, 3.6000e-05, 1.8599e-03 },
+        { 3.6000e-05, 2.4091e-07, 1.2446e-05 },
+        { 1.8599e-03, 1.2446e-05, 6.4303e-04 } },
+      {
+        { 2.7792e-01, 1.8599e-03, 9.6089e-02 },
+        { 1.8599e-03, 1.2446e-05, 6.4303e-04 },
+        { 9.6089e-02, 6.4303e-04, 3.3221e-02 } }
+    };
+
     X1 = new SimpleMatrix(X1_);
     X2 = new SimpleMatrix(X2_);
     X3 = new SimpleMatrix(X3_);
     X4 = new SimpleMatrix(X4_);
+
+    T = new FullTensor(T_);
+    symT = new FullTensor(symT_);
   }
 
   @Test
@@ -475,4 +508,22 @@ public class MatrixOpsTest {
       Assert.assertTrue( MatrixOps.allclose( W.transpose().mult(Winv), SimpleMatrix.identity(3) ) );
     }
   }
+
+
+  @Test
+  public void isSymmetric() {
+    double[][] X_ = {
+            { 0.2740856 ,  0.61844862,  0.84960229},
+            { 0.76229792,  0.78220896, -0.32681905},
+            { 0.58632667, -0.07530232,  0.41396288}};
+    SimpleMatrix X = new SimpleMatrix(X_);
+    SimpleMatrix Y = X.plus( X.transpose() );
+
+    Assert.assertFalse( MatrixOps.isSymmetric( X ) );
+    Assert.assertTrue( MatrixOps.isSymmetric( Y ) );
+
+    Assert.assertFalse( MatrixOps.isSymmetric( T ) );
+    Assert.assertTrue( MatrixOps.isSymmetric( symT ) );
+  }
+
 }

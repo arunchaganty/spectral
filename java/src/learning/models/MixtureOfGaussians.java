@@ -6,9 +6,7 @@
 package learning.models;
 
 import learning.Misc;
-import learning.linalg.MatrixOps;
-import learning.linalg.MatrixFactory;
-import learning.linalg.RandomFactory;
+import learning.linalg.*;
 
 import org.ejml.simple.SimpleMatrix;
 import org.ejml.data.DenseMatrix64F;
@@ -21,6 +19,8 @@ import java.io.ObjectOutputStream;
 import java.io.IOException;
 
 import java.util.Random;
+
+import org.javatuples.*;
 
 /**
  * A mixture of experts model
@@ -48,7 +48,6 @@ public class MixtureOfGaussians {
     this.covs = covs;
   }
 
-
   public SimpleMatrix getWeights() {
     return weights;
   }
@@ -58,6 +57,31 @@ public class MixtureOfGaussians {
   public SimpleMatrix[][] getCovariances() {
     return covs;
   }
+
+  public int getD() { return D; }
+  public int getK() { return K; }
+  public int getV() { return V; }
+
+  /**
+   * Computes the exact moments of the model whose means are given by
+   * the columns of M[v].
+   */
+  public static Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor>
+      computeExactMoments( SimpleMatrix weights, 
+        SimpleMatrix M1, SimpleMatrix M2, SimpleMatrix M3 ) {
+    // Compute the moments
+    SimpleMatrix M12 = M1.mult( MatrixFactory.diag( weights ) ).mult( M2.transpose() );
+    SimpleMatrix M13 = M1.mult( MatrixFactory.diag( weights ) ).mult( M3.transpose() );
+    SimpleMatrix M23 = M2.mult( MatrixFactory.diag( weights ) ).mult( M3.transpose() );
+    FullTensor M123 = FullTensor.fromDecomposition( weights, M1, M2, M3 );
+
+    return new Quartet<>( M12, M13, M23, M123 );
+  }
+  public Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor>
+      computeExactMoments() {
+    return computeExactMoments( weights, means[0], means[1], means[2] ); 
+  }
+
 
   /**
    * Sample N points from a particular cluster
