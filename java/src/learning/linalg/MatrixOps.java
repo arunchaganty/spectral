@@ -848,7 +848,6 @@ public class MatrixOps {
     return MatrixFactory.diag(MatrixFactory.fromVector(diagonal));
   }
 
-
   public static SimpleMatrix whitener( SimpleMatrix X, int K ) {
     Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> UDV = svdk(X, K);
 
@@ -1017,7 +1016,53 @@ public class MatrixOps {
     return new SimpleMatrix( removeInRange( MatrixFactory.toArray(X), lbound, ubound ) );
   }
 
+  public static boolean isSymmetric( SimpleMatrix M ) {
+    if( M.numRows() != M.numCols() ) return false;
+    int D = M.numRows();
 
+    for( int d = 0; d < D; d++ )
+      for( int d_ = 0; d_ <= d; d_++ )
+        if( !equal(M.get( d, d_ ), M.get( d_, d ) ) ) return false;
+
+    return true;
+  }
+
+  public static boolean isSymmetric( FullTensor T ) {
+    if( ! (T.D1 == T.D2 && T.D2 == T.D3 ) ) return false;
+    int D = T.D1;
+
+    for( int d1 = 0; d1 < D; d1++ ) {
+      for( int d2 = 0; d2 < D; d2++ ) {
+        for( int d3 = 0; d3 < D; d3++ ) {
+          boolean isSymmetric = 
+            equal(T.X[d1][d2][d3], T.X[d1][d3][d2]) &&
+            equal(T.X[d1][d2][d3], T.X[d2][d1][d3]) &&
+            equal(T.X[d1][d2][d3], T.X[d2][d3][d1]) &&
+            equal(T.X[d1][d2][d3], T.X[d3][d1][d2]) &&
+            equal(T.X[d1][d2][d3], T.X[d3][d2][d1]);
+          if(!isSymmetric) return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Computes the reciprocal of a vector;
+   * w_{ii} <- 1/w_{ii}
+   */
+  public static void reciprocal( DenseMatrix64F X ) {
+    assert( isVector(X) );
+    int D = (X.numRows == 1) ? X.numCols : X.numRows;
+    for( int d = 0; d < D; d++ )
+      X.set( d, 1/X.get(d) );
+  }
+  public static SimpleMatrix reciprocal( SimpleMatrix X ) {
+    DenseMatrix64F Y = X.getMatrix().copy();
+    reciprocal(Y);
+    return SimpleMatrix.wrap( Y ) ;
+  }
 
 }
 

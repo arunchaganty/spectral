@@ -6,7 +6,7 @@
 package learning.models;
 
 import learning.models.MixtureOfGaussians;
-import learning.models.MixtureOfGaussians.GenerationOptions;
+import static learning.models.MixtureOfGaussians.*;
 
 import learning.linalg.MatrixOps;
 
@@ -19,6 +19,50 @@ import org.junit.Before;
  * Test code for various dimensions.
  */
 public class MixtureOfGaussiansTest {
+
+  // Generation routines
+  public static MixtureOfGaussians generateMultiView(int K, int D, int V, MeanDistribution means) {
+    return MixtureOfGaussians.generate(K, D, V, 
+        WeightDistribution.Uniform, 
+        means, 
+        CovarianceDistribution.Spherical, 1.0);
+  }
+  public static MixtureOfGaussians generateSmallSymmetric() {
+		int K = 2;
+		int D = 3;
+		int V = 3;
+    return generateMultiView( K, D, V, MeanDistribution.Identical );
+  }
+  public static MixtureOfGaussians generateSmallEye() {
+		int K = 2;
+		int D = 3;
+		int V = 3;
+    return generateMultiView( K, D, V, MeanDistribution.Hypercube );
+  }
+  public static MixtureOfGaussians generateSmallRandom() {
+		int K = 2;
+		int D = 3;
+		int V = 3;
+    return generateMultiView( K, D, V, MeanDistribution.Random );
+  }
+  public static MixtureOfGaussians generateMediumSymmetric() {
+		int K = 4;
+		int D = 6;
+		int V = 3;
+    return generateMultiView( K, D, V, MeanDistribution.Identical );
+  }
+  public static MixtureOfGaussians generateMediumEye() {
+		int K = 4;
+		int D = 6;
+		int V = 3;
+    return generateMultiView( K, D, V, MeanDistribution.Hypercube );
+  }
+  public static MixtureOfGaussians generateMediumRandom() {
+		int K = 4;
+		int D = 6;
+		int V = 3;
+    return generateMultiView( K, D, V, MeanDistribution.Random );
+  }
 
   public void testModel( int N, GenerationOptions options ) {
     int D = (int) options.D;

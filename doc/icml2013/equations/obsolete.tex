@@ -1,0 +1,67 @@
+\begin{lemma}[Concentration of Independent Products]
+  \label{lemma:conc-prod}
+  Let $X$ and $Y$ be independent random variables, such that $X$ is subgaussian with parameter $\sigma^2$ and $|Y| \le L$.
+  Then, 
+  \begin{align*}
+    \Pr[ XY \ge \epsilon ] 
+      &\le 
+        \exp\left( - \frac{1}{\sigma^2 L^2} \epsilon^{2} 
+          + \frac{1}{16 (\sigma^4_X L^4)} \epsilon^{4} \right),
+  \end{align*}
+\end{lemma}
+\begin{proof}
+  We begin by bounding the moment generating function of $XY$. Using the property that $X$ and $Y$ are independent,
+  \begin{align*}
+    \E[ \exp(t X Y) ] 
+      &= \E\left[ \E[ \exp(t X Y) \mid Y ] \right] \\
+      &\le \E\left[ \exp\left(\frac{(tY)^2 \sigma^2}{2}\right) \right] \\
+      &\le \E\left[ \exp\left(\frac{t \sigma^2}{2} (Y^2 - \E[Y^2]) + \frac{t^2 \E[Y^2] \sigma^2}{2}\right) \right] \\
+      &\le \exp\left(\frac{t^4 \sigma^4}{8} \frac{L^4}{2}  + \frac{t^2\sigma^2 L^2}{2}\right) \\
+      &\le \exp\left(\frac{t^4 \sigma^4 L^4}{16}  + \frac{t^2 \sigma^2 L^2}{2}\right),
+  \end{align*}
+  where we used the fact that $Y^2 - \E[Y^2]$ is subgaussian with parameter $L^2/2$ because $0 \le Y^2 \le L$.
+
+  By Markov's inequality, we have that,
+  \begin{align*}
+    \Pr[ XY \ge \epsilon ] 
+      &\le \inf_t \frac{\E[\exp(t XY)]}{\exp(t\epsilon)} \\
+      &\le \inf_t \exp\left(\frac{t^4 \sigma^4 L^4 }{16} + \frac{t^2 L^2 \sigma^2}{2} - t\epsilon\right).
+  \end{align*}
+  %Setting $t = (\frac{2\epsilon}{\sigma^4_X \sigma^2_{Y^2}})^{1/3}$ and
+  %$t = \frac{\epsilon}{\sigma^2_X R^2 }$, we get two upper bounds on the
+  %above expression, thus,
+  %\begin{align}
+  %  \Pr[ XY \ge \epsilon ] 
+  %    &\le \min\{
+  %      \exp( -(\frac{54}{64 (\sigma^4_X \sigma^4_{Y^2})})^{1/3} \epsilon^{4/3} 
+  %          + (\frac{1}{2 (\sigma^2_X \sigma^4_{Y^2})})^{1/3} R^2 \epsilon^{2/3} ), \\
+  %    &\quad
+  %      \exp( - \frac{1}{\sigma^2_X R^2} \epsilon^{2} 
+  %        + \frac{\sigma^2_{Y^2}}{8 (\sigma^4_X R^8)} \epsilon^{4} ) \}.
+  %\end{align}
+
+  Setting $t = \frac{\epsilon}{\sigma^2_X L^2 }$, we get the bound,
+  \begin{align*}
+    \Pr[ XY \ge \epsilon ] 
+      &\le 
+        \exp\left( - \frac{1}{\sigma^2 L^2} \epsilon^{2} 
+          + \frac{1}{16 (\sigma^4_X L^4)} \epsilon^{4} \right),
+  \end{align*}
+  which is dominated by the $-\epsilon^2$ term for small $\epsilon$.
+\end{proof}
+
+In practice, we will use the following corollary that directly follows from the above lemma,
+\begin{corollary}
+  Let $\{X_i\}_{i=1}^n$ and $\{Y_i\}_{i=1}^n$ be $n$ i.i.d.\
+  samples from distributions $X$ and $Y$, such that $X$ is subgaussian with parameter
+  $\sigma^2$ and $Y \le L$ with probability 1. Then, if $\epsilon \le 4\sqrt{2} \sigma_X L$,
+  \begin{align}
+    \Pr\left[ \hat\E[ X Y ] - \E[ X Y ] \ge \epsilon \right] 
+    &\le \exp\left( - \frac{n \epsilon^2}{2 \sigma^2 R^2 } \right).
+  \end{align}
+\end{corollary}
+%% TODO: Is this ``proof'' even required?
+\begin{proof}
+  Using the assumed bound on $\epsilon$, we get,
+  $\frac{\sigma^2_{Y^2}}{16 (\sigma^4_X L^8)} \epsilon^{4} \le \frac{1}{2\sigma^2_X L^2} \epsilon^{2}$.
+\end{proof}

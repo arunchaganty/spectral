@@ -13,9 +13,7 @@
 \usepackage{amsthm}
 
 % For algorithms
-\usepackage{algorithm}
-\usepackage{algorithmic}
-
+\usepackage{algorithm,algorithmic}
 
 \usepackage{hyperref}
 
@@ -23,8 +21,8 @@
 % this with the following command.
 \newcommand{\theHalgorithm}{\arabic{algorithm}}
 
-\usepackage{icml2013} 
-%\usepackage[accepted]{icml2013}
+%\usepackage{icml2013} 
+\usepackage[accepted]{icml2013}
 
 
 % The \icmltitle you define below is probably too long as a header.
@@ -32,18 +30,20 @@
 \icmltitlerunning{Spectral Experts}
 
 % Math
-\usepackage{amsmath}
-\usepackage{amssymb}
+\usepackage{amsmath,amssymb}
 \usepackage{soul}
 
 \input{macros}
 \input{section-macros}
 \input{spectral-macros}
 
+%\DeclareMathSizes{8}{8}{6}{4}
 
-\DeclareMathSizes{8}{8}{6}{4}
-%\DeclareMathSizes{10}{8}{6}{4}
-%\DeclareMathSizes{10}{10}{8}{6}
+\usepackage{etoolbox}
+% This flag is used to include the appendix for the ArXiv version
+\newtoggle{withappendix}
+\toggletrue{withappendix}
+%\togglefalse{withappendix}
 
 \begin{document} 
 
@@ -83,8 +83,11 @@ models, machine learning, ICML}
 \bibliography{ref,pliang}
 \bibliographystyle{icml2013}
 
+\iftoggle{withappendix}{
 \appendix
+\onecolumn
 \input{proofs}
+}{}
 
 \end{document} 
 

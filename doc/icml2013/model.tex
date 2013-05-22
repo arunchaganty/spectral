@@ -9,28 +9,32 @@
 The mixture of linear regressions model \citep{VieleTong2002} defines
 a conditional distribution over a response $y \in \Re$
 given covariates $x \in \Re^d$.
-The generation of $y$ given $x$ involves two steps:
-(i) draw the mixture component $h \in [k]$ according to mixture proportions
+Let $k$ be the number of mixture components.
+The generation of $y$ given $x$ involves three steps:
+(i) draw a mixture component $h \in [k]$ according to mixture proportions
 $\pi = (\pi_1, \dots, \pi_k)$;
-and (ii) generate $y$ from a Gaussian centered at $\beta_h^\top x$ with
-variance $\sigma^2$.
-\begin{eqnarray*}
+(ii) draw observation noise $\epsilon$ from a known zero-mean noise distribution $\sE$,
+and (iii) set $y$ deterministically based on $h$ and $\epsilon$.
+More compactly: %to $\beta_h^\top x$ plus some observation noise $\epsilon$.
+\begin{eqnarray}
   h &\sim& \mult(\pi), \\
-  y \mid h &\sim& \normal{ \beta_{h}^T x}{ \sigma^2 }.
-\end{eqnarray*}
+  \epsilon &\sim& \sE, \\
+  y &=& \beta_{h}^T x + \epsilon.
+\end{eqnarray}
 The parameters of the model are $\theta = (\pi, B)$,
 where $\pi \in \Re^d$ are the mixture proportions and
 $B = [\beta_1 \mid \dots \mid \beta_k] \in \Re^{d \times k}$
 are the regression coefficients.
-We assume the variance of the observation noise $\sigma^2$ is known and that the mixture components are independent.
+Note that the choice of mixture component $h$ and the observation noise $\epsilon$ are independent.
+%We also assume the distribution of the observation noise is known and has bounded support.
 The learning problem is stated as follows:
-given $n$ i.i.d. samples $(\xn{1}, \yn{1}), \dots, (\xn{n}, \yn{n})$
+given $n$ i.i.d.\ samples $(\xn{1}, \yn{1}), \dots, (\xn{n}, \yn{n})$
 drawn from the model with some unknown parameters $\theta^*$,
 return an estimate of the parameters $\hat\theta$.
 
 % History of model
 The mixture of linear regressions model has been applied
-in the statistics literature for modeling music perception, where $x$ is the
+in the statistics literature for modelling music perception, where $x$ is the
 actual tone and $y$ is the tone perceived by a musician \cite{VieleTong2002}.
 % Reference mixture of experts.
 % Acknowledge that mixture proportions % can't depend on $x$

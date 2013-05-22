@@ -12,7 +12,7 @@ human action recognition \cite{wang09crf},
 syntactic parsing \cite{petrov08discriminative},
 and machine translation \cite{liang06discrimative}.
 However, parameter estimation in these models is difficult;
-past approaches have relied exclusively on local optimization (EM, 
+past approaches rely on local optimization (EM, 
 gradient descent) and are vulnerable to local optima.
 
 % Goal of this paper
@@ -22,18 +22,18 @@ Our broad goal is to develop efficient provably consistent estimators for
 discriminative latent-variable models.
 In this paper, we provide a first step in this 
 direction by proposing a new algorithm for a simple model,
-\emph{a mixture of linear regressions} (MLG) \cite{VieleTong2002}.
+\emph{a mixture of linear regressions} \cite{VieleTong2002}. % (MLG) ?
 
 % Recent method of moments spectral methods sidestep local optima
 Recently, method of moments estimators have been developed for
 \emph{generative} latent-variable models, including
-mixture models, HMMs \cite{AnandkumarHsuKakade2012},
+mixture models, HMMs \cite{anandkumar12moments},
 Latent Dirichlet Allocation \cite{anandkumar12lda},
 and parsing models \cite{hsu12identifiability}.
-The basic idea of this work is to express
+The basic idea of these methods is to express
 the unknown model parameters as a tensor factorization
-of the third-order moments of the model distribution, which
-can be estimated from data.
+of the third-order moments of the model distribution, a quantity
+which can be estimated from data.
 The moments have a special symmetric structure
 which permits the factorization to be computed efficiently using the robust
 tensor power method \cite{AnandkumarGeHsu2012}.
@@ -41,11 +41,11 @@ tensor power method \cite{AnandkumarGeHsu2012}.
 % Twist
 In a mixture of linear regressions, using third-order moments does not
 directly reveal the tensor structure of the problem, so we cannot
-directly apply the above tensor factorization techniques.  Our solution
+simply apply the above tensor factorization techniques.  Our approach
 is to employ low-rank linear regression
-\cite{NegahbanWainwright2009,Tomioka2011} on second and third powers of
-the response to recover the appropriate symmetric tensors, using which we
-can then apply the tensor power method to retrieve the final parameters.
+\cite{NegahbanWainwright2009,Tomioka2011} to predict the second and third powers of
+the response.  The solution to these regression problems provide the appropriate symmetric tensors,
+on which we can then apply the tensor power method to retrieve the final parameters.
 
 % Approach: Derive moment functions based on linear regression on Y^2
 % and Y^3 Algorithm: trace norm regularization to recover tensor
@@ -68,7 +68,7 @@ can then apply the tensor power method to retrieve the final parameters.
 % tensor factorization
 %While method of moment estimators were \todo{described by Fisher(?)},
 %they required as many moments as there were parameters, and hence deemed
-%impractical. Recently, \citet{AnandkumarHsuKakade2012} showed how using
+%impractical. Recently, \citet{anandkumar12moments} showed how using
 %eigendecomposition, the moment equations could be solved using just the
 %first three moments of data.
 
@@ -99,7 +99,7 @@ can then apply the tensor power method to retrieve the final parameters.
 The result is a simple and efficient two-stage algorithm,
 which we call Spectral Experts.
 We prove that our algorithm yields consistent parameter estimates under certain
-new identifiability conditions.  We also conduct an empirical evaluation
+identifiability conditions.  We also conduct an empirical evaluation
 of our technique to understand its statistical properties (\sectionref{sec:evaluation}).
 %In particular, we find that in the low data regime,
 %but in the high data regime,
@@ -138,11 +138,11 @@ significantly outperforming EM with random initialization.
 
 Let $[n] = \{ 1, \dots, n \}$ denote the first $n$ positive integers.
 We use $O(f(n))$ to denote a function $g(n)$ such that $\lim_{n \to\infty} g(n)/f(n) < \infty$.
-We will only hide universal constants, exposing all dependence on the number of samples,
-dimension, norms, noise variance, etc.
+%We will only hide universal constants, exposing all dependence on the number of samples,
+%dimensionality, norms, etc.
 
 We use $x\tp{p}$ to represent the $p$-th order tensor formed by taking
-the outer product of $x \in \Re^d$; i.e. $x\tp{p}_{i_1 \ldots i_p}
+the tensor product of $x \in \Re^d$; i.e. $x\tp{p}_{i_1 \ldots i_p}
 = x_{i_1} \cdots x_{i_p}$. We will use $\innerp{\cdot}{\cdot}$ to denote
 the generalized dot product between two $p$-th order tensors:
 $\innerp{X}{Y} = \sum_{i_1, \ldots i_p} X_{i_1, \ldots i_p} Y_{i_1,
@@ -150,7 +150,7 @@ $\innerp{X}{Y} = \sum_{i_1, \ldots i_p} X_{i_1, \ldots i_p} Y_{i_1,
 which are permutations of each other, $X_{i_1 \cdots i_p}$ = $X_{j_1
 \cdots j_p}$ (all tensors in this paper will be symmetric).  For
 a $p$-th order tensor $X \in (\Re^d)\tp{p}$, the mode-$i$ unfolding of
-$X$ is a matrix, $X_{(i)} \in \Re^{d \times d^{p-1}}$, whose $j$-th row contains all the elements of $X$ whose
+$X$ is a matrix $X_{(i)} \in \Re^{d \times d^{p-1}}$, whose $j$-th row contains all the elements of $X$ whose
 $i$-th index is equal to $j$. 
 %For $X \in (\Re^d)\tp{p}$ and $Y \in (\Re^d)\tp{(p+q)}$,% $p, q > 0$,
 %$\innerp{X}{Y} \in \Re^{d^q}$ is the projection of $X$ onto the first
@@ -159,25 +159,35 @@ $i$-th index is equal to $j$.
 %i_q}$.
 
 % Norms
+For a vector $X$,
+let $\|X\|_\op$ denote the 2-norm.
 For a matrix $X$,
 let $\|X\|_*$ denote the nuclear (trace) norm (sum of singular values),
-let $\|X\|_F$ denote the Frobenius norm (square root of sum of squares of singular values),
-let $\|X\|_{\max}$ denote the max norm (elementwise maximum),
-let $\|X\|_\Lop$ denote the operator norm (largest singular value),
-let $\sigma_\text{min}(X)$ be the smallest singular value of $X$.
-For a tensor $X$,
+$\|X\|_F$ denote the Frobenius norm (square root of sum of squares of singular values),
+$\|X\|_{\max}$ denote the max norm (elementwise maximum),
+$\|X\|_\op$ denote the operator norm (largest singular value), and
+$\sigma_k(X)$ be the $k$-th largest singular value of $X$.
+For a $p$-th order tensor $X$,
 let $\|X\|_* = \frac{1}{p} \sum_{i=1}^p \|X_{(i)}\|_*$ denote
 the average nuclear norm over all $p$ unfoldings,
-and let $\|X\|_\Lop = \frac{1}{p} \sum_{i=1}^p \|X_{(i)}\|_\Lop$
+and let $\|X\|_\op = \frac{1}{p} \sum_{i=1}^p \|X_{(i)}\|_\op$
 denote the average operator norm over all $p$ unfoldings.
 
-For a symmetric tensor $X \in (\Re^d)\tp{p}$, let $\cvec(X) \in
-\Re^{C_{d,p}}, C_{d,p} = \binom{d + p + 1}{p}$ be the collapsed vectorization of distinct
-elements in $X$, for example, for $X \in \Re^{d \times d}$, $\cvec(X)
-= (X_{ii} : i \in [d]; X_{ij} + X_{ji} : i,j \in [d], i<j)$.
+
+Let $\vvec(X)$ be the vectorization of a $p$-th order tensor. For
+example, if $X \in (\Re^{2})\tp{3}$, $\vvec(X) = (X_{111}, X_{112},
+\cdots, X_{222})$.
+For a tensor $X \in (\Re^d)\tp{p}$, let $\cvec(X) \in
+\Re^{N(d,p)}, N(d,p) = \binom{d + p - 1}{p}$ be the collapsed vectorization of
+$X$. For example, if $X \in \Re^{d \times d}$, $\cvec(X)
+= (X_{ii} : i \in [d]; \frac{X_{ij} + X_{ji}}{\sqrt{2}} : i,j \in [d], i<j)$.
 In general, each component of $\cvec(X)$ is indexed by a vector of
 counts $(c_1, \dots, c_d)$ with total sum $\sum_i c_i = p$.  The value
-of that component is $\sum_{k \in K(c)} X_{k_1 \cdots k_p}$, where $K(c)
+of that component is $\frac{1}{\sqrt{|K(c)|}} \sum_{k \in K(c)} X_{k_1 \cdots k_p}$, where $K(c)
 = \{ k \in [d]^p : \forall i \in [d], c_i = |\{ j \in [p] : k_j = i \}|
-\}$ are the set of index vectors $k$ with that count profile.  
-%For symmetric tensors, $\innerp{X}{Y} = \innerp{\cvec(X)}{\cvec(Y)}$.
+\}$ are the set of index vectors $k$ whose count profile is $c$.
+We note that for a symmetric tensor $X$ and any tensor $Y$,
+$\innerp{X}{Y} = \innerp{\cvec(X)}{\cvec(Y)}$; this property is not true
+in general though.
+Later, we'll see that vectorization allow us to perform regression on tensors,
+and collapsing simplifies our identifiability condition.

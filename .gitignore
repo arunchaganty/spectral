@@ -29,7 +29,6 @@ java/out
 *_tmp.*
 
 # Data
-data/
 java/data
 doc/logs/render
 *.dot
