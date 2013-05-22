@@ -6,7 +6,7 @@
 package learning.models;
 
 import learning.models.MixtureOfGaussians;
-import learning.models.MixtureOfGaussians.GenerationOptions;
+import static learning.models.MixtureOfGaussians.*;
 
 import learning.linalg.MatrixOps;
 
