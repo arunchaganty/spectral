@@ -1,8 +1,8 @@
 % Recover the second moments, B3.
 function B = recoverB3( y, X, sigma2, lambda )
   [N, d] = size( X );
-  avgBetas = X\y;
-  y = y.^3 - 3 * sigma2 * X * avgBetas;
+  avgBetas = X\y; % y_i = x_i^T \beta
+  y = y.^3 - 3 * sigma2 * (X * avgBetas);
 
   % Construct the tensor form of X
   X_ = zeros( N, d.^3 );
@@ -10,6 +10,7 @@ function B = recoverB3( y, X, sigma2, lambda )
     Xn = X(n,:);
     X_(n,:) = vec( tensor([d,d,d], 'unit', Xn ) );
   end
+  X = X_;
 
   cvx_begin sdp;
     variables B(d, d, d);
@@ -24,7 +25,12 @@ function B = recoverB3( y, X, sigma2, lambda )
     variables t2;
     variables t3;
 
-    minimize ( lambda * (t1+t2+t3)/3 + 0.5/N * norm( y - X_ * vec(B) ) );
+    %minimize ( 0.5/N * norm( y - X_ * vec(B) ) );
+    %subject to
+    %  B == shiftdim( B, 1 );
+    %  B == shiftdim( B, 2 );
+
+    minimize ( lambda * (t1 + t2 + t3)/3 + 0.5/N * norm( y - X_ * vec(B) ) );
     subject to
       0.5 * trace(W11) + 0.5 * trace(W12) <= t1;
       [W11, mode_unfold(B,1); mode_unfold(B,1)', W12] == semidefinite(d.^2 + d);
