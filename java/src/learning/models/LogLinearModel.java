@@ -120,11 +120,17 @@ class MixtureModel extends Model {
 class LikelihoodFunctionState implements Maximizer.FunctionState {
   // Set via initialization.
   Model model;
-  List<Example> examples;
+
+  // Set one of these to non-null.
+  ParamsVec target;  // Use sufficient statistics (supervised)
+  List<Example> examples;  // Use examples (unsupervised)
+
   int K;
   Indexer<Feature> featureIndexer;
   int numFeatures;
   boolean storeHypergraphs;
+
+  // TODO: generalize to arbitrary quadratic (A w - b)^2
   double regularization;
 
   boolean valid = false;
@@ -154,29 +160,34 @@ class LikelihoodFunctionState implements Maximizer.FunctionState {
     gradient.clear();
     pCounts.clear();
 
-    for (Example ex : examples) {
-      // Numerator
-      Hypergraph Hq = ex.Hq;
-      if (Hq == null) Hq = model.createHypergraph(ex, params.weights, gradient.weights, 1.0/examples.size());
-      if (storeHypergraphs) ex.Hq = Hq;
+    // Numerator
+    if (examples != null) {
+      // Unsupervised
+      for (Example ex : examples) {
+        Hypergraph Hq = ex.Hq;
+        if (Hq == null) Hq = model.createHypergraph(ex, params.weights, gradient.weights, 1.0/examples.size());
+        if (storeHypergraphs) ex.Hq = Hq;
 
-      Hq.computePosteriors(false);
-      Hq.fetchPosteriors(false);
-      objective += Hq.getLogZ() * 1.0/examples.size();
+        Hq.computePosteriors(false);
+        Hq.fetchPosteriors(false);
+        objective += Hq.getLogZ() * 1.0/examples.size();
+      }
+    } else {
+      // Supervised
+      gradient.incr(1, target);
+      objective += params.dot(target);
     }
 
     // Denominator (globally normalized for now)
     Hp.computePosteriors(false);
     Hp.fetchPosteriors(false);
-    ListUtils.incr(gradient.weights, -1, pCounts.weights);
+    gradient.incr(-1, pCounts);
     objective -= Hp.getLogZ();
 
     // Regularization
     if (regularization > 0) {
-      for (int f = 0; f < numFeatures; f++) {
-        gradient.weights[f] -= regularization * params.weights[f];
-        objective -= 0.5 * regularization * params.weights[f] * params.weights[f];
-      }
+      gradient.incr(-regularization, params);
+      objective -= 0.5 * regularization * NumUtils.l2NormSquared(params.weights);
     }
   }
 }
@@ -200,6 +211,8 @@ class ParamsVec {
   }
 
   void clear() { ListUtils.set(weights, 0); }
+  void incr(double scale, ParamsVec that) { ListUtils.incr(this.weights, scale, that.weights); }
+  double dot(ParamsVec that) { return ListUtils.dot(this.weights, that.weights); }
 
   double computeDiff(ParamsVec that, int[] perm) {
     // Compute differences in ParamsVec with optimal permutation of parameters.
@@ -264,7 +277,7 @@ public class LogLinearModel implements Runnable {
     @Option(gloss="Type of model") public ModelType modelType = ModelType.mixture;
     @Option(gloss="Number of values of the hidden variable") public int K = 3;
     @Option(gloss="Number of possible values of output") public int D = 5;
-    @Option(gloss="Length of observation sequence") public int L = 4;
+    @Option(gloss="Length of observation sequence") public int L = 3;
     @Option(gloss="Random seed for initialization") public Random initRandom = new Random(1);
     @Option(gloss="Random seed for generating artificial data") public Random genRandom = new Random(1);
     @Option(gloss="Random seed for the true model") public Random trueParamsRandom = new Random(1);
@@ -274,6 +287,7 @@ public class LogLinearModel implements Runnable {
     @Option(gloss="How much variation in true parameters") public double trueParamsNoise = 1;
     @Option(gloss="How much variation in initial parameters") public double initParamsNoise = 0.01;
     @Option(gloss="Regularization") public double regularization = 0;
+    @Option(gloss="Fully supervised training") public boolean fullySupervised = false;
     @OptionSet(name="lbfgs") public LBFGSMaximizer.Options lbfgs = new LBFGSMaximizer.Options();
     @OptionSet(name="backtrack") public BacktrackingLineSearch.Options backtrack = new BacktrackingLineSearch.Options();
   }
@@ -343,7 +357,10 @@ public class LogLinearModel implements Runnable {
     LBFGSMaximizer maximizer = new LBFGSMaximizer(opts.backtrack, opts.lbfgs);
     LikelihoodFunctionState state = new LikelihoodFunctionState();
     state.model = model;
-    state.examples = examples;
+    if (opts.fullySupervised)
+      state.target = trueCounts;
+    else
+      state.examples = examples;
     state.K = opts.K;
     state.featureIndexer = featureIndexer;
     state.numFeatures = numFeatures();
