@@ -12,6 +12,7 @@ import learning.exceptions.RecoveryFailure;
 
 import learning.models.MixtureOfGaussians;
 import learning.models.MixtureOfGaussians.*;
+import static learning.models.MixtureOfGaussiansTest.*;
 
 import org.javatuples.*;
 
@@ -34,39 +35,6 @@ public class TensorMethodTest {
     //LogInfo.writeToStdout = false;
     LogInfo.init();
   }
-
-  // Generation routines
-  public MixtureOfGaussians generateMultiView(int K, int D, int V, MeanDistribution means) {
-    return MixtureOfGaussians.generate(K, D, V, 
-        WeightDistribution.Uniform, 
-        means, 
-        CovarianceDistribution.Spherical, 1.0);
-  }
-  public MixtureOfGaussians generateSmallEye() {
-		int K = 2;
-		int D = 3;
-		int V = 3;
-    return generateMultiView( K, D, V, MeanDistribution.Hypercube );
-  }
-  public MixtureOfGaussians generateSmallRandom() {
-		int K = 2;
-		int D = 3;
-		int V = 3;
-    return generateMultiView( K, D, V, MeanDistribution.Random );
-  }
-  public MixtureOfGaussians generateMediumEye() {
-		int K = 4;
-		int D = 6;
-		int V = 3;
-    return generateMultiView( K, D, V, MeanDistribution.Hypercube );
-  }
-  public MixtureOfGaussians generateMediumRandom() {
-		int K = 4;
-		int D = 6;
-		int V = 3;
-    return generateMultiView( K, D, V, MeanDistribution.Random );
-  }
-
   // Actual tests
 
   public void testSymmetrization( MixtureOfGaussians model ) {
