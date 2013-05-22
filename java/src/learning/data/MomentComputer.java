@@ -18,6 +18,8 @@ import java.io.*;
 
 import org.ejml.simple.SimpleMatrix;
 
+import org.apache.commons.io.FilenameUtils;
+
 import org.javatuples.*;
 
 /**
@@ -171,13 +173,14 @@ public class MomentComputer implements Runnable {
       moments = run(PC);
 
       // Debug
-      Execution.putOutput( "M12", moments.getValue0() );
-      Execution.putOutput( "M13", moments.getValue1() );
-      Execution.putOutput( "M23", moments.getValue2() );
-      Execution.putOutput( "M123", moments.getValue3() );
+      //Execution.putOutput( "M12", moments.getValue0() );
+      //Execution.putOutput( "M13", moments.getValue1() );
+      //Execution.putOutput( "M23", moments.getValue2() );
+      //Execution.putOutput( "M123", moments.getValue3() );
 
       // Save
-      String outFilename = Execution.getFile( "moments.dat" );
+      String outFilename = Execution.getFile( FilenameUtils.getBaseName(opts.dataPath) + 
+          "-" + opts.randomProjDim + "-" + opts.randomProjSeed + ".moments" );
       ObjectOutputStream out = new ObjectOutputStream( new FileOutputStream( outFilename ) ); 
       out.writeObject(opts.randomProjSeed);
       out.writeObject(moments);
