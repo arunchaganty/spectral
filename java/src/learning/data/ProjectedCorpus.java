@@ -22,6 +22,7 @@ import java.util.Date;
 import java.io.Serializable;
 
 import fig.basic.Option;
+import fig.basic.LogInfo;
 
 import org.ejml.simple.SimpleMatrix;
 
@@ -33,74 +34,73 @@ public class ProjectedCorpus extends Corpus implements Serializable, RealSequenc
   public int projectionDim;
   protected long masterSeed;
 
+  public double[][] P; // stored as a matrix for efficiency reasons
+  public SimpleMatrix Pinv; // Projection Matrix
+
   protected ProjectedCorpus() {
     super();
   }
 
-  protected ProjectedCorpus(ProjectedCorpus PC) {
+  public ProjectedCorpus(ProjectedCorpus PC) {
     super((Corpus)PC);
     this.projectionDim = PC.projectionDim;
     this.masterSeed = PC.masterSeed;
+    this.P = PC.P;
   }
 
-  public ProjectedCorpus( String[] dict, int[][] C, int d, long seed ) {
-    super( dict, C );
-    projectionDim = d;
-
-    // Stuff for lazy featurisation
+  public ProjectedCorpus(Corpus C, int d, long seed) {
+    super(C);
+    this.projectionDim = d;
     this.masterSeed = seed;
+
+    // y = P^T x
+    this.P = makeProjection();
+    // x = (P^T)^+ y
+    this.Pinv = (new SimpleMatrix(P)).transpose().pseudoInverse();
   }
 
   /**
-   * Project a corpus onto a random set of d-dimensional vectors
-   */
-  public static ProjectedCorpus fromCorpus( Corpus C, int d, long seed ) {
-    return new ProjectedCorpus( C.dict, C.C, d, seed );
+   * Construct a random (Gaussian) projection matrix.
+   */ 
+  protected double[][] makeProjection() {
+    int N = super.getDimension(); 
+    int D = projectionDim;
+    // constructing here (and not RandomFactory) because we want to use 
+    // a RNG with our specific seed.
+    Random rnd = new Random( masterSeed );
+    double[][] P_ = new double[N][D];
+    for(int n = 0; n < N; n++ ) {
+      for(int d = 0; d < D; d++ ) {
+        P_[n][d] = rnd.nextGaussian();
+      }
+      MatrixOps.makeUnitVector(P_[n]);
+    }
+
+    return P_;
   }
 
   /**
    * Get the d-dimensional feature vectore for the i-th index word
    */
   public double[] featurize( int i ) {
-    Random rnd = new Random( masterSeed + i );
-    double[] x = new double[projectionDim];
-    for(int j = 0; j < projectionDim; j++ )
-      x[j] = rnd.nextGaussian();
-    //x[j] = 10 * rnd.nextDouble();
-    
-    // Normalize x
-    MatrixOps.makeUnitVector( x );
-    return x;
+    return P[i];
   }
 
   /**
-   * Get the distribution over words for this feature
-   * @param feature
-   * @return
+   * Get the d-dimensional feature vectore for the i-th index word
    */
-  public double[] getWordDistribution( double[] x ) {
-    double[] z = new double[dict.length];
-
-    MatrixOps.makeUnitVector( x );
-    for(int i = 0; i < dict.length; i++ ) {
-      double[] feature = featurize(i);
-      z[i] = MatrixOps.dot(feature, x);
-      if( z[i] < 0 ) z[i] = 0;
-    }
-    // Normalize into a probability distribution
-    MatrixOps.projectOntoSimplex( z );
-    return z;
+  public SimpleMatrix unfeaturize( SimpleMatrix v ) {
+    return Pinv.mult(v);
   }
-  public SimpleMatrix getWordDistribution( SimpleMatrix x ) {
-    double[] x_ = x.getMatrix().data;
-    return MatrixFactory.fromVector( getWordDistribution( x_ ) );
+  public SimpleMatrix unfeaturize( double[] v ) {
+    return unfeaturize( MatrixFactory.fromVector( v ).transpose() );
   }
 
   public int getDimension() {
     return projectionDim;
   }
   public int getInstanceCount() {
-    return C.length;
+    return super.getInstanceCount();
   }
   public int getInstanceLength(int instance) {
     return C[instance].length;

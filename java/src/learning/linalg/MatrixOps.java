@@ -576,6 +576,14 @@ public class MatrixOps {
     for( int i = 0; i < x.length; i++ )
       x[i] /= sum;
   }
+  public static void makeUnitVector(DenseMatrix64F X) {
+    makeUnitVector(X.data);
+  }
+  public static SimpleMatrix makeUnitVector(SimpleMatrix X) {
+    DenseMatrix64F Y = X.getMatrix().copy();
+    makeUnitVector(Y);
+    return SimpleMatrix.wrap(Y);
+  }
 
   /**
    * Find the sum of the rows of the column in X 

@@ -104,7 +104,7 @@ public class MomentComputer implements Runnable {
     Worker[] comps = new Worker[nThreads];
     // Map
     for( int i = 0; i < nThreads; i++ ) {
-      comps[i] = new Worker( new CachedProjectedCorpus(C), offset, length );
+      comps[i] = new Worker( C, offset, length );
       offset += length;
       comps[i].start();
     }
@@ -162,7 +162,7 @@ public class MomentComputer implements Runnable {
   public void run() {
     // Read corpus
     try {
-      ProjectedCorpus PC = ProjectedCorpus.fromCorpus( 
+      ProjectedCorpus PC = new ProjectedCorpus( 
         Corpus.parseText( opts.dataPath, opts.mapPath ),
         opts.randomProjDim, opts.randomProjSeed );
       

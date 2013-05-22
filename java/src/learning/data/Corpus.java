@@ -54,6 +54,13 @@ public class Corpus {
     this.C = C;
   }
 
+  public int getInstanceCount() {
+    return C.length;
+  }
+  public int getDimension() {
+    return dict.length;
+  }
+
   // TODO: Create a lazy read version
   /**
    * Parse a text file into a corpus.

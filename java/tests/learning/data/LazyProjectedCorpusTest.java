@@ -22,7 +22,7 @@ import fig.basic.LogInfo;
 /**
  * 
  */
-public class ProjectedCorpusTest {
+public class LazyProjectedCorpusTest {
   static double EPS_ZERO = 1e-7;
   static double EPS_CLOSE = 1e-4;
 
@@ -38,7 +38,7 @@ public class ProjectedCorpusTest {
   @Test
   public void parseText() throws IOException {
     Corpus C = Corpus.parseText( dataPath, mapPath );
-    ProjectedCorpus PC = new ProjectedCorpus( C, 10, 1 );
+    LazyProjectedCorpus PC = LazyProjectedCorpus.fromCorpus( C, 10, 1 );
 
     // Show that the projected vectors always choose the right word with
     // highest probability
@@ -47,9 +47,10 @@ public class ProjectedCorpusTest {
       for( int j = 0; j < doc.length; j++ ) {
         int word = doc[j];
 
-        double[] y = PC.featurize( word );
-        SimpleMatrix x = PC.unfeaturize( y );
-        Assert.assertTrue( MatrixOps.argmax( x ) == word );
+        double[] pr = PC.getWordDistribution( PC.featurize( word ) );
+        // Check the right word has the maximum probability  
+        double prMax = MatrixOps.max( pr );
+        Assert.assertTrue( Math.abs( pr[word] - prMax ) < EPS_ZERO );
       }
       LogInfo.logs("At document#" + i );
     }
