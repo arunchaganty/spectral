@@ -7,14 +7,14 @@ package learning.data;
 
 import learning.data.Corpus;
 import learning.data.ProjectedCorpus;
-import learning.linalg.MatrixOps;
-import learning.linalg.MatrixFactory;
-import learning.linalg.RandomFactory;
+import learning.linalg.*;
 
 import fig.basic.LogInfo;
 import fig.basic.Option;
 import fig.basic.OptionsParser;
 import fig.exec.Execution;
+
+import java.io.*;
 
 import org.ejml.simple.SimpleMatrix;
 
@@ -23,29 +23,33 @@ import org.javatuples.*;
 /**
  * Efficiently computes moments of text corpora.
  */
-public class MomentComputer {
-  final int nThreads;
-  final protected RealSequenceData seqData;
+public class MomentComputer implements Runnable {
 
-  public MomentComputer( RealSequenceData seqData, int nThreads ) {
-    this.seqData = seqData;
+  @Option(gloss="Number of threads to run for")
+  public int nThreads;
+
+  public MomentComputer( int nThreads ) {
     this.nThreads = nThreads;
   }
-  public MomentComputer( RealSequenceData seqData ) {
-    this.seqData = seqData;
-    this.nThreads = 4;
+  public MomentComputer() {
+    this( 4 );
   }
 
   /**
    * Compute moments for a range in the dataset.
    */
-  protected class PairsComputer extends Thread {
+  protected class Worker extends Thread {
     public double[][] P12;
     public double[][] P13;
+    public double[][] P23;
+    public double[][][] P123;
+
+    final protected RealSequenceData seqData; // Needs a copy to maintain a unique cache
 
     public int offset;
     public int length;
-    public PairsComputer( int offset, int length ) {
+    public Worker( RealSequenceData seqData, int offset, int length ) {
+      this.seqData = seqData;
       this.offset = offset;
       if( offset + length > seqData.getInstanceCount() )
         length = seqData.getInstanceCount() - offset;
@@ -56,8 +60,10 @@ public class MomentComputer {
       int D = seqData.getDimension();
       P12 = new double[D][D];
       P13 = new double[D][D];
+      P23 = new double[D][D];
+      P123 = new double[D][D][D];
 
-      LogInfo.begin_track( "Pairs @" + offset );
+      LogInfo.begin_track( "Moments @" + offset );
       double count = 0.0;
       for( int instance = offset; instance < offset + length; instance++ ) {
         int instanceLength = seqData.getInstanceLength( instance );
@@ -65,19 +71,23 @@ public class MomentComputer {
           double[] x1 = seqData.getDatum( instance, idx );
           double[] x2 = seqData.getDatum( instance, idx+1 );
           double[] x3 = seqData.getDatum( instance, idx+2 );
-          // Add into P13
           count++;
+          // Add into Pairs and Triples
           for( int i = 0; i < D; i++ ) {
             for( int j = 0; j < D; j++ ) {
               P12[i][j] += (x1[i] * x2[j] - P12[i][j])/(count);
               P13[i][j] += (x1[i] * x3[j] - P13[i][j])/(count);
+              P23[i][j] += (x2[i] * x3[j] - P23[i][j])/(count);
+              for( int k = 0; k < D; k++ ) {
+                P123[i][j][k] += (x1[i] * x2[j] * x3[k] - P123[i][j][k])/(count);
+              } 
             }
           }
         }
-        if( instance % 10 == 0 )
-          Execution.putOutput( "Pairs@" + offset + " status", ((float)(instance - offset) * 100)/length );
+        if( instance % 100 == 0 )
+          Execution.putOutput( "Moments @" + offset + " status", ((float)(instance - offset) * 100)/length );
       }
-      LogInfo.end_track( "Pairs @" + offset );
+      LogInfo.end_track( "Moments @" + offset );
     }
   }
 
@@ -85,18 +95,21 @@ public class MomentComputer {
    * Compute moments in the embarrasingly parallel way - just split
    * into k parts.
    */
-  public Pair<SimpleMatrix, SimpleMatrix> Pairs() {
+  public Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> 
+      run(ProjectedCorpus C) {
     int offset = 0;
-    int totalLength = seqData.getInstanceCount();
+    int totalLength = C.C.length;
     int length = totalLength/nThreads;
 
-    PairsComputer[] comps = new PairsComputer[nThreads];
+    Worker[] comps = new Worker[nThreads];
+    // Map
     for( int i = 0; i < nThreads; i++ ) {
-      comps[i] = new PairsComputer( offset, length );
+      comps[i] = new Worker( new CachedProjectedCorpus(C), offset, length );
       offset += length;
       comps[i].start();
     }
 
+    // Stall
     for( int i = 0; i < nThreads; i++ ) {
       try {
         comps[i].join();
@@ -105,141 +118,77 @@ public class MomentComputer {
       }
     }
 
+    // Reduce
     // Average over all the comps
-    int D = seqData.getDimension();
+    int D = C.projectionDim;
     double[][] P12 = new double[D][D];
     double[][] P13 = new double[D][D];
-    for(PairsComputer comp : comps) {
+    double[][] P23 = new double[D][D];
+    double[][][] P123 = new double[D][D][D];
+    for(Worker comp : comps) {
       for(int i = 0; i < D; i++) {
         for(int j = 0; j < D; j++) {
           double ratio = (double) comp.length/totalLength;
           P12[i][j] += ratio * comp.P12[i][j];
           P13[i][j] += ratio * comp.P13[i][j];
+          P23[i][j] += ratio * comp.P23[i][j];
+          for(int k = 0; k < D; k++) {
+            P123[i][j][k] += ratio * comp.P123[i][j][k];
+          }
         }
       }
     }
 
     SimpleMatrix P12_ = new SimpleMatrix( P12 );
     SimpleMatrix P13_ = new SimpleMatrix( P13 );
+    SimpleMatrix P23_ = new SimpleMatrix( P23 );
+    FullTensor P123_ = new FullTensor( P123 );
 
-    return new Pair<>( P12_, P13_ );
+    return new Quartet<>( P12_, P13_, P23_, P123_ );
   }
 
-  /**
-   * Compute moments for a range in the dataset.
-   */
-  protected class TriplesComputer extends Thread {
-    public double[][][] P123;
-    public double[][] Theta;
-    public int idx1, idx2, idx3;
+  public static class Options {
+    @Option(gloss="File containing word-index representation of data", required=true)
+      public String dataPath;
+    @Option(gloss="File containing word-index to word map", required=true)
+      public String mapPath;
+    @Option(gloss="Dimensions for random proj.")
+      public int randomProjDim = 10;
+    @Option(gloss="Seed for random proj.")
+      public int randomProjSeed = 1;
+  }
+  public static Options opts = new Options();
 
-    public int offset;
-    public int length;
-    public TriplesComputer( int offset, int length, int axis, double[][] Theta ) {
-      assert( 0 <= axis && axis < 3 );
+  public void run() {
+    // Read corpus
+    try {
+      ProjectedCorpus PC = ProjectedCorpus.fromCorpus( 
+        Corpus.parseText( opts.mapPath, opts.dataPath ),
+        opts.randomProjDim, opts.randomProjSeed );
+      
+      // Compute moments
+      Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,FullTensor> moments;
+      moments = run(PC);
 
-      // Align the axes
-      idx1 = idx2 = idx3 = axis;
-      switch( axis ){
-        case 0: idx1 = 1; idx2 = 2; break;
-        case 1: idx1 = 0; idx2 = 2; break;
-        case 2: idx1 = 0; idx2 = 1; break;
-        default:
-                throw new IndexOutOfBoundsException();
-      }
+      // Debug
+      Execution.putOutput( "M12", moments.getValue0() );
+      Execution.putOutput( "M13", moments.getValue1() );
+      Execution.putOutput( "M23", moments.getValue2() );
+      Execution.putOutput( "M123", moments.getValue3() );
 
-      this.offset = offset;
-      if( offset + length > seqData.getInstanceCount() )
-        length = seqData.getInstanceCount() - offset;
-      this.length = length;
-      this.Theta = Theta;
-    }
-
-    public void run() {
-      int D = seqData.getDimension();
-      int K = Theta.length;
-      P123 = new double[K][D][D];
-
-      LogInfo.begin_track( "Triples @" + offset );
-      double count = 0.0;
-      for( int instance = offset; instance < offset + length; instance++ ) {
-        int instanceLength = seqData.getInstanceLength( instance );
-        for( int idx = 0; idx < instanceLength - 2; idx++ ) {
-          double[] x1 = seqData.getDatum( instance, idx + idx1 );
-          double[] x2 = seqData.getDatum( instance, idx + idx2 );
-          double[] x3 = seqData.getDatum( instance, idx + idx3 );
-
-          // Compute inner products
-          double[] prod = new double[K];
-          for( int i = 0; i < K; i++ )
-            for( int j = 0; j < D; j++ )
-              prod[i] += x3[j] * Theta[i][j];
-
-          // Add into P123
-          count++;
-          for( int i = 0; i < D; i++ ) {
-            for( int j = 0; j < D; j++ ) {
-              for( int cluster = 0; cluster < K; cluster++ ) {
-                P123[cluster][i][j] += (prod[cluster] * x1[i] * x2[j] - P123[cluster][i][j])/count;
-              }
-            }
-          }
-        }
-        if( instance % 10 == 0 )
-          Execution.putOutput( "Triples@" + offset + " status", ((float)(instance - offset) * 100)/length );
-      }
-      LogInfo.end_track( "Triples @" + offset );
+      // Save
+      String outFilename = Execution.getFile( "moments.dat" );
+      ObjectOutputStream out = new ObjectOutputStream( new FileOutputStream( outFilename ) ); 
+      out.writeObject(opts.randomProjSeed);
+      out.writeObject(moments);
+      out.close();
+    } catch( IOException e ) {
+      LogInfo.logs( e );
     }
   }
 
-  /**
-   * Compute the projected tensor using each column of theta.
-   *
-   * TODO: Support ordering
-   */
-  public SimpleMatrix[] Triples( int axis, SimpleMatrix theta ) {
-    int K = theta.numCols();
-    // Let's use rows because they're easier to index with
-    double[][] Theta = MatrixFactory.toArray( theta.transpose() );
-
-    int offset = 0;
-    int totalLength = seqData.getInstanceCount();
-    int length = totalLength/nThreads;
-
-    TriplesComputer[] comps = new TriplesComputer[nThreads];
-    for( int i = 0; i < nThreads; i++ ) {
-      comps[i] = new TriplesComputer( offset, length, axis, Theta );
-      offset += length;
-      comps[i].start();
-    }
-
-    for( int i = 0; i < nThreads; i++ ) {
-      try {
-        comps[i].join();
-      } catch (InterruptedException e) {
-        LogInfo.logsForce( "Thread was interrupted: ", e.getMessage() );
-      }
-    }
-
-    // Average over all the comps
-    int D = seqData.getDimension();
-    double[][][] P123 = new double[K][D][D];
-    for(TriplesComputer comp : comps) {
-      for(int cluster = 0; cluster < K; cluster++) {
-        for(int i = 0; i < D; i++) {
-          for(int j = 0; j < D; j++) {
-            double ratio = (double) comp.length/totalLength;
-            P123[cluster][i][j] += ratio * comp.P123[cluster][i][j];
-          }
-        }
-      }
-    }
-    SimpleMatrix[] P123_ = new SimpleMatrix[K];
-    for( int i = 0; i < K; i++ ) {
-      P123_[i] = new SimpleMatrix( P123[i] );
-    }
-
-    return P123_;
+  public static void main(String[] args) {
+    Execution.run(args, new MomentComputer(), "Main", opts);
   }
 
 }

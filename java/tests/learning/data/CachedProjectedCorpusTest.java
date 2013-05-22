@@ -22,7 +22,7 @@ import fig.basic.LogInfo;
 /**
  * 
  */
-public class ProjectedCorpusTest {
+public class CachedProjectedCorpusTest {
   static double EPS_ZERO = 1e-7;
   static double EPS_CLOSE = 1e-4;
 
@@ -39,6 +39,7 @@ public class ProjectedCorpusTest {
   public void parseText() throws IOException {
     Corpus C = Corpus.parseText( dataPath, mapPath );
     ProjectedCorpus PC = ProjectedCorpus.fromCorpus( C, 10, 1 );
+    CachedProjectedCorpus CPC = new CachedProjectedCorpus( PC, 50000 );
 
     // Show that the projected vectors always choose the right word with
     // highest probability
@@ -55,42 +56,5 @@ public class ProjectedCorpusTest {
       LogInfo.logs("At document#" + i );
     }
   }
-  
-  // @Test
-  // public void serializablityTest() throws IOException, ClassNotFoundException {
-  //   // Test whether parseText faithfully reproduces the text corpus,
-  //   // modulo reduction to sentinel classes
-  //   // Small cutoff because the test corpus is so small
-  //   Corpus C = Corpus.parseText( corpusPath, 2 );
-  //   ProjectedCorpus PC = ProjectedCorpus.fromCorpus( C, 10 );
-
-  //   File tmp = File.createTempFile("projected-corpus-test",".dat");
-
-  //   ObjectOutputStream out = new ObjectOutputStream( new FileOutputStream( tmp ) ); 
-  //   out.writeObject( PC );
-  //   out.close();
-
-  //   ObjectInputStream in = new ObjectInputStream( new FileInputStream( tmp ) ); 
-  //   PC = (ProjectedCorpus) in.readObject();
-  //   in.close();
-
-  //   tmp.deleteOnExit();
-
-  //   // Show that the projected vectors always choose the right word with
-  //   // highest probability
-  //   for( int i = 0; i < C.C.length; i++ ) {
-  //     int[] doc = C.C[i];
-  //     for( int j = 0; j < doc.length; j++ ) {
-  //       int word = doc[j];
-
-  //       double[] pr = PC.getWordDistribution( PC.featurize( word ) );
-  //       // Check the right word has the maximum probability  
-  //       double prMax = MatrixOps.max( pr );
-  //       Assert.assertTrue( Math.abs( pr[word] - prMax ) < EPS_ZERO );
-  //     }
-  //   }
-  // }
-
-
-
 }
+

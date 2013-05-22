@@ -21,62 +21,53 @@ import java.util.Date;
 
 import java.io.Serializable;
 
+import fig.basic.Option;
+
 import org.ejml.simple.SimpleMatrix;
 
 /**
  * Stores a corpus in an integer array
  */
-public class ProjectedCorpus extends Corpus implements Serializable {
+public class ProjectedCorpus extends Corpus implements Serializable, RealSequenceData {
   private static final long serialVersionUID = 2L;
   public int projectionDim;
-  protected long[] seeds;
+  protected long masterSeed;
 
   protected ProjectedCorpus() {
     super();
   }
 
-  public ProjectedCorpus( String[] dict, int[][] C, int d, long[] seeds ) {
+  protected ProjectedCorpus(ProjectedCorpus PC) {
+    super((Corpus)PC);
+    this.projectionDim = PC.projectionDim;
+    this.masterSeed = PC.masterSeed;
+  }
+
+  public ProjectedCorpus( String[] dict, int[][] C, int d, long seed ) {
     super( dict, C );
     projectionDim = d;
 
     // Stuff for lazy featurisation
-    this.seeds = seeds;
+    this.masterSeed = seed;
   }
 
   /**
    * Project a corpus onto a random set of d-dimensional vectors
    */
   public static ProjectedCorpus fromCorpus( Corpus C, int d, long seed ) {
-    Random rnd = new Random( seed );
-
-    // Generate a set of seeds for each word
-    long[] seeds = new long[ C.dict.length ];
-    for(int i = 0; i < C.dict.length; i++ ) 
-      seeds[i] = rnd.nextLong();
-
-    return new ProjectedCorpus( C.dict, C.C, d, seeds );
-  }
-  /**
-   * If no seed was provided, use the RandomFactory rng.
-   */
-  public static ProjectedCorpus fromCorpus( Corpus C, int d ) {
-    // Generate a set of seeds for each word
-    long[] seeds = new long[ C.dict.length ];
-    for(int i = 0; i < C.dict.length; i++ ) 
-      seeds[i] = RandomFactory.rand.nextLong();
-
-    return new ProjectedCorpus( C.dict, C.C, d, seeds );
+    return new ProjectedCorpus( C.dict, C.C, d, seed );
   }
 
   /**
    * Get the d-dimensional feature vectore for the i-th index word
    */
   public double[] featurize( int i ) {
-    Random rnd = new Random( seeds[i] );
+    Random rnd = new Random( masterSeed + i );
     double[] x = new double[projectionDim];
     for(int j = 0; j < projectionDim; j++ )
       x[j] = rnd.nextGaussian();
     //x[j] = 10 * rnd.nextDouble();
+    
     // Normalize x
     MatrixOps.makeUnitVector( x );
     return x;
@@ -103,6 +94,19 @@ public class ProjectedCorpus extends Corpus implements Serializable {
   public SimpleMatrix getWordDistribution( SimpleMatrix x ) {
     double[] x_ = x.getMatrix().data;
     return MatrixFactory.fromVector( getWordDistribution( x_ ) );
+  }
+
+  public int getDimension() {
+    return projectionDim;
+  }
+  public int getInstanceCount() {
+    return C.length;
+  }
+  public int getInstanceLength(int instance) {
+    return C[instance].length;
+  }
+  public double[] getDatum(int instance, int index) {
+    return featurize(C[instance][index]);
   }
 
 }
