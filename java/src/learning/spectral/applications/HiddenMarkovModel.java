@@ -5,8 +5,7 @@
  */
 package learning.spectral.applications;
 
-import learning.exceptions.RecoveryFailure;
-import learning.spectral.MultiViewMixture;
+import learning.spectral.TensorMethod;
 import learning.data.Corpus;
 import learning.data.ProjectedCorpus;
 import learning.data.MomentComputer;
@@ -39,11 +38,14 @@ import java.lang.ClassNotFoundException;
 public class HiddenMarkovModel implements Runnable {
 
   public Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix>
-      run( SimpleMatrix M12, SimpleMatrix M23, SimpleMatrix M13, 
-          FullTensor M123 ) {
+      run( int K, 
+          SimpleMatrix M12, SimpleMatrix M13, SimpleMatrix M23, FullTensor M123 ) {
     // Tensor Factorize
-    //
+    TensorMethod algo = new TensorMethod();
+    Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, SimpleMatrix> params = algo.recoverParameters( K, M12, M13, M23, M123 );
+
     // Return emission and transition probabilities.
+
     return null;
   }
 

@@ -5,10 +5,12 @@ import org.ejml.simple.SimpleMatrix;
 import org.ejml.data.DenseMatrix64F;
 import org.javatuples.Triplet;
 
+import java.io.Serializable;
+
 /**
   A Tensor constructed with a full DxDxD matrix
  */
-public class FullTensor implements Tensor {
+public class FullTensor implements Tensor, Serializable {
   public double[][][] X;
   public int D1, D2, D3;
 

@@ -163,7 +163,7 @@ public class MomentComputer implements Runnable {
     // Read corpus
     try {
       ProjectedCorpus PC = ProjectedCorpus.fromCorpus( 
-        Corpus.parseText( opts.mapPath, opts.dataPath ),
+        Corpus.parseText( opts.dataPath, opts.mapPath ),
         opts.randomProjDim, opts.randomProjSeed );
       
       // Compute moments

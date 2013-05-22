@@ -34,7 +34,7 @@ public class CachedProjectedCorpus extends ProjectedCorpus {
     double[] x = featureCache.get(i);
     // Otherwise call PC to get it
     if( x == null ) {
-      x = featurize( i );
+      x = super.featurize( i );
       featureCache.put(i, x, -1);
     }
 
