@@ -267,6 +267,13 @@ public class Main implements Runnable {
         this.model = model;
         break;
       }
+      case tallMixture: {
+        TallMixture model = new TallMixture();
+        model.L = opts.L;
+        model.D = opts.D;
+        this.model = model;
+        break;
+      }
       default:
         throw new RuntimeException("Unhandled model type: " + opts.modelType);
     }

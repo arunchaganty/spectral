@@ -136,7 +136,7 @@ class HiddenMarkovModel extends Model {
       H.addProdNode(hNextNode); // this is a product node over emissions and transistions.
 
       // probability of choosing this value for h.
-      int trans_h_h_ = featureIndexer.getIndex(new UnaryFeature(h, "h'="+h_));
+      int trans_h_h_ = featureIndexer.getIndex(new BinaryFeature(h, h_));
       H.addEdge(h_Node, hNextNode, edgeInfo(params, counts, trans_h_h_, increment));
     }
   }
@@ -185,6 +185,96 @@ class HiddenMarkovModel extends Model {
       int i = L-1;
       for (int h = 0; h < K; h++) {  // And finally an end state.
         addEmission( H, i, h, ex, params, counts, increment );
+      }
+    }
+    return H;
+  }
+}
+
+class TallMixture extends Model {
+  int L, D; // L = number of views, D = choices per view;
+
+  public Example newExample() {
+    Example ex = new Example();
+    ex.x = new int[L];
+    return ex;
+  }
+
+  // Used to set observed data
+  public Example newExample(int[] x) {
+    assert( x.length == L );
+    Example ex = new Example();
+    ex.x = new int[x.length];
+    System.arraycopy(x, 0, ex.x, 0, x.length);
+    return ex;
+  }
+
+  public void addInit(Hypergraph<Example> H, Example ex, double[] params, double[] counts, double increment) {
+    Object rootNode = H.sumStartNode();
+    for (int h = 0; h < K; h++) {  // For each value of start state...
+      String hNode = String.format("h_%d=%d", 0, h); 
+      H.addProdNode(hNode); // Each sub node is a product over views
+
+      // probability of choosing this value for h.
+      int pi_h = featureIndexer.getIndex(new UnaryFeature(h, "pi"));
+      H.addEdge(rootNode, hNode, edgeInfo(params, counts, pi_h, increment));
+    }
+  }
+
+  public void addHiddenNode(Hypergraph<Example> H, int i, int h, Example ex, double[] params, double[] counts, double increment) {
+    String hNode = String.format("h_%d=%d", 0, h); 
+    String h_Node = String.format("h_%d", i+1); 
+    H.addSumNode(h_Node); // Sum over hidden states
+    H.addEdge( hNode, h_Node ); // No potential
+
+    for (int h_ = 0; h_ < K; h_++) {  // For each value of start state...
+      String hNextNode = String.format("h_%d=%d", i+1, h_); 
+      H.addSumNode(hNextNode); // Sum over observations
+
+      // probability of choosing this value for h.
+      int pi_h = featureIndexer.getIndex(new BinaryFeature(h, h_));
+      H.addEdge(h_Node, hNextNode, edgeInfo(params, counts, pi_h, increment));
+    }
+  }
+
+  public void addObserved(Hypergraph<Example> H, int i, int h, Example ex, double[] params, double[] counts, double increment) {
+    String hNode = String.format("h_%d=%d", i+1, h); 
+    String xNode = String.format("h_%d=%d,x_%d", i+1, h, i+1); 
+
+    if (ex != null) {  // Numerator: generate x[j]
+      int f_xj = featureIndexer.getIndex(new UnaryFeature(h, "x="+ex.x[i]));
+      if (params != null)
+        H.addEdge(hNode, H.endNode, edgeInfo(params, counts, f_xj, increment));
+    } else {  // Denominator: generate each possible assignment x[j] = a
+      H.addSumNode(xNode);
+      H.addEdge(hNode, xNode); // No potential required; hNode is a product node
+      for (int a = 0; a < D; a++) {
+        int f_xa = featureIndexer.getIndex(new UnaryFeature(h, "x="+a));
+        if (params != null)
+          H.addEdge(xNode, H.endNode, edgeInfo(params, counts, f_xa, increment, i, a));
+      }
+    }
+  }
+
+
+  public Hypergraph<Example> createHypergraph(Example ex, double[] params, double[] counts, double increment) {
+    // Set length to be length of example data.
+    int L = (ex != null) ? ex.x.length : this.L;
+
+    Hypergraph<Example> H = new Hypergraph<Example>();
+    //H.debug = true;
+    
+    // The root node disjuncts over the possible hidden state values for
+    // the start state
+    addInit(H, ex, params, counts, increment);
+
+    // For the remaining nodes
+    for( int i = 0; i < L; i++ ) { // For each view
+      for( int h = 0; h < K; h++ ) { // For each choice of the hidden start state
+        addHiddenNode( H, i, h, ex, params, counts, increment );
+      }
+      for( int h = 0; h < K; h++ ) { // For each choice of the hidden state for the view
+        addObserved( H, i, h, ex, params, counts, increment );
       }
     }
     return H;
