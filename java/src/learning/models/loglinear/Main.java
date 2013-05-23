@@ -19,6 +19,7 @@ abstract class ObjectiveTerm {
   double value;
   ParamsVec counts;
 
+  // Populate |value| and |counts| based on the current state.
   public abstract void infer(boolean needGradient);
 }
 
@@ -325,20 +326,21 @@ public class Main implements Runnable {
     return new GradientMaximizer(opts.backtrack);
   }
 
+  // Goal: min KL(q||p)
   void optimize() {
-    ParamsVec eParams = model.newParamsVec();  // beta
-    ParamsVec mParams = model.newParamsVec();  // theta
-    ParamsVec mCounts = model.newParamsVec();  // mu
+    ParamsVec eParams = model.newParamsVec();  // beta + theta (q)
+    ParamsVec mParams = model.newParamsVec();  // theta (p)
+    ParamsVec mCounts = model.newParamsVec();  // mu (deterministic function of mParams)
 
     boolean[] allMeasuredFeatures = new boolean[model.numFeatures()];
     for (int j = 0; j < model.numFeatures(); j++) allMeasuredFeatures[j] = true;
 
     ZeroTerm zeroTerm = new ZeroTerm(model.newParamsVec());
-    LinearTerm measurementsTerm = new LinearTerm(eParams, measurements, measuredFeatures);
+    LinearTerm measurementsTerm = new LinearTerm(eParams, measurements, measuredFeatures);  // \tau
     ExamplesTerm eExamplesTerm = new ExamplesTerm(model, eParams, model.newParamsVec(), examples, opts.storeHypergraphs);
 
     ExamplesTerm mExamplesTerm = new ExamplesTerm(model, mParams, model.newParamsVec(), examples, opts.storeHypergraphs);
-    LinearTerm supervisedTerm = new LinearTerm(mParams, trueCounts, allMeasuredFeatures);
+    LinearTerm supervisedTerm = new LinearTerm(mParams, trueCounts, allMeasuredFeatures);  // Infinite data
     LinearTerm examplesOutTerm = new LinearTerm(mParams, eExamplesTerm.counts, allMeasuredFeatures);
     GlobalTerm globalTerm = new GlobalTerm(model, mParams, mCounts);
 
@@ -396,7 +398,7 @@ public class Main implements Runnable {
       boolean done2 = optimizeIter(iter, "M", mMaximizer, mState, opts.mNumIters);
       done = done1 && done2;
 
-      // Copy parameters corresponding to non-measured features from M-step to E-step
+      // Copy parameters from M-step to E-step.
       // This is the base measure for q in KL(q||p)
       if (ePredTerm == eExamplesTerm) {
         for (int j = 0; j < model.numFeatures(); j++)
