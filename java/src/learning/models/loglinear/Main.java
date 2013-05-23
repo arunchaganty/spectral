@@ -254,12 +254,27 @@ public class Main implements Runnable {
 
   public void initModel() {
     switch (opts.modelType) {
-      case mixture:
+      case mixture: {
         MixtureModel model = new MixtureModel();
         model.L = opts.L;
         model.D = opts.D;
         this.model = model;
         break;
+      }
+      case hmm: {
+        HiddenMarkovModel model = new HiddenMarkovModel();
+        model.L = opts.L;
+        model.D = opts.D;
+        this.model = model;
+        break;
+      }
+      case tallMixture: {
+        TallMixture model = new TallMixture();
+        model.L = opts.L;
+        model.D = opts.D;
+        this.model = model;
+        break;
+      }
       default:
         throw new RuntimeException("Unhandled model type: " + opts.modelType);
     }
@@ -292,6 +307,7 @@ public class Main implements Runnable {
           measurements.weights[j] = trueCounts.weights[j];
       }
     } else {
+      // TODO: Implement via spectral.
       throw new RuntimeException("Not supported");
     }
   }
@@ -381,13 +397,15 @@ public class Main implements Runnable {
       }
 
       // Dump out statistics
+      // TODO: Implement a way of checking parameter error in a
+      // block-wise way.
       int[] perm = new int[opts.K];
       List<String> items = new ArrayList<String>();
       items.add("iter="+iter);
-      items.add(logStat("paramsError", mParams.computeDiff(trueParams, perm)));
-      items.add(logStat("paramsPerm", Fmt.D(perm)));
-      items.add(logStat("countsError", mCounts.computeDiff(trueCounts, perm)));
-      items.add(logStat("countsPerm", Fmt.D(perm)));
+      //items.add(logStat("paramsError", mParams.computeDiff(trueParams, perm)));
+      //items.add(logStat("paramsPerm", Fmt.D(perm)));
+      //items.add(logStat("countsError", mCounts.computeDiff(trueCounts, perm)));
+      //items.add(logStat("countsPerm", Fmt.D(perm)));
       items.add(logStat("eObjective", eState.value()));
       items.add(logStat("mObjective", mState.value()));
       eventsOut.println(StrUtils.join(items, "\t"));
