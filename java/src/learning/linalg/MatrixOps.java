@@ -259,6 +259,13 @@ public class MatrixOps {
   public static double min( SimpleMatrix X ) {
     return min( X.getMatrix() );
   }
+  public static double min( double x, double y ) {
+    return ( x < y ) ? x : y;
+  }
+  public static int min( int x, int y ) {
+    return ( x < y ) ? x : y;
+  }
+
   /**
    * Find the maximum value of the matrix X
    */
@@ -274,6 +281,12 @@ public class MatrixOps {
   }
   public static double max( SimpleMatrix X ) {
     return max( X.getMatrix() );
+  }
+  public static double max( double x, double y ) {
+    return ( x > y ) ? x : y;
+  }
+  public static int max( int x, int y ) {
+    return ( x > y ) ? x : y;
   }
 
   public static double maxAbs( double[] x ) {

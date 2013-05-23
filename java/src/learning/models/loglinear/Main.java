@@ -274,6 +274,15 @@ public class Main implements Runnable {
         this.model = model;
         break;
       }
+      case grid: {
+        Grid model = new Grid();
+        model.width = 2;
+        model.height = opts.L/2;
+        model.L = opts.L;
+        model.D = opts.D;
+        this.model = model;
+        break;
+      }
       default:
         throw new RuntimeException("Unhandled model type: " + opts.modelType);
     }
