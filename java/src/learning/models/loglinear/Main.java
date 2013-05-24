@@ -9,6 +9,11 @@ import fig.prob.*;
 import fig.record.*;
 import static fig.basic.LogInfo.*;
 
+import org.ejml.simple.SimpleMatrix;
+import org.javatuples.Quartet;
+import learning.linalg.*;
+import learning.spectral.TensorMethod;
+
 class Example {
   Hypergraph Hq;  // For inference conditioned on the observations (represents q(h|x)).
   int[] x;  // Values of observed nodes
@@ -303,6 +308,7 @@ public class Main implements Runnable {
   }
 
   void estimateMoments() {
+    LogInfo.begin_track("estimateMoments");
     if (opts.objectiveType != Options.ObjectiveType.measurements) return;
 
     Random random = new Random(3);
@@ -316,9 +322,71 @@ public class Main implements Runnable {
           measurements.weights[j] = trueCounts.weights[j];
       }
     } else {
-      // TODO: Implement via spectral.
-      throw new RuntimeException("Not supported");
+      measurements = model.newParamsVec();
+      // Construct triples of three observed variables around the hidden
+      // node.
+      Iterator<double[][]> dataSeq;
+      switch (opts.modelType) {
+        case mixture: {
+          // x_{1,2,3} 
+          dataSeq = (new Iterator<double[][]>() {
+            Iterator<Example> iter = examples.iterator();
+            public boolean hasNext() {
+              return iter.hasNext();
+            }
+            public double[][] next() {
+              Example ex = iter.next();
+              double[][] data = new double[3][opts.D]; // Each datum is a one-hot vector
+              for( int v = 0; v < 3; v++ ) {
+                data[v][ex.x[v]] = 1.0;
+              }
+
+              return data;
+            }
+            public void remove() {
+              throw new RuntimeException();
+            }
+          });
+          break;
+        }
+        default:
+          throw new RuntimeException("Unhandled model type: " + opts.modelType);
+      }
+
+      TensorMethod algo = new TensorMethod();
+
+      Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> 
+        bottleneckMoments = algo.recoverParameters( opts.K, opts.D, dataSeq );
+
+      // Set appropriate measuredFeatures to observed moments
+      switch (opts.modelType) {
+        case mixture: 
+          {
+            SimpleMatrix M[] = {bottleneckMoments.getValue1(), bottleneckMoments.getValue2(), bottleneckMoments.getValue3()};
+            assert( M[2].numRows() == opts.D );
+            assert( M[2].numCols() == opts.K );
+            // Each column corresponds to a particular hidden moment.
+            for( int h = 0; h < opts.K; h++ ) {
+              for( int d = 0; d < opts.D; d++ ) {
+                  // Assuming identical distribution.
+                  int f = measurements.featureIndexer.getIndex(new UnaryFeature(h, "x="+d));
+                  measuredFeatures[f] = true;
+                  measurements.weights[f] = M[2].get( d, h );
+              }
+            }
+          }
+          break;
+        default:
+          throw new RuntimeException("Unhandled model type: " + opts.modelType);
+      }
     }
+
+    // Report measurement error
+    int perm[] = new int[opts.K];
+    LogInfo.logsForce("Measurement Error: " + measurements.computeDiff(trueCounts, perm));
+
+
+    LogInfo.end_track("estimateMoments");
   }
 
   Maximizer newMaximizer() {
@@ -411,10 +479,10 @@ public class Main implements Runnable {
       int[] perm = new int[opts.K];
       List<String> items = new ArrayList<String>();
       items.add("iter="+iter);
-      //items.add(logStat("paramsError", mParams.computeDiff(trueParams, perm)));
-      //items.add(logStat("paramsPerm", Fmt.D(perm)));
-      //items.add(logStat("countsError", mCounts.computeDiff(trueCounts, perm)));
-      //items.add(logStat("countsPerm", Fmt.D(perm)));
+      items.add(logStat("paramsError", mParams.computeDiff(trueParams, perm)));
+      items.add(logStat("paramsPerm", Fmt.D(perm)));
+      items.add(logStat("countsError", mCounts.computeDiff(trueCounts, perm)));
+      items.add(logStat("countsPerm", Fmt.D(perm)));
       items.add(logStat("eObjective", eState.value()));
       items.add(logStat("mObjective", mState.value()));
       eventsOut.println(StrUtils.join(items, "\t"));

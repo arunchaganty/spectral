@@ -70,8 +70,9 @@ class MixtureModel extends Model {
       H.addProdNode(hNode); // this is product node over each view
 
       // probability of choosing this value for h.
-      int hf = featureIndexer.getIndex(new UnaryFeature(h, "h="+h));
-      H.addEdge(rootNode, hNode, edgeInfo(params, counts, hf, increment));
+      //int hf = featureIndexer.getIndex(new UnaryFeature(h, "pi"));
+      //H.addEdge(rootNode, hNode, edgeInfo(params, counts, hf, increment));
+      H.addEdge(rootNode, hNode);
 
       for (int j = 0; j < L; j++) {  // For each view j...
         String xNode = "h="+h+",x"+j;
