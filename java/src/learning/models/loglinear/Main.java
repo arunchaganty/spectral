@@ -45,6 +45,11 @@ class LinearTerm extends ObjectiveTerm {
     this.measuredFeatures = measuredFeatures;
   }
 
+  /**
+   * Gives the objective + gradient.
+   * L = <params,coeffs>
+   * dL = coeffs
+   */
   public void infer(boolean needGradient) {
     value = 0;
     for (int j = 0; j < measuredFeatures.length; j++) {
@@ -70,19 +75,27 @@ class ExamplesTerm extends ObjectiveTerm {
     this.storeHypergraphs = storeHypergraphs;
   }
 
+  /**
+   * Gives the objective + gradient.
+   * L = log partition (A_i, B_i)
+   * dL = expected counts (\mu, \tau)
+   */
   public void infer(boolean needGradient) {
     logs("ExamplesTerm.infer");
     value = 0;
     if (needGradient) counts.clear();
     for (Example ex : examples) {
       Hypergraph Hq = ex.Hq;
+      // Cache the hypergraph
       if (Hq == null) Hq = model.createHypergraph(ex, params.weights, counts.weights, 1.0/examples.size());
       if (storeHypergraphs) ex.Hq = Hq;
 
       Hq.computePosteriors(false);
-      if (needGradient) Hq.fetchPosteriors(false);
+      if (needGradient) Hq.fetchPosteriors(false); // Places the posterior expectation $E_{Y|X}[\phi]$ into counts
       value += Hq.getLogZ() * 1.0/examples.size();
     }
+    // At the end of this routine, 
+    // counts contains $E_{Y|X}[\phi(X)]$ $\phi(x)$ are features.
   }
 }
 
@@ -156,7 +169,7 @@ class LikelihoodFunctionState implements Maximizer.FunctionState {
   public double[] gradient() { compute(true); return gradient.weights; }
 
   public void compute(boolean needGradient) {
-    if (needGradient ? gradientValid : objectiveValid) return;
+    //if (needGradient ? gradientValid : objectiveValid) return;
     objectiveValid = true;
 
     target.infer(needGradient);
@@ -164,6 +177,7 @@ class LikelihoodFunctionState implements Maximizer.FunctionState {
 
     // Compute objective value
     objective = target.value - pred.value;
+    LogInfo.logs("objective: %f", objective);
     if (regularization > 0) {
       for (int j = 0; j < model.numFeatures(); j++) {
         if (!measuredFeatures[j]) continue;
@@ -175,14 +189,16 @@ class LikelihoodFunctionState implements Maximizer.FunctionState {
     if (needGradient) {
       gradientValid = true;
       gradient.clear();
-      //logs("objective = %s, gradient (%s): [%s] - [%s] - %s [%s]", Fmt.D(objective), Fmt.D(measuredFeatures), Fmt.D(target.counts.weights), Fmt.D(pred.counts.weights), regularization, Fmt.D(params.weights));
+      logs("objective = %s, gradient (%s): [%s] - [%s] - %s [%s]", Fmt.D(objective), Fmt.D(measuredFeatures), Fmt.D(target.counts.weights), Fmt.D(pred.counts.weights), regularization, Fmt.D(params.weights));
       for (int j = 0; j < model.numFeatures(); j++) {
         if (!measuredFeatures[j]) continue;
+        // takes \tau (from target) - E(\phi) (from pred).
         gradient.weights[j] += target.counts.weights[j] - pred.counts.weights[j];
 
         // Regularization
         if (regularization > 0)
           gradient.weights[j] -= regularization * params.weights[j];
+        LogInfo.logs("gradient: %s", Fmt.D(gradient.weights));
       }
     }
   }
@@ -196,7 +212,7 @@ class LikelihoodFunctionState implements Maximizer.FunctionState {
 public class Main implements Runnable {
   public static class Options {
     public enum ModelType { mixture, hmm, tallMixture, grid, factMixture };
-    public enum ObjectiveType { supervised, measurements, unsupervised_em, unsupervised_gradient };
+    public enum ObjectiveType { supervised, measurements, unsupervised_em, unsupervised_gradient, measurements_initialization };
 
     @Option(gloss="Type of model") public ModelType modelType = ModelType.mixture;
     @Option(gloss="Number of values of the hidden variable") public int K = 3;
@@ -239,13 +255,19 @@ public class Main implements Runnable {
   void generateExamples() {
     // Create the true parameters
     trueParams = model.newParamsVec();
-    trueParams.initRandom(opts.trueParamsRandom, 1);
+    trueParams.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
     trueCounts = model.newParamsVec();
+
     Hypergraph<Example> Hp = model.createHypergraph(null, trueParams.weights, trueCounts.weights, 1);
     Hp.computePosteriors(false);
     Hp.fetchPosteriors(false);
     trueParams.write(Execution.getFile("true.params"));
     trueCounts.write(Execution.getFile("true.counts"));
+
+    Execution.putOutput("params.map", trueParams.featureIndexer);
+
+    Execution.putOutput("true.params", MatrixFactory.fromVector(trueParams.weights));
+    Execution.putOutput("true.counts", MatrixFactory.fromVector(trueCounts.weights));
 
     // Generate examples from the model
     for (int i = 0; i < opts.genNumExamples; i++) {
@@ -254,6 +276,7 @@ public class Main implements Runnable {
       examples.add(ex);
       //LogInfo.logs("x = %s", Fmt.D(ex.x));
     }
+
     logs("Generated %d examples", examples.size());
   }
 
@@ -317,11 +340,15 @@ public class Main implements Runnable {
 
       // Currently, using true measurements
       for (int j = 0; j < model.numFeatures(); j++) {
-        measuredFeatures[j] = random.nextDouble() < opts.measurementProb;
+        // TODO: Revert to the original.
+        //measuredFeatures[j] = random.nextDouble() < opts.measurementProb;
+        if( j == 1 )
+          measuredFeatures[j] = true;
         if (measuredFeatures[j])
           measurements.weights[j] = trueCounts.weights[j];
       }
     } else {
+      assert(false); // Don't do this yet.
       measurements = model.newParamsVec();
       // Construct triples of three observed variables around the hidden
       // node.
@@ -362,18 +389,29 @@ public class Main implements Runnable {
       switch (opts.modelType) {
         case mixture: 
           {
+            double[] pi = MatrixFactory.toVector( bottleneckMoments.getValue0() );
+            MatrixOps.projectOntoSimplex( pi );
             SimpleMatrix M[] = {bottleneckMoments.getValue1(), bottleneckMoments.getValue2(), bottleneckMoments.getValue3()};
             assert( M[2].numRows() == opts.D );
             assert( M[2].numCols() == opts.K );
             // Each column corresponds to a particular hidden moment.
+            // Project onto the simplex
+            M[2] = MatrixOps.projectOntoSimplex( M[2] );
+            Execution.putOutput("moments.pi", MatrixFactory.fromVector(pi) );
+            Execution.putOutput("moments.M3", M[2]);
+
             for( int h = 0; h < opts.K; h++ ) {
               for( int d = 0; d < opts.D; d++ ) {
                   // Assuming identical distribution.
                   int f = measurements.featureIndexer.getIndex(new UnaryFeature(h, "x="+d));
                   measuredFeatures[f] = true;
-                  measurements.weights[f] = M[2].get( d, h );
+                  // multiplying by pi to go from E[x|h] -> E[x,h]
+                  // multiplying by 3 because true.counts aggregates
+                  // over x1, x2 and x3.
+                  measurements.weights[f] = 3 * M[2].get( d, h ) * pi[h]; 
               }
             }
+            Execution.putOutput("moments.params", MatrixFactory.fromVector(measurements.weights));
           }
           break;
         default:
@@ -405,12 +443,14 @@ public class Main implements Runnable {
 
     ZeroTerm zeroTerm = new ZeroTerm(model.newParamsVec());
     LinearTerm measurementsTerm = new LinearTerm(eParams, measurements, measuredFeatures);  // \tau
+    // WARNING: This actually contains terms for all the variables; only
+    // the "measured" subset is selected inside the LikelihoodFunctionState.
     ExamplesTerm eExamplesTerm = new ExamplesTerm(model, eParams, model.newParamsVec(), examples, opts.storeHypergraphs);
 
     ExamplesTerm mExamplesTerm = new ExamplesTerm(model, mParams, model.newParamsVec(), examples, opts.storeHypergraphs);
     LinearTerm supervisedTerm = new LinearTerm(mParams, trueCounts, allMeasuredFeatures);  // Infinite data
-    LinearTerm examplesOutTerm = new LinearTerm(mParams, eExamplesTerm.counts, allMeasuredFeatures);
-    GlobalTerm globalTerm = new GlobalTerm(model, mParams, mCounts);
+    LinearTerm examplesOutTerm = new LinearTerm(mParams, eExamplesTerm.counts, allMeasuredFeatures); // <\theta, E_q[\phi]> - this is Q(\theta | \theta^t)
+    GlobalTerm globalTerm = new GlobalTerm(model, mParams, mCounts); // A_i, E_p[\phi]
 
     // Construct the objective function
     ObjectiveTerm eTargetTerm, ePredTerm;
@@ -423,16 +463,27 @@ public class Main implements Runnable {
         mPredTerm = globalTerm;
         break;
       case measurements:
-        eTargetTerm = measurementsTerm;
-        ePredTerm = eExamplesTerm;
-        mTargetTerm = examplesOutTerm;
-        mPredTerm = globalTerm;
+        // L = <\tau,\beta> - \sum_i B_i + - \sum_i A_i - h^*(\beta) +
+        //     h(\theta).
+        // Regularization for observed features handled in the
+        // LikelihoodFunctionState.
+        eTargetTerm = measurementsTerm; // <\tau,\beta> (both objective and gradient)
+        ePredTerm = eExamplesTerm; // \sum_i B_i and \E_q[\sigma] (part of objective, and via hack, the gradient!)
+        mTargetTerm = examplesOutTerm; // This is cleverly $B_i$ 
+        mPredTerm = globalTerm; // A(\hteta)
         break;
+      case measurements_initialization:
+        // Just use em
+        // eTargetTerm = zeroTerm;
+        // ePredTerm = zeroTerm;
+        // mTargetTerm = mExamplesTerm;
+        // mPredTerm = globalTerm;
+        // break;
       case unsupervised_em:
         eTargetTerm = zeroTerm;
-        ePredTerm = eExamplesTerm;
-        mTargetTerm = examplesOutTerm;
-        mPredTerm = globalTerm;
+        ePredTerm = eExamplesTerm; // Solves the problem eParams = \E[.]
+        mTargetTerm = examplesOutTerm; // <\theta, \E_q[\phi]>
+        mPredTerm = globalTerm; 
         break;
       case unsupervised_gradient:
         eTargetTerm = zeroTerm;
@@ -456,6 +507,12 @@ public class Main implements Runnable {
         model, mParams, mTargetTerm, mPredTerm, allMeasuredFeatures,
         opts.mRegularization, opts.initRandom, opts.initParamsNoise);
 
+    // Initialize the parameters to be the observed moments.
+    // Initialize the state to be the true state.
+    //ListUtils.set(eParams.weights, trueParams.weights);
+    //ListUtils.set(mParams.weights, trueParams.weights);
+    //ListUtils.set(mCounts.weights, trueCounts.weights);
+
     boolean done = false;
     for (int iter = 0; iter < opts.numIters && !done; iter++) {
       ParamsVec old_mParams = model.newParamsVec();
@@ -467,6 +524,7 @@ public class Main implements Runnable {
       done = done1 && done2;
 
       // Copy parameters from M-step to E-step.
+      // This moves the d\theta to eParams (usually \beta + \theta).
       // This is the base measure for q in KL(q||p)
       if (ePredTerm == eExamplesTerm) {
         for (int j = 0; j < model.numFeatures(); j++)
@@ -521,6 +579,7 @@ public class Main implements Runnable {
     for (iter = 0; iter < numIters && !done; iter++) {
       LogInfo.begin_track("Iteration %s/%s", iter, numIters);
       done = maximizer.takeStep(state);
+      LogInfo.logs("%s objective = %f", stepName, state.value());
       LogInfo.end_track();
     }
     LogInfo.end_track();

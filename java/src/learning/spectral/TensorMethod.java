@@ -149,6 +149,15 @@ public class TensorMethod {
       MomentAggregator agg = new MomentAggregator(D, dataSeq);
       agg.run();
 
-      return recoverParameters( K, agg.getMoments() );
+      // In our case, the moments are symmetric.
+      Pair<SimpleMatrix,SimpleMatrix> params = recoverParameters( K, agg.getMoments().getValue0(),
+        agg.getMoments().getValue3() );
+
+      return new Quartet<>( params.getValue0(), 
+          params.getValue1(),
+          params.getValue1(),
+          params.getValue1() );
+
+      //return recoverParameters( K, agg.getMoments() );
     }
 }
