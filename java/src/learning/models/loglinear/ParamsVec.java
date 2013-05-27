@@ -84,17 +84,17 @@ public class ParamsVec {
 
     double[][] costs = new double[K][K];  // Cost if assign latent state h1 of this to state h2 of that
     for (int j = 0; j < numFeatures; j++) {
+      if(!measuredFeatures[j]) continue;
+
       Feature rawFeature = featureIndexer.getObject(j);
       if (!(rawFeature instanceof UnaryFeature)) continue;
       UnaryFeature feature = (UnaryFeature)rawFeature;
       int h1 = feature.h;
       double v1 = this.weights[j];
       // Only initialize if it is a measured feature.
-      if( measuredFeatures[j] ) {
-        for (int h2 = 0; h2 < K; h2++) {
-          double v2 = that.weights[featureIndexer.indexOf(new UnaryFeature(h2, feature.description))];
-          costs[h1][h2] += Math.abs(v1-v2);
-        }
+      for (int h2 = 0; h2 < K; h2++) {
+        double v2 = that.weights[featureIndexer.indexOf(new UnaryFeature(h2, feature.description))];
+        costs[h1][h2] += Math.abs(v1-v2);
       }
     }
 
@@ -106,19 +106,21 @@ public class ParamsVec {
     // Compute the actual cost (L1 error).
     double cost = 0;
     for (int j = 0; j < numFeatures; j++) {
+      if(!measuredFeatures[j]) continue;
+
       Feature rawFeature = featureIndexer.getObject(j);
       if (rawFeature instanceof BinaryFeature) {
         BinaryFeature feature = (BinaryFeature)rawFeature;
         int perm_j = featureIndexer.indexOf(new BinaryFeature(perm[feature.h1], perm[feature.h2]));
         cost += Math.abs(this.weights[j] - that.weights[perm_j]);
-        continue;
+      } else {
+        UnaryFeature feature = (UnaryFeature)rawFeature;
+        int h1 = feature.h;
+        double v1 = this.weights[j];
+        int h2 = perm[h1];
+        double v2 = that.weights[featureIndexer.indexOf(new UnaryFeature(h2, feature.description))];
+        cost += Math.abs(v1-v2);
       }
-      UnaryFeature feature = (UnaryFeature)rawFeature;
-      int h1 = feature.h;
-      double v1 = this.weights[j];
-      int h2 = perm[h1];
-      double v2 = that.weights[featureIndexer.indexOf(new UnaryFeature(h2, feature.description))];
-      cost += Math.abs(v1-v2);
     }
     return cost;
   }

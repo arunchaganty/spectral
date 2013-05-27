@@ -105,6 +105,13 @@ public class MatrixOps {
       sum += x[i] * y[i];
     return sum;
   }
+  public static double dot( double[] x, double[] y, boolean[] select ) {
+    assert( x.length == y.length );
+    double sum = 0.0;
+    for( int i = 0; i < x.length; i++ )
+      sum += (select[i]) ? x[i] * y[i] : 0;
+    return sum;
+  }
   public static double dot( DenseMatrix64F x, DenseMatrix64F y ) {
     return VectorVectorMult.innerProd( x, y );
   }

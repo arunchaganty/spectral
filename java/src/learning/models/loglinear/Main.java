@@ -136,6 +136,7 @@ class GlobalTerm extends ObjectiveTerm {
 class LikelihoodFunctionState implements Maximizer.FunctionState {
   Model model;
   ObjectiveTerm target, pred;
+  double objectiveOffset;
   boolean[] measuredFeatures;
 
   // TODO: generalize to arbitrary quadratic (A w - b)^2
@@ -176,7 +177,7 @@ class LikelihoodFunctionState implements Maximizer.FunctionState {
     pred.infer(needGradient);
 
     // Compute objective value
-    objective = target.value - pred.value;
+    objective = target.value - pred.value + objectiveOffset;
     LogInfo.logs("objective: %f", objective);
     if (regularization > 0) {
       for (int j = 0; j < model.numFeatures(); j++) {
@@ -198,8 +199,8 @@ class LikelihoodFunctionState implements Maximizer.FunctionState {
         // Regularization
         if (regularization > 0)
           gradient.weights[j] -= regularization * params.weights[j];
-        LogInfo.logs("gradient: %s", Fmt.D(gradient.weights));
       }
+      LogInfo.logs("gradient: %s", Fmt.D(gradient.weights));
     }
   }
 }
@@ -520,6 +521,21 @@ public class Main implements Runnable {
 
       LogInfo.begin_track("Iteration %d/%d", iter, opts.numIters);
       boolean done1 = optimizeIter(iter, "E", eMaximizer, eState, opts.eNumIters);
+
+      // The M-step optimizes the global objective function:
+      //   Objective(theta) = \min_q KL(q||p) + 0.5 |E_q[\sigma] - \tau|^2
+      // mObjective includes the 0.5 |E_q[\sigma] - \tau|^2 term, which doesn't
+      // affect the optimization over \theta, but does matter for monitoring
+      // the Objective.
+      if (opts.eRegularization > 0) {
+        mState.objectiveOffset = 0;
+        for (int j = 0; j < model.numFeatures(); j++) {
+          if (!measuredFeatures[j]) continue;
+          double diff = ePredTerm.counts.weights[j] - measurements.weights[j];
+          mState.objectiveOffset += 0.5 * diff * diff / opts.eRegularization;
+        }
+      }
+
       boolean done2 = optimizeIter(iter, "M", mMaximizer, mState, opts.mNumIters);
       done = done1 && done2;
 
