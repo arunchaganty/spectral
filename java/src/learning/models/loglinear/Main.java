@@ -397,7 +397,7 @@ public class Main implements Runnable {
             assert( M[2].numCols() == opts.K );
             // Each column corresponds to a particular hidden moment.
             // Project onto the simplex
-            M[2] = MatrixOps.projectOntoSimplex( M[2] );
+            //M[2] = MatrixOps.projectOntoSimplex( M[2] );
             Execution.putOutput("moments.pi", MatrixFactory.fromVector(pi) );
             Execution.putOutput("moments.M3", M[2]);
 

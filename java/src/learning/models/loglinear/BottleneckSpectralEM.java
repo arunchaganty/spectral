@@ -207,25 +207,26 @@ public class BottleneckSpectralEM implements Runnable {
   }
 
   abstract class Objective implements Maximizer.FunctionState {
-    Model model;
-    double objective;
-    ParamsVec params;  // Canonical parameters
-    ParamsVec gradient;  // targetCounts - predCounts - \nabla regularization
+    protected Model model;
+    protected double objective;
+    protected ParamsVec params;  // Canonical parameters
+    protected ParamsVec gradient;  // targetCounts - predCounts - \nabla regularization
 
     // Optimization state
-    boolean objectiveValid = false;
-    boolean gradientValid = false;
+    protected boolean objectiveValid = false;
+    protected boolean gradientValid = false;
 
-    Hypergraph Hp;
-    ParamsVec counts;  
+    protected Hypergraph Hp;
+    protected ParamsVec counts;  
 
-    double regularization;
+    protected double regularization;
 
     public Objective(Model model, ParamsVec params, 
         double regularization) {
       this.model = model;
       this.params = params;
       this.gradient = model.newParamsVec();
+      this.regularization = regularization;
 
       this.counts = model.newParamsVec();
       this.Hp = model.createHypergraph(null, params.weights, counts.weights, 1);
