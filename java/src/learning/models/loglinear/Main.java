@@ -522,7 +522,11 @@ public class Main implements Runnable {
       LogInfo.begin_track("Iteration %d/%d", iter, opts.numIters);
       boolean done1 = optimizeIter(iter, "E", eMaximizer, eState, opts.eNumIters);
 
-      // Compute objective
+      // The M-step optimizes the global objective function:
+      //   Objective(theta) = \min_q KL(q||p) + 0.5 |E_q[\sigma] - \tau|^2
+      // mObjective includes the 0.5 |E_q[\sigma] - \tau|^2 term, which doesn't
+      // affect the optimization over \theta, but does matter for monitoring
+      // the Objective.
       if (opts.eRegularization > 0) {
         mState.objectiveOffset = 0;
         for (int j = 0; j < model.numFeatures(); j++) {
