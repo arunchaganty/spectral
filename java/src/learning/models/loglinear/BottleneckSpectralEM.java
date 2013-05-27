@@ -32,9 +32,10 @@ public class BottleneckSpectralEM implements Runnable {
   @Option(gloss="Regularization for the M-step") public double mRegularization = 0;
 
   //@Option(gloss="Type of training to use") public ObjectiveType objectiveType = ObjectiveType.unsupervised_gradient;
-  //@Option(gloss="Type of optimization to use") public boolean useLBFGS = true;
+  @Option(gloss="Type of optimization to use") public boolean useLBFGS = true;
   @Option(gloss="Use expected measurements (with respect to true distribution)") public boolean expectedMeasurements = true;
   @Option(gloss="Include each (true) measurement with this prob") public double measurementProb = 1;
+  @Option(gloss="Initialize using measurements?") public boolean useMeasurements = true;
   @Option(gloss="Number of iterations before switching to full unsupervised") public int numMeasurementIters = Integer.MAX_VALUE;
 
   @OptionSet(name="lbfgs") public LBFGSMaximizer.Options lbfgs = new LBFGSMaximizer.Options();
@@ -88,7 +89,7 @@ public class BottleneckSpectralEM implements Runnable {
      */
     public double reportCounts(ParamsVec estimatedCounts, boolean[] measuredFeatures) {
       double err = estimatedCounts.computeDiff( trueCounts, measuredFeatures, null );
-      LogInfo.logsForce("countsError="+err);
+      LogInfo.logsForce("countsError(%s)=%f", Fmt.D(measuredFeatures), err);
       return err;
     }
     public double reportCounts(ParamsVec estimatedCounts) {
@@ -100,6 +101,11 @@ public class BottleneckSpectralEM implements Runnable {
   }
   public Analysis analysis;
 
+  Maximizer newMaximizer() {
+    if (useLBFGS) return new LBFGSMaximizer(backtrack, lbfgs);
+    return new GradientMaximizer(backtrack);
+  }
+
   ////////////////////////////////////////////////////////
   
   // Algorithm parameters
@@ -109,8 +115,232 @@ public class BottleneckSpectralEM implements Runnable {
    * Unrolls data along bottleneck nodes and uses method of moments
    * to return expected potentials
    */
-  ParamsVec solveBottleneck( Model model, List<Example> data ) {
-    return model.newParamsVec();
+  Pair<ParamsVec,boolean[]> solveBottleneck( final List<Example> data ) {
+    LogInfo.begin_track("solveBottleneck");
+    ParamsVec measurements = model.newParamsVec();
+    boolean[] measuredFeatures = new boolean[measurements.numFeatures];
+
+    // Construct data. For now, just return expected counts
+    if (expectedMeasurements) {
+      assert( analysis != null );
+      // TODO: Revert to the original.
+      Random random = new Random(3);
+      //measuredFeatures[0] = true;
+      for (int j = 0; j < model.numFeatures(); j++) {
+        measuredFeatures[j] = random.nextDouble() < measurementProb;
+        if (measuredFeatures[j])
+          measurements.weights[j] = analysis.trueCounts.weights[j];
+      }
+    } else {
+      //assert(false); // Don't do this yet.
+      // Construct triples of three observed variables around the hidden
+      // node.
+      //
+      int K, D;
+      Iterator<double[][]> dataSeq;
+      if( model instanceof MixtureModel) {
+        final MixtureModel mixModel = (MixtureModel) model;
+        K = mixModel.K; D = mixModel.D;
+
+        // x_{1,2,3} 
+        dataSeq = (new Iterator<double[][]>() {
+          Iterator<Example> iter = data.iterator();
+          public boolean hasNext() {
+            return iter.hasNext();
+          }
+          public double[][] next() {
+            Example ex = iter.next();
+            double[][] data = new double[3][mixModel.D]; // Each datum is a one-hot vector
+            for( int v = 0; v < 3; v++ ) {
+              data[v][ex.x[v]] = 1.0;
+            }
+
+            return data;
+          }
+          public void remove() {
+            throw new RuntimeException();
+          }
+        });
+      } else {
+        throw new RuntimeException("Unhandled model type: " + model.getClass() );
+      }
+
+      TensorMethod algo = new TensorMethod();
+
+      Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> 
+        bottleneckMoments = algo.recoverParameters( K, D, dataSeq );
+
+      // Set appropriate measuredFeatures to observed moments
+      if( model instanceof MixtureModel ) {
+        double[] pi = MatrixFactory.toVector( bottleneckMoments.getValue0() );
+        MatrixOps.projectOntoSimplex( pi );
+        SimpleMatrix M[] = {bottleneckMoments.getValue1(), bottleneckMoments.getValue2(), bottleneckMoments.getValue3()};
+        assert( M[2].numRows() == D );
+        assert( M[2].numCols() == K );
+        // Each column corresponds to a particular hidden moment.
+        // Project onto the simplex
+        M[2] = MatrixOps.projectOntoSimplex( M[2] );
+        Execution.putOutput("moments.pi", MatrixFactory.fromVector(pi) );
+        Execution.putOutput("moments.M3", M[2]);
+
+        for( int h = 0; h < K; h++ ) {
+          for( int d = 0; d < D; d++ ) {
+            // Assuming identical distribution.
+            int f = measurements.featureIndexer.getIndex(new UnaryFeature(h, "x="+d));
+            measuredFeatures[f] = true;
+            // multiplying by pi to go from E[x|h] -> E[x,h]
+            // multiplying by 3 because true.counts aggregates
+            // over x1, x2 and x3.
+            measurements.weights[f] = 3 * M[2].get( d, h ) * pi[h]; 
+          }
+        }
+        Execution.putOutput("moments.params", MatrixFactory.fromVector(measurements.weights));
+      } else {
+        throw new RuntimeException("Unhandled model type: " + model.getClass() );
+      }
+    }
+    LogInfo.end_track("solveBottleneck");
+
+    if(analysis != null) analysis.reportCounts( measurements, measuredFeatures );
+
+    return new Pair<>(measurements, measuredFeatures);
+  }
+
+  abstract class Objective implements Maximizer.FunctionState {
+    Model model;
+    double objective;
+    ParamsVec params;  // Canonical parameters
+    ParamsVec gradient;  // targetCounts - predCounts - \nabla regularization
+
+    // Optimization state
+    boolean objectiveValid = false;
+    boolean gradientValid = false;
+
+    Hypergraph Hp;
+    ParamsVec counts;  
+
+    double regularization;
+
+    public Objective(Model model, ParamsVec params, 
+        double regularization) {
+      this.model = model;
+      this.params = params;
+      this.gradient = model.newParamsVec();
+
+      this.counts = model.newParamsVec();
+      this.Hp = model.createHypergraph(null, params.weights, counts.weights, 1);
+    }
+
+    public void invalidate() { objectiveValid = gradientValid = false; }
+    public double[] point() { return params.weights; }
+    public double value() { compute(false); return objective; }
+    public double[] gradient() { compute(true); return gradient.weights; }
+
+    public abstract void compute(boolean needGradients);
+  }
+
+  class MomentMatchingObjective extends Objective {
+    boolean[] measuredFeatures;
+
+    // TODO: generalize to arbitrary quadratic (A w - b)^2
+
+    ParamsVec measurements;  // targetCounts - predCounts - \nabla regularization
+
+    public MomentMatchingObjective(Model model, ParamsVec params, double regularization, 
+        ParamsVec measurements, boolean[] measuredFeatures, 
+        Random initRandom, double initNoise) {
+      super(model, params, regularization);
+
+      this.measurements = measurements;
+      this.measuredFeatures = measuredFeatures;
+
+      // Create state
+      this.params.initRandom(initRandom, initNoise);
+    }
+
+    public void compute(boolean needGradient) {
+      // Always recompute for now.
+      //if (needGradient ? gradientValid : objectiveValid) return;
+      objectiveValid = true;
+
+      // Objective is \theta^T \tau - A(\theta) 
+      objective = 0.0;
+      // \theta^T \tau 
+      objective += MatrixOps.dot( params.weights, measurements.weights, measuredFeatures );
+
+      // A(\theta)
+      counts.clear(); Hp.computePosteriors(false);
+      objective -= Hp.getLogZ();
+
+      if (regularization > 0) {
+        for (int j = 0; j < model.numFeatures(); j++) {
+          if (!measuredFeatures[j]) continue;
+          objective -= 0.5 * regularization * params.weights[j] * params.weights[j];
+        }
+      }
+      // Compute objective value
+      LogInfo.logs("objective: %f", objective);
+
+      // Compute gradient (if needed)
+      // \tau - E_{\theta}[\phi]
+      if (needGradient) {
+        gradientValid = true;
+        gradient.clear();
+
+        // Compute E_{\theta}[\phi]
+        Hp.fetchPosteriors(false);
+
+        logs("objective = %s, gradient (%s): [%s] - [%s] - %s [%s]", 
+            Fmt.D(objective), Fmt.D(measuredFeatures), Fmt.D(measurements.weights), Fmt.D(counts.weights), regularization, Fmt.D(params.weights));
+        for (int j = 0; j < model.numFeatures(); j++) {
+          if (!measuredFeatures[j]) continue;
+          // takes \tau (from target) - E(\phi) (from pred).
+          gradient.weights[j] += measurements.weights[j] - counts.weights[j];
+
+          // Regularization
+          if (regularization > 0)
+            gradient.weights[j] -= regularization * params.weights[j];
+        }
+        LogInfo.logs("gradient: %s", Fmt.D(gradient.weights));
+      }
+    }
+  }
+
+  String logStat(String key, Object value) {
+    LogInfo.logs("%s = %s", key, value);
+    Execution.putOutput(key, value);
+    return key+"="+value;
+  }
+
+  boolean optimize( Maximizer maximizer, Objective state, int numIters, String label ) {
+    LogInfo.begin_track("optimize", label);
+    state.invalidate();
+    boolean done = false;
+    // E-step
+    int iter;
+    for (iter = 0; iter < numIters && !done; iter++) {
+      LogInfo.begin_track("Iteration %s/%s", iter, numIters);
+      done = maximizer.takeStep(state);
+      LogInfo.logs("objective=%f", state.value());
+
+      // Logging stuff
+      if( label == "em" ) {
+        List<String> items = new ArrayList<String>();
+        int perm[] = new int[model.K];
+        items.add("iter="+iter);
+        items.add(logStat("paramsError", state.params.computeDiff(analysis.trueParams, perm)));
+        items.add(logStat("paramsPerm", Fmt.D(perm)));
+        items.add(logStat("countsError", state.counts.computeDiff(analysis.trueCounts, perm)));
+        items.add(logStat("countsPerm", Fmt.D(perm)));
+        items.add(logStat("eObjective", state.value()));
+        eventsOut.println(StrUtils.join(items, "\t"));
+        eventsOut.flush();
+      }
+
+      LogInfo.end_track();
+    }
+    LogInfo.end_track();
+    return done && iter == 1;  // Didn't make any updates
   }
 
   /**
@@ -119,20 +349,120 @@ public class BottleneckSpectralEM implements Runnable {
    *  - Solved as a restricted M-step, minimizing $\theta^T \tau -
    *    A(\theta)$ or matching $E_\theta[\phi(x) = \tau$.
    */
-  ParamsVec initializeParameters(ParamsVec moments, boolean[] measuredFeatures) {
-    return model.newParamsVec();
+  ParamsVec initializeParameters(final ParamsVec measurements, final boolean[] measuredFeatures) {
+    LogInfo.begin_track("initialize parameters");
+    // The objective function!
+    ParamsVec params = model.newParamsVec();
+    Maximizer maximizer = newMaximizer();
+    MomentMatchingObjective state = new MomentMatchingObjective(
+        model, params, eRegularization, 
+        measurements, measuredFeatures,
+        initRandom, initParamsNoise);
+    
+    // Optimize
+    optimize( maximizer, state, 1000, "initialization" );
+    LogInfo.end_track();
+    return params;
   }
   ParamsVec initializeParameters(ParamsVec moments) {
-    return initializeParameters( moments, new boolean[moments.numFeatures] );
+      boolean[] allMeasuredFeatures = new boolean[moments.numFeatures];
+      Arrays.fill( allMeasuredFeatures, true );
+      return initializeParameters( moments, allMeasuredFeatures );
   }
   ParamsVec initializeParameters() {
-    return initializeParameters( model.newParamsVec() );
+    ParamsVec init = model.newParamsVec();
+    init.initRandom( initRandom, initParamsNoise );
+    return init;
+  }
+
+  class EMObjective extends Objective {
+    List<Example> examples;
+    ParamsVec mu;
+
+    public EMObjective(Model model, ParamsVec params, double regularization,
+        List<Example> examples) {
+      super(model, params, regularization);
+
+      this.examples = examples;
+      this.mu = model.newParamsVec();
+    }
+
+    void computeExpectedCounts() {
+      mu.clear();
+      for (Example ex : examples) {
+        Hypergraph Hq = ex.Hq;
+        // Cache the hypergraph
+        if (Hq == null) Hq = model.createHypergraph(ex, params.weights, mu.weights, 1.0/examples.size());
+        if (storeHypergraphs) ex.Hq = Hq;
+
+        Hq.computePosteriors(false);
+        Hq.fetchPosteriors(false); // Places the posterior expectation $E_{Y|X}[\phi]$ into counts
+      }
+      // At the end of this routine, 
+      // mu contains $E_{Y|X}[\phi(X)]$ $\phi(x)$ are features.
+    }
+
+    public void compute(boolean needGradient) {
+      // Always recompute for now.
+      //if (needGradient ? gradientValid : objectiveValid) return;
+      objectiveValid = true;
+
+      computeExpectedCounts();
+
+      // Objective is \theta^T \mu - A(\theta) 
+      objective = 0.0;
+      // \theta^T \tau 
+      objective += MatrixOps.dot( params.weights, mu.weights );
+
+      // A(\theta)
+      counts.clear(); Hp.computePosteriors(false);
+      objective -= Hp.getLogZ();
+
+      if (regularization > 0) {
+        for (int j = 0; j < model.numFeatures(); j++) {
+          objective -= 0.5 * regularization * params.weights[j] * params.weights[j];
+        }
+      }
+      // Compute objective value
+      LogInfo.logs("objective: %f", objective);
+
+      // Compute gradient (if needed)
+      // \mu - E_{\theta}[\phi]
+      if (needGradient) {
+        gradientValid = true;
+        gradient.clear();
+
+        // Compute E_{\theta}[\phi]
+        Hp.fetchPosteriors(false);
+
+        logs("objective = %s, gradient: [%s] - [%s] - %s [%s]", 
+            Fmt.D(objective), Fmt.D(mu.weights), Fmt.D(counts.weights), regularization, Fmt.D(params.weights));
+        for (int j = 0; j < model.numFeatures(); j++) {
+          // takes \tau (from target) - E(\phi) (from pred).
+          gradient.weights[j] += mu.weights[j] - counts.weights[j];
+
+          // Regularization
+          if (regularization > 0)
+            gradient.weights[j] -= regularization * params.weights[j];
+        }
+        LogInfo.logs("gradient: %s", Fmt.D(gradient.weights));
+      }
+    }
   }
 
   /**
    * Solves EM for the model using data and initial parameters.
    */
   ParamsVec solveEM(List<Example> data, ParamsVec initialParams) {
+    LogInfo.begin_track("solveEM");
+    Maximizer maximizer = newMaximizer();
+    EMObjective state = new EMObjective(
+        model, initialParams, mRegularization,
+        data);
+    // Optimize
+    optimize( maximizer, state, numIters, "em" );
+    LogInfo.end_track("solveEM");
+
     return initialParams;
   }
 
@@ -141,8 +471,32 @@ public class BottleneckSpectralEM implements Runnable {
    * initializes parameters using them, and runs EM.
    */
   ParamsVec solveBottleneckEM( List<Example> data ) {
-    return model.newParamsVec();
+    // Extract measurements via moments
+    ParamsVec initialParams;
+    if( useMeasurements ) {
+      // Get moments
+      Pair<ParamsVec,boolean[]> bottleneckCounts = solveBottleneck( data );
+
+      ParamsVec expectedCounts = bottleneckCounts.getFirst();
+      boolean[] measuredFeatures = bottleneckCounts.getSecond();
+      expectedCounts.write(Execution.getFile("measured_counts"));
+      // initialize parameters from moments
+      initialParams = initializeParameters( expectedCounts, measuredFeatures );
+    } else { 
+      initialParams = initializeParameters();
+    }
+    initialParams.write(Execution.getFile("params.init"));
+    
+    // solve EM
+    return solveEM( data, initialParams );
   }
+
+  void setModel(Model model) {
+    this.model = model;
+  }
+
+  ///////////////////////////////////
+  // Instantiation stuff
 
   public enum ModelType { mixture, hmm, tallMixture, grid, factMixture };
   public static class ModelOptions {
@@ -189,7 +543,7 @@ public class BottleneckSpectralEM implements Runnable {
       Example ex = model.newExample();
       Hp.fetchSampleHyperpath(opts.genRandom, ex);
       examples.add(ex);
-      LogInfo.logs("x = %s", Fmt.D(ex.x));
+      //LogInfo.logs("x = %s", Fmt.D(ex.x));
     }
 
     return examples;
@@ -241,9 +595,6 @@ public class BottleneckSpectralEM implements Runnable {
     model_.createHypergraph(null, null, null, 0);
     return model_;
   }
-  void setModel(Model model) {
-    this.model = model;
-  }
 
   public void run() {
     eventsOut = IOUtils.openOutHard(Execution.getFile("events"));
@@ -254,7 +605,7 @@ public class BottleneckSpectralEM implements Runnable {
 
     // Generate parameters
     ParamsVec trueParams = generateParameters( model, genOpts );
-    Analysis analysis = new Analysis( model, trueParams );
+    analysis = new Analysis( model, trueParams );
 
     // Get true parameters
     List<Example> data = generateData( model, trueParams, genOpts );

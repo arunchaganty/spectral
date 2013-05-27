@@ -510,9 +510,9 @@ public class Main implements Runnable {
 
     // Initialize the parameters to be the observed moments.
     // Initialize the state to be the true state.
-    //ListUtils.set(eParams.weights, trueParams.weights);
-    //ListUtils.set(mParams.weights, trueParams.weights);
-    //ListUtils.set(mCounts.weights, trueCounts.weights);
+    ListUtils.set(eParams.weights, trueParams.weights);
+    ListUtils.set(mParams.weights, trueParams.weights);
+    ListUtils.set(mCounts.weights, trueCounts.weights);
 
     boolean done = false;
     for (int iter = 0; iter < opts.numIters && !done; iter++) {
