@@ -28,6 +28,8 @@ public class TensorFactorization {
     for( int attempt = 0; attempt < attempts; attempt++ ) {
       SimpleMatrix theta = RandomFactory.randn(1, D);
       theta.scale(1.0/MatrixOps.norm(theta));
+      if( attempt % 10 == 0 )
+        LogInfo.logs("Attempt %d/%d", attempt, attempts);
 
       // Hit the tensor with this vector and repeat till you converge
       for(int n = 0; n < N; n++ ) {
@@ -86,6 +88,7 @@ public class TensorFactorization {
 
     for( int k = 0; k < K; k++ ) {
       // Extract the top eigenvalue/vector pair
+      LogInfo.logs("Eigenvector %d/%d", k, K);
       Pair<Double, SimpleMatrix> pair = eigendecomposeStep(T, attempts, iters);
 
       // When null, then we are done
@@ -119,8 +122,9 @@ public class TensorFactorization {
     LogInfo.begin_track("tensor-eigendecomposition");
 
     // Whiten
+    LogInfo.logs( "k(P): " + MatrixOps.conditionNumber(P,K) );
     SimpleMatrix W = MatrixOps.whitener(P, K);
-    LogInfo.logs( "W: " + W );
+    //LogInfo.logs( "W: " + W );
     SimpleMatrix Winv = MatrixOps.colorer(P, K);
     FullTensor Tw = T.rotate(W,W,W);
 

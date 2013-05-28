@@ -166,16 +166,17 @@ public class TensorMethod implements Runnable {
     }
 
   @OptionSet(name="moments")
-    MomentComputer.Options momentOpts = new MomentComputer.Options();
-  @Option(gloss="Path to file containing moments information")
+    public MomentComputer.Options momentOpts = new MomentComputer.Options();
+  @Option(gloss="Path to file containing moments information", required=true)
     public String momentsPath;
-  @Option(gloss="Number of clusters to use for the factorization")
+  @Option(gloss="Number of clusters to use for the factorization", required=true)
     public int K;
 
   @SuppressWarnings("unchecked")
   public void run() {
     try { 
       // Read moments from path. 
+      LogInfo.begin_track("file-input");
       ObjectInputStream in = new ObjectInputStream( new FileInputStream( momentsPath ) ); 
       momentOpts.randomProjSeed = (int) in.readObject();
       Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,FullTensor> moments = 
@@ -190,6 +191,7 @@ public class TensorMethod implements Runnable {
       ProjectedCorpus PC = new ProjectedCorpus( 
           Corpus.parseText( momentOpts.dataPath, momentOpts.mapPath ),
           momentOpts.randomProjDim, momentOpts.randomProjSeed );
+      LogInfo.end_track("file-input");
 
       // Run the TensorFactorization algorithm
       Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> 
@@ -200,18 +202,24 @@ public class TensorMethod implements Runnable {
       SimpleMatrix M3 = parameters.getValue3();
 
       // Unproject.
-      pi = PC.unfeaturize( pi );
+      LogInfo.begin_track("unfeaturization");
+      MatrixOps.printSize( pi );
+      MatrixOps.printSize( M1 );
+      MatrixOps.printSize( PC.Pinv );
       M1 = PC.unfeaturize( M1 );
       M2 = PC.unfeaturize( M2 );
       M3 = PC.unfeaturize( M3 );
+      LogInfo.end_track();
 
       // Write.
+      LogInfo.begin_track("saving");
       parameters = new Quartet<>(pi, M1, M2, M3);
       String outFilename = Execution.getFile( FilenameUtils.getBaseName(momentOpts.dataPath) + 
           "-" + momentOpts.randomProjDim + "-" + momentOpts.randomProjSeed + ".parameters" );
       ObjectOutputStream out = new ObjectOutputStream( new FileOutputStream( outFilename ) ); 
       out.writeObject(parameters);
       out.close();
+      LogInfo.end_track();
     } catch( ClassNotFoundException e ) {
       LogInfo.logsForce( e );
     } catch ( IOException e ) {
@@ -225,6 +233,6 @@ public class TensorMethod implements Runnable {
    * - It can also "unproject" if needed.
    */
   public static void main(String[] args) {
-    Execution.run(args, new TensorFactorization());
+    Execution.run(args, new TensorMethod());
   }
 }
