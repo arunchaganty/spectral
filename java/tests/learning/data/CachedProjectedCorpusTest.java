@@ -38,7 +38,7 @@ public class CachedProjectedCorpusTest {
   @Test
   public void parseText() throws IOException {
     Corpus C = Corpus.parseText( dataPath, mapPath );
-    ProjectedCorpus PC = ProjectedCorpus.fromCorpus( C, 10, 1 );
+    LazyProjectedCorpus PC = LazyProjectedCorpus.fromCorpus( C, 10, 1 );
     CachedProjectedCorpus CPC = new CachedProjectedCorpus( PC, 50000 );
 
     // Show that the projected vectors always choose the right word with
