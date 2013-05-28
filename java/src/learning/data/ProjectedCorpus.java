@@ -34,6 +34,8 @@ public class ProjectedCorpus extends Corpus implements Serializable, RealSequenc
   public int projectionDim;
   protected long masterSeed;
 
+  protected Featurizer featurizer;
+
   public double[][] P; // stored as a matrix for efficiency reasons
   public SimpleMatrix Pinv; // Projection Matrix
 
@@ -46,6 +48,7 @@ public class ProjectedCorpus extends Corpus implements Serializable, RealSequenc
     this.projectionDim = PC.projectionDim;
     this.masterSeed = PC.masterSeed;
     this.P = PC.P;
+    this.Pinv = PC.Pinv;
   }
 
   public ProjectedCorpus(Corpus C, int d, long seed) {
@@ -54,7 +57,18 @@ public class ProjectedCorpus extends Corpus implements Serializable, RealSequenc
     this.masterSeed = seed;
 
     // y = P^T x
-    this.P = makeProjection();
+    this.P = makeProjection(super.getDimension());
+    // x = (P^T)^+ y
+    this.Pinv = (new SimpleMatrix(P)).transpose().pseudoInverse();
+  }
+  public ProjectedCorpus(Corpus C, int d, long seed, Featurizer featurizer) {
+    super(C);
+    this.projectionDim = d;
+    this.masterSeed = seed;
+    this.featurizer = featurizer;
+
+    // y = P^T x
+    this.P = makeProjection(super.getDimension() + featurizer.numFeatures());
     // x = (P^T)^+ y
     this.Pinv = (new SimpleMatrix(P)).transpose().pseudoInverse();
   }
@@ -62,8 +76,7 @@ public class ProjectedCorpus extends Corpus implements Serializable, RealSequenc
   /**
    * Construct a random (Gaussian) projection matrix.
    */ 
-  protected double[][] makeProjection() {
-    int N = super.getDimension(); 
+  protected double[][] makeProjection(int N) {
     int D = projectionDim;
     // constructing here (and not RandomFactory) because we want to use 
     // a RNG with our specific seed.
@@ -83,7 +96,17 @@ public class ProjectedCorpus extends Corpus implements Serializable, RealSequenc
    * Get the d-dimensional feature vectore for the i-th index word
    */
   public double[] featurize( int i ) {
-    return P[i];
+    double[] x = P[i];
+
+    // Find all the features for i.
+    if( featurizer != null ) {
+      int baseDim = super.getDimension();
+      for( Integer f : featurizer.features( dict[i] ) ){
+        // Include feature from i.
+        MatrixOps.add( x, P[baseDim + f] );
+      }
+    }
+    return x;
   }
 
   /**

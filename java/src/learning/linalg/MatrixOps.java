@@ -1104,5 +1104,14 @@ public class MatrixOps {
     return SimpleMatrix.wrap( Y ) ;
   }
 
+  /**
+   * x[i] <- x[i] + y[i].
+   */
+  public static void add(double[] x, double[] y) {
+    assert( x.length == y.length );
+
+    for( int i = 0; i < x.length; i++ )
+      x[i] += y[i];
+  }
 }
 

@@ -446,7 +446,5 @@ public class MixtureOfExperts implements Serializable {
     }
 
   }
-
-
 }
 
