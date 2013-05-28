@@ -120,8 +120,10 @@ class HiddenMarkovModel extends Model {
       H.addProdNode(hNode); // this is a product node over emissions and transistions.
 
       // probability of choosing this value for h.
-      int pi_h = featureIndexer.getIndex(new UnaryFeature(h, "pi="+h));
-      H.addEdge(rootNode, hNode, edgeInfo(params, counts, pi_h, increment));
+      //int pi_h = featureIndexer.getIndex(new UnaryFeature(h, "pi="+h));
+      //H.addEdge(rootNode, hNode, edgeInfo(params, counts, pi_h, increment));
+      // TODO: Handle non-uniform start probabilities.
+      H.addEdge(rootNode, hNode);
     }
   }
 

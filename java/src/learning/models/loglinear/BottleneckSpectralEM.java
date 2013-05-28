@@ -38,6 +38,8 @@ public class BottleneckSpectralEM implements Runnable {
   @Option(gloss="Initialize using measurements?") public boolean useMeasurements = true;
   @Option(gloss="Number of iterations before switching to full unsupervised") public int numMeasurementIters = Integer.MAX_VALUE;
 
+  @Option(gloss="Smooth measurements") public double smoothMeasurements = 0.0;
+
   @OptionSet(name="lbfgs") public LBFGSMaximizer.Options lbfgs = new LBFGSMaximizer.Options();
   @OptionSet(name="backtrack") public BacktrackingLineSearch.Options backtrack = new BacktrackingLineSearch.Options();
 
@@ -89,7 +91,7 @@ public class BottleneckSpectralEM implements Runnable {
      */
     public double reportCounts(ParamsVec estimatedCounts, boolean[] measuredFeatures) {
       double err = estimatedCounts.computeDiff( trueCounts, measuredFeatures, null );
-      LogInfo.logsForce("countsError(%s)=%f", Fmt.D(measuredFeatures), err);
+      LogInfo.logsForce("countsError(%s)=%f [%s] - [%s]", Fmt.D(measuredFeatures), err, Fmt.D(estimatedCounts.weights), Fmt.D(trueCounts.weights));
       return err;
     }
     public double reportCounts(ParamsVec estimatedCounts) {
@@ -136,11 +138,11 @@ public class BottleneckSpectralEM implements Runnable {
       // Construct triples of three observed variables around the hidden
       // node.
       //
-      int K, D;
+      int L, K, D;
       Iterator<double[][]> dataSeq;
       if( model instanceof MixtureModel) {
         final MixtureModel mixModel = (MixtureModel) model;
-        K = mixModel.K; D = mixModel.D;
+        K = mixModel.K; D = mixModel.D; L = mixModel.L;
 
         // x_{1,2,3} 
         dataSeq = (new Iterator<double[][]>() {
@@ -161,6 +163,42 @@ public class BottleneckSpectralEM implements Runnable {
             throw new RuntimeException();
           }
         });
+      } else if( model instanceof HiddenMarkovModel) {
+        final HiddenMarkovModel hmmModel = (HiddenMarkovModel) model;
+        K = hmmModel.K; D = hmmModel.D; L = hmmModel.L;
+
+        // x_{1,2,3} 
+        dataSeq = (new Iterator<double[][]>() {
+          Iterator<Example> iter = data.iterator();
+          int[] current; int idx = 0; 
+          public boolean hasNext() {
+            if( current != null && idx < current.length - 2) 
+              return true;
+            else
+              return iter.hasNext();
+          }
+          public double[][] next() {
+            // Walk through every example, and return triples from the
+            // examples.
+            if( current == null || idx > current.length - 3 ) {
+              Example ex = iter.next();
+              current = ex.x;
+              idx = 0;
+            }
+
+            // Efficiently memoize the random projections here.
+            double[][] data = new double[3][hmmModel.D]; // Each datum is a one-hot vector
+            for( int v = 0; v < 3; v++ ) {
+              data[v][current[idx+v]] = 1.0;
+            }
+            idx++;
+
+            return data;
+          }
+          public void remove() {
+            throw new RuntimeException();
+          }
+        });
       } else {
         throw new RuntimeException("Unhandled model type: " + model.getClass() );
       }
@@ -170,16 +208,17 @@ public class BottleneckSpectralEM implements Runnable {
       Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> 
         bottleneckMoments = algo.recoverParameters( K, D, dataSeq );
 
+      double[] pi = MatrixFactory.toVector( bottleneckMoments.getValue0() );
+      MatrixOps.projectOntoSimplex( pi, smoothMeasurements );
+      SimpleMatrix M[] = {bottleneckMoments.getValue1(), bottleneckMoments.getValue2(), bottleneckMoments.getValue3()};
+
       // Set appropriate measuredFeatures to observed moments
       if( model instanceof MixtureModel ) {
-        double[] pi = MatrixFactory.toVector( bottleneckMoments.getValue0() );
-        MatrixOps.projectOntoSimplex( pi );
-        SimpleMatrix M[] = {bottleneckMoments.getValue1(), bottleneckMoments.getValue2(), bottleneckMoments.getValue3()};
         assert( M[2].numRows() == D );
         assert( M[2].numCols() == K );
         // Each column corresponds to a particular hidden moment.
         // Project onto the simplex
-        M[2] = MatrixOps.projectOntoSimplex( M[2] );
+        M[2] = MatrixOps.projectOntoSimplex( M[2], smoothMeasurements );
         Execution.putOutput("moments.pi", MatrixFactory.fromVector(pi) );
         Execution.putOutput("moments.M3", M[2]);
 
@@ -191,10 +230,52 @@ public class BottleneckSpectralEM implements Runnable {
             // multiplying by pi to go from E[x|h] -> E[x,h]
             // multiplying by 3 because true.counts aggregates
             // over x1, x2 and x3.
-            measurements.weights[f] = 3 * M[2].get( d, h ) * pi[h]; 
+            measurements.weights[f] = L * M[2].get( d, h ) * pi[h]; 
           }
         }
         Execution.putOutput("moments.params", MatrixFactory.fromVector(measurements.weights));
+      } else if( model instanceof HiddenMarkovModel ) {
+        // M[1] is O 
+        SimpleMatrix O = M[1];
+        // M[2] is OT 
+        SimpleMatrix T = O.pseudoInverse().mult(M[2]);
+        assert( O.numRows() == D ); assert( O.numCols() == K );
+        assert( T.numRows() == K ); assert( T.numCols() == K );
+
+        // Each column corresponds to a particular hidden moment.
+        // Project onto the simplex
+        // Note: We might need to invert the random projection here.
+        O = MatrixOps.projectOntoSimplex( O, smoothMeasurements );
+        // smooth measurements by adding a little 
+        T = MatrixOps.projectOntoSimplex( T, smoothMeasurements );
+        Execution.putOutput("moments.pi", Fmt.D(pi));
+        Execution.putOutput("moments.O", O);
+        Execution.putOutput("moments.T", T);
+
+        // Put the observed moments back into the counts.
+        for( int h = 0; h < K; h++ ) {
+          for( int d = 0; d < D; d++ ) {
+            int f = measurements.featureIndexer.getIndex(new UnaryFeature(h, "x="+d));
+            measuredFeatures[f] = true;
+            // multiplying by pi to go from E[x|h] -> E[x,h]
+            // multiplying by 3 because true.counts aggregates
+            // over x1, x2 and x3.
+            measurements.weights[f] = L * O.get( d, h ) * pi[h];
+          }
+          // 
+          // TODO: Experiment with using T.
+          if( true ) {
+            for( int h_ = 0; h_ < K; h_++ ) {
+              int f = measurements.featureIndexer.getIndex(new BinaryFeature(h,h_));
+              measuredFeatures[f] = true;
+              // multiplying by pi to go from E[x|h] -> E[x,h]
+              // multiplying by 3 because true.counts aggregates
+              // over x1, x2 and x3.
+              measurements.weights[f] = (L-1) * T.get( h, h_ ) * pi[h]; 
+            }
+          }
+        }
+        Execution.putOutput("moments.params", Fmt.D( measurements.weights ));
       } else {
         throw new RuntimeException("Unhandled model type: " + model.getClass() );
       }
@@ -206,20 +287,69 @@ public class BottleneckSpectralEM implements Runnable {
     return new Pair<>(measurements, measuredFeatures);
   }
 
+  String logStat(String key, Object value) {
+    LogInfo.logs("%s = %s", key, value);
+    Execution.putOutput(key, value);
+    return key+"="+value;
+  }
+
+  boolean optimize( Maximizer maximizer, Objective state, int numIters, String label ) {
+    LogInfo.begin_track("optimize", label);
+    state.invalidate();
+    boolean done = false;
+    // E-step
+    int iter;
+
+    PrintWriter out = IOUtils.openOutHard(Execution.getFile(label + ".events"));
+
+    for (iter = 0; iter < numIters && !done; iter++) {
+      LogInfo.begin_track("Iteration %s/%s", iter, numIters);
+      done = maximizer.takeStep(state);
+      LogInfo.logs("objective=%f", state.value());
+      LogInfo.logs("counts=%s", Fmt.D(state.counts.weights));
+
+      // Logging stuff
+      List<String> items = new ArrayList<String>();
+      int perm[] = new int[model.K];
+      items.add("iter="+iter);
+      items.add(logStat("paramsError", state.params.computeDiff(analysis.trueParams, perm)));
+      items.add(logStat("paramsPerm", Fmt.D(perm)));
+      items.add(logStat("countsError", state.counts.computeDiff(analysis.trueCounts, perm)));
+      items.add(logStat("muError", state.mu.computeDiff(analysis.trueCounts, perm)));
+      items.add(logStat("countsPerm", Fmt.D(perm)));
+      items.add(logStat("eObjective", state.value()));
+      out.println(StrUtils.join(items, "\t"));
+      out.flush();
+
+      // The EMObjective's per-example counts are stored in mu.
+      // The global term's counts are stored in counts.
+      analysis.reportCounts( state.mu );
+      analysis.reportCounts( state.counts );
+
+      LogInfo.end_track();
+    }
+    LogInfo.end_track();
+    return done && iter == 1;  // Didn't make any updates
+  }
+  boolean optimize( Maximizer maximizer, Objective state, int numIters ) {
+    return optimize( maximizer, state, numIters, "optimize" );
+  }
+
   abstract class Objective implements Maximizer.FunctionState {
-    protected Model model;
-    protected double objective;
-    protected ParamsVec params;  // Canonical parameters
-    protected ParamsVec gradient;  // targetCounts - predCounts - \nabla regularization
+    public Model model;
+    public double objective;
+    public ParamsVec params;  // Canonical parameters
+    public ParamsVec gradient;  // targetCounts - predCounts - \nabla regularization
 
     // Optimization state
-    protected boolean objectiveValid = false;
-    protected boolean gradientValid = false;
+    public boolean objectiveValid = false;
+    public boolean gradientValid = false;
 
-    protected Hypergraph Hp;
-    protected ParamsVec counts;  
+    public Hypergraph Hp;
+    public ParamsVec counts;  
+    public ParamsVec mu; // Expected counts; ether measurements or from hypergraph.
 
-    protected double regularization;
+    public double regularization;
 
     public Objective(Model model, ParamsVec params, 
         double regularization) {
@@ -230,6 +360,7 @@ public class BottleneckSpectralEM implements Runnable {
 
       this.counts = model.newParamsVec();
       this.Hp = model.createHypergraph(null, params.weights, counts.weights, 1);
+      this.mu = model.newParamsVec();
     }
 
     public void invalidate() { objectiveValid = gradientValid = false; }
@@ -237,7 +368,7 @@ public class BottleneckSpectralEM implements Runnable {
     public double value() { compute(false); return objective; }
     public double[] gradient() { compute(true); return gradient.weights; }
 
-    public abstract void compute(boolean needGradients);
+    public abstract void compute(boolean needGradient);
   }
 
   class MomentMatchingObjective extends Objective {
@@ -245,14 +376,12 @@ public class BottleneckSpectralEM implements Runnable {
 
     // TODO: generalize to arbitrary quadratic (A w - b)^2
 
-    ParamsVec measurements;  // targetCounts - predCounts - \nabla regularization
-
     public MomentMatchingObjective(Model model, ParamsVec params, double regularization, 
         ParamsVec measurements, boolean[] measuredFeatures, 
         Random initRandom, double initNoise) {
       super(model, params, regularization);
 
-      this.measurements = measurements;
+      this.mu = measurements;
       this.measuredFeatures = measuredFeatures;
 
       // Create state
@@ -260,14 +389,13 @@ public class BottleneckSpectralEM implements Runnable {
     }
 
     public void compute(boolean needGradient) {
-      // Always recompute for now.
-      //if (needGradient ? gradientValid : objectiveValid) return;
+      if (needGradient ? gradientValid : objectiveValid) return;
       objectiveValid = true;
 
       // Objective is \theta^T \tau - A(\theta) 
       objective = 0.0;
       // \theta^T \tau 
-      objective += MatrixOps.dot( params.weights, measurements.weights, measuredFeatures );
+      objective += MatrixOps.dot( params.weights, mu.weights, measuredFeatures );
 
       // A(\theta)
       counts.clear(); Hp.computePosteriors(false);
@@ -292,11 +420,11 @@ public class BottleneckSpectralEM implements Runnable {
         Hp.fetchPosteriors(false);
 
         logs("objective = %s, gradient (%s): [%s] - [%s] - %s [%s]", 
-            Fmt.D(objective), Fmt.D(measuredFeatures), Fmt.D(measurements.weights), Fmt.D(counts.weights), regularization, Fmt.D(params.weights));
+            Fmt.D(objective), Fmt.D(measuredFeatures), Fmt.D(mu.weights), Fmt.D(counts.weights), regularization, Fmt.D(params.weights));
         for (int j = 0; j < model.numFeatures(); j++) {
           if (!measuredFeatures[j]) continue;
           // takes \tau (from target) - E(\phi) (from pred).
-          gradient.weights[j] += measurements.weights[j] - counts.weights[j];
+          gradient.weights[j] += mu.weights[j] - counts.weights[j];
 
           // Regularization
           if (regularization > 0)
@@ -305,43 +433,6 @@ public class BottleneckSpectralEM implements Runnable {
         LogInfo.logs("gradient: %s", Fmt.D(gradient.weights));
       }
     }
-  }
-
-  String logStat(String key, Object value) {
-    LogInfo.logs("%s = %s", key, value);
-    Execution.putOutput(key, value);
-    return key+"="+value;
-  }
-
-  boolean optimize( Maximizer maximizer, Objective state, int numIters, String label ) {
-    LogInfo.begin_track("optimize", label);
-    state.invalidate();
-    boolean done = false;
-    // E-step
-    int iter;
-    for (iter = 0; iter < numIters && !done; iter++) {
-      LogInfo.begin_track("Iteration %s/%s", iter, numIters);
-      done = maximizer.takeStep(state);
-      LogInfo.logs("objective=%f", state.value());
-
-      // Logging stuff
-      if( label == "em" ) {
-        List<String> items = new ArrayList<String>();
-        int perm[] = new int[model.K];
-        items.add("iter="+iter);
-        items.add(logStat("paramsError", state.params.computeDiff(analysis.trueParams, perm)));
-        items.add(logStat("paramsPerm", Fmt.D(perm)));
-        items.add(logStat("countsError", state.counts.computeDiff(analysis.trueCounts, perm)));
-        items.add(logStat("countsPerm", Fmt.D(perm)));
-        items.add(logStat("eObjective", state.value()));
-        eventsOut.println(StrUtils.join(items, "\t"));
-        eventsOut.flush();
-      }
-
-      LogInfo.end_track();
-    }
-    LogInfo.end_track();
-    return done && iter == 1;  // Didn't make any updates
   }
 
   /**
@@ -378,14 +469,12 @@ public class BottleneckSpectralEM implements Runnable {
 
   class EMObjective extends Objective {
     List<Example> examples;
-    ParamsVec mu;
 
     public EMObjective(Model model, ParamsVec params, double regularization,
         List<Example> examples) {
       super(model, params, regularization);
 
       this.examples = examples;
-      this.mu = model.newParamsVec();
     }
 
     void computeExpectedCounts() {
@@ -416,7 +505,7 @@ public class BottleneckSpectralEM implements Runnable {
       objective += MatrixOps.dot( params.weights, mu.weights );
 
       // A(\theta)
-      counts.clear(); Hp.computePosteriors(false);
+      counts.clear(); Hp.computePosteriors(false); Hp.fetchPosteriors(false);
       objective -= Hp.getLogZ();
 
       if (regularization > 0) {
@@ -430,11 +519,8 @@ public class BottleneckSpectralEM implements Runnable {
       // Compute gradient (if needed)
       // \mu - E_{\theta}[\phi]
       if (needGradient) {
-        gradientValid = true;
         gradient.clear();
-
-        // Compute E_{\theta}[\phi]
-        Hp.fetchPosteriors(false);
+        gradientValid = true;
 
         logs("objective = %s, gradient: [%s] - [%s] - %s [%s]", 
             Fmt.D(objective), Fmt.D(mu.weights), Fmt.D(counts.weights), regularization, Fmt.D(params.weights));
@@ -462,6 +548,8 @@ public class BottleneckSpectralEM implements Runnable {
         data);
     // Optimize
     optimize( maximizer, state, numIters, "em" );
+    state.params.write( Execution.getFile("params") );
+    state.counts.write( Execution.getFile("counts") );
     LogInfo.end_track("solveEM");
 
     return initialParams;
@@ -515,7 +603,6 @@ public class BottleneckSpectralEM implements Runnable {
     @Option(gloss="How much variation in true parameters") public double trueParamsNoise = 1;
   }
   @OptionSet(name="gen") public GenerationOptions genOpts = new GenerationOptions();;
-  PrintWriter eventsOut;
 
   /**
    * Generates random data from the model.
@@ -598,7 +685,6 @@ public class BottleneckSpectralEM implements Runnable {
   }
 
   public void run() {
-    eventsOut = IOUtils.openOutHard(Execution.getFile("events"));
 
     // Setup; generate model 
     Model model = generateModel( modelOpts );

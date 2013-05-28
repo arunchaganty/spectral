@@ -702,15 +702,20 @@ public class MatrixOps {
    * @param x
    * @return
    */
-  public static void projectOntoSimplex( double[] x ) {
+  public static void projectOntoSimplex( double[] x, double smooth ) {
     // Normalize and shrink to 0
     normalize(x);
-    for(int i = 0; i < x.length; i++ )
+    for(int i = 0; i < x.length; i++ ) {
       if( x[i] < 0 ) x[i] = 0;
+      x[i] += smooth;
+    }
     normalize(x);
   }
+  public static void projectOntoSimplex( double[] x ) {
+    projectOntoSimplex( x, 0.0 );
+  }
 
-  public static void projectOntoSimplex( DenseMatrix64F X ) {
+  public static void projectOntoSimplex( DenseMatrix64F X, double smooth ) {
     int nRows = X.numRows;
     int nCols = X.numCols;
 
@@ -723,10 +728,14 @@ public class MatrixOps {
       for( int row = 0; row < nRows; row++ ) {
         double x  = X_[ X.getIndex(row, col) ];
         if( x < 0 ) X_[ X.getIndex(row, col) ] = 0;
+        X_[ X.getIndex(row, col) ] += smooth;
       }
 
       columnNormalize( X, col );
     }
+  }
+  public static void projectOntoSimplex( DenseMatrix64F X ) {
+    projectOntoSimplex( X, 0.0 );
   }
 
   /**
@@ -734,10 +743,13 @@ public class MatrixOps {
    * @param X
    * @return
    */
-  public static SimpleMatrix projectOntoSimplex( SimpleMatrix X ) {
+  public static SimpleMatrix projectOntoSimplex( SimpleMatrix X, double smooth ) {
     DenseMatrix64F Y = X.getMatrix().copy();
-    projectOntoSimplex(Y);
+    projectOntoSimplex(Y, smooth);
     return SimpleMatrix.wrap( Y );
+  }	
+  public static SimpleMatrix projectOntoSimplex( SimpleMatrix X ) {
+    return projectOntoSimplex( X, 0.0 );
   }	
 
   /**
@@ -1093,5 +1105,4 @@ public class MatrixOps {
   }
 
 }
-
 
