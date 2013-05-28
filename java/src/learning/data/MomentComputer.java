@@ -167,10 +167,17 @@ public class MomentComputer implements Runnable {
     // Read corpus
     try {
       Corpus C = Corpus.parseText( opts.dataPath, opts.mapPath );
-      ProjectedCorpus PC = new ProjectedCorpus( C,
-        opts.randomProjDim, opts.randomProjSeed,
-        new KirkpatrikFeaturizer( C )
-        );
+      ProjectedCorpus PC;
+      if( opts.useKirkpatrik ) {
+        PC = new ProjectedCorpus( C,
+          opts.randomProjDim, opts.randomProjSeed,
+          new KirkpatrikFeaturizer( C )
+          );
+      }
+      else {
+        PC = new ProjectedCorpus( C,
+          opts.randomProjDim, opts.randomProjSeed);
+      }
       
       // Compute moments
       Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,FullTensor> moments;
