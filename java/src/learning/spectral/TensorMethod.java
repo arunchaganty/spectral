@@ -1,23 +1,27 @@
 package learning.spectral;
 
-import fig.basic.Option;
 import learning.linalg.*;
-import learning.data.MomentAggregator;
+import learning.data.*;
 
 import org.javatuples.*;
 import java.util.*;
+import java.io.*;
+
+import fig.basic.Option;
+import fig.basic.OptionSet;
+import fig.basic.LogInfo;
+import fig.exec.Execution;
 
 import org.ejml.simple.SimpleMatrix;
-import fig.basic.LogInfo;
+import org.apache.commons.io.FilenameUtils;
 
 /**
  * Recover parameters from symmetric multi-views using the Tensor powerup method
  */
-public class TensorMethod {
-
-  @Option
+public class TensorMethod implements Runnable {
+  @Option(gloss="Number of iterations to run the power method to convergence")
   int iters = 1000;
-  @Option
+  @Option(gloss="Number of attempts to find good eigen-vectors")
   int attempts = 10;
 
   public TensorMethod() {}
@@ -160,4 +164,67 @@ public class TensorMethod {
 
       //return recoverParameters( K, agg.getMoments() );
     }
+
+  @OptionSet(name="moments")
+    MomentComputer.Options momentOpts = new MomentComputer.Options();
+  @Option(gloss="Path to file containing moments information")
+    public String momentsPath;
+  @Option(gloss="Number of clusters to use for the factorization")
+    public int K;
+
+  @SuppressWarnings("unchecked")
+  public void run() {
+    try { 
+      // Read moments from path. 
+      ObjectInputStream in = new ObjectInputStream( new FileInputStream( momentsPath ) ); 
+      momentOpts.randomProjSeed = (int) in.readObject();
+      Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,FullTensor> moments = 
+        (Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,FullTensor>)
+        in.readObject();
+      momentOpts.randomProjDim = moments.getValue0().numRows();
+      in.close();
+      assert( moments.getValue0().numCols() == momentOpts.randomProjDim );
+
+      // Read corpus from path. Use seed from projection.
+      // This is mainly to "unproject"
+      ProjectedCorpus PC = new ProjectedCorpus( 
+          Corpus.parseText( momentOpts.dataPath, momentOpts.mapPath ),
+          momentOpts.randomProjDim, momentOpts.randomProjSeed );
+
+      // Run the TensorFactorization algorithm
+      Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> 
+        parameters = recoverParameters( K, moments );
+      SimpleMatrix pi = parameters.getValue0();
+      SimpleMatrix M1 = parameters.getValue1();
+      SimpleMatrix M2 = parameters.getValue2();
+      SimpleMatrix M3 = parameters.getValue3();
+
+      // Unproject.
+      pi = PC.unfeaturize( pi );
+      M1 = PC.unfeaturize( M1 );
+      M2 = PC.unfeaturize( M2 );
+      M3 = PC.unfeaturize( M3 );
+
+      // Write.
+      parameters = new Quartet<>(pi, M1, M2, M3);
+      String outFilename = Execution.getFile( FilenameUtils.getBaseName(momentOpts.dataPath) + 
+          "-" + momentOpts.randomProjDim + "-" + momentOpts.randomProjSeed + ".parameters" );
+      ObjectOutputStream out = new ObjectOutputStream( new FileOutputStream( outFilename ) ); 
+      out.writeObject(parameters);
+      out.close();
+    } catch( ClassNotFoundException e ) {
+      LogInfo.logsForce( e );
+    } catch ( IOException e ) {
+      LogInfo.logsForce( e );
+    }
+  }
+
+  /**
+   * Main routine reads moments from a file and runs the tensor factorization
+   * algorithm. 
+   * - It can also "unproject" if needed.
+   */
+  public static void main(String[] args) {
+    Execution.run(args, new TensorFactorization());
+  }
 }
