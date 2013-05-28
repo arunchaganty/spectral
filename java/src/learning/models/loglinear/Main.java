@@ -14,10 +14,7 @@ import org.javatuples.Quartet;
 import learning.linalg.*;
 import learning.spectral.TensorMethod;
 
-class Example {
-  Hypergraph Hq;  // For inference conditioned on the observations (represents q(h|x)).
-  int[] x;  // Values of observed nodes
-}
+import static learning.models.loglinear.Models.*;
 
 // A term in the objective function.
 abstract class ObjectiveTerm {

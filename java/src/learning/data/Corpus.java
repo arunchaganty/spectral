@@ -5,22 +5,8 @@
  */
 package learning.data;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Random;
-import java.util.Vector;
-
-import java.io.Serializable;
-
-import org.ejml.simple.SimpleMatrix;
+import java.io.*;
+import java.util.*;
 
 /**
  * Stores a corpus in an integer array
