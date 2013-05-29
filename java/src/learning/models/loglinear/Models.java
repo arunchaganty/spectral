@@ -50,7 +50,7 @@ public class Models {
               H.addEdge(hNode, H.endNode, edgeInfo(params, counts, f, increment));
           } else {  // Denominator: generate each possible assignment x[j] = a
             H.addSumNode(xNode);
-            H.addEdge(hNode, xNode, debugEdge("xh"));
+            H.addEdge(hNode, xNode);
             for (int a = 0; a < D; a++) {
               int f = featureIndexer.getIndex(new UnaryFeature(h, "x="+a));
               if (params != null)
@@ -141,7 +141,7 @@ public class Models {
 
     public Hypergraph<Example> createHypergraph(int L, Example ex, double[] params, double[] counts, double increment) {
       // Set length to be length of example data.
-      assert( (ex == null) || ex.x.length == this.L );
+      assert( (ex == null) || ex.x.length == L );
 
       Hypergraph<Example> H = new Hypergraph<Example>();
       //H.debug = true;
