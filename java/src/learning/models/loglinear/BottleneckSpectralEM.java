@@ -410,6 +410,20 @@ public class BottleneckSpectralEM implements Runnable {
     public abstract void infer(boolean needGradient);
   }
 
+  public static void printMemory() {
+        try{
+        System.gc();
+        Thread.currentThread().sleep(100);
+        System.runFinalization();
+        Thread.currentThread().sleep(100);
+        System.gc();
+        Thread.currentThread().sleep(100);
+        System.runFinalization();
+        Thread.currentThread().sleep(100);
+        } catch(InterruptedException e) {}
+        LogInfo.logs( "Memory: %dMb (%dMb free)", (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())/(1024 * 1024), Runtime.getRuntime().freeMemory()/(1024 * 1024) );
+  }
+
   class GlobalTerm extends ObjectiveTerm {
     Model model;
     ParamsVec params; // A reference.
@@ -422,12 +436,23 @@ public class BottleneckSpectralEM implements Runnable {
 
       // Construct a H for each length in the examples.
       // HACK: Likely only to work for the examples we're using.
+      Map<Integer, Integer> countProfile = getCountProfile(examples);
+      LogInfo.begin_track("Constructing globalTerm");
+      LogInfo.logs("Found %d unique lengths",  countProfile.size() );
       Hp = new HashMap<>();
-      for( Map.Entry<Integer,Integer> pair : getCountProfile(examples).entrySet() ) {
+        printMemory();
+      for( Map.Entry<Integer,Integer> pair : countProfile.entrySet() ) {
         int L = pair.getKey(); int cnt = pair.getValue();
+
+        LogInfo.logs( "%d instances of %d length", cnt, L );
         Hp.put( model.createHypergraph(L, params.weights, gradient.weights, (double) cnt/examples.size()),
             cnt );
+        printMemory();
+        //Hp.put( model.createHypergraph(L, params.weights, gradient.weights, (double) 1), 1 );
+        //break; // Cheating because we're running out of memory.
       }
+        printMemory();
+      LogInfo.end_track();
     }
 
     public void infer(boolean needGradient) {
@@ -540,6 +565,7 @@ public class BottleneckSpectralEM implements Runnable {
         Hq.fetchPosteriors(false); // Places the posterior expectation $E_{Y|X}[\phi]$ into counts
         //value += Hq.getLogZ() * 1.0/examples.size();
       }
+      printMemory();
       value = MatrixOps.dot(params.weights, gradient.weights);
       // At the end of this routine, 
       // counts contains $E_{Y|X}[\phi(X)]$ $\phi(x)$ are features.

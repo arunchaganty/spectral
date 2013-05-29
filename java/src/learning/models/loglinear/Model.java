@@ -36,45 +36,60 @@ public abstract class Model {
     public Example choose(Example ex) { return ex; }
   };
 
-  Hypergraph.LogHyperedgeInfo<Example> hiddenEdgeInfo(final int j, final int v) {
-    return new Hypergraph.LogHyperedgeInfo<Example>() {
-      public double getLogWeight() { return 0; }
-      public void setPosterior(double prob) { }
-      public Example choose(Example ex) {
+  class UpdatingEdgeInfo implements Hypergraph.LogHyperedgeInfo<Example> {
+    int j;
+    int v;
+    boolean updateHidden;
+
+    public double getLogWeight() { return 0; }
+    public void setPosterior(double prob) { }
+
+    UpdatingEdgeInfo(final int j, final int v, boolean updateHidden) {
+      this.j = j;
+      this.v = v;
+      this.updateHidden = updateHidden;
+    }
+    public Example choose(Example ex) {
+      if( updateHidden )
         ex.h[j] = v;
-        return ex;
-      }
-      public String toString() { return "edge " + j + " " + v; }
-    };
+      else
+        ex.x[j] = v;
+      return ex;
+    }
+    public String toString() { return "edge " + j + " " + v; }
   }
-  Hypergraph.LogHyperedgeInfo<Example> debugEdge(final String msg) {
-    return new Hypergraph.LogHyperedgeInfo<Example>() {
-      public double getLogWeight() { return 0; }
-      public void setPosterior(double prob) { }
-      public Example choose(Example ex) { return ex; }
-      public String toString() { return msg; }
-    };
+  class UpdatingMultinomialEdgeInfo extends Hypergraph.MultinomialLogHyperedgeInfo<Example> {
+    int j;
+    int v;
+    boolean updateHidden;
+    UpdatingMultinomialEdgeInfo(double[] params, double[] counts, int f, double increment, final int j, final int v, boolean updateHidden) {
+      super(params, counts, f, increment);
+      this.j = j;
+      this.v = v;
+      this.updateHidden = updateHidden;
+    }
+    public Example choose(Example ex) {
+      if( updateHidden )
+        ex.h[j] = v;
+      else
+        ex.x[j] = v;
+      return ex;
+    }
+  }
+
+
+  Hypergraph.LogHyperedgeInfo<Example> hiddenEdgeInfo(final int j, final int v) {
+    return new UpdatingEdgeInfo(j, v, true);
   }
 
   Hypergraph.LogHyperedgeInfo<Example> hiddenEdgeInfo(double[] params, double[] counts, int f, double increment, final int j, final int v) {
-    return new Hypergraph.MultinomialLogHyperedgeInfo<Example>(params, counts, f, increment) {
-      public Example choose(Example ex) {
-        ex.h[j] = v;
-        return ex;
-      }
-    };
+    return new UpdatingMultinomialEdgeInfo(params, counts, f, increment, j, v, true);
   }
-
   Hypergraph.LogHyperedgeInfo<Example> edgeInfo(double[] params, double[] counts, int f, double increment) {
     return new Hypergraph.MultinomialLogHyperedgeInfo<Example>(params, counts, f, increment);
   }
   Hypergraph.LogHyperedgeInfo<Example> edgeInfo(double[] params, double[] counts, int f, double increment, final int j, final int v) {
-    return new Hypergraph.MultinomialLogHyperedgeInfo<Example>(params, counts, f, increment) {
-      public Example choose(Example ex) {
-        ex.x[j] = v;
-        return ex;
-      }
-    };
+    return new UpdatingMultinomialEdgeInfo(params, counts, f, increment, j, v, false);
   }
 }
 
