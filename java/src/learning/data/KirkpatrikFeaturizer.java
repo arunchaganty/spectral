@@ -77,6 +77,5 @@ public class KirkpatrikFeaturizer implements Featurizer {
         map.add( featureIndexer.getIndex( trigram ) );
     }
   }
-
 }
 

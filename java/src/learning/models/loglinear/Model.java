@@ -29,6 +29,35 @@ public abstract class Model {
     public Example choose(Example ex) { return ex; }
   };
 
+  Hypergraph.LogHyperedgeInfo<Example> hiddenEdgeInfo(final int j, final int v) {
+    return new Hypergraph.LogHyperedgeInfo<Example>() {
+      public double getLogWeight() { return 0; }
+      public void setPosterior(double prob) { }
+      public Example choose(Example ex) {
+        ex.h[j] = v;
+        return ex;
+      }
+      public String toString() { return "edge " + j + " " + v; }
+    };
+  }
+  Hypergraph.LogHyperedgeInfo<Example> debugEdge(final String msg) {
+    return new Hypergraph.LogHyperedgeInfo<Example>() {
+      public double getLogWeight() { return 0; }
+      public void setPosterior(double prob) { }
+      public Example choose(Example ex) { return ex; }
+      public String toString() { return msg; }
+    };
+  }
+
+  Hypergraph.LogHyperedgeInfo<Example> hiddenEdgeInfo(double[] params, double[] counts, int f, double increment, final int j, final int v) {
+    return new Hypergraph.MultinomialLogHyperedgeInfo<Example>(params, counts, f, increment) {
+      public Example choose(Example ex) {
+        ex.h[j] = v;
+        return ex;
+      }
+    };
+  }
+
   Hypergraph.LogHyperedgeInfo<Example> edgeInfo(double[] params, double[] counts, int f, double increment) {
     return new Hypergraph.MultinomialLogHyperedgeInfo<Example>(params, counts, f, increment);
   }

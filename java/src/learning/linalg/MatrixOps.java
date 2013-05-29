@@ -1113,5 +1113,17 @@ public class MatrixOps {
     for( int i = 0; i < x.length; i++ )
       x[i] += y[i];
   }
+
+  /**
+   * Report hamming loss between labels x, y
+   */
+  public static int hamming(int[] x, int[] y) {
+    assert( x.length == y.length );
+    int err = 0;
+    for( int i = 0; i < x.length; i++ )
+      err += (x[i] != y[i]) ? 1 : 0;
+    return err / x.length;
+  }
+
 }
 

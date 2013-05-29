@@ -113,10 +113,22 @@ public class BottleneckSpectralEM implements Runnable {
   }
 
   ////////////////////////////////////////////////////////
+
+  String logStat(String key, Object value) {
+    LogInfo.logs("%s = %s", key, value);
+    Execution.putOutput(key, value);
+    return key+"="+value;
+  }
+
+  ////////////////////////////////////////////////////////
   
   // Algorithm parameters
   Model model;
 
+  /**
+   * Model specific unrolling of the data elements to create three-view data.
+   * TODO: Move to Model?
+   */
   Iterator<double[][]> constructDataSequence( Model model, final List<Example> data ) {
     LogInfo.begin_track("construct-data-sequence");
     Iterator<double[][]> dataSeq;
@@ -185,7 +197,10 @@ public class BottleneckSpectralEM implements Runnable {
     LogInfo.end_track();
     return dataSeq;
   }
-
+  /**
+   * Use the moments returned by MoM to estimate counts.
+   * TODO: Move to Model?
+   */
   void populateFeatures( Model model, 
         Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> bottleneckMoments,
         ParamsVec measurements, boolean[] measuredFeatures ) {
@@ -268,7 +283,6 @@ public class BottleneckSpectralEM implements Runnable {
   
     LogInfo.end_track();
   }
-
   /**
    * Unrolls data along bottleneck nodes and uses method of moments
    * to return expected potentials
@@ -320,13 +334,9 @@ public class BottleneckSpectralEM implements Runnable {
     return new Pair<>(measurements, measuredFeatures);
   }
 
-  String logStat(String key, Object value) {
-    LogInfo.logs("%s = %s", key, value);
-    Execution.putOutput(key, value);
-    return key+"="+value;
-  }
+  /////////////////////
 
-  boolean optimize( Maximizer maximizer, Objective state, int numIters, String label ) {
+  boolean optimize( Maximizer maximizer, Objective state, int numIters, List<Example> examples, String label ) {
     LogInfo.begin_track("optimize", label);
     state.invalidate();
     boolean done = false;
@@ -353,6 +363,8 @@ public class BottleneckSpectralEM implements Runnable {
       items.add(logStat("countsPerm", Fmt.D(perm)));
       }
       items.add(logStat("eObjective", state.value()));
+      if( examples != null )
+        items.add(logStat("accuracy", reportAccuracy( state.params, examples ) ) ); 
       out.println(StrUtils.join(items, "\t"));
       out.flush();
 
@@ -367,9 +379,6 @@ public class BottleneckSpectralEM implements Runnable {
     }
     LogInfo.end_track();
     return done && iter == 1;  // Didn't make any updates
-  }
-  boolean optimize( Maximizer maximizer, Objective state, int numIters ) {
-    return optimize( maximizer, state, numIters, "optimize" );
   }
 
   abstract class Objective implements Maximizer.FunctionState {
@@ -472,38 +481,6 @@ public class BottleneckSpectralEM implements Runnable {
     }
   }
 
-  /**
-   * Potentially uses moments to find an initial set of parameters that
-   * match it. 
-   *  - Solved as a restricted M-step, minimizing $\theta^T \tau -
-   *    A(\theta)$ or matching $E_\theta[\phi(x) = \tau$.
-   */
-  ParamsVec initializeParameters(final ParamsVec measurements, final boolean[] measuredFeatures) {
-    LogInfo.begin_track("initialize parameters");
-    // The objective function!
-    ParamsVec params = model.newParamsVec();
-    Maximizer maximizer = newMaximizer();
-    MomentMatchingObjective state = new MomentMatchingObjective(
-        model, params, eRegularization, 
-        measurements, measuredFeatures,
-        initRandom, initParamsNoise);
-    
-    // Optimize
-    optimize( maximizer, state, 1000, "initialization" );
-    LogInfo.end_track();
-    return params;
-  }
-  ParamsVec initializeParameters(ParamsVec moments) {
-      boolean[] allMeasuredFeatures = new boolean[moments.numFeatures];
-      Arrays.fill( allMeasuredFeatures, true );
-      return initializeParameters( moments, allMeasuredFeatures );
-  }
-  ParamsVec initializeParameters() {
-    ParamsVec init = model.newParamsVec();
-    init.initRandom( initRandom, initParamsNoise );
-    return init;
-  }
-
   class EMObjective extends Objective {
     List<Example> examples;
 
@@ -575,6 +552,86 @@ public class BottleneckSpectralEM implements Runnable {
   }
 
   /**
+   * Uses the params and model to label the hidden labels for each
+   * data point and reports Hamming errors. 
+   */
+  public double reportAccuracy( ParamsVec params, List<Example> examples ) {
+    LogInfo.begin_track("report-accuracy");
+    ParamsVec counts = model.newParamsVec();
+    int K = model.K;
+
+    // Create a confusion matrix with prediced vs estimated label choices
+    double[][] labelMapping = new double[K][K];
+    for(int i = 0; i < examples.size(); i++ ) {
+      Example ex = examples.get(i);
+      // Create a copy of the example with just the data; use this to
+      // guess the labels.
+      Example ex_ = ex.copyData();
+      // Cache the hypergraph
+      Hypergraph Hq = model.createHypergraph(ex_, params.weights, counts.weights, 1.0/examples.size());
+      Hq.computePosteriors(false);
+      Hq.fetchPosteriors(false); // Places the posterior expectation $E_{Y|X}[\phi]$ into counts
+      // Fill in the ex_.h values
+      Hq.fetchBestHyperpath(ex_);
+
+      for( int l = 0; l < ex.h.length; l++ )  
+        labelMapping[ex.h[l]][ex_.h[l]] -= 1; // subtracting because we want to use as costs.
+    }
+    LogInfo.logsForce( "Label mapping: \n" + Fmt.D( labelMapping ) );
+
+    // Now we can do bipartite matching to give us the best labellings.
+    BipartiteMatcher matcher = new BipartiteMatcher();
+    int[] perm = matcher.findMinWeightAssignment(labelMapping);
+    LogInfo.logsForce( "perm: " + Fmt.D( perm ) );
+    // Compute hamming score
+    long correct = 0;
+    long total = 0;
+    for( int k = 0; k < K; k++ ) {
+      for( int k_ = 0; k_ < K; k_++ ) {
+        total += labelMapping[k][k_];
+      }
+      correct += labelMapping[k][perm[k]];
+    }
+    double acc = (double) correct/ (double) total;
+    LogInfo.logs( "Accuracy: %d/%d = %f", correct, total, acc );
+    LogInfo.end_track();
+
+    return acc;
+  }
+
+  /**
+   * Potentially uses moments to find an initial set of parameters that
+   * match it. 
+   *  - Solved as a restricted M-step, minimizing $\theta^T \tau -
+   *    A(\theta)$ or matching $E_\theta[\phi(x) = \tau$.
+   */
+  ParamsVec initializeParameters(final ParamsVec measurements, final boolean[] measuredFeatures) {
+    LogInfo.begin_track("initialize parameters");
+    // The objective function!
+    ParamsVec params = model.newParamsVec();
+    Maximizer maximizer = newMaximizer();
+    MomentMatchingObjective state = new MomentMatchingObjective(
+        model, params, eRegularization, 
+        measurements, measuredFeatures,
+        initRandom, initParamsNoise);
+    
+    // Optimize
+    optimize( maximizer, state, 1000, null, "initialization" );
+    LogInfo.end_track();
+    return params;
+  }
+  ParamsVec initializeParameters(ParamsVec moments) {
+      boolean[] allMeasuredFeatures = new boolean[moments.numFeatures];
+      Arrays.fill( allMeasuredFeatures, true );
+      return initializeParameters( moments, allMeasuredFeatures );
+  }
+  ParamsVec initializeParameters() {
+    ParamsVec init = model.newParamsVec();
+    init.initRandom( initRandom, initParamsNoise );
+    return init;
+  }
+
+  /**
    * Solves EM for the model using data and initial parameters.
    */
   ParamsVec solveEM(List<Example> data, ParamsVec initialParams) {
@@ -586,7 +643,7 @@ public class BottleneckSpectralEM implements Runnable {
         model, initialParams, mRegularization,
         data);
     // Optimize
-    optimize( maximizer, state, numIters, "em" );
+    optimize( maximizer, state, numIters, data, "em" );
     state.params.write( Execution.getFile("params") );
     state.counts.write( Execution.getFile("counts") );
     LogInfo.end_track("solveEM");
@@ -660,6 +717,7 @@ public class BottleneckSpectralEM implements Runnable {
    *  - Uses genRand as a seed.
    */
   List<Example> generateData( Model model, ParamsVec params, GenerationOptions opts ) {
+    LogInfo.begin_track("generateData");
     ParamsVec counts = model.newParamsVec();
     Hypergraph<Example> Hp = model.createHypergraph(null, params.weights, counts.weights, 1);
     // Necessary preprocessing before you can generate hyperpaths
@@ -672,8 +730,10 @@ public class BottleneckSpectralEM implements Runnable {
       Example ex = model.newExample();
       Hp.fetchSampleHyperpath(opts.genRandom, ex);
       examples.add(ex);
-      //LogInfo.logs("x = %s", Fmt.D(ex.x));
+      LogInfo.logs("x = %s", Fmt.D(ex.x));
+      LogInfo.logs("h = %s", Fmt.D(ex.h));
     }
+    LogInfo.end_track();
 
     return examples;
   }

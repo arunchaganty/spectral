@@ -18,16 +18,13 @@ public class Models {
     public Example newExample() {
       Example ex = new Example();
       ex.x = new int[L];
+      ex.h = new int[1];
       return ex;
     }
-
     // Used to set observed data
     public Example newExample(int[] x) {
       assert( x.length == L );
-      Example ex = new Example();
-      ex.x = new int[x.length];
-      System.arraycopy(x, 0, ex.x, 0, x.length);
-      return ex;
+      return new Example( x, new int[1] );
     }
 
     public Hypergraph<Example> createHypergraph(Example ex, double[] params, double[] counts, double increment) {
@@ -43,7 +40,7 @@ public class Models {
         // probability of choosing this value for h.
         //int hf = featureIndexer.getIndex(new UnaryFeature(h, "pi"));
         //H.addEdge(rootNode, hNode, edgeInfo(params, counts, hf, increment));
-        H.addEdge(rootNode, hNode);
+        H.addEdge(rootNode, hNode, hiddenEdgeInfo(0,h) ); 
 
         for (int j = 0; j < L; j++) {  // For each view j...
           String xNode = "h="+h+",x"+j;
@@ -53,7 +50,7 @@ public class Models {
               H.addEdge(hNode, H.endNode, edgeInfo(params, counts, f, increment));
           } else {  // Denominator: generate each possible assignment x[j] = a
             H.addSumNode(xNode);
-            H.addEdge(hNode, xNode);
+            H.addEdge(hNode, xNode, debugEdge("xh"));
             for (int a = 0; a < D; a++) {
               int f = featureIndexer.getIndex(new UnaryFeature(h, "x="+a));
               if (params != null)
@@ -79,15 +76,13 @@ public class Models {
     public Example newExample() {
       Example ex = new Example();
       ex.x = new int[L];
+      ex.h = new int[L];
       return ex;
     }
 
     // Used to set observed data
     public Example newExample(int[] x) {
-      Example ex = new Example();
-      ex.x = new int[x.length];
-      System.arraycopy(x, 0, ex.x, 0, x.length);
-      return ex;
+      return new Example( x, new int[x.length] );
     }
 
     public void addInit(Hypergraph<Example> H, Example ex, double[] params, double[] counts, double increment) {
@@ -101,7 +96,7 @@ public class Models {
         //int pi_h = featureIndexer.getIndex(new UnaryFeature(h, "pi="+h));
         //H.addEdge(rootNode, hNode, edgeInfo(params, counts, pi_h, increment));
         // TODO: Handle non-uniform start probabilities.
-        H.addEdge(rootNode, hNode);
+        H.addEdge(rootNode, hNode, hiddenEdgeInfo(0,h));
       }
     }
 
@@ -120,7 +115,7 @@ public class Models {
 
         // probability of choosing this value for h.
         int trans_h_h_ = featureIndexer.getIndex(new BinaryFeature(h, h_));
-        H.addEdge(h_Node, hNextNode, edgeInfo(params, counts, trans_h_h_, increment));
+        H.addEdge(h_Node, hNextNode, hiddenEdgeInfo(params, counts, trans_h_h_, increment, i+1, h_));
       }
     }
 

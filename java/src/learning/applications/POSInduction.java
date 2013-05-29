@@ -58,7 +58,7 @@ public class POSInduction implements Runnable {
     for( int i = 0; i < C.getInstanceCount() && i < maxN; i++ ) {
       Example ex = new Example( C.C[i], C.L[i] );
       examples.add( ex );
-//      LogInfo.logs( Fmt.D( ex.x ) );
+      // LogInfo.logs( Fmt.D( ex.x ) );
     }
     return examples;
   }
@@ -89,7 +89,6 @@ public class POSInduction implements Runnable {
     } catch( IOException e ) {
       LogInfo.logsForce( e );
     }
-
   }
   
   public static void main(String[] args) {
