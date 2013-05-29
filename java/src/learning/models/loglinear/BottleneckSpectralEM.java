@@ -47,6 +47,8 @@ public class BottleneckSpectralEM implements Runnable {
   @OptionSet(name="lbfgs") public LBFGSMaximizer.Options lbfgs = new LBFGSMaximizer.Options();
   @OptionSet(name="backtrack") public BacktrackingLineSearch.Options backtrack = new BacktrackingLineSearch.Options();
 
+  @Option(gloss="Print all the things") public boolean debug = false;
+
   /**
    * Stores the true counts to be used to print error statistics
    */
@@ -77,16 +79,10 @@ public class BottleneckSpectralEM implements Runnable {
      * Reports error between estimated parameters and true parameters on
      * the selected fields
      */
-    public double reportParams(ParamsVec estimatedParams, boolean[] measuredFeatures) {
-      double err = estimatedParams.computeDiff( trueParams, measuredFeatures, null );
+    public double reportParams(ParamsVec estimatedParams) {
+      double err = estimatedParams.computeDiff( trueParams, new int[model.K] );
       LogInfo.logsForce("paramsError="+err);
       return err;
-    }
-    public double reportParams(ParamsVec estimatedParams) {
-      boolean[] allMeasuredFeatures = new boolean[estimatedParams.numFeatures];
-      Arrays.fill( allMeasuredFeatures, true );
-
-      return reportParams(estimatedParams, allMeasuredFeatures);
     }
 
     /**
@@ -95,14 +91,15 @@ public class BottleneckSpectralEM implements Runnable {
      */
     public double reportCounts(ParamsVec estimatedCounts, boolean[] measuredFeatures) {
       double err = estimatedCounts.computeDiff( trueCounts, measuredFeatures, null );
-      LogInfo.logsForce("countsError(%s)=%f [%s] - [%s]", Fmt.D(measuredFeatures), err, Fmt.D(estimatedCounts.weights), Fmt.D(trueCounts.weights));
+      //LogInfo.logsForce("countsError(%s)=%f [%s] - [%s]", Fmt.D(measuredFeatures), err, Fmt.D(estimatedCounts.weights), Fmt.D(trueCounts.weights));
+      LogInfo.logsForce("countsError(%.1f %% of features)=%f", 100*(double)MatrixOps.sum(measuredFeatures)/measuredFeatures.length, err );
       return err;
     }
     public double reportCounts(ParamsVec estimatedCounts) {
       boolean[] allMeasuredFeatures = new boolean[estimatedCounts.numFeatures];
       Arrays.fill( allMeasuredFeatures, true );
 
-      return reportParams(estimatedCounts, allMeasuredFeatures);
+      return reportCounts(estimatedCounts, allMeasuredFeatures);
     }
   }
   public Analysis analysis;
@@ -135,6 +132,7 @@ public class BottleneckSpectralEM implements Runnable {
     if( model instanceof MixtureModel) {
       final MixtureModel mixModel = (MixtureModel) model;
       int K = mixModel.K; int D = mixModel.D;
+      assert( mixModel.L == 3 );
 
       // x_{1,2,3} 
       dataSeq = (new Iterator<double[][]>() {
@@ -207,7 +205,6 @@ public class BottleneckSpectralEM implements Runnable {
     LogInfo.begin_track("populate-features");
 
     int K = model.K; int D = model.D;
-    int L = 3; // Extract from the model in a clever way.
 
     double[] pi = MatrixFactory.toVector( bottleneckMoments.getValue0() );
     MatrixOps.projectOntoSimplex( pi, smoothMeasurements );
@@ -215,6 +212,7 @@ public class BottleneckSpectralEM implements Runnable {
   
     // Set appropriate measuredFeatures to observed moments
     if( model instanceof MixtureModel ) {
+      int L = ((MixtureModel)(model)).L; // Extract from the model in a clever way.
       assert( M[2].numRows() == D );
       assert( M[2].numCols() == K );
       // Each column corresponds to a particular hidden moment.
@@ -236,6 +234,7 @@ public class BottleneckSpectralEM implements Runnable {
       }
       Execution.putOutput("moments.params", MatrixFactory.fromVector(measurements.weights));
     } else if( model instanceof HiddenMarkovModel ) {
+      int L = ((HiddenMarkovModel)(model)).L; // Extract from the model in a clever way.
       // M[1] is O 
       SimpleMatrix O = M[1];
       // M[2] is OT 
@@ -327,9 +326,11 @@ public class BottleneckSpectralEM implements Runnable {
       }
       populateFeatures( model, bottleneckMoments, measurements, measuredFeatures ); 
     }
-    LogInfo.end_track("solveBottleneck");
-
+    LogInfo.logs("sum_counts: " + MatrixOps.sum(measurements.weights));
+    if(analysis != null)  LogInfo.logs("sum_counts (true): " + MatrixOps.sum(analysis.trueCounts.weights));
     if(analysis != null) analysis.reportCounts( measurements, measuredFeatures );
+
+    LogInfo.end_track("solveBottleneck");
 
     return new Pair<>(measurements, measuredFeatures);
   }
@@ -358,9 +359,9 @@ public class BottleneckSpectralEM implements Runnable {
       if(analysis != null) {
         items.add(logStat("paramsError", state.params.computeDiff(analysis.trueParams, perm)));
         items.add(logStat("paramsPerm", Fmt.D(perm)));
-        items.add(logStat("countsError", state.counts.computeDiff(analysis.trueCounts, perm)));
-        items.add(logStat("muError", state.mu.computeDiff(analysis.trueCounts, perm)));
-      items.add(logStat("countsPerm", Fmt.D(perm)));
+        items.add(logStat("globalCountsError", state.counts.computeDiff(analysis.trueCounts, perm)));
+        items.add(logStat("countsError", state.mu.computeDiff(analysis.trueCounts, perm)));
+        items.add(logStat("countsPerm", Fmt.D(perm)));
       }
       items.add(logStat("eObjective", state.value()));
       if( examples != null )
@@ -372,7 +373,7 @@ public class BottleneckSpectralEM implements Runnable {
       // The global term's counts are stored in counts.
       if(analysis != null ) {
         analysis.reportCounts( state.mu );
-        analysis.reportCounts( state.counts );
+        //analysis.reportCounts( state.counts );
       }
 
       LogInfo.end_track();
@@ -393,7 +394,7 @@ public class BottleneckSpectralEM implements Runnable {
 
     public Hypergraph Hp;
     public ParamsVec counts;  
-    public ParamsVec mu; // Expected counts; ether measurements or from hypergraph.
+    public ParamsVec mu; // Expected counts; either measurements or from hypergraph.
 
     public double regularization;
 
@@ -444,7 +445,7 @@ public class BottleneckSpectralEM implements Runnable {
       objective += MatrixOps.dot( params.weights, mu.weights, measuredFeatures );
 
       // A(\theta)
-      counts.clear(); Hp.computePosteriors(false);
+      counts.clear(); Hp.computePosteriors(false); Hp.fetchPosteriors(false);
       objective -= Hp.getLogZ();
 
       if (regularization > 0) {
@@ -463,7 +464,6 @@ public class BottleneckSpectralEM implements Runnable {
         gradient.clear();
 
         // Compute E_{\theta}[\phi]
-        Hp.fetchPosteriors(false);
 
         // logs("objective = %s, gradient (%s): [%s] - [%s] - %s [%s]", 
         //     Fmt.D(objective), Fmt.D(measuredFeatures), Fmt.D(mu.weights), Fmt.D(counts.weights), regularization, Fmt.D(params.weights));
@@ -577,12 +577,14 @@ public class BottleneckSpectralEM implements Runnable {
       for( int l = 0; l < ex.h.length; l++ )  
         labelMapping[ex.h[l]][ex_.h[l]] -= 1; // subtracting because we want to use as costs.
     }
-    LogInfo.logsForce( "Label mapping: \n" + Fmt.D( labelMapping ) );
+    if( debug )
+      LogInfo.dbg( "Label mapping: \n" + Fmt.D( labelMapping ) );
 
     // Now we can do bipartite matching to give us the best labellings.
     BipartiteMatcher matcher = new BipartiteMatcher();
     int[] perm = matcher.findMinWeightAssignment(labelMapping);
-    LogInfo.logsForce( "perm: " + Fmt.D( perm ) );
+    if( debug )
+      LogInfo.dbg( "perm: " + Fmt.D( perm ) );
     // Compute hamming score
     long correct = 0;
     long total = 0;
@@ -730,8 +732,10 @@ public class BottleneckSpectralEM implements Runnable {
       Example ex = model.newExample();
       Hp.fetchSampleHyperpath(opts.genRandom, ex);
       examples.add(ex);
-      LogInfo.logs("x = %s", Fmt.D(ex.x));
-      LogInfo.logs("h = %s", Fmt.D(ex.h));
+      if( debug ) {
+        LogInfo.logs("x = %s", Fmt.D(ex.x));
+        LogInfo.logs("h = %s", Fmt.D(ex.h));
+      }
     }
     LogInfo.end_track();
 

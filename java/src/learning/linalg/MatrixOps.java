@@ -494,6 +494,12 @@ public class MatrixOps {
       sum += x[i];
     return sum;
   }
+  public static double sum(boolean[] x ) {
+    double sum = 0.0;
+    for( int i = 0; i < x.length; i++ )
+      sum += x[i] ? 1 : 0;
+    return sum;
+  }
   public static double sum(double[][] x ) {
     double sum = 0.0;
     for( int i = 0; i < x.length; i++ )
