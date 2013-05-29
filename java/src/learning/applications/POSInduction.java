@@ -81,7 +81,7 @@ public class POSInduction implements Runnable {
           C.getTagDimension(), // K
           C.getDimension(),  // D
           3 ); // L
-      algo.setModel( model );
+      algo.setModel( model, 3 ); // Just for initialization
       ParamsVec params = algo.solveBottleneckEM( data );
 
       LogInfo.logs( Fmt.D(params.weights) );

@@ -49,26 +49,47 @@ public class BottleneckSpectralEM implements Runnable {
 
   @Option(gloss="Print all the things") public boolean debug = false;
 
+  Map<Integer,Integer> getCountProfile(List<Example> examples) {
+      Map<Integer,Integer> counter = new HashMap<Integer,Integer>();
+      for( Example ex: examples ) {
+        int L = ex.x.length;
+        if( counter.get( L ) == null ) {
+          counter.put( L, 1 );
+        } else {
+          counter.put( L, counter.get(L) + 1 );
+        }
+      }
+      return counter;
+  }
+
   /**
    * Stores the true counts to be used to print error statistics
    */
   class Analysis {
     Model model;
-    Hypergraph<Example> Hp;
+    Map<Integer,Hypergraph<Example>> Hp;
     ParamsVec trueParams; // \theta^*
     ParamsVec trueCounts; // E_{\theta^*}[ \phi(X) ]
+    List<Example> examples;
 
     /**
      * Initializes the analysis object with true values
      */
-    public Analysis( Model model, ParamsVec trueParams ) {
+    public Analysis( Model model, ParamsVec trueParams, List<Example> examples ) {
       this.model = model;
       this.trueParams = trueParams;
       this.trueCounts = model.newParamsVec();
+      this.examples = examples;
 
-      this.Hp = model.createHypergraph(null, trueParams.weights, trueCounts.weights, 1);
-      Hp.computePosteriors(false);
-      Hp.fetchPosteriors(false);
+      Hp = new HashMap<Integer, Hypergraph<Example>>();
+      for( Map.Entry<Integer,Integer> pair : getCountProfile(examples).entrySet() ) {
+        int L = pair.getKey(); int cnt = pair.getValue();
+        Hypergraph<Example> H = model.createHypergraph(L, trueParams.weights, trueCounts.weights, (double) cnt/examples.size());
+        H.computePosteriors(false);
+        H.fetchPosteriors(false);
+
+        Hp.put( L, H );
+      }
 
       // Write to file
       trueParams.write(Execution.getFile("true.params"));
@@ -295,7 +316,6 @@ public class BottleneckSpectralEM implements Runnable {
     // Construct data. For now, just return expected counts
     if (expectedMeasurements) {
       assert( analysis != null );
-      // TODO: Revert to the original.
       Random random = new Random(3);
       //measuredFeatures[0] = true;
       for (int j = 0; j < model.numFeatures(); j++) {
@@ -359,8 +379,7 @@ public class BottleneckSpectralEM implements Runnable {
       if(analysis != null) {
         items.add(logStat("paramsError", state.params.computeDiff(analysis.trueParams, perm)));
         items.add(logStat("paramsPerm", Fmt.D(perm)));
-        items.add(logStat("globalCountsError", state.counts.computeDiff(analysis.trueCounts, perm)));
-        items.add(logStat("countsError", state.mu.computeDiff(analysis.trueCounts, perm)));
+        items.add(logStat("countsError", state.getCounts().computeDiff(analysis.trueCounts, perm)));
         items.add(logStat("countsPerm", Fmt.D(perm)));
       }
       items.add(logStat("eObjective", state.value()));
@@ -372,7 +391,7 @@ public class BottleneckSpectralEM implements Runnable {
       // The EMObjective's per-example counts are stored in mu.
       // The global term's counts are stored in counts.
       if(analysis != null ) {
-        analysis.reportCounts( state.mu );
+        analysis.reportCounts( state.getCounts() );
         //analysis.reportCounts( state.counts );
       }
 
@@ -382,32 +401,192 @@ public class BottleneckSpectralEM implements Runnable {
     return done && iter == 1;  // Didn't make any updates
   }
 
+  // A term in the objective function.
+  abstract class ObjectiveTerm {
+    double value;
+    ParamsVec gradient;
+
+    // Populate |value| and |counts| based on the current state.
+    public abstract void infer(boolean needGradient);
+  }
+
+  class GlobalTerm extends ObjectiveTerm {
+    Model model;
+    ParamsVec params; // A reference.
+    Map<Hypergraph<Example>, Integer> Hp; // We maintain a different hypergraph for each length.
+
+    public GlobalTerm(Model model, ParamsVec params, List<Example> examples) {
+      this.model = model;
+      this.params = params;
+      this.gradient = model.newParamsVec();
+
+      // Construct a H for each length in the examples.
+      // HACK: Likely only to work for the examples we're using.
+      Hp = new HashMap<>();
+      for( Map.Entry<Integer,Integer> pair : getCountProfile(examples).entrySet() ) {
+        int L = pair.getKey(); int cnt = pair.getValue();
+        Hp.put( model.createHypergraph(L, params.weights, gradient.weights, (double) cnt/examples.size()),
+            cnt );
+      }
+    }
+
+    public void infer(boolean needGradient) {
+      if (needGradient) gradient.clear();
+      value = 0.0;
+      int totalCount = 0;
+      for( Hypergraph<Example> H : Hp.keySet() ) {
+        int cnt = Hp.get(H);
+        H.computePosteriors(false);
+        if (needGradient) H.fetchPosteriors(false);
+        value += (double) cnt * (H.getLogZ() - value)/(totalCount+cnt);
+        totalCount += cnt;
+      }
+    }
+  }
+
+  // Linear function with given coefficients
+  class LinearTerm extends ObjectiveTerm {
+    ParamsVec params;
+    ParamsVec coeffs; 
+    boolean[] measuredFeatures;  // Which features to include
+
+    public LinearTerm(ParamsVec params, ParamsVec coeffs, boolean[] measuredFeatures) {
+      this.params = params;
+      this.coeffs = coeffs;
+      this.measuredFeatures = measuredFeatures;
+
+      this.gradient = coeffs;
+    }
+
+    /**
+     * Gives the objective + gradient.
+     * L = <params,coeffs>
+     * dL = coeffs
+     */
+    public void infer(boolean needGradient) {
+      value = MatrixOps.dot( params.weights, coeffs.weights, measuredFeatures );
+      if (needGradient) this.gradient = coeffs;
+    }
+  }
+
+  class ExamplesTerm extends ObjectiveTerm {
+    Model model;
+    ParamsVec params;
+    List<Example> examples;
+    boolean storeHypergraphs;
+
+    ExamplesTerm(Model model, ParamsVec params, List<Example> examples, boolean storeHypergraphs) {
+      this.model = model;
+      this.params = params;
+      this.gradient = model.newParamsVec();
+      this.examples = examples;
+      this.storeHypergraphs = storeHypergraphs;
+    }
+
+    /**
+     * Gives the objective + gradient.
+     * L = log partition (A_i, B_i)
+     * dL = expected counts (\mu, \tau)
+     */
+    public void infer(boolean needGradient) {
+      logs("ExamplesTerm.infer");
+      value = 0;
+      if (needGradient) gradient.clear();
+      for (Example ex : examples) {
+        Hypergraph Hq = ex.Hq;
+        // Cache the hypergraph
+        if (Hq == null) Hq = model.createHypergraph(ex, params.weights, gradient.weights, 1.0/examples.size());
+        if (storeHypergraphs) ex.Hq = Hq;
+
+        Hq.computePosteriors(false);
+        if (needGradient) Hq.fetchPosteriors(false); // Places the posterior expectation $E_{Y|X}[\phi]$ into counts
+        value += Hq.getLogZ() * 1.0/examples.size();
+      }
+      // At the end of this routine, 
+      // counts contains $E_{Y|X}[\phi(X)]$ $\phi(x)$ are features.
+    }
+  }
+
+  class ExpectedLinearTerm extends ObjectiveTerm {
+    Model model;
+    ParamsVec params;
+    List<Example> examples;
+    boolean storeHypergraphs;
+
+    ExpectedLinearTerm(Model model, ParamsVec params, List<Example> examples, boolean storeHypergraphs) {
+      this.model = model;
+      this.params = params;
+      this.gradient = model.newParamsVec();
+      this.examples = examples;
+      this.storeHypergraphs = storeHypergraphs;
+    }
+
+    /**
+     * Gives the objective + gradient.
+     * L = log partition (A_i, B_i)
+     * dL = expected counts (\mu, \tau)
+     */
+    public void infer(boolean needGradient) {
+      logs("ExpectedExamplesTerm.infer");
+      value = 0;
+      gradient.clear();
+      for (Example ex : examples) {
+        Hypergraph Hq = ex.Hq;
+        // Cache the hypergraph
+        if (Hq == null) Hq = model.createHypergraph(ex, params.weights, gradient.weights, 1.0/examples.size());
+        if (storeHypergraphs) ex.Hq = Hq;
+
+        Hq.computePosteriors(false);
+        Hq.fetchPosteriors(false); // Places the posterior expectation $E_{Y|X}[\phi]$ into counts
+        //value += Hq.getLogZ() * 1.0/examples.size();
+      }
+      value = MatrixOps.dot(params.weights, gradient.weights);
+      // At the end of this routine, 
+      // counts contains $E_{Y|X}[\phi(X)]$ $\phi(x)$ are features.
+    }
+  }
+
+  public static boolean[] allMeasuredFeatures(ParamsVec features) {
+    boolean[] measuredFeatures = new boolean[features.numFeatures];
+    Arrays.fill( measuredFeatures, true );
+    return measuredFeatures;
+  }
+
+  // Implements an objective of target - pred - regularization
   abstract class Objective implements Maximizer.FunctionState {
     public Model model;
-    public double objective;
-    public ParamsVec params;  // Canonical parameters
+    public ParamsVec params;  // Canonical parameters that we are optimizing 
+
+    public double objective; // Objective value
     public ParamsVec gradient;  // targetCounts - predCounts - \nabla regularization
 
     // Optimization state
     public boolean objectiveValid = false;
     public boolean gradientValid = false;
 
-    public Hypergraph Hp;
-    public ParamsVec counts;  
-    public ParamsVec mu; // Expected counts; either measurements or from hypergraph.
+    ObjectiveTerm target; 
+    ObjectiveTerm pred;
+    boolean[] measuredFeatures;
+    double regularization;
 
-    public double regularization;
-
-    public Objective(Model model, ParamsVec params, 
+    protected Objective(Model model, ParamsVec params, 
+        ObjectiveTerm target, ObjectiveTerm pred,
+        boolean[] measuredFeatures,
         double regularization) {
       this.model = model;
       this.params = params;
-      this.gradient = model.newParamsVec();
-      this.regularization = regularization;
 
-      this.counts = model.newParamsVec();
-      this.Hp = model.createHypergraph(null, params.weights, counts.weights, 1);
-      this.mu = model.newParamsVec();
+      this.objective = 0;
+      this.gradient = model.newParamsVec();
+
+      this.target = target;
+      this.pred = pred;
+      this.measuredFeatures = measuredFeatures;
+      this.regularization = regularization;
+    }
+    public void initRandom(Random initRandom, double initNoise) {
+      // Create state
+      this.params.initRandom(initRandom, initNoise);
     }
 
     public void invalidate() { objectiveValid = gradientValid = false; }
@@ -415,39 +594,16 @@ public class BottleneckSpectralEM implements Runnable {
     public double value() { compute(false); return objective; }
     public double[] gradient() { compute(true); return gradient.weights; }
 
-    public abstract void compute(boolean needGradient);
-  }
-
-  class MomentMatchingObjective extends Objective {
-    boolean[] measuredFeatures;
-
-    // TODO: generalize to arbitrary quadratic (A w - b)^2
-
-    public MomentMatchingObjective(Model model, ParamsVec params, double regularization, 
-        ParamsVec measurements, boolean[] measuredFeatures, 
-        Random initRandom, double initNoise) {
-      super(model, params, regularization);
-
-      this.mu = measurements;
-      this.measuredFeatures = measuredFeatures;
-
-      // Create state
-      this.params.initRandom(initRandom, initNoise);
-    }
-
     public void compute(boolean needGradient) {
       if (needGradient ? gradientValid : objectiveValid) return;
       objectiveValid = true;
 
+      target.infer(needGradient);
+      pred.infer(needGradient);
+
       // Objective is \theta^T \tau - A(\theta) 
       objective = 0.0;
-      // \theta^T \tau 
-      objective += MatrixOps.dot( params.weights, mu.weights, measuredFeatures );
-
-      // A(\theta)
-      counts.clear(); Hp.computePosteriors(false); Hp.fetchPosteriors(false);
-      objective -= Hp.getLogZ();
-
+      objective = target.value - pred.value;
       if (regularization > 0) {
         for (int j = 0; j < model.numFeatures(); j++) {
           if (!measuredFeatures[j]) continue;
@@ -460,9 +616,8 @@ public class BottleneckSpectralEM implements Runnable {
       // Compute gradient (if needed)
       // \tau - E_{\theta}[\phi]
       if (needGradient) {
-        gradientValid = true;
         gradient.clear();
-
+        gradientValid = true;
         // Compute E_{\theta}[\phi]
 
         // logs("objective = %s, gradient (%s): [%s] - [%s] - %s [%s]", 
@@ -470,7 +625,7 @@ public class BottleneckSpectralEM implements Runnable {
         for (int j = 0; j < model.numFeatures(); j++) {
           if (!measuredFeatures[j]) continue;
           // takes \tau (from target) - E(\phi) (from pred).
-          gradient.weights[j] += mu.weights[j] - counts.weights[j];
+          gradient.weights[j] += target.gradient.weights[j] - pred.gradient.weights[j];
 
           // Regularization
           if (regularization > 0)
@@ -479,75 +634,45 @@ public class BottleneckSpectralEM implements Runnable {
         // LogInfo.logs("gradient: %s", Fmt.D(gradient.weights));
       }
     }
+
+    abstract public ParamsVec getCounts();
+  }
+
+  /**
+   * Create the MomentMatchingObjective. 
+   * measurementsTerm - globalTerm - regularizer
+   */
+  class MomentMatchingObjective extends Objective {
+    public MomentMatchingObjective(Model model, ParamsVec params, 
+        List<Example> examples,
+        ParamsVec measurements, boolean[] measuredFeatures, 
+        double regularization) { 
+      super(model, params, 
+          new LinearTerm(params, measurements, measuredFeatures), // measurementsTerm
+          new GlobalTerm(model, params, examples), // globalTerm
+          measuredFeatures,
+          regularization
+          );
+    }
+    public ParamsVec getCounts() {
+      return pred.gradient;
+    }
   }
 
   class EMObjective extends Objective {
     List<Example> examples;
 
-    public EMObjective(Model model, ParamsVec params, double regularization,
-        List<Example> examples) {
-      super(model, params, regularization);
-
-      this.examples = examples;
+    public EMObjective(Model model, ParamsVec params, 
+        List<Example> examples, boolean storeHypergraphs,
+        double regularization) {
+      super(model, params, 
+          new ExpectedLinearTerm(model, params, examples, storeHypergraphs), // measurementsTerm
+          new GlobalTerm(model, params, examples), // globalTerm
+          allMeasuredFeatures(params),
+          regularization);
     }
-
-    void computeExpectedCounts() {
-      mu.clear();
-      for (Example ex : examples) {
-        Hypergraph Hq = ex.Hq;
-        // Cache the hypergraph
-        if (Hq == null) Hq = model.createHypergraph(ex, params.weights, mu.weights, 1.0/examples.size());
-        if (storeHypergraphs) ex.Hq = Hq;
-
-        Hq.computePosteriors(false);
-        Hq.fetchPosteriors(false); // Places the posterior expectation $E_{Y|X}[\phi]$ into counts
-      }
-      // At the end of this routine, 
-      // mu contains $E_{Y|X}[\phi(X)]$ $\phi(x)$ are features.
-    }
-
-    public void compute(boolean needGradient) {
-      // Always recompute for now.
-      //if (needGradient ? gradientValid : objectiveValid) return;
-      objectiveValid = true;
-
-      computeExpectedCounts();
-
-      // Objective is \theta^T \mu - A(\theta) 
-      objective = 0.0;
-      // \theta^T \tau 
-      objective += MatrixOps.dot( params.weights, mu.weights );
-
-      // A(\theta)
-      counts.clear(); Hp.computePosteriors(false); Hp.fetchPosteriors(false);
-      objective -= Hp.getLogZ();
-
-      if (regularization > 0) {
-        for (int j = 0; j < model.numFeatures(); j++) {
-          objective -= 0.5 * regularization * params.weights[j] * params.weights[j];
-        }
-      }
-      // Compute objective value
-      LogInfo.logs("objective: %f", objective);
-
-      // Compute gradient (if needed)
-      // \mu - E_{\theta}[\phi]
-      if (needGradient) {
-        gradient.clear();
-        gradientValid = true;
-
-        //logs("objective = %s, gradient: [%s] - [%s] - %s [%s]", 
-        //    Fmt.D(objective), Fmt.D(mu.weights), Fmt.D(counts.weights), regularization, Fmt.D(params.weights));
-        for (int j = 0; j < model.numFeatures(); j++) {
-          // takes \tau (from target) - E(\phi) (from pred).
-          gradient.weights[j] += mu.weights[j] - counts.weights[j];
-
-          // Regularization
-          if (regularization > 0)
-            gradient.weights[j] -= regularization * params.weights[j];
-        }
-        //LogInfo.logs("gradient: %s", Fmt.D(gradient.weights));
-      }
+    public ParamsVec getCounts() {
+      return target.gradient;
     }
   }
 
@@ -555,6 +680,7 @@ public class BottleneckSpectralEM implements Runnable {
    * Uses the params and model to label the hidden labels for each
    * data point and reports Hamming errors. 
    */
+  @SuppressWarnings("unchecked")
   public double reportAccuracy( ParamsVec params, List<Example> examples ) {
     LogInfo.begin_track("report-accuracy");
     ParamsVec counts = model.newParamsVec();
@@ -607,25 +733,27 @@ public class BottleneckSpectralEM implements Runnable {
    *  - Solved as a restricted M-step, minimizing $\theta^T \tau -
    *    A(\theta)$ or matching $E_\theta[\phi(x) = \tau$.
    */
-  ParamsVec initializeParameters(final ParamsVec measurements, final boolean[] measuredFeatures) {
+  ParamsVec initializeParameters(final List<Example> examples, final ParamsVec measurements, final boolean[] measuredFeatures) {
     LogInfo.begin_track("initialize parameters");
     // The objective function!
     ParamsVec params = model.newParamsVec();
     Maximizer maximizer = newMaximizer();
     MomentMatchingObjective state = new MomentMatchingObjective(
-        model, params, eRegularization, 
+        model, params, 
+        examples,
         measurements, measuredFeatures,
-        initRandom, initParamsNoise);
+        eRegularization); 
+    state.initRandom(initRandom, initParamsNoise);
     
     // Optimize
-    optimize( maximizer, state, 1000, null, "initialization" );
+    optimize( maximizer, state, eNumIters, examples, "initialization" );
     LogInfo.end_track();
     return params;
   }
-  ParamsVec initializeParameters(ParamsVec moments) {
+  ParamsVec initializeParameters(final List<Example> examples, ParamsVec moments) {
       boolean[] allMeasuredFeatures = new boolean[moments.numFeatures];
       Arrays.fill( allMeasuredFeatures, true );
-      return initializeParameters( moments, allMeasuredFeatures );
+      return initializeParameters( examples, moments, allMeasuredFeatures );
   }
   ParamsVec initializeParameters() {
     ParamsVec init = model.newParamsVec();
@@ -642,12 +770,13 @@ public class BottleneckSpectralEM implements Runnable {
         initialParams.numFeatures, data.size() );
     Maximizer maximizer = newMaximizer();
     EMObjective state = new EMObjective(
-        model, initialParams, mRegularization,
-        data);
+        model, initialParams, 
+        data, storeHypergraphs,
+        mRegularization);
     // Optimize
     optimize( maximizer, state, numIters, data, "em" );
     state.params.write( Execution.getFile("params") );
-    state.counts.write( Execution.getFile("counts") );
+    state.getCounts().write( Execution.getFile("counts") );
     LogInfo.end_track("solveEM");
 
     return initialParams;
@@ -668,7 +797,7 @@ public class BottleneckSpectralEM implements Runnable {
       boolean[] measuredFeatures = bottleneckCounts.getSecond();
       expectedCounts.write(Execution.getFile("measured_counts"));
       // initialize parameters from moments
-      initialParams = initializeParameters( expectedCounts, measuredFeatures );
+      initialParams = initializeParameters( data, expectedCounts, measuredFeatures );
     } else { 
       initialParams = initializeParameters();
     }
@@ -678,10 +807,10 @@ public class BottleneckSpectralEM implements Runnable {
     return solveEM( data, initialParams );
   }
 
-  public void setModel(Model model) {
+  public void setModel(Model model, int L) {
     this.model = model;
     // Run once to just instantiate features
-    model.createHypergraph(null, null, null, 0);
+    model.createHypergraph(L, null, null, 0);
   }
 
   ///////////////////////////////////
@@ -721,7 +850,7 @@ public class BottleneckSpectralEM implements Runnable {
   List<Example> generateData( Model model, ParamsVec params, GenerationOptions opts ) {
     LogInfo.begin_track("generateData");
     ParamsVec counts = model.newParamsVec();
-    Hypergraph<Example> Hp = model.createHypergraph(null, params.weights, counts.weights, 1);
+    Hypergraph<Example> Hp = model.createHypergraph(modelOpts.L, params.weights, counts.weights, 1);
     // Necessary preprocessing before you can generate hyperpaths
     Hp.computePosteriors(false);
     Hp.fetchPosteriors(false);
@@ -790,14 +919,14 @@ public class BottleneckSpectralEM implements Runnable {
 
     // Setup; generate model 
     Model model = generateModel( modelOpts );
-    setModel( model );
+    setModel( model, modelOpts.L );
 
     // Generate parameters
     ParamsVec trueParams = generateParameters( model, genOpts );
-    analysis = new Analysis( model, trueParams );
-
     // Get true parameters
     List<Example> data = generateData( model, trueParams, genOpts );
+
+    analysis = new Analysis( model, trueParams, data );
 
     // Run the bottleneck spectral algorithm
     ParamsVec params = solveBottleneckEM(data);

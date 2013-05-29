@@ -21,7 +21,14 @@ public abstract class Model {
 
   abstract Example newExample();
   abstract Example newExample(int[] x);
-  abstract Hypergraph<Example> createHypergraph(Example ex, double[] params, double[] counts, double increment);
+  // L gives the length of the observation sequence.
+  public Hypergraph<Example> createHypergraph(int L, double[] params, double[] counts, double increment) {
+    return createHypergraph( L, null, params, counts, increment );
+  }
+  public Hypergraph<Example> createHypergraph(Example ex, double[] params, double[] counts, double increment) {
+    return createHypergraph( ex.x.length, ex, params, counts, increment );
+  }
+  abstract Hypergraph<Example> createHypergraph(int L, Example ex, double[] params, double[] counts, double increment);
 
   Hypergraph.LogHyperedgeInfo<Example> nullInfo = new Hypergraph.LogHyperedgeInfo<Example>() {
     public double getLogWeight() { return 0; }

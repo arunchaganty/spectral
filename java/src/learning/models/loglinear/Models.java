@@ -27,7 +27,7 @@ public class Models {
       return new Example( x, new int[1] );
     }
 
-    public Hypergraph<Example> createHypergraph(Example ex, double[] params, double[] counts, double increment) {
+    public Hypergraph<Example> createHypergraph(int L, Example ex, double[] params, double[] counts, double increment) {
       Hypergraph<Example> H = new Hypergraph<Example>();
       //H.debug = true;
       
@@ -139,9 +139,9 @@ public class Models {
       }
     }
 
-    public Hypergraph<Example> createHypergraph(Example ex, double[] params, double[] counts, double increment) {
+    public Hypergraph<Example> createHypergraph(int L, Example ex, double[] params, double[] counts, double increment) {
       // Set length to be length of example data.
-      int L = (ex != null) ? ex.x.length : this.L;
+      assert( (ex == null) || ex.x.length == this.L );
 
       Hypergraph<Example> H = new Hypergraph<Example>();
       //H.debug = true;
@@ -235,9 +235,9 @@ public class Models {
     }
 
 
-    public Hypergraph<Example> createHypergraph(Example ex, double[] params, double[] counts, double increment) {
+    public Hypergraph<Example> createHypergraph(int L, Example ex, double[] params, double[] counts, double increment) {
       // Set length to be length of example data.
-      int L = (ex != null) ? ex.x.length : this.L;
+      assert( (ex == null) || ex.x.length == L );
 
       Hypergraph<Example> H = new Hypergraph<Example>();
       //H.debug = true;
@@ -353,7 +353,7 @@ public class Models {
       LogInfo.end_track("grid-add-edges");
     }
 
-    public Hypergraph<Example> createHypergraph(Example ex, double[] params, double[] counts, double increment) {
+    public Hypergraph<Example> createHypergraph(int L, Example ex, double[] params, double[] counts, double increment) {
       LogInfo.begin_track("create-grid");
       // Set length to be length of example data.
 
