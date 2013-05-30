@@ -401,7 +401,9 @@ public class Main implements Runnable {
             for( int h = 0; h < opts.K; h++ ) {
               for( int d = 0; d < opts.D; d++ ) {
                   // Assuming identical distribution.
-                  int f = measurements.featureIndexer.getIndex(new UnaryFeature(h, "x="+d));
+                  //int f = measurements.featureIndexer.getIndex(new UnaryFeature(h, "x="+d));
+                  assert(false);
+                  int f = 0;
                   measuredFeatures[f] = true;
                   // multiplying by pi to go from E[x|h] -> E[x,h]
                   // multiplying by 3 because true.counts aggregates

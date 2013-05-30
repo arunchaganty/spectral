@@ -36,6 +36,3 @@ public interface EMOptimizable {
 
 }
 
-
-
-

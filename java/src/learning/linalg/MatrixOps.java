@@ -68,7 +68,24 @@ public class MatrixOps {
       out += "{ ";
       for( int j = 0; j < X[i].length; j++ )
         out += String.valueOf(X[i][j]) + ", ";
-      out += "}\n";
+      out += "},\n";
+    }
+    out += "}";
+
+    return out;
+  }
+  public static String arrayToString( double[][][] X ) {
+    if( X == null ) return "null";
+    String out = "";
+    out += "{\n";
+    for( int i = 0; i < X.length; i++ ) {
+      out += "{ ";
+      for( int j = 0; j < X[i].length; j++ ) {
+        for( int k = 0; k < X[i][j].length; k++ ) 
+          out += String.valueOf(X[i][j][k]) + ", ";
+        out += "}, \n";
+      }
+      out += "},\n\n";
     }
     out += "}";
 
@@ -92,6 +109,10 @@ public class MatrixOps {
     System.out.println( arrayToString(X));
   }
   public static void printArray( int[][] X ) {
+    System.out.println( arrayToString(X));
+  }
+
+  public static void printArray( double[][][] X ) {
     System.out.println( arrayToString(X));
   }
 
@@ -128,6 +149,21 @@ public class MatrixOps {
     return true;
   }
   public static boolean allclose( double[] X1, double[] X2 ) {
+    return allclose( X1, X2, EPS_CLOSE );
+  }
+  public static boolean allclose( double[][] X1, double[][] X2, double eps ) {
+    assert( X1.length == X2.length );
+    assert( X1[0].length == X2[0].length );
+
+    for( int i = 0; i < X1.length; i++ ) {
+      for( int j = 0; j < X1[0].length; j++ ) {
+        if( !equal( X1[i][j], X2[i][j], eps ) ) return false;
+      }
+    }
+
+    return true;
+  }
+  public static boolean allclose( double[][] X1, double[][] X2 ) {
     return allclose( X1, X2, EPS_CLOSE );
   }
   public static boolean allclose( double[][][] X1, double[][][] X2, double eps ) {
@@ -505,6 +541,56 @@ public class MatrixOps {
     for( int i = 0; i < x.length; i++ )
       for( int j = 0; j < x[i].length; j++ )
         sum += x[i][j];
+    return sum;
+  }
+  // 0 for rows, 1 for columns
+  public static double sum(double[][] x, int axis, int index ) {
+    // Assume symmetric.
+    double sum = 0.0;
+    if( axis == 0 ) {
+      for( int j = 0; j < x[index].length; j++ )
+        sum += x[index][j];
+    } else {
+      for( int i = 0; i < x.length; i++ )
+          sum += x[i][index];
+    }
+    return sum;
+  }
+  public static double sum(double[][][] x, int axis, int index ) {
+    // Assume symmetric.
+    double sum = 0.0;
+    if( axis == 0 ) {
+      for( int i = 0; i < x[index].length; i++ )
+        for( int j = 0; j < x[index][i].length; j++ )
+          sum += x[index][i][j];
+    } else if( axis == 1) {
+      for( int i = 0; i < x.length; i++ )
+        for( int j = 0; j < x[i][index].length; j++ )
+          sum += x[i][index][j];
+    } else {
+      for( int i = 0; i < x.length; i++ )
+        for( int j = 0; j < x[i].length; j++ )
+          sum += x[i][j][index];
+    }
+    return sum;
+  }
+  public static double sum(double[][][] x, int axis1, int index1, int axis2, int index2  ) {
+    // Assume symmetric.
+    assert( axis1 < axis2 );
+    double sum = 0.0;
+    if( axis1 == 0 ) {
+      if( axis2 == 1 )  {
+        for( int i = 0; i < x[index1][index2].length; i++ )
+          sum += x[index1][index2][i];
+      } else {
+        for( int i = 0; i < x[index1].length; i++ )
+          sum += x[index1][i][index2];
+      }
+    } else if( axis1 == 1) {
+      assert(axis2 == 2);
+      for( int i = 0; i < x.length; i++ )
+          sum += x[i][index1][index2];
+    }
     return sum;
   }
   /**
@@ -1129,6 +1215,16 @@ public class MatrixOps {
     for( int i = 0; i < x.length; i++ )
       err += (x[i] != y[i]) ? 1 : 0;
     return err / x.length;
+  }
+
+  public static void scale( double[][] x, double factor ) {
+    for( int i = 0; i < x.length; i++ )
+      for( int j = 0; j < x[i].length; j++ )
+        x[i][j] *= factor;
+  }
+  public static void scale( double[] x, double factor ) {
+    for( int i = 0; i < x.length; i++ )
+        x[i] *= factor;
   }
 
 }

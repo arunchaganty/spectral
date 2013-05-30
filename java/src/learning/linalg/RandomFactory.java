@@ -25,7 +25,7 @@ public class RandomFactory {
    * @param D
    * @return
    */
-  public static SimpleMatrix randn(int N, int D) {
+  public static SimpleMatrix randn(Random rand, int N, int D) {
     SimpleMatrix X = MatrixFactory.zeros(N,D);
     for( int i = 0; i < N; i++)
       for( int j = 0; j < D; j++)
@@ -33,14 +33,36 @@ public class RandomFactory {
 
     return X;
   }
+  public static SimpleMatrix randn(int N, int D) {
+    return randn( rand, N, D );
+  }
+  public static double[][] randn_(Random rand, int m, int n) {
+    double[][] X = new double[m][n];
+    for( int i = 0; i < m; i++)
+      for( int j = 0; j < n; j++)
+        X[i][j] = rand.nextGaussian();
+    return X;
+  }
 
   public static SimpleMatrix rand(int m, int n) {
+    return rand( rand, m, n );
+  }
+  public static SimpleMatrix rand(Random rand, int m, int n) {
     SimpleMatrix X = MatrixFactory.zeros(m,n);
     for( int i = 0; i < m; i++)
       for( int j = 0; j < n; j++)
         X.set( i, j, 2.0 * rand.nextDouble() - 1.0 );
-
     return X;
+  }
+  public static double[][] rand_(Random rand, int m, int n) {
+    double[][] X = new double[m][n];
+    for( int i = 0; i < m; i++)
+      for( int j = 0; j < n; j++)
+        X[i][j] = 2.0 * rand.nextDouble() - 1.0;
+    return X;
+  }
+  public static double[] rand_(Random rand, int m) {
+    return rand_(rand, 1, m)[0];
   }
 
   /**
@@ -74,6 +96,16 @@ public class RandomFactory {
   }
   public static double randUniform() {
     return randUniform(0, 1);
+  }
+
+  public static double randUniform(Random rand, double lowerBound, double upperBound) {
+    return lowerBound + rand.nextDouble() * (upperBound - lowerBound);
+  }
+  public static double randUniform(Random rand, double upperBound) {
+    return randUniform(rand, 0, upperBound);
+  }
+  public static double randUniform(Random rand) {
+    return randUniform(rand, 0, 1);
   }
 
   /**
