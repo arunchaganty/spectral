@@ -105,6 +105,13 @@ public class MatrixOps {
       sum += x[i] * y[i];
     return sum;
   }
+  public static double dot( double[] x, double[] y, boolean[] select ) {
+    assert( x.length == y.length );
+    double sum = 0.0;
+    for( int i = 0; i < x.length; i++ )
+      sum += (select[i]) ? x[i] * y[i] : 0;
+    return sum;
+  }
   public static double dot( DenseMatrix64F x, DenseMatrix64F y ) {
     return VectorVectorMult.innerProd( x, y );
   }
@@ -487,6 +494,12 @@ public class MatrixOps {
       sum += x[i];
     return sum;
   }
+  public static double sum(boolean[] x ) {
+    double sum = 0.0;
+    for( int i = 0; i < x.length; i++ )
+      sum += x[i] ? 1 : 0;
+    return sum;
+  }
   public static double sum(double[][] x ) {
     double sum = 0.0;
     for( int i = 0; i < x.length; i++ )
@@ -695,15 +708,20 @@ public class MatrixOps {
    * @param x
    * @return
    */
-  public static void projectOntoSimplex( double[] x ) {
+  public static void projectOntoSimplex( double[] x, double smooth ) {
     // Normalize and shrink to 0
     normalize(x);
-    for(int i = 0; i < x.length; i++ )
+    for(int i = 0; i < x.length; i++ ) {
       if( x[i] < 0 ) x[i] = 0;
+      x[i] += smooth;
+    }
     normalize(x);
   }
+  public static void projectOntoSimplex( double[] x ) {
+    projectOntoSimplex( x, 0.0 );
+  }
 
-  public static void projectOntoSimplex( DenseMatrix64F X ) {
+  public static void projectOntoSimplex( DenseMatrix64F X, double smooth ) {
     int nRows = X.numRows;
     int nCols = X.numCols;
 
@@ -716,10 +734,14 @@ public class MatrixOps {
       for( int row = 0; row < nRows; row++ ) {
         double x  = X_[ X.getIndex(row, col) ];
         if( x < 0 ) X_[ X.getIndex(row, col) ] = 0;
+        X_[ X.getIndex(row, col) ] += smooth;
       }
 
       columnNormalize( X, col );
     }
+  }
+  public static void projectOntoSimplex( DenseMatrix64F X ) {
+    projectOntoSimplex( X, 0.0 );
   }
 
   /**
@@ -727,10 +749,13 @@ public class MatrixOps {
    * @param X
    * @return
    */
-  public static SimpleMatrix projectOntoSimplex( SimpleMatrix X ) {
+  public static SimpleMatrix projectOntoSimplex( SimpleMatrix X, double smooth ) {
     DenseMatrix64F Y = X.getMatrix().copy();
-    projectOntoSimplex(Y);
+    projectOntoSimplex(Y, smooth);
     return SimpleMatrix.wrap( Y );
+  }	
+  public static SimpleMatrix projectOntoSimplex( SimpleMatrix X ) {
+    return projectOntoSimplex( X, 0.0 );
   }	
 
   /**
@@ -1085,6 +1110,26 @@ public class MatrixOps {
     return SimpleMatrix.wrap( Y ) ;
   }
 
-}
+  /**
+   * x[i] <- x[i] + y[i].
+   */
+  public static void add(double[] x, double[] y) {
+    assert( x.length == y.length );
 
+    for( int i = 0; i < x.length; i++ )
+      x[i] += y[i];
+  }
+
+  /**
+   * Report hamming loss between labels x, y
+   */
+  public static int hamming(int[] x, int[] y) {
+    assert( x.length == y.length );
+    int err = 0;
+    for( int i = 0; i < x.length; i++ )
+      err += (x[i] != y[i]) ? 1 : 0;
+    return err / x.length;
+  }
+
+}
 

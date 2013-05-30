@@ -154,6 +154,8 @@ public class MomentComputer implements Runnable {
       public String dataPath;
     @Option(gloss="File containing word-index to word map", required=true)
       public String mapPath;
+    @Option(gloss="Use Kirkpatrik features")
+      public boolean useKirkpatrik = false;
     @Option(gloss="Dimensions for random proj.")
       public int randomProjDim = 10;
     @Option(gloss="Seed for random proj.")
@@ -164,9 +166,18 @@ public class MomentComputer implements Runnable {
   public void run() {
     // Read corpus
     try {
-      ProjectedCorpus PC = new ProjectedCorpus( 
-        Corpus.parseText( opts.dataPath, opts.mapPath ),
-        opts.randomProjDim, opts.randomProjSeed );
+      Corpus C = Corpus.parseText( opts.dataPath, opts.mapPath );
+      ProjectedCorpus PC;
+      if( opts.useKirkpatrik ) {
+        PC = new ProjectedCorpus( C,
+          opts.randomProjDim, opts.randomProjSeed,
+          new KirkpatrikFeaturizer( C )
+          );
+      }
+      else {
+        PC = new ProjectedCorpus( C,
+          opts.randomProjDim, opts.randomProjSeed);
+      }
       
       // Compute moments
       Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,FullTensor> moments;

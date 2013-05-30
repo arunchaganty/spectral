@@ -14,10 +14,7 @@ import org.javatuples.Quartet;
 import learning.linalg.*;
 import learning.spectral.TensorMethod;
 
-class Example {
-  Hypergraph Hq;  // For inference conditioned on the observations (represents q(h|x)).
-  int[] x;  // Values of observed nodes
-}
+import static learning.models.loglinear.Models.*;
 
 // A term in the objective function.
 abstract class ObjectiveTerm {
@@ -87,7 +84,7 @@ class ExamplesTerm extends ObjectiveTerm {
     for (Example ex : examples) {
       Hypergraph Hq = ex.Hq;
       // Cache the hypergraph
-      if (Hq == null) Hq = model.createHypergraph(ex, params.weights, counts.weights, 1.0/examples.size());
+      if (Hq == null) Hq = model.createHypergraph(ex.x.length, ex, params.weights, counts.weights, 1.0/examples.size());
       if (storeHypergraphs) ex.Hq = Hq;
 
       Hq.computePosteriors(false);
@@ -105,11 +102,11 @@ class GlobalTerm extends ObjectiveTerm {
   ParamsVec params;
   Hypergraph H;
 
-  public GlobalTerm(Model model, ParamsVec params, ParamsVec counts) {
+  public GlobalTerm(Model model, int L, ParamsVec params, ParamsVec counts) {
     this.model = model;
     this.params = params;
     this.counts = counts;
-    H = model.createHypergraph(null, params.weights, counts.weights, 1);
+    H = model.createHypergraph(L, null, params.weights, counts.weights, 1);
   }
 
   public void infer(boolean needGradient) {
@@ -199,8 +196,8 @@ class LikelihoodFunctionState implements Maximizer.FunctionState {
         // Regularization
         if (regularization > 0)
           gradient.weights[j] -= regularization * params.weights[j];
-        LogInfo.logs("gradient: %s", Fmt.D(gradient.weights));
       }
+      LogInfo.logs("gradient: %s", Fmt.D(gradient.weights));
     }
   }
 }
@@ -213,7 +210,7 @@ class LikelihoodFunctionState implements Maximizer.FunctionState {
 public class Main implements Runnable {
   public static class Options {
     public enum ModelType { mixture, hmm, tallMixture, grid, factMixture };
-    public enum ObjectiveType { supervised, measurements, unsupervised_em, unsupervised_gradient, measurements_initialization };
+    public enum ObjectiveType { supervised, measurements, unsupervised_em, unsupervised_gradient };
 
     @Option(gloss="Type of model") public ModelType modelType = ModelType.mixture;
     @Option(gloss="Number of values of the hidden variable") public int K = 3;
@@ -259,7 +256,7 @@ public class Main implements Runnable {
     trueParams.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
     trueCounts = model.newParamsVec();
 
-    Hypergraph<Example> Hp = model.createHypergraph(null, trueParams.weights, trueCounts.weights, 1);
+    Hypergraph<Example> Hp = model.createHypergraph(opts.L, null, trueParams.weights, trueCounts.weights, 1);
     Hp.computePosteriors(false);
     Hp.fetchPosteriors(false);
     trueParams.write(Execution.getFile("true.params"));
@@ -320,7 +317,7 @@ public class Main implements Runnable {
     model.K = opts.K;
 
     // Run once to just instantiate features
-    model.createHypergraph(null, null, null, 0);
+    model.createHypergraph(opts.L, null, null, null, 0);
 
     measuredFeatures = new boolean[model.numFeatures()];
   }
@@ -397,7 +394,7 @@ public class Main implements Runnable {
             assert( M[2].numCols() == opts.K );
             // Each column corresponds to a particular hidden moment.
             // Project onto the simplex
-            M[2] = MatrixOps.projectOntoSimplex( M[2] );
+            //M[2] = MatrixOps.projectOntoSimplex( M[2] );
             Execution.putOutput("moments.pi", MatrixFactory.fromVector(pi) );
             Execution.putOutput("moments.M3", M[2]);
 
@@ -451,7 +448,7 @@ public class Main implements Runnable {
     ExamplesTerm mExamplesTerm = new ExamplesTerm(model, mParams, model.newParamsVec(), examples, opts.storeHypergraphs);
     LinearTerm supervisedTerm = new LinearTerm(mParams, trueCounts, allMeasuredFeatures);  // Infinite data
     LinearTerm examplesOutTerm = new LinearTerm(mParams, eExamplesTerm.counts, allMeasuredFeatures); // <\theta, E_q[\phi]> - this is Q(\theta | \theta^t)
-    GlobalTerm globalTerm = new GlobalTerm(model, mParams, mCounts); // A_i, E_p[\phi]
+    GlobalTerm globalTerm = new GlobalTerm(model, opts.L, mParams, mCounts); // A_i, E_p[\phi]
 
     // Construct the objective function
     ObjectiveTerm eTargetTerm, ePredTerm;
@@ -473,13 +470,6 @@ public class Main implements Runnable {
         mTargetTerm = examplesOutTerm; // This is cleverly $B_i$ 
         mPredTerm = globalTerm; // A(\hteta)
         break;
-      case measurements_initialization:
-        // Just use em
-        // eTargetTerm = zeroTerm;
-        // ePredTerm = zeroTerm;
-        // mTargetTerm = mExamplesTerm;
-        // mPredTerm = globalTerm;
-        // break;
       case unsupervised_em:
         eTargetTerm = zeroTerm;
         ePredTerm = eExamplesTerm; // Solves the problem eParams = \E[.]
@@ -510,9 +500,9 @@ public class Main implements Runnable {
 
     // Initialize the parameters to be the observed moments.
     // Initialize the state to be the true state.
-    //ListUtils.set(eParams.weights, trueParams.weights);
-    //ListUtils.set(mParams.weights, trueParams.weights);
-    //ListUtils.set(mCounts.weights, trueCounts.weights);
+    ListUtils.set(eParams.weights, trueParams.weights);
+    ListUtils.set(mParams.weights, trueParams.weights);
+    ListUtils.set(mCounts.weights, trueCounts.weights);
 
     boolean done = false;
     for (int iter = 0; iter < opts.numIters && !done; iter++) {
