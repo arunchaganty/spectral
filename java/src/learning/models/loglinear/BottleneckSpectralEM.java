@@ -427,18 +427,15 @@ public class BottleneckSpectralEM implements Runnable {
       LogInfo.begin_track("Constructing globalTerm");
       LogInfo.logs("Found %d unique lengths",  countProfile.size() );
       Hp = new HashMap<>();
-        printMemory();
       for( Map.Entry<Integer,Integer> pair : countProfile.entrySet() ) {
         int L = pair.getKey(); int cnt = pair.getValue();
 
         LogInfo.logs( "%d instances of %d length", cnt, L );
         Hp.put( model.createHypergraph(L, params.weights, gradient.weights, (double) cnt/examples.size()),
             cnt );
-        printMemory();
         //Hp.put( model.createHypergraph(L, params.weights, gradient.weights, (double) 1), 1 );
         //break; // Cheating because we're running out of memory.
       }
-        printMemory();
       LogInfo.end_track();
     }
 
@@ -552,7 +549,6 @@ public class BottleneckSpectralEM implements Runnable {
         Hq.fetchPosteriors(false); // Places the posterior expectation $E_{Y|X}[\phi]$ into counts
         //value += Hq.getLogZ() * 1.0/examples.size();
       }
-      printMemory();
       value = MatrixOps.dot(params.weights, gradient.weights);
       // At the end of this routine, 
       // counts contains $E_{Y|X}[\phi(X)]$ $\phi(x)$ are features.
@@ -714,7 +710,7 @@ public class BottleneckSpectralEM implements Runnable {
       Hq.fetchBestHyperpath(ex_);
 
       for( int l = 0; l < ex.h.length; l++ )  
-        labelMapping[ex.h[l]][ex_.h[l]] -= 1; // subtracting because we want to use as costs.
+        labelMapping[ex.h[l]][ex_.h[l]] += 1; 
     }
     if( debug )
       LogInfo.dbg( "Label mapping: \n" + Fmt.D( labelMapping ) );
