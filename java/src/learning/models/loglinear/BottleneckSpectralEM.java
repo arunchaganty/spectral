@@ -48,6 +48,7 @@ public class BottleneckSpectralEM implements Runnable {
 
   @OptionSet(name="lbfgs") public LBFGSMaximizer.Options lbfgs = new LBFGSMaximizer.Options();
   @OptionSet(name="backtrack") public BacktrackingLineSearch.Options backtrack = new BacktrackingLineSearch.Options();
+  @OptionSet(name="tensor") public TensorMethod algo = new TensorMethod();
 
   @Option(gloss="Print all the things") public boolean debug = false;
 
@@ -351,7 +352,6 @@ public class BottleneckSpectralEM implements Runnable {
 
       Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> bottleneckMoments = null;
       Iterator<double[][]> dataSeq = constructDataSequence( model, data );
-      TensorMethod algo = new TensorMethod();
       bottleneckMoments = algo.recoverParameters( K, D, dataSeq );
       populateFeatures( model, bottleneckMoments, measurements, measuredFeatures ); 
     }

@@ -20,9 +20,9 @@ import org.apache.commons.io.FilenameUtils;
  */
 public class TensorMethod implements Runnable {
   @Option(gloss="Number of iterations to run the power method to convergence")
-  int iters = 1000;
+  public int iters = 1000;
   @Option(gloss="Number of attempts to find good eigen-vectors")
-  int attempts = 10;
+  public int attempts = 10;
 
   public TensorMethod() {}
   public TensorMethod(int iters, int attempts) {
@@ -166,19 +166,24 @@ public class TensorMethod implements Runnable {
       //return recoverParameters( K, agg.getMoments() );
     }
 
-  @OptionSet(name="moments")
-    public MomentComputer.Options momentOpts = new MomentComputer.Options();
-  @Option(gloss="Path to file containing moments information", required=true)
-    public String momentsPath;
-  @Option(gloss="Number of clusters to use for the factorization", required=true)
-    public int K;
+  public class ComputationOptions {
+    @OptionSet(name="moments")
+      public MomentComputer.Options momentOpts = new MomentComputer.Options();
+    @Option(gloss="Path to file containing moments information", required=true)
+      public String momentsPath;
+    @Option(gloss="Number of clusters to use for the factorization", required=true)
+      public int K;
+  }
+  public ComputationOptions opts = new ComputationOptions();
 
   @SuppressWarnings("unchecked")
   public void run() {
     try { 
+      int K = opts.K;
+      MomentComputer.Options momentOpts = opts.momentOpts;
       // Read moments from path. 
       LogInfo.begin_track("file-input");
-      ObjectInputStream in = new ObjectInputStream( new FileInputStream( momentsPath ) ); 
+      ObjectInputStream in = new ObjectInputStream( new FileInputStream( opts.momentsPath ) ); 
       momentOpts.randomProjSeed = (int) in.readObject();
       Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,FullTensor> moments = 
         (Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,FullTensor>)
@@ -234,6 +239,7 @@ public class TensorMethod implements Runnable {
    * - It can also "unproject" if needed.
    */
   public static void main(String[] args) {
-    Execution.run(args, new TensorMethod());
+    TensorMethod method = new TensorMethod(); 
+    Execution.run(args, method, method.opts);
   }
 }
