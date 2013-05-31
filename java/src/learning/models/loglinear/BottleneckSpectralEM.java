@@ -366,7 +366,7 @@ public class BottleneckSpectralEM implements Runnable {
       // Project onto the simplex
       
       // Average over the last two M's
-      for(int i = 1; i < L; i++ )
+      for(int i = 1; i < 3; i++ )
         M[i] = MatrixOps.projectOntoSimplex( M[i], smoothMeasurements );
       SimpleMatrix M3 = (M[1]).plus(M[2]).scale(1.0/2.0);
       //SimpleMatrix M3 = M[2]; // M3 is most accurate.
