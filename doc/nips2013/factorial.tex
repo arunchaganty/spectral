@@ -1,35 +1,44 @@
-\section{Unshuffling factorization for factorial mixture models} \label{sec:factorialModels}
+\section{Unshuffling factorization for factorial mixture models}
+\label{sec:factorialModels}
 
 So far, we have relied on the existence of a bottleneck hidden variable $h_j$ on which
-we have three conditionally independent views.  Such bottlenecks do not always
-exist; for example, in \reffig{factorialModels}(a), neither $h_1$ or $h_2$ is a bottleneck.
-Our solution is to create a composite latent variable $c$ which is in
+we have three conditionally independent views $x_{j_1},x_{j_2},x_{j_3}$.  Such bottlenecks do not always
+exist; for example, in \reffig{factorialMixtureModel}(a), neither $h_1$ nor $h_2$ is
+a bottleneck.
+In this section, we present a technique to handle such models.
+We start by creating a composite latent variable $c$ which is in
 one-to-one correspondence with the existing latent variables $(h_1,h_2)$.
 We can invoke $\TensorFactorize$ to obtain composite marginals and
-conditional means.  However, the identity of $h_1$ and $h_2$ becomes lost in the composite,
-and must be recovered.  To do this, we develop a new algorithm $\UnshuffleFactorize$
-to produce constraints on the original parameters.
+conditional means, but the identities of $h_1$ and $h_2$ becomes lost in the
+composite.  We develop a new algorithm $\UnshuffleFactorize$
+to restore the identities and place constraints on the original
+parameters.
 
-\Fig{figures/factorialModels}{0.3}{factorialModels}{The factorial mixture model (a)
+\Fig{figures/factorialMixtureModel}{0.3}{factorialMixtureModel}{The factorial mixture model (a)
 does not have three-view bottlenecks, so we first identify composite bottlenecks,
 and then perform an \emph{unshuffling factorization} (b):
-Given known composite conditional means $B_c = \BP[x_j \mid c] \in \R^\ell$,
-which are derived from combinations of unknown parameters $f_a = \theta_1(\cdot, a), g_b = \theta_2(\cdot, b)$,
-we group differences into bins (dashed boxes), and maximal bins into sources (red rounded boxes),
-producing a linear program with variables $f_a,g_b,Z_{ab}$ and constraints for each $B_c$.
+Given known composite conditional means
+$L_c = \log \BP[x_j \mid c] \in \R^\ell$,
+which are derived from combinations of unknown parameters
+$f_a = \theta_1(\cdot, a), g_b = \theta_2(\cdot, b)$ and log-normalization scalars $Z_{ab}$,
+we group difference vectors into bins (dashed boxes), and maximal bins into sources (red rounded boxes),
+producing a linear program with variables $\{f_a\},\{g_b\},\{Z_{ab}\}$ and
+a constraint for each $B_c$.
 }
 
-%restricted Boltzmann machines \cite{salakhutdinov09softmax}
-
-We focus on the factorial mixture model.
+We focus on the restricted Boltzmann machine
+\cite{smolensky86rbm,salakhutdinov09softmax},
+which we refer to as an undirected factorial mixture model
+(the directed version is a two-layer sigmoid belief network \cite{saul96sigmoid}).
 Let $h = (h_1, \dots, h_s) \in [\nh]^s$ be the latent variables (sources)
 and $x = (x_1, x_2, x_3) \in [\nphix]^3$ be the observed variables.
+The joint model probability is as follows:
 \begin{align}
-p_\theta(x, h) = \prod_{i=1}^s p_\theta(h_i) \prod_{j=1}^3 p_\theta(x_j \mid h), \quad
-p_\theta(x_j \mid h) = \exp\left\{ \sum_{i=1}^s \theta_i(x_j, h_i) - A(\theta; h) \right\},
+%p_\theta(x, h) = \prod_{i=1}^s p_\theta(h_i) \prod_{j=1}^3 p_\theta(x_j \mid h), \quad
+%p_\theta(x_j \mid h) = \exp\left\{ \sum_{i=1}^s \theta_i(x_j, h_i) - A(\theta; h) \right\},
+p_\theta(x, h) = \exp \left\{ \sum_{j=1}^3 \sum_{i=1}^s \theta_i(x_j, h_i) - A(\theta) \right\},
 \end{align}
-where each $\theta_i \in \R^{\nphix \times \nh}$ are the parameters for the $i$-th source.
-%Let $\theta = (\theta_1, \dots, \theta_b) \in \R^{\nphix \times b \nh}$.
+where each $\theta_i \in \R^{\nphix \times \nh}$ is the parameter matrix for the $i$-th source.
 
 Let $B \eqdef (\BP[x_j \mid c])_{x_j \in [\nphix],c \in [\nh]^s} \in
 \R^{\nphix \times \nh^s}$ be the conditional mean of $x_j$ given composite cluster $c$.
@@ -47,69 +56,89 @@ which produces $B = (\E[x_j \mid c])_{c \in [\nh]^s}$.
 In the simple mixture model,
 the clusters produced by $\TensorFactorize$ are in exact one-to-one correspondence
 with the actual mixture components, but in the factorial case, we must solve
-a \emph{credit assignment problem} to match combinations of $s$ sources
+a \emph{credit assignment problem} to match combinations of the $s$ sources
 with columns of $B$.
 
 Let $\{ v_{ia} \}_{i \in [s], a \in [k]}$, where $v_{ia} = \theta_i(\cdot, a) \in \R^\ell$,
 be the collection of parameter vectors that we seek to recover.
-Let $C \in \R^{\ell \times k^s}$ be the elementwise logarithm of $B$; that is
-$C(x_j, h) = \log B(x_j, h)$.
-The columns of $C$ are exactly the unordered collection of vectors
+Let $L \in \R^{\ell \times k^s}$ be the elementwise logarithm of $B$; that is
+$L(x_j, h) = \log B(x_j, h)$.
+The key observation is that the columns of $L$ are exactly the unordered collection of vectors
 $\{ \sum_{i=1}^s v_{ia_i} - Z_{\ba} : \ba = (a_1, \dots, a_s) \in [\nh]^s \}$,
-where $Z_{\ba} = \log \sum_{e=1}^\ell (\sum_{i=1}^s \exp(v_{ia_i}(e)))$ is the normalization constant (a scalar).
+where $Z_{\ba} = \log \sum_{e=1}^\ell (\sum_{i=1}^s \exp(v_{ia_i}(e)))$ is the
+log-normalization constant (a scalar) that sums over possible values $e$ of $x_j$.
 
 Note that there is a combinatorial dimension to this problem since the association between
-columns of $C$ and combinations of $\{ v_{ia} \}$ is unknown.
-As a running example (\reffig{factorialModels}(b)),
-consider $s=2$ sources, each taking on $k=3$ values (let $f_a = v_{1a}$ and $g_b = v_{2b}$).
-The following algorithm creates a linear program which puts constraints on variables $\{v_{ia}\}$ and $Z_{\ba}$:
+columns of $L$ and combinations of $\{ v_{ia} \}$ is unknown.
+For example, example (\reffig{factorialMixtureModel}(b)),
+consider $s=2$ sources, each taking on $k=3$ values
+(for convenience, let $f_a = v_{1a}$ and $g_b = v_{2b}$).
+The following algorithm, $\UnshuffleFactorize$,
+creates a linear program that places constraints on
+variables $\{v_{ia}\}$ and $Z_{\ba}$:
 \begin{enumerate}
 
-\item Compute the difference vector $B_i - B_j$ for every distinct pair of columns $c,d \in [\nh^s]$.
+\item Compute the difference vector $L_c - L_d$ for every distinct pair of
+columns $c,d \in [\nh^s]$.
 
-\item Put the pairs $(c,d)$ into bins, where the difference vectors $B_c-B_d$
+\item Put the pairs $(c,d)$ into bins such that the difference vectors $L_c-L_d$
 in each bin are \emph{comparable}, by which we mean that they
 differ by a constant scalar times $\bone$ (for the normalization constant).
 
 \item Keep only the maximal bins.
-These bins should contain $\nh^{s-1}$ pairs, each corresponding to a fixed setting of the $s-1$ sources
-and changing the value of one source.
+Such bins should contain $\nh^{s-1}$ pairs, each corresponding to a fixed
+setting of the $s-1$ sources
+and changing the value of only one source.
 Specifically, the difference vector is equal to $v_{ia} - v_{ia'}$ up to a
 constant scalar for some source $i \in [k]$ and distinct values $a, a' \in
 [\nh]$.
 
 \item Group the bins into sources:
   For each source $i = 1, \dots, s$,
-  chose any bin, declare it as $v_{i1} - v_{i2}$, and add it to the source.
-  Let $\gamma$ be the set of $c$ such that that bin contains some difference vector $B_c - B_d$,
-  and include any other bin with the same $\gamma$; these should correspond to $v_{i1} - v_{ia}$ for $a \ge 3$.
-  Then throw away any bin whose difference vector is $-(B_c - B_d)$
-  or is comparable to the difference of two existing difference vectors (e.g., $v_{i2} - v_{i1}$ or $v_{i2} - v_{i3}$).
-  The resulting source should have $\nh-1$ bins, corresponding to $\{ v_{i1} - v_{ia} : 2 \le a \le \nh \}$.
-  At this point, we have identified which vectors contribute to each $B_c$,
+  chose any bin $\omega$, declare it as $v_{i1} - v_{i2}$,
+  and add $\omega$ to the source.
+  Let $\gamma$ be the set of $c$ such that $\omega$
+  contains some difference vector $L_c - L_d$,
+  and include any other bin $\omega'$ with the same $\gamma$;
+  $\omega$' should correspond to $v_{i1} - v_{ia}$ for $a \ge 3$.
+
+  Then throw away any bin whose difference vector is $-(L_c - L_d)$
+  or is comparable to the difference of two existing difference vectors
+  (we want to discard bins corresponding to $v_{i2} - v_{i1}$ and $v_{i2} - v_{i3}$).
+  Finally, the resulting source should have $\nh-1$ bins, corresponding to $\{ v_{i1} - v_{ia} : 2 \le a \le \nh \}$.
+  At this point, we have identified which vectors contribute to each $L_c$,
   taking care of the combinatorial aspect of the problem,
   but have yet to recover the actual vectors.
 
   \item To do this last step, construct a linear program with $\nh^s \cdot d$ constraints, one for each entry of $B$.
   It will have $s\nh \cdot d + \nh^s$ variables,
   one for each of $s\nh$ vectors $v_{ia}$ and $\nh^s$ for the normalization constants $Z_\ba$.
-  Note that $Z_\ba$ is actually a determinstic function of the the vectors, but since it is a non-linear one,
+  Note that $Z_\ba$ is actually a deterministic function of the the vectors, but since it is a non-linear one,
   it is difficult to work with; therefore, we create a separate variable to keep the problem linear.
 
-  It turns out that this is LP is rank deficient for two reasons, the first intrinsic to our model,
-  and the second due to loose linearization.
-  First, the vectors $v_{ia}$ are non-identifiable since we can always add any vector $u \in \R^\ell$ to
-  all the vectors of a source $i_1$ ($v_{i_1 a}$ for all $a \in [\nh]$)
-  subtract $u$ from all the vectors of another source $v_{i_2 a}$ for all $a \in [\nh]$.
-  Second, if we knew the normalization constants $\{Z_\ba\}$, then this is only rank deficiency.
-  However, treating $\{Z_\ba\}$ as independent variables creates additional rank deficiency.
-
-  Despite this, in the spirit of providing partial information,
-  $\UnshuffleFactorize$ still gives us linear constraints on the parameters.
-  In particular, we propose adding to the likelihood objective a strong regularization term
-  $R(\theta, Z) = \frac{\lambda}{2} (\bA_1 \theta - \bA_2 Z - B)^2$, where $\bA_1$ and $\bA_2$ are coefficients
-  recovered by unshuffling.
-  In particular, we propose optimizing $\min_{\theta, Z} \sum_{i=1}^n -\log p_\theta(x^{(i)}) + R(\theta, Z)$.
-  Although the resulting objective is still non-convex, the regularization imposes quite strong constraints,
-  and the optimization would happen effectively over a much lower-dimensional subspace.
 \end{enumerate}
+
+It turns out that this is LP is rank deficient for two reasons,
+the first intrinsic to our model,
+and the second due to loose linearization.
+First, the vectors $v_{ia}$ are non-identifiable since we can always add any vector $u \in \R^\ell$ to
+all the vectors of a source $i_1$ ($v_{i_1 a}$ for all $a \in [\nh]$)
+and subtract $u$ from all the vectors of another source $v_{i_2 a}$ for all $a \in [\nh]$.
+Second, if we treated log-normalization constants $\{Z_\ba\}$ as a deterministic
+function of $v_{ia}$, then the resulting program would have no other sources
+of rank deficiency, but would also be non-linear.
+Treating $\{Z_\ba\}$ as independent variables creates additional rank
+deficiency.
+
+Despite this, in the spirit of providing partial information,
+we can still use the linear constraints provided by $\UnshuffleFactorize$.
+In particular, define a regularization term
+$R(\theta, Z) = \frac{1}{2} (\bA_1 \theta - \bA_2 Z - B)^2$, where $\bA_1$ and $\bA_2$ are coefficients
+recovered by unshuffling.
+In particular, we propose optimizing $\min_{\theta, Z} \sum_{i=1}^n -\log
+p_\theta(x^{(i)}) + \lambda R(\theta, Z)$,
+where $\lambda$ will be relatively large.
+Although the resulting objective is still non-convex,
+the regularization imposes quite strong constraints,
+resulting in an optimization problem
+that effectively operates over a much lower-dimensional subspace.

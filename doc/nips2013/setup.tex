@@ -8,43 +8,23 @@ and let $\phi_c(z_c) \in \R^d$ be the feature map for each $c \in C$.
 In this paper, we will consider both directed and undirected models over $z$.
 In the undirected case, we define the standard globally-normalized exponential family model:
 \begin{align}
-  p_\theta(z) = \exp\{ \phi(z)^\top\theta - A(\theta) \}, \aside{undirected}
+  \label{eqn:undirectedSetup}
+  p_\theta(z) = \exp\{ \phi(z)^\top\theta - A(\theta) \},
 \end{align}
 where $\phi(z) \eqdef \sum_{c \in C} \phi_c(z_c) \in \R^d$ is the global feature vector, $\theta \in \R^d$ is the parameter vector,
 and $A(\theta) = \log \int \exp\{\phi(z)^\top\theta\} dz$ is the global log-partition function.
+To some extent, our methods only depend on the conditional independence
+structure of the models.
+We focus on undirected models for notational simplicity;
+directed models are discussed in \refapp{directedModels}.
 
-In the directed case, we assume a directed acyclic graph over $V$,
-and define $\pi(j) \subset V$ to be the parents of each node $j \in V$.
-Next, define a model as a product of locally-normalized models:
-\begin{align}
-  p_\theta(z) = \prod_{j \in V} p_\theta(z_j \mid z_{\pi(j)}), \quad\quad
-  p_\theta(z_j \mid z_{\pi(j)}) = \exp \{ \phi_j(z_j, z_{\pi(j)})^\top\theta - A_j(\theta; z_{\pi(j)}) \}.
-\end{align}
-Here, each local model has its own local features $\phi_j(z_j, z_{\pi(j)})$
-and its own local log-partition function $A(\theta; z_{\pi(j)})$, which depends on values of its parent.
-To make the directed and undirected models more comparable,
-define $\phi(z) = \sum_{j \in V} \phi(z_j, z_{\pi(j)})$
-and $A(\theta; z) = \sum_{j \in V} A_j(\theta; z_{\pi(j)})$,
-so that:
-\begin{align}
-  p_\theta(z) \eqdef \exp\{ \phi(z)^\top\theta - A(\theta; z) \}. \aside{directed}
-\end{align}
-
-%To some extent, our methods only depend on the conditional independence
-%structure of the models, not on whether the model is directed or undirected.
-%Later, we will show how to estimate
-
-%\paragraph{Example.}
-%For example, \reffig{simpleModels} Markov random fields are an instance.
-
-\paragraph{Problem statement.}
+\paragraph{Problem statement}
 
 % Statement
 This paper focuses on the problem of parameter estimation:
 We are given $n$ i.i.d.~examples of the observed variables $D = (x^{(1)}, \dots, x^{(n)})$
 where each $x^{(i)} \sim p_{\theta^*}$ for some true parameters $\theta^*$.
-Our goal is to produce a parameter estimate $\hat\theta$ which is hopefully
-close to $\theta^*$.
+Our goal is to produce a parameter estimate $\hat\theta$ that approximates $\theta^*$.
 
 % Maximum likelihood
 The standard estimation procedure is maximum (marginal) likelihood,
@@ -52,12 +32,3 @@ $\hatthetaml \eqdef \max_{\theta \in \R^d} \sum_{x \in D} \log p_\theta(x)$,
 which is statistically efficient but computationally intractable.
 In practice, one uses EM or gradient-based optimization procedure on the marginal likelihood,
 which can get stuck in local optima.
-
-%Since both models have the same sufficient statistics lead to convex
-%likelihoods (assuming all variables are observed), in many cases our methods
-%will not be particular to which.  In some cases, however (e.g., the factorial models),
-%we will rely on marginalization properties of the directed models.
-
-% Principles
-%By insisting on developing a consistent estimator and considering identifiability,
-%The key is that a variable in the model must correspond to a bottleneck.

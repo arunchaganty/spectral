@@ -34,14 +34,14 @@ G.indent = function(x, n) { return frame(x).xpadding(n != null ? n : 20).xpivot(
 ////////////////////////////////////////////////////////////
 
 G.schema = function() {
-  boxed = function(a) { return frame(a).padding(10).bg.strokeWidth(2).strokeColor('gray').end; }
+  boxed = function(a) { return frame(a).padding(5).bg.strokeWidth(2).strokeColor('gray').end; }
   style = function(x) { return x.strokeWidth(10).color('brown'); }
   return overlay(
     table(
       [boxed('Data $x^{(1)}, \\dots, x^{(n)}$'), nil(), boxed('Parameters $\\theta$')],
       [a1 = style(downArrow(s=70)), nil(), a3 = style(upArrow(s))],
-      [boxed('Observed moments $\\E[\\phix(x)]$'), a2 = style(rightArrow(200)), boxed('Latent moments $\\E[\\phi(x,h) \\mid h]$')],
-    _).margin(50, 30).center(),
+      [boxed('Observed moments $\\E[\\phix(x)]$'), a2 = style(rightArrow(200)), boxed('Latent moments $\\E[t(x) \\mid h]$')],
+    _).margin(50, 20).center(),
     moveRightOf('(1) aggregation'.bold(), a1),
     moveBottomOf('(2) factorization'.bold(), a2),
     moveRightOf('(3) optimization'.bold(), a3),
@@ -122,14 +122,15 @@ G.gridModel = function(opts) {
   return new Overlay(O);
 }
 
-G.factorialMixtureModel = function() {
+G.factorialMixtureModel = function(directed) {
+  var edge = directed ? arrow : line;
   return overlay(
     ytable(
       xtable(h1 = node('$h_1$'), h2 = node('$h_2$')).margin(50),
       xtable(x1 = node('$x_1$', true), x2 = node('$x_2$', true), x3 = node('$x_3$', true)).margin(50),
     _).margin(50).center(),
-    arrow(h1, x1), arrow(h1, x2), arrow(h1, x3),
-    arrow(h2, x1), arrow(h2, x2), arrow(h2, x3),
+    edge(h1, x1), edge(h1, x2), edge(h1, x3),
+    edge(h2, x1), edge(h2, x2), edge(h2, x3),
   _);
 }
 
@@ -171,7 +172,7 @@ G.unshuffle = function() {
 
   var rhs = [];
   for (var i = 0; i < K*K; i++) {
-    rhs.push(text('$\\green{B_{'+(i+1)+'}}$'));
+    rhs.push(text('$\\green{L_{'+(i+1)+'}}$'));
   }
 
   Math.seedrandom(2);

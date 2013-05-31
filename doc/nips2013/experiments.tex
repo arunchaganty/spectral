@@ -1,33 +1,45 @@
 \section{Experiments} \label{sec:experiments}
 
-We have argued the case for using measurements of the latent moments,
-$\hat\E[\phi(x,h)]$ to aid parameter estimation. In this section, we
-seek to answer two questions, 
-(i) how much do such measurements aid
-estimation and 
-(ii) how effective are the measurements estimated using the
+%We have argued the case for using measurements of the latent moments to 
+%aid parameter estimation.
+The spectral decomposition (Steps 1 and 2) in \refsec{threeViewMixtureModel}
+provides measurements,
+which are used in the optimization problem \refeqn{minKL}.
+In this section, we
+seek to answer two questions empirically:
+(i) how much do the measurements aid estimation and 
+(ii) how effectively are the measurements estimated using the
 method of moments.
 
-We find that measurements can considerably improve the fit of the
-parameters estimated. 
+In summary, we find that measurements can improve the fit of the
+parameters estimated considerably.
 While empirical measurements estimated using the
 method of moments are less accurate, we still find that they improve
-parameter estimates, in general.
+parameter estimates in general.
 
 % Do measurements help in parameter estimation?
 \subsection{Measurements for parameter estimation}
 
 Our generative process for the data is as follows.
-We generated 10 random hidden Markov models, each with 3 hidden states and 5 symbols. 
-For each model, we generated 10 sets of 10,000 sequences of length 3.
-We compared the prediction accuracy of parameters estimated using EM initialized using \refeqn{minKL} when different percentages of the expected latent measurements, $\E[\phi(x,h)]$, were observed. 
-%For example, we ran one experiment where we assumed 10\% of the latent measurements were observed.
+We generated 10 random hidden Markov models,
+each with $k=3$ hidden states and $\ell=5$ possible observed values. 
+For each model, we generated 10 sets of 10,000 sequences of length $L=3$.
+We compared the prediction accuracy of parameters estimated using EM
+initialized using \refeqn{minKL} when different percentages of the expected
+latent measurements, $\E[\phi(x,h)]$, were observed.
+
+%For example, we ran one experiment where we assumed 10\% of the latent
+%measurements were observed.
 
 \Fig{figures/measurements}{0.5}{measurements}{a}
 
-\reffig{measurements} plots the training set accuracy of the parameters micro-averaged over the different data and models.
-For comparison, we have included the accuracy achieved using the method of moments estimation procedure described in \refsec{factorization} with empirical moment estimates. 
-We see that using measurements for can improve prediction accuracy. Spectral estimates too improve accuracy, though not as markedly.
+\reffig{measurements} plots the training set accuracy of the parameters
+micro-averaged over the different data and models.  For comparison, we have
+included the accuracy achieved using the method of moments estimation procedure
+described in \refsec{factorization} with empirical moment estimates.  We see
+that using measurements for even a small percentage of features can improve
+prediction accuracy by \todo{x\%}. Spectral estimates too improve accuracy,
+though not as markedly; we observed a \todo{x\%} improvement.
 
 % - we ran experiments with different proportions of the expected feature counts being observed and plot performance here. 
 % - while such information is not available in practice, we note that it provides a significant improvement over learning with just EM.
@@ -66,11 +78,18 @@ We see that using measurements for can improve prediction accuracy. Spectral est
     \caption{}
 \end{table}
 
-Having shown that measurements can help the task of parameter estimation, we now present results for variety of models, summarized in \reftab{errors}.
-For each row, we report micro-averaged log-likelihoods and prediction accuracy over 5 different models with the specified number of parameters and 5 random samples of $10,000$ instances from the model. 
-In the table, we compare randomly initialized EM with EM initialized using (a) empirical measurements estimated with the method of moments and (b) fully expected measurements.
+Having shown that measurements can help the task of parameter estimation, we
+now present results for variety of models, summarized in \reftab{errors}. 
+For each row, we report micro-averaged log-likelihoods and prediction accuracy
+over 5 different models with the specified number of parameters and 5 random
+samples of $10,000$ instances from the model. 
+In the table, we compare randomly initialized EM with EM initialized using (a)
+empirical measurements estimated with the method of moments and (b) fully
+expected measurements.
 
-First, we note that we found measurements to uniformly improve the prediction accuracy of EM. The picture for method of moments is similar, though there is greater variation in the improvement it provides.
+First, we note that we found measurements to uniformly improve the prediction
+accuracy of EM. The picture for method of moments is similar, though there is
+greater variation in the improvement it provides.
 
 % - Generated data from different 3-view mixture models and hmms. 
 % - Each averages over 5 different parameters and 5 different data samples.
