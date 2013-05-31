@@ -15,6 +15,7 @@ import learning.linalg.*;
 import learning.spectral.TensorMethod;
 
 import static learning.models.loglinear.Models.*;
+import static learning.Misc.*;
 
 /**
  * NIPS 2013
@@ -43,9 +44,11 @@ public class BottleneckSpectralEM implements Runnable {
   @Option(gloss="Use cached bottleneck moments") public String cachedBottleneckMoments = null;
 
   @Option(gloss="Smooth measurements") public double smoothMeasurements = 0.0;
+  @Option(gloss="Use T in BottleneckSpectralEM?") public boolean useTransitions = false;
 
   @OptionSet(name="lbfgs") public LBFGSMaximizer.Options lbfgs = new LBFGSMaximizer.Options();
   @OptionSet(name="backtrack") public BacktrackingLineSearch.Options backtrack = new BacktrackingLineSearch.Options();
+  @OptionSet(name="tensor") public TensorMethod algo = new TensorMethod();
 
   @Option(gloss="Print all the things") public boolean debug = false;
 
@@ -228,8 +231,13 @@ public class BottleneckSpectralEM implements Runnable {
     int K = model.K; int D = model.D;
 
     double[] pi = MatrixFactory.toVector( bottleneckMoments.getValue0() );
-    MatrixOps.projectOntoSimplex( pi, smoothMeasurements );
+    MatrixOps.projectOntoSimplex( pi, 1.0 + smoothMeasurements );
     SimpleMatrix M[] = {bottleneckMoments.getValue1(), bottleneckMoments.getValue2(), bottleneckMoments.getValue3()};
+
+      LogInfo.logs( Fmt.D( pi ) );
+      LogInfo.logs( M[0] );
+      LogInfo.logs( M[1] );
+      LogInfo.logs( M[2] );
   
     // Set appropriate measuredFeatures to observed moments
     if( model instanceof MixtureModel ) {
@@ -238,9 +246,15 @@ public class BottleneckSpectralEM implements Runnable {
       assert( M[2].numCols() == K );
       // Each column corresponds to a particular hidden moment.
       // Project onto the simplex
-      M[2] = MatrixOps.projectOntoSimplex( M[2], smoothMeasurements );
-      Execution.putOutput("moments.pi", MatrixFactory.fromVector(pi) );
-      Execution.putOutput("moments.M3", M[2]);
+      
+      // Average over the three M's
+      for(int i = 0; i < L; i++ )
+        M[i] = MatrixOps.projectOntoSimplex( M[i], smoothMeasurements );
+      SimpleMatrix M3 = (M[0].plus(M[1]).plus(M[2])).scale(1.0/3.0);
+      //SimpleMatrix M3 = M[2]; // M3 is most accurate.
+      M3 = MatrixOps.projectOntoSimplex( M3, smoothMeasurements );
+      LogInfo.logs( "pi: " + Fmt.D(pi) );
+      LogInfo.logs( "M3: " + M3 );
 
       for( int h = 0; h < K; h++ ) {
         for( int d = 0; d < D; d++ ) {
@@ -250,7 +264,7 @@ public class BottleneckSpectralEM implements Runnable {
           // multiplying by pi to go from E[x|h] -> E[x,h]
           // multiplying by 3 because true.counts aggregates
           // over x1, x2 and x3.
-          measurements.weights[f] = L * M[2].get( d, h ) * pi[h]; 
+          measurements.weights[f] = L * M3.get( d, h ) * pi[h]; 
         }
       }
       Execution.putOutput("moments.params", MatrixFactory.fromVector(measurements.weights));
@@ -268,10 +282,18 @@ public class BottleneckSpectralEM implements Runnable {
       // Note: We might need to invert the random projection here.
       O = MatrixOps.projectOntoSimplex( O, smoothMeasurements );
       // smooth measurements by adding a little 
-      T = MatrixOps.projectOntoSimplex( T, smoothMeasurements );
-      Execution.putOutput("moments.pi", Fmt.D(pi));
-      Execution.putOutput("moments.O", O);
-      Execution.putOutput("moments.T", T);
+      T = MatrixOps.projectOntoSimplex( T, smoothMeasurements ).transpose();
+      LogInfo.logs( "pi: " + Fmt.D(pi) );
+      LogInfo.logs( "O: " + O );
+      LogInfo.logs( "T: " + T );
+
+      double[][] T_ = MatrixFactory.toArray( T );
+      double[][] O_ = MatrixFactory.toArray( O.transpose() );
+
+      for( int i = 0; i < K; i ++) {
+        assert( MatrixOps.equal( MatrixOps.sum( T_[i] ), 1 ) );
+        assert( MatrixOps.equal( MatrixOps.sum( O_[i] ), 1 ) );
+      }
 
       // Put the observed moments back into the counts.
       for( int h = 0; h < K; h++ ) {
@@ -285,7 +307,7 @@ public class BottleneckSpectralEM implements Runnable {
         }
         // 
         // TODO: Experiment with using T.
-        if( true ) {
+        if( useTransitions ) {
           for( int h_ = 0; h_ < K; h_++ ) {
             int f = measurements.featureIndexer.getIndex(new BinaryFeature(h,h_));
             measuredFeatures[f] = true;
@@ -329,21 +351,8 @@ public class BottleneckSpectralEM implements Runnable {
       int K = model.K; int D = model.D;
 
       Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> bottleneckMoments = null;
-      if( cachedBottleneckMoments != null ) {
-        try {
-        ObjectInputStream in = new ObjectInputStream( new FileInputStream( cachedBottleneckMoments ) );
-        bottleneckMoments = 
-          (Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix>) in.readObject();
-        } catch (IOException e) {
-          LogInfo.fail(e) ;
-        } catch (ClassNotFoundException e) {
-          LogInfo.fail(e) ;
-        }
-      } else {
-        Iterator<double[][]> dataSeq = constructDataSequence( model, data );
-        TensorMethod algo = new TensorMethod();
-        bottleneckMoments = algo.recoverParameters( K, D, dataSeq );
-      }
+      Iterator<double[][]> dataSeq = constructDataSequence( model, data );
+      bottleneckMoments = algo.recoverParameters( K, D, dataSeq );
       populateFeatures( model, bottleneckMoments, measurements, measuredFeatures ); 
     }
     LogInfo.logs("sum_counts: " + MatrixOps.sum(measurements.weights));
@@ -410,20 +419,6 @@ public class BottleneckSpectralEM implements Runnable {
     public abstract void infer(boolean needGradient);
   }
 
-  public static void printMemory() {
-        try{
-        System.gc();
-        Thread.currentThread().sleep(100);
-        System.runFinalization();
-        Thread.currentThread().sleep(100);
-        System.gc();
-        Thread.currentThread().sleep(100);
-        System.runFinalization();
-        Thread.currentThread().sleep(100);
-        } catch(InterruptedException e) {}
-        LogInfo.logs( "Memory: %dMb (%dMb free)", (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())/(1024 * 1024), Runtime.getRuntime().freeMemory()/(1024 * 1024) );
-  }
-
   class GlobalTerm extends ObjectiveTerm {
     Model model;
     ParamsVec params; // A reference.
@@ -440,18 +435,15 @@ public class BottleneckSpectralEM implements Runnable {
       LogInfo.begin_track("Constructing globalTerm");
       LogInfo.logs("Found %d unique lengths",  countProfile.size() );
       Hp = new HashMap<>();
-        printMemory();
       for( Map.Entry<Integer,Integer> pair : countProfile.entrySet() ) {
         int L = pair.getKey(); int cnt = pair.getValue();
 
         LogInfo.logs( "%d instances of %d length", cnt, L );
         Hp.put( model.createHypergraph(L, params.weights, gradient.weights, (double) cnt/examples.size()),
             cnt );
-        printMemory();
         //Hp.put( model.createHypergraph(L, params.weights, gradient.weights, (double) 1), 1 );
         //break; // Cheating because we're running out of memory.
       }
-        printMemory();
       LogInfo.end_track();
     }
 
@@ -565,7 +557,6 @@ public class BottleneckSpectralEM implements Runnable {
         Hq.fetchPosteriors(false); // Places the posterior expectation $E_{Y|X}[\phi]$ into counts
         //value += Hq.getLogZ() * 1.0/examples.size();
       }
-      printMemory();
       value = MatrixOps.dot(params.weights, gradient.weights);
       // At the end of this routine, 
       // counts contains $E_{Y|X}[\phi(X)]$ $\phi(x)$ are features.
@@ -727,27 +718,11 @@ public class BottleneckSpectralEM implements Runnable {
       Hq.fetchBestHyperpath(ex_);
 
       for( int l = 0; l < ex.h.length; l++ )  
-        labelMapping[ex.h[l]][ex_.h[l]] -= 1; // subtracting because we want to use as costs.
+        labelMapping[ex.h[l]][ex_.h[l]] += 1; 
     }
-    if( debug )
+    //if( debug )
       LogInfo.dbg( "Label mapping: \n" + Fmt.D( labelMapping ) );
-
-    // Now we can do bipartite matching to give us the best labellings.
-    BipartiteMatcher matcher = new BipartiteMatcher();
-    int[] perm = matcher.findMinWeightAssignment(labelMapping);
-    if( debug )
-      LogInfo.dbg( "perm: " + Fmt.D( perm ) );
-    // Compute hamming score
-    long correct = 0;
-    long total = 0;
-    for( int k = 0; k < K; k++ ) {
-      for( int k_ = 0; k_ < K; k_++ ) {
-        total += labelMapping[k][k_];
-      }
-      correct += labelMapping[k][perm[k]];
-    }
-    double acc = (double) correct/ (double) total;
-    LogInfo.logs( "Accuracy: %d/%d = %f", correct, total, acc );
+    double acc = bestAccuracy( labelMapping );
     LogInfo.end_track();
 
     return acc;

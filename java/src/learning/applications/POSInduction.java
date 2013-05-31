@@ -24,6 +24,7 @@ import static fig.basic.LogInfo.*;
 
 import java.io.*;
 import java.util.*;
+import static learning.Misc.*;
 
 /**
  * Perform POS induction, aka HMM learning.
@@ -44,8 +45,11 @@ public class POSInduction implements Runnable {
   public int iterations = 1000;
   @Option(gloss="em eps")
   public double eps = 1e-4;
+
   @Option(gloss="Measurements Path (pre-cached measurements only) - empty for no measurements")
   public String measurementsPath = "";
+  @Option(gloss="smoothMeasurements")
+  public double smoothMeasurements = 0.0;
 
   @Option(gloss="File containing word-index representation of data", required=true)
     public String dataPath;
@@ -93,13 +97,18 @@ public class POSInduction implements Runnable {
   }
 
   public double reportAccuracy( HiddenMarkovModel model, ParsedCorpus C ) {
-    double err = 0.0;
+    int K = C.getTagDimension();
+    double[][] confusion = new double[K][K];
     for( int n = 0; n < C.getInstanceCount(); n++ ) {
+      int[] l = C.L[n];
       int[] l_ = model.viterbi( C.C[n] );
-      err += ( MatrixOps.hamming( l_, C.L[n] ) - err )/(n+1);
-    }
 
-    return err;
+      for( int i = 0; i < l.length; i++ )  
+        confusion[l[i]][l_[i]] += 1; 
+    }
+    double acc = bestAccuracy( confusion);
+
+    return acc;
   }
 
   String logStat(String key, Object value) {
@@ -149,6 +158,42 @@ public class POSInduction implements Runnable {
     return lhood;
   }
 
+  @SuppressWarnings("unchecked")
+  public Params loadMeasurements( String filename ) {
+    try {
+      // Open the file
+      ObjectInputStream in = new ObjectInputStream( new FileInputStream( filename ) ); 
+      Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix>
+        measurements = (Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix>) in.readObject();
+      in.close();
+
+      // construct O T and pi
+      SimpleMatrix O = measurements.getValue2();
+      SimpleMatrix T = O.pseudoInverse().mult( measurements.getValue3() );
+
+      // Initialize pi to be random.
+      SimpleMatrix pi = measurements.getValue0(); // This is just a random guess.
+
+      // project and smooth 
+      // projectOntoSimplex normalizes columns!
+      pi = MatrixOps.projectOntoSimplex( pi.transpose(), smoothMeasurements );
+      T = MatrixOps.projectOntoSimplex( T, smoothMeasurements ).transpose();
+      O = MatrixOps.projectOntoSimplex( O, smoothMeasurements ).transpose();
+
+      Params params = new Params( 
+          MatrixFactory.toVector(pi), 
+          MatrixFactory.toArray(T), 
+          MatrixFactory.toArray(O)); 
+      return params;
+
+    } catch( IOException e ) {
+      LogInfo.fail(e);
+    } catch( ClassNotFoundException e ) {
+      LogInfo.fail(e);
+    }
+    return null;
+  }
+
   public void run() {
     try { 
       LogInfo.begin_track("file-input");
@@ -168,10 +213,10 @@ public class POSInduction implements Runnable {
           C.getDimension() ); // D
 
       // Possibly load the measurements
-      double[] params;
+      Params params;
       if( measurementsPath.trim().length() != 0 ) {
-        assert( false );
-        params = RandomFactory.rand_(initRandom, model.numFeatures());
+        // Get measurements from path.
+        params = loadMeasurements( measurementsPath );
       } else {
         // random
         params = Params.uniformWithNoise( 
@@ -179,9 +224,9 @@ public class POSInduction implements Runnable {
             model.params.stateCount,
             model.params.emissionCount,
             initParamsNoise
-            ).toVector();
+            );
       }
-      optimize( model, params, C );
+      optimize( model, params.toVector(), C );
 
     } catch( IOException e ) {
       LogInfo.logsForce( e );

@@ -42,12 +42,30 @@ public class HiddenMarkovModel implements EMOptimizable {
     public int stateCount;
     public int emissionCount;
 
-		Params(int stateCount, int emissionCount) {
+		public Params(int stateCount, int emissionCount) {
 			this.stateCount = stateCount;
 			this.emissionCount = emissionCount;
 			pi = new double[stateCount];
 			T = new double[stateCount][stateCount];
 			O = new double[stateCount][emissionCount];
+		}
+
+		public Params(double[] pi, double[][] T, double[][] O) {
+      assert( T.length == T[0].length );
+			this.stateCount = T.length;
+      assert( pi.length == stateCount );
+      assert( O.length == stateCount );
+			this.emissionCount = O[0].length;
+      // Check if the parameters are valid!
+      assert( MatrixOps.equal( MatrixOps.sum( pi ),1.0 ) );
+      for( int s = 0; s < stateCount; s++ ) {
+        assert( MatrixOps.equal( MatrixOps.sum( T[s] ),1.0 ) );
+        assert( MatrixOps.equal( MatrixOps.sum( O[s] ),1.0 ) );
+      }
+
+			this.pi = pi;
+			this.T = T;
+			this.O = O;
 		}
 		
 		@Override
@@ -333,6 +351,7 @@ public class HiddenMarkovModel implements EMOptimizable {
 			V[0][s] = params.O[s][o[0]] * params.pi[s];
 			Ptr[0][s] = -1; // Doesn't need to be defined.
 		}
+    MatrixOps.normalize( V[0] );
 		
 		// The dynamic program to find the optimal path
 		for( int i = 1; i < o.length; i++ ) {
@@ -342,8 +361,9 @@ public class HiddenMarkovModel implements EMOptimizable {
 				double T_max = 0.0;
 				int S_max = -1;
 				for( int s_ = 0; s_ < params.stateCount; s_++ ) {
-					if( params.T[s_][s] * V[i-1][s_] > T_max ) {
-						T_max = params.T[s_][s] * V[i-1][s_];
+          double t = params.T[s_][s] * V[i-1][s_];
+					if( t > T_max ) {
+						T_max = t;
 						S_max = s_;
 					}
 				}
@@ -352,13 +372,21 @@ public class HiddenMarkovModel implements EMOptimizable {
 				V[i][s] = params.O[s][o[i]] * T_max;
 				Ptr[i][s] = S_max; 
 			}
+      MatrixOps.normalize( V[i] );
 		}
 		
 		int[] z = new int[o.length];
 		// Choose the best last state and back track from there
 		z[o.length-1] = MatrixOps.argmax(V[o.length-1]);
-		for(int i = o.length-1; i >= 1; i-- ) 
+    if( z[o.length-1] == -1 ) {
+      LogInfo.logs( Fmt.D( V ) );
+      LogInfo.logs( Fmt.D( params.T ) );
+    }
+    assert( z[o.length-1] != -1 );
+		for(int i = o.length-1; i >= 1; i-- )  {
+      assert( z[i] != -1 );
 			z[i-1] = Ptr[i][z[i]];
+    }
 		
 		return z;
 	}
@@ -368,14 +396,17 @@ public class HiddenMarkovModel implements EMOptimizable {
 	 * @param o
 	 * @return
 	 */
-	public double[][] forward( final int[] o ) {
+	public Pair<double[][],Double> forward( final int[] o ) {
 		// Store the forward probabilities
 		double [][] f = new double[o.length][params.stateCount];
 		
+    double c = 0;
 		// Initialise with the initial probabilty
 		for( int s = 0; s < params.stateCount; s++ ) {
 			f[0][s] = params.pi[s] * params.O[s][o[0]];
 		}
+    c += Math.log( MatrixOps.sum( f[0] ) );
+    MatrixOps.scale( f[0], 1/MatrixOps.sum(f[0]) );
 		
 		// Compute the forward values as f_t(s) = sum_{s_} f_{t-1}(s_) * T( s_ | s ) * O( y | s )
 		for( int i = 1; i < o.length; i++ ) {
@@ -386,9 +417,11 @@ public class HiddenMarkovModel implements EMOptimizable {
 				}
 				f[i][s] *= params.O[s][o[i]];
 			}
+      c += Math.log( MatrixOps.sum( f[i] ) );
+      MatrixOps.scale( f[i], 1/MatrixOps.sum(f[i]) );
     }
 
-    return f;
+    return new Pair<>(f,c);
 	}
 	public double[][] backward( final int[] o ) {
     // Backward probabilities
@@ -396,12 +429,14 @@ public class HiddenMarkovModel implements EMOptimizable {
 		for( int s = 0; s < params.stateCount; s++ ) {
 			b[o.length-1][s] = 1.0;
 		}
+    MatrixOps.scale( b[o.length-1], 1/MatrixOps.sum(b[o.length-1]) );
 		for( int i = o.length-2; i >= 0; i-- ) {
 			for( int s = 0; s < params.stateCount; s++ ) {
 				for( int s_ = 0; s_ < params.stateCount; s_++ ) {
 					b[i][s] += b[i+1][s_] * params.T[s][s_] * params.O[s_][o[i+1]];
 				}
 			}
+      MatrixOps.scale( b[i], 1/MatrixOps.sum(b[i]) );
 		}
 
     return b;
@@ -477,10 +512,12 @@ public class HiddenMarkovModel implements EMOptimizable {
     for( int n = 0; n < X.length; n++ ) {
       int[] o = X[n];
 
-      double f[][] = forward( o );
+      Pair<double [][],Double> fc = forward( o );
+      double f[][] = fc.getValue0();
+      double c = fc.getValue1();
       double b[][] = backward( o );
       
-      value += (Math.log(MatrixOps.sum(f[o.length-1])) - value)/(n+1);
+      value += (Math.log(MatrixOps.sum(f[o.length-1])) + c - value)/(n+1);
 
       if( gradient != null ) {
         // Construct the transition probability
@@ -525,19 +562,21 @@ public class HiddenMarkovModel implements EMOptimizable {
         } 
         //LogInfo.logs( "pi " + Fmt.D(gradient) );
         // update counts for T
-        for( int h = 0; h < params.stateCount; h++ ) {
-          double denom = 0; // Number of times we're in state h.
-          for( int t = 0; t < o.length-1; t++ ) denom += z[t][h]; 
+        if( o.length > 1 ) {
+          for( int h = 0; h < params.stateCount; h++ ) {
+            double denom = 0; // Number of times we're in state h.
+            for( int t = 0; t < o.length-1; t++ ) denom += z[t][h]; 
 
-          for( int h_ = 0; h_ < params.stateCount; h_++ ) {
-            double num = 0;
-            for( int t = 0; t < o.length-1; t++ ) {
-              num += xi[t][h][h_];
+            for( int h_ = 0; h_ < params.stateCount; h_++ ) {
+              double num = 0;
+              for( int t = 0; t < o.length-1; t++ ) {
+                num += xi[t][h][h_];
+              }
+              gradient[params.index_T(h,h_)] += 1.0/N * 
+                num/denom;
             }
-            gradient[params.index_T(h,h_)] += 1.0/N * 
-              num/denom;
-          }
-        } 
+          } 
+        }
         //LogInfo.logs( "T " + Fmt.D(gradient) );
         // update counts for O
         for( int t = 0; t < o.length; t++ ) {
