@@ -34,14 +34,14 @@ G.indent = function(x, n) { return frame(x).xpadding(n != null ? n : 20).xpivot(
 ////////////////////////////////////////////////////////////
 
 G.schema = function() {
-  boxed = function(a) { return frame(a).padding(10).bg.strokeWidth(2).strokeColor('gray').end; }
+  boxed = function(a) { return frame(a).padding(5).bg.strokeWidth(2).strokeColor('gray').end; }
   style = function(x) { return x.strokeWidth(10).color('brown'); }
   return overlay(
     table(
       [boxed('Data $x^{(1)}, \\dots, x^{(n)}$'), nil(), boxed('Parameters $\\theta$')],
       [a1 = style(downArrow(s=70)), nil(), a3 = style(upArrow(s))],
-      [boxed('Observed moments $\\E[\\phix(x)]$'), a2 = style(rightArrow(200)), boxed('Latent moments $\\E[\\phi(x,h) \\mid h]$')],
-    _).margin(50, 30).center(),
+      [boxed('Observed moments $\\E[\\phix(x)]$'), a2 = style(rightArrow(200)), boxed('Latent moments $\\E[t(x) \\mid h]$')],
+    _).margin(50, 20).center(),
     moveRightOf('(1) aggregation'.bold(), a1),
     moveBottomOf('(2) factorization'.bold(), a2),
     moveRightOf('(3) optimization'.bold(), a3),

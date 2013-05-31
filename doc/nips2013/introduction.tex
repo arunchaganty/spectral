@@ -14,8 +14,10 @@ spectral decomposition have offered a refreshing and promising perspective on
 this learning problem \citep{hsu09spectral,anandkumar11tree,anandkumar12moments,anandkumar12lda,hsu12identifiability,balle11transducer,balle12automata}.
 These methods exploit the linear algebraic properties of the model and
 factorize the moments into parameters, providing strong theoretical guarantees.
-However, these methods are not as easy to apply as EM, and have yet to be
-developed for log-linear models.
+However, these methods are not as universally applicable as EM, and have yet to
+be developed for log-linear models.
+
+\Fig{figures/schema}{0.3}{schema}{Schema of our approach.}
 
 % This paper
 In this work, we develop a technique for parameter estimation in log-linear
@@ -25,15 +27,14 @@ independence factorization structure implied by the model and identify
 bottlenecks.  We construct third-order tensors around these bottlenecks, which
 are factorized in our case into moments involving the latent variables.
 
-\Fig{figures/schema}{0.3}{schema}{Schema.}
-
 This paper contributes three ideas:
 First, in certain cases, these latent moments are exactly the sufficient statistics of
 the log-linear model, in which we case use convex optimization directly to obtain the parameters,
-resulting in a consistent parameter estimation procedure.
+resulting in a consistent parameter estimation procedure (\refsec{threeViewMixtureModel}).
 Second, in other cases, the latent moments only provide partial information about the parameters,
-but we show that this information can be naturally incorporated into the measurements framework of \citet{liang09measurements}.
-This provides a natural way to leverage the method of moments when providing an
-exact consistent estimator is difficult.
+but we show that this information can be naturally incorporated
+using the measurements framework of \citet{liang09measurements} (\refsec{generalModels}).
+This provides a natural way to leverage the method of moments when constructing
+a consistent estimator is difficult.
 Finally, for factorial models, we introduce a new \emph{unshuffling
-factorization} procedure to recover parameter estimates.
+factorization} procedure to recover parameter estimates (\refsec{factorialModels}).

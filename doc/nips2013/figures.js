@@ -14,8 +14,16 @@ _).margin(100, 20).center();
 prez.addSlide(simpleModels.id('simpleModels'));
 
 generalModels = table(
-  [hmm({directed: false, len: 4}), tallMixtureModel(false), gridModel({directed: false, numRows: 3, numCols: 2})],
-  ['(a) Hidden Markov model', '(b) Tall mixture model', '(c) Grid model'],
+  [
+    hmm({directed: false, len: 4}),
+    gridModel({directed: false, numRows: 3, numCols: 2}),
+    tallMixtureModel(false),
+  _],
+  [
+    '(a) Hidden Markov model',
+    '(b) Grid model',
+    '(c) Tall mixture model',
+  _],
 _).margin(100, 20).center();
 prez.addSlide(generalModels.id('generalModels'));
 

@@ -22,7 +22,7 @@ Next, define a model as a product of locally-normalized models:
 \end{align}
 Here, each local model has its own local features $\phi_j(z_j, z_{\pi(j)})$
 and its own local log-partition function $A(\theta; z_{\pi(j)})$, which depends on values of its parent.
-To make the directed and undirected models more comparable,
+To consolidate notation,
 define $\phi(z) = \sum_{j \in V} \phi(z_j, z_{\pi(j)})$
 and $A(\theta; z) = \sum_{j \in V} A_j(\theta; z_{\pi(j)})$,
 so that:
@@ -43,8 +43,7 @@ so that:
 This paper focuses on the problem of parameter estimation:
 We are given $n$ i.i.d.~examples of the observed variables $D = (x^{(1)}, \dots, x^{(n)})$
 where each $x^{(i)} \sim p_{\theta^*}$ for some true parameters $\theta^*$.
-Our goal is to produce a parameter estimate $\hat\theta$ which is hopefully
-close to $\theta^*$.
+Our goal is to produce a parameter estimate $\hat\theta$ that approximates $\theta^*$.
 
 % Maximum likelihood
 The standard estimation procedure is maximum (marginal) likelihood,

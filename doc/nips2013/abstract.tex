@@ -1,6 +1,6 @@
 \begin{abstract}
 Parameter estimation in log-linear latent-variable models is typically
-performed using local optimization, which is prone to local optima.
+performed using gradient-based optimization on the log-likelihood, which is prone to local optima.
 In this paper,
 %we show how to leverage recent advances in the method of moments
 %to alleviate these problems.
@@ -10,11 +10,12 @@ which we incorporate as constraints on the original optimization
 problem.
 In favorable cases, these constraints provide full information and render the
 original optimization problem
-convex; in other cases, the constraints offer partial information,
-but still provide significant aid to the original optimization problem.
-Factorial models do require special attention,
-so we develop a new unshuffling factorization technique to induce
-constraints for these models.
-Empirically, we show that our methods provide substantial gains
-across several models.
+convex; in other cases, the constraints offer only partial information,
+but still appear to provide significant aid to the original optimization
+problem.
+Factorial models do require special attention;
+to handle these models,
+we introduce a new technique called unshuffling factorization to induce
+linear constraints on the parameters.
+Empirically, our approach provides improvements on several models.
 \end{abstract}
