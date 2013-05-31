@@ -6,6 +6,6 @@ for f in deps/*.jar; do
   deps=$f:$deps;
 done;
 
-$JAVA_PATH/java -cp $deps:bin org.junit.runner.JUnitCore $@
+$JAVA_PATH/java -ea -cp $deps:bin org.junit.runner.JUnitCore $@
 
 

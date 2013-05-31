@@ -124,7 +124,7 @@ public class RealHiddenMarkovModel extends HiddenMarkovModel {
   }
 
   public static RealHiddenMarkovModel generate( GenerationOptions options, FeatureOptions featureOptions ) {
-		Params params = Params.uniformWithNoise( options.stateCount, options.emissionCount, options.noise );
+		Params params = Params.uniformWithNoise( new Random(), options.stateCount, options.emissionCount, options.noise );
     Features features = null;
 
     if( featureOptions.scheme.equals( "eye" ) )
