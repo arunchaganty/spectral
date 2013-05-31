@@ -74,7 +74,7 @@ def makePlot( data, trueBetas, specBetas, spemBetas, em0Betas, emBetas, outFile 
         plot.set_color( "black" )
 
     #plt.legend( plottables, ["Spectral", "Spectral + EM", "EM"] )
-    plt.legend( plottables, ["Spectral", "Spectral + EM", "EM"] )
+    legend = plt.legend( plottables, ["Spectral", "Spectral + EM", "EM"] )
 
     #plt.savefig(outFile)
     plt.show()

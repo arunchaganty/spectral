@@ -24,7 +24,7 @@ public class MatlabProxy {
     BufferedWriter writer = new BufferedWriter( new FileWriter( path ) );
     for( int r = 0; r < X.numRows(); r++ ) {
       for( int c = 0; c < X.numCols(); c++ ) {
-        writer.write( String.format("%.9f  ", X.get(r,c) ) );
+        writer.write( String.format("%.16f  ", X.get(r,c) ) );
       }
       writer.newLine();
     }
@@ -37,7 +37,7 @@ public class MatlabProxy {
 
   public static void save( File path, double x ) throws IOException {
     BufferedWriter writer = new BufferedWriter( new FileWriter( path ) );
-    writer.write( String.format( "%.9f", x ) );
+    writer.write( String.format( "%.16f", x ) );
     writer.newLine();
     writer.close();
   }

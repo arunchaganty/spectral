@@ -68,7 +68,24 @@ public class MatrixOps {
       out += "{ ";
       for( int j = 0; j < X[i].length; j++ )
         out += String.valueOf(X[i][j]) + ", ";
-      out += "}\n";
+      out += "},\n";
+    }
+    out += "}";
+
+    return out;
+  }
+  public static String arrayToString( double[][][] X ) {
+    if( X == null ) return "null";
+    String out = "";
+    out += "{\n";
+    for( int i = 0; i < X.length; i++ ) {
+      out += "{ ";
+      for( int j = 0; j < X[i].length; j++ ) {
+        for( int k = 0; k < X[i][j].length; k++ ) 
+          out += String.valueOf(X[i][j][k]) + ", ";
+        out += "}, \n";
+      }
+      out += "},\n\n";
     }
     out += "}";
 
@@ -95,6 +112,10 @@ public class MatrixOps {
     System.out.println( arrayToString(X));
   }
 
+  public static void printArray( double[][][] X ) {
+    System.out.println( arrayToString(X));
+  }
+
   /**
    * Take the vector dot product of two vectors (as arrays)
    */
@@ -103,6 +124,13 @@ public class MatrixOps {
     double sum = 0.0;
     for( int i = 0; i < x.length; i++ )
       sum += x[i] * y[i];
+    return sum;
+  }
+  public static double dot( double[] x, double[] y, boolean[] select ) {
+    assert( x.length == y.length );
+    double sum = 0.0;
+    for( int i = 0; i < x.length; i++ )
+      sum += (select[i]) ? x[i] * y[i] : 0;
     return sum;
   }
   public static double dot( DenseMatrix64F x, DenseMatrix64F y ) {
@@ -121,6 +149,21 @@ public class MatrixOps {
     return true;
   }
   public static boolean allclose( double[] X1, double[] X2 ) {
+    return allclose( X1, X2, EPS_CLOSE );
+  }
+  public static boolean allclose( double[][] X1, double[][] X2, double eps ) {
+    assert( X1.length == X2.length );
+    assert( X1[0].length == X2[0].length );
+
+    for( int i = 0; i < X1.length; i++ ) {
+      for( int j = 0; j < X1[0].length; j++ ) {
+        if( !equal( X1[i][j], X2[i][j], eps ) ) return false;
+      }
+    }
+
+    return true;
+  }
+  public static boolean allclose( double[][] X1, double[][] X2 ) {
     return allclose( X1, X2, EPS_CLOSE );
   }
   public static boolean allclose( double[][][] X1, double[][][] X2, double eps ) {
@@ -259,6 +302,13 @@ public class MatrixOps {
   public static double min( SimpleMatrix X ) {
     return min( X.getMatrix() );
   }
+  public static double min( double x, double y ) {
+    return ( x < y ) ? x : y;
+  }
+  public static int min( int x, int y ) {
+    return ( x < y ) ? x : y;
+  }
+
   /**
    * Find the maximum value of the matrix X
    */
@@ -274,6 +324,12 @@ public class MatrixOps {
   }
   public static double max( SimpleMatrix X ) {
     return max( X.getMatrix() );
+  }
+  public static double max( double x, double y ) {
+    return ( x > y ) ? x : y;
+  }
+  public static int max( int x, int y ) {
+    return ( x > y ) ? x : y;
   }
 
   public static double maxAbs( double[] x ) {
@@ -474,11 +530,67 @@ public class MatrixOps {
       sum += x[i];
     return sum;
   }
+  public static double sum(boolean[] x ) {
+    double sum = 0.0;
+    for( int i = 0; i < x.length; i++ )
+      sum += x[i] ? 1 : 0;
+    return sum;
+  }
   public static double sum(double[][] x ) {
     double sum = 0.0;
     for( int i = 0; i < x.length; i++ )
       for( int j = 0; j < x[i].length; j++ )
         sum += x[i][j];
+    return sum;
+  }
+  // 0 for rows, 1 for columns
+  public static double sum(double[][] x, int axis, int index ) {
+    // Assume symmetric.
+    double sum = 0.0;
+    if( axis == 0 ) {
+      for( int j = 0; j < x[index].length; j++ )
+        sum += x[index][j];
+    } else {
+      for( int i = 0; i < x.length; i++ )
+          sum += x[i][index];
+    }
+    return sum;
+  }
+  public static double sum(double[][][] x, int axis, int index ) {
+    // Assume symmetric.
+    double sum = 0.0;
+    if( axis == 0 ) {
+      for( int i = 0; i < x[index].length; i++ )
+        for( int j = 0; j < x[index][i].length; j++ )
+          sum += x[index][i][j];
+    } else if( axis == 1) {
+      for( int i = 0; i < x.length; i++ )
+        for( int j = 0; j < x[i][index].length; j++ )
+          sum += x[i][index][j];
+    } else {
+      for( int i = 0; i < x.length; i++ )
+        for( int j = 0; j < x[i].length; j++ )
+          sum += x[i][j][index];
+    }
+    return sum;
+  }
+  public static double sum(double[][][] x, int axis1, int index1, int axis2, int index2  ) {
+    // Assume symmetric.
+    assert( axis1 < axis2 );
+    double sum = 0.0;
+    if( axis1 == 0 ) {
+      if( axis2 == 1 )  {
+        for( int i = 0; i < x[index1][index2].length; i++ )
+          sum += x[index1][index2][i];
+      } else {
+        for( int i = 0; i < x[index1].length; i++ )
+          sum += x[index1][i][index2];
+      }
+    } else if( axis1 == 1) {
+      assert(axis2 == 2);
+      for( int i = 0; i < x.length; i++ )
+          sum += x[i][index1][index2];
+    }
     return sum;
   }
   /**
@@ -575,6 +687,14 @@ public class MatrixOps {
     double sum = norm( x );
     for( int i = 0; i < x.length; i++ )
       x[i] /= sum;
+  }
+  public static void makeUnitVector(DenseMatrix64F X) {
+    makeUnitVector(X.data);
+  }
+  public static SimpleMatrix makeUnitVector(SimpleMatrix X) {
+    DenseMatrix64F Y = X.getMatrix().copy();
+    makeUnitVector(Y);
+    return SimpleMatrix.wrap(Y);
   }
 
   /**
@@ -674,15 +794,20 @@ public class MatrixOps {
    * @param x
    * @return
    */
-  public static void projectOntoSimplex( double[] x ) {
+  public static void projectOntoSimplex( double[] x, double smooth ) {
     // Normalize and shrink to 0
     normalize(x);
-    for(int i = 0; i < x.length; i++ )
+    for(int i = 0; i < x.length; i++ ) {
       if( x[i] < 0 ) x[i] = 0;
+      x[i] += smooth;
+    }
     normalize(x);
   }
+  public static void projectOntoSimplex( double[] x ) {
+    projectOntoSimplex( x, 0.0 );
+  }
 
-  public static void projectOntoSimplex( DenseMatrix64F X ) {
+  public static void projectOntoSimplex( DenseMatrix64F X, double smooth ) {
     int nRows = X.numRows;
     int nCols = X.numCols;
 
@@ -695,10 +820,14 @@ public class MatrixOps {
       for( int row = 0; row < nRows; row++ ) {
         double x  = X_[ X.getIndex(row, col) ];
         if( x < 0 ) X_[ X.getIndex(row, col) ] = 0;
+        X_[ X.getIndex(row, col) ] += smooth;
       }
 
       columnNormalize( X, col );
     }
+  }
+  public static void projectOntoSimplex( DenseMatrix64F X ) {
+    projectOntoSimplex( X, 0.0 );
   }
 
   /**
@@ -706,10 +835,13 @@ public class MatrixOps {
    * @param X
    * @return
    */
-  public static SimpleMatrix projectOntoSimplex( SimpleMatrix X ) {
+  public static SimpleMatrix projectOntoSimplex( SimpleMatrix X, double smooth ) {
     DenseMatrix64F Y = X.getMatrix().copy();
-    projectOntoSimplex(Y);
+    projectOntoSimplex(Y, smooth);
     return SimpleMatrix.wrap( Y );
+  }	
+  public static SimpleMatrix projectOntoSimplex( SimpleMatrix X ) {
+    return projectOntoSimplex( X, 0.0 );
   }	
 
   /**
@@ -847,7 +979,6 @@ public class MatrixOps {
     }
     return MatrixFactory.diag(MatrixFactory.fromVector(diagonal));
   }
-
 
   public static SimpleMatrix whitener( SimpleMatrix X, int K ) {
     Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> UDV = svdk(X, K);
@@ -1049,6 +1180,52 @@ public class MatrixOps {
     return true;
   }
 
-}
+  /**
+   * Computes the reciprocal of a vector;
+   * w_{ii} <- 1/w_{ii}
+   */
+  public static void reciprocal( DenseMatrix64F X ) {
+    assert( isVector(X) );
+    int D = (X.numRows == 1) ? X.numCols : X.numRows;
+    for( int d = 0; d < D; d++ )
+      X.set( d, 1/X.get(d) );
+  }
+  public static SimpleMatrix reciprocal( SimpleMatrix X ) {
+    DenseMatrix64F Y = X.getMatrix().copy();
+    reciprocal(Y);
+    return SimpleMatrix.wrap( Y ) ;
+  }
 
+  /**
+   * x[i] <- x[i] + y[i].
+   */
+  public static void add(double[] x, double[] y) {
+    assert( x.length == y.length );
+
+    for( int i = 0; i < x.length; i++ )
+      x[i] += y[i];
+  }
+
+  /**
+   * Report hamming loss between labels x, y
+   */
+  public static int hamming(int[] x, int[] y) {
+    assert( x.length == y.length );
+    int err = 0;
+    for( int i = 0; i < x.length; i++ )
+      err += (x[i] != y[i]) ? 1 : 0;
+    return err / x.length;
+  }
+
+  public static void scale( double[][] x, double factor ) {
+    for( int i = 0; i < x.length; i++ )
+      for( int j = 0; j < x[i].length; j++ )
+        x[i][j] *= factor;
+  }
+  public static void scale( double[] x, double factor ) {
+    for( int i = 0; i < x.length; i++ )
+        x[i] *= factor;
+  }
+
+}
 

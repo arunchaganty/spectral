@@ -5,10 +5,12 @@ import org.ejml.simple.SimpleMatrix;
 import org.ejml.data.DenseMatrix64F;
 import org.javatuples.Triplet;
 
+import java.io.Serializable;
+
 /**
   A Tensor constructed with a full DxDxD matrix
  */
-public class FullTensor implements Tensor {
+public class FullTensor implements Tensor, Serializable {
   public double[][][] X;
   public int D1, D2, D3;
 
@@ -42,10 +44,11 @@ public class FullTensor implements Tensor {
 
     double[][][] X = new double[D1][D2][D3];
 
+    int idx = 0;
     for(int d1 = 0; d1 < D1; d1++) {
       for(int d2 = 0; d2 < D2; d2++) {
         for(int d3 = 0; d3 < D3; d3++) {
-          X[d1][d2][d3] = V.get( d1*(D2 + D3) + d2*(D3) + d3 );
+          X[d1][d2][d3] = V.get( idx++ );
         }
       }
     }
@@ -62,7 +65,7 @@ public class FullTensor implements Tensor {
       for(int d2 = 0; d2 < D2; d2++) {
         builder.append( "  { " );
         for(int d3 = 0; d3 < D3; d3++) {
-          builder.append( X[d1][d2][d3] + ", " );
+          builder.append( String.format( "%.4f", X[d1][d2][d3]) + ", " );
         }
         builder.append( " }\n" );
       }

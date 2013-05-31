@@ -63,7 +63,7 @@ public class SpectralExperts implements Runnable {
   @Option(gloss = "Trace Norm Regularization (Pairs)")
   public double traceReg2 = 1e-4;
   @Option(gloss = "Trace Norm Regularization (Triples)")
-  public double traceReg3 = -1;
+  public double traceReg3 = 0;
   @Option(gloss = "Scale Data?")
   public boolean scaleData = false;
   @Option(gloss = "Run spectral? (if false, just compute the moments)")
@@ -105,6 +105,8 @@ public class SpectralExperts implements Runnable {
 	public int nThreads = 1;
 	@Option(gloss = "Random seed")
 	public int seed = (int)(new Date()).getTime();
+	@Option(gloss = "Random seed")
+	public int dataSeed = (int)(new Date()).getTime();
 
   public static class SpectralExpertsAnalysis {
     public boolean saveToExecution = false;
@@ -369,12 +371,12 @@ public class SpectralExperts implements Runnable {
     // Normalize the data
     SimpleMatrix xScaling = MatrixFactory.ones(D);
     double yScaling = 1.0;
-    if(scaleData) {
-      Pair<SimpleMatrix, SimpleMatrix> scaleInfo = MatrixOps.columnScale(X);
-      X = scaleInfo.getValue0(); xScaling = scaleInfo.getValue1();
-      scaleInfo = MatrixOps.rowScale(y);
-      y = scaleInfo.getValue0(); yScaling = scaleInfo.getValue1().get(0);
-    }
+    //if(scaleData) {
+    //  Pair<SimpleMatrix, SimpleMatrix> scaleInfo = MatrixOps.columnScale(X);
+    //  X = scaleInfo.getValue0(); xScaling = scaleInfo.getValue1();
+    //  scaleInfo = MatrixOps.rowScale(y);
+    //  y = scaleInfo.getValue0(); yScaling = scaleInfo.getValue1().get(0);
+    //}
 
     // Consider only the upper triangular half of x x' (because it is symmetric) and construct a vector.
     double[][] A_ = new double[N][D_];
@@ -415,14 +417,14 @@ public class SpectralExperts implements Runnable {
       }
     }
     // Rescale
-    if(scaleData) { // Unscale B
-      for( int d = 0; d < D; d++ ) {
-        for( int d_ = 0; d_ < D; d_++ ) {
-          double scaling = (yScaling * yScaling) / (xScaling.get(d) * xScaling.get(d_));
-          B.set( d, d_, B.get(d, d_) * scaling);
-        }
-      }
-    }
+    //if(scaleData) { // Unscale B
+    //  for( int d = 0; d < D; d++ ) {
+    //    for( int d_ = 0; d_ < D; d_++ ) {
+    //      double scaling = (yScaling * yScaling) / (xScaling.get(d) * xScaling.get(d_));
+    //      B.set( d, d_, B.get(d, d_) * scaling);
+    //    }
+    //  }
+    // }
     LogInfo.end_track("ridge-regression-pairs");
 
     return B;
@@ -473,7 +475,7 @@ public class SpectralExperts implements Runnable {
 
       LogInfo.end_track("low-rank-pairs");
     }
-    Pairs = MatrixOps.approxk(Pairs, K );
+    //Pairs = MatrixOps.approxk(Pairs, K );
 
     return Pairs;
   }
@@ -499,12 +501,12 @@ public class SpectralExperts implements Runnable {
 
     SimpleMatrix xScaling = MatrixFactory.ones(D);
     double yScaling = 1.0;
-    if(scaleData) {
-      Pair<SimpleMatrix, SimpleMatrix> scaleInfo = MatrixOps.columnScale(X);
-      X = scaleInfo.getValue0(); xScaling = scaleInfo.getValue1();
-      scaleInfo = MatrixOps.rowScale(y);
-      y = scaleInfo.getValue0(); yScaling = scaleInfo.getValue1().get(0);
-    }
+    //if(scaleData) {
+    //  Pair<SimpleMatrix, SimpleMatrix> scaleInfo = MatrixOps.columnScale(X);
+    //  X = scaleInfo.getValue0(); xScaling = scaleInfo.getValue1();
+    //  scaleInfo = MatrixOps.rowScale(y);
+    //  y = scaleInfo.getValue0(); yScaling = scaleInfo.getValue1().get(0);
+    //}
 
     // Consider only the upper triangular half of x x' (because it is symmetric) and construct a vector.
     double[][] A_ = new double[N][D_];
@@ -544,18 +546,22 @@ public class SpectralExperts implements Runnable {
       for( int d2 = 0; d2 <= d1; d2++ ) {
         for( int d3 = 0; d3 <= d2; d3++ ) {
           double value = bEntries.get(idx++);
-          if(scaleData)
-            value = value * (yScaling * yScaling * yScaling) /
-                    (xScaling.get(d1) * xScaling.get(d2) * xScaling.get(d2));
-          B[d1][d2][d3] = B[d1][d3][d2] =
-             B[d2][d1][d3] = B[d2][d3][d1] =
-             B[d3][d1][d2] = B[d3][d2][d1] = value;
+          //if(scaleData)
+          //  value = value * (yScaling * yScaling * yScaling) /
+          //          (xScaling.get(d1) * xScaling.get(d2) * xScaling.get(d2));
+          B[d1][d2][d3] = value;
+          B[d1][d3][d2] = value;
+          B[d2][d1][d3] = value;
+          B[d2][d3][d1] = value;
+          B[d3][d1][d2] = value;
+          B[d3][d2][d1] = value;
         }
       }
     }
+    FullTensor B_ = new FullTensor(B);
     LogInfo.end_track("ridge-regression-triples");
 
-    return new FullTensor(B);
+    return B_;
   }
 
   FullTensor recoverTriples(SimpleMatrix y, SimpleMatrix X, SimpleMatrix avgBetas) {
@@ -593,8 +599,7 @@ public class SpectralExperts implements Runnable {
       FullTensor.fold(0, Triples_, Triples);
       LogInfo.end_track("low-rank-triples");
     }
-    MatrixOps.approxk(Triples,K);
-
+    //MatrixOps.approxk(Triples,K);
 
     return Triples;
   }
@@ -625,6 +630,44 @@ public class SpectralExperts implements Runnable {
     // Get output
     SimpleMatrix B2 = MatlabProxy.load( new File( dir, "B2.txt" ) );
     SimpleMatrix B3_ = MatlabProxy.load( new File( dir, "B3.txt" ) );
+    FullTensor B3 = FullTensor.reshape( B3_, new int[]{ D, D, D } );
+
+    dir.delete();
+   
+    return new Pair<>(B2, B3); 
+    } catch( IOException e ) {
+      throw new RuntimeException();
+    } catch( InterruptedException e ) {
+      throw new RuntimeException();
+    }
+  }
+
+  public Pair<SimpleMatrix, FullTensor> recoverMomentsByMatlabSpecial( SimpleMatrix y2, SimpleMatrix y3, SimpleMatrix X ) {
+    int N = X.numRows();
+    int D = X.numCols();
+    double sigma2 = (analysis != null) ? analysis.model.getSigma2() : 0.0;
+
+    try {
+    // Create a temporary directory for all this stuff
+    File dir = Misc.createTemporaryDirectory( "spectral-experts" );
+
+    // Save matrices
+    MatlabProxy.save( new File( dir, "X.txt" ), X );
+    MatlabProxy.save( new File( dir, "lambda2.txt" ), traceReg2 );
+    MatlabProxy.save( new File( dir, "lambda3.txt" ), traceReg3 );
+    MatlabProxy.save( new File( dir, "sigma2.txt" ), 0 ); //sigma2 );
+
+    MatlabProxy.save( new File( dir, "y.txt" ), y2.transpose() );
+    MatlabProxy.run( matlabPath, String.format("sdpB2('%s')", dir) );
+
+    // Run matlab
+    MatlabProxy.save( new File( dir, "y.txt" ), y3.transpose() );
+    MatlabProxy.run( matlabPath, String.format("sdpB3('%s')", dir) );
+
+    // Get output
+    SimpleMatrix B2 = MatlabProxy.load( new File( dir, "B2.txt" ) );
+    SimpleMatrix B3_ = MatlabProxy.load( new File( dir, "B3.txt" ) );
+    System.out.println(B3_);
     FullTensor B3 = FullTensor.reshape( B3_, new int[]{ D, D, D } );
 
     dir.delete();
@@ -746,9 +789,12 @@ public class SpectralExperts implements Runnable {
       // Choose a subset of the data
       int N = X.numRows();
       if( removeThirds || adjustNoise > 0 || forceResample || subsampleN > N ) {
+        // Set the seed
+        RandomFactory.setSeed( dataSeed );
+        LogInfo.logsForce("Resampling data");
         // Possibly sample data with thirds removed
         model.removeThirds = removeThirds;
-        model.sigma2 = adjustNoise;
+        model.sigma2 = ( adjustNoise > 0 ) ?  adjustNoise : (model.getSigma2());
         y = null; X = null; data = null;
         Pair<SimpleMatrix, SimpleMatrix> yX = model.sample( (int) subsampleN );
         y = yX.getValue0();

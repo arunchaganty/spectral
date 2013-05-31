@@ -5,7 +5,7 @@
  */
 package learning.data;
 
-import learning.data.ProjectedCorpus;
+import learning.data.LazyProjectedCorpus;
 
 import org.ejml.simple.SimpleMatrix;
 
@@ -15,12 +15,15 @@ import com.spaceprogram.kittycache.KittyCache;
  * Caches the features from a projected corpus. Each thread should have
  * it's own.
  */
-public class CachedProjectedCorpus extends ProjectedCorpus {
+public class CachedProjectedCorpus extends LazyProjectedCorpus {
   protected ProjectedCorpus PC;
   protected KittyCache<Integer,double[]> featureCache;
-  public CachedProjectedCorpus( ProjectedCorpus PC ) {
-    this.PC = PC;
-    this.featureCache = new KittyCache<>( 1000 );
+  public CachedProjectedCorpus( LazyProjectedCorpus PC, int cacheSize ) {
+    super( PC );
+    this.featureCache = new KittyCache<>( cacheSize );
+  }
+  public CachedProjectedCorpus( LazyProjectedCorpus PC ) {
+    this( PC, 1000 );
   }
 
   /**
@@ -31,7 +34,7 @@ public class CachedProjectedCorpus extends ProjectedCorpus {
     double[] x = featureCache.get(i);
     // Otherwise call PC to get it
     if( x == null ) {
-      x = PC.featurize( i );
+      x = super.featurize( i );
       featureCache.put(i, x, -1);
     }
 

@@ -380,16 +380,19 @@ public class MixtureOfExperts implements Serializable {
   }
 
   public static void printData( SimpleMatrix y, SimpleMatrix X, MixtureOfExperts model ) {
-    double[][] exponents = model.getNonLinearity().getExponents();
-
-    // Pretty print the exponents
-    System.out.printf( "# " );
-    for( double[] exp : exponents ) {
-      for( int d = 0; d < exp.length; d++ )
-        System.out.printf( "x_" + d + "^" + exp[d] );
-      System.out.printf( " " );
+    double[][] exponents = 
+      ( model != null ) ? model.getNonLinearity().getExponents()
+        : null;
+    if( exponents != null ) {
+      // Pretty print the exponents
+      System.out.printf( "# " );
+      for( double[] exp : exponents ) {
+        for( int d = 0; d < exp.length; d++ )
+          System.out.printf( "x_" + d + "^" + exp[d] );
+        System.out.printf( " " );
+      }
+      System.out.printf( "\n" );
     }
-    System.out.printf( "\n" );
 
     int N = X.numRows();
     for( int i = 0; i < N; i++ ) {
@@ -397,7 +400,6 @@ public class MixtureOfExperts implements Serializable {
         System.out.printf( "%f ", X.get(i,d) );
       System.out.printf( "%f\n", y.get(i) );
     }
-
   }
 
   /**
@@ -444,7 +446,5 @@ public class MixtureOfExperts implements Serializable {
     }
 
   }
-
-
 }
 

@@ -54,17 +54,33 @@ public class SpectralExpertsTest {
       y3.set( n, Triples.project3( Xn, Xn, Xn ) );
     }
 
+    SimpleMatrix PairsR, PairsM;
+    FullTensor TriplesR, TriplesM;
     // Regress to get Pairs_ and Triples_
-    SimpleMatrix Pairs_ = algo.recoverPairsByRidgeRegression( y2, X );
-    FullTensor Triples_ = algo.recoverTriplesByRegression( y3, X );
+    {
+      PairsR = algo.recoverPairsByRidgeRegression( y2, X );
+      TriplesR = algo.recoverTriplesByRegression( y3, X );
+    }
+
+    {
+      Pair<SimpleMatrix,FullTensor> momentsM = algo.recoverMomentsByMatlabSpecial( y2, y3, X );
+      PairsM = momentsM.getValue0();
+      TriplesM = momentsM.getValue1();
+    }
 
     System.out.println( algo.analysis.Pairs );
-    System.out.println( Pairs_ );
-    algo.analysis.reportPairs(Pairs_);
-    algo.analysis.reportTriples(Triples_);
+    System.out.println( PairsR );
+    System.out.println( PairsM );
+    System.out.println( algo.analysis.Triples );
+    System.out.println( TriplesR );
+    System.out.println( TriplesM );
 
-    Assert.assertTrue( algo.analysis.PairsErr < 1e-2 );
-    Assert.assertTrue( algo.analysis.TriplesErr < 1e-1 );
+    System.out.printf( "%.4f %.4f %.4f %.4f %.4f %.4f\n", 
+      MatrixOps.diff(PairsR, PairsM ), MatrixOps.diff(TriplesR, TriplesM ),
+      MatrixOps.diff(PairsR, Pairs ), MatrixOps.diff(TriplesR, Triples ),
+      MatrixOps.diff(Pairs, PairsM ), MatrixOps.diff(Triples, TriplesM )
+    );
+
   }
 
   public void arbitraryRegressionTest(SpectralExperts algo, MixtureOfExperts.GenerationOptions options) throws NumericalException {
@@ -75,6 +91,7 @@ public class SpectralExpertsTest {
     int K = model.getK(); int D = model.getD();
     algo.K = K;
     algo.enableAnalysis(model);
+    if( algo.traceReg3 < 0 ) algo.traceReg3 = algo.traceReg2 * 10;
     if (algo.adjustReg) {
       algo.traceReg2 /= Math.sqrt(N); //N; //Math.pow(N, 1.0/3);
       algo.traceReg3 /= Math.sqrt(N); //N; //Math.pow(N, 1.0/3);
@@ -98,22 +115,37 @@ public class SpectralExpertsTest {
       y2.set( n, MatrixOps.xMy( Xn, Pairs.getMatrix(), Xn ) );
       y3.set( n, Triples.project3( Xn, Xn, Xn ) );
     }
-    y2 = y2.transpose().plus( RandomFactory.randn(1, (int)N).scale(model.sigma2)) ;
-    y3 = y3.transpose().plus( RandomFactory.randn(1, (int)N).scale(model.sigma2)) ;
+    y2 = y2.transpose(); //.plus( RandomFactory.randn(1, (int)N).scale(model.sigma2)) ;
+    y3 = y3.transpose(); //.plus( RandomFactory.randn(1, (int)N).scale(model.sigma2)) ;
 
+    SimpleMatrix PairsR, PairsM;
+    FullTensor TriplesR, TriplesM;
     // Regress to get Pairs_ and Triples_
-    MatrixOps.printSize(y2);
-    MatrixOps.printSize(y3);
-    MatrixOps.printSize(X);
-    SimpleMatrix Pairs_ = algo.recoverPairsByRidgeRegression( y2, X );
-    FullTensor Triples_ = algo.recoverTriplesByRegression( y3, X );
+    {
+      PairsR = algo.recoverPairsByRidgeRegression( y2, X );
+      TriplesR = algo.recoverTriplesByRegression( y3, X );
+    }
+    {
+      Pair<SimpleMatrix,FullTensor> momentsM = algo.recoverMomentsByMatlabSpecial( y2, y3, X );
+      PairsM = momentsM.getValue0();
+      TriplesM = momentsM.getValue1();
+    }
 
-    System.out.println( algo.analysis.Pairs );
-    System.out.println( Pairs_ );
-    algo.analysis.reportPairs(Pairs_);
-    algo.analysis.reportTriples(Triples_);
+    //System.out.println( algo.analysis.Pairs );
+    //System.out.println( PairsM );
+    //System.out.println( PairsR );
+    System.out.println( algo.analysis.Triples );
+    System.out.println( TriplesM );
+    System.out.println( TriplesR );
 
-    System.out.printf( "%.4f %.4f\n", algo.analysis.PairsErr, algo.analysis.TriplesErr );
+    System.out.println( TriplesM.minus( TriplesR ) );
+    System.out.println( MatrixOps.diff(TriplesM, TriplesR ) );
+
+    System.out.printf( "%.4f %.4f %.4f\n", 
+      MatrixOps.diff(TriplesR, TriplesM ),
+      MatrixOps.diff(TriplesR, algo.analysis.Triples ),
+      MatrixOps.diff(algo.analysis.Triples, TriplesM )
+    );
   }
 
   public void testMomentRunner(MixtureOfExperts model, int N, double reg) {
@@ -221,6 +253,8 @@ public class SpectralExpertsTest {
 
       Triples = algo.recoverTriples(y, X, avgBetas);
       if( algo.analysis != null ) algo.analysis.reportTriples(Triples);
+      System.out.println (Triples);
+      System.out.println (algo.analysis.Triples);
     }
 
     System.out.printf( "%.4f %.4f\n", algo.analysis.PairsErr, algo.analysis.TriplesErr );
@@ -311,6 +345,8 @@ public class SpectralExpertsTest {
   public boolean testRegression = false;
   @Option( gloss = "Test the moments?" )
   public boolean testMoments = false;
+	@Option(gloss = "Random seed")
+	public int testSeed = 0;
 
   public static void main( String[] args ) throws RecoveryFailure, NumericalException {
     SpectralExpertsTest test = new SpectralExpertsTest();
@@ -320,6 +356,8 @@ public class SpectralExpertsTest {
     OptionsParser parser = new OptionsParser( test, algo, options );
 
     if( parser.parse( args ) ) {
+      LogInfo.logs(test.testSeed);
+      RandomFactory.setSeed( test.testSeed );
       if( test.testRegression )
         test.arbitraryRegressionTest(algo, options);
       else if( test.testMoments )
