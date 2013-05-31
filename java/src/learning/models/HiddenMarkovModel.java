@@ -368,14 +368,17 @@ public class HiddenMarkovModel implements EMOptimizable {
 	 * @param o
 	 * @return
 	 */
-	public double[][] forward( final int[] o ) {
+	public Pair<double[][],Double> forward( final int[] o ) {
 		// Store the forward probabilities
 		double [][] f = new double[o.length][params.stateCount];
 		
+    double c = 0;
 		// Initialise with the initial probabilty
 		for( int s = 0; s < params.stateCount; s++ ) {
 			f[0][s] = params.pi[s] * params.O[s][o[0]];
 		}
+    c += Math.log( MatrixOps.sum( f[0] ) );
+    MatrixOps.scale( f[0], 1/MatrixOps.sum(f[0]) );
 		
 		// Compute the forward values as f_t(s) = sum_{s_} f_{t-1}(s_) * T( s_ | s ) * O( y | s )
 		for( int i = 1; i < o.length; i++ ) {
@@ -386,9 +389,11 @@ public class HiddenMarkovModel implements EMOptimizable {
 				}
 				f[i][s] *= params.O[s][o[i]];
 			}
+      c += Math.log( MatrixOps.sum( f[i] ) );
+      MatrixOps.scale( f[i], 1/MatrixOps.sum(f[i]) );
     }
 
-    return f;
+    return new Pair<>(f,c);
 	}
 	public double[][] backward( final int[] o ) {
     // Backward probabilities
@@ -396,12 +401,14 @@ public class HiddenMarkovModel implements EMOptimizable {
 		for( int s = 0; s < params.stateCount; s++ ) {
 			b[o.length-1][s] = 1.0;
 		}
+    MatrixOps.scale( b[o.length-1], 1/MatrixOps.sum(b[o.length-1]) );
 		for( int i = o.length-2; i >= 0; i-- ) {
 			for( int s = 0; s < params.stateCount; s++ ) {
 				for( int s_ = 0; s_ < params.stateCount; s_++ ) {
 					b[i][s] += b[i+1][s_] * params.T[s][s_] * params.O[s_][o[i+1]];
 				}
 			}
+      MatrixOps.scale( b[i], 1/MatrixOps.sum(b[i]) );
 		}
 
     return b;
@@ -477,10 +484,12 @@ public class HiddenMarkovModel implements EMOptimizable {
     for( int n = 0; n < X.length; n++ ) {
       int[] o = X[n];
 
-      double f[][] = forward( o );
+      Pair<double [][],Double> fc = forward( o );
+      double f[][] = fc.getValue0();
+      double c = fc.getValue1();
       double b[][] = backward( o );
       
-      value += (Math.log(MatrixOps.sum(f[o.length-1])) - value)/(n+1);
+      value += (Math.log(MatrixOps.sum(f[o.length-1])) + c - value)/(n+1);
 
       if( gradient != null ) {
         // Construct the transition probability

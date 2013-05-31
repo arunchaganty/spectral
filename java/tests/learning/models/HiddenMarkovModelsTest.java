@@ -127,30 +127,6 @@ public class HiddenMarkovModelsTest {
     }
   }
 
-
-  public void testForwardBackward(HiddenMarkovModel model, int N) {
-    Pair<int[], int[]> data = model.sampleWithHiddenVariables( N );
-    int[] observed = data.getValue0(); int[] hidden = data.getValue1();
-
-    double[][] posterior = model.forwardBackward( observed );
-    // TODO: Test the posteriori for some property.
-  }
-
-  //@Test
-  public void testForwardBackward() {
-    int K = 3;
-    int D = 5;
-    int N = 10;
-    int M = 20;
-
-    GenerationOptions options = new GenerationOptions(K, D);
-    HiddenMarkovModel model = HiddenMarkovModel.generate( options );
-
-    for( int n = 0; n < N; n++ ) {
-      testForwardBackward( model, M );
-    }
-  }
-
   @Test
   public void testForward() {
     HiddenMarkovModel model = new HiddenMarkovModel(hmm1);
@@ -158,23 +134,24 @@ public class HiddenMarkovModelsTest {
     // alpha
     int[] o1 = {0,1,1,0};
     double[][] f1 = {
-          { 0.34, 0.075, },
-          { 0.0657, 0.15275, },
-          { 0.020991, 0.0917325, },
-          { 0.00618822, 0.048626475 }
-        };
-    double[][] f1_ = model.forward(o1);
+      { 0.81928, 0.18072 },
+      { 0.30076, 0.69924 },
+      { 0.18622, 0.81378 },
+      { 0.11289, 0.88711 }, };
+    Pair<double[][],Double> f1c_ = model.forward(o1);
+    double[][] f1_ = f1c_.getValue0();
 
     Assert.assertTrue( MatrixOps.allclose( f1_, f1 ) );
     
     int[] o2 = {1,0,1};
     double[][] f2 = {
-      { 0.51, 0.075, },
-      { 0.0642, 0.21225, },
-      { 0.024291, 0.1179825, }
+      { 0.87179, 0.12821 },
+      { 0.23223, 0.76777 },
+      { 0.17073, 0.82927 },
     };
 
-    double[][] f2_ = model.forward(o2);
+    Pair<double[][],Double> f2c_ = model.forward(o2);
+    double[][] f2_ = f2c_.getValue0();
     Assert.assertTrue( MatrixOps.allclose( f2_, f2 ) );
   }
   
@@ -184,18 +161,21 @@ public class HiddenMarkovModelsTest {
       // alpha
     int[] o1 = {0,1,1,0};
     double[][] b1 = {
-      {0.133143, 0.127281},
-      {0.2561, 0.2487},
-      {0.4700, 0.4900},
-      {1.0, 1.0}};
+      { 0.51125, 0.48875 },
+      { 0.50733, 0.49267 },
+      { 0.48958, 0.51042 },
+      { 0.50000, 0.50000 },
+    };
+
     double[][] b1_ = model.backward(o1);
     Assert.assertTrue( MatrixOps.allclose( b1_, b1 ) );
     
     int[] o2 = {1,0,1};
     double[][] b2 = {
-      {0.24210, 0.25070},
-      {0.53, 0.51},
-      {1, 1}};
+      { 0.49127, 0.50873 },
+      { 0.50962, 0.49038 },
+      { 0.50000, 0.50000 },
+    };
 
     double[][] b2_ = model.backward(o2);
     Assert.assertTrue( MatrixOps.allclose( b2_, b2 ) );
