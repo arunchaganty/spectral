@@ -10,20 +10,18 @@ seek to answer two questions empirically:
 (i) how much do the measurements aid estimation, and
 (ii) how effectively are the measurements estimated using the
 method of moments.
-
-In summary, we find that measurements can improve the fit of the
-parameters estimated considerably.
-While empirical measurements estimated using the
-method of moments are less accurate, we still find that they improve
-parameter estimates in general.
+%We found that measurements can improve the fit of the
+%parameters estimated considerably.
+%While empirical measurements estimated using the
+%method of moments are less accurate, we still find that they improve
+%parameter estimates in general.
 
 % Do measurements help in parameter estimation?
-\subsection{Measurements for parameter estimation}
+\paragraph{Measurements}
 
-Our generative process for the data is as follows.
 We generated 10 random hidden Markov models,
 each with $k=3$ hidden states and $\ell=5$ possible observed values. 
-For each model, we generated 10 sets of 10,000 sequences of length $L=3$.
+For each model, we generated 10 sets of $n=10,000$ sequences of length $L=3$.
 We compared the prediction accuracy of parameters estimated using EM
 initialized using \refeqn{minKL} when different percentages of the expected
 latent measurements, $\E[\phi(x,h)]$, were observed.
@@ -33,13 +31,21 @@ latent measurements, $\E[\phi(x,h)]$, were observed.
 
 \Fig{figures/measurements}{0.3}{measurements}{a}
 
-\reffig{measurements} plots the training set accuracy of the parameters
-micro-averaged over the different data and models.  For comparison, we have
-included the accuracy achieved using the method of moments estimation procedure
-described in \refsec{factorization} with empirical moment estimates.  We see
-that using measurements for even a small percentage of features can improve
-prediction accuracy by \todo{x\%}. Spectral estimates too improve accuracy,
-though not as markedly; we observed a \todo{x\%} improvement.
+\reffig{measurements} shows the prediction error of the parameters
+micro-averaged over the different data and models.  First, as we get more
+measurements, prediction error decreases.  Second,
+learning from only the emissions moments works comparably
+to using emissions and transitions, verifying the fact that
+we can get leverage from partial information.\footnote{
+These numbers are high releative because they use empirical moments
+whereas the curve is based on expected moments.}
+
+%For comparison, we have
+%included the accuracy achieved using the method of moments estimation procedure
+%described in \refsec{factorization} with empirical moment estimates.  We see
+%that using measurements for even a small percentage of features can improve
+%prediction accuracy by \todo{x\%}. Spectral estimates too improve accuracy,
+%though not as markedly; we observed a \todo{x\%} improvement.
 
 % - we ran experiments with different proportions of the expected feature counts being observed and plot performance here. 
 % - while such information is not available in practice, we note that it provides a significant improvement over learning with just EM.
@@ -51,7 +57,7 @@ though not as markedly; we observed a \todo{x\%} improvement.
 % 10 different data samples and report the micro-averages.
 
 % Could it be effective in practice?
-\subsection{Method of moments for measurement estimation}
+\paragraph{General results}
 
 \begin{table}
     \label{tab:errors}
@@ -87,14 +93,18 @@ though not as markedly; we observed a \todo{x\%} improvement.
     \caption{Micro-averaged Errors.}
 \end{table}
 
-Having shown that measurements can help the task of parameter estimation, we
-now present results for variety of models, summarized in \reftab{errors}. 
-For each row, we report micro-averaged log-likelihoods and prediction accuracy
+%Having shown that measurements can help the task of parameter estimation, we
+\reftab{errors} shows results for the mixture model and HMM.
+For each row, we report prediction accuracy
 over 5 different models with the specified number of parameters and 5 random
 samples of $10,000$ instances from the model. 
-In the table, we compare randomly initialized EM with EM initialized using (a)
-empirical measurements estimated with the method of moments and (b) fully
-expected measurements.
+We see that using measurements recovered from spectral decomposition
+helps significantly over EM, sometimes matching
+using the true expected measurements.
+
+%In the table, we compare randomly initialized EM with EM initialized using (a)
+%empirical measurements estimated with the method of moments and (b) fully
+%expected measurements.
 
 First, we note that we found measurements to uniformly improve the prediction
 accuracy of EM. The picture for method of moments is similar, though there is
