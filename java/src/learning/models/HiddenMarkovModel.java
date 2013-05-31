@@ -333,6 +333,7 @@ public class HiddenMarkovModel implements EMOptimizable {
 			V[0][s] = params.O[s][o[0]] * params.pi[s];
 			Ptr[0][s] = -1; // Doesn't need to be defined.
 		}
+    MatrixOps.normalize( V[0] );
 		
 		// The dynamic program to find the optimal path
 		for( int i = 1; i < o.length; i++ ) {
@@ -342,8 +343,9 @@ public class HiddenMarkovModel implements EMOptimizable {
 				double T_max = 0.0;
 				int S_max = -1;
 				for( int s_ = 0; s_ < params.stateCount; s_++ ) {
-					if( params.T[s_][s] * V[i-1][s_] > T_max ) {
-						T_max = params.T[s_][s] * V[i-1][s_];
+          double t = params.T[s_][s] * V[i-1][s_];
+					if( t > T_max ) {
+						T_max = t;
 						S_max = s_;
 					}
 				}
@@ -352,13 +354,21 @@ public class HiddenMarkovModel implements EMOptimizable {
 				V[i][s] = params.O[s][o[i]] * T_max;
 				Ptr[i][s] = S_max; 
 			}
+      MatrixOps.normalize( V[i] );
 		}
 		
 		int[] z = new int[o.length];
 		// Choose the best last state and back track from there
 		z[o.length-1] = MatrixOps.argmax(V[o.length-1]);
-		for(int i = o.length-1; i >= 1; i-- ) 
+    if( z[o.length-1] == -1 ) {
+      LogInfo.logs( Fmt.D( V ) );
+      LogInfo.logs( Fmt.D( params.T ) );
+    }
+    assert( z[o.length-1] != -1 );
+		for(int i = o.length-1; i >= 1; i-- )  {
+      assert( z[i] != -1 );
 			z[i-1] = Ptr[i][z[i]];
+    }
 		
 		return z;
 	}
@@ -534,19 +544,21 @@ public class HiddenMarkovModel implements EMOptimizable {
         } 
         //LogInfo.logs( "pi " + Fmt.D(gradient) );
         // update counts for T
-        for( int h = 0; h < params.stateCount; h++ ) {
-          double denom = 0; // Number of times we're in state h.
-          for( int t = 0; t < o.length-1; t++ ) denom += z[t][h]; 
+        if( o.length > 1 ) {
+          for( int h = 0; h < params.stateCount; h++ ) {
+            double denom = 0; // Number of times we're in state h.
+            for( int t = 0; t < o.length-1; t++ ) denom += z[t][h]; 
 
-          for( int h_ = 0; h_ < params.stateCount; h_++ ) {
-            double num = 0;
-            for( int t = 0; t < o.length-1; t++ ) {
-              num += xi[t][h][h_];
+            for( int h_ = 0; h_ < params.stateCount; h_++ ) {
+              double num = 0;
+              for( int t = 0; t < o.length-1; t++ ) {
+                num += xi[t][h][h_];
+              }
+              gradient[params.index_T(h,h_)] += 1.0/N * 
+                num/denom;
             }
-            gradient[params.index_T(h,h_)] += 1.0/N * 
-              num/denom;
-          }
-        } 
+          } 
+        }
         //LogInfo.logs( "T " + Fmt.D(gradient) );
         // update counts for O
         for( int t = 0; t < o.length; t++ ) {
