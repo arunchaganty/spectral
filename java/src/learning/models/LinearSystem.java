@@ -16,6 +16,7 @@ Allows one to easily create a linear system (Ax = b) with named variables.
 public class LinearSystem {
   Indexer<String> varIndexer = new Indexer<String>();
   List<Constraint> constraints = new ArrayList<Constraint>();
+  int rank;
 
   public void add(Constraint constraint) {
     for (Term term : constraint.terms)
@@ -23,7 +24,7 @@ public class LinearSystem {
     constraints.add(constraint);
   }
 
-  public void solve() {
+  public void solve(boolean display) {
     // Ax = b
     int V = varIndexer.size();
     int C = constraints.size();
@@ -37,25 +38,28 @@ public class LinearSystem {
     }
 
     // Display the system
-    logs("%s", "name\ttarget\t" + StrUtils.join(varIndexer.getObjects(), "\t"));
-    for (int c = 0; c < C; c++) {
-      List<String> row = new ArrayList<String>();
-      row.add(constraints.get(c).name);
-      row.add(Fmt.D(b.get(c, 0)));
-      for (int v = 0; v < V; v++) {
-        row.add(Fmt.D(A.get(c, v)));
+    if (display) {
+      logs("%s", "name\ttarget\t" + StrUtils.join(varIndexer.getObjects(), "\t"));
+      for (int c = 0; c < C; c++) {
+        List<String> row = new ArrayList<String>();
+        row.add(constraints.get(c).name);
+        row.add(Fmt.D(b.get(c, 0)));
+        for (int v = 0; v < V; v++) {
+          row.add(Fmt.D(A.get(c, v)));
+        }
+        logs("%s", StrUtils.join(row, "\t"));
       }
-      logs("%s", StrUtils.join(row, "\t"));
     }
 
     Matrix At = A.transpose();
     Matrix S = At.times(A);
     //S = S.plus(Matrix.identity(V, V).times(0.01));  // Regularization
+    rank = S.rank();
     logs("S: %dx%d has rank %d", S.getRowDimension(), S.getColumnDimension(), S.rank());
-    Matrix x = S.inverse().times(At.times(b));
+    /*Matrix x = S.inverse().times(At.times(b));
     for (int v = 0; v < V; v++) {
       LogInfo.logs("%s: %s", varIndexer.getObject(v), x.get(v, 0));
-    }
+    }*/
     LogInfo.end_track();
   }
 }

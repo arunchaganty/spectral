@@ -158,3 +158,101 @@ G.factorialHMM = function() {
     new Overlay(edges),
   _);
 }
+
+G.unshuffle = function() {
+  var lhs = [];
+  var K = 3;
+  for (var i = 0; i < K; i++) {
+    for (var j = 0; j < K; j++) {
+      var s = text('$f_'+(i+1)+'+g_'+(j+1)+'-Z_{'+(i+1)+(j+1)+'}$');
+      lhs.push(s);
+    }
+  }
+
+  var rhs = [];
+  for (var i = 0; i < K*K; i++) {
+    rhs.push(text('$\\green{B_{'+(i+1)+'}}$'));
+  }
+
+  Math.seedrandom(2);
+  var N = K*K;
+  var perm = wholeNumbers(N);
+  for (var i = 0; i < N; i++) {
+    var j = Math.floor(Math.random()*(N-i+1));
+    var tmp = perm[i];
+    perm[i] = perm[j];
+    perm[j] = tmp;
+  }
+  var arrows = [];
+  for (var i = 0; i < N; i++) {
+    var s = lhs[i];
+    var t = rhs[perm[i]];
+    arrows.push(line([s.right(), s.ymiddle()], [t.left(), t.ymiddle()]).dashed());
+  }
+
+  var rows = [['unknown', 'known']];
+  for (var i = 0; i < N; i++)
+    rows.push([lhs[i], rhs[i]]);
+
+  inputOutput = overlay(
+    new Table(rows).xmargin(50).center(),
+    new Overlay(arrows),
+  _);
+
+  bin = function() { return frame(table.apply(null, arguments)).padding(5).bg.strokeWidth(1).dashed().end; }
+
+  group = function() {
+    var title = arguments[0];
+    var body = Array.prototype.slice.call(arguments, 1);
+    var f = frame(ytable.apply(null, body).ymargin(10)).padding(10);
+    f.bg.strokeWidth(1).round(15).strokeColor(title ? 'red' : 'gray').end;
+    if (title != null) f.title(opaquebg(title));
+    return f;
+  }
+
+  contents = ytable(
+    xtable(
+      group('Source 1',
+        bin(
+          ['$f_1 - f_2 - (Z_{11} - Z_{21})$'],
+          ['$f_1 - f_2 - (Z_{12} - Z_{22})$'],
+          ['$f_1 - f_2 - (Z_{13} - Z_{23})$'],
+        _),
+        bin(
+          ['$f_1 - f_3 - (Z_{11} - Z_{31})$'],
+          ['$f_1 - f_3 - (Z_{12} - Z_{32})$'],
+          ['$f_1 - f_3 - (Z_{13} - Z_{33})$'],
+        _),
+      _),
+      group('Source 2',
+        bin(
+          ['$g_1 - g_2 - (Z_{11} - Z_{12})$'],
+          ['$g_1 - g_2 - (Z_{21} - Z_{22})$'],
+          ['$g_1 - g_2 - (Z_{31} - Z_{32})$'],
+        _),
+        bin(
+          ['$g_1 - g_3 - (Z_{11} - Z_{13})$'],
+          ['$g_1 - g_3 - (Z_{21} - Z_{23})$'],
+          ['$g_1 - g_3 - (Z_{31} - Z_{33})$'],
+        _),
+      _),
+    _).margin(20),
+    group(null,
+      bin(
+        ['$f_1 + f_2 - g_1 - g_2 - (Z_{11} - Z_{22})$'],
+      _),
+    _),
+    group(null,
+      bin(
+        ['$f_1 + g_2 - f_2 - g_1 - (Z_{12} - Z_{21})$'],
+      _),
+    _),
+    '$\\cdots$',
+  _).ymargin(20).center();
+
+  return xtable(
+    inputOutput,
+    '$\\Rightarrow$',
+    contents.scale(0.8),
+  _).center().margin(30);
+}

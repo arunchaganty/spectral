@@ -386,5 +386,114 @@ public class Models {
     }
   }
 
-}
+  // 2 x width grid.  Each node has two observations, 
+  // 1     L
+  // o-o-o-o
+  // | | | |
+  // o-o-o-o
+  public static class GridModel extends Model {
+    final int height = 2;
+    int width;
+    int L, D; // L = number of grid cells, D = choices per X;
 
+    public GridModel(int L, int D) {
+      this.L = L;
+      this.D = D;
+      this.width = L / height;
+      assert L % height == 0 : L;
+    }
+
+    public Example newExample() {
+      Example ex = new Example();
+      ex.h = new int[L];
+      ex.x = new int[L * 2];
+      return ex;
+    }
+
+    // row r, column c, direction d (a or b) => index into x
+    int observedNodeIndex(int r, int c, int d) { return (r * width + c) * 2 + d; }
+
+    // row r, column c => index into h
+    int hiddenNodeIndex(int r, int c) { return r * width + c; }
+
+    // Used to set observed data
+    public Example newExample(int[] x) {
+      assert x.length == L;
+      Example ex = new Example();
+      ex.x = new int[L];
+      ListUtils.set(ex.x, x);
+      return ex;
+    }
+
+    private Object genNode(Hypergraph<Example> H, Example ex, double[] params, double[] counts, double increment, int c, int ha, int hb) {
+      String node = "G"+c+"="+ha+","+hb;
+      if (H.addProdNode(node)) {
+        // 4 emissions
+        H.addEdge(node, emitNode(H, ex, params, counts, increment, 0, c, 0, ha));  // Top row, left observation
+        H.addEdge(node, emitNode(H, ex, params, counts, increment, 0, c, 1, hb));  // Top row, right observation
+        H.addEdge(node, emitNode(H, ex, params, counts, increment, 1, c, 0, ha));  // Bottom row, left observation
+        H.addEdge(node, emitNode(H, ex, params, counts, increment, 1, c, 1, hb));  // Bottom row, right observation
+        // 1 transition
+        H.addEdge(node, transNode(H, ex, params, counts, increment, c+1, ha, hb));
+      }
+      return node;
+    }
+
+    // Generate the d-th observation at cell (r, c), given that the hidden node is h.
+    private Object emitNode(Hypergraph<Example> H, Example ex, double[] params, double[] counts, double increment, int r, int c, int d, int h) {
+      String node = "E("+r+","+c+","+d+")="+h;
+      if (H.addSumNode(node)) {
+        int j = observedNodeIndex(r, c, d);
+        if (ex != null) {  // Numerator: generate x[j]
+          int f = featureIndexer.getIndex(new UnaryFeature(h, "x="+ex.x[j]));
+          if (params != null)
+            H.addEdge(node, H.endNode, edgeInfo(params, counts, f, increment));
+        } else {  // Denominator: generate each possible assignment x[j] = a
+          for (int a = 0; a < D; a++) {
+            int f = featureIndexer.getIndex(new UnaryFeature(h, "x="+a));
+            if (params != null)
+              H.addEdge(node, H.endNode, edgeInfo(params, counts, f, increment, j, a));
+          }
+        }
+      }
+      return node;
+    }
+
+    // Generate the grid from column c on, given that hidden nodes at c-1 are (prev_ha, prev_hb).
+    // Transition into the nodes at column c.
+    private Object transNode(Hypergraph<Example> H, Example ex, double[] params, double[] counts, double increment, int c, int prev_ha, int prev_hb) {
+      if (c == width) return H.endNode;
+
+      String node = "T"+c+"="+prev_ha+","+prev_hb;
+      if (H.addSumNode(node)) {
+        // For each possible setting of hidden nodes at column c (ha, hb)...
+        for (int ha = 0; ha < K; ha++) {
+          for (int hb = 0; hb < K; hb++) {
+            if (c == 0) {
+              // No prev_ha, prev_hb...
+              H.addEdge(node, genNode(H, ex, params, counts, increment, c, ha, hb));
+            } else {
+              // Intermediate node, allows us to add two features.
+              String node2 = "T2"+c+"="+prev_ha+","+prev_hb;
+              H.addSumNode(node2);
+              int f1 = featureIndexer.getIndex(new BinaryFeature(prev_ha, ha));
+              if (params != null)
+                H.addEdge(node, node2, hiddenEdgeInfo(params, counts, f1, increment, hiddenNodeIndex(0, c), ha));
+              int f2 = featureIndexer.getIndex(new BinaryFeature(prev_hb, hb));
+              if (params != null)
+                H.addEdge(node2, genNode(H, ex, params, counts, increment, c, ha, hb), hiddenEdgeInfo(params, counts, f2, increment, hiddenNodeIndex(1, c), hb));
+            }
+          }
+        }
+      }
+      return node;
+    }
+
+    public Hypergraph<Example> createHypergraph(int L, Example ex, double[] params, double[] counts, double increment) {
+      Hypergraph<Example> H = new Hypergraph<Example>();
+      //H.debug = true;
+      H.addEdge(H.sumStartNode(), transNode(H, ex, params, counts, increment, 0, -1, -1));
+      return H;
+    }
+  }
+}

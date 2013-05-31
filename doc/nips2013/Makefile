@@ -2,14 +2,14 @@ default: main.pdf
 
 texfiles := $(wildcard *.tex) $(wildcard figures/*.tex)
 
-sfig:
-	git clone https://github.com/percyliang/sfig
+#sfig:
+#	git clone https://github.com/percyliang/sfig
+#
+#figures: sfig figures.js utils.js sfig/internal/sfig.js
+#	node figures.js
+#	touch figures
 
-figures: sfig figures.js utils.js
-	nodejs figures.js
-	touch figures
-
-main.pdf: $(texfiles) figures main.bbl
+main.pdf: $(texfiles) main.bbl #figures 
 	@pdflatex main < /dev/null > /dev/null || true
 	@grep -A 4 "Emergency stop" main.log || grep Warning main.log || true
 main.bbl: pliang.bib

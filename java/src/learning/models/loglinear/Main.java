@@ -302,11 +302,7 @@ public class Main implements Runnable {
         break;
       }
       case grid: {
-        Grid model = new Grid();
-        model.width = 2;
-        model.height = opts.L/2;
-        model.L = opts.L;
-        model.D = opts.D;
+        GridModel model = new GridModel(opts.L, opts.D);
         this.model = model;
         break;
       }
