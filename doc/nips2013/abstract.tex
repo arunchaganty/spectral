@@ -1,3 +1,20 @@
 \begin{abstract}
-Latent-variable models.
+Parameter estimation in log-linear latent-variable models is typically
+performed using local optimization, which is prone to local optima.
+In this paper,
+%we show how to leverage recent advances in the method of moments
+%to alleviate these problems.
+we leverage recent advances in the method of moments to estimate latent
+moments of the target distribution,
+which we incorporate as constraints on the original optimization
+problem.
+In favorable cases, these constraints provide full information and render the
+original optimization problem
+convex; in other cases, the constraints offer partial information,
+but still provide significant aid to the original optimization problem.
+Factorial models do require special attention,
+so we develop a new unshuffling factorization technique to induce
+constraints for these models.
+Empirically, we show that our methods provide substantial gains
+across several models.
 \end{abstract}

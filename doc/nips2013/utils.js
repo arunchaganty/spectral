@@ -38,7 +38,7 @@ G.schema = function() {
   style = function(x) { return x.strokeWidth(10).color('brown'); }
   return overlay(
     table(
-      [boxed('Data $x$'), nil(), boxed('Parameters $\\theta$')],
+      [boxed('Data $x^{(1)}, \\dots, x^{(n)}$'), nil(), boxed('Parameters $\\theta$')],
       [a1 = style(downArrow(s=70)), nil(), a3 = style(upArrow(s))],
       [boxed('Observed moments $\\E[\\phix(x)]$'), a2 = style(rightArrow(200)), boxed('Latent moments $\\E[\\phi(x,h) \\mid h]$')],
     _).margin(50, 30).center(),
