@@ -1,30 +1,81 @@
 \section{Experiments} \label{sec:experiments}
 
-\subsection{Basic mixture model}
+We have argued the case for using measurements of the latent moments,
+$\hat\E[\phi(x,h)]$ to aid parameter estimation. In this section, we
+seek to answer two questions, 
+(i) how much do such measurements aid
+estimation and 
+(ii) how effective are the measurements estimated using the
+method of moments.
 
-Show simple mixture model works on artifical data.
+We find that measurements can considerably improve the fit of the
+parameters estimated. 
+While empirical measurements estimated using the
+method of moments are less accurate, we still find that they improve
+parameter estimates, in general.
 
-Show EM/gradient gets stuck in local optima.
+% Do measurements help in parameter estimation?
+\subsection{Measurements for parameter estimation}
 
-spectral methods are not statistically efficient (especially with parameter sharing).
+Our generative process for the data is as follows.
+We generated 10 random hidden Markov models, each with 3 hidden states and 5 symbols. 
+For each model, we generated 10 sets of 10,000 sequences of length 3.
+We compared the prediction accuracy of parameters estimated using EM initialized using \refeqn{minKL} when different percentages of the expected latent measurements, $\E[\phi(x,h)]$, were observed. 
+%For example, we ran one experiment where we assumed 10\% of the latent measurements were observed.
 
-\subsection{Measurements}
+%\Fig{X}
 
-For models in \reffig{generalModels}, do experiments.
+\todo{Figure X} plots the training set accuracy of the parameters micro-averaged over the different data and models.
+For comparison, we have included the accuracy achieved using the method of moments estimation procedure described in \refsec{factorization} with empirical moment estimates. 
+We see that using measurements for even a small percentage of features can improve prediction accuracy by \todo{x\%}. Spectral estimates too improve accuracy, though not as markedly; we observed a  \todo{x\%} improvement.
 
-Show that the non-convexity decreases.
+% - we ran experiments with different proportions of the expected feature counts being observed and plot performance here. 
+% - while such information is not available in practice, we note that it provides a significant improvement over learning with just EM.
+% - next, we used spectral techniques to estimate the counts on the data and observed that it also showed a concrete improvement in performance, though not as much as the measurements.
 
-\subsection{Factorial models}
+% details:
+% - For purposes of illustration, we looked at 10 different hmms with
+% parameters $K=3$, $D=5$ and $N=10^5$ samples. We ran each experiment for
+% 10 different data samples and report the micro-averages.
 
-Show that the unshuffling basically works with near infinite data, while EM gets stuck in local optima.
+% Could it be effective in practice?
+\subsection{Method of moments for measurement estimation}
 
-\subsection{Part-of-speech induction}
+Having shown that measurements can help the task of parameter estimation, we now present results for variety of models, summarized in \todo{Table X}. 
+For each row, we report micro-averaged log-likelihoods and prediction accuracy over 5 different models with the specified number of parameters and 5 random samples of $10,000$ instances from the model. 
+In the table, we compare randomly initialized EM with EM initialized using (a) empirical measurements estimated with the method of moments and (b) fully expected measurements.
 
-\cite{kirkpatrick10painless} trains for 1,000 iterations, which takes a long time.
-63.1\% Basic HMM
-68.1\% EM, L-BFGS 75.5\%
+First, we note that we found measurements to uniformly improve the prediction accuracy of EM. The picture for method of moments is similar, though there is greater variation in the improvement it provides.
 
-Can we match the performance?
+% - Generated data from different 3-view mixture models and hmms. 
+% - Each averages over 5 different parameters and 5 different data samples.
+% - Find that there is quite some variation in spectral performance, but measurements uniformly helps estimation.
 
-Also, since method of moments doesn't require inference, can we use a much larger corpus
-and get better results.
+% \subsection{Basic mixture model}
+% 
+% Show simple mixture model works on artifical data.
+% 
+% Show EM/gradient gets stuck in local optima.
+% 
+% spectral methods are not statistically efficient (especially with parameter sharing).
+% 
+% \subsection{Measurements}
+% 
+% For models in \reffig{generalModels}, do experiments.
+% 
+% Show that the non-convexity decreases.
+% 
+% \subsection{Factorial models}
+% 
+% Show that the unshuffling basically works with near infinite data, while EM gets stuck in local optima.
+% 
+% \subsection{Part-of-speech induction}
+% 
+% \cite{kirkpatrick10painless} trains for 1,000 iterations, which takes a long time.
+% 63.1\% Basic HMM
+% 68.1\% EM, L-BFGS 75.5\%
+% 
+% Can we match the performance?
+% 
+% Also, since method of moments doesn't require inference, can we use a much larger corpus
+% and get better results.

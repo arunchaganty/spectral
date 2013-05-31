@@ -122,14 +122,15 @@ G.gridModel = function(opts) {
   return new Overlay(O);
 }
 
-G.factorialMixtureModel = function() {
+G.factorialMixtureModel = function(directed) {
+  var edge = directed ? arrow : line;
   return overlay(
     ytable(
       xtable(h1 = node('$h_1$'), h2 = node('$h_2$')).margin(50),
       xtable(x1 = node('$x_1$', true), x2 = node('$x_2$', true), x3 = node('$x_3$', true)).margin(50),
     _).margin(50).center(),
-    arrow(h1, x1), arrow(h1, x2), arrow(h1, x3),
-    arrow(h2, x1), arrow(h2, x2), arrow(h2, x3),
+    edge(h1, x1), edge(h1, x2), edge(h1, x3),
+    edge(h2, x1), edge(h2, x2), edge(h2, x3),
   _);
 }
 
@@ -171,7 +172,7 @@ G.unshuffle = function() {
 
   var rhs = [];
   for (var i = 0; i < K*K; i++) {
-    rhs.push(text('$\\green{B_{'+(i+1)+'}}$'));
+    rhs.push(text('$\\green{L_{'+(i+1)+'}}$'));
   }
 
   Math.seedrandom(2);

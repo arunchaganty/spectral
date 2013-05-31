@@ -7,11 +7,22 @@ sfig.Text.defaults.setProperty('font', 'Times New Roman');  // For paper
 
 prez.addSlide(schema().id('schema'));
 
-simpleModels = table(
+model = table(
+  [mixtureModel(false)],
+_).margin(100, 20).center();
+prez.addSlide(model.id('mixtureModel'));
+
+/*simpleModels = table(
   [mixtureModel(true), mixtureModel(false)],
   ['(a) Directed mixture model', '(b) Undirected mixture model'],
 _).margin(100, 20).center();
-prez.addSlide(simpleModels.id('simpleModels'));
+prez.addSlide(simpleModels.id('simpleModels'));*/
+
+directedModels = table(
+  [mixtureModel(true), hmm({directed: true, len: 4}), factorialMixtureModel(true)],
+  ['(a) Mixture model', '(b) Hidden Markov model', '(c) Factorial mixture model'],
+_).margin(100, 20).center();
+prez.addSlide(directedModels.id('directedModels'));
 
 generalModels = table(
   [
@@ -34,9 +45,15 @@ _).margin(50, 20).center();
 prez.addSlide(factorialModels.id('factorialModels'));*/
 
 factorialModels = table(
-  [factorialMixtureModel(), unshuffle()],
+  [factorialMixtureModel(false), unshuffle()],
   ['(a) Factorial mixture model', '(b) Unshuffling factorization'],
 _).margin(50, 20).center();
 prez.addSlide(factorialModels.id('factorialModels'));
+
+factorialHMM = table(
+  [factorialHMM()],
+  ['(a) Factorial HMM'],
+_).margin(50, 20).center();
+prez.addSlide(factorialHMM.id('factorialHMM'));
 
 prez.writePdf({outPrefix: 'figures', combine: false});
