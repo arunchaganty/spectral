@@ -67,7 +67,7 @@ public class MomentAggregator extends Thread {
         }
       }
       //if( count % 1000 == 0 )
-      //  LogInfo.logs( String.format("Moments (%d): %d", this.getId(), (int)count) );
+      //LogInfo.logs( String.format("Moments (%d): %d", this.getId(), (int)count) );
     }
     LogInfo.end_track( "Moments" + this.getId() );
   }

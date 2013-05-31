@@ -213,6 +213,45 @@ public class BottleneckSpectralEM implements Runnable {
           throw new RuntimeException();
         }
       });
+    } else if( model instanceof GridModel) {
+      final GridModel gModel = (GridModel) model;
+      final int K = gModel.K; final int D = gModel.D;
+      final int L = gModel.L;
+
+      // x_{1,2,3} 
+      dataSeq = (new Iterator<double[][]>() {
+        Iterator<Example> iter = data.iterator();
+        Example current; int idx = 0; 
+        public boolean hasNext() {
+          if( current != null && idx < current.h.length ) 
+        return true;
+          else
+        return iter.hasNext();
+        }
+        public double[][] next() {
+          // Walk through every example, and return triples from the
+          // examples.
+          if( current == null || idx >= current.h.length ) {
+            current = iter.next();
+            idx = 0;
+          }
+
+          // Efficiently memoize the random projections here.
+          double[][] data = new double[3][D]; // Each datum is a one-hot vector
+          for( int v = 0; v < 3; v++ ) {
+            // VERY subtly constructed; h[idx] is the hidden node, so x[2*idx],
+            // x[2*idx+1] are the children. However, the tensor fact. is
+            // most stable for x3, so I'm making these the last two nodes.
+            // Hate me later.
+            data[v][current.x[(2*idx + (2-v)) % current.x.length]] = 1.0;
+          }
+          idx++;
+          return data;
+        }
+        public void remove() {
+          throw new RuntimeException();
+        }
+      });
     } else {
       throw new RuntimeException("Unhandled model type: " + model.getClass() );
     }
@@ -319,6 +358,35 @@ public class BottleneckSpectralEM implements Runnable {
         }
       }
       Execution.putOutput("moments.params", Fmt.D( measurements.weights ));
+    } else if( model instanceof GridModel) {
+      int L = ((GridModel)(model)).L; // Extract from the model in a clever way.
+      assert( M[2].numRows() == D );
+      assert( M[2].numCols() == K );
+      // Each column corresponds to a particular hidden moment.
+      // Project onto the simplex
+      
+      // Average over the last two M's
+      for(int i = 1; i < L; i++ )
+        M[i] = MatrixOps.projectOntoSimplex( M[i], smoothMeasurements );
+      SimpleMatrix M3 = (M[1]).plus(M[2]).scale(1.0/2.0);
+      //SimpleMatrix M3 = M[2]; // M3 is most accurate.
+      M3 = MatrixOps.projectOntoSimplex( M3, smoothMeasurements );
+      LogInfo.logs( "pi: " + Fmt.D(pi) );
+      LogInfo.logs( "M3: " + M3 );
+
+      for( int h = 0; h < K; h++ ) {
+        for( int d = 0; d < D; d++ ) {
+          // Assuming identical distribution.
+          int f = measurements.featureIndexer.getIndex(new UnaryFeature(h, "x="+d));
+          measuredFeatures[f] = true;
+          // multiplying by pi to go from E[x|h] -> E[x,h]
+          // multiplying by 3 because true.counts aggregates
+          // over x1, x2 and x3.
+          measurements.weights[f] = L * M3.get( d, h ) * pi[h]; 
+        }
+      }
+      Execution.putOutput("moments.params", MatrixFactory.fromVector(measurements.weights));
+
     } else {
       throw new RuntimeException("Unhandled model type: " + model.getClass() );
     }
@@ -900,11 +968,7 @@ public class BottleneckSpectralEM implements Runnable {
         break;
       }
       case grid: {
-        Grid model = new Grid();
-        model.width = 2;
-        model.height = opts.L/2;
-        model.L = opts.L;
-        model.D = opts.D;
+        GridModel model = new GridModel(opts.L, opts.D);
         model_ = model;
         break;
       }
