@@ -23,11 +23,11 @@ For each model, we generated 10 sets of 10,000 sequences of length 3.
 We compared the prediction accuracy of parameters estimated using EM initialized using \refeqn{minKL} when different percentages of the expected latent measurements, $\E[\phi(x,h)]$, were observed. 
 %For example, we ran one experiment where we assumed 10\% of the latent measurements were observed.
 
-%\Fig{X}
+\Fig{figures/measurements}{0.5}{measurements}{a}
 
-\todo{Figure X} plots the training set accuracy of the parameters micro-averaged over the different data and models.
+\reffig{measurements} plots the training set accuracy of the parameters micro-averaged over the different data and models.
 For comparison, we have included the accuracy achieved using the method of moments estimation procedure described in \refsec{factorization} with empirical moment estimates. 
-We see that using measurements for even a small percentage of features can improve prediction accuracy by \todo{x\%}. Spectral estimates too improve accuracy, though not as markedly; we observed a  \todo{x\%} improvement.
+We see that using measurements for can improve prediction accuracy. Spectral estimates too improve accuracy, though not as markedly.
 
 % - we ran experiments with different proportions of the expected feature counts being observed and plot performance here. 
 % - while such information is not available in practice, we note that it provides a significant improvement over learning with just EM.
@@ -41,7 +41,32 @@ We see that using measurements for even a small percentage of features can impro
 % Could it be effective in practice?
 \subsection{Method of moments for measurement estimation}
 
-Having shown that measurements can help the task of parameter estimation, we now present results for variety of models, summarized in \todo{Table X}. 
+\begin{table}
+    \label{tab:errors}
+    \begin{tabular}{l | l l | l l l }
+        Algorithm & Hidden States & Dimension & Accuracy & Error in $\hat \E[\phi(x,h)]$ & Log Likelihood \\ \hline
+        & \multicolumn{2}{|c|}{Mixture Models} & & & \\ \hline
+        EM & 2 & 2 & 0.69 (+/- 0.1) & 0.69 (+/- 0.6) & -2.53 (+/- 0.1) \\
+        & \multicolumn{2}{|c|}{HMMs} & & & \\ \hline
+        % EM
+% 3 2 0.648872 (+/- 0.095464) 1.227816 (+/- 0.719636) -3.722825 (+/- 0.245093) 2.350263 (+/- 1.288540)
+% 3 3 0.514018 (+/- 0.062330) 1.816636 (+/- 0.739626) -4.216187 (+/- 0.102203) 4.186464 (+/- 1.747718)
+% 5 2 0.724705 (+/- 0.070466) 1.131530 (+/- 0.559746) -5.213327 (+/- 0.172906) 3.993639 (+/- 1.360042)
+% 
+% % Spec
+% 3 2 0.797079 (+/- 0.086223) 0.230606 (+/- 0.164765) -3.542495 (+/- 0.203750) 1.383477 (+/- 1.297197)
+% 3 3 0.678500 (+/- 0.107540) 1.014050 (+/- 0.604031) -3.766423 (+/- 0.273059) 4.417891 (+/- 2.540264)
+% 5 2 0.797205 (+/- 0.055123) 0.186235 (+/- 0.144865) -5.042223 (+/- 0.095900) 2.029760 (+/- 1.227884)
+% 
+% % Me
+% 3 2 0.801385 (+/- 0.084407) 0.010773 (+/- 0.004410) -3.546779 (+/- 0.200814) 1.284341 (+/- 1.345515)
+% 3 3 0.705435 (+/- 0.115996) 0.023051 (+/- 0.018703) -3.877286 (+/- 0.135231) 1.466214 (+/- 0.904723)
+% 5 2 0.801550 (+/- 0.051041) 0.017168 (+/- 0.003883) -5.032909 (+/- 0.098391) 1.810640 (+/- 1.453650)
+    \end{tabular}
+    \caption{}
+\end{table}
+
+Having shown that measurements can help the task of parameter estimation, we now present results for variety of models, summarized in \reftab{errors}.
 For each row, we report micro-averaged log-likelihoods and prediction accuracy over 5 different models with the specified number of parameters and 5 random samples of $10,000$ instances from the model. 
 In the table, we compare randomly initialized EM with EM initialized using (a) empirical measurements estimated with the method of moments and (b) fully expected measurements.
 
