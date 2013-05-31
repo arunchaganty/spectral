@@ -259,133 +259,6 @@ public class Models {
     }
   }
 
-  public static class Grid extends Model {
-    int L, D; // L = number of grid cells, D = choices per X;
-    int width, height;
-
-
-    public Example newExample() {
-      Example ex = new Example();
-      assert( L == width * height );
-      ex.x = new int[2 * L]; // Each grid cell has two units
-      return ex;
-    }
-
-    // Used to set observed data
-    public Example newExample(int[] x) {
-      assert( L == width * height );
-      assert( x.length == 2 * L );
-      Example ex = new Example();
-      ex.x = new int[x.length];
-      System.arraycopy(x, 0, ex.x, 0, x.length);
-      return ex;
-    }
-
-    public void addObserved(Hypergraph<Example> H, int i, int j, Example ex, double[] params, double[] counts, double increment) {
-      LogInfo.begin_track("grid-add-observed");
-      // Iterate over hidden states of the cell at (i,j)
-      for( int h = 0; h < K; h++ ) {
-        String hNode = String.format("h_{%d,%d}=%d", i, j, h); // Defined to be a product node.
-        String xaNode = String.format("h_{%d,%d}=%d,x_a", i, j, h); // Register x nodes
-        String xbNode = String.format("h_{%d,%d}=%d,x_b", i, j, h); 
-
-        if (ex != null) {  // Numerator: generate x[j]
-          int idx = 2*(width*i + j);
-          int f_xa = featureIndexer.getIndex(new UnaryFeature(h, String.format("x^a=%d", ex.x[idx]))); // Features are shared across cells
-          int f_xb = featureIndexer.getIndex(new UnaryFeature(h, String.format("x^b=%d", ex.x[idx+1])));
-          if (params != null) {
-            H.addEdge(hNode, H.endNode, edgeInfo(params, counts, f_xa, increment));
-            H.addEdge(hNode, H.endNode, edgeInfo(params, counts, f_xb, increment));
-          }
-        } else {  // Denominator: generate each possible assignment x[j] = a
-          H.addSumNode(xaNode);
-          H.addSumNode(xbNode);
-          H.addEdge(hNode, xaNode); // No potential required; hNode is a product node
-          H.addEdge(hNode, xbNode); // No potential required; hNode is a product node
-
-          for (int a = 0; a < D; a++) {
-            int idx = 2*(height*i + j);
-            int f_xa = featureIndexer.getIndex(new UnaryFeature(h, String.format("x^a=%d", a) ) );
-            int f_xb = featureIndexer.getIndex(new UnaryFeature(h, String.format("x^b=%d", a) ) );
-            if (params != null) {
-              H.addEdge(xaNode, H.endNode, edgeInfo(params, counts, f_xa, increment, idx, a));
-              H.addEdge(xbNode, H.endNode, edgeInfo(params, counts, f_xb, increment, idx+1, a)); // Remember that this is where we store the variable
-            }
-          }
-        }
-      }
-      LogInfo.end_track("grid-add-observed");
-    }
-
-    public void addEdges(Hypergraph<Example> H, int i, int j, Example ex, double[] params, double[] counts, double increment) {
-      LogInfo.begin_track("grid-add-edges");
-      for( int h = 0; h < K; h++ ) {
-        String hNode = String.format("h_{%d,%d}=%d", i, j, h); 
-        // Add links to adjacent nodes; note that nodes earlier in the lex.
-        // ordering have already added links.
-        
-        if( i + 1 < height ) {
-          // Temporary factor that will enumerate over the sum
-          String h_Node = String.format("h_{%d,%d}=%d,h_{%d,%d}", i, j, h, i+1, j); 
-          H.addSumNode( h_Node );
-          H.addEdge( hNode, h_Node );
-          for (int h_ = 0; h_ < K; h_++) {  // For each value of start state...
-            String hRightNode = String.format("h_{%d,%d}=%d", i+1, j, h_); 
-            H.addProdNode(hRightNode); // Sum over observations
-            // The h->h_ potential
-            int T_h_h_ = featureIndexer.getIndex(new BinaryFeature(h, h_));
-            H.addEdge(h_Node, hRightNode, edgeInfo(params, counts, T_h_h_, increment));
-          }
-        }
-        if( j + 1 < width ) {
-          String h_Node = String.format("h_{%d,%d}=%d,h_{%d,%d}", i, j, h, i, j+1); 
-          H.addSumNode( h_Node );
-          H.addEdge( hNode, h_Node );
-          for (int h_ = 0; h_ < K; h_++) {  // For each value of start state...
-            String hLowerNode = String.format("h_{%d,%d}=%d", i, j+1, h_); 
-            H.addProdNode(hLowerNode); // Sum over observations
-            // The h->h_ potential
-            int T_h_h_ = featureIndexer.getIndex(new BinaryFeature(h, h_));
-            H.addEdge(h_Node, hLowerNode, edgeInfo(params, counts, T_h_h_, increment));
-          }
-        }
-      }
-      LogInfo.end_track("grid-add-edges");
-    }
-
-    public Hypergraph<Example> createHypergraph(int L, Example ex, double[] params, double[] counts, double increment) {
-      LogInfo.begin_track("create-grid");
-      // Set length to be length of example data.
-
-      Hypergraph<Example> H = new Hypergraph<Example>();
-      H.debug = true;
-      
-      // Add the first hidden node first.
-      Object rootNode = H.sumStartNode(); // Think of it as h_{0,0}
-      for (int h = 0; h < K; h++) {  // For each value of start state...
-        String hNode = String.format("h_{%d,%d}=%d", 0, 0, h); 
-        H.addProdNode(hNode); // this is a product node over emissions and transistions.
-        // probability of choosing this value for h.
-        int pi_h = featureIndexer.getIndex(new UnaryFeature(h, "pi="+h));
-        H.addEdge(rootNode, hNode, edgeInfo(params, counts, pi_h, increment));
-      }
-      // Traverse the nodes in cantor diagonal fashion
-      for( int w = 0; w < width+height; w++ ) {
-        // Now add all the hidden nodes and their observeds.
-        for(int i = 0; i < MatrixOps.min(w+1,height); i++ ) {
-          if( w - i >= width ) continue;
-          int j = w - i;
-          // LogInfo.logs( w + ": " + i + ", " + j );
-          addEdges(H, i, j, ex, params, counts, increment);
-          addObserved(H, i, j, ex, params, counts, increment);
-        }
-      }
-      LogInfo.end_track("create-grid");
-      
-      return H;
-    }
-  }
-
   // 2 x width grid.  Each node has two observations, 
   // 1     L
   // o-o-o-o
@@ -394,7 +267,7 @@ public class Models {
   public static class GridModel extends Model {
     final int height = 2;
     int width;
-    int L, D; // L = number of grid cells, D = choices per X;
+    int L; // L = number of grid cells, D = choices per X;
 
     public GridModel(int L, int D) {
       this.L = L;
@@ -411,10 +284,10 @@ public class Models {
     }
 
     // row r, column c, direction d (a or b) => index into x
-    int observedNodeIndex(int r, int c, int d) { return (r * width + c) * 2 + d; }
+    public int observedNodeIndex(int r, int c, int d) { return (r * width + c) * 2 + d; }
 
     // row r, column c => index into h
-    int hiddenNodeIndex(int r, int c) { return r * width + c; }
+    public int hiddenNodeIndex(int r, int c) { return r * width + c; }
 
     // Used to set observed data
     public Example newExample(int[] x) {
