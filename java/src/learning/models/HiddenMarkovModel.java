@@ -42,12 +42,30 @@ public class HiddenMarkovModel implements EMOptimizable {
     public int stateCount;
     public int emissionCount;
 
-		Params(int stateCount, int emissionCount) {
+		public Params(int stateCount, int emissionCount) {
 			this.stateCount = stateCount;
 			this.emissionCount = emissionCount;
 			pi = new double[stateCount];
 			T = new double[stateCount][stateCount];
 			O = new double[stateCount][emissionCount];
+		}
+
+		public Params(double[] pi, double[][] T, double[][] O) {
+      assert( T.length == T[0].length );
+			this.stateCount = T.length;
+      assert( pi.length == stateCount );
+      assert( O.length == stateCount );
+			this.emissionCount = O[0].length;
+      // Check if the parameters are valid!
+      assert( MatrixOps.equal( MatrixOps.sum( pi ),1.0 ) );
+      for( int s = 0; s < stateCount; s++ ) {
+        assert( MatrixOps.equal( MatrixOps.sum( T[s] ),1.0 ) );
+        assert( MatrixOps.equal( MatrixOps.sum( O[s] ),1.0 ) );
+      }
+
+			this.pi = pi;
+			this.T = T;
+			this.O = O;
 		}
 		
 		@Override

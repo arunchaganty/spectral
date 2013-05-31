@@ -269,10 +269,18 @@ public class BottleneckSpectralEM implements Runnable {
       // Note: We might need to invert the random projection here.
       O = MatrixOps.projectOntoSimplex( O, smoothMeasurements );
       // smooth measurements by adding a little 
-      T = MatrixOps.projectOntoSimplex( T, smoothMeasurements );
+      T = MatrixOps.projectOntoSimplex( T, smoothMeasurements ).transpose();
       Execution.putOutput("moments.pi", Fmt.D(pi));
       Execution.putOutput("moments.O", O);
       Execution.putOutput("moments.T", T);
+
+      double[][] T_ = MatrixFactory.toArray( T );
+      double[][] O_ = MatrixFactory.toArray( O.transpose() );
+
+      for( int i = 0; i < K; i ++) {
+        assert( MatrixOps.equal( MatrixOps.sum( T_[i] ), 1 ) );
+        assert( MatrixOps.equal( MatrixOps.sum( O_[i] ), 1 ) );
+      }
 
       // Put the observed moments back into the counts.
       for( int h = 0; h < K; h++ ) {
