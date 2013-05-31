@@ -3,7 +3,7 @@
 Let $z$ be a collection of variables indexed by $V$ (that is, $z = \{z_j\}_{j \in V}$).
 Suppose that some of the variables are observed ($x = \{ z_j \}_{j \in O}$, where $O \subset V$) 
 and the rest are latent ($h = \{ z_j \}_{j \in H}$, where $H = V \backslash O$).
-Let $C \subset 2^V$ be a collection of subset of variables,
+Let $C \subset 2^V$ be a collection of subsets of variables,
 and let $\phi_c(z_c) \in \R^d$ be the feature map for each $c \in C$.
 In this paper, we will consider both directed and undirected models over $z$.
 In the undirected case, we define the standard globally-normalized exponential family model:
@@ -30,5 +30,5 @@ Our goal is to produce a parameter estimate $\hat\theta$ that approximates $\the
 The standard estimation procedure is maximum (marginal) likelihood,
 $\hatthetaml \eqdef \max_{\theta \in \R^d} \sum_{x \in D} \log p_\theta(x)$,
 which is statistically efficient but computationally intractable.
-In practice, one uses EM or gradient-based optimization procedure on the marginal likelihood,
-which can get stuck in local optima.
+In practice, one uses gradient-based optimization procedures (e.g., EM or L-BFGS)
+on the marginal likelihood, which can get stuck in local optima.
