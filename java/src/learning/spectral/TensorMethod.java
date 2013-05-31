@@ -154,13 +154,14 @@ public class TensorMethod implements Runnable {
       agg.run();
 
       // In our case, the moments are symmetric.
-      Pair<SimpleMatrix,SimpleMatrix> params = recoverParameters( K, agg.getMoments().getValue0(),
-        agg.getMoments().getValue3() );
+      //Pair<SimpleMatrix,SimpleMatrix> params = recoverParameters( K, agg.getMoments().getValue0(),
+      //  agg.getMoments().getValue3() );
+      Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> params = recoverParameters( K, agg.getMoments() );
 
       return new Quartet<>( params.getValue0(), 
           params.getValue1(),
-          params.getValue1(),
-          params.getValue1() );
+          params.getValue2(),
+          params.getValue3() );
 
       //return recoverParameters( K, agg.getMoments() );
     }
