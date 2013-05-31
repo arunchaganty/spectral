@@ -29,9 +29,36 @@ latent measurements, $\E[\phi(x,h)]$, were observed.
 %For example, we ran one experiment where we assumed 10\% of the latent
 %measurements were observed.
 
-\Fig{figures/measurements}{0.3}{measurements}{a}
+\begin{figure}
+  \centering
+  \begin{subfigure}[b]{0.4\textwidth}
+    \label{tab:errors}
+    \begin{tabular}{l | l l }
+        Algorithm / ($k$, $d$) Model & $(3,3)$ & $(3,5)$ \\ \hline
+        & \multicolumn{2}{c}{Mixture} \\
+        EM                    & 0.51 & 0.72 \\
+        Spectral              & 0.68 & 0.80 \\
+        Measurements  & 0.70 & 0.80 \\
+        & \multicolumn{2}{c}{HMM} \\
+        EM                    & 0.42 & 0.62  \\
+        Spectral              & 0.45 & 0.64  \\
+        Measurements  & 0.47 & 0.73
+    \end{tabular}
+    \caption{Micro-averaged accuracy.}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.4\textwidth}
+    \label{fig:measurements}
+    \includegraphics[width=0.9\textwidth]{figures/measurements.pdf}
+    \caption{Prediction accuracy.}
+  \end{subfigure}
+\end{figure}
 
-\reffig{measurements} shows the prediction error of the parameters
+
+%\Fig{figures/measurements}{0.3}{measurements}{Prediction Accuracy}
+
+%\reffig{measurements}
+The figure
+shows the prediction error of the parameters
 micro-averaged over the different data and models.  First, as we get more
 measurements, prediction error decreases.  Second,
 learning from only the emissions moments works comparably
@@ -59,42 +86,42 @@ whereas the curve is based on expected moments.}
 % Could it be effective in practice?
 \paragraph{General results}
 
-\begin{table}
-    \label{tab:errors}
-    \begin{tabular}{l | l l | l l l }
-        Algorithm & $k$ & $d$ & Accuracy & $\Delta \hat \E[\phi(x,h)]$ & Log Likelihood \\ \hline
-        & \multicolumn{2}{|c|}{Mixtures} & & & \\ \hline
-        \multirow{3}{*}{EM} 
-        & 3 & 2 & 0.65 (+/- 0.01) & 1.23 & -3.72 \\
-        & 3 & 3 & 0.51 (+/- 0.06) & 1.81 & -4.21\\
-        & 5 & 2 & 0.72 (+/- 0.07) & 1.13 & -5.21\\ \hline
-        \multirow{3}{*}{Spectral} 
-        & 3 & 2 & 0.80 (+/- 0.09) & 0.23 & -3.54 \\
-        & 3 & 3 & 0.68 (+/- 0.10) & 1.01 & -3.76 \\
-        & 5 & 2 & 0.80 (+/- 0.05) & 0.18 & -5.04 \\ \hline
-        \multirow{3}{*}{100\% Measurements} 
-        & 3 & 2 & 0.80 (+/- 0.08) & 0.01& -3.54 \\
-        & 3 & 3 & 0.70 (+/- 0.11) & 0.02& -3.87 \\
-        & 5 & 2 & 0.80 (+/- 0.05) & 0.01& -5.03 \\ \hline
-        & \multicolumn{2}{|c|}{HMMs} & & & \\ \hline
-        \multirow{3}{*}{EM} 
-& 3 & 2 & 0.64 (+/- 0.10) & 1.71 & -4.51 \\  
-& 3 & 3 & 0.42 (+/- 0.05) & 2.41 & -6.09 \\  
-& 5 & 2 & 0.62 (+/- 0.09) & 1.60 & -6.47 \\  \hline
-        \multirow{3}{*}{Spectral} 
-& 3 & 2 & 0.67 (+/- 0.07) & 2.59 & -3.71 \\ 
-& 3 & 3 & 0.45 (+/- 0.08) & 4.96 & -4.36 \\ 
-& 5 & 2 & 0.64 (+/- 0.10) & 3.43 & -5.31 \\ \hline
-        \multirow{3}{*}{100\% Measurements} 
-& 3 & 2 & 0.71 (+/- 0.07) & 0.39 & -4.64 \\ 
-& 3 & 3 & 0.47 (+/- 0.07) & 1.53 & -5.85 \\ 
-& 5 & 2 & 0.73 (+/- 0.07) & 0.39 & -6.16 \\ \hline
-    \end{tabular}
-    \caption{Micro-averaged Errors.}
-\end{table}
+%\begin{table}
+%    \label{tab:errors}
+%    \begin{tabular}{l | l l | l l l }
+%        Algorithm & $k$ & $d$ & Accuracy & $\Delta \hat \E[\phi(x,h)]$ & Log Likelihood \\ \hline
+%        & \multicolumn{2}{|c|}{Mixtures} & & & \\ \hline
+%        \multirow{3}{*}{EM} 
+%        & 3 & 2 & 0.65 (+/- 0.01) & 1.23 & -3.72 \\
+%        & 3 & 3 & 0.51 (+/- 0.06) & 1.81 & -4.21\\
+%        & 5 & 2 & 0.72 (+/- 0.07) & 1.13 & -5.21\\ \hline
+%        \multirow{3}{*}{Spectral} 
+%        & 3 & 2 & 0.80 (+/- 0.09) & 0.23 & -3.54 \\
+%        & 3 & 3 & 0.68 (+/- 0.10) & 1.01 & -3.76 \\
+%        & 5 & 2 & 0.80 (+/- 0.05) & 0.18 & -5.04 \\ \hline
+%        \multirow{3}{*}{100\% Measurements} 
+%        & 3 & 2 & 0.80 (+/- 0.08) & 0.01& -3.54 \\
+%        & 3 & 3 & 0.70 (+/- 0.11) & 0.02& -3.87 \\
+%        & 5 & 2 & 0.80 (+/- 0.05) & 0.01& -5.03 \\ \hline
+%        & \multicolumn{2}{|c|}{HMMs} & & & \\ \hline
+%        \multirow{3}{*}{EM} 
+%& 3 & 2 & 0.64 (+/- 0.10) & 1.71 & -4.51 \\  
+%& 3 & 3 & 0.42 (+/- 0.05) & 2.41 & -6.09 \\  
+%& 5 & 2 & 0.62 (+/- 0.09) & 1.60 & -6.47 \\  \hline
+%        \multirow{3}{*}{Spectral} 
+%& 3 & 2 & 0.67 (+/- 0.07) & 2.59 & -3.71 \\ 
+%& 3 & 3 & 0.45 (+/- 0.08) & 4.96 & -4.36 \\ 
+%& 5 & 2 & 0.64 (+/- 0.10) & 3.43 & -5.31 \\ \hline
+%        \multirow{3}{*}{100\% Measurements} 
+%& 3 & 2 & 0.71 (+/- 0.07) & 0.39 & -4.64 \\ 
+%& 3 & 3 & 0.47 (+/- 0.07) & 1.53 & -5.85 \\ 
+%& 5 & 2 & 0.73 (+/- 0.07) & 0.39 & -6.16 \\ \hline
+%    \end{tabular}
+%    \caption{Micro-averaged Errors.}
+%\end{table}
 
 %Having shown that measurements can help the task of parameter estimation, we
-\reftab{errors} shows results for the mixture model and HMM.
+The table above shows results for the mixture model and HMM.
 For each row, we report prediction accuracy
 over 5 different models with the specified number of parameters and 5 random
 samples of $10,000$ instances from the model. 
@@ -106,9 +133,9 @@ using the true expected measurements.
 %empirical measurements estimated with the method of moments and (b) fully
 %expected measurements.
 
-First, we note that we found measurements to uniformly improve the prediction
-accuracy of EM. The picture for method of moments is similar, though there is
-greater variation in the improvement it provides.
+%First, we note that we found measurements to uniformly improve the prediction
+%accuracy of EM. The picture for method of moments is similar, though there is
+%greater variation in the improvement it provides.
 
 % - Generated data from different 3-view mixture models and hmms. 
 % - Each averages over 5 different parameters and 5 different data samples.
