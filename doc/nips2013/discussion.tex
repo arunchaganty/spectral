@@ -1,29 +1,51 @@
-\section{Related work}
+\section{Discussion}
 
-% Observable operator models
+In recent years, there has been much interest
+on using the method of moments and spectral decomposition
+for learning latent-variable models.
+One line of work uses observable operator models to learn
 HMMs \cite{hsu09spectral},
 low-treewidth graphs \cite{parikh12spectral},
 probabilistic context-free grammars \cite{cohen12pcfg},
 weighted finite state automata \cite{balle12automata},
-finite state transducers \cite{balle11transducer}.
+finite state transducers \cite{balle11transducer},
+but do not produce parameter estimates.
 
 % Method of moments
+Our work builds on a second line of work which focuses
+on parameter estimation.  These methods have been used to learn
+hidden Markov models \cite{anandkumar12moments},
 Latent Dirichlet Allocation \cite{anandkumar12lda},
+linear Bayesian networks \cite{anandkumar12linear},
 mixture of spherical Gaussians \cite{hsu13spherical},
-latent parse tree models \cite{hsu12identifiability}
+latent parse tree models \cite{hsu12identifiability}, and
 mixture of linear regressions \cite{chaganty13regression}.
-linear Bayesian networks \cite{anandkumar12linear}.
+Not only can actual parameter estimates be valuable for scientific
+applications, they also provide a natural initialization point
+for further local optimization, which has been found to improve accuracy
+\cite{chaganty13regression}.
+
+Extending this latter perspective,
+our work departs from the standard goal of
+insisting on constructing consistent parameter estimators, but rather strives
+to use spectral decomposition to obtain constraints to improve
+parameter estimation.  Using these techniques,
+we found empirically that our approach provides
+improvements in various models such as the grid model and factorial HMM
+for which we do not have a consistent parameter estimate.
+We believe using partial information from factorized moments
+in conjunction with likelihood optimization
+broadens the toolbox of techniques for learning
+latent-variable models.
+Finally, our technique still relies fundamentally on
+having three-view bottlenecks \cite{anandkumar12moments}.
+How to extract partial information without this assumption
+remains an interesting open problem.
 
 % Structure recovery
-structure recovery
-\cite{anandkumar11tree}
+%structure recovery
+%\cite{anandkumar11tree}
 
 % Alternate estimators
-There are multiple consistent estimators.
-Composite likelihood \cite{besag75pseudo,lindsay88composite,liang08asymptotics}
-We are assuming inference is tractable.
-Our main problem is non-convexity.
-
-\section{Conclusion}
-
-That's it.
+%There are multiple consistent estimators.
+%Composite likelihood \cite{besag75pseudo,lindsay88composite,liang08asymptotics}

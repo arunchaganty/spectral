@@ -19,7 +19,7 @@ Partial information is available when the following holds:
 
 % Examples
 \reffig{generalModels} shows examples of log-linear models.
-For notational simplicitly, assume each latent variable $h_j \in [\nh]$ is an integer
+For notational simplicity, assume each latent variable $h_j \in [\nh]$ is an integer
 and each observed variable $x_j \in \R^\ell$ is an indicator vector encoding
 one of $\ell$
 possible values.
@@ -68,6 +68,8 @@ and $\E[x_{ij}^b \mid h_{ij}]$,
 and a third quantity that involves the latent-to-latent features and the observation features.
 This quantity involves marginalizing out the rest of the graph,
 and therefore difficult to use.
+Note that if each latent variable had only one observation,
+there would be no bottlenecks, and our method would not be applicable.
 %to extract something useful like $\BP[h_{ij}, h_{i(j+1)}]$
 %in closed form.
 %Note that the analog of this was still possible in the first HMM reduction that
@@ -88,7 +90,8 @@ In each of these three models, we could extract marginals $\pi = \BP[h_j] \in \R
 and some conditional mean matrix $B = \E[x_{j'} \mid h_j] \in \R^{\nphix \times \nh}$,
 but these are insufficient to identify the parameters.
 How can we still use this partial information $(\pi,B)$?
-To this end, we adopt the measurements framework of \citet{liang09measurements},
+To this end, we adopt the measurements framework of \citet{liang09measurements}
+(also, see \cite{graca08em}),
 which allows us to incorporate moment constraints into a likelihood-based objective in a coherent way.
 The basic idea is to define two families of distributions:
 $\sQ$, which are consistent with all information; and
