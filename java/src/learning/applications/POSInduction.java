@@ -94,13 +94,18 @@ public class POSInduction implements Runnable {
   }
 
   public double reportAccuracy( HiddenMarkovModel model, ParsedCorpus C ) {
-    double err = 0.0;
+    int K = C.getTagDimension();
+    double[][] confusion = new double[K][K];
     for( int n = 0; n < C.getInstanceCount(); n++ ) {
+      int[] l = C.L[n];
       int[] l_ = model.viterbi( C.C[n] );
-      err += ( MatrixOps.hamming( l_, C.L[n] ) - err )/(n+1);
-    }
 
-    return err;
+      for( int i = 0; i < l.length; i++ )  
+        confusion[l[i]][l_[i]] += 1; 
+    }
+    double acc = bestAccuracy( confusion);
+
+    return acc;
   }
 
   String logStat(String key, Object value) {

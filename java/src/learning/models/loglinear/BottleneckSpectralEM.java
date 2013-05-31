@@ -718,23 +718,7 @@ public class BottleneckSpectralEM implements Runnable {
     }
     if( debug )
       LogInfo.dbg( "Label mapping: \n" + Fmt.D( labelMapping ) );
-
-    // Now we can do bipartite matching to give us the best labellings.
-    BipartiteMatcher matcher = new BipartiteMatcher();
-    int[] perm = matcher.findMinWeightAssignment(labelMapping);
-    if( debug )
-      LogInfo.dbg( "perm: " + Fmt.D( perm ) );
-    // Compute hamming score
-    long correct = 0;
-    long total = 0;
-    for( int k = 0; k < K; k++ ) {
-      for( int k_ = 0; k_ < K; k_++ ) {
-        total += labelMapping[k][k_];
-      }
-      correct += labelMapping[k][perm[k]];
-    }
-    double acc = (double) correct/ (double) total;
-    LogInfo.logs( "Accuracy: %d/%d = %f", correct, total, acc );
+    double acc = bestAccuracy( labelMapping );
     LogInfo.end_track();
 
     return acc;

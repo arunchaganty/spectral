@@ -9,6 +9,7 @@ import java.util.Comparator;
 import java.io.*;
 
 import fig.basic.LogInfo;
+import fig.basic.BipartiteMatcher;
 
 /**
  * Miscellaneous utilities
@@ -224,6 +225,26 @@ public class Misc {
         Thread.currentThread().sleep(100);
         } catch(InterruptedException e) {}
         LogInfo.logs( "Memory: %dMb (%dMb free)", (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())/(1024 * 1024), Runtime.getRuntime().freeMemory()/(1024 * 1024) );
+  }
+
+  public static double bestAccuracy( double[][] confusionMatrix ) {
+    // Now we can do bipartite matching to give us the best labellings.
+    int K = confusionMatrix.length;
+    BipartiteMatcher matcher = new BipartiteMatcher();
+    int[] perm = matcher.findMaxWeightAssignment(confusionMatrix);
+    // Compute hamming score
+    long correct = 0;
+    long total = 0;
+    for( int k = 0; k < K; k++ ) {
+      for( int k_ = 0; k_ < K; k_++ ) {
+        total += confusionMatrix[k][k_];
+      }
+      correct += confusionMatrix[k][perm[k]];
+    }
+    double acc = (double) correct/ (double) total;
+    LogInfo.logs( "Accuracy: %d/%d = %f", correct, total, acc );
+
+    return acc;
   }
 
 
