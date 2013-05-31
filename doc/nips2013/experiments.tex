@@ -34,9 +34,8 @@ latent measurements, $\E[\phi(x,h)]$, were observed.
 \begin{figure}
   \centering
   \begin{subfigure}[b]{0.4\textwidth}
-    \label{tab:errors}
     \begin{tabular}{l | l l }
-        Algorithm / ($k$, $d$) Model & $(3,3)$ & $(3,5)$ \\ \hline
+        Algorithm & $(3,3)$ & $(3,5)$ \\ \hline
         & \multicolumn{2}{c}{Mixture} \\
         EM                    & 0.51 & 0.72 \\
         Spectral              & 0.68 & 0.80 \\
@@ -47,16 +46,14 @@ latent measurements, $\E[\phi(x,h)]$, were observed.
         Measurements  & 0.47 & 0.73
     \end{tabular}
     \caption{Micro-averaged accuracy.}
+    \label{tab:errors}
   \end{subfigure}
   \begin{subfigure}[b]{0.4\textwidth}
-    \label{fig:measurements}
-    \includegraphics[width=0.9\textwidth]{figures/measurements.pdf}
+    \includegraphics[width=1.0\textwidth]{figures/measurements.pdf}
     \caption{Prediction accuracy.}
+    \label{fig:measurements}
   \end{subfigure}
 \end{figure}
-
-
-\Fig{figures/measurements}{0.3}{measurements}{Prediction Accuracy}
 
 \reffig{measurements} plots the training set accuracy of the parameters
 micro-averaged over the different data and models.  For comparison, we have
