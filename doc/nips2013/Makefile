@@ -6,7 +6,7 @@ sfig:
 	git clone https://github.com/percyliang/sfig
 
 figures: sfig figures.js utils.js
-	node figures.js
+	nodejs figures.js
 	touch figures
 
 main.pdf: $(texfiles) figures main.bbl
