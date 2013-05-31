@@ -3,28 +3,37 @@
 %We have argued the case for using measurements of the latent moments to 
 %aid parameter estimation.
 The spectral decomposition (Steps 1 and 2) in \refsec{threeViewMixtureModel}
-provides measurements,
+provides estimates of the latent moments,
 which are used in the optimization problem \refeqn{minKL}.
-In this section, we
-seek to answer two questions empirically:
-(i) how much do the measurements aid estimation, and
-(ii) how effectively are the measurements estimated using the
-method of moments.
+In this section, we study our approach empirically.
+%seek to answer two questions empirically:
+%(i) how much do the measurements aid estimation, and
+%(ii) how effectively are the measurements estimated using the
+%method of moments.
 %We found that measurements can improve the fit of the
 %parameters estimated considerably.
 %While empirical measurements estimated using the
 %method of moments are less accurate, we still find that they improve
 %parameter estimates in general.
 
-% Do measurements help in parameter estimation?
-\paragraph{Measurements}
+% Could it be effective in practice?
+\paragraph{General results}
 
-We generated 10 random hidden Markov models,
+For both the mixture model and HMM,
+we generated 5 different models and $n=10,000$ examples from the model.
+\reftab{errors} shows the prediction accuracy averaged over the 5 models and 5
+random trials each.
+We see that using latent moments recovered from spectral decomposition
+helps over EM, especially for the mixture model.
+
+\paragraph{Effect of latent moments}
+
+We generated 10 random HMMs,
 each with $k=3$ hidden states and $\ell=5$ possible observed values. 
-For each model, we generated 10 sets of $n=10,000$ sequences of length $L=3$.
-We compared the prediction accuracy of parameters estimated using EM
+For each model, we generated $n=10,000$ sequences of length $L=3$.
+We compared the prediction error (averaged over 10 trials) using EM
 initialized using \refeqn{minKL} when different percentages of the expected
-latent measurements, $\E[\phi(x,h)]$, were observed.
+latent moments were observed.
 
 %For example, we ran one experiment where we assumed 10\% of the latent
 %measurements were observed.
@@ -33,15 +42,15 @@ latent measurements, $\E[\phi(x,h)]$, were observed.
   \centering
   \begin{subfigure}[b]{0.4\textwidth}
     \begin{tabular}{l | l l }
-        Algorithm / $(k,d)$ & $(3,3)$ & $(3,5)$ \\ \hline
-        & \multicolumn{2}{c}{Mixture} \\
+        Algorithm / $(k,\ell)$ & $(3,3)$ & $(3,5)$ \\ \hline
+        & \multicolumn{2}{c}{Mixture model} \\
         EM                    & 0.51 & 0.72 \\
         Spectral              & 0.68 & 0.80 \\
-        Measurements  & 0.70 & 0.80 \\
+        Oracle                & 0.70 & 0.80 \\ \hline
         & \multicolumn{2}{c}{HMM} \\
         EM                    & 0.42 & 0.62  \\
         Spectral              & 0.45 & 0.64  \\
-        Measurements  & 0.47 & 0.73
+        Oracle                & 0.47 & 0.73
     \end{tabular}
     \caption{Micro-averaged accuracy.}
     \label{tab:errors}
@@ -51,20 +60,21 @@ latent measurements, $\E[\phi(x,h)]$, were observed.
     \caption{Prediction accuracy.}
     \label{fig:measurements}
   \end{subfigure}
+  \caption{Experimental results.  Spectral: using latent moments estimated from
+  spectral decomposition.  Oracle: using expected moments under the true
+  parameters.}
 \end{figure}
 
 %\Fig{figures/measurements}{0.3}{measurements}{Prediction Accuracy}
 
-%\reffig{measurements}
-The figure
+\reffig{measurements}
 shows the prediction error of the parameters
-micro-averaged over the different data and models.  First, as we get more
-measurements, prediction error decreases.  Second,
-learning from only the emissions moments works comparably
+micro-averaged over the different data and models.  First, as we use
+more expected latent moments (oracle), prediction error decreases.  Second,
+learning from only the emissions moments is comparable
 to using emissions and transitions, verifying the fact that
-we can get leverage from partial information.\footnote{
-These numbers are high releative because they use empirical moments
-whereas the curve is based on expected moments.}
+we can effectively leverage from partial information.\footnote{
+These errors are high relative to the oracle due to sampling error.}
 
 %For comparison, we have
 %included the accuracy achieved using the method of moments estimation procedure
@@ -81,9 +91,6 @@ whereas the curve is based on expected moments.}
 % - For purposes of illustration, we looked at 10 different hmms with
 % parameters $K=3$, $D=5$ and $N=10^5$ samples. We ran each experiment for
 % 10 different data samples and report the micro-averages.
-
-% Could it be effective in practice?
-\paragraph{General results}
 
 %\begin{table}
 %    \label{tab:errors}
@@ -118,15 +125,6 @@ whereas the curve is based on expected moments.}
 %    \end{tabular}
 %    \caption{Micro-averaged Errors.}
 %\end{table}
-
-%Having shown that measurements can help the task of parameter estimation, we
-The table above shows results for the mixture model and HMM.
-For each row, we report prediction accuracy
-over 5 different models with the specified number of parameters and 5 random
-samples of $10,000$ instances from the model. 
-We see that using measurements recovered from spectral decomposition
-helps significantly over EM, sometimes matching
-using the true expected measurements.
 
 %In the table, we compare randomly initialized EM with EM initialized using (a)
 %empirical measurements estimated with the method of moments and (b) fully

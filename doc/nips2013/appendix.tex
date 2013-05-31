@@ -84,11 +84,14 @@ similar to our treatment of HMMs plus unshuffling factorization.
 
 \subsection{Experiments}
 
+Table~\ref{tab:errorsa} shows the full set of results for the mixture
+model and HMM.
+
 \begin{table}
-    \label{tab:errors}
+\begin{center}
     \begin{tabular}{l | l l | l l l }
-        Algorithm & $k$ & $d$ & Accuracy & $\Delta \hat \E[\phi(x,h)]$ & Log Likelihood \\ \hline
-        & \multicolumn{2}{|c|}{Mixtures} & & & \\ \hline
+        Algorithm & $k$ & $\ell$ & Accuracy & $\Delta \hat \E[\phi(x,h)]$ & Log Likelihood \\ \hline
+        & \multicolumn{2}{|c|}{Mixture model} & & & \\ \hline
         \multirow{3}{*}{EM} 
         & 3 & 2 & 0.65 (+/- 0.01) & 1.23 & -3.72 \\
         & 3 & 3 & 0.51 (+/- 0.06) & 1.81 & -4.21\\
@@ -97,11 +100,11 @@ similar to our treatment of HMMs plus unshuffling factorization.
         & 3 & 2 & 0.80 (+/- 0.09) & 0.23 & -3.54 \\
         & 3 & 3 & 0.68 (+/- 0.10) & 1.01 & -3.76 \\
         & 5 & 2 & 0.80 (+/- 0.05) & 0.18 & -5.04 \\ \hline
-        \multirow{3}{*}{100\% Measurements} 
+        \multirow{3}{*}{Oracle} 
         & 3 & 2 & 0.80 (+/- 0.08) & 0.01& -3.54 \\
         & 3 & 3 & 0.70 (+/- 0.11) & 0.02& -3.87 \\
         & 5 & 2 & 0.80 (+/- 0.05) & 0.01& -5.03 \\ \hline
-        & \multicolumn{2}{|c|}{HMMs} & & & \\ \hline
+        & \multicolumn{2}{|c|}{HMM} & & & \\ \hline
         \multirow{3}{*}{EM} 
 & 3 & 2 & 0.64 (+/- 0.10) & 1.71 & -4.51 \\  
 & 3 & 3 & 0.42 (+/- 0.05) & 2.41 & -6.09 \\  
@@ -110,12 +113,12 @@ similar to our treatment of HMMs plus unshuffling factorization.
 & 3 & 2 & 0.67 (+/- 0.07) & 2.59 & -3.71 \\ 
 & 3 & 3 & 0.45 (+/- 0.08) & 4.96 & -4.36 \\ 
 & 5 & 2 & 0.64 (+/- 0.10) & 3.43 & -5.31 \\ \hline
-        \multirow{3}{*}{100\% Measurements} 
+        \multirow{3}{*}{Oracle} 
 & 3 & 2 & 0.71 (+/- 0.07) & 0.39 & -4.64 \\ 
 & 3 & 3 & 0.47 (+/- 0.07) & 1.53 & -5.85 \\ 
 & 5 & 2 & 0.73 (+/- 0.07) & 0.39 & -6.16 \\ \hline
     \end{tabular}
-    \caption{Micro-averaged Errors.}
+    \caption{Micro-averaged results for various models, methods.}
+    \label{tab:errorsa}
+\end{center}
 \end{table}
-
-
