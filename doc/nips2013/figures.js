@@ -19,8 +19,8 @@ _).margin(100, 20).center();
 prez.addSlide(simpleModels.id('simpleModels'));*/
 
 directedModels = table(
-  [mixtureModel(true), hmm({directed: true, len: 4}), factorialMixtureModel(true)],
-  ['(a) Mixture model', '(b) Hidden Markov model', '(c) Factorial mixture model'],
+  [mixtureModel(true), hmm({directed: true, len: 4})],
+  ['(a) Mixture model', '(b) Hidden Markov model'],
 _).margin(100, 20).center();
 prez.addSlide(directedModels.id('directedModels'));
 
@@ -38,22 +38,16 @@ generalModels = table(
 _).margin(100, 20).center();
 prez.addSlide(generalModels.id('generalModels'));
 
-/*factorialModels = table(
-  [factorialMixtureModel(), factorialHMM()],
-  ['(a) Factorial mixture model', '(b) Factorial HMM'],
-_).margin(50, 20).center();
-prez.addSlide(factorialModels.id('factorialModels'));*/
-
-factorialModels = table(
+model = table(
   [factorialMixtureModel(false), unshuffle()],
   ['(a) Factorial mixture model', '(b) Unshuffling factorization'],
 _).margin(50, 20).center();
-prez.addSlide(factorialModels.id('factorialModels'));
+prez.addSlide(model.id('factorialMixtureModel'));
 
-factorialHMM = table(
-  [factorialHMM()],
-  ['(a) Factorial HMM'],
+factorialModels = table(
+  [factorialMixtureModel(true), factorialHMM()],
+  ['(a) Factorial mixture model', '(b) Factorial HMM'],
 _).margin(50, 20).center();
-prez.addSlide(factorialHMM.id('factorialHMM'));
+prez.addSlide(factorialModels.id('factorialModels'));
 
 prez.writePdf({outPrefix: 'figures', combine: false});

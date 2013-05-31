@@ -8,7 +8,8 @@ and let $\phi_c(z_c) \in \R^d$ be the feature map for each $c \in C$.
 In this paper, we will consider both directed and undirected models over $z$.
 In the undirected case, we define the standard globally-normalized exponential family model:
 \begin{align}
-  p_\theta(z) = \exp\{ \phi(z)^\top\theta - A(\theta) \}, \aside{undirected}
+  \label{eqn:undirectedSetup}
+  p_\theta(z) = \exp\{ \phi(z)^\top\theta - A(\theta) \},
 \end{align}
 where $\phi(z) \eqdef \sum_{c \in C} \phi_c(z_c) \in \R^d$ is the global feature vector, $\theta \in \R^d$ is the parameter vector,
 and $A(\theta) = \log \int \exp\{\phi(z)^\top\theta\} dz$ is the global log-partition function.

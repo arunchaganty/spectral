@@ -3,33 +3,34 @@
 \section{Directed models}
 \label{sec:directedModels}
 
-In the directed case, we assume a directed acyclic graph over $V$,
+We have so far focused on undirected models for simplicity,
+but our techniques also apply to directed models in which each
+local conditional distribution is a log-linear model.
+
+The setting is as follows:~Assume we have a directed acyclic graph over
+nodes $V$,
 and define $\pi(j) \subset V$ to be the parents of each node $j \in V$.
-Next, define a model as a product of locally-normalized models:
+Define the joint distribution as a product of locally-normalized models:
 \begin{align}
   p_\theta(z) = \prod_{j \in V} p_\theta(z_j \mid z_{\pi(j)}), \quad\quad
   p_\theta(z_j \mid z_{\pi(j)}) = \exp \{ \phi_j(z_j, z_{\pi(j)})^\top\theta - A_j(\theta; z_{\pi(j)}) \}.
 \end{align}
 Here, each local model has its own local features $\phi_j(z_j, z_{\pi(j)})$
 and its own local log-partition function $A(\theta; z_{\pi(j)})$, which depends on values of its parent.
-To consolidate notation,
-define $\phi(z) = \sum_{j \in V} \phi(z_j, z_{\pi(j)})$
+To consolidate notation with \refeqn{undirectedSetup},
+define the sum of all the feature vectors
+$\phi(z) = \sum_{j \in V} \phi(z_j, z_{\pi(j)})$
 and $A(\theta; z) = \sum_{j \in V} A_j(\theta; z_{\pi(j)})$,
 so that:
 \begin{align}
-  p_\theta(z) \eqdef \exp\{ \phi(z)^\top\theta - A(\theta; z) \}. \aside{directed}
+  p_\theta(z) \eqdef \exp\{ \phi(z)^\top\theta - A(\theta; z) \}.
 \end{align}
-
-In this section, we describe parameter estimation in other models using our
-framework.
-a two-layer sigmoid belief network \cite{saul96sigmoid}.
 
 \subsection{Directed mixture model}
 
-In \refsecs{threeViewMixtureModel}{generalModels}, we focused for simplicity on
-undirected models, but we parameter estimation in directed models is also
-possible.
-In the directed mixture model, we have
+In this section, we demonstrate parameter estimation for the directed mixture
+model (\reffig{directedModels}(a)).  This is the usual mixture model, defined
+as follows:
 \begin{align}
 p_\theta(x,h) = p_\theta(h) \prod_{j=1}^3 p_\theta(x_j \mid h),
 \end{align}
@@ -48,10 +49,35 @@ Note that in directed models, the log-partition functions depends on the parent 
 Having recovered the marginal distribution over $\pi$, we can compute the desired expectation.
 Again, this problem is convex.
 
-\subsection{Factorial hidden Markov models}
-
-\Fig{figures/factorialHMM}{0.7}{factorialHMM}{
-Parameter in a factorial HMM.
+\Fig{figures/directedModels}{0.3}{directedModels}{
+Various directed versions of the undirected models.
 }
 
-\cite{ghahramani97fhmm}
+\Fig{figures/factorialModels}{0.3}{factorialModels}{
+Directed factorial models.
+}
+
+\subsection{Other models}
+
+\reffig{directedModels} shows examples of the directed models
+for which we have already derived undirected estimates.
+In general, the aggregation
+and factorization steps (Steps 1 and 2) in \refsec{threeViewMixtureModel}
+remain the same as the undirected cases since these steps
+only rely on the conditional independence structure of the models,
+not particular parametrizations.
+
+\subsection{Factorial models}
+
+For factorial models, the directed and undirected version do differ in their
+conditional independence statements.
+For example, consider the 
+the directed factorial mixture model,
+also known as a sigmoid belief network \citep{saul96sigmoid},
+in \reffig{factorialModels}(a).
+Here ,$h_1$ and $h_2$ are marginally independent in the directed
+case but conditionally indepdent in the undirected case.
+However, since our algorithm treats $(h_1,h_2)$ as a composite variable $c$
+anyway, it is not sensitive to these differences.
+The factorial HMM \cite{ghahramani97fhmm} is similar and can be handled
+similar to our treatment of HMMs plus unshuffling factorization.

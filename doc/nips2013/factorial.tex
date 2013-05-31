@@ -3,7 +3,7 @@
 
 So far, we have relied on the existence of a bottleneck hidden variable $h_j$ on which
 we have three conditionally independent views $x_{j_1},x_{j_2},x_{j_3}$.  Such bottlenecks do not always
-exist; for example, in \reffig{factorialModels}(a), neither $h_1$ nor $h_2$ is
+exist; for example, in \reffig{factorialMixtureModel}(a), neither $h_1$ nor $h_2$ is
 a bottleneck.
 In this section, we present a technique to handle such models.
 We start by creating a composite latent variable $c$ which is in
@@ -14,7 +14,7 @@ composite.  We develop a new algorithm $\UnshuffleFactorize$
 to restore the identities and place constraints on the original
 parameters.
 
-\Fig{figures/factorialModels}{0.3}{factorialModels}{The factorial mixture model (a)
+\Fig{figures/factorialMixtureModel}{0.3}{factorialMixtureModel}{The factorial mixture model (a)
 does not have three-view bottlenecks, so we first identify composite bottlenecks,
 and then perform an \emph{unshuffling factorization} (b):
 Given known composite conditional means
@@ -28,7 +28,8 @@ a constraint for each $B_c$.
 
 We focus on the restricted Boltzmann machine
 \cite{smolensky86rbm,salakhutdinov09softmax},
-which we refer to as an undirected factorial mixture model.
+which we refer to as an undirected factorial mixture model
+(the directed version is a two-layer sigmoid belief network \cite{saul96sigmoid}).
 Let $h = (h_1, \dots, h_s) \in [\nh]^s$ be the latent variables (sources)
 and $x = (x_1, x_2, x_3) \in [\nphix]^3$ be the observed variables.
 The joint model probability is as follows:
@@ -69,7 +70,7 @@ log-normalization constant (a scalar) that sums over possible values $e$ of $x_j
 
 Note that there is a combinatorial dimension to this problem since the association between
 columns of $L$ and combinations of $\{ v_{ia} \}$ is unknown.
-For example, example (\reffig{factorialModels}(b)),
+For example, example (\reffig{factorialMixtureModel}(b)),
 consider $s=2$ sources, each taking on $k=3$ values
 (for convenience, let $f_a = v_{1a}$ and $g_b = v_{2b}$).
 The following algorithm, $\UnshuffleFactorize$,
