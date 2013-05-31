@@ -211,4 +211,20 @@ public class Misc {
     return (temp);
   }
 
+
+  public static void printMemory() {
+        try{
+        System.gc();
+        Thread.currentThread().sleep(100);
+        System.runFinalization();
+        Thread.currentThread().sleep(100);
+        System.gc();
+        Thread.currentThread().sleep(100);
+        System.runFinalization();
+        Thread.currentThread().sleep(100);
+        } catch(InterruptedException e) {}
+        LogInfo.logs( "Memory: %dMb (%dMb free)", (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())/(1024 * 1024), Runtime.getRuntime().freeMemory()/(1024 * 1024) );
+  }
+
+
 }

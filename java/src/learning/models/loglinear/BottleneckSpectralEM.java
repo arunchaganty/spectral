@@ -15,6 +15,7 @@ import learning.linalg.*;
 import learning.spectral.TensorMethod;
 
 import static learning.models.loglinear.Models.*;
+import static learning.Misc.*;
 
 /**
  * NIPS 2013
@@ -408,20 +409,6 @@ public class BottleneckSpectralEM implements Runnable {
 
     // Populate |value| and |counts| based on the current state.
     public abstract void infer(boolean needGradient);
-  }
-
-  public static void printMemory() {
-        try{
-        System.gc();
-        Thread.currentThread().sleep(100);
-        System.runFinalization();
-        Thread.currentThread().sleep(100);
-        System.gc();
-        Thread.currentThread().sleep(100);
-        System.runFinalization();
-        Thread.currentThread().sleep(100);
-        } catch(InterruptedException e) {}
-        LogInfo.logs( "Memory: %dMb (%dMb free)", (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())/(1024 * 1024), Runtime.getRuntime().freeMemory()/(1024 * 1024) );
   }
 
   class GlobalTerm extends ObjectiveTerm {

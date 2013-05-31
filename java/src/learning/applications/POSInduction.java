@@ -24,6 +24,7 @@ import static fig.basic.LogInfo.*;
 
 import java.io.*;
 import java.util.*;
+import static learning.Misc.*;
 
 /**
  * Perform POS induction, aka HMM learning.
