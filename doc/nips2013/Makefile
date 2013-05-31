@@ -5,7 +5,7 @@ texfiles := $(wildcard *.tex) $(wildcard figures/*.tex)
 sfig:
 	git clone https://github.com/percyliang/sfig
 
-figures: sfig figures.js utils.js
+figures: sfig figures.js utils.js sfig/internal/sfig.js
 	node figures.js
 	touch figures
 

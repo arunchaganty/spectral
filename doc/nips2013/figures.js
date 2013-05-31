@@ -1,4 +1,5 @@
 require('./sfig/internal/sfig.js');
+require('./sfig/external/seedrandom.js');
 require('./sfig/internal/metapost.js');
 require('./utils.js');
 
@@ -18,9 +19,15 @@ generalModels = table(
 _).margin(100, 20).center();
 prez.addSlide(generalModels.id('generalModels'));
 
-factorialModels = table(
+/*factorialModels = table(
   [factorialMixtureModel(), factorialHMM()],
   ['(a) Factorial mixture model', '(b) Factorial HMM'],
+_).margin(50, 20).center();
+prez.addSlide(factorialModels.id('factorialModels'));*/
+
+factorialModels = table(
+  [factorialMixtureModel(), unshuffle()],
+  ['(a) Factorial mixture model', '(b) Unshuffling factorization'],
 _).margin(50, 20).center();
 prez.addSlide(factorialModels.id('factorialModels'));
 
