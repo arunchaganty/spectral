@@ -1,9 +1,9 @@
 % Spectral Experts
 % Arun Chaganty, Percy Liang
 
-\newcommand{\tp}[1] {^{\otimes #1}}
-\newcommand{\opX} {\mathfrak{X}}
-\newcommand{\cvec} {\textrm{cvec}}
+\newcommand{\tp}[1]{^{\otimes #1}}
+\newcommand{\opX}{\mathfrak{X}}
+\newcommand{\cvec}{\textrm{cvec}}
 
 # Introduction
 
@@ -19,13 +19,6 @@
 
 # Background
 
-## Method of Moments
-
-* Let us study how method of moment estimators work in general.
-* Consider a moment map $\mathcal{M}$ that maps the parameters $\theta$ to the moments $m$. For a Gaussian, we have that $\mathcal{M} = (\mu, \sigma^2)$.
-* In general, we will compute the inverse of the moment map to learn the parameters from the sample estimates.
-* By the central limit theorem, our sample estimates of the moments converge at a $1/\sqrt{n}$ rate, so we expect that our parameters will also converge at this rate.
-
 ## Mixture of Regressions
 
 * The mixture of linear regressions model defines a conditional distribution over a response $y \in \Re$ given covariates $x \in \Re^d$.
@@ -35,6 +28,14 @@
     iii) Set $y = \beta_h^T x + \epsilon$, where $\{\beta_h\}_{h=1}^{k}$ are the conditional means of the regression coefficients.
 * The parameters that we would like to learn from this model are $\pi$ and $B = [ \beta_1 | ... | \beta_k ]$.
 * The challenge in our scenario is that the moments of the data give us very filtered information of the parameters.
+
+## Method of Moments
+
+* Let us study how method of moment estimators work in general.
+* Consider a moment map $\mathcal{M}$ that maps the parameters $\theta$ to the moments $m$. For a Gaussian, we have that $\mathcal{M} = (\mu, \sigma^2)$.
+* In general, we will compute the inverse of the moment map to learn the parameters from the sample estimates.
+* By the central limit theorem, our sample estimates of the moments converge at a $1/\sqrt{n}$ rate, so we expect that our parameters will also converge at this rate.
+
 
 # Algorithm
 

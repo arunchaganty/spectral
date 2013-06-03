@@ -1,0 +1,57 @@
+% Text
+\newcommand{\todo}[1]{\hl{\textbf{TODO:} #1}}
+\newcommand{\citationneeded} {\ensuremath{^{[\textrm{citation needed}]}}}
+\providecommand{\comment}[1]{%
+  \text{\phantom{(#1)}} \tag{#1}
+}
+
+
+%Math Operators
+%\DeclareMathOperator {\argmax} {argmax}
+%\DeclareMathOperator {\argmin} {argmin}
+\DeclareMathOperator {\sgn} {sgn}
+\DeclareMathOperator {\trace} {tr}
+\DeclareMathOperator{\E} {\mathbb{E}}
+\DeclareMathOperator{\Var} {Var}
+\DeclareMathOperator{\diag} {diag}
+\DeclareMathOperator{\triu} {triu}
+\DeclareMathOperator{\mult} {Multinomial}
+\DeclareMathOperator{\normalt} {Normal}
+\DeclareMathOperator{\cvec} {cvec}
+\DeclareMathOperator{\vvec} {vec}
+
+\newcommand{\ud}{\, \mathrm{d}}
+\newcommand{\diff}[1] {\frac{\partial}{\, \partial #1}}
+\newcommand{\difff}[2] {\frac{\partial^2}{\, \partial #1\, \partial #2}}
+\newcommand{\diffn}[2] {\frac{\partial^{#2}}{\, \partial {#1}^{#2}}}
+\newcommand{\tuple}[1] {\langle #1 \rangle}
+\newcommand{\innerprod}[2] {\langle #1, #2 \rangle}
+
+\newtheorem{proposition}{Proposition}
+\newtheorem{condition}{Condition}
+
+% Constants/etc.
+\renewcommand{\Re} {\mathbb{R}}
+\newcommand{\Cm} {\mathbb{C}}
+\newcommand{\Qm} {\mathbb{Q}}
+\newcommand{\half} {\frac{1}{2}}
+
+\newcommand{\inv}[1] {{#1}^{-1}}
+
+\newcommand{\normal}[2] {\mathcal{N}(#1, #2)}
+\newcommand{\mL} {\mathcal{L}}
+
+\newcommand\eqdef{\ensuremath{\stackrel{\rm def}{=}}} % Equal by definition
+\newcommand\refeqn[1]{(\ref{eqn:#1})}
+\newcommand\sD{\ensuremath{\mathcal{D}}}
+\newcommand\sM{\ensuremath{\mathcal{M}}}
+\newcommand\sE{\ensuremath{\mathcal{E}}}
+\newcommand\refapp[1]{Appendix~\ref{sec:#1}}
+\newcommand\refthm[1]{Theorem~\ref{thm:#1}}
+\newcommand\refprop[1]{Proposition~\ref{prop:#1}}
+\newcommand\sigmamin{\sigma_\text{\rm min}}
+\newcommand\sigmamax{\sigma_\text{\rm max}}
+\newcommand\op{{\text{\rm op}}}
+\newcommand\BP{\ensuremath{\mathbb{P}}}
+\newcommand\reflem[1]{Lemma~\ref{lem:#1}}
+\newcommand{\Lop}{{\textrm{op}}}

@@ -1,0 +1,14 @@
+\newcommand{\sidenote}[1]{\begin{itemize} \item #1 \end{itemize}}
+\newcommand{\hlmath}[1]{\textrm{\color{blue}\ensuremath{#1}}}
+
+\pgfdeclarelayer{bg}
+\pgfsetlayers{bg,main}
+\newcommand{\obj}[2]{
+    \node at #1 {
+    \begin{minipage}{6cm}
+      #2
+    \end{minipage}
+    }
+}
+\tikzstyle{loop}=[smooth,dashed,in=-90,out=-90,looseness=0.75]
+

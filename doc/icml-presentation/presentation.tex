@@ -1,0 +1,230 @@
+\documentclass[xcolor={svgnames}]{beamer}
+
+\setbeameroption{hide notes} 
+
+%\usetheme{NLP}
+\usepackage{beamerthemesplit}
+\usetheme{default}
+\useoutertheme{infolines}
+
+\usepackage{graphicx}
+\usepackage{lmodern}
+
+\usepackage{soul}
+
+\usepackage{amsmath,amsthm,amssymb}   
+
+\usepackage{listings}
+
+\usepackage{algorithm,algorithmic}
+
+\usepackage{tikz}
+\usetikzlibrary{positioning,shapes,shadows,arrows}
+
+\input{macros}
+\input{slide-macros}
+\input{spectral-macros}
+
+% these will be used later in the title page
+\title[Spectral Experts]{Spectral Experts for Estimating Mixtures of Linear Regressions}
+\author[Chaganty, Liang]{%
+    Arun Tejasvi Chaganty\\
+    Percy Liang
+}
+\institute{Stanford University}
+
+\begin{document}
+
+% "Beamer, do the following at the start of every section"
+\AtBeginSection[] 
+{%
+\begin{frame}<beamer> 
+\frametitle{Outline} % make a frame titled "Outline"
+\tableofcontents[currentsection]  % show TOC and highlight current section
+\end{frame}
+}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}
+  \frametitle{Discriminative Latent Variable Models}
+
+  \begin{itemize}
+    \item {\bf Discriminative Latent Variable Models are useful, but hard to learn.}
+    \item Discriminative LVMs combine the predictive accuracy with compact expressiveness.
+    \item They have been used in several applications, e.g.\ object recognition, syntactic parsing, machine translation, etc.
+    \item Learning parameters for these models is hard because they have non-convex likelihood functions.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Goal: Consistent Parameter Estimation.}
+
+  \begin{itemize}
+    \item {\bf We would like to develop efficient consistent estimators for discriminative LVMS.}
+    \item Past approaches rely on local optimization, which are susceptible to local optima.
+    \item And they don't just go away with more data.
+    \item Recently, there has been work on consistent parameter
+      estimation for generative LVMS\@. We'd like to extend their work to
+      the discriminative case.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Mixture of Linear Regressions}
+
+  \begin{itemize}
+    \item {\bf First step, consider a simple discriminative model, mixture of linear regressions.}
+    \item The mixture of linear regressions model defines a conditional distribution over a response $y \in \Re$ given covariates $x \in \Re^d$.
+     \item The generative procedure is as follows,
+       \begin{enumerate}
+        \item Draw a mixture component $h \in [k] \sim Mult(\pi)$, where $\pi = [\pi_1 | \dots | \pi_k]$ defines the mixture proportions.
+        \item Draw the noise $\epsilon \sim \mathcal{E}$, where $\mathcal{E}$ is the noise distribution.
+        \item Set $y = \beta_h^T x + \epsilon$, where $\{\beta_h\}_{h=1}^{k}$ are the conditional means of the regression coefficients.
+       \end{enumerate}
+    \item The parameters that we would like to learn from this model are $\pi$ and $B = [ \beta_1 | \cdots | \beta_k ]$.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Method of Moments.}
+
+  \begin{itemize}
+    \item {\bf We approach the problem by using the method of moments on three conditional views. }
+    \item Consider a moment map $\mathcal{M}$ that maps the parameters $\theta$ to the moments $m$. For a Gaussian, we have that $\mathcal{M} = (\mu, \sigma^2)$.
+    \item In general, we will compute the inverse of the moment map to learn the parameters from the sample estimates.
+    \item By the central limit theorem, our sample estimates of the moments converge at a $1/\sqrt{n}$ rate, so we expect that our parameters will also converge at this rate.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Method of Moments for Generative LVMs.}
+
+  \begin{itemize}
+    \item {\bf We can recover the means of a generative LVM by exploiting their symmetric structure. }
+    \item 
+    \begin{align*}
+    M_2 &= \sum_{h=1}^k \pi_h \beta_h\tp{2} & M_3 &= \sum_{h=1}^k \pi_h \beta_h\tp{3}.
+  \end{align*}
+    \item In general, $M_2$ is insufficient to identify the model, because it is invariant to rotations of $B$. 
+    \item If the $\beta_h$ were orthogonal, then the eigenvectors and eigenvalues of $M_3$ would give us the answer. 
+    \item In general, we need both $M_2$ and $M_3$. We can use the whitening transformation for $M_2$ to whiten $M_3$ such that it has a orthogonal decomposition.
+\item The robust tensor power method by \cite{AnandkumarHsuGe2012} find stable eigenvectors.
+  \item In the discriminative case, we do not observe $M_2$ directly from the data, but rather, as we'll see, linear projections of them.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Recovering the Moments.}
+  \begin{itemize}
+    \item {\bf The powers of the response variables $y^p$ are linear measurements of the moments of the parameters $M_p$!}
+    \item As noted earlier, the first problem we run into is that we can't observe the moments of the parameters $B$ and $\pi$ directly!
+\item However, observe that 
+\begin{align}
+  y &= \innerp{\beta_h}{x} + \epsilon \\
+    &= \innerp{M_1}{x} + \underbrace{{\beta_h - M_1}{x} + \epsilon }_{\textrm{noise}},
+\end{align}
+  where $M_1 = \sum_{h=1}^k \pi_h \beta_h$, the mean regression coefficient. 
+  \item We note that while the noise term is dependent on $x$, it has a zero-mean. Thus, we could potentially recover $M_1$ through regression.
+\item Similarly, we can cast the remaining two terms as regression problems.
+
+\item An additional fact that we can exploit is that both $M_2$ and $M_3$ are low rank, so we can use low-rank regression to recover estimates $\hat M_2$ and $\hat M_3$ efficiently from data.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Rates for Recovery}
+  \begin{itemize}
+    \item {\bf The algorithm is consistent, and requires $O(?)$ samples.}
+\item The rate of convergence for the spectral experts algorithm to the
+true parameters breaks into two parts; the rates for learning the
+moments, which feeds into the rates for learning the parameters.
+\item For low rank regression, we have the following bound on recovery by (Tomioka2011);
+  $$ \| \hat M_p - M_p \|_F \le \frac{32 \lambda^{(p)}_n \sqrt{k}}{\kappa(\opX_p)}, $$
+where $\kappa(\opX_p)$ is the (restricted) strong convexity constant, and $\lambda^{(p)} > \|\opX^*_p(\eta)\|$. 
+\item Because we assume our noise is bounded, it is easy to show that the error concentrates. 
+\item In the tensor recovery case, we will need to whiten $M_3$ before
+applying the tensor decomposition and unwhiten it afterwards; this
+modifies the error bounds slightly.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Experimental Results}
+  \begin{itemize}
+    \item {\bf Spectral Experts provides a good initialization to EM.}
+      \item We simulated the performance of spectral experts and compared it to EM. 
+\item In a non-trivial number of cases, EM did not converge to the right parameters and got stuck in local optima.
+\item The parameters estimated by the spectral method were not very good even with $O(10^5)$ samples.
+\item However, EM initialized with these parameters did extremely well. 
+\item This finding that spectral methods should be a good initialization for EM is not surprising.
+  \begin{itemize}
+    \item The biggest sell for spectral methods is that they give a global guarantee on where the parameters are.
+    \item The parameters might not be at the global optima, but will hopefully lie in the potential well around it.
+    \item EM will then converge to the global optima.
+  \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Conclusions}
+  \begin{itemize}
+    \item {\bf We can learn the parameters of conditional models where the observed moments on their own have such sparse information.}
+    \item The key intuition is that we could construct a regression problem to learn the moments of the parameters from their projections onto the data.
+    \item We found that while the parameters learned this way are usually not better than those learned via local methods like EM, etc., they are a good way to initialize these local methods.
+  \end{itemize}
+\end{frame}
+
+\end{document}
+
+% TikZ
+%\begin{tikzpicture}
+%  \node (img1) at (0,0) {\includegraphics[height=0.6\textheight,width=0.4\linewidth,keepaspectratio]{}};
+%\end{tikzpicture}
+
+% Notes 
+% \note[item]{}
+
+% 2-column
+% \begin{columns}
+%   \begin{column}{0.48\textwidth}
+%     \begin{itemize}
+%         \item
+%     \end{itemize}
+%   \end{column}
+%   \hfill
+%   \begin{column}{0.48\textwidth}
+%     \begin{itemize}
+%         \item
+%     \end{itemize}
+%   \end{column}
+% \end{columns}
+
+
+\end{document}
+
+% TikZ
+%\begin{tikzpicture}
+%  \node (img1) at (0,0) {\includegraphics[height=0.6\textheight,width=0.4\linewidth,keepaspectratio]{}};
+%\end{tikzpicture}
+
+% Notes 
+% \note[item]{}
+
+% 2-column
+% \begin{columns}
+%   \begin{column}{0.48\textwidth}
+%     \begin{itemize}
+%         \item
+%     \end{itemize}
+%   \end{column}
+%   \hfill
+%   \begin{column}{0.48\textwidth}
+%     \begin{itemize}
+%         \item
+%     \end{itemize}
+%   \end{column}
+% \end{columns}
+
