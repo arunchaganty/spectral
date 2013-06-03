@@ -1,0 +1,124 @@
+\appendix
+
+\section{Directed models}
+\label{sec:directedModels}
+
+We have so far focused on undirected models for simplicity,
+but our techniques also apply to directed models in which each
+local conditional distribution is a log-linear model.
+
+The setting is as follows:~Assume we have a directed acyclic graph over
+nodes $V$,
+and define $\pi(j) \subset V$ to be the parents of each node $j \in V$.
+Define the joint distribution as a product of locally-normalized models:
+\begin{align}
+  p_\theta(z) = \prod_{j \in V} p_\theta(z_j \mid z_{\pi(j)}), \quad\quad
+  p_\theta(z_j \mid z_{\pi(j)}) = \exp \{ \phi_j(z_j, z_{\pi(j)})^\top\theta - A_j(\theta; z_{\pi(j)}) \}.
+\end{align}
+Here, each local model has its own local features $\phi_j(z_j, z_{\pi(j)})$
+and its own local log-partition function $A(\theta; z_{\pi(j)})$, which depends on values of its parent.
+To consolidate notation with \refeqn{undirectedSetup},
+define the sum of all the feature vectors
+$\phi(z) = \sum_{j \in V} \phi(z_j, z_{\pi(j)})$
+and $A(\theta; z) = \sum_{j \in V} A_j(\theta; z_{\pi(j)})$,
+so that:
+\begin{align}
+  p_\theta(z) \eqdef \exp\{ \phi(z)^\top\theta - A(\theta; z) \}.
+\end{align}
+
+\subsection{Directed mixture model}
+
+In this section, we demonstrate parameter estimation for the directed mixture
+model (\reffig{directedModels}(a)).  This is the usual mixture model, defined
+as follows:
+\begin{align}
+p_\theta(x,h) = p_\theta(h) \prod_{j=1}^3 p_\theta(x_j \mid h),
+\end{align}
+where
+$p_\theta(h) \eqdef \exp\{\phiprior(h)^\top\theta - \Aprior(\theta)\}$
+and
+$p_\theta(x_j \mid h) \eqdef \exp\{\philocal(x_j, h)^\top\theta - \Alocal(\theta; h)\}$.
+
+Consequently, the joint log-likelihood is:
+\begin{align}
+  L(\theta) = {\underbrace{\E[\phi(x,h)]}_{\mu}}^\top\theta - \E[A(\theta; z)], \quad
+  \E[A(\theta, z)] = \Aprior(\theta) + 3 \sum_{h \in [\nh]} \pi_h \Alocal(\theta;h).
+\end{align}
+
+Note that in directed models, the log-partition functions depends on the parent variables (in this case, $h$).
+Having recovered the marginal distribution over $\pi$, we can compute the desired expectation.
+Again, this problem is convex.
+
+\Fig{figures/directedModels}{0.3}{directedModels}{
+Various directed versions of the undirected models.
+}
+
+\Fig{figures/factorialModels}{0.3}{factorialModels}{
+Directed factorial models.
+}
+
+\subsection{Other models}
+
+\reffig{directedModels} shows examples of the directed models
+for which we have already derived undirected estimates.
+In general, the aggregation
+and factorization steps (Steps 1 and 2) in \refsec{threeViewMixtureModel}
+remain the same as the undirected cases since these steps
+only rely on the conditional independence structure of the models,
+not particular parametrizations.
+
+\subsection{Factorial models}
+
+For factorial models, the directed and undirected version do differ in their
+conditional independence statements.
+For example, consider the 
+the directed factorial mixture model,
+also known as a sigmoid belief network \citep{saul96sigmoid},
+in \reffig{factorialModels}(a).
+Here ,$h_1$ and $h_2$ are marginally independent in the directed
+case but conditionally indepdent in the undirected case.
+However, since our algorithm treats $(h_1,h_2)$ as a composite variable $c$
+anyway, it is not sensitive to these differences.
+The factorial HMM \cite{ghahramani97fhmm} is similar and can be handled
+similar to our treatment of HMMs plus unshuffling factorization.
+
+\subsection{Experiments}
+
+Table~\ref{tab:errorsa} shows the full set of results for the mixture
+model and HMM.
+
+\begin{table}
+\begin{center}
+    \begin{tabular}{l | l l | l l l }
+        Algorithm & $k$ & $\ell$ & Accuracy & $\Delta \hat \E[\phi(x,h)]$ & Log Likelihood \\ \hline
+        & \multicolumn{2}{|c|}{Mixture model} & & & \\ \hline
+        \multirow{3}{*}{EM} 
+        & 3 & 2 & 0.65 (+/- 0.01) & 1.23 & -3.72 \\
+        & 3 & 3 & 0.51 (+/- 0.06) & 1.81 & -4.21\\
+        & 5 & 2 & 0.72 (+/- 0.07) & 1.13 & -5.21\\ \hline
+        \multirow{3}{*}{Spectral} 
+        & 3 & 2 & 0.80 (+/- 0.09) & 0.23 & -3.54 \\
+        & 3 & 3 & 0.68 (+/- 0.10) & 1.01 & -3.76 \\
+        & 5 & 2 & 0.80 (+/- 0.05) & 0.18 & -5.04 \\ \hline
+        \multirow{3}{*}{Oracle} 
+        & 3 & 2 & 0.80 (+/- 0.08) & 0.01& -3.54 \\
+        & 3 & 3 & 0.70 (+/- 0.11) & 0.02& -3.87 \\
+        & 5 & 2 & 0.80 (+/- 0.05) & 0.01& -5.03 \\ \hline
+        & \multicolumn{2}{|c|}{HMM} & & & \\ \hline
+        \multirow{3}{*}{EM} 
+& 3 & 2 & 0.64 (+/- 0.10) & 1.71 & -4.51 \\  
+& 3 & 3 & 0.42 (+/- 0.05) & 2.41 & -6.09 \\  
+& 5 & 2 & 0.62 (+/- 0.09) & 1.60 & -6.47 \\  \hline
+        \multirow{3}{*}{Spectral} 
+& 3 & 2 & 0.67 (+/- 0.07) & 2.59 & -3.71 \\ 
+& 3 & 3 & 0.45 (+/- 0.08) & 4.96 & -4.36 \\ 
+& 5 & 2 & 0.64 (+/- 0.10) & 3.43 & -5.31 \\ \hline
+        \multirow{3}{*}{Oracle} 
+& 3 & 2 & 0.71 (+/- 0.07) & 0.39 & -4.64 \\ 
+& 3 & 3 & 0.47 (+/- 0.07) & 1.53 & -5.85 \\ 
+& 5 & 2 & 0.73 (+/- 0.07) & 0.39 & -6.16 \\ \hline
+    \end{tabular}
+    \caption{Micro-averaged results for various models, methods.}
+    \label{tab:errorsa}
+\end{center}
+\end{table}

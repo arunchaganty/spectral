@@ -1,13 +1,13 @@
 \section{Three-view mixture models}
 \label{sec:threeViewMixtureModel}
 
-\Fig{figures/simpleModels}{0.3}{simpleModels}{Three-view mixture models: conditioned on a latent variable $h \in [\nh]$,
-we have three conditionally independent observed variables.  We consider
-estimation for both directed (left) and undirected (right) versions.
-}
+\Fig{figures/mixtureModel}{0.3}{mixtureModel}{An (undirected) three-view
+mixture model:
+conditioned on a latent variable $h \in [\nh]$,
+the observed variables $x_1,x_2,x_3$ are conditionally independent.}
 
-In this section, we consider the simplest model to illustrate the form of our method.
-Consider the undirected mixture model model in \reffig{simpleModels}(a).
+In this section, we consider the simplest model to illustrate the form of our
+method.  Consider the undirected mixture model model in \reffig{mixtureModel}.
 We have one discrete latent variable $h \in [\nh]$ and
 three observed variables
 $x = (x_1, x_2, x_3) \in \sX_1 \times \sX_2 \times \sX_3 = \sX$
@@ -19,18 +19,19 @@ but it is possible to use different distributions (see \citet{anandkumar12moment
   p_\theta(x, h) \eqdef \exp \{ \phi(x, h)^\top\theta - A(\theta) \}, \quad\text{where} \, \phi(x, h) \eqdef \phiprior(h) + \sum_{j=1}^3 \philocal(x_j, h) \in \R^d.
 \end{align}
 
-In the following, we will detail the algorithm for producing a parameter
-estimate $D$.  For simplicity of exposition, we will assume we have an infinite
-amount of data and work with the population quantities.  Actual parameter
-estimates are constructed by simply plugging in empirical quantities.
+We will now describe the algorithm for producing a parameter
+estimate $\hat\theta$.  For simplicity of exposition, we will assume we have an infinite
+amount of data and work with population quantities.  Actual parameter
+estimates are constructed by simply plugging in the empirical versions.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Step 1: Compute observed moments (aggregation)}
 
-Rather than directly trying to connect the parameters $\theta$ to the data, we start
-bottom-up by considering what properties of the data we can measure.
-Let $\phix : \sX \mapsto \R^\ell$ denote a \emph{transformation function} (the requirement will be specified later),
-which will extract the properties of the observed variables $x$ relevant to $h$.
+%Rather than directly trying to connect the parameters $\theta$ to the data $D$,
+Let us start bottom-up by simply computing properties of the data.
+Let $\phix : \sX \mapsto \R^\ell$ denote a \emph{transformation function}
+(the requirement on $t$ will be specified later),
+which aims to extract properties of $x$ relevant to $h$.
 Define the \emph{observed moments} (analogous to those used in \cite{anandkumar12moments}):
 \begin{align}
   M_2 \eqdef \E[\phix(x_1) \otimes \phix(x_2)] \in \R^{\nphix \times \nphix}, \quad\quad
@@ -38,33 +39,35 @@ Define the \emph{observed moments} (analogous to those used in \cite{anandkumar1
 \end{align}
 Importantly, these quantities are easily estimated from data by taking empirical averages.
 
-\subsection{Step 2: Recover hidden moments (factorization)}
+\subsection{Step 2: Recover latent moments (factorization)}
 \label{sec:factorization}
 
 By exploiting the conditional independence structure of the model, the observed
 moments $M_2,M_3$ (which only reference the observed variables) admit a
-factorization in terms of the \emph{hidden moments}
-(which provides a window into the hidden variables).
+factorization in terms of the \emph{latent moments}
+(which provides a window into the latent variables) \cite{anandkumar12moments}.
 
 Define
-$\pi \eqdef (\BP[h=1], \dots, \BP[h=\nh])$ to be the marginal probabilities over the latent variable $h$,
+$\pi \eqdef (\BP[h=1], \dots, \BP[h=\nh])$ to be the marginal probabilities
+over $h$,
 and define the matrix $B \eqdef (\E[\phix(x_j) \mid h])_{h \in [\nh]} \in \R^{\ell \times k}$,
-where each column is the expected transformated data conditioned on $h$.
+where each column is the expected transformed data conditioned on $h$.
 
-Now, we can express the observed moments $(M_2,M_3)$ in terms of the hidden moments $(\pi,B)$:
+Now we can express the observed moments $(M_2,M_3)$ in terms of the latent moments $(\pi,B)$:
 \begin{align}
   M_2 = \sum_h \pi_h B_h \otimes B_h \in \R^{\nphix \times \nphix}, \quad\quad
   M_3 = \sum_h \pi_h B_h \otimes B_h \otimes B_h \in \R^{\nphix \times \nphix \times \nphix}.
 \end{align}
 \begin{assumption}
-  The hidden moments matrix $B \in \R^{\nphix \times \nh}$ has full column rank $\nh$.
+  The latent moments matrix $B \in \R^{\nphix \times \nh}$ has full column rank $\nh$.
 \end{assumption}
 
 \citep{anandkumar13tensor} presented a robust tensor power method, which we call $\TensorFactorize$,
 which converts consistent estimates of $(M_2,M_3)$ into consistent estimates of $(\pi, B)$ (up to permutation of the columns).
-In brief, algorithm first computes a whitening matrix $W \in \R^{\nphix \times \nh}$ such that $W^\top M_2 W = I$,
-and uses it to whiten $M_3$.  Then a robust tensor power method is applied to extract the eigenvectors of the whitened $M_3$,
-which correspond to columns of $B$.
+In brief, the algorithm first computes a whitening matrix $W \in \R^{\nphix \times \nh}$ such that $W^\top M_2 W = I_{k \times k}$,
+and uses it to whiten $M_3$.  Then a robust tensor power method is applied to
+extract the eigenvectors of the whitened $M_3$;
+unwhitening yields the columns of $B$.
 %\begin{lemma}[tensor factorization \citep{anandkumar13tensor}]
 %Let $B \in \R^{\nphix \times \nh}$ be a rank $k$ matrix.
 %Let $M_2 = \sum_h \pi_h B_h \otimes B_h \in \R^{\nphix \times \nphix}$ be a rank $k$ symmetric matrix.
@@ -73,7 +76,7 @@ which correspond to columns of $B$.
 %and returns consistent estimates of $(\pi, B)$ (up to permutation of the columns).
 %\end{lemma}
 
-We need to specify some conditions on the transformation function $\phix$
+We need to specify conditions on the transformation function $\phix$
 to ensure that enough information is retained to pinpoint the parameters later.
 The following condition characterizes $\phix$:
 \begin{property}
@@ -82,72 +85,67 @@ The following condition characterizes $\phix$:
   (\E[\philocal(x_j, h) \mid h])_{h \in [\nh]} \in \R^{d \times h}$ is a
   function of $B$.
 \end{property}
-Here, $C$ provide a view on the local features $\phi_L(x_j,h)$ which is more
-directly related to the model parameters \refeqn{mixtureModel}, whereas $B$ is
-what we have recovered so far.  Note that we couldn't recover $C$ directly because it depends on $h$.
+Here, $C$ provides a view on the local features $\philocal(x_j,h)$,
+which are
+closely related to the model parameters \refeqn{mixtureModel},
+and $B$ is what we have recovered so far.
+%Note that we couldn't recover $C$ directly because it depends on $h$.
 
-However, it is not difficult to construct $\phix$ such that Property~\ref{property:transformation} holds.
-Since $h$ is discrete, we can always take $\phix(x) = \flatten((\philocal(x, h))_{h \in [\nh]}) \in \R^{dk}$,
-which contains $k$ blocks, one for each latent state.  We can recover a column $C_h = \E[\philocal(x_j, h) \mid h]$
-by taking the block of column $B_h = \E[\flatten(\philocal(x_j, h'))_{h' \in [\nh]} \mid h]$
-corresponding to $h = h'$.
-Often, the local features are simply the tensor product of some function $g(x)$ and an indicator on $h$:
-$\philocal(x,h) = \flatten(g(x) \otimes e_h)$.
-In this case, it suffices to take $\phix(x) = g(x)$.
-
-Finally, having retrieved $C_h$, it is easy to compute the \emph{hidden moments} $\mu$:
-\begin{align}
-  \mu \eqdef \E[\phi(x,h)] = \E[\phiprior(h)] + \sum_{j=1}^3 \E[\philocal(x_j,h)] = \sum_{h \in [\nh]} \pi_h (\phi_p(h) + 3 C_h).
-\end{align}
-In \cite{anandkumar12moments}, these hidden moments would be exactly the parameters (multinomial probabilities), but
-for log-linear models, we still need to do more work to extract the parameters $\theta$.
+It is easy to construct $\phix$ such that Property~\ref{property:transformation} holds.
+Since $h$ is discrete,
+we can always take $\phix(x) = \flatten((\philocal(x, h))_{h \in [\nh]}) \in \R^{dk}$,
+which contains $k$ blocks, one for each latent state.
+Then each column $C_h \in \R^d$ is simply the $h$-th block
+of the column $B_h \in \R^{kd}$.
+%We can recover a column $C_h = \E[\philocal(x_j, h) \mid h]$
+%Each column $C_h = \E[\philocal(x_j, h) \mid h]$
+%by taking the block of column $B_h = \E[\flatten(\philocal(x_j, h'))_{h' \in [\nh]} \mid h]$
+%corresponding to $h = h'$.
+More simply, if
+the local features are simply the tensor product of some function $g(x)$ and an
+indicator on $h$ ($\philocal(x,h) = \flatten(g(x) \otimes e_h)$),
+then $\phix(x) = g(x)$ suffices.
 
 \subsection{Step 3: Recover parameters (optimization)}
 
-For the mixture model, the hidden moments $\E[\phi(x,h)]$ we recover are actually
-are the sufficient statistics of the log-linear model.
-To elaborate, let us suppose for the moment that we have infinite examples of $(x,h)$.
-Let us consider the undirected mixture model.
-Then we would seek to maximize the joint log-likelihood:
+In \cite{anandkumar12moments}, our latent moments $(\pi, B)$
+would be the parameters, but for log-linear models,
+we still need to do a bit more work.
+First, note that we can express the sufficient statistics $\E[\phi(x,h)]$
+of the model in terms of the quantities recovered in Step 2:
+\begin{align}
+  \mu \eqdef \E[\phi(x,h)] = \E[\phiprior(h)] + \sum_{j=1}^3 \E[\philocal(x_j,h)] = \sum_{h \in [\nh]} \pi_h (\phiprior(h) + 3 C_h).
+\end{align}
+By properties of the exponential family, $\mu$ suffices to recover $\theta$.
+To elaborate, if we had infinite \emph{labeled} examples $(x,h)$,
+then we would seek to maximize the joint log-likelihood:
 \begin{align}
 L(\theta) \eqdef \E[\log p_\theta(x, h \mid \theta)] = {\underbrace{\E[\phi(x,h)]}_{\mu}}^\top\theta - A(\theta).
 \end{align}
-Note that the optimization problem here only depends on the data via $\mu$, which is usually estimated from examples of $(x,h)$.
-Since $h$ is latent in our latent-variable setting, we must recover $\mu$ from latent observations.
-By the moment-generating properties of the log-partition function,
-the optimality condition is that $\mu = \E_\theta[\phi(x, h)]$.
+Note that the optimization problem here only depends on the data via $\mu$.
+Instead of estimating $\mu$ from labeled examples,
+we estimate $\mu$ from tensor factorization applied to unlabeled examples.
 
-We thus obtain a consistent estimator for $\theta$ assuming the exponential family is identifiable:
-\begin{assumption}
-The log-linear model is identifiable from fully-observed data.
-Equivalently, the log-partition function $A(\theta)$ is strongly convex.
-\end{assumption}
-Identifiability means that the moments $\mu$ uniquely determine $\theta^*$.
-In summary, factorization yields the mean parameters of the exponential family,
-and we can use convex optimization to retrieve the (canonical) parameters $\theta$.
+We thus obtain a consistent estimator for $\theta$ assuming the exponential
+family is identifiable from fully-observed data (that is
+the log-partition function $A(\theta)$ is strongly convex).
+%\begin{assumption}
+%The log-linear model is identifiable from fully-observed data.
+%Equivalently, the log-partition function $A(\theta)$ is strongly convex.
+%\end{assumption}
+%Identifiability means that the moments $\mu$ uniquely determine $\theta^*$.
+%By the moment-generating properties of the log-partition function,
+%the optimality condition is that $\mu = \nabla A(\theta) = \E_\theta[\phi(x, h)]$.
+In other words,
+tensor factorization (Step 2) yields the mean parameters of the exponential family
+($\mu = \nabla A(\theta) = \E_\theta[\phi(x, h)]$),
+which can be mapped to (canonical) parameters $\theta$ via convex optimization.
 
-% Directed mixture model
-\paragraph{Directed mixture model}
-
-The directed mixture model, we have $p_\theta(x,h) = p_\theta(h) \prod_{j=1}^3 p_\theta(x_j \mid h)$,
-where
-$p_\theta(h) \eqdef \exp\{\phiprior(h)^\top\theta - \Aprior(\theta)\}$
-and
-$p_\theta(x_j \mid h) \eqdef \exp\{\philocal(x_j, h)^\top\theta - \Alocal(\theta; h)\}$.
-Consequently, the joint log-likelihood is:
-\begin{align}
-  L(\theta) = {\underbrace{\E[\phi(x,h)]}_{\mu}}^\top\theta - \E[A(\theta; z)], \quad
-  \E[A(\theta, z)] = \Aprior(\theta) + 3 \sum_{h \in [\nh]} \pi_h \Alocal(\theta;h).
-\end{align}
-Note that in directed models, the log-partition functions depends on the parent variables (in this case, $h$).
-Having recovered the marginal distribution over $\pi$, we can compute the desired expectation.
-Again, this problem is convex.
-
-\paragraph{Perturbation analysis.}
+\paragraph{Perturbation analysis (sketch)}
 We have so far worked with exact population values $M_2,M_3,\pi,B,\mu,\theta^*$.
 With finite samples, we must work the corresponding estimated quantities $\hat M_2,\hat M_3,\hat\pi,\hat B,\hat\mu,\hat\theta$.
 How the error in the moments $(\hat M_2,\hat M_3)$ affects error in $(\hat\pi,\hat B)$ is well studied
 (see \citet{anandkumar12moments,anandkumar13tensor}).
-The hidden moments $\hat\mu$ are simply a quadratic combination of $(\hat\pi,\hat B)$,
+The latent moments $\hat\mu$ are simply a quadratic combination of $(\hat\pi,\hat B)$,
 and $\hat\theta = \nabla^{-1} A(\hat\mu)$, which is Lipschitz.
 Therefore, we have a consistent estimator with polynomial sample complexity.
