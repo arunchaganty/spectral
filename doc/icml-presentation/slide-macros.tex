@@ -3,12 +3,27 @@
 
 \pgfdeclarelayer{bg}
 \pgfsetlayers{bg,main}
-\newcommand{\obj}[2]{
-    \node at #1 {
+\newcommand{\obj}[1]{%
+    {%
     \begin{minipage}{6cm}
+      #1
+    \end{minipage}
+    }
+}
+\newcommand{\objw}[2]{%
+    {%
+    \begin{minipage}{#1}
       #2
     \end{minipage}
     }
 }
+\tikzstyle{box}=[scale=0.8,rectangle,fill=white,draw=black]
 \tikzstyle{loop}=[smooth,dashed,in=-90,out=-90,looseness=0.75]
 
+\makeatletter
+\newcommand*{\centerfloat}{%
+  \parindent \z@
+  \leftskip \z@ \@plus 1fil \@minus \textwidth
+  \rightskip\leftskip
+  \parfillskip \z@skip}
+\makeatother

@@ -49,110 +49,258 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{Discriminative Latent Variable Models}
+  \frametitle{Generative vs. Discriminative Latent Variable Models}
 
-  \begin{itemize}
-    \item {\bf Discriminative Latent Variable Models are useful, but hard to learn.}
-    \item Discriminative LVMs combine the predictive accuracy with compact expressiveness.
-    \item They have been used in several applications, e.g.\ object recognition, syntactic parsing, machine translation, etc.
-    \item Learning parameters for these models is hard because they have non-convex likelihood functions.
-  \end{itemize}
+  \begin{centering}
+  \begin{tikzpicture}
+    % x, y
+    \node at (0,0) {Generative Models};
+    \node[style=box] at (0,-1.5) {\obj{%
+      \vspace{4em}
+      \hfill CRFs
+      }};
+    \node[style=box] at (0,-4) {\obj{%
+      \vspace{4em}
+      \hfill PCFGs
+      }};
+
+    \node<2-> at (6,0) {Discriminative Models};
+    \node<2->[style=box] at (6,-1.5) {\obj{%
+      \vspace{4em}
+      \hfill Liang et.\ al (2006)
+      }};
+    \node<2->[style=box] at (6,-4) {\obj{%
+      \vspace{4em}
+      \hfill Wang \& Mori (2009)
+      }};
+
+    \node<2-> at (7,-5.5) {\obj{%
+      Easier to include features, \\
+      tend to be more accuracy.
+      }};
+  \end{tikzpicture}
+  \end{centering}
+
+    \note[item]{Discriminative Latent Variable Models are useful, but hard to learn.}
+    \note[item]{Split models into generative and discriminative models.}
+    \note[item]{Discriminative LVMs combine the predictive accuracy with compact expressiveness.}
+    \note[item]{They have been used in several applications, e.g.\ object recognition, syntactic parsing, machine translation, etc.}
+    \note[item]{Learning parameters for these models is hard because they have non-convex likelihood functions.}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Goal: Consistent Parameter Estimation.}
+  \frametitle{Parameter Estimation is Hard}
+
+  \begin{centering}
+  \begin{tikzpicture}
+    % x, y
+    \node[style=box] at (0,-1.5) {\objw{36em}{%
+      \vspace{10em}
+      {\em log-likelihood picture}
+      }};
+  \end{tikzpicture}
+  \end{centering}
 
   \begin{itemize}
-    \item {\bf We would like to develop efficient consistent estimators for discriminative LVMS.}
-    \item Past approaches rely on local optimization, which are susceptible to local optima.
-    \item And they don't just go away with more data.
-    \item Recently, there has been work on consistent parameter
-      estimation for generative LVMS\@. We'd like to extend their work to
-      the discriminative case.
+    \item<1-> Log-likelihood function is non-convex.
+    \item<2-> This is a problem that doesn't go away even with infinite data.
+    \item<3-> Can we build {\bf consistent estimators} that get better with more data?
   \end{itemize}
+
+  \note[item]{We would like to develop efficient consistent estimators for discriminative LVMS.}
+  \note[item]{Past approaches rely on local optimization, which are susceptible to local optima.}
+  \note[item]{And they don't just go away with more data.}
+  \note[item]{Recently, there has been work on consistent parameter
+      estimation for generative LVMS\@. We'd like to extend their work to
+      the discriminative case.}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Spectral Methods for Generative Models.}
+  \begin{centering}
+  \begin{tikzpicture}
+    % x, y
+    \node at (0,0) {Generative Models};
+    \node[style=box] at (0,-1.5) {\obj{%
+      \vspace{4em}
+      \hfill CRFs
+      }};
+    \node[style=box] at (0,-4) {\obj{%
+      \vspace{4em}
+      \hfill PCFGs
+      }};
+
+    %\node<2-> at (6,0) {Discriminative Models};
+    \node<2->[style=box] at (6,-1.5) {\obj{%
+      Solve the general multi-view case using the tensor factorization method.\\
+      \hfill Anandkumar et.\ al (2012) 
+      }};
+    \node<3->[style=box] at (6,-4) {\obj{%
+      Reduce the problem to multi-view learning via tree-unmixing.\\
+      \hfill Hsu et.\ al (2012) 
+      }};
+  \end{tikzpicture}
+  \end{centering}
+
+   \todo{Talk about observable operator stuff.}
 \end{frame}
 
 \begin{frame}
   \frametitle{Mixture of Linear Regressions}
 
-  \begin{itemize}
-    \item {\bf First step, consider a simple discriminative model, mixture of linear regressions.}
-    \item The mixture of linear regressions model defines a conditional distribution over a response $y \in \Re$ given covariates $x \in \Re^d$.
-     \item The generative procedure is as follows,
+  \begin{centering}
+  \begin{tikzpicture}
+    % x, y
+    \node<1-3> at (0,0){Generative Process};
+    \node<1-3>[style=box] at (0,-2.5) {\obj{%
+      Graphical model \vspace{3em}\\
+      Given parameters $\pi$ and $B = [ \beta_1 | \cdots | \beta_k ]$,
+      \begin{itemize}
+        \item<1-> $h \in [k] \sim Mult(\pi)$.
+        \item<2-> $\epsilon \sim \mathcal{E}$.
+        \item<3-> $y = \beta_h^T x + \epsilon$.
+      \end{itemize}
+      }};
+    \node<4>[style=box] at (0,0) {\obj{%
+    {\bf Given:} $\mathcal{D} = (x_i, y_i)_{i=1}^{n}$,\\
+    can we {\bf estimate parameters} $\pi$ and $B = [ \beta_1 | \cdots | \beta_k ]$?
+      }};
+
+    %\node<2-> at (6,0) {Discriminative Models};
+    \node[style=box] at (6,-1.5) {\obj{%
+      \vspace{12em}
+      Diagram
+      }};
+  \end{tikzpicture}
+  \end{centering}
+
+  \note[item]{First step, consider a simple discriminative model, mixture of linear regressions.}
+  \note[item]{The mixture of linear regressions model defines a conditional distribution over a response $y \in \Re$ given covariates $x \in \Re^d$.}
+     \note[item]{The generative procedure is as follows,
        \begin{enumerate}
         \item Draw a mixture component $h \in [k] \sim Mult(\pi)$, where $\pi = [\pi_1 | \dots | \pi_k]$ defines the mixture proportions.
         \item Draw the noise $\epsilon \sim \mathcal{E}$, where $\mathcal{E}$ is the noise distribution.
         \item Set $y = \beta_h^T x + \epsilon$, where $\{\beta_h\}_{h=1}^{k}$ are the conditional means of the regression coefficients.
-       \end{enumerate}
-    \item The parameters that we would like to learn from this model are $\pi$ and $B = [ \beta_1 | \cdots | \beta_k ]$.
-  \end{itemize}
+      \end{enumerate}}
+   \note[item]{The parameters that we would like to learn from this model are $\pi$ and $B = [ \beta_1 | \cdots | \beta_k ]$.}
 \end{frame}
 
 \begin{frame}
   \frametitle{Method of Moments.}
 
+  \begin{centering}
+  \begin{tikzpicture}
+    % x, y
+    \node[style=box] at (0,0) {\objw{36em}{%
+      \vspace{10em}
+      {\em moment-map picture}
+      }};
+  \end{tikzpicture}
+  \end{centering}
   \begin{itemize}
-    \item {\bf We approach the problem by using the method of moments on three conditional views. }
-    \item Consider a moment map $\mathcal{M}$ that maps the parameters $\theta$ to the moments $m$. For a Gaussian, we have that $\mathcal{M} = (\mu, \sigma^2)$.
-    \item In general, we will compute the inverse of the moment map to learn the parameters from the sample estimates.
-    \item By the central limit theorem, our sample estimates of the moments converge at a $1/\sqrt{n}$ rate, so we expect that our parameters will also converge at this rate.
+    \item<1-> Moments are expected to converge at a $1/\sqrt{n}$ rate, by CLT.
+    \item<2-> A continuous mapping $\mathcal{M}^{-1}$ will also converge at a $1/\sqrt{n}$ rate.
   \end{itemize}
+
+    \note[item]{We approach the problem by using the method of moments on three conditional views. }
+    \note[item]{Consider a moment map $\mathcal{M}$ that maps the parameters $\theta$ to the moments $m$. For a Gaussian, we have that $\mathcal{M} = (\mu, \sigma^2)$.}
+    \note[item]{In general, we will compute the inverse of the moment map to learn the parameters from the sample estimates.}
+    \note[item]{By the central limit theorem, our sample estimates of the moments converge at a $1/\sqrt{n}$ rate, so we expect that our parameters will also converge at this rate.}
 \end{frame}
 
 \begin{frame}
   \frametitle{Method of Moments for Generative LVMs.}
 
-  \begin{itemize}
-    \item {\bf We can recover the means of a generative LVM by exploiting their symmetric structure. }
-    \item 
-    \begin{align*}
-    M_2 &= \sum_{h=1}^k \pi_h \beta_h\tp{2} & M_3 &= \sum_{h=1}^k \pi_h \beta_h\tp{3}.
-  \end{align*}
-    \item In general, $M_2$ is insufficient to identify the model, because it is invariant to rotations of $B$. 
-    \item If the $\beta_h$ were orthogonal, then the eigenvectors and eigenvalues of $M_3$ would give us the answer. 
-    \item In general, we need both $M_2$ and $M_3$. We can use the whitening transformation for $M_2$ to whiten $M_3$ such that it has a orthogonal decomposition.
-\item The robust tensor power method by \cite{AnandkumarHsuGe2012} find stable eigenvectors.
-  \item In the discriminative case, we do not observe $M_2$ directly from the data, but rather, as we'll see, linear projections of them.
-  \end{itemize}
+  \begin{centering}
+  \begin{tikzpicture}
+    % x, y
+    \node[style=box] at (0,0) {\objw{36em}{%
+      \vspace{10em}
+      {\em Work out the moments in the generative case, with indicative diagrams for matrices, tensors, etc.}
+      }};
+  \end{tikzpicture}
+  \end{centering}
+
+    \note[item]{\bf We can recover the means of a generative LVM by exploiting their symmetric structure.}
+    \note[item]{\begin{align*} M_2 &= \sum_{h=1}^k \pi_h \beta_h\tp{2} & M_3 &= \sum_{h=1}^k \pi_h \beta_h\tp{3}.  \end{align*}}
+      \note[item]{In general, $M_2$ is insufficient to identify the model, because it is invariant to rotations of $B$. }
+      \note[item]{If the $\beta_h$ were orthogonal, then the eigenvectors and eigenvalues of $M_3$ would give us the answer. }
+      \note[item]{In general, we need both $M_2$ and $M_3$. We can use the whitening transformation for $M_2$ to whiten $M_3$ such that it has a orthogonal decomposition.}
+      \note[item]{The robust tensor power method by \cite{AnandkumarHsuGe2012} find stable eigenvectors.}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Recovering the Moments.}
-  \begin{itemize}
-    \item {\bf The powers of the response variables $y^p$ are linear measurements of the moments of the parameters $M_p$!}
-    \item As noted earlier, the first problem we run into is that we can't observe the moments of the parameters $B$ and $\pi$ directly!
-\item However, observe that 
-\begin{align}
-  y &= \innerp{\beta_h}{x} + \epsilon \\
-    &= \innerp{M_1}{x} + \underbrace{{\beta_h - M_1}{x} + \epsilon }_{\textrm{noise}},
-\end{align}
-  where $M_1 = \sum_{h=1}^k \pi_h \beta_h$, the mean regression coefficient. 
-  \item We note that while the noise term is dependent on $x$, it has a zero-mean. Thus, we could potentially recover $M_1$ through regression.
-\item Similarly, we can cast the remaining two terms as regression problems.
+  \frametitle{Method of Moments for the Mixture of Linear Regressions.}
 
-\item An additional fact that we can exploit is that both $M_2$ and $M_3$ are low rank, so we can use low-rank regression to recover estimates $\hat M_2$ and $\hat M_3$ efficiently from data.
-  \end{itemize}
+  \begin{centering}
+  \begin{tikzpicture}
+    % x, y
+    \node[style=box] at (0,0) {\objw{36em}{%
+      \vspace{10em}
+      {\em Try to work out the moments in our case.}
+      }};
+  \end{tikzpicture}
+  \end{centering}
+      \note[item]{In the discriminative case, we do not observe $M_2$ directly from the data, but rather, as we'll see, linear measurements of them.}
+      \note[item]{Try to work out the moments for this case and see how they {\tt \#fail} epically.}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Rates for Recovery}
-  \begin{itemize}
-    \item {\bf The algorithm is consistent, and requires $O(?)$ samples.}
-\item The rate of convergence for the spectral experts algorithm to the
-true parameters breaks into two parts; the rates for learning the
-moments, which feeds into the rates for learning the parameters.
-\item For low rank regression, we have the following bound on recovery by (Tomioka2011);
-  $$ \| \hat M_p - M_p \|_F \le \frac{32 \lambda^{(p)}_n \sqrt{k}}{\kappa(\opX_p)}, $$
-where $\kappa(\opX_p)$ is the (restricted) strong convexity constant, and $\lambda^{(p)} > \|\opX^*_p(\eta)\|$. 
-\item Because we assume our noise is bounded, it is easy to show that the error concentrates. 
-\item In the tensor recovery case, we will need to whiten $M_3$ before
-applying the tensor decomposition and unwhiten it afterwards; this
-modifies the error bounds slightly.
-  \end{itemize}
+  \frametitle{Method of Moments for the Mixture of Linear Regressions.}
+
+  \begin{centering}
+  \begin{tikzpicture}
+    % x, y
+    \node[style=box] at (0,0) {\objw{18em}{%
+      \vspace{10em}
+      {\em Different tactic: show that $y^p$ are linear measurements of the moments of the parameters $M_p$! }
+      }};
+
+    \node[style=box] at (6,0) {\objw{8em}{%
+      {$y^p$ are linear measurements of the moments of the parameters $M_p$!}
+      }};
+  \end{tikzpicture}
+  \end{centering}
+
+    \note[item]{The powers of the response variables $y^p$ are linear measurements of the moments of the parameters $M_p$!}
+    \note[item]{As noted earlier, the first problem we run into is that we can't observe the moments of the parameters $B$ and $\pi$ directly!}
+    \note[item]{However, observe that 
+    \begin{align}
+      y &= \innerp{\beta_h}{x} + \epsilon \\
+        &= \innerp{M_1}{x} + \underbrace{{\beta_h - M_1}{x} + \epsilon }_{\textrm{noise}},
+    \end{align}
+    where $M_1 = \sum_{h=1}^k \pi_h \beta_h$, the mean regression coefficient.}
+    \note[item]{We note that while the noise term is dependent on $x$, it has a zero-mean. Thus, we could potentially recover $M_1$ through regression.}
+    \note[item]{Similarly, we can cast the remaining two terms as regression problems.}
+    \note[item]{An additional fact that we can exploit is that both $M_2$ and $M_3$ are low rank, so we can use low-rank regression to recover estimates $\hat M_2$ and $\hat M_3$ efficiently from data.}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Experimental Results}
+  \frametitle{Efficient Consistent Recovery}
+
+  \begin{centering}
+  \begin{tikzpicture}
+    % x, y
+    \node[style=box] at (0,0) {\objw{12em}{%
+      \vspace{10em}
+      Regression step
+      }};
+
+    \node[style=box] at (6,0) {\objw{12em}{%
+      The tensor factorization method.
+      }};
+  \end{tikzpicture}
+  \end{centering}
+
+  \note[item]{The algorithm is consistent, and requires $O(?)$ samples.}
+  \note[item]{The rate of convergence for the spectral experts algorithm to the true parameters breaks into two parts; the rates for learning the moments, which feeds into the rates for learning the parameters.}
+  \note[item]{For low rank regression, we have the following bound on recovery by (Tomioka2011); $$ \| \hat M_p - M_p \|_F \le \frac{32 \lambda^{(p)}_n \sqrt{k}}{\kappa(\opX_p)}, $$ where $\kappa(\opX_p)$ is the (restricted) strong convexity constant, and $\lambda^{(p)} > \|\opX^*_p(\eta)\|$.}
+  \note[item]{Because we assume our noise is bounded, it is easy to show that the error concentrates.}
+  \note[item]{In the tensor recovery case, we will need to whiten $M_3$ before applying the tensor decomposition and unwhiten it afterwards; this modifies the error bounds slightly.}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Experimental Insights}
   \begin{itemize}
     \item {\bf Spectral Experts provides a good initialization to EM.}
       \item We simulated the performance of spectral experts and compared it to EM. 
