@@ -77,7 +77,7 @@
       \end{itemize}
       }};
     %\node<1->[below=0.5cm of gen-models] (disc) {Discriminative Models};
-    \node<1->[style=box,below=1.0cm of gen] (disc) {\obj{%
+    \node<2->[style=box,below=1.0cm of gen] (disc) {\obj{%
     {\bf Discriminative Models}
       \begin{itemize}
         \item Max-Entropy Markov Model (Toutanova and Manning, 2000)
@@ -158,7 +158,7 @@
         \item Reduce the problem to multi-view learning via tree-unmixing (Hsu et.\ al, 2012). 
       \end{itemize}
       }};
-      \node<4->[style=box] at (4,-3) {\objw{8cm}{%
+      \node<4->[style=box] at (4,-3) {\objw{12cm}{%
       {\bf How can we apply these methods for discriminative models?}
       }};
   \end{tikzpicture}
@@ -251,10 +251,17 @@
   \begin{centering}
   \begin{tikzpicture}
     % x, y
-    \node<1>[style=box] (moments) at (0,0) {\objw{12cm}{%
+    \node<1->[style=box]  (moments) at (0,0) {\objw{12cm}{%
+      \begin{align*}
+        \underbrace{\E[x]}_{M_1} &= \sum_{h=1}^k \pi_h \beta_h & 
+        \underbrace{\E[x\tp{2}]}_{M_2} &= \sum_{h=1}^k \pi_h \beta_h\tp{2} & 
+        \underbrace{\E[x\tp{3}]}_{M_3} &= \sum_{h=1}^k \pi_h \beta_h\tp{3}. 
+      \end{align*}
+    }};
+    \node<1>[style=box,below=0.1cm of moments] {\objw{12cm}{%
     \includegraphics[width=\textwidth,height=6cm,keepaspectratio]{figures/moments.png}
       }};
-    \node<2->[style=box] (moments) at (0,0) {\objw{12cm}{%
+    \node<2->[style=box,below=0.1cm of moments] {\objw{12cm}{%
       \begin{itemize}
         \item<2-> {\bf Tensor Power Method} for orthonormal $\beta_h$,
           \begin{align*}
@@ -266,13 +273,6 @@
         \item<3-> Use $M_2$ to whiten $M_3$.
       \end{itemize}
       }};
-    \node<1->[style=box,below=0.1cm of moments]  {\objw{12cm}{%
-      \begin{align*}
-        \underbrace{\E[x]}_{M_1} &= \sum_{h=1}^k \pi_h \beta_h & 
-        \underbrace{\E[x\tp{2}]}_{M_2} &= \sum_{h=1}^k \pi_h \beta_h\tp{2} & 
-        \underbrace{\E[x\tp{3}]}_{M_3} &= \sum_{h=1}^k \pi_h \beta_h\tp{3}. 
-      \end{align*}
-    }};
   \end{tikzpicture}
   \end{centering}
 
@@ -292,20 +292,20 @@
     % x, y
     \node[style=box] at (0,0) {\objw{36em}{%
         \begin{align*}
-          \action<1->{
+          \action<1->{%
             \E[y] &= \E[\beta_h^T x + \epsilon] \\
                   &= M_1^T \E[x]\\
           }
-          \action<2->{ 
+          \action<2->{%
             \E[y x] &= \E[(\beta_h^T x) x + \epsilon x] \\
               &= M_1^T \E[x\tp{2}]\\
           }
-          \action<3->{ 
+          \action<3->{% 
             \E[y^2] &= \E[(\beta_h^T x)^2 + 2 \epsilon (\beta_h^T x) + \epsilon^2 ] \\
                     &= \E[\trace(\beta_h \beta_h^T x x^T)] + \E[\epsilon^2 ] \\
                     &= \trace(M_2 \E[x\tp{2}]) + \E[\epsilon^2 ] \\
           }
-          \action<4->{ 
+          \action<4->{% 
             \E[y^p x\tp{q}] 
                     &= \trace(M_p \E[x\tp{p+q}]) + \cdots.
           }
@@ -405,27 +405,59 @@
 
 \begin{frame}
   \frametitle{Experimental Insights}
+
+  \begin{tikzpicture}
+    % x, y
+    \node<1-4> at (0,0) {%
+      \includegraphics<1>[width=\textwidth,height=5cm,keepaspectratio]{figures/1-8-3.png}
+      \includegraphics<2->[width=\textwidth,height=5cm,keepaspectratio]{figures/1-8-3-em.png}
+      };
+    % x, y
+    \node<1-4> at (6,0) {%
+      \includegraphics<3>[width=\textwidth,height=5cm,keepaspectratio]{figures/1-8-3-spec.png}
+      \includegraphics<4->[width=\textwidth,height=5cm,keepaspectratio]{figures/1-8-3-specm.png}
+      };
+      \node<5-> at (0,0) {\objw{12cm}{%
+      \begin{small}
+  \begin{tabular}{ r r r c c c }
+\hline
+$b$ & $d$ & $k$ & Spectral & EM & Spectral + EM \\
+\hline
+  1 & 4 & 2 & 2.45 $\pm$ 3.68 & 0.28 $\pm$ 0.82 & {\bf 0.17 $\pm$ 0.57} \\
+  2 & 5 & 2 & 1.38 $\pm$ 0.84 & {\bf 0.00 $\pm$ 0.00} & {\bf 0.00 $\pm$ 0.00} \\
+  2 & 5 & 3 & 2.92 $\pm$ 1.71 & 0.43 $\pm$ 1.07 & {\bf 0.31 $\pm$ 1.02} \\
+  2 & 6 & 2 & 2.33 $\pm$ 0.67 & 0.63 $\pm$ 1.29 & {\bf 0.01 $\pm$ 0.01} \\
+\hline
+\end{tabular}
+      \end{small}
+    }};
+  \end{tikzpicture}
+
   \begin{itemize}
-    \item {\bf Spectral Experts provides a good initialization to EM.}
-      \item We simulated the performance of spectral experts and compared it to EM. 
-\item In a non-trivial number of cases, EM did not converge to the right parameters and got stuck in local optima.
-\item The parameters estimated by the spectral method were not very good even with $O(10^5)$ samples.
-\item However, EM initialized with these parameters did extremely well. 
-\item This finding that spectral methods should be a good initialization for EM is not surprising.
+      \item Spectral methods can provide a good initializaton.
+  \end{itemize}
+
+    \note[item]{Spectral Experts provides a good initialization to EM.}
+    \note[item]{We simulated the performance of spectral experts and compared it to EM.}
+    \note[item]{In a non-trivial number of cases, EM did not converge to the right parameters and got stuck in local optima.}
+    \note[item]{The parameters estimated by the spectral method were not very good even with $O(10^5)$ samples.}
+    \note[item]{However, EM initialized with these parameters did extremely well.}
+\note[item]{This finding that spectral methods should be a good initialization for EM is not surprising.}
+\note[item]{%
   \begin{itemize}
     \item The biggest sell for spectral methods is that they give a global guarantee on where the parameters are.
     \item The parameters might not be at the global optima, but will hopefully lie in the potential well around it.
     \item EM will then converge to the global optima.
   \end{itemize}
-  \end{itemize}
+  }
 \end{frame}
 
 \begin{frame}
   \frametitle{Conclusions}
   \begin{itemize}
-    \item {\bf We can learn the parameters of conditional models where the observed moments on their own have such sparse information.}
-    \item The key intuition is that we could construct a regression problem to learn the moments of the parameters from their projections onto the data.
-    \item We found that while the parameters learned this way are usually not better than those learned via local methods like EM, etc., they are a good way to initialize these local methods.
+    \item Consistent estimator for the mixture of linear regressions with polynomial sample complexity.
+    \item Tackle conditional moments using regression while exploiting structure.
+    \item Method of moment estimates can be a good initialization for EM.
   \end{itemize}
 \end{frame}
 
@@ -453,9 +485,6 @@
 %     \end{itemize}
 %   \end{column}
 % \end{columns}
-
-
-\end{document}
 
 % TikZ
 %\begin{tikzpicture}
