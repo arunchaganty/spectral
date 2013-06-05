@@ -53,34 +53,43 @@
 
   \begin{centering}
   \begin{tikzpicture}
-    % x, y
-    \node at (0,0) {Generative Models};
-    \node[style=box] at (0,-1.5) {\obj{%
-      \vspace{4em}
-      \hfill CRFs
+    % Tasks.
+    \node[style=box] (pos) at (0,0) {\objw{8cm}{%
+      \includegraphics[width=\textwidth]{figures/pos.png}\\
+      \hfill Part-of-Speech Tagging
       }};
-    \node[style=box] at (0,-4) {\obj{%
-      \vspace{4em}
-      \hfill PCFGs
+      \node[style=box,below=0.5cm of pos] (dep) {\objw{8cm}{%
+      \includegraphics[width=\textwidth]{figures/dep-parse.png}\\
+      \hfill Dependency Parsing
       }};
-
-    \node<2-> at (6,0) {Discriminative Models};
-    \node<2->[style=box] at (6,-1.5) {\obj{%
-      \vspace{4em}
-      \hfill Liang et.\ al (2006)
-      }};
-    \node<2->[style=box] at (6,-4) {\obj{%
-      \vspace{4em}
-      \hfill Wang \& Mori (2009)
+      \node[style=box, below=0.5cm of dep] (act) {\objw{8cm}{%
+      \includegraphics[width=\textwidth,height=3cm,keepaspectratio]{figures/activity-recognition.png}\\
+      \hfill Activity Recognition
       }};
 
-    \node<2-> at (7,-5.5) {\obj{%
-      Easier to include features, \\
-      tend to be more accuracy.
+    \node<1->[style=box] (gen) at (6,0) {\obj{%
+      {\bf Generative Models}
+      \begin{itemize}
+        \item Hidden Markov Models
+        \item Conditional Random Fields
+        \item PCFGs
+        \item \dots
+      \end{itemize}
+      }};
+    %\node<1->[below=0.5cm of gen-models] (disc) {Discriminative Models};
+    \node<1->[style=box,below=1.0cm of gen] (disc) {\obj{%
+    {\bf Discriminative Models}
+      \begin{itemize}
+        \item Max-Entropy Markov Model (Toutanova and Manning, 2000)
+        \item Discriminative Parsers (Liang et.\ al, 2006)
+        \item Semi-Latent Topic Models (Wang and Mori, 2009)
+        \item Easy to include features and tend to be more accurate.
+      \end{itemize}
       }};
   \end{tikzpicture}
   \end{centering}
 
+    \note[item]{Would like to start by talking about the bigger picture of parameter estimation.}
     \note[item]{Discriminative Latent Variable Models are useful, but hard to learn.}
     \note[item]{Split models into generative and discriminative models.}
     \note[item]{Discriminative LVMs combine the predictive accuracy with compact expressiveness.}
@@ -94,17 +103,21 @@
   \begin{centering}
   \begin{tikzpicture}
     % x, y
-    \node[style=box] at (0,-1.5) {\objw{36em}{%
-      \vspace{10em}
-      {\em log-likelihood picture}
+    \node[style=box] at (0,-1.5) {\objw{12cm}{%
+    \includegraphics<1>[width=\textwidth,height=8cm,keepaspectratio]{figures/likelihood.png}
+    \includegraphics<2>[width=\textwidth,height=8cm,keepaspectratio]{figures/likelihood-em1.png}
+    \includegraphics<3-4>[width=\textwidth,height=8cm,keepaspectratio]{figures/likelihood-em2.png}
+    \includegraphics<5>[width=\textwidth,height=8cm,keepaspectratio]{figures/likelihood-mom.png}
+    \includegraphics<6>[width=\textwidth,height=8cm,keepaspectratio]{figures/likelihood-mom1.png}
+      \hfill{\em expected log-likelihood}
       }};
   \end{tikzpicture}
   \end{centering}
 
   \begin{itemize}
     \item<1-> Log-likelihood function is non-convex.
-    \item<2-> This is a problem that doesn't go away even with infinite data.
-    \item<3-> Can we build {\bf consistent estimators} that get better with more data?
+    \item<4-> This is a problem that doesn't go away even with infinite data.
+    \item<5-> Can we build {\bf consistent estimators} that get better with more data?
   \end{itemize}
 
   \note[item]{We would like to develop efficient consistent estimators for discriminative LVMS.}
@@ -120,29 +133,37 @@
   \begin{centering}
   \begin{tikzpicture}
     % x, y
-    \node at (0,0) {Generative Models};
-    \node[style=box] at (0,-1.5) {\obj{%
-      \vspace{4em}
-      \hfill CRFs
+    \node<1-2>[style=box] (pos) at (0,0) {\objw{6cm}{%
+      \includegraphics[width=\textwidth]{figures/pos.png}\\
+      \hfill Part-of-Speech Tagging
       }};
-    \node[style=box] at (0,-4) {\obj{%
-      \vspace{4em}
-      \hfill PCFGs
+    \node<3->[style=box] (dep) at (0,0) {\objw{6cm}{%
+      \includegraphics[width=\textwidth]{figures/dep-parse.png}\\
+      \hfill Dependency Parsing
       }};
 
     %\node<2-> at (6,0) {Discriminative Models};
-    \node<2->[style=box] at (6,-1.5) {\obj{%
-      Solve the general multi-view case using the tensor factorization method.\\
-      \hfill Anandkumar et.\ al (2012) 
+    \node<1-2>[style=box] (ahk) at (6,0) {\objw{8cm}{%
+      \includegraphics[width=\textwidth,height=4cm,keepaspectratio]{figures/three-view.png}\\
+      \begin{itemize}
+        \item Solution for multi-view case using tensor factorization (Anandkumar et.\ al, 2012).
+        \item<2> HMMs (Anandkumar et.\ al, 2012) 
+        \item<2> LDA (Anandkumar et.\ al, 2012) 
+      \end{itemize}
+      \hfill 
       }};
-    \node<3->[style=box] at (6,-4) {\obj{%
-      Reduce the problem to multi-view learning via tree-unmixing.\\
-      \hfill Hsu et.\ al (2012) 
+      \node<3->[style=box] at (6,0) {\objw{8cm}{%
+      \includegraphics[width=\textwidth,height=4cm,keepaspectratio]{figures/unmixing.png}\\
+      \begin{itemize}
+        \item Reduce the problem to multi-view learning via tree-unmixing (Hsu et.\ al, 2012). 
+      \end{itemize}
+      }};
+      \node<4->[style=box] at (4,-3) {\objw{8cm}{%
+      {\bf How can we apply these methods for discriminative models?}
       }};
   \end{tikzpicture}
   \end{centering}
-
-   \todo{Talk about observable operator stuff.}
+  \note[item]{\todo{Talk about observable operator stuff.}}
 \end{frame}
 
 \begin{frame}
@@ -151,25 +172,34 @@
   \begin{centering}
   \begin{tikzpicture}
     % x, y
-    \node<1-3> at (0,0){Generative Process};
-    \node<1-3>[style=box] at (0,-2.5) {\obj{%
-      Graphical model \vspace{3em}\\
-      Given parameters $\pi$ and $B = [ \beta_1 | \cdots | \beta_k ]$,
+    \node<1-10>[style=box] at (0,0) {\obj{%
+    {\bf Parameters:} $\pi = [\pi_1, \cdots, \pi_k]$ and $B = [ \beta_1 | \cdots | \beta_k ]$.
+    \includegraphics[width=\textwidth,height=4cm,keepaspectratio]{figures/disc-model.png}\\
+    For a given $x$,
       \begin{itemize}
-        \item<1-> $h \in [k] \sim Mult(\pi)$.
-        \item<2-> $\epsilon \sim \mathcal{E}$.
-        \item<3-> $y = \beta_h^T x + \epsilon$.
+        \item<3-> $h \in [k] \sim Mult(\pi)$.
+        \item<4-> $\epsilon \sim \mathcal{E}$.
+        \item<5-> $y = \beta_h^T x + \epsilon$.
       \end{itemize}
       }};
-    \node<4>[style=box] at (0,0) {\obj{%
+    \node<11>[style=box] at (0,0) {\obj{%
+    \includegraphics[width=\textwidth,height=4cm,keepaspectratio]{figures/disc-model.png}\\
     {\bf Given:} $\mathcal{D} = (x_i, y_i)_{i=1}^{n}$,\\
     can we {\bf estimate parameters} $\pi$ and $B = [ \beta_1 | \cdots | \beta_k ]$?
       }};
 
     %\node<2-> at (6,0) {Discriminative Models};
-    \node[style=box] at (6,-1.5) {\obj{%
-      \vspace{12em}
-      Diagram
+    \node[style=box] at (6,0) {\obj{%
+    \includegraphics<1>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-1.png}
+    \includegraphics<2>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-2.png}
+    \includegraphics<3-4>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-3a.png}
+    \includegraphics<5>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-3b.png}
+    \includegraphics<6>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-4a.png}
+    \includegraphics<7-8>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-4b.png}
+    \includegraphics<9>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-4c.png}
+    \includegraphics<10>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-5.png}
+    \includegraphics<11>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-6.png}
+      \\{\em Data}
       }};
   \end{tikzpicture}
   \end{centering}
@@ -191,17 +221,24 @@
   \begin{centering}
   \begin{tikzpicture}
     % x, y
-    \node[style=box] at (0,0) {\objw{36em}{%
-      \vspace{10em}
-      {\em moment-map picture}
+    \node[style=box] at (0,0) {\objw{12cm}{%
+      \includegraphics<1>[width=\textwidth,height=8cm,keepaspectratio]{figures/mom-1.png}
+      \includegraphics<2>[width=\textwidth,height=8cm,keepaspectratio]{figures/mom-2.png}
+      \includegraphics<3>[width=\textwidth,height=8cm,keepaspectratio]{figures/mom-3.png}
+      \includegraphics<4>[width=\textwidth,height=8cm,keepaspectratio]{figures/mom-4.png}
+      \includegraphics<5>[width=\textwidth,height=8cm,keepaspectratio]{figures/mom-5.png}
+      %\\{\em moment-map}
       }};
+      \node<4->[style=box] at (3,-2) {$(\hat m - m^*) \to \normal{0}{\frac{1}{n} \Sigma}$};
+      \node<5->[style=box] at (-2,-2) {$(\hat \theta - \theta^*) \to \normal{0}{\frac{1}{n} (\Delta \mathcal{M}^{-1})^T \Sigma \Delta \mathcal{M}^{-1}}$};
   \end{tikzpicture}
   \end{centering}
-  \begin{itemize}
-    \item<1-> Moments are expected to converge at a $1/\sqrt{n}$ rate, by CLT.
-    \item<2-> A continuous mapping $\mathcal{M}^{-1}$ will also converge at a $1/\sqrt{n}$ rate.
-  \end{itemize}
+  %\begin{itemize}
+  %  \item<4-> Moments are expected to converge at a $1/\sqrt{n}$ rate, by CLT.
+  %  \item<5-> A continuous mapping $\mathcal{M}^{-1}$ will also converge at a $1/\sqrt{n}$ rate.
+  %\end{itemize}
 
+    \note[item]{I'm unsure whether this stuff really belongs here.}
     \note[item]{We approach the problem by using the method of moments on three conditional views. }
     \note[item]{Consider a moment map $\mathcal{M}$ that maps the parameters $\theta$ to the moments $m$. For a Gaussian, we have that $\mathcal{M} = (\mu, \sigma^2)$.}
     \note[item]{In general, we will compute the inverse of the moment map to learn the parameters from the sample estimates.}
@@ -214,10 +251,28 @@
   \begin{centering}
   \begin{tikzpicture}
     % x, y
-    \node[style=box] at (0,0) {\objw{36em}{%
-      \vspace{10em}
-      {\em Work out the moments in the generative case, with indicative diagrams for matrices, tensors, etc.}
+    \node<1>[style=box] (moments) at (0,0) {\objw{12cm}{%
+    \includegraphics[width=\textwidth,height=6cm,keepaspectratio]{figures/moments.png}
       }};
+    \node<2->[style=box] (moments) at (0,0) {\objw{12cm}{%
+      \begin{itemize}
+        \item<2-> {\bf Tensor Power Method} for orthonormal $\beta_h$,
+          \begin{align*}
+            M_3(\beta_h,\beta_h) 
+              &= \sum_{h'=1}^k \pi_{h'} (\beta_{h}^T \beta_{h'})^2 \beta_{h'} \\
+              &= \sum_{h'=1}^k \pi_{h'} \delta_{hh'} \beta_{h'} \\
+              &= \pi_{h'} \beta_{h}.
+          \end{align*}
+        \item<3-> Use $M_2$ to whiten $M_3$.
+      \end{itemize}
+      }};
+    \node<1->[style=box,below=0.1cm of moments]  {\objw{12cm}{%
+      \begin{align*}
+        \underbrace{\E[x]}_{M_1} &= \sum_{h=1}^k \pi_h \beta_h & 
+        \underbrace{\E[x\tp{2}]}_{M_2} &= \sum_{h=1}^k \pi_h \beta_h\tp{2} & 
+        \underbrace{\E[x\tp{3}]}_{M_3} &= \sum_{h=1}^k \pi_h \beta_h\tp{3}. 
+      \end{align*}
+    }};
   \end{tikzpicture}
   \end{centering}
 
@@ -236,8 +291,25 @@
   \begin{tikzpicture}
     % x, y
     \node[style=box] at (0,0) {\objw{36em}{%
-      \vspace{10em}
-      {\em Try to work out the moments in our case.}
+        \begin{align*}
+          \action<1->{
+            \E[y] &= \E[\beta_h^T x + \epsilon] \\
+                  &= M_1^T \E[x]\\
+          }
+          \action<2->{ 
+            \E[y x] &= \E[(\beta_h^T x) x + \epsilon x] \\
+              &= M_1^T \E[x\tp{2}]\\
+          }
+          \action<3->{ 
+            \E[y^2] &= \E[(\beta_h^T x)^2 + 2 \epsilon (\beta_h^T x) + \epsilon^2 ] \\
+                    &= \E[\trace(\beta_h \beta_h^T x x^T)] + \E[\epsilon^2 ] \\
+                    &= \trace(M_2 \E[x\tp{2}]) + \E[\epsilon^2 ] \\
+          }
+          \action<4->{ 
+            \E[y^p x\tp{q}] 
+                    &= \trace(M_p \E[x\tp{p+q}]) + \cdots.
+          }
+        \end{align*}
       }};
   \end{tikzpicture}
   \end{centering}
@@ -251,14 +323,29 @@
   \begin{centering}
   \begin{tikzpicture}
     % x, y
-    \node[style=box] at (0,0) {\objw{18em}{%
-      \vspace{10em}
-      {\em Different tactic: show that $y^p$ are linear measurements of the moments of the parameters $M_p$! }
+    \node[style=box] at (0,0) {\objw{12cm}{%
+        \begin{align*}
+          \action<+->{
+            y &= \beta_h^T x + \epsilon \\
+          }
+          \action<+->{
+            &= \underbrace{M_1^T x}_{\textrm{linear measurement}} + \underbrace{(\beta_h - M_1)^T x + \epsilon}_{\textrm{noise}} \\
+          }
+          \action<+->{
+            y^2 
+              &= (\beta_h^T x)^2 + 2 (\beta_h^T x) \epsilon + \epsilon^2 \\
+              &= \trace(\beta_h\tp{2} x\tp{2}) + 2 (\beta_h^T x) \epsilon + \epsilon^2 \\
+              &= \trace(M_2 x\tp{2}) + \E[\epsilon^2] + \trace((\beta_h\tp{2} - M_2) x\tp{2}) + 2 (\beta_h^T x) \epsilon \\
+              &= \trace(M_2 x\tp{2}) + \underbrace{\E[\epsilon^2]}_{\textrm{bias}} + \underbrace{\trace((\beta_h\tp{2} - M_2) x\tp{2}) + 2 (\beta_h^T x) \epsilon}_{\textrm{noise}} \\
+          }
+          \action<+->{ 
+          y^3 &= \innerp{M_3}{x\tp{3}} + \textrm{bias} + \textrm{noise}.
+          }
+        \end{align*}
       }};
-
-    \node[style=box] at (6,0) {\objw{8em}{%
-      {$y^p$ are linear measurements of the moments of the parameters $M_p$!}
-      }};
+    %\node[style=box] at (6,0) {\objw{8em}{%
+    %  {$y^p$ are linear measurements of the moments of the parameters $M_p$!}
+    %  }};
   \end{tikzpicture}
   \end{centering}
 
@@ -276,18 +363,35 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{Efficient Consistent Recovery}
+  \frametitle{Method of Moments for the Mixture of Linear Regressions.}
 
   \begin{centering}
   \begin{tikzpicture}
     % x, y
-    \node[style=box] at (0,0) {\objw{12em}{%
-      \vspace{10em}
-      Regression step
+    \node[style=box] (note) at (0,0) {\objw{12cm}{%
+      {$y^p$ are linear measurements of the moments of the parameters $M_p$!}
       }};
+    \node[style=box,below=0.1cm of note] {\objw{12cm}{%
+      \includegraphics<1>[width=\textwidth,height=8cm,keepaspectratio]{figures/regression-1.png}
+      \includegraphics<2>[width=\textwidth,height=8cm,keepaspectratio]{figures/regression-2.png}
+      \includegraphics<3>[width=\textwidth,height=8cm,keepaspectratio]{figures/regression-3.png}
+      }};
+  \end{tikzpicture}
+  \end{centering}
+\end{frame}
 
-    \node[style=box] at (6,0) {\objw{12em}{%
-      The tensor factorization method.
+\begin{frame}
+  \frametitle{Perturbation Analysis}
+
+  \begin{centering}
+  \begin{tikzpicture}
+    % x, y
+    \node[style=box] at (0,0) {\objw{12cm}{%
+      \includegraphics<1>[width=\textwidth,height=8cm,keepaspectratio]{figures/err-1.png}
+      \includegraphics<2>[width=\textwidth,height=8cm,keepaspectratio]{figures/err-2.png}
+      \includegraphics<3>[width=\textwidth,height=8cm,keepaspectratio]{figures/err-3.png}
+      \includegraphics<4>[width=\textwidth,height=8cm,keepaspectratio]{figures/err-4.png}
+      \includegraphics<5>[width=\textwidth,height=8cm,keepaspectratio]{figures/err-5.png}
       }};
   \end{tikzpicture}
   \end{centering}
