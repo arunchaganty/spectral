@@ -129,6 +129,64 @@
 \end{frame}
 
 \begin{frame}
+  \frametitle{Spectral Methods}
+  \begin{itemize}
+    \item Subspace identification [Ljung, 1987]
+    \item Observable operator models [Jaeger, 2000]
+    \item {\bf Hidden Markov models [Hsu et al, 2009]}
+    \item Low-treewidth graphs [Parikh et al., 2012]
+    \item Weighted finite state automata [Balle \& Mohri, 2012]
+  \end{itemize}
+  \begin{itemize}
+    \item Mixture of Gaussians [Kalai/Moitra/Valiant, 2010]
+    \item {\bf Mixture models, HMMs [Anandkumar/Hsu/Kakade, 2012]}
+    \item Latent Dirichlet Allocation [Anandkumar/Hsu/Kakade, 2012]
+    \item Stochastic block models [Anandkumar/Ge/Hsu/Kakade, 2012]
+    \item Linear Bayesian networks [Anandkumar/Hsu/Javanmard/Kakade, 2012]
+  \end{itemize}
+  \note[item]{\todo{Talk about observable operator stuff.}}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Spectral Methods: Tensor Factorization}
+  \begin{centering}
+  \begin{tikzpicture}
+    % x, y
+    \node<1>[style=box] (moments) at (0,0) {\objw{12cm}{%
+    \includegraphics[width=\textwidth,height=6cm,keepaspectratio]{figures/moments.png}
+      }};
+    \node<2->[style=box] (moments) at (0,0) {\objw{12cm}{%
+      \begin{itemize}
+        \item<2-> {\bf Tensor Power Method} for orthonormal $\beta_h$,
+          \begin{align*}
+            M_3(\beta_h,\beta_h) 
+              &= \sum_{h'=1}^k \pi_{h'} (\beta_{h}^T \beta_{h'})^2 \beta_{h'} \\
+              &= \sum_{h'=1}^k \pi_{h'} \delta_{hh'} \beta_{h'} \\
+              &= \pi_{h'} \beta_{h}.
+          \end{align*}
+        \item<3-> Use $M_2$ to whiten $M_3$.
+      \end{itemize}
+      }};
+    \node<1->[style=box,below=0.1cm of moments]  {\objw{12cm}{%
+      \begin{align*}
+        \underbrace{\E[x]}_{M_1} &= \sum_{h=1}^k \pi_h \beta_h & 
+        \underbrace{\E[x\tp{2}]}_{M_2} &= \sum_{h=1}^k \pi_h \beta_h\tp{2} & 
+        \underbrace{\E[x\tp{3}]}_{M_3} &= \sum_{h=1}^k \pi_h \beta_h\tp{3}. 
+      \end{align*}
+    }};
+  \end{tikzpicture}
+  \end{centering}
+
+    \note[item]{\bf We can recover the means of a generative LVM by exploiting their symmetric structure.}
+    \note[item]{\begin{align*} M_2 &= \sum_{h=1}^k \pi_h \beta_h\tp{2} & M_3 &= \sum_{h=1}^k \pi_h \beta_h\tp{3}.  \end{align*}}
+      \note[item]{In general, $M_2$ is insufficient to identify the model, because it is invariant to rotations of $B$. }
+      \note[item]{If the $\beta_h$ were orthogonal, then the eigenvectors and eigenvalues of $M_3$ would give us the answer. }
+      \note[item]{In general, we need both $M_2$ and $M_3$. We can use the whitening transformation for $M_2$ to whiten $M_3$ such that it has a orthogonal decomposition.}
+      \note[item]{The robust tensor power method by \cite{AnandkumarHsuGe2012} find stable eigenvectors.}
+\end{frame}
+
+\begin{comment}
+\begin{frame}
   \frametitle{Spectral Methods for Generative Models.}
   \begin{centering}
   \begin{tikzpicture}
@@ -165,6 +223,7 @@
   \end{centering}
   \note[item]{\todo{Talk about observable operator stuff.}}
 \end{frame}
+\end{comment}
 
 \begin{frame}
   \frametitle{Mixture of Linear Regressions}
@@ -215,6 +274,7 @@
    \note[item]{The parameters that we would like to learn from this model are $\pi$ and $B = [ \beta_1 | \cdots | \beta_k ]$.}
 \end{frame}
 
+\begin{comment}
 \begin{frame}
   \frametitle{Method of Moments.}
 
@@ -244,46 +304,9 @@
     \note[item]{In general, we will compute the inverse of the moment map to learn the parameters from the sample estimates.}
     \note[item]{By the central limit theorem, our sample estimates of the moments converge at a $1/\sqrt{n}$ rate, so we expect that our parameters will also converge at this rate.}
 \end{frame}
+\end{comment}
 
-\begin{frame}
-  \frametitle{Method of Moments for Generative LVMs.}
-
-  \begin{centering}
-  \begin{tikzpicture}
-    % x, y
-    \node<1>[style=box] (moments) at (0,0) {\objw{12cm}{%
-    \includegraphics[width=\textwidth,height=6cm,keepaspectratio]{figures/moments.png}
-      }};
-    \node<2->[style=box] (moments) at (0,0) {\objw{12cm}{%
-      \begin{itemize}
-        \item<2-> {\bf Tensor Power Method} for orthonormal $\beta_h$,
-          \begin{align*}
-            M_3(\beta_h,\beta_h) 
-              &= \sum_{h'=1}^k \pi_{h'} (\beta_{h}^T \beta_{h'})^2 \beta_{h'} \\
-              &= \sum_{h'=1}^k \pi_{h'} \delta_{hh'} \beta_{h'} \\
-              &= \pi_{h'} \beta_{h}.
-          \end{align*}
-        \item<3-> Use $M_2$ to whiten $M_3$.
-      \end{itemize}
-      }};
-    \node<1->[style=box,below=0.1cm of moments]  {\objw{12cm}{%
-      \begin{align*}
-        \underbrace{\E[x]}_{M_1} &= \sum_{h=1}^k \pi_h \beta_h & 
-        \underbrace{\E[x\tp{2}]}_{M_2} &= \sum_{h=1}^k \pi_h \beta_h\tp{2} & 
-        \underbrace{\E[x\tp{3}]}_{M_3} &= \sum_{h=1}^k \pi_h \beta_h\tp{3}. 
-      \end{align*}
-    }};
-  \end{tikzpicture}
-  \end{centering}
-
-    \note[item]{\bf We can recover the means of a generative LVM by exploiting their symmetric structure.}
-    \note[item]{\begin{align*} M_2 &= \sum_{h=1}^k \pi_h \beta_h\tp{2} & M_3 &= \sum_{h=1}^k \pi_h \beta_h\tp{3}.  \end{align*}}
-      \note[item]{In general, $M_2$ is insufficient to identify the model, because it is invariant to rotations of $B$. }
-      \note[item]{If the $\beta_h$ were orthogonal, then the eigenvectors and eigenvalues of $M_3$ would give us the answer. }
-      \note[item]{In general, we need both $M_2$ and $M_3$. We can use the whitening transformation for $M_2$ to whiten $M_3$ such that it has a orthogonal decomposition.}
-      \note[item]{The robust tensor power method by \cite{AnandkumarHsuGe2012} find stable eigenvectors.}
-\end{frame}
-
+\begin{comment}
 \begin{frame}
   \frametitle{Method of Moments for the Mixture of Linear Regressions.}
 
@@ -316,6 +339,7 @@
       \note[item]{In the discriminative case, we do not observe $M_2$ directly from the data, but rather, as we'll see, linear measurements of them.}
       \note[item]{Try to work out the moments for this case and see how they {\tt \#fail} epically.}
 \end{frame}
+\end{comment}
 
 \begin{frame}
   \frametitle{Method of Moments for the Mixture of Linear Regressions.}
@@ -427,6 +451,11 @@
     \item The key intuition is that we could construct a regression problem to learn the moments of the parameters from their projections onto the data.
     \item We found that while the parameters learned this way are usually not better than those learned via local methods like EM, etc., they are a good way to initialize these local methods.
   \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{}
+  Thank you.
 \end{frame}
 
 \end{document}
