@@ -44,7 +44,7 @@ public class BottleneckSpectralEM implements Runnable {
   @Option(gloss="Use cached bottleneck moments") public String cachedBottleneckMoments = null;
 
   @Option(gloss="Smooth measurements") public double smoothMeasurements = 0.0;
-  @Option(gloss="Use T in BottleneckSpectralEM?") public boolean useTransitions = false;
+  @Option(gloss="Use T in BottleneckSpectralEM?") public boolean useTransitions = true;
 
   @OptionSet(name="lbfgs") public LBFGSMaximizer.Options lbfgs = new LBFGSMaximizer.Options();
   @OptionSet(name="backtrack") public BacktrackingLineSearch.Options backtrack = new BacktrackingLineSearch.Options();
@@ -366,7 +366,7 @@ public class BottleneckSpectralEM implements Runnable {
       // Project onto the simplex
       
       // Average over the last two M's
-      for(int i = 1; i < 3; i++ )
+      for(int i = 1; i < t; i++ )
         M[i] = MatrixOps.projectOntoSimplex( M[i], smoothMeasurements );
       SimpleMatrix M3 = (M[1]).plus(M[2]).scale(1.0/2.0);
       //SimpleMatrix M3 = M[2]; // M3 is most accurate.
