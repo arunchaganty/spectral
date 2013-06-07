@@ -27,3 +27,28 @@
   \rightskip\leftskip
   \parfillskip \z@skip}
 \makeatother
+
+\newcommand*{\tikzgridon}{%
+\setbeamertemplate{background canvas}{%
+\begin{tikzpicture}[remember picture, overlay]
+    \draw[help lines,xstep=.25,ystep=.25,gray!20] (current page.south west) grid (current page.north east);
+    \draw[help lines,xstep=1,ystep=1,gray] (current page.south west) grid (current page.north east);
+    \foreach \x in {-15,-14.5,...,15} {%
+        \node [anchor=north, gray] at (\x,0) {\tiny \x};
+        \node [anchor=east,gray] at (0,\x) {\tiny \x};
+    }
+\end{tikzpicture}
+}
+}
+\newcommand{\tikzgridoff}{\setbeamertemplate{background canvas}{}}
+
+% Input is dimensions
+\newcommand*{\tikzrect}[4]{%
+  \draw[#1] #2 -- ++(-#3,0) -- ++(0,-#4) -- ++(#3,0) -- cycle;
+}
+
+\newcommand*{\tikzcube}[5]{%
+  \draw[#1] #2 -- ++(-#3,0,0) -- ++(0,-#4,0) -- ++(#3,0,0) -- cycle;
+  \draw[#1] #2 -- ++(0,0,-#5) -- ++(0,-#4,0) -- ++(0,0,#5) -- cycle;
+  \draw[#1] #2 -- ++(-#3,0,0) -- ++(0,0,-#5) -- ++(#3,0,0) -- cycle;
+}
