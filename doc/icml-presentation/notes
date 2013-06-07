@@ -1,0 +1,27 @@
+* Gen vs Disc. graphical model.
+* HMMs, GMMs, etc.
+
+* MLE is consistent. EM is not. 
+* Get rid of applications nonsense
+
+* MoM the big picture, i.e. 
+/talks/2013/microsoft/
+* Cite the new result in 2009, 
+  * Outline the high level idea of tensor factorization (-symmetric).
+  * move the tensor factorization to mom.
+  * Let's see how we can pply this building block to our scenario.
+*  -unmixing
+* -mom
+* -unweidly stuff .
+* one slide for y = ...
+* diagrmas for y = x . M_p
+* Warm up with M1 and M2
+* regression just for y3.
+  + Error analysis for just M3
+* EM for just 1
+* Compared to observable operator 
+  - animations.
+  - histogram
+  - revisit the optimaization picture.
+
+* Get clear the difference between discriminative and generative models.
