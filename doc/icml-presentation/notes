@@ -1,16 +1,15 @@
-* Gen vs Disc. graphical model.
-* HMMs, GMMs, etc.
+* Gen vs Disc. graphical model. (*)
+* HMMs, GMMs, etc. (*)
 
-* MLE is consistent. EM is not. 
-* Get rid of applications nonsense
+* MLE is consistent. EM is not.  (*)
+* Get rid of applications nonsense (*)
 
-* MoM the big picture, i.e. 
-/talks/2013/microsoft/
-* Cite the new result in 2009, 
+* MoM the big picture, i.e. /talks/2013/microsoft/ (~)
+* Cite the new result in 2009,  (~)
   * Outline the high level idea of tensor factorization (-symmetric).
-  * move the tensor factorization to mom.
-  * Let's see how we can pply this building block to our scenario.
-*  -unmixing
+  * move the tensor factorization to mom. (*)
+  * Let's see how we can apply this building block to our scenario. (*)
+* -unmixing
 * -mom
 * -unweidly stuff .
 * one slide for y = ...
