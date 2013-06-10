@@ -1,5 +1,6 @@
 # June 7th 2013
 
+* LABEL GRAPHS
 * Be very clear that we're looking at generative models.
 * cite mixture of experts in the discriminative model slide
 * Use "if" instead of "assume"; it's less permanent.
@@ -7,61 +8,61 @@
 * I should some how get to the meat faster.
 
 * Correct citations
-* Talk about the axes when presentinga a graph
+* Talk about the axes when presenting a graph
 * Include full details of the experimental setup.
 * Using "intutive" instead of "not surprising"
 * Including future work might be good.
 * Pull MLR earlier?
-* s/Negabhan/Negahban
 
 
 # Slide 1
 
-* took too long "features about your data", wandering
-* Logistic regression => mixture of experts
+* took too long "features about your data", wandering (*)
+* Logistic regression => mixture of experts (*)
 
 # Slide 2
 
-* negative log-likelihood
+* negative log-likelihood (*)
 
 # Slide 3
 
-* "EM" => "generally, local optimization"
+* "EM" => "generally, local optimization" (*)
 * Goal of everything:
-* "not only get better" => "but converge to the correct parameters"
-* Method of moments is more general than spectral methods;
+  "not only get better" => "but converge to the correct parameters" (+)
+* Method of moments is more general than spectral methods; (+)
   + Be aware that spectral methods is more general
   + Spectral methods for learning latent-variable models
 
 # Slide 4:
 
-* [k] notation not defined
-* Slip up: Say "define generative model"
+* [k] notation not defined (*)
+* Slip up: Say "define generative model" (+)
 
-* Need to say given $\beta_h$ alone, can recover mean, but not sufficient
-* Your dot operator changed
-* M_p is undefined
+* Need to say given $\beta_h$ alone, can recover mean, but not sufficient (*)
+* Your dot operator changed (*)
+* M_p is undefined (*)
 
-* Title: method of moments for mixture of linear regressions (emphasize low-rank)
-* Say method: regularize by nuclear norm first before saying analysis
+# Title: method of moments for mixture of linear regressions (emphasize low-rank) 
+
+* Say method: regularize by nuclear norm first before saying analysis ( )
 * Refer to AHK work (GMM): before, moments of the data were powers of $\beta$;
-here have to work harder to recover them
+here have to work harder to recover them (+)
 * Going through derivation: say explicitly we prove sample complexity results,
-don't slog through it
+don't slog through it (+)
 
-* Flip back between visualization and histogram of errors
+* Flip back between visualization and histogram of errors (+)
 
-* "Not too surprising" => "intuitive"
-* Figure: emphasize "spectral gets ballpark" (this should be a conclusion)
-* Experimental setup: say what the number of examples is, k = 3, d = 3
+* "Not too surprising" => "intuitive"  (+)
+* Figure: emphasize "spectral gets ballpark" (this should be a conclusion) (+)
+* Experimental setup: say what the number of examples is, k = 3, d = 3  (+)
 
-* Say assumptions
+* Say assumptions (*)
   h is independent of x
   B is full rank
 
-* Slip: "anneal regression coefficient" => "regularization parameter"
+* Slip: "anneal regression coefficient" => "regularization parameter" (+)
   "featurization" => "not deterministic polynomial dependencies"
-* Say "this is good when d is small relative to n"
+* Say "this is good when d is small relative to n" (+)
 ----
 
 - Histogram axes unlabeled

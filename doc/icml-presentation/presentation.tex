@@ -19,7 +19,7 @@
 \usepackage{algorithm,algorithmic}
 
 \usepackage{tikz}
-\usetikzlibrary{positioning,shapes,shadows,arrows}
+\usetikzlibrary{calc,positioning,shapes,shadows,arrows}
 
 \input{macros}
 \input{slide-macros}
@@ -76,9 +76,9 @@
     \node<4->[style=box,below=0.1cm of disc] (disc-models) {\obj{%
     {\bf Discriminative Models}
       \begin{itemize}
-        \item Logistic Regression
         \item Latent CRFs
         \item Discriminative LDA
+        \item Mixture of Experts
         %\item Semi-Latent Topic Models (Wang and Mori, 2009)
         %\item Discriminative Parsers (Liang et.\ al, 2006)
         \item \dots
@@ -90,14 +90,6 @@
 
   \end{tikzpicture}
 
-  % Really do known Gen (HMMs, ) vs Disc (CRFs) models 
-
-    \note[item]{Would like to start by talking about the bigger picture of parameter estimation.}
-    \note[item]{Discriminative Latent Variable Models are useful, but hard to learn.}
-    \note[item]{Split models into generative and discriminative models.}
-    \note[item]{Discriminative LVMs combine the predictive accuracy with compact expressiveness.}
-    \note[item]{They have been used in several applications, e.g.\ object recognition, syntactic parsing, machine translation, etc.}
-    \note[item]{Learning parameters for these models is hard because they have non-convex likelihood functions.}
 \end{frame}
 
 \begin{frame}
@@ -110,7 +102,7 @@
     \includegraphics<2>[width=\textwidth,height=6cm,keepaspectratio]{figures/likelihood-mle.png}
     \includegraphics<3>[width=\textwidth,height=6cm,keepaspectratio]{figures/likelihood-em.png}
     \includegraphics<4>[width=\textwidth,height=6cm,keepaspectratio]{figures/likelihood-mom.png}
-      \hfill{\em expected log-likelihood}
+      \hfill{\em expected negative log-likelihood}
       }};
   \end{tikzpicture}
 
@@ -119,29 +111,21 @@
   \begin{itemize}
     \item<1-> Log-likelihood function is non-convex.
     \item<2-> MLE is consistent but intractable.
-    \item<3-> EM is efficient but inconsistent.
+    \item<3-> Local methods (EM, gradient descent, etc.) are tractable but inconsistent.
     \item<4-> Can we build {\bf efficient yet consistent estimators} that get better with more data?
   \end{itemize}
 
-  \note[item]{We would like to develop efficient consistent estimators for discriminative LVMS.}
-  \note[item]{Past approaches rely on local optimization, which are susceptible to local optima.}
-  \note[item]{And they don't just go away with more data.}
-  \note[item]{Recently, there has been work on consistent parameter
-      estimation for generative LVMS\@. We'd like to extend their work to
-      the discriminative case.}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Method of Moments a.k.a.\ Spectral Methods}
+  \frametitle{Related Work}
   \begin{itemize}
     \item<+-> Method of Moments [Pearson, 1894]
     \item<+-> Observable operator models
     \begin{itemize}
       \item Subspace identification [Ljung, 1987]
       \item Observable operator models [Jaeger, 2000]
-        \note[item]{Entry point into machine learning}
-      \item {\bf Hidden Markov models [Hsu et al, 2009]}
-        \note[item]{Entry point into machine learning}
+      \item {\em Hidden Markov models [Hsu et al, 2009]}
       \item Low-treewidth graphs [Parikh et al., 2012]
       \item Weighted finite state automata [Balle \& Mohri, 2012]
     \end{itemize}
@@ -157,6 +141,38 @@
 \end{frame}
 
 \begin{frame}
+  \frametitle{Aside: Tensor Operations}
+  \begin{tikzpicture}
+    % x, y
+    \node<1->[style=box] (defn) at (0,0) {\objw{6cm}{%
+    \begin{align*}
+        \action<1->{%
+        x\tp{3}_{ijk} &= x_i x_j x_k \comment{tensoring}\\
+        }
+        \action<2->{%
+        \innerp{A}{B} &= \sum_{ijk} A_{ijk} B_{ijk} \comment{inner product}\\
+        }
+        \action<3->{%
+        A(u)_{ij} &= \sum_{k} A_{ijk} u_k \comment{projection}\\
+        }
+        \action<4->{%
+        A(u,v)_{i} &= \sum_{jk} A_{ijk} u_j v_k \comment{projection} \\
+        }
+      \end{align*}
+    }};
+    \tikzcube{black,fill=white}{(6,2,0)}{1}{1}{1};
+    %\node (pt) at (5.75,1.75,0) {$\hlmath{\times}$};
+    \uncover<3->{%
+    \tikzrect{black,fill=white}{(6,0)}{1}{1};
+    }
+    \uncover<4->{%
+    \tikzrect{black,fill=white}{(6,-2)}{0.1}{1};
+    }
+  \end{tikzpicture}
+
+\end{frame}
+
+\begin{frame}
   \frametitle{Example: Gaussian Mixture Model}
   \begin{tikzpicture}
     % x, y
@@ -164,7 +180,7 @@
     \begin{itemize} 
       \item Generative process:
       \begin{align*}
-        h \in [k] &\sim \Mult(\pi) \\
+        h &\sim \Mult(\pi) \\
         x &\sim \normal{\beta_h}{\sigma^2}.
       \end{align*}
     \end{itemize}
@@ -185,8 +201,8 @@
         \E[x] &= \sum_h \pi_h \beta_h \\
         }
         \action<4->{%
-        \E[x\tp{2}] &= \sum_h \pi_h \beta_h{\hlmath{\tp{2}}} \\
-                    &= \sum_h \pi_h (\beta_h \beta_h^T) \\
+        \E[x\tp{2}] &= \sum_h \pi_h (\beta_h \beta_h^T) \\
+                    &= \sum_h \pi_h \beta_h{\tp{2}} \\
                     }
         \action<5->{%
         \E[x\tp{3}] &= \sum_h \pi_h \beta_h\tp{3}.
@@ -211,44 +227,11 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{Aside: Tensor Operations}
-  \begin{tikzpicture}
-    % x, y
-    \node<1->[style=box] (defn) at (0,0) {\objw{6cm}{%
-    \begin{align*}
-        \action<1->{%
-        x\tp{3}_{ijk} &= x_i x_j x_k \comment{indexing}\\
-        }
-        \action<2->{%
-        A \cdot B &= \sum_{ijk} A_{ijk} B_{ijk} \comment{inner product}\\
-        }
-        \action<3->{%
-        A(u)_{ij} &= \sum_{k} A_{ijk} u_k \comment{projection}\\
-        }
-        \action<4->{%
-        A(u,v)_{i} &= \sum_{jk} A_{ijk} u_j v_k \comment{projection} \\
-        }
-      \end{align*}
-    }};
-    \tikzcube{black,fill=white}{(6,2,0)}{1}{1}{1};
-    \node (pt) at (5.75,1.75,0) {$\hlmath{\times}$};
-    \uncover<3->{%
-    \tikzrect{black,fill=white}{(6,0)}{1}{1};
-    }
-    \uncover<4->{%
-    \tikzrect{black,fill=white}{(6,-2)}{0.1}{1};
-    }
-  \end{tikzpicture}
-
-\end{frame}
-
-
-\begin{frame}
   \frametitle{Example: Gaussian Mixture Model}
   \begin{tikzpicture}
     % x, y
     \node<1->[style=box] (moments) at (0,0) {\objw{6cm}{%
-      Assume $\beta_h$ to be orthogonal;
+      If $\beta_h$ are orthogonal;
       \begin{align*}
         \E[x\tp{3}] &= \sum_{h=1}^k \pi_h \beta_h\tp{3}. 
       \end{align*}
@@ -258,10 +241,10 @@
       \includegraphics[width=0.45\textwidth,height=3cm,keepaspectratio]{figures/mog.png}
     }};
 
-    \node<1-> at (0,-3) {\objw{6cm}{%
+    \node<1-> at (6,-3) {\objw{6cm}{%
     \includegraphics[width=\textwidth,height=6cm,keepaspectratio]{figures/tensor.png}
       }};
-    \node<2->[style=box] at (6,-3) {\objw{6cm}{%
+    \node<2->[style=box] at (0,-3) {\objw{6cm}{%
       $\beta_h$ are eigenvectors!
         \begin{align*}
           \E[x\tp{3}](\beta_h,\beta_h) 
@@ -278,14 +261,27 @@
 %      \hfill {Tensor Power Method}
 %      }};
   \end{tikzpicture}
-
-    \note[item]{\bf We can recover the means of a generative LVM by exploiting their symmetric structure.}
-    \note[item]{\begin{align*} M_2 &= \sum_{h=1}^k \pi_h \beta_h\tp{2} & M_3 &= \sum_{h=1}^k \pi_h \beta_h\tp{3}.  \end{align*}}
-      \note[item]{In general, $M_2$ is insufficient to identify the model, because it is invariant to rotations of $B$. }
-      \note[item]{If the $\beta_h$ were orthogonal, then the eigenvectors and eigenvalues of $M_3$ would give us the answer. }
-      \note[item]{In general, we need both $M_2$ and $M_3$. We can use the whitening transformation for $M_2$ to whiten $M_3$ such that it has a orthogonal decomposition.}
-      \note[item]{The robust tensor power method by \cite{AnandkumarHsuGe2012} find stable eigenvectors.}
 \end{frame}
+
+\begin{frame}
+  \frametitle{Generative vs. Discriminative Latent Variable Models}
+
+  \begin{tikzpicture}
+    % Tasks.
+    \node[style=box] (gen) at (0,0) {\objw{6cm}{%
+      \includegraphics[width=\textwidth,height=3cm,keepaspectratio]{figures/gen.png}\\
+      \hfill Generative Models
+      }};
+    \node[scale=0.7] at (0.5,0.5) {Latent variable};
+
+    \node[style=box] (disc) at (6,0) {\objw{6cm}{%
+      \includegraphics[width=\textwidth,height=3cm,keepaspectratio]{figures/disc.png}\\
+      \hfill Discriminative Models
+      }};
+  \end{tikzpicture}
+
+\end{frame}
+
 
 \begin{frame}
   \frametitle{Mixture of Linear Regressions}
@@ -295,7 +291,7 @@
     \node[style=box] at (0,0) {\objw{4cm}{%
     \includegraphics[width=\textwidth,height=4cm,keepaspectratio]{figures/disc.png}
       \begin{itemize}
-        \item<2-> $h \in [k] \sim \Mult(\pi)$.
+        \item<2-> $h \sim \Mult(\pi)$.
         \item<4-> $y = \beta_h^T x + \epsilon$.
       \end{itemize}
       }};
@@ -363,12 +359,6 @@
 %       }};
 %   \end{tikzpicture}
 % 
-%     \note[item]{\bf We can recover the means of a generative LVM by exploiting their symmetric structure.}
-%     \note[item]{\begin{align*} M_2 &= \sum_{h=1}^k \pi_h \beta_h\tp{2} & M_3 &= \sum_{h=1}^k \pi_h \beta_h\tp{3}.  \end{align*}}
-%       \note[item]{In general, $M_2$ is insufficient to identify the model, because it is invariant to rotations of $B$. }
-%       \note[item]{If the $\beta_h$ were orthogonal, then the eigenvectors and eigenvalues of $M_3$ would give us the answer. }
-%       \note[item]{In general, we need both $M_2$ and $M_3$. We can use the whitening transformation for $M_2$ to whiten $M_3$ such that it has a orthogonal decomposition.}
-%       \note[item]{The robust tensor power method by \cite{AnandkumarHsuGe2012} find stable eigenvectors.}
 % \end{frame}
 
 \begin{frame}
@@ -386,22 +376,8 @@
           }
         \end{align*}
       }};
-    %\node[style=box] at (6,0) {\objw{8em}{%
-    %  {$y^p$ are linear measurements of the moments of the parameters $M_p$!}
-    %  }};
   \end{tikzpicture}
 
-    \note[item]{The powers of the response variables $y^p$ are linear measurements of the moments of the parameters $M_p$!}
-    \note[item]{As noted earlier, the first problem we run into is that we can't observe the moments of the parameters $B$ and $\pi$ directly!}
-    \note[item]{However, observe that 
-    \begin{align}
-      y &= \innerp{\beta_h}{x} + \epsilon \\
-        &= \innerp{\E[\beta_h]}{x} + \underbrace{{\beta_h - \E[\beta_h]}{x} + \epsilon }_{\textrm{noise}},
-    \end{align}
-    where $M_1 = \sum_{h=1}^k \pi_h \beta_h$, the mean regression coefficient.}
-    \note[item]{We note that while the noise term is dependent on $x$, it has a zero-mean. Thus, we could potentially recover $M_1$ through regression.}
-    \note[item]{Similarly, we can cast the remaining two terms as regression problems.}
-    \note[item]{An additional fact that we can exploit is that both $M_2$ and $M_3$ are low rank, so we can use low-rank regression to recover estimates $\hat M_2$ and $\hat M_3$ efficiently from data.}
 \end{frame}
 
 \begin{frame}
@@ -412,88 +388,184 @@
     \node[style=box] (measurements) at (0,0) {\objw{12cm}{%
         \begin{align*}
           \action<+->{%
-            y &= \underbrace{\E[\beta_h]^T \odot x}_{\textrm{linear measurement}} &\quad & + \underbrace{(\beta_h - \E[\beta_h])^T x + \epsilon}_{\textrm{noise}} \\
+          y &= \underbrace{\innerp{\E[\beta_h]^T}{x}}_{\textrm{linear measurement}} &\quad & + \underbrace{(\beta_h - \E[\beta_h])^T x + \epsilon}_{\textrm{noise}} \\
           }
           \action<+->{%
             y^2 
-              &= \E[\beta_h\tp{2}] \odot x\tp{2} &+ \textrm{bias} &+ \textrm{noise} \\
+            &= \innerp{\E[\beta_h\tp{2}]}{x\tp{2}} &+ \textrm{bias} &+ \textrm{noise} \\
           }
           \action<+->{%
-          y^3 &= \E[\beta_h\tp{2}] \odot x\tp{3} &+ \textrm{bias} &+ \textrm{noise} \\
+          y^3 &= \innerp{\E[\beta_h\tp{3}]}{x\tp{3}} &+ \textrm{bias} &+ \textrm{noise} \\
           }
         \end{align*}
 
         \uncover<4->{%
-          We can use regression to recover $M_p$ from linear measurements.\\
+        We can use regression to recover $\E[\beta_h\tp{p}]$ from linear measurements.\\
           }
       }};
+
+    \node<5->[style=box,below=0.1cm of measurements.south] (tensor) {\objw{12cm}{%
+      \includegraphics[width=\textwidth,height=3cm,keepaspectratio]{figures/tensor.png}
+      }};
+
   \end{tikzpicture}
 \end{frame}
-
-\begin{frame}
-  \frametitle{Method of Moments for the Mixture of Linear Regressions.}
-
-  \begin{tikzpicture}
-    % x, y
-    \node[style=box] (measurements) at (0,0) {\objw{12cm}{%
-      \includegraphics[width=\textwidth,height=6cm,keepaspectratio]{figures/tensor.png}
-      }};
-    \node<2->[style=box,below=0.1cm of measurements] {\objw{12cm}{%
-      We can use low-rank regression techniques [Negabhan \& Wainwright 2009; Tomioka 2011].
-      \begin{align*}
-        \hat\E[\beta_h\tp{2}] &= \arg\min_{M} \left(y^2 - M] \odot x\tp{2}\right)^2_{(x,y)\in\mathcal{D}} + \|M\|_{*} \\
-        \|M\|_{*} &= \sum_i \sigma_i(M).
-      \end{align*}
-      }};
-  \end{tikzpicture}
-\end{frame}
-
-% \begin{frame}
-%   \frametitle{Method of Moments for the Mixture of Linear Regressions.}
-% 
-%   \begin{tikzpicture}
-%     % x, y
-%     \node[style=box] (note) at (0,0) {\objw{12cm}{%
-%       {$y^p$ are linear measurements of the moments of the parameters $M_p$!}
-%       }};
-%     \node[style=box,below=0.1cm of note] {\objw{12cm}{%
-%       \includegraphics<1>[width=\textwidth,height=8cm,keepaspectratio]{figures/regression-1.png}
-%       \includegraphics<2>[width=\textwidth,height=8cm,keepaspectratio]{figures/regression-2.png}
-%       \includegraphics<3>[width=\textwidth,height=8cm,keepaspectratio]{figures/regression-3.png}
-%       }};
-%   \end{tikzpicture}
-% \end{frame}
 
 \begin{frame}
   \frametitle{Overview: Spectral Experts}
 
   \begin{tikzpicture}
     % x, y
-    \node[style=box] at (0,0) {\objw{12cm}{%
-      \includegraphics<1>[width=\textwidth,height=8cm,keepaspectratio]{figures/err-1.png}
+    % Nodes
+    \node[style=txt] (data1) at (0,0) {$\left\{ x, y \right\}_{(x,y) \in \sD}$};
+    \node[style=txt,below=1cm of data1.center] (data2) {$\left\{ x\tp{2}, y^2 \right\}_{(x,y) \in \sD}$};
+    \node[style=txt,below=1cm of data2.center] (data3) {$\left\{ x\tp{3}, y^3 \right\}_{(x,y) \in \sD}$};
+
+    \node[style=txt] (m1) at (4,0) {$\E_h\left[\beta_h\right]$};
+    \node[style=txt,below=1cm of m1.center] (m2) {$\E_h\left[\beta_h\tp{2}\right]$};
+    \node[style=txt,below=1cm of m2.center] (m3) {$\E_h\left[\beta_h\tp{3}\right]$};
+
+    \node[below=0.5cm of m2.center] (params-pos) {};
+    \node[style=txt,right=3.0cm of params-pos] (params) {$\pi, B$};
+
+    % Arrows
+    \draw[-latex] (data1) -- (m1);
+    \draw[-latex] (data2) -- (m2);
+    \draw[-latex] (data3) -- (m3);
+
+    % Bias influence
+    \draw[-latex,dashed,gray] (m1.east) -- ++(0.1cm,0) -- ++(0,-0.50cm) -- ++(-3.00cm,0) node (bias-1) {} -- ( bias-1 |- m3) -- (m3.west);
+
+    % Mean
+    \draw[-latex] (m2.east) -- ++(0.1cm,0) node (tf-1) {} -- (tf-1 |- params-pos) -- node[above,scale=0.5] {tensor factorization} (params);
+    \draw[-latex] (m3.east) -- ++(0.1cm,0) node (tf-2) {} -- (tf-2 |- params-pos) -- (params);
+
+    % Box for regression
+    \begin{pgfonlayer}{bg}
+    \draw[fill=blue,opacity=0.1,dashed] ($(data1.north east) + (-0.1cm,0.1cm)$) rectangle ($(m3.south west) + (0.1cm,-0.1cm)$);
+    \end{pgfonlayer}
+    \node[style=txt] (reg-label) at ($(data3) !.5! (m3) + (0, -1.0cm)$) {regression};
+
+    % tensor factorization
+    \begin{pgfonlayer}{bg}
+    \draw[fill=green,opacity=0.1,dashed] ($(m2.north east) + (-0.1cm,0.1cm)$) rectangle ($(params.south west) + (0.1cm,-1.0cm)$);
+    \end{pgfonlayer}
+    \node (params-mid) at ($(params-pos) !.5! (params)$) {};
+    \node[style=txt] at (params-mid |- reg-label) {tensor factorization};
+  \end{tikzpicture}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Method of Moments for the Mixture of Linear Regressions.}
+
+  \begin{tikzpicture}
+    % x, y
+    \node[style=box] (reg) at (0,0) {\objw{12cm}{%
+      \begin{align*}
+        \hat\E[\beta_h\tp{2}] &= \arg\min_{M} \left(y^2 - \innerp{M}{x\tp{2}}\right)^2_{(x,y)\in\mathcal{D}} \action<3->{+ \hlmath{\|M\|_{*}}} \\
+        \action<3->{%
+        \|M\|_{*} &= \sum_i \sigma_i(M).
+        }
+      \end{align*}
+      }};
+    \node<2->[style=box,below=0.1 of reg] (measurements) {\objw{12cm}{%
+      \includegraphics[width=\textwidth,height=6cm,keepaspectratio]{figures/tensor.png}
       }};
   \end{tikzpicture}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Perturbation Analysis}
+  \frametitle{Overview: Spectral Experts}
 
   \begin{tikzpicture}
     % x, y
-    \node[style=box] at (0,0) {\objw{12cm}{%
-      \includegraphics<1>[width=\textwidth,height=8cm,keepaspectratio]{figures/err-1.png}
-      %\includegraphics<2>[width=\textwidth,height=8cm,keepaspectratio]{figures/err-2.png}
-      \includegraphics<2>[width=\textwidth,height=8cm,keepaspectratio]{figures/err-3.png}
-      %\includegraphics<4>[width=\textwidth,height=8cm,keepaspectratio]{figures/err-4.png}
-      \includegraphics<3>[width=\textwidth,height=8cm,keepaspectratio]{figures/err-5.png}
-      }};
-  \end{tikzpicture}
+    % Nodes
+    \node[style=txt] (data1) at (0,0) {$\left\{ x, y \right\}_{(x,y) \in \sD}$};
+    \node[style=txt,below=1cm of data1.center] (data2) {$\left\{ x\tp{2}, y^2 \right\}_{(x,y) \in \sD}$};
+    \node[style=txt,below=1cm of data2.center] (data3) {$\left\{ x\tp{3}, y^3 \right\}_{(x,y) \in \sD}$};
 
-  \note[item]{The algorithm is consistent, and requires $O(?)$ samples.}
-  \note[item]{The rate of convergence for the spectral experts algorithm to the true parameters breaks into two parts; the rates for learning the moments, which feeds into the rates for learning the parameters.}
-  \note[item]{For low rank regression, we have the following bound on recovery by (Tomioka2011); $$ \| \hat M_p - M_p \|_F \le \frac{32 \lambda^{(p)}_n \sqrt{k}}{\kappa(\opX_p)}, $$ where $\kappa(\opX_p)$ is the (restricted) strong convexity constant, and $\lambda^{(p)} > \|\opX^*_p(\eta)\|$.}
-  \note[item]{Because we assume our noise is bounded, it is easy to show that the error concentrates.}
-  \note[item]{In the tensor recovery case, we will need to whiten $M_3$ before applying the tensor decomposition and unwhiten it afterwards; this modifies the error bounds slightly.}
+    \node[style=txt] (m1) at (4,0) {$\E_h\left[\beta_h\right]$};
+    \node[style=txt,below=1cm of m1.center] (m2) {$\E_h\left[\beta_h\tp{2}\right]$};
+    \node[style=txt,below=1cm of m2.center] (m3) {$\E_h\left[\beta_h\tp{3}\right]$};
+
+    \node[below=0.5cm of m2.center] (params-pos) {};
+    \node[style=txt,right=3.0cm of params-pos] (params) {$\pi, B$};
+
+    % Arrows
+    \draw[-latex] (data1) -- (m1);
+    \draw[-latex] (data2) -- node[above,scale=0.5] {low rank} (m2);
+    \draw[-latex] (data3) -- node[above,scale=0.5] {low rank} (m3);
+
+    % Bias influence
+    \draw[-latex,dashed,gray] (m1.east) -- ++(0.1cm,0) -- ++(0,-0.50cm) -- ++(-3.00cm,0) node (bias-1) {} -- ( bias-1 |- m3) -- (m3.west);
+
+    % Mean
+    \draw[-latex] (m2.east) -- ++(0.1cm,0) node (tf-1) {} -- (tf-1 |- params-pos) -- node[above,scale=0.5] {tensor factorization} (params);
+    \draw[-latex] (m3.east) -- ++(0.1cm,0) node (tf-2) {} -- (tf-2 |- params-pos) -- (params);
+
+    % Box for regression
+    \begin{pgfonlayer}{bg}
+    \draw[fill=blue,opacity=0.1,dashed] ($(data1.north east) + (-0.1cm,0.1cm)$) rectangle ($(m3.south west) + (0.1cm,-0.1cm)$);
+    \end{pgfonlayer}
+    \node[style=txt] (reg-label) at ($(data3) !.5! (m3) + (0, -1.0cm)$) {regression};
+
+    % tensor factorization
+    \begin{pgfonlayer}{bg}
+    \draw[fill=green,opacity=0.1,dashed] ($(m2.north east) + (-0.1cm,0.1cm)$) rectangle ($(params.south west) + (0.1cm,-1.0cm)$);
+    \end{pgfonlayer}
+    \node (params-mid) at ($(params-pos) !.5! (params)$) {};
+    \node[style=txt] at (params-mid |- reg-label) {tensor factorization};
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Sample Complexity}
+
+  \begin{tikzpicture}
+    % x, y
+    % Nodes
+    \node[style=txt] (data1) at (0,0) {$\left\{ x, y \right\}_{(x,y) \in \sD}$};
+    \node[style=txt,below=1cm of data1.center] (data2) {$\left\{ x\tp{2}, y^2 \right\}_{(x,y) \in \sD}$};
+    \node[style=txt,below=1cm of data2.center] (data3) {$\left\{ x\tp{3}, y^3 \right\}_{(x,y) \in \sD}$};
+
+    \node[style=txt] (m1) at (4,0) {$\E_h\left[\beta_h\right]$};
+    \node[style=txt,below=1cm of m1.center] (m2) {$\E_h\left[\beta_h\tp{2}\right]$};
+    \node[style=txt,below=1cm of m2.center] (m3) {$\E_h\left[\beta_h\tp{3}\right]$};
+
+    \node[below=0.5cm of m2.center] (params-pos) {};
+    \node[style=txt,right=3.0cm of params-pos] (params) {$\pi, B$};
+
+    % Arrows
+    \draw[-latex] (data1) -- (m1);
+    \draw[-latex] (data2) -- node[above,scale=0.5] {low rank} (m2);
+    \draw[-latex] (data3) -- node[above,scale=0.5] {low rank} (m3);
+
+    % Bias influence
+    \draw[-latex,dashed,gray] (m1.east) -- ++(0.1cm,0) -- ++(0,-0.50cm) -- ++(-3.00cm,0) node (bias-1) {} -- ( bias-1 |- m3) -- (m3.west);
+
+    % Mean
+    \draw[-latex] (m2.east) -- ++(0.1cm,0) node (tf-1) {} -- (tf-1 |- params-pos) -- node[above,scale=0.5] {tensor factorization} (params);
+    \draw[-latex] (m3.east) -- ++(0.1cm,0) node (tf-2) {} -- (tf-2 |- params-pos) -- (params);
+
+    % Box for regression
+    \begin{pgfonlayer}{bg}
+    \draw[fill=blue,opacity=0.1,dashed] ($(data1.north east) + (-0.1cm,0.1cm)$) rectangle ($(m3.south west) + (0.1cm,-0.1cm)$);
+    \end{pgfonlayer}
+    \node[style=txt] (reg-label) at ($(data3) !.5! (m3) + (0, -1.0cm)$) {regression};
+
+    % tensor factorization
+    \begin{pgfonlayer}{bg}
+    \draw[fill=green,opacity=0.1,dashed] ($(m2.north east) + (-0.1cm,0.1cm)$) rectangle ($(params.south west) + (0.1cm,-1.0cm)$);
+    \end{pgfonlayer}
+    \node (params-mid) at ($(params-pos) !.5! (params)$) {};
+    \node[style=txt] (tf-label) at (params-mid |- reg-label) {tensor factorization};
+
+    % Error bounds
+    \node<2->[style=txt,below=0.1em of reg-label] {$O\left( k \|x\|^{12} \|\beta\|^{6} \|\E[\epsilon^2]\|^{6} \right)$};
+    \node<3->[style=txt,below=0.1em of tf-label] {$O\left( \frac{k \pi_{\max}^2}{\sigma_k(M_2)^5} \right)$};
+
+  \end{tikzpicture}
 \end{frame}
 
 \begin{frame}
@@ -501,52 +573,52 @@
 
   \begin{tikzpicture}
     % x, y
-    \node<-4> (em) at (-3,-0.5) {%
+    \node (em) at (-3,-0.5) {%
       \includegraphics<1>[width=\textwidth,height=5cm,keepaspectratio]{figures/1-8-3.png}
-      \includegraphics<2->[width=\textwidth,height=5cm,keepaspectratio]{figures/1-8-3-em.png}
-      };
-    % x, y
-    \node<-4> at (3,-0.5) {%
+      \includegraphics<2>[width=\textwidth,height=5cm,keepaspectratio]{figures/1-8-3-em.png}
       \includegraphics<3>[width=\textwidth,height=5cm,keepaspectratio]{figures/1-8-3-spec.png}
       \includegraphics<4->[width=\textwidth,height=5cm,keepaspectratio]{figures/1-8-3-specm.png}
       };
-    \node<5-> at (0,-0.5) {%
+    % x, y
+    \node<2-> at (3,-0.5) {%
       \includegraphics[width=\textwidth,height=5cm,keepaspectratio]{figures/hist.png}
     };
 
-    \node[above=0.1 cm of em] {%
-    $y = \underbrace{t + t^4 + t^7}_{x} + \epsilon$
-    };
-
-%      \begin{small}
-%  \begin{tabular}{ r r r c c c }
-%\hline
-%$b$ & $d$ & $k$ & Spectral & EM & Spectral + EM \\
-%\hline
-%  1 & 4 & 2 & 2.45 $\pm$ 3.68 & 0.28 $\pm$ 0.82 & {\bf 0.17 $\pm$ 0.57} \\
-%  2 & 5 & 2 & 1.38 $\pm$ 0.84 & {\bf 0.00 $\pm$ 0.00} & {\bf 0.00 $\pm$ 0.00} \\
-%  2 & 5 & 3 & 2.92 $\pm$ 1.71 & 0.43 $\pm$ 1.07 & {\bf 0.31 $\pm$ 1.02} \\
-%  2 & 6 & 2 & 2.33 $\pm$ 0.67 & 0.63 $\pm$ 1.29 & {\bf 0.01 $\pm$ 0.01} \\
-%\hline
-%\end{tabular}
-%      \end{small}
-%    }};
+    \node[above=0.1 cm of em] {\objw{3cm}{%
+      \begin{align*}
+        y &= \beta^T 
+            \begin{bmatrix} 
+              1 \\
+              t \\
+              t^4 \\
+              t^7
+            \end{bmatrix} + \epsilon
+      \end{align*}
+      }};
   \end{tikzpicture}
+\end{frame}
 
-  \note[item]{Stable!}
-    \note[item]{Spectral Experts provides a good initialization to EM.}
-    \note[item]{We simulated the performance of spectral experts and compared it to EM.}
-    \note[item]{In a non-trivial number of cases, EM did not converge to the right parameters and got stuck in local optima.}
-    \note[item]{The parameters estimated by the spectral method were not very good even with $O(10^5)$ samples.}
-    \note[item]{However, EM initialized with these parameters did extremely well.}
-\note[item]{This finding that spectral methods should be a good initialization for EM is not surprising.}
-\note[item]{%
-  \begin{itemize}
-    \item The biggest sell for spectral methods is that they give a global guarantee on where the parameters are.
-    \item The parameters might not be at the global optima, but will hopefully lie in the potential well around it.
-    \item EM will then converge to the global optima.
-  \end{itemize}
-  }
+\begin{frame}
+  \frametitle{Experimental Insights}
+
+\begin{small}
+  \begin{tabular}{r r r c c c}
+\hline
+%$b$ & 
+$d$ & $k$ & Spectral & EM & Spectral + EM \\
+\hline
+  %1 & 
+  4 & 2 & 2.45 $\pm$ 3.68 & 0.28 $\pm$ 0.82 & {\bf 0.17 $\pm$ 0.57} \\
+  %2 & 
+  5 & 2 & 1.38 $\pm$ 0.84 & {\bf 0.00 $\pm$ 0.00} & {\bf 0.00 $\pm$ 0.00} \\
+  %2 & 
+  5 & 3 & 2.92 $\pm$ 1.71 & 0.43 $\pm$ 1.07 & {\bf 0.31 $\pm$ 1.02} \\
+  %2 & 
+  6 & 2 & 2.33 $\pm$ 0.67 & 0.63 $\pm$ 1.29 & {\bf 0.01 $\pm$ 0.01} \\
+\hline
+\end{tabular}
+      \end{small}
+
 \end{frame}
 
 \begin{frame}
@@ -557,7 +629,7 @@
       \includegraphics<1>[width=\textwidth,height=6cm,keepaspectratio]{figures/likelihood-mom.png}
       \includegraphics<2>[width=\textwidth,height=6cm,keepaspectratio]{figures/likelihood-mom-em1.png}
       \includegraphics<3>[width=\textwidth,height=6cm,keepaspectratio]{figures/likelihood-mom-em2.png}
-        \hfill{\em expected log-likelihood}
+        \hfill{\em expected negative log-likelihood}
       }};
   \end{tikzpicture}
 
