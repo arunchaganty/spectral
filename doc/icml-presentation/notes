@@ -83,6 +83,79 @@ it seems rather un-interpretable besides that it is polynomial.
 align together, but not a big deal.
 ----
 
+# June 7th 2013
+
+Time: 15 minutes; 10:16
+
+Big points
+ - Introduce notation, make it clear before saying
+ - "moments" is way too overloaded
+ - Focus on important point; don't say things that hide details
+ - reference the figures more
+
+When in doubt, just move on
+
+-- Slide 2
+Use examples of latent variable models
+Latent CRF
+Discriminative LDA
+reference h, z, x, y, h
+
+Discriminative models: logistic regression
+
+-- Slide 3
+marginal likelihood $p(x)$
+don't say NP hard, say intractable
+EM can work in practice provided good initialization
+
+-- Slide 4
+Method of moments is old
+studied in control theory / automata
+Observable operator models (not representation learning)
+Parameter estimation
+
+-- Slide 5
+introduce simple mixture model
+Need to introduce notation (x^\otimes 3), \beta, means
+Need actual mixture model
+tensor power method
+words: \beta's...means... forget whitening
+
+-- Slide 6
+mixture of linear regressions: simplest model
+Generative model is as follows:
+Purpose is defining the model:
+don't stress dimensionality - we can't estimate in this
+To generate a point
+Data => Example
+Stress: don't know h
+
+E[\beta_h]: define
+Say, that $M_1$ doesn't give you $\beta$
+Hide hideous equations: focus on first term.
+Don't use trace, just do dot product
+just say bias, noise
+generalized product
+
+don't use word "moments"
+low-rank: $d^3$ too subtle
+
+Slide just to summarize algorithm
+Then slide for analysis;
+don't say too much about analysis; make faster
+
+Slide 9
+featurizations: confusing: (t, t^2)
+curves are just
+label axes
+graphs are
+explain the figure (build), explain axes
+
+Draw an example where spectral is right basin of attraction but too high,
+whereas EM has better objective, but
+
+# June 6th 2013
+
 * Gen vs Disc. graphical model. (*)
 * HMMs, GMMs, etc. (*)
 
@@ -94,13 +167,13 @@ align together, but not a big deal.
   * Outline the high level idea of tensor factorization (-symmetric).
   * move the tensor factorization to mom. (*)
   * Let's see how we can apply this building block to our scenario. (*)
-* -unmixing
-* -mom
-* -unweidly stuff .
-* one slide for y = ...
-* diagrmas for y = x . M_p
-* Warm up with M1 and M2
-* regression just for y3.
+* -unmixing (*)
+* -mom (*)
+* -unweidly stuff . (*)
+* one slide for y = ... (*)
+* diagrmas for y = x . M_p (*)
+* Warm up with M1 and M2 (*)
+* regression just for y3. (*)
   + Error analysis for just M3
 * EM for just 1
 * Compared to observable operator 
@@ -109,9 +182,4 @@ align together, but not a big deal.
   - revisit the optimaization picture.
 
 * Get clear the difference between discriminative and generative models.
-
-
-----
-
-
 

@@ -51,15 +51,15 @@
 \begin{frame}
   \frametitle{Generative vs. Discriminative Latent Variable Models}
 
-  \begin{centering}
   \begin{tikzpicture}
     % Tasks.
     \node[style=box] (gen) at (0,0) {\objw{6cm}{%
       \includegraphics[width=\textwidth,height=3cm,keepaspectratio]{figures/gen.png}\\
       \hfill Generative Models
       }};
+    \node[scale=0.7] at (0.5,0.5) {Latent variable};
 
-    \node<1->[style=box,below=0.1cm of gen] {\obj{%
+    \node<2->[style=box,below=0.1cm of gen] {\obj{%
       {\bf Generative Models}
       \begin{itemize}
         \item Gaussian Mixture Models
@@ -69,26 +69,26 @@
         \item \dots
       \end{itemize}
       }};
-    \node<2->[style=box] (disc) at (6,0) {\objw{6cm}{%
+    \node<3->[style=box] (disc) at (6,0) {\objw{6cm}{%
       \includegraphics[width=\textwidth,height=3cm,keepaspectratio]{figures/disc.png}\\
       \hfill Discriminative Models
       }};
-    \node<2->[style=box,below=0.1cm of disc] (disc-models) {\obj{%
+    \node<4->[style=box,below=0.1cm of disc] (disc-models) {\obj{%
     {\bf Discriminative Models}
       \begin{itemize}
         \item Logistic Regression
-        \item Conditional Random Fields
-        \item Semi-Latent Topic Models (Wang and Mori, 2009)
+        \item Latent CRFs
+        \item Discriminative LDA
+        %\item Semi-Latent Topic Models (Wang and Mori, 2009)
         %\item Discriminative Parsers (Liang et.\ al, 2006)
         \item \dots
       \end{itemize}
       }};
-    \node<3->[style=box,below=0.1cm of disc-models] {\obj{%
+    \node<5->[style=box,below=0.1cm of disc-models] {\obj{%
       {\bf Easy to include features and tend to be more accurate.}
     }};
 
   \end{tikzpicture}
-  \end{centering}
 
   % Really do known Gen (HMMs, ) vs Disc (CRFs) models 
 
@@ -103,7 +103,6 @@
 \begin{frame}
   \frametitle{Parameter Estimation is Hard}
 
-  \begin{centering}
   \begin{tikzpicture}
     % x, y
     \node[style=box] at (0,-1.5) {\objw{12cm}{%
@@ -114,7 +113,6 @@
       \hfill{\em expected log-likelihood}
       }};
   \end{tikzpicture}
-  \end{centering}
 
   % Simple message: MLE is consistent but intractable, EM is efficient not but consistent. Can we get something in between.
 
@@ -134,17 +132,20 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{Spectral Methods}
+  \frametitle{Method of Moments a.k.a.\ Spectral Methods}
   \begin{itemize}
-     \item Representation Learning
+    \item<+-> Method of Moments [Pearson, 1894]
+    \item<+-> Observable operator models
     \begin{itemize}
-    \item Subspace identification [Ljung, 1987]
-    \item Observable operator models [Jaeger, 2000]
-    \item {\bf Hidden Markov models [Hsu et al, 2009]}
-    \item Low-treewidth graphs [Parikh et al., 2012]
-    \item Weighted finite state automata [Balle \& Mohri, 2012]
-  \end{itemize}
-     \item<2-> Parameter Estimation
+      \item Subspace identification [Ljung, 1987]
+      \item Observable operator models [Jaeger, 2000]
+        \note[item]{Entry point into machine learning}
+      \item {\bf Hidden Markov models [Hsu et al, 2009]}
+        \note[item]{Entry point into machine learning}
+      \item Low-treewidth graphs [Parikh et al., 2012]
+      \item Weighted finite state automata [Balle \& Mohri, 2012]
+    \end{itemize}
+     \item<+-> Parameter Estimation
   \begin{itemize}
     \item Mixture of Gaussians [Kalai/Moitra/Valiant, 2010]
     \item {\bf Mixture models, HMMs [Anandkumar/Hsu/Kakade, 2012]}
@@ -153,40 +154,130 @@
     \item Linear Bayesian networks [Anandkumar/Hsu/Javanmard/Kakade, 2012]
   \end{itemize}
   \end{itemize}
-  \note[item]{\todo{Talk about observable operator stuff.}}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Spectral Methods via Tensor Factorization}
-  \begin{centering}
+  \frametitle{Example: Gaussian Mixture Model}
   \begin{tikzpicture}
     % x, y
-    \node<1>[style=box] (moments) at (0,0) {\objw{12cm}{%
+    \node<1->[style=box] (defn) at (0,0) {\objw{6cm}{%
+    \begin{itemize} 
+      \item Generative process:
       \begin{align*}
-        %\underbrace{\E[x]}_{M_1} &= \sum_{h=1}^k \pi_h \beta_h & 
-        %\underbrace{\E[x\tp{2}]}_{M_2} &= \sum_{h=1}^k \pi_h \beta_h\tp{2} & 
-        \underbrace{\E[x\tp{3}]}_{M_3} &= \sum_{h=1}^k \pi_h \beta_h\tp{3}. 
+        h \in [k] &\sim \Mult(\pi) \\
+        x &\sim \normal{\beta_h}{\sigma^2}.
+      \end{align*}
+    \end{itemize}
+    }};
+    \node<1->[style=box] (models) at (6,0) {\objw{6cm}{%
+      \includegraphics[width=0.45\textwidth,height=3cm,keepaspectratio]{figures/gen.png}
+      \includegraphics[width=0.45\textwidth,height=3cm,keepaspectratio]{figures/mog.png}
+    }};
+
+    \node<2->[style=box,below=0.1cm of defn] {\objw{6cm}{%
+    \begin{itemize} 
+      \item Moments:
+    \begin{align*}
+        \action<2->{%
+        \E[x|h] &= \beta_h \\
+        }
+        \action<3->{%
+        \E[x] &= \sum_h \pi_h \beta_h \\
+        }
+        \action<4->{%
+        \E[x\tp{2}] &= \sum_h \pi_h \beta_h{\hlmath{\tp{2}}} \\
+                    &= \sum_h \pi_h (\beta_h \beta_h^T) \\
+                    }
+        \action<5->{%
+        \E[x\tp{3}] &= \sum_h \pi_h \beta_h\tp{3}.
+        }
+      \end{align*}
+    \end{itemize}
+    }};
+    %\tikzrect{1}{1};
+    \uncover<4->{%
+    \tikzrect{black,fill=white}{(6,-2)}{1}{1};
+    \node at (7,-2.5) {$\E[x\tp{2}]$};
+    \node at (4.5,-2.5) {$d$};
+    }
+    \uncover<5->{%
+    \tikzcube{black,fill=white}{(6,-4,0)}{1}{1}{1};
+    \node at (7,-4.5,0) {$\E[x\tp{3}]$};
+    \node at (4.5,-4.5) {$d$};
+    \node at (4.5,-4.5) {$d$};
+    }
+  \end{tikzpicture}
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Aside: Tensor Operations}
+  \begin{tikzpicture}
+    % x, y
+    \node<1->[style=box] (defn) at (0,0) {\objw{6cm}{%
+    \begin{align*}
+        \action<1->{%
+        x\tp{3}_{ijk} &= x_i x_j x_k \comment{indexing}\\
+        }
+        \action<2->{%
+        A \cdot B &= \sum_{ijk} A_{ijk} B_{ijk} \comment{inner product}\\
+        }
+        \action<3->{%
+        A(u)_{ij} &= \sum_{k} A_{ijk} u_k \comment{projection}\\
+        }
+        \action<4->{%
+        A(u,v)_{i} &= \sum_{jk} A_{ijk} u_j v_k \comment{projection} \\
+        }
       \end{align*}
     }};
-    \node<1>[style=box,below=0.4cm of moments] {\objw{12cm}{%
+    \tikzcube{black,fill=white}{(6,2,0)}{1}{1}{1};
+    \node (pt) at (5.75,1.75,0) {$\hlmath{\times}$};
+    \uncover<3->{%
+    \tikzrect{black,fill=white}{(6,0)}{1}{1};
+    }
+    \uncover<4->{%
+    \tikzrect{black,fill=white}{(6,-2)}{0.1}{1};
+    }
+  \end{tikzpicture}
+
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Example: Gaussian Mixture Model}
+  \begin{tikzpicture}
+    % x, y
+    \node<1->[style=box] (moments) at (0,0) {\objw{6cm}{%
+      Assume $\beta_h$ to be orthogonal;
+      \begin{align*}
+        \E[x\tp{3}] &= \sum_{h=1}^k \pi_h \beta_h\tp{3}. 
+      \end{align*}
+    }};
+    \node<1->[style=box] (models) at (6,0) {\objw{6cm}{%
+      \includegraphics[width=0.45\textwidth,height=3cm,keepaspectratio]{figures/gen.png}
+      \includegraphics[width=0.45\textwidth,height=3cm,keepaspectratio]{figures/mog.png}
+    }};
+
+    \node<1-> at (0,-3) {\objw{6cm}{%
     \includegraphics[width=\textwidth,height=6cm,keepaspectratio]{figures/tensor.png}
       }};
-    \node<2>[style=box] (tensorf) at (0,0) {\objw{12cm}{%
-      Given orthonormal $\beta_h$,
-          \begin{align*}
-            M_3(\beta_h,\beta_h) 
-              %&= \sum_{h'=1}^k \pi_{h'} (\beta_{h}^T \beta_{h'})^2 \beta_{h'} \\
-              %&= \sum_{h'=1}^k \pi_{h'} \delta_{hh'} \beta_{h'} \\
-              &= \pi_{h'} \beta_{h}.
-          \end{align*}
-      }};
+    \node<2->[style=box] at (6,-3) {\objw{6cm}{%
+      $\beta_h$ are eigenvectors!
+        \begin{align*}
+          \E[x\tp{3}](\beta_h,\beta_h) 
+            %&= \sum_{h'=1}^k \pi_{h'} (\beta_{h}^T \beta_{h'})^2 \beta_{h'} \\
+            %&= \sum_{h'=1}^k \pi_{h'} \delta_{hh'} \beta_{h'} \\
+            &= \pi_{h} \beta_{h}.
+        \end{align*}
 
-    \node<2>[style=box,below=0.1cm of tensorf] {\objw{12cm}{%
-    \includegraphics[width=\textwidth,height=6cm,keepaspectratio]{figures/tensor-decomp.png}
-      \hfill {Tensor Power Method}
+        \hfill{\em Anandkumar, Hsu, et.\ al (2012)}
       }};
+%
+%    \node<2>[style=box,below=0.1cm of tensorf] {\objw{12cm}{%
+%    \includegraphics[width=\textwidth,height=6cm,keepaspectratio]{figures/tensor-decomp.png}
+%      \hfill {Tensor Power Method}
+%      }};
   \end{tikzpicture}
-  \end{centering}
 
     \note[item]{\bf We can recover the means of a generative LVM by exploiting their symmetric structure.}
     \note[item]{\begin{align*} M_2 &= \sum_{h=1}^k \pi_h \beta_h\tp{2} & M_3 &= \sum_{h=1}^k \pi_h \beta_h\tp{3}.  \end{align*}}
@@ -199,55 +290,53 @@
 \begin{frame}
   \frametitle{Mixture of Linear Regressions}
 
-  \begin{centering}
   \begin{tikzpicture}
     % x, y
-    \node<1-9>[style=box] at (0,0) {\obj{%
-    \includegraphics[width=\textwidth,height=4cm,keepaspectratio]{figures/disc-model.png}\\
-    {\bf Parameters:} $\pi = [\pi_1, \cdots, \pi_k]$ and $B = [ \beta_1 | \cdots | \beta_k ]$.
-    For a given $x$,
+    \node[style=box] at (0,0) {\objw{4cm}{%
+    \includegraphics[width=\textwidth,height=4cm,keepaspectratio]{figures/disc.png}
       \begin{itemize}
-        \item<2-> $h \in [k] \sim Mult(\pi)$.
-        \item<3-> $\epsilon \sim \mathcal{E}$.
+        \item<2-> $h \in [k] \sim \Mult(\pi)$.
         \item<4-> $y = \beta_h^T x + \epsilon$.
       \end{itemize}
       }};
-    \node<10>[style=box] at (0,0) {\obj{%
-    \includegraphics[width=\textwidth,height=4cm,keepaspectratio]{figures/disc-model.png}\\
-    {\bf Given:} $\mathcal{D} = (x_i, y_i)_{i=1}^{n}$,\\
-    can we {\bf estimate parameters} $\pi$ and $B = [ \beta_1 | \cdots | \beta_k ]$?
-      }};
 
-    %\node<2-> at (6,0) {Discriminative Models};
     \node[style=box] at (6,0) {\obj{%
     \includegraphics<1>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-2.png}
-    \includegraphics<2-3>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-3a.png}
-    \includegraphics<4>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-3b.png}
-    \includegraphics<5>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-4a.png}
-    \includegraphics<6-7>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-4b.png}
-    \includegraphics<8>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-4c.png}
-    \includegraphics<9>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-5.png}
-    \includegraphics<10>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-6.png}
-      \\{\em Data}
+    \includegraphics<2>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-3a.png}
+    \includegraphics<3>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-3b.png}
+    \includegraphics<4>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-4a.png}
+    \includegraphics<5>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-4b.png}
+    %\includegraphics<6>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-4c.png}
+    \includegraphics<6>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-5.png}
       }};
   \end{tikzpicture}
-  \end{centering}
+\end{frame}
 
-  \note[item]{First step, consider a simple discriminative model, mixture of linear regressions.}
-  \note[item]{The mixture of linear regressions model defines a conditional distribution over a response $y \in \Re$ given covariates $x \in \Re^d$.}
-     \note[item]{The generative procedure is as follows,
-       \begin{enumerate}
-        \item Draw a mixture component $h \in [k] \sim Mult(\pi)$, where $\pi = [\pi_1 | \dots | \pi_k]$ defines the mixture proportions.
-        \item Draw the noise $\epsilon \sim \mathcal{E}$, where $\mathcal{E}$ is the noise distribution.
-        \item Set $y = \beta_h^T x + \epsilon$, where $\{\beta_h\}_{h=1}^{k}$ are the conditional means of the regression coefficients.
-      \end{enumerate}}
-   \note[item]{The parameters that we would like to learn from this model are $\pi$ and $B = [ \beta_1 | \cdots | \beta_k ]$.}
+\begin{frame}
+  \frametitle{Mixture of Linear Regressions}
+
+  \begin{tikzpicture}
+    \node[style=box] (data) at (0,0) {\obj{%
+    \includegraphics[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-6.png}
+      \\{\em Data}
+      }};
+
+    % x, y
+    \node[style=box] (params) at (7,0) {\objw{4cm}{%
+    \includegraphics[width=\textwidth,height=4cm,keepaspectratio]{figures/disc.png}
+    \\
+    {\bf Parameters: $\pi, B$}
+    }};
+
+    \draw[->,dashed] (data) -- node[above]{?} (params);
+
+
+  \end{tikzpicture}
 \end{frame}
 
 % \begin{frame}
 %   \frametitle{Method of Moments for Generative LVMs.}
 % 
-%   \begin{centering}
 %   \begin{tikzpicture}
 %     % x, y
 %     \node<1->[style=box]  (moments) at (0,0) {\objw{12cm}{%
@@ -273,7 +362,6 @@
 %       \end{itemize}
 %       }};
 %   \end{tikzpicture}
-%   \end{centering}
 % 
 %     \note[item]{\bf We can recover the means of a generative LVM by exploiting their symmetric structure.}
 %     \note[item]{\begin{align*} M_2 &= \sum_{h=1}^k \pi_h \beta_h\tp{2} & M_3 &= \sum_{h=1}^k \pi_h \beta_h\tp{3}.  \end{align*}}
@@ -286,7 +374,6 @@
 \begin{frame}
   \frametitle{Method of Moments for the Mixture of Linear Regressions.}
 
-  \begin{centering}
   \begin{tikzpicture}
     % x, y
     \node[style=box] at (0,0) {\objw{12cm}{%
@@ -295,7 +382,7 @@
           y &= \underbrace{\beta_h^T}_{\textrm{random}} x + \epsilon \\
           }
           \action<+->{
-            &= \underbrace{\E[\beta_h]^T x}_{\textrm{linear measurement}} + \underbrace{(\beta_h - M_1)^T x + \epsilon}_{\textrm{noise}} \\
+            &= \underbrace{\E[\beta_h]^T x}_{\textrm{linear measurement}} + \underbrace{(\beta_h - \E[\beta_h])^T x + \epsilon}_{\textrm{noise}} \\
           }
         \end{align*}
       }};
@@ -303,14 +390,13 @@
     %  {$y^p$ are linear measurements of the moments of the parameters $M_p$!}
     %  }};
   \end{tikzpicture}
-  \end{centering}
 
     \note[item]{The powers of the response variables $y^p$ are linear measurements of the moments of the parameters $M_p$!}
     \note[item]{As noted earlier, the first problem we run into is that we can't observe the moments of the parameters $B$ and $\pi$ directly!}
     \note[item]{However, observe that 
     \begin{align}
       y &= \innerp{\beta_h}{x} + \epsilon \\
-        &= \innerp{M_1}{x} + \underbrace{{\beta_h - M_1}{x} + \epsilon }_{\textrm{noise}},
+        &= \innerp{\E[\beta_h]}{x} + \underbrace{{\beta_h - \E[\beta_h]}{x} + \epsilon }_{\textrm{noise}},
     \end{align}
     where $M_1 = \sum_{h=1}^k \pi_h \beta_h$, the mean regression coefficient.}
     \note[item]{We note that while the noise term is dependent on $x$, it has a zero-mean. Thus, we could potentially recover $M_1$ through regression.}
@@ -321,56 +407,50 @@
 \begin{frame}
   \frametitle{Method of Moments for the Mixture of Linear Regressions.}
 
-  \begin{centering}
   \begin{tikzpicture}
     % x, y
     \node[style=box] (measurements) at (0,0) {\objw{12cm}{%
         \begin{align*}
           \action<+->{%
-            y &= \underbrace{M_1^T x}_{\textrm{linear measurement}} + \underbrace{(\beta_h - M_1)^T x + \epsilon}_{\textrm{noise}} \\
-            M_1 &= \E[\beta_h] \\
+            y &= \underbrace{\E[\beta_h]^T \odot x}_{\textrm{linear measurement}} &\quad & + \underbrace{(\beta_h - \E[\beta_h])^T x + \epsilon}_{\textrm{noise}} \\
           }
           \action<+->{%
             y^2 
-              %&= (\beta_h^T x)^2 + 2 (\beta_h^T x) \epsilon + \epsilon^2 \\
-              %&= \trace(\beta_h\tp{2} x\tp{2}) + 2 (\beta_h^T x) \epsilon + \epsilon^2 \\
-              %&= \trace(M_2 x\tp{2}) + \E[\epsilon^2] + \trace((\beta_h\tp{2} - M_2) x\tp{2}) + 2 (\beta_h^T x) \epsilon \\
-              &= \trace(M_2 x\tp{2}) + \underbrace{\E[\epsilon^2]}_{\textrm{bias}} + \underbrace{\trace((\beta_h\tp{2} - M_2) x\tp{2}) + 2 (\beta_h^T x) \epsilon}_{\textrm{noise}} \\
-              M_2 &= \E[\beta_h\tp{2}] \\
+              &= \E[\beta_h\tp{2}] \odot x\tp{2} &+ \textrm{bias} &+ \textrm{noise} \\
           }
           \action<+->{%
-          y^3 &= \innerp{M_3}{x\tp{3}} + \textrm{bias} + \textrm{noise} \\
-          \innerp{A}{B} &= \sum_{ijk} A_{ijk} B_{ijk}.
+          y^3 &= \E[\beta_h\tp{2}] \odot x\tp{3} &+ \textrm{bias} &+ \textrm{noise} \\
           }
         \end{align*}
-      }};
-    \node<4->[style=box,below=0.1cm of measurements]  {\objw{12cm}{%
-    We can use \uncover<5->{{\color{blue}{(low-rank)}}} regression to recover $M_p$ from linear measurements.\\
-    \uncover<5->{\hfill {\color{blue}{{[Negabhan and Wainwright (2009); Tomioka (2011)]}}}}
-      }};
-    %\node[style=box] at (6,0) {\objw{8em}{%
-    %  {$y^p$ are linear measurements of the moments of the parameters $M_p$!}
-    %  }};
-  \end{tikzpicture}
-  \end{centering}
 
-    \note[item]{The powers of the response variables $y^p$ are linear measurements of the moments of the parameters $M_p$!}
-    \note[item]{As noted earlier, the first problem we run into is that we can't observe the moments of the parameters $B$ and $\pi$ directly!}
-    \note[item]{However, observe that 
-    \begin{align}
-      y &= \innerp{\beta_h}{x} + \epsilon \\
-        &= \innerp{M_1}{x} + \underbrace{{\beta_h - M_1}{x} + \epsilon }_{\textrm{noise}},
-    \end{align}
-    where $M_1 = \sum_{h=1}^k \pi_h \beta_h$, the mean regression coefficient.}
-    \note[item]{We note that while the noise term is dependent on $x$, it has a zero-mean. Thus, we could potentially recover $M_1$ through regression.}
-    \note[item]{Similarly, we can cast the remaining two terms as regression problems.}
-    \note[item]{An additional fact that we can exploit is that both $M_2$ and $M_3$ are low rank, so we can use low-rank regression to recover estimates $\hat M_2$ and $\hat M_3$ efficiently from data.}
+        \uncover<4->{%
+          We can use regression to recover $M_p$ from linear measurements.\\
+          }
+      }};
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Method of Moments for the Mixture of Linear Regressions.}
+
+  \begin{tikzpicture}
+    % x, y
+    \node[style=box] (measurements) at (0,0) {\objw{12cm}{%
+      \includegraphics[width=\textwidth,height=6cm,keepaspectratio]{figures/tensor.png}
+      }};
+    \node<2->[style=box,below=0.1cm of measurements] {\objw{12cm}{%
+      We can use low-rank regression techniques [Negabhan \& Wainwright 2009; Tomioka 2011].
+      \begin{align*}
+        \hat\E[\beta_h\tp{2}] &= \arg\min_{M} \left(y^2 - M] \odot x\tp{2}\right)^2_{(x,y)\in\mathcal{D}} + \|M\|_{*} \\
+        \|M\|_{*} &= \sum_i \sigma_i(M).
+      \end{align*}
+      }};
+  \end{tikzpicture}
 \end{frame}
 
 % \begin{frame}
 %   \frametitle{Method of Moments for the Mixture of Linear Regressions.}
 % 
-%   \begin{centering}
 %   \begin{tikzpicture}
 %     % x, y
 %     \node[style=box] (note) at (0,0) {\objw{12cm}{%
@@ -382,13 +462,22 @@
 %       \includegraphics<3>[width=\textwidth,height=8cm,keepaspectratio]{figures/regression-3.png}
 %       }};
 %   \end{tikzpicture}
-%   \end{centering}
 % \end{frame}
+
+\begin{frame}
+  \frametitle{Overview: Spectral Experts}
+
+  \begin{tikzpicture}
+    % x, y
+    \node[style=box] at (0,0) {\objw{12cm}{%
+      \includegraphics<1>[width=\textwidth,height=8cm,keepaspectratio]{figures/err-1.png}
+      }};
+  \end{tikzpicture}
+\end{frame}
 
 \begin{frame}
   \frametitle{Perturbation Analysis}
 
-  \begin{centering}
   \begin{tikzpicture}
     % x, y
     \node[style=box] at (0,0) {\objw{12cm}{%
@@ -399,7 +488,6 @@
       \includegraphics<3>[width=\textwidth,height=8cm,keepaspectratio]{figures/err-5.png}
       }};
   \end{tikzpicture}
-  \end{centering}
 
   \note[item]{The algorithm is consistent, and requires $O(?)$ samples.}
   \note[item]{The rate of convergence for the spectral experts algorithm to the true parameters breaks into two parts; the rates for learning the moments, which feeds into the rates for learning the parameters.}
@@ -413,12 +501,12 @@
 
   \begin{tikzpicture}
     % x, y
-    \node<1-4> (em) at (-3,-0.5) {%
+    \node<-4> (em) at (-3,-0.5) {%
       \includegraphics<1>[width=\textwidth,height=5cm,keepaspectratio]{figures/1-8-3.png}
       \includegraphics<2->[width=\textwidth,height=5cm,keepaspectratio]{figures/1-8-3-em.png}
       };
     % x, y
-    \node<1-4> at (3,-0.5) {%
+    \node<-4> at (3,-0.5) {%
       \includegraphics<3>[width=\textwidth,height=5cm,keepaspectratio]{figures/1-8-3-spec.png}
       \includegraphics<4->[width=\textwidth,height=5cm,keepaspectratio]{figures/1-8-3-specm.png}
       };
@@ -427,7 +515,7 @@
     };
 
     \node[above=0.1 cm of em] {%
-        $y = x + x^4 + x^7 + \epsilon$
+    $y = \underbrace{t + t^4 + t^7}_{x} + \epsilon$
     };
 
 %      \begin{small}
@@ -464,15 +552,14 @@
 \begin{frame}
   \frametitle{Experimental Insights}
 
-  \begin{centering}
   \begin{tikzpicture}
     \node[style=box] at (0,-1.5) {\objw{12cm}{%
       \includegraphics<1>[width=\textwidth,height=6cm,keepaspectratio]{figures/likelihood-mom.png}
-      \includegraphics<2>[width=\textwidth,height=6cm,keepaspectratio]{figures/likelihood-mom1.png}
+      \includegraphics<2>[width=\textwidth,height=6cm,keepaspectratio]{figures/likelihood-mom-em1.png}
+      \includegraphics<3>[width=\textwidth,height=6cm,keepaspectratio]{figures/likelihood-mom-em2.png}
         \hfill{\em expected log-likelihood}
       }};
   \end{tikzpicture}
-  \end{centering}
 
 \end{frame}
 
