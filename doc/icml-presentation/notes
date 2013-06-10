@@ -1,66 +1,67 @@
-High-level
- - Notation much better
- - Be careful of wording
+# June 7th 2013
 
-Slide 1: took too long "features about your data", wandering
-Logistic regression => mixture of experts
+* Be very clear that we're looking at generative models.
+* cite mixture of experts in the discriminative model slide
+* Use "if" instead of "assume"; it's less permanent.
 
-Slide 2: negative log-likelihood
+* I should some how get to the meat faster.
 
-Slide 3: "EM" => "generally, local optimization"
+* Correct citations
+* Talk about the axes when presentinga a graph
+* Include full details of the experimental setup.
+* Using "intutive" instead of "not surprising"
+* Including future work might be good.
+* Pull MLR earlier?
+* s/Negabhan/Negahban
 
-Goal of everything:
-"not only get better" => "but converge to the correct parameters"
-Method of moments is more general than spectral methods;
-  Be aware that spectral methods is more general
-  Spectral methods for learning latent-variable models
 
-Slide 4:
-pick mixture *component*
+# Slide 1
 
-ERROR: because there are cross terms for Gaussian mixture model
+* took too long "features about your data", wandering
+* Logistic regression => mixture of experts
 
-Slip up: "Elementwise products not sums"
+# Slide 2
 
-[assume] => If $\beta_h$ are orthogonal
-generalized eigendecomposition (emphasize rank 3)
-Tensor power method is older; not AHK's
+* negative log-likelihood
 
-Talked about "general discriminative models"
-[k] notation not defined
-Slip up: Say "define generative model"
+# Slide 3
 
-Need to say given $\beta_h$ alone, can recover mean, but not sufficient
-center
-Your dot operator changed
-M_p is undefined
+* "EM" => "generally, local optimization"
+* Goal of everything:
+* "not only get better" => "but converge to the correct parameters"
+* Method of moments is more general than spectral methods;
+  + Be aware that spectral methods is more general
+  + Spectral methods for learning latent-variable models
 
-Title: method of moments for mixture of linear regressions (emphasize low-rank)
+# Slide 4:
 
-Say method: regularize by nuclear norm first before saying analysis
+* [k] notation not defined
+* Slip up: Say "define generative model"
 
-Refer to AHK work (GMM): before, moments of the data were powers of $\beta$;
+* Need to say given $\beta_h$ alone, can recover mean, but not sufficient
+* Your dot operator changed
+* M_p is undefined
+
+* Title: method of moments for mixture of linear regressions (emphasize low-rank)
+* Say method: regularize by nuclear norm first before saying analysis
+* Refer to AHK work (GMM): before, moments of the data were powers of $\beta$;
 here have to work harder to recover them
-
-Going through derivation: say explicitly we prove sample complexity results,
+* Going through derivation: say explicitly we prove sample complexity results,
 don't slog through it
 
-Whenever show graph, show axes
-Flip back between visualization and histogram of errors
+* Flip back between visualization and histogram of errors
 
-"Not too surprising" => "intuitive"
-Figure: emphasize "spectral gets ballpark" (this should be a conclusion)
+* "Not too surprising" => "intuitive"
+* Figure: emphasize "spectral gets ballpark" (this should be a conclusion)
+* Experimental setup: say what the number of examples is, k = 3, d = 3
 
-Experimental setup: say what the number of examples is, k = 3, d = 3
-
-Say assumptions
+* Say assumptions
   h is independent of x
   B is full rank
 
-Slip: "anneal regression coefficient" => "regularization parameter"
-"featurization" => "not deterministic polynomial dependencies"
-
-Say "this is good when d is small relative to n"
+* Slip: "anneal regression coefficient" => "regularization parameter"
+  "featurization" => "not deterministic polynomial dependencies"
+* Say "this is good when d is small relative to n"
 ----
 
 - Histogram axes unlabeled
@@ -82,8 +83,6 @@ it seems rather un-interpretable besides that it is polynomial.
 - if the slides are going to contain boxes, i think its better if they
 align together, but not a big deal.
 ----
-
-# June 7th 2013
 
 Time: 15 minutes; 10:16
 
