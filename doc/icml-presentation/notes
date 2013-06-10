@@ -1,3 +1,88 @@
+High-level
+ - Notation much better
+ - Be careful of wording
+
+Slide 1: took too long "features about your data", wandering
+Logistic regression => mixture of experts
+
+Slide 2: negative log-likelihood
+
+Slide 3: "EM" => "generally, local optimization"
+
+Goal of everything:
+"not only get better" => "but converge to the correct parameters"
+Method of moments is more general than spectral methods;
+  Be aware that spectral methods is more general
+  Spectral methods for learning latent-variable models
+
+Slide 4:
+pick mixture *component*
+
+ERROR: because there are cross terms for Gaussian mixture model
+
+Slip up: "Elementwise products not sums"
+
+[assume] => If $\beta_h$ are orthogonal
+generalized eigendecomposition (emphasize rank 3)
+Tensor power method is older; not AHK's
+
+Talked about "general discriminative models"
+[k] notation not defined
+Slip up: Say "define generative model"
+
+Need to say given $\beta_h$ alone, can recover mean, but not sufficient
+center
+Your dot operator changed
+M_p is undefined
+
+Title: method of moments for mixture of linear regressions (emphasize low-rank)
+
+Say method: regularize by nuclear norm first before saying analysis
+
+Refer to AHK work (GMM): before, moments of the data were powers of $\beta$;
+here have to work harder to recover them
+
+Going through derivation: say explicitly we prove sample complexity results,
+don't slog through it
+
+Whenever show graph, show axes
+Flip back between visualization and histogram of errors
+
+"Not too surprising" => "intuitive"
+Figure: emphasize "spectral gets ballpark" (this should be a conclusion)
+
+Experimental setup: say what the number of examples is, k = 3, d = 3
+
+Say assumptions
+  h is independent of x
+  B is full rank
+
+Slip: "anneal regression coefficient" => "regularization parameter"
+"featurization" => "not deterministic polynomial dependencies"
+
+Say "this is good when d is small relative to n"
+----
+
+- Histogram axes unlabeled
+- Reordering: put a bit more "setup" upfront and then go through histories.
+-----
+
+- Label that histogram, I found it hard to interpret in the beginning.
+It also looked very sparse.
+- Maybe address problems with the experiments proactively: like one
+thing that stood out for me is that it seems that MoM did not work on
+the graph. Given it is standard practice to show the best results in a
+talk, perhaps you should explain why it didnt converge as a part of
+the talk. But the insight is appreciated.
+- i think it took 5 min for it to get anywhere near your
+contributions, i think that can be shortened to 2 or 3 min.
+- for the error bound, unless it is compared to some previous bound,
+it seems rather un-interpretable besides that it is polynomial.
+- a few words about complexity
+- if the slides are going to contain boxes, i think its better if they
+align together, but not a big deal.
+----
+
 * Gen vs Disc. graphical model. (*)
 * HMMs, GMMs, etc. (*)
 
@@ -24,3 +109,9 @@
   - revisit the optimaization picture.
 
 * Get clear the difference between discriminative and generative models.
+
+
+----
+
+
+
