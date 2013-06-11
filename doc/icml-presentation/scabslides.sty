@@ -1,0 +1,104 @@
+% Macros to help with writing slides
+%
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{scabby}
+\typeout{Scabby slide macros}
+
+\RequirePackage{etoolbox}
+\RequirePackage{tikz}
+\RequirePackage{graphicx}
+
+\newtoggle{debug}
+\togglefalse{debug}
+
+\DeclareOption{debug}{\toggletrue{debug}}
+\ProcessOptions
+
+% Include the right tikz libraries.
+\usetikzlibrary{calc,positioning,shapes,shadows,arrows,tikzmark}
+
+% Basic macros
+\providecommand{\hlmath}[2]{\textrm{\color{#1}\ensuremath{#2}}}
+
+\newcommand{\sidenote}[1]{\begin{itemize} \item #1 \end{itemize}}
+
+\iftoggle{debug}{\newcommand{\@dbgmark}{x}}
+{\newcommand{\@dbgmark}{}}
+
+
+\iftoggle{debug}{\setbeamertemplate{background}[grid][step=0.5cm]}{}
+\setbeamerfont{alerted text}{fg=black,series=\bfseries}
+
+% Declare the right layers
+\pgfdeclarelayer{background}
+\pgfdeclarelayer{debug}
+\pgfsetlayers{background,main,debug}
+
+% TikZ styles
+\tikzstyle{box}=[scale=0.8,rectangle,fill=white,draw=black]
+\tikzstyle{txt}=[minimum height=6ex]
+\tikzstyle{lbl}=[minimum height=1ex]
+\tikzstyle{loop}=[smooth,dashed,in=-90,out=-90,looseness=0.75]
+
+\tikzstyle{node}=[scale=0.8,circle,radius height=5ex,minimum height=5ex,draw=black,fill=white]
+\newcommand{\mkcircle}[4]{%
+  \point{#1}{#3};
+  \draw[draw=black,fill=white,#2] {#3} circle[radius=#4];
+}
+
+\newcommand{\point}[2]{%
+  \begin{pgfonlayer}{debug}
+    \node (#1) at #2 {\@dbgmark};
+  \end{pgfonlayer}{debug}
+}
+
+% Canvas for drawing
+\newenvironment{canvas}{%
+  \begin{tikzpicture}[remember picture,overlay,trim left=0]
+  \draw[use as bounding box] (current page.north west) rectangle (current page.south east);
+  \iftoggle{debug}{%
+  \begin{pgfonlayer}{debug}
+    \node[red] at (0,0) {o};
+  \end{pgfonlayer}
+  }{};
+}{
+    \end{tikzpicture}
+}
+
+% A minipage object for Tikz
+\newcommand{\objw}[2]{%
+    {%
+    \begin{minipage}{#1}
+      #2
+    \end{minipage}
+    }
+}
+\newcommand{\obj}[1]{\objw{6cm}{#1}}
+
+% Common Shapes
+\newcommand*{\tikzrect}[5]{%
+  \node (#1) at #3 {};
+  \draw[#2] #3 -- ++(-#4,0) -- ++(0,-#5) -- ++(#4,0) -- cycle;
+}
+\newcommand*{\tikzcube}[6]{%
+  \node (#1) at #3 {};
+  \draw[#2] #3 -- ++(-#4,0,0) -- ++(0,-#5,0) -- ++(#4,0,0) -- cycle;
+  \draw[#2] #3 -- ++(0,0,-#6) -- ++(0,-#5,0) -- ++(0,0,#6) -- cycle;
+  \draw[#2] #3 -- ++(-#4,0,0) -- ++(0,0,-#6) -- ++(#4,0,0) -- cycle;
+}
+
+% Common layouts
+\newcommand{\splitcolumn}[2]{%
+\begin{columns}[onlytextwidth]
+  \begin{column}{0.48\textwidth}
+    #1
+  \end{column}
+  \hfill
+  \begin{column}{0.48\textwidth}
+    #2
+  \end{column}
+\end{columns}
+}
+
+

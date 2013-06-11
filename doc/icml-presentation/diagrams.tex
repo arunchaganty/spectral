@@ -1,0 +1,9 @@
+
+\newcommand{\drawgen}[1]{%
+  \mkcircle{h}{}{#1}{1.5ex};
+  \node[left=0.1cm of h] {$h$};
+  \mkcircle{x}{fill=green,opacity=0.7}{($#1 - (0,1cm)$)}{1.5ex};
+  \node[left=0.1cm of x] {$x$};
+  \draw[-latex] (h) -- (x);
+}
+

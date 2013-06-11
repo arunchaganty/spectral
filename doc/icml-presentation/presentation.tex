@@ -5,27 +5,31 @@
 %\usetheme{NLP}
 \usetheme{boxes}
 \useoutertheme{infolines}
-\setbeamertemplate{background}[grid][step=10pt]
 
 \usepackage{graphicx}
 \usepackage{lmodern}
+\usepackage{calc}
 
 \usepackage{soul}
 
 \usepackage{amsmath,amsthm,amssymb}   
 
 \usepackage{listings}
-\usepackage[style=verbose,autocite=footnote,maxnames=10,babel=hyphen,hyperref=true,abbreviate=false,mcite]{biblatex}
+\usepackage[style=authoryear,babel=hyphen]{biblatex}
 \addbibresource{ref.bib}
+\addbibresource{pliang.bib}
 
 %\usepackage{algorithm,algorithmic}
 
 \usepackage{tikz}
-\usetikzlibrary{calc,positioning,shapes,shadows,arrows,tikzmark}
+%\usepackage[debug]{scabslides}
+\usepackage{scabslides}
+
+\usepackage{mathtools}
 
 \input{macros}
-\input{slide-macros}
 \input{spectral-macros}
+\input{diagrams}
 
 % these will be used later in the title page
 \title[Spectral Experts]{Spectral Experts for Estimating Mixtures of Linear Regressions}
@@ -77,16 +81,13 @@
         }
       \end{itemize}
   }{%
-  \begin{tikzpicture}[remember picture, overlay]
-    \draw[use as bounding box] (current page.north west) rectangle (current page.south east);
+  \begin{canvas}
     \point{mark}{(3cm,0)};
-    \point{gen}{(pic cs:gen)};
-    \point{disc}{(pic cs:disc)};
-    \point{a}{(gen -| mark)};
-    \point{b}{(disc -| mark)};
-    \node<1->[anchor=north east] at (a) {\includegraphics[width=\textwidth,height=2cm,keepaspectratio]{figures/gen.png}};
-    \node<3->[anchor=north east] at (b) {\includegraphics[width=\textwidth,height=2cm,keepaspectratio]{figures/disc.png}};
-  \end{tikzpicture}
+    \point{gen}{({pic cs:gen} -| mark)}
+    \point{disc}{({pic cs:disc} -| mark)}
+    \node<1->[anchor=north east] at ($(gen) +(0,1.0cm)$) {\includegraphics[width=\textwidth,height=2cm,keepaspectratio]{figures/gen.png}};
+    \node<3->[anchor=north east] at ($(disc) +(0,-0.5cm)$) {\includegraphics[width=\textwidth,height=2cm,keepaspectratio]{figures/disc.png}};
+  \end{canvas}
   }
 
 \end{frame}
@@ -96,12 +97,17 @@
 
   \begin{tikzpicture}
     % x, y
-    \node at (0,-1.5) {%
+    \node at (0,0) {%
     \includegraphics<1>[width=\textwidth,height=6cm,keepaspectratio]{figures/likelihood.png}
     \includegraphics<2>[width=\textwidth,height=6cm,keepaspectratio]{figures/likelihood-mle.png}
     \includegraphics<3>[width=\textwidth,height=6cm,keepaspectratio]{figures/likelihood-em.png}
     \includegraphics<4>[width=\textwidth,height=6cm,keepaspectratio]{figures/likelihood-mom.png}
       };
+    %\point{opt}{(0.4cm,-1.1cm)};
+    %\node[style=lbl,below=0.0cm of opt,scale=1.2] {$\hlmath{blue}{\theta^*}$};
+    % Axes
+    \draw[-latex] (-6cm,-2.25cm) -- node[right,at end]{$-\log(p_{\theta}(x))$}  (-6cm,2cm);
+    \draw[-latex] (-6cm,-2.25cm) -- node[above,at end]{$\theta$}  (5cm,-2.25cm);
   \end{tikzpicture}
 
   % Simple message: MLE is consistent but intractable, EM is efficient not but consistent. Can we get something in between.
@@ -118,19 +124,19 @@
 \begin{frame}
   \frametitle{Related Work}
   \begin{itemize}
-    \item<+-> Method of Moments [Pearson, 1894]
-    \item<+-> Observable operator models
+    \item<1-> Method of Moments [Pearson, 1894]
+    \item<2-> Observable operator models
     \begin{itemize}
-      \item Subspace identification [Ljung, 1987]
-      \item Observable operator models [Jaeger, 2000]
-      \item {\em Hidden Markov models [Hsu et al, 2009]}
+      \item Control Theory [Ljung, 1987]
+      \item Observable operator models [Jaeger, 2000; Singh et al., 2004]
+      \item \alert<2>{Hidden Markov models [Hsu et al, 2009]}
       \item Low-treewidth graphs [Parikh et al., 2012]
       \item Weighted finite state automata [Balle \& Mohri, 2012]
     \end{itemize}
-     \item<+-> Parameter Estimation
+     \item<3-> Parameter Estimation
   \begin{itemize}
     \item Mixture of Gaussians [Kalai/Moitra/Valiant, 2010]
-    \item {\bf Mixture models, HMMs [Anandkumar/Hsu/Kakade, 2012]}
+    \item \alert{Mixture models, HMMs [Anandkumar/Hsu/Kakade, 2012]}
     \item Latent Dirichlet Allocation [Anandkumar/Hsu/Kakade, 2012]
     \item Stochastic block models [Anandkumar/Ge/Hsu/Kakade, 2012]
     \item Linear Bayesian networks [Anandkumar/Hsu/Javanmard/Kakade, 2012]
@@ -140,129 +146,168 @@
 
 \begin{frame}
   \frametitle{Aside: Tensor Operations}
-  \twocolumn{%
-    \begin{align*}
-        \action<1->{%
-        \tikzmark{tensoring}x\tp{3}_{ijk} &= x_i x_j x_k \comment{tensoring}\\
-        }
-        \action<2->{%
-        \tikzmark{innerp}\innerp{A}{B} &= \sum_{ijk} A_{ijk} B_{ijk} \comment{inner product}\\
-        }
-    \end{align*}
+  \splitcolumn{%
+    \begin{itemize}
+      \item \tikzmark{tensoring} Tensoring
+        $$x\tp{3}_{ijk} = x_i x_j x_k$$
+      \item \tikzmark{innerp}Inner product
+        \begin{align*}
+          \innerp{A}{B} &= \sum_{ijk} A_{ijk} B_{ijk} \\
+          \pause
+            &= \innerp{\vvec{A}}{\vvec{B}} 
+        \end{align*}
+    \end{itemize}
   }{%
-  \begin{tikzpicture}[remember picture, overlay]
-    \draw[use as bounding box] (current page.north west) rectangle (current page.south east);
-    \point{mark}{(4cm,0)};
-    \point{tensoring}{(pic cs:tensoring)};
-    \point{innerp}{(pic cs:innerp)};
-    \point{a}{(tensoring -| mark)};
-    \point{b}{(innerp -| mark)};
-      \tikzcube{black,fill=white}{($(a) + (0,0,0)$)}{1}{1}{1};
-      \tikzcube{black,fill=white}{($(b) + (0,0,0)$)}{1}{1}{1};
-    \end{tikzpicture}
   }
+  \begin{canvas}
+    \point{mark}{(6.8cm,0)};
+    % Tensoring
+    \tikzcube{tensoring}{black,fill=white}{($({pic cs:tensoring} -| mark) + (0,0,0)$)}{1}{1}{1};
+    \node at ($(tensoring) + (1.0cm,-0.3cm)$) {$=$};
+    \tikzcube{v1}{black,fill=white}{($(tensoring) + (2.5cm,-0.3cm)$)}{1}{0.3}{0.3};
+    \node (lbl1) at ($(v1) + (0.40cm,-0.1cm)$) {$\times$};
+    \tikzcube{v2}{black,fill=white}{($(v1) + (1cm,0.3cm)$)}{0.3}{1}{0.3};
+    \node at ($(lbl1) + (1cm,0.0cm)$) {$\times$};
+    \tikzcube{v3}{black,fill=white}{($(v2) + (1cm,-0.3cm)$)}{0.3}{0.3}{1};
+
+    % Inner product
+    \uncover<2->{%
+    \point{ptA}{($({pic cs:innerp} -| mark) + (0,0.2cm)$)}
+    \point{ptB}{($(ptA) + (2cm,0)$)}
+    \tikzcube{innerpA}{black,fill=yellow}{($(ptA) + (0,0,0)$)}{1}{1}{1};
+    \tikzcube{innerpB}{black,fill=blue,opacity=0.7}{($(ptB) + (0,0,0)$)}{1}{1}{1};
+    \node[scale=2.0] (op1a) at ($(ptA) + (-1.3cm,-0.3cm)$) {$\langle$};
+    \node (op1b) at ($(ptA) + (0.7cm,-0.3cm)$) {$,$};
+    \node[scale=2.0] (op1c) at ($(ptB) + (0.8cm,-0.3cm)$) {$\rangle$};
+    \node[scale=2.0] (op2) at ($(op1c) + (1.5cm,0.0cm)$) {$= \hlmath{green}{0.5}$};
+    }
+
+    % Inner product 2
+    \uncover<3->{%
+    \tikzrect{innerpAv}{black,fill=yellow}{($(ptA) + (0,-1.5cm)$)}{0.3}{1.5};
+    \tikzrect{innerpBv}{black,fill=blue,opacity=0.7}{($(ptB) + (0,-1.5cm)$)}{0.3}{1.5};
+    \node[scale=2.0] (op1a) at ($(innerpAv) + (-1.3cm,-0.6cm)$) {$\langle$};
+    \node (op1b) at ($(innerpAv) + (0.7cm,-0.6cm)$) {$,$};
+    \node[scale=2.0] (op1c) at ($(innerpBv) + (0.8cm,-0.6cm)$) {$\rangle$};
+    \node[scale=2.0] (op2) at ($(op1c) + (1.5cm,0.0cm)$) {$= \hlmath{green}{0.5}$};
+    }
+  \end{canvas}
+
 \end{frame}
 
 \begin{frame}
   \frametitle{Example: Gaussian Mixture Model}
-  \begin{tikzpicture}
-    % x, y
-    \node<1->[style=box] (defn) at (0,0) {\objw{6cm}{%
-    \begin{itemize} 
-      \item Generative process:
+
+  \splitcolumn{%
+    \begin{itemize}
+      \item \tikzmark{gen} Generative process:
       \begin{align*}
         h &\sim \Mult(\pi) \\
         x &\sim \normal{\beta_h}{\sigma^2}.
       \end{align*}
-    \end{itemize}
-    }};
-    \node<1->[style=box] (models) at (6,0) {\objw{6cm}{%
-      \includegraphics[width=0.45\textwidth,height=3cm,keepaspectratio]{figures/gen.png}
-      \includegraphics[width=0.45\textwidth,height=3cm,keepaspectratio]{figures/mog.png}
-    }};
-
-    \node<2->[style=box,below=0.1cm of defn] {\objw{6cm}{%
-    \begin{itemize} 
       \item Moments:
-    \begin{align*}
-        \action<2->{%
-        \E[x|h] &= \beta_h \\
-        }
-        \action<3->{%
-        \E[x] &= \sum_h \pi_h \beta_h \\
-        }
-        \action<4->{%
-        \E[x\tp{2}] &= \sum_h \pi_h (\beta_h \beta_h^T) \\
-                    &= \sum_h \pi_h \beta_h{\tp{2}} \\
-                    }
-        \action<5->{%
-        \E[x\tp{3}] &= \sum_h \pi_h \beta_h\tp{3}.
-        }
-      \end{align*}
+      \begin{align*}
+          \uncover<2->{%
+          \E[x|h] &= \beta_h \\
+          }
+          \uncover<3->{%
+          \E[x] &= \sum_h \pi_h \beta_h \\
+          }
+          \uncover<4->{%
+          \tikzmark{m2}
+          \E[x\tp{2}] &= \sum_h \pi_h (\beta_h \beta_h^T) \\
+                      &= \sum_h \pi_h \beta_h{\tp{2}} \\
+                      }
+          \uncover<5->{%
+          \tikzmark{m3}
+          \E[x\tp{3}] &= \sum_h \pi_h \beta_h\tp{3}.
+          }
+        \end{align*}
     \end{itemize}
-    }};
-    %\tikzrect{1}{1};
+  }{%
+  }
+  \begin{canvas}
+    % The model
+    \point{mark}{(6.5cm,0)};
+    \point{start}{({pic cs:gen} -| mark)};
+    \node[anchor=west] (diag1) at ($(start)$) {%
+      \includegraphics[width=0.45\textwidth,height=2cm,keepaspectratio]{figures/gen.png}
+    };
+    \node[anchor=west] (diag) at ($(start) + (1cm,0.0cm)$) {%
+      \includegraphics[width=0.45\textwidth,height=3cm,keepaspectratio]{figures/mog.png}
+    };
+
     \uncover<4->{%
-    \tikzrect{black,fill=white}{(6,-2)}{1}{1};
-    \node at (7,-2.5) {$\E[x\tp{2}]$};
-    \node at (4.5,-2.5) {$d$};
+      \point{m2}{({pic cs:m2} -| mark)};
+      \tikzrect{M2}{black,fill=white}{($(m2) + (1cm,1cm)$)}{1}{1};
+      \node[anchor=west] at ($(m2) + (1.1cm, 0.5cm)$) {$\E[x\tp{2}]$};
+      \node[anchor=east] at ($(m2) + (-0.1cm, 0.5cm)$) {$d$};
+      \node[anchor=south] at ($(m2) + (0.5cm, 1.0cm)$) {$d$};
     }
     \uncover<5->{%
-    \tikzcube{black,fill=white}{(6,-4,0)}{1}{1}{1};
-    \node at (7,-4.5,0) {$\E[x\tp{3}]$};
-    \node at (4.5,-4.5) {$d$};
-    \node at (4.5,-4.5) {$d$};
+      \point{m3}{($({pic cs:m3} -| mark) + (1cm,1cm)$)};
+      \tikzcube{M3}{black,fill=white}{($(m3) + (0,0,0)$)}{1}{1}{1};
+      \node[anchor=west] at ($(m3) + (0.5cm, -0.5cm)$) {$\E[x\tp{3}]$};
+      \node[anchor=east] at ($(m3) + (-1.1cm, -0.5cm)$) {$d$};
     }
-  \end{tikzpicture}
+  \end{canvas}
 
 \end{frame}
 
 \begin{frame}
-  \frametitle{Example: Gaussian Mixture Model}
-  \twocolumn{%
+  \frametitle{Solution: Tensor Factorization}
+  \splitcolumn{%
     \begin{itemize}
-      \item If $\beta_h$ are orthogonal;
-      \begin{align*}
-        \E[x\tp{3}] &= \sum_{h=1}^k \pi_h \beta_h\tp{3}. 
-      \end{align*}
-      \item<2-> $\beta_h$ are eigenvectors \footcite{AnandkumarGeHsu2012}!
+      \item \tikzmark{gen}$\E[x\tp{3}] = \sum_{h=1}^k \pi_h \beta_h\tp{3}$.
+      \item<2-> If $\beta_h$ are orthogonal, the are eigenvectors! \footcite{AnandkumarGeHsu2012}
         \begin{align*}
           \E[x\tp{3}](\beta_h,\beta_h) 
             %&= \sum_{h'=1}^k \pi_{h'} (\beta_{h}^T \beta_{h'})^2 \beta_{h'} \\
             %&= \sum_{h'=1}^k \pi_{h'} \delta_{hh'} \beta_{h'} \\
             &= \pi_{h} \beta_{h}.
         \end{align*}
+      \item<3-> In general, whiten $\E[x\tp{3}]$ first.
     \end{itemize}
   }{%
-  %\begin{tikzpicture}
-  %  % x, y
-  %  \node<1->[style=box] (models) at (6,0) {\objw{6cm}{%
-  %    \includegraphics[width=0.45\textwidth,height=3cm,keepaspectratio]{figures/gen.png}
-  %    \includegraphics[width=0.45\textwidth,height=3cm,keepaspectratio]{figures/mog.png}
-  %  }};
-  %  \node<1-> at (6,-3) {\objw{6cm}{%
-  %  \includegraphics[width=\textwidth,height=6cm,keepaspectratio]{figures/tensor.png}
-  %    }};
-  %\end{tikzpicture}
   }
+  \begin{canvas}
+    \point{mark}{(6.5cm,0)};
+    \point{start}{({pic cs:gen} -| mark)};
+
+    \node[anchor=west] (diag1) at ($(start)$) {%
+      \includegraphics[width=0.45\textwidth,height=2cm,keepaspectratio]{figures/gen.png}
+    };
+    \node[anchor=west] (diag) at ($(start) + (1cm,0.0cm)$) {%
+      \includegraphics[width=0.45\textwidth,height=3cm,keepaspectratio]{figures/mog.png}
+    };
+    %\drawgen{(start)};
+    %\node[anchor=west] (diag) at ($(start) + (1cm,-0.5cm)$) {%
+    %  \includegraphics[width=0.45\textwidth,height=3cm,keepaspectratio]{figures/mog.png}
+    %};
+    % x, y
+    %\node[anchor=north west] at ($(start) - (1cm,2cm)$) {%
+    %    \includegraphics[width=6cm,height=2cm,keepaspectratio]{figures/tensor.png}
+    %};
+  \end{canvas}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Generative vs. Discriminative Latent Variable Models}
+  \frametitle{}
 
-  \begin{tikzpicture}
+  \begin{canvas}
     % Tasks.
-    \node[style=box] (gen) at (0,0) {\objw{6cm}{%
-      \includegraphics[width=\textwidth,height=3cm,keepaspectratio]{figures/gen.png}\\
-      \hfill Generative Models
-      }};
-    \node[scale=0.7] at (0.5,0.5) {Latent variable};
+    \node[anchor=west] (gen) at (1cm,0) {%
+      \includegraphics[width=\textwidth,height=2.5cm,keepaspectratio]{figures/gen.png}
+     };
+     \node[below=0.1cm of gen.south] {Generative Models};
 
-    \node[style=box] (disc) at (6,0) {\objw{6cm}{%
-      \includegraphics[width=\textwidth,height=3cm,keepaspectratio]{figures/disc.png}\\
-      \hfill Discriminative Models
-      }};
-  \end{tikzpicture}
+    \draw[scale=0.8,fill=green,opacity=0.4,dashed] (6.5cm,2cm) rectangle (12.5cm,-3cm);
+    \node[style=box,anchor=west] (disc) at (6cm,0) {%
+      \includegraphics[width=\textwidth,height=3cm,keepaspectratio]{figures/disc.png}
+     };
+     \node[below=0.1cm of disc.south] {Discriminative Models};
+     % Highlight
+  \end{canvas}
 
 \end{frame}
 
@@ -270,48 +315,51 @@
 \begin{frame}
   \frametitle{Mixture of Linear Regressions}
 
-  \begin{tikzpicture}
-    % x, y
-    \node[style=box] at (0,0) {\objw{4cm}{%
-    \includegraphics[width=\textwidth,height=4cm,keepaspectratio]{figures/disc.png}
-      \begin{itemize}
-        \item<2-> $h \sim \Mult(\pi)$.
-        \item<4-> $y = \beta_h^T x + \epsilon$.
-      \end{itemize}
-      }};
-
-    \node[style=box] at (6,0) {\obj{%
-    \includegraphics<1>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-2.png}
-    \includegraphics<2>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-3a.png}
-    \includegraphics<3>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-3b.png}
-    \includegraphics<4>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-4a.png}
-    \includegraphics<5>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-4b.png}
-    %\includegraphics<6>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-4c.png}
-    \includegraphics<6>[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-5.png}
-      }};
-  \end{tikzpicture}
+  \splitcolumn{%
+    \tikzmark{model}
+    \includegraphics[width=3cm,height=4cm,keepaspectratio]{figures/disc.png}
+    \begin{itemize}
+      \item<2-> $h \sim \Mult(\pi)$.
+      \item<4-> $y = \beta_h^T x + \epsilon$.
+    \end{itemize}
+  }{%
+  }
+    \begin{canvas}
+      % x, y
+      \point{mark}{(5.5cm,0)}
+      \point{model}{({pic cs:model} -| mark)}
+      \node[anchor=west] at ($(model) + (0,0.5cm)$) {%
+      \includegraphics<1>[width=5cm,height=6cm,keepaspectratio]{figures/mlr-data-2.png}
+      \includegraphics<2>[width=5cm,height=6cm,keepaspectratio]{figures/mlr-data-3a.png}
+      \includegraphics<3>[width=5cm,height=6cm,keepaspectratio]{figures/mlr-data-3b.png}
+      \includegraphics<4>[width=5cm,height=6cm,keepaspectratio]{figures/mlr-data-4a.png}
+      \includegraphics<5>[width=5cm,height=6cm,keepaspectratio]{figures/mlr-data-4b.png}
+      %\includegraphics<6>[width54cm,height=6cm,keepaspectratio]{figures/mlr-data-4c.png}
+      \includegraphics<6>[width=5cm,height=6cm,keepaspectratio]{figures/mlr-data-5.png}
+        };
+    \end{canvas}
 \end{frame}
 
 \begin{frame}
   \frametitle{Mixture of Linear Regressions}
 
-  \begin{tikzpicture}
-    \node[style=box] (data) at (0,0) {\obj{%
-    \includegraphics[width=\textwidth,height=6cm,keepaspectratio]{figures/mlr-data-6.png}
-      \\{\em Data}
-      }};
+  \begin{canvas}
+    \node[anchor=west] (data) at (0,0) {%
+    \includegraphics[width=4cm,height=6cm,keepaspectratio]{figures/mlr-data.png}
+    };
 
     % x, y
-    \node[style=box] (params) at (7,0) {\objw{4cm}{%
-    \includegraphics[width=\textwidth,height=4cm,keepaspectratio]{figures/disc.png}
-    \\
-    {\bf Parameters: $\pi, B$}
-    }};
+    \node[anchor=west,scale=2.0] (params) at (7cm,0) {%
+      $\begin{bmatrix} \pi \\ B \end{bmatrix}$
+      };
+    \node[anchor=west,right=0.1cm of params] {%
+    \includegraphics[width=4cm,height=2cm,keepaspectratio]{figures/disc.png}
+    };
 
-    \draw[->,dashed] (data) -- node[above]{?} (params);
+    \draw[-latex] (data) -- node[above]{?} (params);
 
 
-  \end{tikzpicture}
+  \end{canvas}
 \end{frame}
 
 % \begin{frame}
@@ -345,241 +393,137 @@
 % 
 % \end{frame}
 
-\begin{frame}
+\begin{frame}[c]
   \frametitle{Method of Moments for the Mixture of Linear Regressions.}
-
-  \begin{tikzpicture}
-    % x, y
-    \node[style=box] at (0,0) {\objw{12cm}{%
-        \begin{align*}
-          \action<+->{
-          y &= \underbrace{\beta_h^T}_{\textrm{random}} x + \epsilon \\
-          }
-          \action<+->{
-            &= \underbrace{\E[\beta_h]^T x}_{\textrm{linear measurement}} + \underbrace{(\beta_h - \E[\beta_h])^T x + \epsilon}_{\textrm{noise}} \\
-          }
-        \end{align*}
-      }};
-  \end{tikzpicture}
-
+  \begin{align*}
+    y &= \alt<1>{\innerp{\beta_h}{x}}{\underbrace{\beta_h^T}_{\textrm{\color{DarkGreen}random}} x} + \epsilon \\
+    \action<3->{%
+    &= \sum_h \pi_h \innerp{\beta_h}{x} + \innerp{\left(\beta_h - \sum_h \pi_h \beta_h\right)}{x} + \epsilon \\
+    }
+    \action<4-6>{%
+    &= \alt<4>{\E[\beta_h]^T x}{\underbrace{\E[\beta_h]^T x}_{\textrm{\color{blue}linear measurement}}} 
+    + \alt<4-5>{\innerp{(\beta_h - \E[\beta_h])}{x} + \epsilon}{\underbrace{\innerp{(\beta_h - \E[\beta_h])}{x} + \epsilon}_{\textrm{\color{red} noise}}} \\
+    }
+  \end{align*}
 \end{frame}
 
 \begin{frame}
   \frametitle{Method of Moments for the Mixture of Linear Regressions.}
 
-  \begin{tikzpicture}
-    % x, y
-    \node[style=box] (measurements) at (0,0) {\objw{12cm}{%
-        \begin{align*}
-          \action<+->{%
-          y &= \underbrace{\innerp{\E[\beta_h]^T}{x}}_{\textrm{linear measurement}} &\quad & + \underbrace{(\beta_h - \E[\beta_h])^T x + \epsilon}_{\textrm{noise}} \\
-          }
-          \action<+->{%
-            y^2 
-            &= \innerp{\E[\beta_h\tp{2}]}{x\tp{2}} &+ \textrm{bias} &+ \textrm{noise} \\
-          }
-          \action<+->{%
-          y^3 &= \innerp{\E[\beta_h\tp{3}]}{x\tp{3}} &+ \textrm{bias} &+ \textrm{noise} \\
-          }
-        \end{align*}
+  \begin{align*}
+    \action<1->{%
+    y &= \overbrace{\innerp{\E[\beta_h]}{x}}^{\textrm{\color{blue} linear measurement}} & & + \overbrace{(\beta_h - \E[\beta_h])^T x + \epsilon}^{\textrm{\color{red} noise}} \\
+    }
+    \action<2->{%
+      y^2 
+      &= \innerp{\beta_h}{x}^2 &+ \epsilon^2 &+ 2 \epsilon \innerp{\beta_h}{x}  \\
+    }
+    \action<3->{%
+      &= \color{blue}\innerp{\E[\beta_h\tp{2}]}{x\tp{2}} &+ \color{DarkGreen} \textrm{bias} &+ \color{red} \textrm{noise} \\
+    }
+    \action<4->{%
+    y^3 &= \color{blue} \innerp{\E[\beta_h\tp{3}]}{x\tp{3}} &+ \color{DarkGreen} \textrm{bias} &+ \color{red} \textrm{noise} \\
+    }
+  \end{align*}
 
-        \uncover<4->{%
-        We can use regression to recover $\E[\beta_h\tp{p}]$ from linear measurements.\\
-          }
-      }};
+  %\begin{tikzpicture}
+  %  % x, y
+  %  \node<5->[style=box] (tensor) {\objw{12cm}{%
+  %    \includegraphics[width=\textwidth,height=3cm,keepaspectratio]{figures/tensor.png}
+  %    }};
+  %\end{tikzpicture}
+\end{frame}
 
-    \node<5->[style=box,below=0.1cm of measurements.south] (tensor) {\objw{12cm}{%
-      \includegraphics[width=\textwidth,height=3cm,keepaspectratio]{figures/tensor.png}
-      }};
-
-  \end{tikzpicture}
+\begin{frame}
+  \frametitle{Method of Moments for the Mixture of Linear Regressions.}
+  \centering
+  
+  \begin{itemize}
+  {\Large
+    \item 
+    $\E[\beta_h\tp{3}] = \sum_{h=1}^k \pi_h \beta_h\tp{3}$
+  }
+    \item<2-> Apply tensor factorization!
+  \end{itemize}
 \end{frame}
 
 \begin{frame}
   \frametitle{Overview: Spectral Experts}
 
-  \begin{tikzpicture}
-    % x, y
-    % Nodes
-    \node[style=txt] (data1) at (0,0) {$\left\{ x, y \right\}_{(x,y) \in \sD}$};
-    \node[style=txt,below=1cm of data1.center] (data2) {$\left\{ x\tp{2}, y^2 \right\}_{(x,y) \in \sD}$};
-    \node[style=txt,below=1cm of data2.center] (data3) {$\left\{ x\tp{3}, y^3 \right\}_{(x,y) \in \sD}$};
-
-    \node[style=txt] (m1) at (4,0) {$\E_h\left[\beta_h\right]$};
-    \node[style=txt,below=1cm of m1.center] (m2) {$\E_h\left[\beta_h\tp{2}\right]$};
-    \node[style=txt,below=1cm of m2.center] (m3) {$\E_h\left[\beta_h\tp{3}\right]$};
-
-    \node[below=0.5cm of m2.center] (params-pos) {};
-    \node[style=txt,right=3.0cm of params-pos] (params) {$\pi, B$};
-
-    % Arrows
-    \draw[-latex] (data1) -- (m1);
-    \draw[-latex] (data2) -- (m2);
-    \draw[-latex] (data3) -- (m3);
-
-    % Bias influence
-    \draw[-latex,dashed,gray] (m1.east) -- ++(0.1cm,0) -- ++(0,-0.50cm) -- ++(-3.00cm,0) node (bias-1) {} -- ( bias-1 |- m3) -- (m3.west);
-
-    % Mean
-    \draw[-latex] (m2.east) -- ++(0.1cm,0) node (tf-1) {} -- (tf-1 |- params-pos) -- node[above,scale=0.5] {tensor factorization} (params);
-    \draw[-latex] (m3.east) -- ++(0.1cm,0) node (tf-2) {} -- (tf-2 |- params-pos) -- (params);
-
-    % Box for regression
-    \begin{pgfonlayer}{bg}
-    \draw[fill=blue,opacity=0.1,dashed] ($(data1.north east) + (-0.1cm,0.1cm)$) rectangle ($(m3.south west) + (0.1cm,-0.1cm)$);
-    \end{pgfonlayer}
-    \node[style=txt] (reg-label) at ($(data3) !.5! (m3) + (0, -1.0cm)$) {regression};
-
-    % tensor factorization
-    \begin{pgfonlayer}{bg}
-    \draw[fill=green,opacity=0.1,dashed] ($(m2.north east) + (-0.1cm,0.1cm)$) rectangle ($(params.south west) + (0.1cm,-1.0cm)$);
-    \end{pgfonlayer}
-    \node (params-mid) at ($(params-pos) !.5! (params)$) {};
-    \node[style=txt] at (params-mid |- reg-label) {tensor factorization};
-  \end{tikzpicture}
+  \begin{canvas}
+    \input{spectral-experts.tikz}
+    \node[style=txt] at (reg-label) {\alert<1>{regression}};
+    \node[style=txt] at (tf-label) {\alert<2>{tensor factorization}};
+  \end{canvas}
 \end{frame}
 
 
 \begin{frame}
-  \frametitle{Method of Moments for the Mixture of Linear Regressions.}
+  \frametitle{Exploiting Low-rank Structure.}
+
+    \begin{align*}
+      \hat\E[\beta_h\tp{2}] &= \arg\min_{M} \left(y^2 - \innerp{M}{x\tp{2}}\right)^2_{(x,y)\in\mathcal{D}} 
+        \alt<1>{+ \|M\|_{2}}
+          {+ \hlmath{blue}{\|M\|_{*}}} \\
+      \action<2->{%
+      \|M\|_{*} &= \sum_i \sigma_i(M).
+      }
+    \end{align*}
 
   \begin{tikzpicture}
     % x, y
-    \node[style=box] (reg) at (0,0) {\objw{12cm}{%
-      \begin{align*}
-        \hat\E[\beta_h\tp{2}] &= \arg\min_{M} \left(y^2 - \innerp{M}{x\tp{2}}\right)^2_{(x,y)\in\mathcal{D}} \action<3->{+ \hlmath{\|M\|_{*}}} \\
-        \action<3->{%
-        \|M\|_{*} &= \sum_i \sigma_i(M).
-        }
-      \end{align*}
-      }};
-    \node<2->[style=box,below=0.1 of reg] (measurements) {\objw{12cm}{%
+    \node (measurements) {%
       \includegraphics[width=\textwidth,height=6cm,keepaspectratio]{figures/tensor.png}
-      }};
+      };
   \end{tikzpicture}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Overview: Spectral Experts}
+  \frametitle{Spectral Experts}
 
-  \begin{tikzpicture}
-    % x, y
-    % Nodes
-    \node[style=txt] (data1) at (0,0) {$\left\{ x, y \right\}_{(x,y) \in \sD}$};
-    \node[style=txt,below=1cm of data1.center] (data2) {$\left\{ x\tp{2}, y^2 \right\}_{(x,y) \in \sD}$};
-    \node[style=txt,below=1cm of data2.center] (data3) {$\left\{ x\tp{3}, y^3 \right\}_{(x,y) \in \sD}$};
-
-    \node[style=txt] (m1) at (4,0) {$\E_h\left[\beta_h\right]$};
-    \node[style=txt,below=1cm of m1.center] (m2) {$\E_h\left[\beta_h\tp{2}\right]$};
-    \node[style=txt,below=1cm of m2.center] (m3) {$\E_h\left[\beta_h\tp{3}\right]$};
-
-    \node[below=0.5cm of m2.center] (params-pos) {};
-    \node[style=txt,right=3.0cm of params-pos] (params) {$\pi, B$};
-
-    % Arrows
-    \draw[-latex] (data1) -- (m1);
-    \draw[-latex] (data2) -- node[above,scale=0.5] {low rank} (m2);
-    \draw[-latex] (data3) -- node[above,scale=0.5] {low rank} (m3);
-
-    % Bias influence
-    \draw[-latex,dashed,gray] (m1.east) -- ++(0.1cm,0) -- ++(0,-0.50cm) -- ++(-3.00cm,0) node (bias-1) {} -- ( bias-1 |- m3) -- (m3.west);
-
-    % Mean
-    \draw[-latex] (m2.east) -- ++(0.1cm,0) node (tf-1) {} -- (tf-1 |- params-pos) -- node[above,scale=0.5] {tensor factorization} (params);
-    \draw[-latex] (m3.east) -- ++(0.1cm,0) node (tf-2) {} -- (tf-2 |- params-pos) -- (params);
-
-    % Box for regression
-    \begin{pgfonlayer}{bg}
-    \draw[fill=blue,opacity=0.1,dashed] ($(data1.north east) + (-0.1cm,0.1cm)$) rectangle ($(m3.south west) + (0.1cm,-0.1cm)$);
-    \end{pgfonlayer}
-    \node[style=txt] (reg-label) at ($(data3) !.5! (m3) + (0, -1.0cm)$) {regression};
-
-    % tensor factorization
-    \begin{pgfonlayer}{bg}
-    \draw[fill=green,opacity=0.1,dashed] ($(m2.north east) + (-0.1cm,0.1cm)$) rectangle ($(params.south west) + (0.1cm,-1.0cm)$);
-    \end{pgfonlayer}
-    \node (params-mid) at ($(params-pos) !.5! (params)$) {};
-    \node[style=txt] at (params-mid |- reg-label) {tensor factorization};
-  \end{tikzpicture}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Sample Complexity}
-
-  \begin{tikzpicture}
-    % x, y
-    % Nodes
-    \node[style=txt] (data1) at (0,0) {$\left\{ x, y \right\}_{(x,y) \in \sD}$};
-    \node[style=txt,below=1cm of data1.center] (data2) {$\left\{ x\tp{2}, y^2 \right\}_{(x,y) \in \sD}$};
-    \node[style=txt,below=1cm of data2.center] (data3) {$\left\{ x\tp{3}, y^3 \right\}_{(x,y) \in \sD}$};
-
-    \node[style=txt] (m1) at (4,0) {$\E_h\left[\beta_h\right]$};
-    \node[style=txt,below=1cm of m1.center] (m2) {$\E_h\left[\beta_h\tp{2}\right]$};
-    \node[style=txt,below=1cm of m2.center] (m3) {$\E_h\left[\beta_h\tp{3}\right]$};
-
-    \node[below=0.5cm of m2.center] (params-pos) {};
-    \node[style=txt,right=3.0cm of params-pos] (params) {$\pi, B$};
-
-    % Arrows
-    \draw[-latex] (data1) -- (m1);
-    \draw[-latex] (data2) -- node[above,scale=0.5] {low rank} (m2);
-    \draw[-latex] (data3) -- node[above,scale=0.5] {low rank} (m3);
-
-    % Bias influence
-    \draw[-latex,dashed,gray] (m1.east) -- ++(0.1cm,0) -- ++(0,-0.50cm) -- ++(-3.00cm,0) node (bias-1) {} -- ( bias-1 |- m3) -- (m3.west);
-
-    % Mean
-    \draw[-latex] (m2.east) -- ++(0.1cm,0) node (tf-1) {} -- (tf-1 |- params-pos) -- node[above,scale=0.5] {tensor factorization} (params);
-    \draw[-latex] (m3.east) -- ++(0.1cm,0) node (tf-2) {} -- (tf-2 |- params-pos) -- (params);
-
-    % Box for regression
-    \begin{pgfonlayer}{bg}
-    \draw[fill=blue,opacity=0.1,dashed] ($(data1.north east) + (-0.1cm,0.1cm)$) rectangle ($(m3.south west) + (0.1cm,-0.1cm)$);
-    \end{pgfonlayer}
-    \node[style=txt] (reg-label) at ($(data3) !.5! (m3) + (0, -1.0cm)$) {regression};
-
-    % tensor factorization
-    \begin{pgfonlayer}{bg}
-    \draw[fill=green,opacity=0.1,dashed] ($(m2.north east) + (-0.1cm,0.1cm)$) rectangle ($(params.south west) + (0.1cm,-1.0cm)$);
-    \end{pgfonlayer}
-    \node (params-mid) at ($(params-pos) !.5! (params)$) {};
-    \node[style=txt] (tf-label) at (params-mid |- reg-label) {tensor factorization};
+  \begin{canvas}
+    \input{spectral-experts.tikz}
+    \node[style=txt] at (reg-label) {{\color{blue}\bf low-rank} regression};
+    \node[style=txt] at (tf-label) {tensor factorization};
 
     % Error bounds
-    \node<2->[style=txt,below=0.1em of reg-label] {$O\left( k \|x\|^{12} \|\beta\|^{6} \|\E[\epsilon^2]\|^{6} \right)$};
-    \node<3->[style=txt,below=0.1em of tf-label] {$O\left( \frac{k \pi_{\max}^2}{\sigma_k(M_2)^5} \right)$};
-
-  \end{tikzpicture}
+    \node<2->[style=txt,below=0.1em of reg-label]{%
+      $O\left( k\ 
+      \hlmath{blue}{\|x\|^{12}}\
+      \hlmath{DarkGreen}{\|\beta\|^{6}}\
+      \hlmath{red}{\|\E[\epsilon^2]\|^{6}}
+      \right)$};
+    \node<3->[style=txt,below=0.1em of tf-label] {%
+    $O\left( \frac{k \pi_{\max}^2}{\sigma_k(M_2)^5} \right)$};
+  \end{canvas}
 \end{frame}
 
 \begin{frame}
   \frametitle{Experimental Insights}
 
-  \begin{tikzpicture}
+  \begin{canvas}
     % x, y
-    \node (em) at (-3,-0.5) {%
+    \node[anchor=west] (em) at (-0.5cm,-1.5cm) {%
       \includegraphics<1>[width=\textwidth,height=5cm,keepaspectratio]{figures/1-8-3.png}
       \includegraphics<2>[width=\textwidth,height=5cm,keepaspectratio]{figures/1-8-3-em.png}
       \includegraphics<3>[width=\textwidth,height=5cm,keepaspectratio]{figures/1-8-3-spec.png}
       \includegraphics<4->[width=\textwidth,height=5cm,keepaspectratio]{figures/1-8-3-specm.png}
       };
     % x, y
-    \node<2-> at (3,-0.5) {%
+    \node[anchor=west, right=6cm of em] at (em.west) {%
       \includegraphics[width=\textwidth,height=5cm,keepaspectratio]{figures/hist.png}
     };
 
-    \node[above=0.1 cm of em] {\objw{3cm}{%
-      \begin{align*}
-        y &= \beta^T 
+    \node[above=0.1 cm of em] {%
+        $y = \beta^T 
             \begin{bmatrix} 
               1 \\
               t \\
               t^4 \\
               t^7
-            \end{bmatrix} + \epsilon
-      \end{align*}
-      }};
-  \end{tikzpicture}
+            \end{bmatrix} + \epsilon$
+      };
+  \end{canvas}
 \end{frame}
 
 \begin{frame}
@@ -609,12 +553,16 @@ $d$ & $k$ & Spectral & EM & Spectral + EM \\
   \frametitle{Experimental Insights}
 
   \begin{tikzpicture}
-    \node[style=box] at (0,-1.5) {\objw{12cm}{%
+    \node at (0,0) {%
       \includegraphics<1>[width=\textwidth,height=6cm,keepaspectratio]{figures/likelihood-mom.png}
       \includegraphics<2>[width=\textwidth,height=6cm,keepaspectratio]{figures/likelihood-mom-em1.png}
       \includegraphics<3>[width=\textwidth,height=6cm,keepaspectratio]{figures/likelihood-mom-em2.png}
-        \hfill{\em expected negative log-likelihood}
-      }};
+    };
+    \draw[-latex] (-6cm,-2.25cm) -- node[right,at end]{$-\log(p_{\theta}(x))$}  (-6cm,2cm);
+    \draw[-latex] (-6cm,-2.25cm) -- node[above,at end]{$\theta$}  (5cm,-2.25cm);
+
+    \node<2-> at (1.8cm,0.6cm) {$\hlmath{DarkGreen}{\theta_{spec}}$};
+    \node<3-> at (0.3cm,-0.8cm) {$\hlmath{blue}{\theta^{*}}$};
   \end{tikzpicture}
 
 \end{frame}
@@ -637,9 +585,9 @@ $d$ & $k$ & Spectral & EM & Spectral + EM \\
 \end{document}
 
 % TikZ
-%\begin{tikzpicture}
+%\begin{canvas}
 %  \node (img1) at (0,0) {\includegraphics[height=0.6\textheight,width=0.4\linewidth,keepaspectratio]{}};
-%\end{tikzpicture}
+%\end{canvas}
 
 % Notes 
 % \note[item]{}
@@ -660,9 +608,9 @@ $d$ & $k$ & Spectral & EM & Spectral + EM \\
 % \end{columns}
 
 % TikZ
-%\begin{tikzpicture}
+%\begin{canvas}
 %  \node (img1) at (0,0) {\includegraphics[height=0.6\textheight,width=0.4\linewidth,keepaspectratio]{}};
-%\end{tikzpicture}
+%\end{canvas}
 
 % Notes 
 % \note[item]{}
