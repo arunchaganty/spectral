@@ -2,11 +2,11 @@
 
 # Preamble (0:14 = 0:14) [0:15]
 
-Hi, I'm going to present Spectral Experts, a consistent estimator for the mixture of linear regressions we developed. First, however, I'd like to introduce the general context and the underlying goal for this work; parameter estimation in discriminative latent variable models.
+Hello. I am going to present a consistent estimator to learn the parameters of a simple discriminative model, the mixture of linear regressions. This is in contrast to a lot of prior work in learning generative models in the spectral learning community.
 
 # Generative vs. Discriminative Latent Variable Models (1:20 = 1:34) [1:00]
 
-Latent variable models are very powerful tools for inferential tasks in machine learning. We can categorize these models into two broad classes; generative and discriminative. 
+Latent variable models are very powerful tools in machine learning, but are hard to learn because the latent variables introduce a non-convexity in the likelihood function. We can categorize these models into two broad classes; generative and discriminative. 
 
 In the first case of generative models, we describe the generative distribution for the observed variables, $x$, conditioned on some latent variables, $h$. 
 

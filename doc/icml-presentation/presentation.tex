@@ -3,9 +3,9 @@
 \setbeameroption{hide notes} 
 
 %\usetheme{NLP}
-\usepackage{beamerthemesplit}
-\usetheme{default}
+\usetheme{boxes}
 \useoutertheme{infolines}
+\setbeamertemplate{background}[grid][step=10pt]
 
 \usepackage{graphicx}
 \usepackage{lmodern}
@@ -16,10 +16,10 @@
 
 \usepackage{listings}
 
-\usepackage{algorithm,algorithmic}
+%\usepackage{algorithm,algorithmic}
 
 \usepackage{tikz}
-\usetikzlibrary{calc,positioning,shapes,shadows,arrows}
+\usetikzlibrary{calc,positioning,shapes,shadows,arrows,tikzmark}
 
 \input{macros}
 \input{slide-macros}
@@ -49,46 +49,44 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{Generative vs. Discriminative Latent Variable Models}
+  \frametitle{Latent Variable Models}
 
-  \begin{tikzpicture}
-    % Tasks.
-    \node[style=box] (gen) at (0,0) {\objw{6cm}{%
-      \includegraphics[width=\textwidth,height=3cm,keepaspectratio]{figures/gen.png}\\
-      \hfill Generative Models
-      }};
-    \node[scale=0.7] at (0.5,0.5) {Latent variable};
 
-    \node<2->[style=box,below=0.1cm of gen] {\obj{%
-      {\bf Generative Models}
-      \begin{itemize}
-        \item Gaussian Mixture Models
-        \item Hidden Markov Models
-        \item Latent Dirichlet Allocation
-        \item PCFGs
-        \item \dots
+  \splitcolumn{%
+    \begin{itemize} 
+      \item {\bf Generative Models} \tikzmark{gen}
+        \uncover<2->{%
+        \begin{itemize}
+          \item Gaussian Mixture Models
+          \item Hidden Markov Models
+          \item Latent Dirichlet Allocation
+          \item PCFGs
+          \item \dots
+        \end{itemize}
+        }
+      \item<3-> {\bf Discriminative Models} \tikzmark{disc}
+        \uncover<4->{%
+        \begin{itemize}
+          \item Mixture of Experts
+          \item Latent CRFs
+          \item Discriminative LDA
+          \item \dots
+          \item {\em Easy to include features and tend to be more accurate.}
+        \end{itemize}
+        }
       \end{itemize}
-      }};
-    \node<3->[style=box] (disc) at (6,0) {\objw{6cm}{%
-      \includegraphics[width=\textwidth,height=3cm,keepaspectratio]{figures/disc.png}\\
-      \hfill Discriminative Models
-      }};
-    \node<4->[style=box,below=0.1cm of disc] (disc-models) {\obj{%
-    {\bf Discriminative Models}
-      \begin{itemize}
-        \item Latent CRFs
-        \item Discriminative LDA
-        \item Mixture of Experts
-        %\item Semi-Latent Topic Models (Wang and Mori, 2009)
-        %\item Discriminative Parsers (Liang et.\ al, 2006)
-        \item \dots
-      \end{itemize}
-      }};
-    \node<5->[style=box,below=0.1cm of disc-models] {\obj{%
-      {\bf Easy to include features and tend to be more accurate.}
-    }};
-
+  }{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \draw[use as bounding box] (current page.north west) rectangle (current page.south east);
+    \point{mark}{(2cm,0)};
+    \point{gen}{(pic cs:gen)};
+    \point{disc}{(pic cs:disc)};
+    \point{a}{((pic cs:gen) -| mark)};
+    \point{b}{((pic cs:disc) -| mark)};
+    %\node<1-> at (a) {\includegraphics[width=\textwidth,height=3cm,keepaspectratio]{figures/gen.png}};
+    %\node<1-> at (b) {\includegraphics[width=\textwidth,height=3cm,keepaspectratio]{figures/disc.png}};
   \end{tikzpicture}
+  }
 
 \end{frame}
 

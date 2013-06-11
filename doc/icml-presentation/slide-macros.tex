@@ -1,6 +1,21 @@
 \newcommand{\sidenote}[1]{\begin{itemize} \item #1 \end{itemize}}
 \newcommand{\hlmath}[1]{\textrm{\color{blue}\ensuremath{#1}}}
 
+\newcommand{\debugsym}{x}
+
+\newcommand{\point}[2]{\node (#1) at #2 {{\debugsym}}}
+\newcommand{\splitcolumn}[2]{%
+\begin{columns}
+  \begin{column}{0.48\textwidth}
+    #1
+  \end{column}
+  \hfill
+  \begin{column}{0.48\textwidth}
+    #2
+  \end{column}
+\end{columns}
+}
+
 \pgfdeclarelayer{bg}
 \pgfsetlayers{bg,main}
 \newcommand{\obj}[1]{%
