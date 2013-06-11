@@ -15,6 +15,8 @@
 \usepackage{amsmath,amsthm,amssymb}   
 
 \usepackage{listings}
+\usepackage[style=verbose,autocite=footnote,maxnames=10,babel=hyphen,hyperref=true,abbreviate=false,mcite]{biblatex}
+\addbibresource{ref.bib}
 
 %\usepackage{algorithm,algorithmic}
 
@@ -51,7 +53,6 @@
 \begin{frame}
   \frametitle{Latent Variable Models}
 
-
   \splitcolumn{%
     \begin{itemize} 
       \item {\bf Generative Models} \tikzmark{gen}
@@ -78,13 +79,13 @@
   }{%
   \begin{tikzpicture}[remember picture, overlay]
     \draw[use as bounding box] (current page.north west) rectangle (current page.south east);
-    \point{mark}{(2cm,0)};
+    \point{mark}{(3cm,0)};
     \point{gen}{(pic cs:gen)};
     \point{disc}{(pic cs:disc)};
-    \point{a}{((pic cs:gen) -| mark)};
-    \point{b}{((pic cs:disc) -| mark)};
-    %\node<1-> at (a) {\includegraphics[width=\textwidth,height=3cm,keepaspectratio]{figures/gen.png}};
-    %\node<1-> at (b) {\includegraphics[width=\textwidth,height=3cm,keepaspectratio]{figures/disc.png}};
+    \point{a}{(gen -| mark)};
+    \point{b}{(disc -| mark)};
+    \node<1->[anchor=north east] at (a) {\includegraphics[width=\textwidth,height=2cm,keepaspectratio]{figures/gen.png}};
+    \node<3->[anchor=north east] at (b) {\includegraphics[width=\textwidth,height=2cm,keepaspectratio]{figures/disc.png}};
   \end{tikzpicture}
   }
 
@@ -95,13 +96,12 @@
 
   \begin{tikzpicture}
     % x, y
-    \node[style=box] at (0,-1.5) {\objw{12cm}{%
+    \node at (0,-1.5) {%
     \includegraphics<1>[width=\textwidth,height=6cm,keepaspectratio]{figures/likelihood.png}
     \includegraphics<2>[width=\textwidth,height=6cm,keepaspectratio]{figures/likelihood-mle.png}
     \includegraphics<3>[width=\textwidth,height=6cm,keepaspectratio]{figures/likelihood-em.png}
     \includegraphics<4>[width=\textwidth,height=6cm,keepaspectratio]{figures/likelihood-mom.png}
-      \hfill{\em expected negative log-likelihood}
-      }};
+      };
   \end{tikzpicture}
 
   % Simple message: MLE is consistent but intractable, EM is efficient not but consistent. Can we get something in between.
@@ -140,34 +140,27 @@
 
 \begin{frame}
   \frametitle{Aside: Tensor Operations}
-  \begin{tikzpicture}
-    % x, y
-    \node<1->[style=box] (defn) at (0,0) {\objw{6cm}{%
+  \twocolumn{%
     \begin{align*}
         \action<1->{%
-        x\tp{3}_{ijk} &= x_i x_j x_k \comment{tensoring}\\
+        \tikzmark{tensoring}x\tp{3}_{ijk} &= x_i x_j x_k \comment{tensoring}\\
         }
         \action<2->{%
-        \innerp{A}{B} &= \sum_{ijk} A_{ijk} B_{ijk} \comment{inner product}\\
+        \tikzmark{innerp}\innerp{A}{B} &= \sum_{ijk} A_{ijk} B_{ijk} \comment{inner product}\\
         }
-        \action<3->{%
-        A(u)_{ij} &= \sum_{k} A_{ijk} u_k \comment{projection}\\
-        }
-        \action<4->{%
-        A(u,v)_{i} &= \sum_{jk} A_{ijk} u_j v_k \comment{projection} \\
-        }
-      \end{align*}
-    }};
-    \tikzcube{black,fill=white}{(6,2,0)}{1}{1}{1};
-    %\node (pt) at (5.75,1.75,0) {$\hlmath{\times}$};
-    \uncover<3->{%
-    \tikzrect{black,fill=white}{(6,0)}{1}{1};
-    }
-    \uncover<4->{%
-    \tikzrect{black,fill=white}{(6,-2)}{0.1}{1};
-    }
-  \end{tikzpicture}
-
+    \end{align*}
+  }{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \draw[use as bounding box] (current page.north west) rectangle (current page.south east);
+    \point{mark}{(4cm,0)};
+    \point{tensoring}{(pic cs:tensoring)};
+    \point{innerp}{(pic cs:innerp)};
+    \point{a}{(tensoring -| mark)};
+    \point{b}{(innerp -| mark)};
+      \tikzcube{black,fill=white}{($(a) + (0,0,0)$)}{1}{1}{1};
+      \tikzcube{black,fill=white}{($(b) + (0,0,0)$)}{1}{1}{1};
+    \end{tikzpicture}
+  }
 \end{frame}
 
 \begin{frame}
@@ -226,39 +219,32 @@
 
 \begin{frame}
   \frametitle{Example: Gaussian Mixture Model}
-  \begin{tikzpicture}
-    % x, y
-    \node<1->[style=box] (moments) at (0,0) {\objw{6cm}{%
-      If $\beta_h$ are orthogonal;
+  \twocolumn{%
+    \begin{itemize}
+      \item If $\beta_h$ are orthogonal;
       \begin{align*}
         \E[x\tp{3}] &= \sum_{h=1}^k \pi_h \beta_h\tp{3}. 
       \end{align*}
-    }};
-    \node<1->[style=box] (models) at (6,0) {\objw{6cm}{%
-      \includegraphics[width=0.45\textwidth,height=3cm,keepaspectratio]{figures/gen.png}
-      \includegraphics[width=0.45\textwidth,height=3cm,keepaspectratio]{figures/mog.png}
-    }};
-
-    \node<1-> at (6,-3) {\objw{6cm}{%
-    \includegraphics[width=\textwidth,height=6cm,keepaspectratio]{figures/tensor.png}
-      }};
-    \node<2->[style=box] at (0,-3) {\objw{6cm}{%
-      $\beta_h$ are eigenvectors!
+      \item<2-> $\beta_h$ are eigenvectors \footcite{AnandkumarGeHsu2012}!
         \begin{align*}
           \E[x\tp{3}](\beta_h,\beta_h) 
             %&= \sum_{h'=1}^k \pi_{h'} (\beta_{h}^T \beta_{h'})^2 \beta_{h'} \\
             %&= \sum_{h'=1}^k \pi_{h'} \delta_{hh'} \beta_{h'} \\
             &= \pi_{h} \beta_{h}.
         \end{align*}
-
-        \hfill{\em Anandkumar, Hsu, et.\ al (2012)}
-      }};
-%
-%    \node<2>[style=box,below=0.1cm of tensorf] {\objw{12cm}{%
-%    \includegraphics[width=\textwidth,height=6cm,keepaspectratio]{figures/tensor-decomp.png}
-%      \hfill {Tensor Power Method}
-%      }};
-  \end{tikzpicture}
+    \end{itemize}
+  }{%
+  %\begin{tikzpicture}
+  %  % x, y
+  %  \node<1->[style=box] (models) at (6,0) {\objw{6cm}{%
+  %    \includegraphics[width=0.45\textwidth,height=3cm,keepaspectratio]{figures/gen.png}
+  %    \includegraphics[width=0.45\textwidth,height=3cm,keepaspectratio]{figures/mog.png}
+  %  }};
+  %  \node<1-> at (6,-3) {\objw{6cm}{%
+  %  \includegraphics[width=\textwidth,height=6cm,keepaspectratio]{figures/tensor.png}
+  %    }};
+  %\end{tikzpicture}
+  }
 \end{frame}
 
 \begin{frame}
