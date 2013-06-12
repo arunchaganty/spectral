@@ -1,9 +1,55 @@
 
-\newcommand{\drawgen}[1]{%
-  \mkcircle{h}{}{#1}{1.5ex};
-  \node[left=0.1cm of h] {$h$};
-  \mkcircle{x}{fill=green,opacity=0.7}{($#1 - (0,1cm)$)}{1.5ex};
-  \node[left=0.1cm of x] {$x$};
-  \draw[-latex] (h) -- (x);
+\newcommand<>{\drawgen}[1]{%
+  \uncover#2{
+    \point{start-gen}{#1}
+    \node[style=node] (h) at (start-gen) {};
+    \node[left=0.1cm of h] {$h$};
+    \node[style=node,fill=green!70,below=1cm of h] (x) {};
+    \node[left=0.1cm of x] {$x$};
+    \draw[-latex] (h) -- (x);
+  }
+}
+
+\newcommand<>{\drawdisc}[1]{%
+  \uncover#2{
+    \point{start-disc}{#1}
+    \node[style=node] (h) at (start-disc) {};
+    \node[right=0.1cm of h] {$h$};
+
+    \node[style=obsnode,left=0.3cm of h] (x) {};
+    \node[left=0.1cm of x] {$x$};
+
+    \node[style=obsnode,below=1cm of h] (y) {};
+    \node[left=0.1cm of y] {$y$};
+    \draw[-latex] (h) -- (y);
+    \draw[-latex] (x) -- (y);
+  }
+}
+
+\newcommand{\tensorfactorization}[1]{%
+  \point{start-tf}{#1}
+  \tikzcube{tensoring}{black,fill=white}{($(start-tf) + (0,0,0)$)}{1}{1}{1};
+  \node at ($(tensoring) + (1.0cm,-0.3cm)$) {$=$};
+  \tensorfiber{t1}{fill=blue!70}{($(tensoring) + (2.5cm,0.0cm)$)};
+  \node at ($(t1) + (1.0cm,-0.3cm)$) {$+$};
+  \tensorfiber{t2}{fill=green!70}{($(t1) + (2.5cm,0.0cm)$)};
+  \node at ($(t2) + (1.0cm,-0.3cm)$) {$+ \dots + $};
+  \tensorfiber{t3}{fill=red!70}{($(t2) + (3.0cm,0.0cm)$)};
+
+  \draw [decorate,decoration={brace,amplitude=10pt,raise=4pt,mirror},yshift=0pt] 
+    ($(t1) + (-1cm,-1cm)$) -- ($(t3) + (0.2cm,-1cm)$) node [below,black,midway,yshift=-0.6cm] {$k$};
+}
+
+\newcommand{\matrixfactorization}[1]{%
+    \point{start-mf}{(2cm,0)}
+    \tikzrect{mat}{black,fill=white}{($(start-mf) + (0,0)$)}{1}{1};
+    \node at ($(mat) + (1.0cm,-0.3cm)$) {$=$};
+    \matfiber{t1}{fill=blue!70}{($(mat) + (2.5cm,0.0cm)$)};
+    \node at ($(t1) + (1.0cm,-0.3cm)$) {$+$};
+    \matfiber{t2}{fill=green!70}{($(t1) + (2.5cm,0.0cm)$)};
+    \node at ($(t2) + (1.0cm,-0.3cm)$) {$+ \dots + $};
+    \matfiber{t3}{fill=red!70}{($(t2) + (3.0cm,0.0cm)$)};
+    \draw [decorate,decoration={brace,amplitude=10pt,raise=4pt,mirror},yshift=0pt] 
+      ($(t1) + (-1cm,-1cm)$) -- ($(t3) + (0.2cm,-1cm)$) node [below,black,midway,yshift=-0.6cm] {$k$};
 }
 

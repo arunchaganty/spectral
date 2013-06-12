@@ -25,6 +25,8 @@
 \usepackage[debug]{scabby}
 %\usepackage{scabby}
 
+\usepackage[customcolors]{hf-tikz}
+
 \usepackage{mathtools}
 
 \input{macros}
@@ -59,7 +61,7 @@
 
   \splitcolumn{%
     \begin{itemize} 
-      \item {\bf Generative Models} \tikzmark{gen}
+      \item  \tikzmark{gen} {\bf Generative Models}
         \uncover<2->{%
         \begin{itemize}
           \item Gaussian Mixture Models
@@ -69,7 +71,7 @@
           \item \dots
         \end{itemize}
         }
-      \item<3-> {\bf Discriminative Models} \tikzmark{disc}
+      \item<3-> \tikzmark{disc} {\bf Discriminative Models} 
         \uncover<4->{%
         \begin{itemize}
           \item Mixture of Experts
@@ -85,8 +87,8 @@
     \point{mark}{(3cm,0)};
     \point{gen}{({pic cs:gen} -| mark)}
     \point{disc}{({pic cs:disc} -| mark)}
-    \node<1->[anchor=north east] at ($(gen) +(0,1.0cm)$) {\includegraphics[width=\textwidth,height=2cm,keepaspectratio]{figures/gen.png}};
-    \node<3->[anchor=north east] at ($(disc) +(0,-0.5cm)$) {\includegraphics[width=\textwidth,height=2cm,keepaspectratio]{figures/disc.png}};
+    \drawgen<1->{($(gen) + (0,1.5cm)$)};
+    \drawdisc<3->{($(disc) + (0,0.0cm)$)};
   \end{canvas}
   }
 
@@ -116,7 +118,7 @@
     \item<1-> Log-likelihood function is non-convex.
     \item<2-> MLE is consistent but intractable.
     \item<3-> Local methods (EM, gradient descent, etc.) are tractable but inconsistent.
-    \item<4-> Can we build {\bf efficient yet consistent estimators} that get better with more data?
+    \item<4-> Can we build an {\bf efficient and consistent estimator}?
   \end{itemize}
 
 \end{frame}
@@ -153,8 +155,9 @@
       \item<2-> \tikzmark{innerp}Inner product
         \begin{align*}
           \innerp{A}{B} &= \sum_{ijk} A_{ijk} B_{ijk} \\
-          \pause
+          \uncover<3->{%
             &= \innerp{\vvec{A}}{\vvec{B}} 
+          }
         \end{align*}
     \end{itemize}
   }{%
@@ -179,7 +182,7 @@
     \node[scale=2.0] (op1a) at ($(ptA) + (-1.3cm,-0.3cm)$) {$\langle$};
     \node (op1b) at ($(ptA) + (0.7cm,-0.3cm)$) {$,$};
     \node[scale=2.0] (op1c) at ($(ptB) + (0.8cm,-0.3cm)$) {$\rangle$};
-    \node[scale=2.0] (op2) at ($(op1c) + (1.5cm,0.0cm)$) {$= \hlmath{green}{0.5}$};
+    \node[scale=1.0] (op2) at ($(op1c) + (1.5cm,0.0cm)$) {$= \mathmg{0.5}$};
     }
 
     % Inner product 2
@@ -189,7 +192,7 @@
     \node[scale=2.0] (op1a) at ($(innerpAv) + (-1.3cm,-1.1cm)$) {$\langle$};
     \node (op1b) at ($(innerpAv) + (0.7cm,-1.1cm)$) {$,$};
     \node[scale=2.0] (op1c) at ($(innerpBv) + (0.8cm,-1.1cm)$) {$\rangle$};
-    \node[scale=1.0] (op2) at ($(op1c) + (1.5cm,0.0cm)$) {$= \hlmath{green}{0.5}$};
+    \node[scale=1.0] (op2) at ($(op1c) + (1.5cm,0.0cm)$) {$= \mathmg{0.5}$};
     }
   \end{canvas}
 
@@ -200,9 +203,9 @@
 
   \splitcolumn{%
     \begin{itemize}
-      \item \tikzmark{gen} Generative process:
+      \item Generative process\tikzmark{gen}:
       \begin{align*}
-        h &\sim \Mult(\pi) \\
+        h &\sim \Mult([\pi_1, \pi_2, \cdots, \pi_k]) \\
         x &\sim \normal{\beta_h}{\sigma^2}.
       \end{align*}
       \item Moments:
@@ -230,10 +233,11 @@
     % The model
     \point{mark}{(6.5cm,0)};
     \point{start}{({pic cs:gen} -| mark)};
-    \node[anchor=west] (diag1) at ($(start)$) {%
-      \includegraphics[width=0.45\textwidth,height=2cm,keepaspectratio]{figures/gen.png}
-    };
-    \node[anchor=west] (diag) at ($(start) + (1cm,0.0cm)$) {%
+    \drawgen{($(start) + (0,2cm)$)};
+    %\node[anchor=west] (diag1) at ($(start)$) {%
+    %  \includegraphics[width=0.45\textwidth,height=2cm,keepaspectratio]{figures/gen.png}
+    %};
+    \node[anchor=west] (diag) at ($(start) + (1cm,1.0cm)$) {%
       \includegraphics[width=0.45\textwidth,height=3cm,keepaspectratio]{figures/mog.png}
     };
 
@@ -256,17 +260,19 @@
 
 \begin{frame}
   \frametitle{Solution: Tensor Factorization}
+  \cornertext<3->{\cite{AnandkumarGeHsu2012}}
+
   \splitcolumn{%
     \begin{itemize}
       \item \tikzmark{gen}$\E[x\tp{3}] = \sum_{h=1}^k \pi_h \beta_h\tp{3}$.
-      \item<2-> If $\beta_h$ are orthogonal, the are eigenvectors! \footcite{AnandkumarGeHsu2012}
+      \item<3-> If $\beta_h$ are orthogonal, the are eigenvectors!
         \begin{align*}
           \E[x\tp{3}](\beta_h,\beta_h) 
             %&= \sum_{h'=1}^k \pi_{h'} (\beta_{h}^T \beta_{h'})^2 \beta_{h'} \\
             %&= \sum_{h'=1}^k \pi_{h'} \delta_{hh'} \beta_{h'} \\
             &= \pi_{h} \beta_{h}.
         \end{align*}
-      \item<3-> In general, whiten $\E[x\tp{3}]$ first.
+      \item<4-> In general, whiten $\E[x\tp{3}]$ first.
     \end{itemize}
   }{%
   }
@@ -274,20 +280,13 @@
     \point{mark}{(6.5cm,0)};
     \point{start}{({pic cs:gen} -| mark)};
 
-    \node[anchor=west] (diag1) at ($(start)$) {%
-      \includegraphics[width=0.45\textwidth,height=2cm,keepaspectratio]{figures/gen.png}
-    };
+    \drawgen{($(start) + (0,2cm)$)};
     \node[anchor=west] (diag) at ($(start) + (1cm,0.0cm)$) {%
       \includegraphics[width=0.45\textwidth,height=3cm,keepaspectratio]{figures/mog.png}
     };
-    %\drawgen{(start)};
-    %\node[anchor=west] (diag) at ($(start) + (1cm,-0.5cm)$) {%
-    %  \includegraphics[width=0.45\textwidth,height=3cm,keepaspectratio]{figures/mog.png}
-    %};
-    % x, y
-    %\node[anchor=north west] at ($(start) - (1cm,2cm)$) {%
-    %    \includegraphics[width=6cm,height=2cm,keepaspectratio]{figures/tensor.png}
-    %};
+    \uncover<2->{%
+      \tensorfactorization{(2cm,-1cm)};
+    }
   \end{canvas}
 \end{frame}
 
@@ -296,17 +295,14 @@
 
   \begin{canvas}
     % Tasks.
-    \node[anchor=west] (gen) at (1cm,0) {%
-      \includegraphics[width=\textwidth,height=2.5cm,keepaspectratio]{figures/gen.png}
-     };
-     \node[below=0.1cm of gen.south] {Generative Models};
+    \drawgen{(3cm,0)}
+    \node[below=0.1cm of x.south] {Generative Models};
 
-    \draw[scale=0.8,fill=green,opacity=0.4,dashed] (6.5cm,2cm) rectangle (12.5cm,-3cm);
-    \node[style=box,anchor=west] (disc) at (6cm,0) {%
-      \includegraphics[width=\textwidth,height=3cm,keepaspectratio]{figures/disc.png}
-     };
-     \node[below=0.1cm of disc.south] {Discriminative Models};
-     % Highlight
+    % Highlight
+    \draw[scale=0.8,fill=green,opacity=0.4,dashed] (8cm,1cm) rectangle (14cm,-4cm);
+      \drawdisc{(9cm,0)}
+      \node[below=0.1cm of y.south] {Discriminative Models};
+
   \end{canvas}
 
 \end{frame}
@@ -317,9 +313,11 @@
 
   \splitcolumn{%
     \tikzmark{model}
-    \includegraphics[width=3cm,height=4cm,keepaspectratio]{figures/disc.png}
+    \begin{tikzpicture}
+      \drawdisc{(0,0)}
+    \end{tikzpicture}
     \begin{itemize}
-      \item<2-> $h \sim \Mult(\pi)$.
+      \item<2-> $h \sim \Mult([\pi_1, \pi_2, \cdots, \pi_k])$.
       \item<4-> $y = \beta_h^T x + \epsilon$.
     \end{itemize}
   }{%
@@ -336,6 +334,7 @@
       \includegraphics<5>[width=5cm,height=6cm,keepaspectratio]{figures/mlr-data-4b.png}
       %\includegraphics<6>[width54cm,height=6cm,keepaspectratio]{figures/mlr-data-4c.png}
       \includegraphics<6>[width=5cm,height=6cm,keepaspectratio]{figures/mlr-data-5.png}
+      \includegraphics<7>[width=5cm,height=6cm,keepaspectratio]{figures/mlr-data-6.png}
         };
     \end{canvas}
 \end{frame}
@@ -349,12 +348,19 @@
     };
 
     % x, y
-    \node[anchor=west,scale=2.0] (params) at (7cm,0) {%
-      $\begin{bmatrix} \pi \\ B \end{bmatrix}$
+    \node[anchor=west,scale=1.0] (params) at (7cm,0) {%
+      $\begin{bmatrix} \pi_1 \\ \pi_2 \\ \vdots \\ \pi_k \end{bmatrix}  
+       \begin{bmatrix} 
+                 &         &       &         \\
+                 &         &       &         \\
+         \beta_1 & \beta_2 & \dots & \beta_k \\
+                 &         &       &         \\
+                 &         &       &         
+       \end{bmatrix} $
       };
-    \node[anchor=west,right=0.1cm of params] {%
-    \includegraphics[width=4cm,height=2cm,keepaspectratio]{figures/disc.png}
-    };
+    %\node[anchor=west,right=0.1cm of params] {%
+    %\includegraphics[width=4cm,height=2cm,keepaspectratio]{figures/disc.png}
+    %};
 
     \draw[-latex] (data) -- node[above]{?} (params);
 
@@ -394,8 +400,8 @@
 % \end{frame}
 
 \begin{frame}[c]
-  \frametitle{Finding Moments}
-  \withrmargin{
+  \frametitle{Finding Tensor Structure}
+  \withrmargin{%
   \begin{align*}
     y &= \innerpp{\robustaltm<1>{\beta_h}{\underbrace{\beta_h}_{\textmg{random}}}}
                 {x} + \epsilon \\
@@ -406,29 +412,41 @@
     {\mathmr{\ub{\innerp{(\beta_h - \E[\beta_h])}{x} + \epsilon}_{\textrm{noise}}}} \\
     }
   \end{align*}
-  }{
-    $\E[\beta_h] = \sum_h \pi_h \beta_h.$
+  }{%
+    \uncover<3->{%
+        $\mboxg{mom}{\E[\beta_h] = \sum_h \pi_h \beta_h}$.
+    }
   }
 \end{frame}
 
 \begin{frame}
-  \frametitle{Method of Moments for the Mixture of Linear Regressions.}
+  \frametitle{Finding Tensor Structure}
 
+  \splitcolumn{%
   \begin{align*}
     \action<1->{%
-    y &= \overbrace{\innerp{\E[\beta_h]}{x}}^{\textrm{\color{blue} linear measurement}} & & + \overbrace{(\beta_h - \E[\beta_h])^T x + \epsilon}^{\textrm{\color{red} noise}} \\
+    y &= \mathmb{\ob{\innerp{\E[\beta_h]}{x}}^{\textrm{linear measurement}}} &&+ \mathmr{\ob{(\beta_h - \E[\beta_h])^T x + \epsilon}^{\textrm{noise}}} \\[4ex]
     }
     \action<2->{%
       y^2 
-      &= \innerp{\beta_h}{x}^2 &+ \epsilon^2 &+ 2 \epsilon \innerp{\beta_h}{x}  \\
+      &= \left(\innerp{\beta_h}{x} + \epsilon\right)^2 && \\
     }
     \action<3->{%
-      &= \color{blue}\innerp{\E[\beta_h\tp{2}]}{x\tp{2}} &+ \color{DarkGreen} \textrm{bias} &+ \color{red} \textrm{noise} \\
+    &= 
+    \color{blue}
+      \robustaltm<3>{%
+            \innerp{\E[\beta_h\tp{2}]}{x\tp{2}}
+        }{%
+          \ub{\innerp{\E[\beta_h\tp{2}]}{x\tp{2}}}_{M_2} 
+        }
+        &&+ \color{DarkGreen} \textrm{bias} + \color{red} \textrm{noise} \\[4ex]
     }
-    \action<4->{%
-    y^3 &= \color{blue} \innerp{\E[\beta_h\tp{3}]}{x\tp{3}} &+ \color{DarkGreen} \textrm{bias} &+ \color{red} \textrm{noise} \\
+    \action<5->{%
+    y^3 &= \color{blue} \ub{\innerp{\E[\beta_h\tp{3}]}{x\tp{3}}}_{M_3} &&+ \color{DarkGreen} \textrm{bias} + \color{red} \textrm{noise} 
     }
   \end{align*}
+  }{%
+  }
 
   %\begin{tikzpicture}
   %  % x, y
@@ -445,10 +463,17 @@
   \begin{itemize}
   {\Large
     \item 
-    $\E[\beta_h\tp{3}] = \sum_{h=1}^k \pi_h \beta_h\tp{3}$
+    $M_3 \eqdef \E[\beta_h\tp{3}] = \sum_{h=1}^k \pi_h \beta_h\tp{3}$
   }
-    \item<2-> Apply tensor factorization!
+    \item<3-> Apply tensor factorization!
   \end{itemize}
+
+  \begin{canvas}
+    \uncover<2->{%
+      \tensorfactorization{(-3cm,-1cm)};
+    }
+  \end{canvas}
+
 \end{frame}
 
 \begin{frame}
@@ -456,8 +481,8 @@
 
   \begin{canvas}
     \input{spectral-experts.tikz}
-    \node[style=txt] at (reg-label) {\alert<1>{regression}};
-    \node[style=txt] at (tf-label) {\alert<2>{tensor factorization}};
+    \node[style=txt] at (reg-label) {\alert<2>{regression}};
+    \node[style=txt] at (tf-label) {\alert<3>{tensor factorization}};
   \end{canvas}
 \end{frame}
 
@@ -465,25 +490,37 @@
 \begin{frame}
   \frametitle{Exploiting Low-rank Structure.}
 
+  \cornertext{%
+  \uncover<2->{\cite{fazel2002matrix}}\\
+  \uncover<3->{\cite{tomioka2010estimation}} 
+  }
+
     \begin{align*}
-      \hat\E[\beta_h\tp{2}] &= \arg\min_{M} \left(y^2 - \innerp{M}{x\tp{2}}\right)^2_{(x,y)\in\mathcal{D}} 
-        \alt<1>{+ \|M\|_{2}}
-          {+ \hlmath{blue}{\|M\|_{*}}} \\
-      \action<2->{%
-      \|M\|_{*} &= \sum_i \sigma_i(M).
-      }
+      \hat M_{\robustaltm<-2>{2}{\mathmb{3}}} &= \arg\min_{M} \sum_{(x,y)\in\mathcal{D}} \left(y^2 - 
+      \robustaltm<-2>{\innerp{M_2}{x\tp{2}}}{\mathmb{\innerp{M_3}{x\tp{3}}}}
+      - \textrm{bias}\right)^2 
+      \uncover<2->{+
+      \robustaltm<2>{\mathmb{\ub{\|M\|_{*}}_{\sum_i \sigma_i(M)}}}
+        {\|M\|_{*}}
+      } \\
     \end{align*}
 
-  \begin{tikzpicture}
+  \begin{canvas}
     % x, y
-    \node (measurements) {%
-      \includegraphics[width=\textwidth,height=6cm,keepaspectratio]{figures/tensor.png}
-      };
-  \end{tikzpicture}
+    \alt<-2>{%
+      \matrixfactorization{(2cm,0)}
+    }{%
+      \tensorfactorization{(2cm,0)}
+    }
+  \end{canvas}
 \end{frame}
 
 \begin{frame}
   \frametitle{Spectral Experts}
+  \cornertext{%
+  \uncover<2->{\cite{NegahbanWainwright2009,Tomioka2011}} \\
+  \uncover<3->{\cite{AnandkumarGeHsu2012}} 
+  }
 
   \begin{canvas}
     \input{spectral-experts.tikz}
@@ -575,9 +612,14 @@ $d$ & $k$ & Spectral & EM & Spectral + EM \\
 \begin{frame}
   \frametitle{Conclusions}
   \begin{itemize}
-    \item {\bf Consistent estimator} for the mixture of linear regressions with {\bf polynomial sample and computational complexity}.
-    \item<2-> Derive conditional moments using regression.
-    \item<3-> Method of moment estimates can be a good initialization for EM.
+    \item<1-> Expose tensor factorization structure through regression.
+    \item<2-> {\bf Consistent estimator} for the mixture of linear regressions with {\bf polynomial sample and computational complexity}.
+    \item<3-> Empirically, method of moment estimates can be a good initialization for EM.
+    \item<4-> How can we handle other discriminative models?
+      \begin{itemize}
+          \item<5-> Dependencies between $h$ and $x$ (mixture of experts).
+          \item<6-> Non-linear link functions (logistic regression).
+      \end{itemize}
   \end{itemize}
 \end{frame}
 
