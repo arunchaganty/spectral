@@ -22,8 +22,8 @@
 %\usepackage{algorithm,algorithmic}
 
 \usepackage{tikz}
-%\usepackage[debug]{scabslides}
-\usepackage{scabslides}
+\usepackage[debug]{scabby}
+%\usepackage{scabby}
 
 \usepackage{mathtools}
 
@@ -76,9 +76,9 @@
           \item Latent CRFs
           \item Discriminative LDA
           \item \dots
-          \item {\em Easy to include features and tend to be more accurate.}
         \end{itemize}
         }
+      \item<4-> {\em Easy to include features and tend to be more accurate.}
       \end{itemize}
   }{%
   \begin{canvas}
@@ -150,7 +150,7 @@
     \begin{itemize}
       \item \tikzmark{tensoring} Tensoring
         $$x\tp{3}_{ijk} = x_i x_j x_k$$
-      \item \tikzmark{innerp}Inner product
+      \item<2-> \tikzmark{innerp}Inner product
         \begin{align*}
           \innerp{A}{B} &= \sum_{ijk} A_{ijk} B_{ijk} \\
           \pause
@@ -184,12 +184,12 @@
 
     % Inner product 2
     \uncover<3->{%
-    \tikzrect{innerpAv}{black,fill=yellow}{($(ptA) + (0,-1.5cm)$)}{0.3}{1.5};
-    \tikzrect{innerpBv}{black,fill=blue,opacity=0.7}{($(ptB) + (0,-1.5cm)$)}{0.3}{1.5};
-    \node[scale=2.0] (op1a) at ($(innerpAv) + (-1.3cm,-0.6cm)$) {$\langle$};
-    \node (op1b) at ($(innerpAv) + (0.7cm,-0.6cm)$) {$,$};
-    \node[scale=2.0] (op1c) at ($(innerpBv) + (0.8cm,-0.6cm)$) {$\rangle$};
-    \node[scale=2.0] (op2) at ($(op1c) + (1.5cm,0.0cm)$) {$= \hlmath{green}{0.5}$};
+    \tikzrect{innerpAv}{black,fill=yellow}{($(ptA) + (0,-1.5cm)$)}{0.3}{2.0};
+    \tikzrect{innerpBv}{black,fill=blue,opacity=0.7}{($(ptB) + (0,-1.5cm)$)}{0.3}{2.0};
+    \node[scale=2.0] (op1a) at ($(innerpAv) + (-1.3cm,-1.1cm)$) {$\langle$};
+    \node (op1b) at ($(innerpAv) + (0.7cm,-1.1cm)$) {$,$};
+    \node[scale=2.0] (op1c) at ($(innerpBv) + (0.8cm,-1.1cm)$) {$\rangle$};
+    \node[scale=1.0] (op2) at ($(op1c) + (1.5cm,0.0cm)$) {$= \hlmath{green}{0.5}$};
     }
   \end{canvas}
 
@@ -394,17 +394,21 @@
 % \end{frame}
 
 \begin{frame}[c]
-  \frametitle{Method of Moments for the Mixture of Linear Regressions.}
+  \frametitle{Finding Moments}
+  \withrmargin{
   \begin{align*}
-    y &= \alt<1>{\innerp{\beta_h}{x}}{\underbrace{\beta_h^T}_{\textrm{\color{DarkGreen}random}} x} + \epsilon \\
-    \action<3->{%
-    &= \sum_h \pi_h \innerp{\beta_h}{x} + \innerp{\left(\beta_h - \sum_h \pi_h \beta_h\right)}{x} + \epsilon \\
-    }
-    \action<4-6>{%
-    &= \alt<4>{\E[\beta_h]^T x}{\underbrace{\E[\beta_h]^T x}_{\textrm{\color{blue}linear measurement}}} 
-    + \alt<4-5>{\innerp{(\beta_h - \E[\beta_h])}{x} + \epsilon}{\underbrace{\innerp{(\beta_h - \E[\beta_h])}{x} + \epsilon}_{\textrm{\color{red} noise}}} \\
+    y &= \innerpp{\robustaltm<1>{\beta_h}{\underbrace{\beta_h}_{\textmg{random}}}}
+                {x} + \epsilon \\
+    \uncover<4-6>{%
+    &= \robustaltm<4>{\innerp{\E[\beta_h]}{x}}
+      {\mathmb{\ub{\innerp{\E[\beta_h]}{x}}_{\textrm{linear measurement}}}} 
+    + \robustaltm<4-5>{\innerp{(\beta_h - \E[\beta_h])}{x} + \epsilon}
+    {\mathmr{\ub{\innerp{(\beta_h - \E[\beta_h])}{x} + \epsilon}_{\textrm{noise}}}} \\
     }
   \end{align*}
+  }{
+    $\E[\beta_h] = \sum_h \pi_h \beta_h.$
+  }
 \end{frame}
 
 \begin{frame}
