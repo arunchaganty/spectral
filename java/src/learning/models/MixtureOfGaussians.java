@@ -125,6 +125,20 @@ public class MixtureOfGaussians {
 		return new SimpleMatrix( y );
   }
 
+  public Pair<SimpleMatrix,int[]> sampleWithCluster( int N, int view, int cluster ) {
+    double[] mean = MatrixFactory.toVector( MatrixOps.col( means[view], cluster ) );
+    double[][] cov = MatrixFactory.toArray( covs[view][cluster] );
+		fig.prob.MultGaussian mgRnd = new MultGaussian( mean, cov );
+		double[][] y = new double[N][D];
+		int[] h = new int[N];
+
+		for(int n = 0; n < N; n++) {
+			y[n] = mgRnd.sample(rnd);
+      h[n] = cluster;
+    }
+		return new Pair<>(new SimpleMatrix( y ), h);
+  }
+
   /**
    * Sample n points from each view of the point distribution
    *
@@ -149,6 +163,27 @@ public class MixtureOfGaussians {
     }
 
     return X;
+  }
+  public Pair<SimpleMatrix[],int[]> sampleWithCluster( int N ) {
+    // Generate n random points
+    SimpleMatrix X[] = new SimpleMatrix[V];
+    for( int v = 0; v < V; v++ ) X[v] = new SimpleMatrix( N, D );
+
+    int[] h = new int[N];
+
+    double[] z = RandomFactory.multinomial( MatrixFactory.toVector( weights ), N );
+    for( int v = 0; v < V; v++ ) {
+      int offset = 0;
+      for( int k = 0; k < K; k++ ) {
+        // Sample z[k] numbers from the k-th gaussian 
+				int n = (int) z[k];
+				MatrixOps.setRows( X[v], offset, offset+n, sample(n, v, k) );
+        for(int i = offset; i < offset + n; i++ ) h[i] = k;
+        offset += n;
+      }
+    }
+
+    return new Pair<>(X, h);
   }
 
   public static enum WeightDistribution {
@@ -340,6 +375,9 @@ public class MixtureOfGaussians {
     @Option(gloss="Output file: '-' for STDOUT") 
     public String outputPath = "-";
 
+    @Option(gloss="with cluster") 
+    public boolean withCluster = false;
+
     @Option(gloss="Number of points") 
     public double N = 1e3;
   }
@@ -359,25 +397,56 @@ public class MixtureOfGaussians {
     int N = (int) outOptions.N;
     int D = (int) genOptions.D;
     int V = (int) genOptions.V;
-    SimpleMatrix[] X = model.sample( N );
+    if( outOptions.outputPath == "-" && outOptions.withCluster ) {
+      Pair<SimpleMatrix[],int[]> Xh = model.sampleWithCluster( N );
+      SimpleMatrix[] X = Xh.getValue0();
+      int[] h = Xh.getValue1();
 
-    if( outOptions.outputPath == "-" ) {
-      // Print data
-      for( int v = 0; v < V; v++ ) {
-        System.out.printf( "View %d\n", v );
-        for( int n = 0; n < N; n++ ) {
-          for( int d = 0; d < D; d++ )
-            System.out.printf( "%f ", X[v].get(n,d) );
-          System.out.printf( "\n" );
+      if( outOptions.outputPath == "-" ) {
+        // Print data
+        for( int v = 0; v < V; v++ ) {
+          System.out.printf( "# View %d\n", v );
+          for( int n = 0; n < N; n++ ) {
+            for( int d = 0; d < D; d++ )
+              System.out.printf( "%f ", X[v].get(n,d) );
+            System.out.printf( "# %d ", h[n] );
+            System.out.printf( "\n" );
+          }
+        }
+      } else {
+        try {
+          ObjectOutputStream out = new ObjectOutputStream( new FileOutputStream( outOptions.outputPath ) ); 
+          out.writeObject(X);
+          out.close();
+        } catch (IOException e){
+          LogInfo.error( e );
         }
       }
-    } else {
-      try {
-        ObjectOutputStream out = new ObjectOutputStream( new FileOutputStream( outOptions.outputPath ) ); 
-        out.writeObject(X);
-        out.close();
-      } catch (IOException e){
-        LogInfo.error( e );
+
+
+    }
+    else {
+      SimpleMatrix[] X = model.sample( N );
+
+      if( outOptions.outputPath == "-" ) {
+        // Print data
+        for( int v = 0; v < V; v++ ) {
+          System.out.printf( "# View %d\n", v );
+          System.out.printf( "# M: " );
+          for( int n = 0; n < N; n++ ) {
+            for( int d = 0; d < D; d++ )
+              System.out.printf( "%f ", X[v].get(n,d) );
+            System.out.printf( "\n" );
+          }
+        }
+      } else {
+        try {
+          ObjectOutputStream out = new ObjectOutputStream( new FileOutputStream( outOptions.outputPath ) ); 
+          out.writeObject(X);
+          out.close();
+        } catch (IOException e){
+          LogInfo.error( e );
+        }
       }
     }
   }

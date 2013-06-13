@@ -379,6 +379,10 @@ public class MixtureOfExperts implements Serializable {
     return new Pair<>( yX, model );
   }
 
+  public static void printParams(  MixtureOfExperts model ) {
+    System.out.printf("# Pi: %s\n", model.weights );
+    System.out.printf("# Betas: %s\n", model.betas.transpose() );
+  }
   public static void printData( SimpleMatrix y, SimpleMatrix X, MixtureOfExperts model ) {
     double[][] exponents = 
       ( model != null ) ? model.getNonLinearity().getExponents()
@@ -431,6 +435,7 @@ public class MixtureOfExperts implements Serializable {
     Pair<SimpleMatrix, SimpleMatrix> yX = model.sample( N );
 
     if( outOptions.outputPath.equals( "-" ) ) {
+      printParams( model );
       SimpleMatrix y = yX.getValue0();
       SimpleMatrix X = yX.getValue1();
       printData( y,  X, model );
