@@ -218,12 +218,12 @@
           }
           \uncover<4->{%
           \tikzmark{m2}
-          \E[x\tp{2}] &= \sum_h \pi_h (\beta_h \beta_h^T) \\
-                      &= \sum_h \pi_h \beta_h{\tp{2}} \\
+          \E[x\tp{2}] &= \sum_h \pi_h (\beta_h \beta_h^T) + \sigma^2 \\
+                      &= \sum_h \pi_h \beta_h{\tp{2}} + \sigma^2 \\
                       }
           \uncover<5->{%
           \tikzmark{m3}
-          \E[x\tp{3}] &= \sum_h \pi_h \beta_h\tp{3}.
+          \E[x\tp{3}] &= \sum_h \pi_h \beta_h\tp{3} + \textrm{bias}.
           }
         \end{align*}
     \end{itemize}
@@ -471,7 +471,7 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{Recovering Parameters.}
+  \frametitle{Recovering Parameters}
   \centering
   
   \begin{itemize}
@@ -530,7 +530,7 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{Spectral Experts}
+  \frametitle{Overview: Spectral Experts}
   \cornertext{%
   \uncover<2->{\cite{NegahbanWainwright2009,Tomioka2011}} \\
   \uncover<3->{\cite{AnandkumarGeHsu2012}} 
@@ -558,18 +558,14 @@
 
   \begin{canvas}
     % x, y
-    \node[anchor=west] (em) at (-6.5cm,-1.5cm) {%
-      \includegraphics<1>[width=\textwidth,height=5cm,keepaspectratio]{figures/1-8-3.png}
-      \includegraphics<2>[width=\textwidth,height=5cm,keepaspectratio]{figures/1-8-3-em.png}
-      \includegraphics<3>[width=\textwidth,height=5cm,keepaspectratio]{figures/1-8-3-spec.png}
-      \includegraphics<4->[width=\textwidth,height=5cm,keepaspectratio]{figures/1-8-3-specm.png}
+    \node[anchor=west] (em) at (-6.5cm,-0.0cm) {%
+    \includegraphics<1>[width=\textwidth,height=5cm,keepaspectratio]{figures/1833.pdf}
+      \includegraphics<2-3>[width=\textwidth,height=5cm,keepaspectratio]{figures/EM-1833.pdf}
+      \includegraphics<4-5>[width=\textwidth,height=5cm,keepaspectratio]{figures/Spectral-1833.pdf}
+      \includegraphics<6->[width=\textwidth,height=5cm,keepaspectratio]{figures/Spectral-Spectral+EM-1833.pdf}
       };
-    % x, y
-    \node[anchor=west, right=6cm of em] at (em.west) {%
-      \includegraphics[width=\textwidth,height=5cm,keepaspectratio]{figures/hist.png}
-    };
 
-    \node[above=0.1 cm of em] {%
+    \node<1-2>[anchor=west, right=1 cm of em.east] {%
         $y = \beta^T 
             \begin{bmatrix} 
               1 \\
@@ -578,29 +574,46 @@
               t^7
             \end{bmatrix} + \epsilon$
       };
+    % x, y
+    \node[anchor=west, right=6.2cm of em] at (em.west) {%
+      \includegraphics<3-4>[width=\textwidth,height=5cm,keepaspectratio]{figures/EM-hist.pdf}
+      \includegraphics<5>[width=\textwidth,height=5cm,keepaspectratio]{figures/EM-Spectral-hist.pdf}
+      \includegraphics<6>[width=\textwidth,height=5cm,keepaspectratio]{figures/EM-Spectral-Spectral+EM-hist.pdf}
+    };
   \end{canvas}
 \end{frame}
 
 \begin{frame}
   \frametitle{Experimental Insights}
 
-\begin{small}
-  \begin{tabular}{r r r c c c}
-\hline
-%$b$ & 
-$d$ & $k$ & Spectral & EM & Spectral + EM \\
-\hline
-  %1 & 
-  4 & 2 & 2.45 $\pm$ 3.68 & 0.28 $\pm$ 0.82 & {\bf 0.17 $\pm$ 0.57} \\
-  %2 & 
-  5 & 2 & 1.38 $\pm$ 0.84 & {\bf 0.00 $\pm$ 0.00} & {\bf 0.00 $\pm$ 0.00} \\
-  %2 & 
-  5 & 3 & 2.92 $\pm$ 1.71 & 0.43 $\pm$ 1.07 & {\bf 0.31 $\pm$ 1.02} \\
-  %2 & 
-  6 & 2 & 2.33 $\pm$ 0.67 & 0.63 $\pm$ 1.29 & {\bf 0.01 $\pm$ 0.01} \\
-\hline
-\end{tabular}
-      \end{small}
+  \begin{canvas}
+    \node (exp1) at (-3cm,2cm) {\includegraphics[width=4.5cm]{figures/err-hist-0.pdf}};
+    \node[below=-0.2cm of exp1] {$d=4, k=2$};
+    \node (exp2) at (3cm,2cm) {\includegraphics[width=4.5cm]{figures/err-hist-1.pdf}};
+    \node[below=-0.2cm of exp2] {$d=5, k=2$};
+    \node (exp3) at (-3cm,-2cm) {\includegraphics[width=4.5cm]{figures/err-hist-2.pdf}};
+    \node[below=-0.2cm of exp3] {$d=5, k=3$};
+    \node (exp4) at (3cm,-2cm) {\includegraphics[width=4.5cm]{figures/err-hist-3.pdf}};
+    \node[below=-0.2cm of exp4] {$d=6, k=2$};
+  \end{canvas}
+
+%\begin{small}
+%  \begin{tabular}{r r r c c c}
+%\hline
+%%$b$ & 
+%$d$ & $k$ & Spectral & EM & Spectral + EM \\
+%\hline
+%  %1 & 
+%  4 & 2 & 2.45 $\pm$ 3.68 & 0.28 $\pm$ 0.82 & {\bf 0.17 $\pm$ 0.57} \\
+%  %2 & 
+%  5 & 2 & 1.38 $\pm$ 0.84 & {\bf 0.00 $\pm$ 0.00} & {\bf 0.00 $\pm$ 0.00} \\
+%  %2 & 
+%  5 & 3 & 2.92 $\pm$ 1.71 & 0.43 $\pm$ 1.07 & {\bf 0.31 $\pm$ 1.02} \\
+%  %2 & 
+%  6 & 2 & 2.33 $\pm$ 0.67 & 0.63 $\pm$ 1.29 & {\bf 0.01 $\pm$ 0.01} \\
+%\hline
+%\end{tabular}
+%      \end{small}
 
 \end{frame}
 
@@ -622,11 +635,9 @@ $d$ & $k$ & Spectral & EM & Spectral + EM \\
     \draw<4->[dashed,DarkGreen,line width=0.7pt] ($(spec)-(0.5cm,0)$) -- ($(spec)+(3.5cm,0)$);
 
     \draw<5->[-latex,smooth,line width=1pt,DarkGreen] ($(spec) + (-0.1cm,+0.05cm)$) -- ($(mle) + (-0.30cm,+0.10cm)$);
-    %\node[scale=0.7] at (mle) {x};
+    \node<5->[scale=0.7] at (mle) {x};
     \node<5->[anchor=west] at ($(mle) + (0.3cm,0)$) {$\mathmb{\theta^*}_{\textrm{spec + EM}}$};
-
-
-
+    \draw<5->[dashed,blue,line width=0.7pt] ($(mle)-(0.4cm,0)$) -- ($(mle)+(0.4cm,0)$);
   \end{tikzpicture}
 
 \end{frame}
@@ -636,7 +647,7 @@ $d$ & $k$ & Spectral & EM & Spectral + EM \\
   \frametitle{Conclusions}
   \begin{itemize}
     \item<1-> Expose tensor factorization structure through regression.
-    \item<2-> {\bf Consistent estimator} for the mixture of linear regressions with {\bf polynomial sample and computational complexity}.
+    \item<2-> Consistent estimator for the mixture of linear regressions with polynomial sample and computational complexity.
     \item<3-> Empirically, method of moment estimates can be a good initialization for EM.
     \item<4-> How can we handle other discriminative models?
       \begin{itemize}
