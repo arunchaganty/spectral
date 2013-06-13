@@ -129,7 +129,7 @@
     \begin{itemize}
       \item Control Theory [Ljung, 1987]
       \item Observable operator models [Jaeger, 2000; Littman / Sutton / Singh, 2004]
-      \item \alert<2>{Hidden Markov models [Hsu/Kakade/Zhang]}
+      \item \alert<2>{Hidden Markov models [Hsu/Kakade/Zhang, 2009]}
       \item Low-treewidth graphs [Parikh et al., 2012]
       \item Weighted finite state automata [Balle \& Mohri, 2012]
     \end{itemize}
@@ -516,10 +516,10 @@
   }
 
     \begin{align*}
-      \robustaltm<-3>{\hat M_2}{\mathmb{\hat M_3}} &= \arg\min_{M} \sum_{(x,y)\in\mathcal{D}} \left(y^2 - 
-      \robustaltm<-3>{\innerp{M}{x\tp{2}}}{\mathmb{\innerp{M}{x\tp{3}}}}
+      \robustaltm<-2>{\hat M_2}{\mathmb{\hat M_3}} &= \arg\min_{M} \sum_{(x,y)\in\mathcal{D}} \left(y^2 - 
+      \robustaltm<-2>{\innerp{M}{x\tp{2}}}{\mathmb{\innerp{M}{x\tp{3}}}}
       - \textrm{bias}\right)^2 
-      \uncover<3->{+
+      \uncover<2->{+
       \robustaltm<2>{\mathmb{\ub{\|M\|_{*}}_{\sum_i \sigma_i(M)}}}
         {\|M\|_{*}}
       } \\
@@ -527,17 +527,17 @@
 
   \begin{canvas}
     % x, y
-    \uncover<2-3>{
+    \uncover<1-2>{
       \matrixfactorization{(-3cm,-2cm)}
     }
-    \only<4>{
+    \only<3>{
       \tensorfactorization{(-3cm,-2cm)}
     }
   \end{canvas}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Overview: Spectral Experts}
+  \frametitle{Sample Complexity}
   \cornertext{%
   \uncover<2->{\cite{NegahbanWainwright2009,Tomioka2011}} \\
   \uncover<3->{\cite{AnandkumarGeHsu2012}} 
@@ -545,7 +545,7 @@
 
   \begin{canvas}
     \input{spectral-experts.tikz}
-    \node[style=txt] at (reg-label) {\robustalt<1>{\color{blue}\bf low-rank}{low-rank} regression};
+    \node[style=txt] at (reg-label) {\robustalt<1>{\color{blue}\textbf{low-rank}}{low-rank}regression};
     \node[style=txt] at (tf-label) {tensor factorization};
 
     % Error bounds
@@ -572,7 +572,7 @@
       \includegraphics<5->[width=\textwidth,height=5cm,keepaspectratio]{figures/Spectral-Spectral+EM-1833.pdf}
       };
 
-    \node<1-2>[anchor=west, right=1 cm of em.east] {%
+    \node<1-2>[anchor=west, right=1 cm of em.east] (eq) {%
         $y = \beta^T 
             \ub{\begin{bmatrix} 
               1 \\
@@ -580,6 +580,9 @@
               t^4 \\
               t^7
             \end{bmatrix}}_{x} + \epsilon$
+      };
+    \node<1-2>[anchor=west, below=0.1 cm of eq] {%
+        $k = 3, d = 4, n = 10^5$
       };
     % x, y
     \node[anchor=west, right=6.2cm of em] at (em.west) {%
@@ -643,7 +646,7 @@
 
     \draw<5->[-latex,smooth,line width=1pt,DarkGreen] ($(spec) + (-0.1cm,+0.05cm)$) -- ($(mle) + (-0.30cm,+0.10cm)$);
     \node<5->[scale=0.7] at (mle) {x};
-    \node<5->[anchor=west] at ($(mle) + (0.3cm,0)$) {$\mathmb{\theta^*}_{\textrm{spec + EM}}$};
+    \node<5->[anchor=west] at ($(mle) + (0.3cm,0)$) {$\mathmb{\hat\theta}_{\textrm{spec + EM}}$};
     \draw<5->[dashed,blue,line width=0.7pt] ($(mle)-(0.4cm,0)$) -- ($(mle)+(0.4cm,0)$);
   \end{tikzpicture}
 

@@ -2,7 +2,7 @@
 
 # Preamble (0:14 = 0:14) [0:15]
 
-Hello. I am going to present a consistent estimator to learn the parameters of a simple discriminative model, the mixture of linear regressions. This is in contrast to a lot of prior work in learning generative models in the spectral learning community.
+Hello. I am going to talk about consistent parameter estimation for a simple discriminative model, the mixture of linear regressions. This is in contrast to a lot of prior work in learning generative models in the spectral learning community.
 
 # Generative vs. Discriminative Latent Variable Models (1:20 = 1:34) [1:00]
 
