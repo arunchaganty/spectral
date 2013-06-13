@@ -7,6 +7,7 @@ OUTPUT=$(shell basename $(PWD))
 FIGURES=
 
 $(OUTPUT).pdf: $(FILE).tex ${FIGURES}
+	export TEXINPUTS=/media/world/packages/tex//:
 	pdflatex --file-line-error --interaction=nonstopmode $<
 	mv $(FILE).pdf $@
 

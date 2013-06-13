@@ -7,6 +7,7 @@
 
 \RequirePackage{etoolbox}
 \RequirePackage{tikz}
+\RequirePackage{pgfplots}
 \RequirePackage{graphicx}
 \RequirePackage{mathtools}
 \RequirePackage{calc}
@@ -16,7 +17,11 @@
 \newtoggle{debug}
 \togglefalse{debug}
 
+\newtoggle{debugmarks}
+\togglefalse{debugmarks}
+
 \DeclareOption{debug}{\toggletrue{debug}}
+\DeclareOption{debugmarks}{\toggletrue{debugmarks}}
 \ProcessOptions
 
 % Include the right tikz libraries.
@@ -41,6 +46,8 @@
 \hfsetfillcolor{blue!10}
 \hfsetbordercolor{blue!90}
 
+\pgfplotsset{compat=1.8}
+
 
 %% DRAWING 
 %%%%%%%%%%%%%%%%%
@@ -61,13 +68,15 @@
 \newcommand{\point}[2]{%
   \begin{pgfonlayer}{debug}
     \node[scale=0.8] (#1) at #2 {\@dbgmark};
-    \node[scale=0.5,below=0.1ex of #1] {#1};
+    \iftoggle{debugmarks}{
+      \node[scale=0.5,below=0.1ex of #1] {#1};
+      }{}
   \end{pgfonlayer}{debug}
 }
 
 % Canvas for drawing
 \newenvironment{canvas}{%
-  \begin{tikzpicture}[remember picture,overlay,trim left=0]
+  \begin{tikzpicture}[remember picture,overlay,trim left=0,x=1cm,y=1cm,shift=(current page.center)]
   \draw[use as bounding box] (current page.north west) rectangle (current page.south east);
   \iftoggle{debug}{%
   \begin{pgfonlayer}{debug}
@@ -76,6 +85,15 @@
   }{};
 }{
     \end{tikzpicture}
+}
+
+\tikzset{%
+  remember picture with id/.style={%
+    shift=(current page.center),
+    remember picture,
+    overlay,
+    save picture id=#1,
+  }
 }
 
 % A minipage object for Tikz

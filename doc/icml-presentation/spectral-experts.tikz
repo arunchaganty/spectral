@@ -1,11 +1,11 @@
 % x, y
 % Nodes
 %\node[style=txt,anchor=south west] (data1) at (1cm,1cm) {$\left\{ x, y \right\}_{(x,y) \in \sD}$};
-\node[style=txt] (data2) at (2cm,1cm) {$\left\{ x\tp{2}, y^2 \right\}_{(x,y) \in \sD}$};
+\node[style=txt] (data2) at (-4cm,1cm) {$\left\{ x\tp{2}, y^2 \right\}_{(x,y) \in \sD}$};
 \node[style=txt,below=1cm of data2.center] (data3) {$\left\{ x\tp{3}, y^3 \right\}_{(x,y) \in \sD}$};
 
-%\node[style=txt,anchor=south west] (m1) at (6cm,1cm) {$\E\left[\beta_h\right]$};
-\node[style=txt] (m2) at (7cm,1cm) {$M_2$}; %{$\E\left[\beta_h\tp{2}\right]$};
+%\node[style=txt,anchor=south west] (m1) at (2cm,1cm) {$\E\left[\beta_h\right]$};
+\node[style=txt] (m2) at (0cm,1cm) {$M_2$}; %{$\E\left[\beta_h\tp{2}\right]$};
 \node[style=txt,below=1cm of m2.center] (m3) {$M_3$}; %{$\E\left[\beta_h\tp{3}\right]$};
 
 \node[below=0.5cm of m2.center] (params-pos) {};

@@ -22,8 +22,8 @@
 %\usepackage{algorithm,algorithmic}
 
 \usepackage{tikz}
-\usepackage[debug]{scabby}
-%\usepackage{scabby}
+%\usepackage[debug,debugmarks]{scabby}
+\usepackage{scabby}
 
 \usepackage[customcolors]{hf-tikz}
 
@@ -80,15 +80,15 @@
           \item \dots
         \end{itemize}
         }
-      \item<4-> {\em Easy to include features and tend to be more accurate.}
+      \item<5-> {\em Easy to include features and tend to be more accurate.}
       \end{itemize}
   }{%
   \begin{canvas}
     \point{mark}{(3cm,0)};
     \point{gen}{({pic cs:gen} -| mark)}
     \point{disc}{({pic cs:disc} -| mark)}
-    \drawgen<1->{($(gen) + (0,1.5cm)$)};
-    \drawdisc<3->{($(disc) + (0,0.0cm)$)};
+    \drawgen<1->{($(gen) + (0,0.0cm)$)};
+    \drawdisc<3->{($(disc) + (0,-0.5cm)$)};
   \end{canvas}
   }
 
@@ -99,17 +99,15 @@
 
   \begin{tikzpicture}
     % x, y
-    \node at (0,0) {%
-    \includegraphics<1>[width=\textwidth,height=6cm,keepaspectratio]{figures/likelihood.png}
-    \includegraphics<2>[width=\textwidth,height=6cm,keepaspectratio]{figures/likelihood-mle.png}
-    \includegraphics<3>[width=\textwidth,height=6cm,keepaspectratio]{figures/likelihood-em.png}
-    \includegraphics<4>[width=\textwidth,height=6cm,keepaspectratio]{figures/likelihood-mom.png}
-      };
-    %\point{opt}{(0.4cm,-1.1cm)};
-    %\node[style=lbl,below=0.0cm of opt,scale=1.2] {$\hlmath{blue}{\theta^*}$};
-    % Axes
-    \draw[-latex] (-6cm,-2.25cm) -- node[right,at end]{$-\log(p_{\theta}(x))$}  (-6cm,2cm);
-    \draw[-latex] (-6cm,-2.25cm) -- node[above,at end]{$\theta$}  (5cm,-2.25cm);
+    \llhood{0}{0};
+    \node[scale=0.7] at (mle) {x};
+    \node<2-> at ($(mle) + (0.6cm,0)$) {$\mathmb{\theta^*_{\textrm{MLE}}}$};
+    \node[scale=0.7] at (em1) {x};
+    \node<3-> at ($(em1) + (0.5cm,0)$) {$\mathmr{\hat\theta_{\textrm{EM}}}$};
+    \node[scale=0.7] at (em2) {x};
+    \node<3-> at ($(em2) + (0.5cm,0)$) {$\mathmr{\hat\theta_{\textrm{EM}}}$};
+
+    \draw<4->[latex-latex,DarkGreen,line width=1pt] ($(mle) + (-0.8cm,0.8cm)$) -- node[above]{$\mathmg{\epsilon}$} ($(mle) + (+0.8cm,0.8cm)$);
   \end{tikzpicture}
 
   % Simple message: MLE is consistent but intractable, EM is efficient not but consistent. Can we get something in between.
@@ -163,9 +161,10 @@
   }{%
   }
   \begin{canvas}
-    \point{mark}{(6.8cm,0)};
+    \point{mark}{(1.0cm,0)};
+    \point{tensoring-pos}{({pic cs:tensoring} -| mark)}
     % Tensoring
-    \tikzcube{tensoring}{black,fill=white}{($({pic cs:tensoring} -| mark) + (0,0,0)$)}{1}{1}{1};
+    \tikzcube{tensoring}{black,fill=white}{($(tensoring-pos) + (0,-3cm) + (0,0,0)$)}{1}{1}{1};
     \node at ($(tensoring) + (1.0cm,-0.3cm)$) {$=$};
     \tikzcube{v1}{black,fill=white}{($(tensoring) + (2.5cm,-0.3cm)$)}{1}{0.3}{0.3};
     \node (lbl1) at ($(v1) + (0.40cm,-0.1cm)$) {$\times$};
@@ -175,24 +174,26 @@
 
     % Inner product
     \uncover<2->{%
-    \point{ptA}{($({pic cs:innerp} -| mark) + (0,0.2cm)$)}
+    \point{ptA}{($({pic cs:innerp} -| mark) + (0,-3.0cm)$)}
     \point{ptB}{($(ptA) + (2cm,0)$)}
+
     \tikzcube{innerpA}{black,fill=yellow}{($(ptA) + (0,0,0)$)}{1}{1}{1};
-    \tikzcube{innerpB}{black,fill=blue,opacity=0.7}{($(ptB) + (0,0,0)$)}{1}{1}{1};
-    \node[scale=2.0] (op1a) at ($(ptA) + (-1.3cm,-0.3cm)$) {$\langle$};
-    \node (op1b) at ($(ptA) + (0.7cm,-0.3cm)$) {$,$};
-    \node[scale=2.0] (op1c) at ($(ptB) + (0.8cm,-0.3cm)$) {$\rangle$};
-    \node[scale=1.0] (op2) at ($(op1c) + (1.5cm,0.0cm)$) {$= \mathmg{0.5}$};
+    \tikzcube{innerpB}{black,fill=blue!70}{($(ptB) + (0,0,0)$)}{1}{1}{1};
+
+    \innerpdiagt{(ptA)}{(ptB)};
+    \node[scale=1.0] at ($(ptB) + (1.5cm,-0.3cm)$) {$= \mathmg{0.5}$};
     }
 
     % Inner product 2
     \uncover<3->{%
-    \tikzrect{innerpAv}{black,fill=yellow}{($(ptA) + (0,-1.5cm)$)}{0.3}{2.0};
-    \tikzrect{innerpBv}{black,fill=blue,opacity=0.7}{($(ptB) + (0,-1.5cm)$)}{0.3}{2.0};
-    \node[scale=2.0] (op1a) at ($(innerpAv) + (-1.3cm,-1.1cm)$) {$\langle$};
-    \node (op1b) at ($(innerpAv) + (0.7cm,-1.1cm)$) {$,$};
-    \node[scale=2.0] (op1c) at ($(innerpBv) + (0.8cm,-1.1cm)$) {$\rangle$};
-    \node[scale=1.0] (op2) at ($(op1c) + (1.5cm,0.0cm)$) {$= \mathmg{0.5}$};
+    \point{ptvA}{($(ptA) + (0,-2cm)$)}
+    \point{ptvB}{($(ptB) + (0,-2cm)$)}
+
+    \tikzrect{innerpAv}{black,fill=yellow}{($(ptvA) + (0,0.5cm)$)}{0.3}{2.0};
+    \tikzrect{innerpBv}{black,fill=blue!70}{($(ptvB) + (0,0.5cm)$)}{0.3}{2.0};
+
+    \innerpdiagt{(ptvA)}{(ptvB)};
+    \node[scale=1.0] at ($(ptvB) + (1.5cm,-0.3cm)$) {$= \mathmg{0.5}$};
     }
   \end{canvas}
 
@@ -200,7 +201,6 @@
 
 \begin{frame}
   \frametitle{Example: Gaussian Mixture Model}
-
   \splitcolumn{%
     \begin{itemize}
       \item Generative process\tikzmark{gen}:
@@ -231,25 +231,27 @@
   }
   \begin{canvas}
     % The model
-    \point{mark}{(6.5cm,0)};
-    \point{start}{({pic cs:gen} -| mark)};
-    \drawgen{($(start) + (0,2cm)$)};
+    \point{mark}{(1cm,0)};
+    \point{start}{(1cm,1cm)}; %{pic cs:gen} -| mark)};
+    \drawgen{($(start) + (0,1cm)$)};
     %\node[anchor=west] (diag1) at ($(start)$) {%
     %  \includegraphics[width=0.45\textwidth,height=2cm,keepaspectratio]{figures/gen.png}
     %};
-    \node[anchor=west] (diag) at ($(start) + (1cm,1.0cm)$) {%
-      \includegraphics[width=0.45\textwidth,height=3cm,keepaspectratio]{figures/mog.png}
+    \node[anchor=west] (diag) at ($(start) + (1cm,0.0cm)$) {%
+      \includegraphics[width=0.45\textwidth,height=3cm,keepaspectratio]{figures/mog.pdf}
     };
 
     \uncover<4->{%
-      \point{m2}{({pic cs:m2} -| mark)};
+      \point{m2-pos}{({pic cs:m2} -| mark)};
+      \point{m2}{($(m2-pos) - (0,4.5cm)$)};
       \tikzrect{M2}{black,fill=white}{($(m2) + (1cm,1cm)$)}{1}{1};
       \node[anchor=west] at ($(m2) + (1.1cm, 0.5cm)$) {$\E[x\tp{2}]$};
       \node[anchor=east] at ($(m2) + (-0.1cm, 0.5cm)$) {$d$};
       \node[anchor=south] at ($(m2) + (0.5cm, 1.0cm)$) {$d$};
     }
     \uncover<5->{%
-      \point{m3}{($({pic cs:m3} -| mark) + (1cm,1cm)$)};
+      \point{m3-pos}{({pic cs:m3} -| mark)};
+      \point{m3}{($(m3-pos) - (-1cm,3.5cm)$)};
       \tikzcube{M3}{black,fill=white}{($(m3) + (0,0,0)$)}{1}{1}{1};
       \node[anchor=west] at ($(m3) + (0.5cm, -0.5cm)$) {$\E[x\tp{3}]$};
       \node[anchor=east] at ($(m3) + (-1.1cm, -0.5cm)$) {$d$};
@@ -258,7 +260,7 @@
 
 \end{frame}
 
-\begin{frame}
+\begin{frame}[t]
   \frametitle{Solution: Tensor Factorization}
   \cornertext<3->{\cite{AnandkumarGeHsu2012}}
 
@@ -277,15 +279,15 @@
   }{%
   }
   \begin{canvas}
-    \point{mark}{(6.5cm,0)};
-    \point{start}{({pic cs:gen} -| mark)};
+    \point{mark}{(1cm,0)};
+    \point{start}{(1cm,1cm)}; %{pic cs:gen} -| mark)};
 
-    \drawgen{($(start) + (0,2cm)$)};
+    \drawgen{($(start) + (0,1cm)$)};
     \node[anchor=west] (diag) at ($(start) + (1cm,0.0cm)$) {%
-      \includegraphics[width=0.45\textwidth,height=3cm,keepaspectratio]{figures/mog.png}
+      \includegraphics[width=0.45\textwidth,height=3cm,keepaspectratio]{figures/mog.pdf}
     };
     \uncover<2->{%
-      \tensorfactorization{(2cm,-1cm)};
+      \tensorfactorization{(-3cm,-2cm)};
     }
   \end{canvas}
 \end{frame}
@@ -295,12 +297,12 @@
 
   \begin{canvas}
     % Tasks.
-    \drawgen{(3cm,0)}
+    \drawgen{(-3cm,1cm)}
     \node[below=0.1cm of x.south] {Generative Models};
 
     % Highlight
-    \draw[scale=0.8,fill=green,opacity=0.4,dashed] (8cm,1cm) rectangle (14cm,-4cm);
-      \drawdisc{(9cm,0)}
+    \draw<2>[scale=0.8,fill=green,opacity=0.4,dashed] (1cm,2.5cm) rectangle (6.5cm,-2.5cm);
+      \drawdisc{(3cm,1cm)}
       \node[below=0.1cm of y.south] {Discriminative Models};
 
   \end{canvas}
@@ -324,17 +326,16 @@
   }
     \begin{canvas}
       % x, y
-      \point{mark}{(5.5cm,0)}
+      \point{mark}{(0cm,0cm)}
       \point{model}{({pic cs:model} -| mark)}
-      \node[anchor=west] at ($(model) + (0,0.5cm)$) {%
-      \includegraphics<1>[width=5cm,height=6cm,keepaspectratio]{figures/mlr-data-2.png}
-      \includegraphics<2>[width=5cm,height=6cm,keepaspectratio]{figures/mlr-data-3a.png}
-      \includegraphics<3>[width=5cm,height=6cm,keepaspectratio]{figures/mlr-data-3b.png}
-      \includegraphics<4>[width=5cm,height=6cm,keepaspectratio]{figures/mlr-data-4a.png}
-      \includegraphics<5>[width=5cm,height=6cm,keepaspectratio]{figures/mlr-data-4b.png}
-      %\includegraphics<6>[width54cm,height=6cm,keepaspectratio]{figures/mlr-data-4c.png}
-      \includegraphics<6>[width=5cm,height=6cm,keepaspectratio]{figures/mlr-data-5.png}
-      \includegraphics<7>[width=5cm,height=6cm,keepaspectratio]{figures/mlr-data-6.png}
+      \node[anchor=west] at ($(model) + (0,-1cm)$) {%
+      \includegraphics<1>[width=5cm,height=6cm,keepaspectratio]{figures/mlr-0.pdf}
+      \includegraphics<2>[width=5cm,height=6cm,keepaspectratio]{figures/mlr-1.pdf}
+      \includegraphics<3>[width=5cm,height=6cm,keepaspectratio]{figures/mlr-2.pdf}
+      \includegraphics<4>[width=5cm,height=6cm,keepaspectratio]{figures/mlr-3.pdf}
+      \includegraphics<5>[width=5cm,height=6cm,keepaspectratio]{figures/mlr-4.pdf}
+      \includegraphics<6>[width=5cm,height=6cm,keepaspectratio]{figures/mlr-5.pdf}
+      \includegraphics<7>[width=5cm,height=6cm,keepaspectratio]{figures/mlr-6.pdf}
         };
     \end{canvas}
 \end{frame}
@@ -343,12 +344,12 @@
   \frametitle{Mixture of Linear Regressions}
 
   \begin{canvas}
-    \node[anchor=west] (data) at (0,0) {%
-    \includegraphics[width=4cm,height=6cm,keepaspectratio]{figures/mlr-data.png}
+    \node[anchor=east] (data) at (-2cm,0) {%
+    \includegraphics[width=4cm,height=6cm,keepaspectratio]{figures/mlr-6.pdf}
     };
 
     % x, y
-    \node[anchor=west,scale=1.0] (params) at (7cm,0) {%
+    \node[anchor=west,scale=1.0] (params) at (1.5cm,0) {%
       $\begin{bmatrix} \pi_1 \\ \pi_2 \\ \vdots \\ \pi_k \end{bmatrix}  
        \begin{bmatrix} 
                  &         &       &         \\
@@ -425,10 +426,10 @@
   \splitcolumn{%
   \begin{align*}
     \action<1->{%
-    y &= \mathmb{\ob{\innerp{\E[\beta_h]}{x}}^{\textrm{linear measurement}}} &&+ \mathmr{\ob{(\beta_h - \E[\beta_h])^T x + \epsilon}^{\textrm{noise}}} \\[4ex]
+    y\tikzmark{regA} &= \mathmb{\ob{\innerp{\E[\beta_h]}{x}}^{\textrm{linear measurement}}} &&+ \mathmr{\ob{(\beta_h - \E[\beta_h])^T x + \epsilon}^{\textrm{noise}}} \\[4ex]
     }
     \action<2->{%
-      y^2 
+    y^2 \tikzmark{regB}
       &= \left(\innerp{\beta_h}{x} + \epsilon\right)^2 && \\
     }
     \action<3->{%
@@ -442,11 +443,24 @@
         &&+ \color{DarkGreen} \textrm{bias} + \color{red} \textrm{noise} \\[4ex]
     }
     \action<5->{%
-    y^3 &= \color{blue} \ub{\innerp{\E[\beta_h\tp{3}]}{x\tp{3}}}_{M_3} &&+ \color{DarkGreen} \textrm{bias} + \color{red} \textrm{noise} 
+    y^3 \tikzmark{regC}
+    &= \color{blue} \ub{\innerp{\E[\beta_h\tp{3}]}{x\tp{3}}}_{M_3} &&+ \color{DarkGreen} \textrm{bias} + \color{red} \textrm{noise} 
     }
   \end{align*}
   }{%
   }
+  \begin{canvas}
+    \point{mark}{(3cm,0)};
+    \uncover<1-> {%
+      \regressionA{($({pic cs:regA} -| mark) + (0,-2.5cm)$)};
+    }
+    \uncover<3-> {%
+      \regressionB{($({pic cs:regB} -| mark) + (0,-3cm)$)};
+    }
+    \uncover<5-> {%
+      \regressionC{($({pic cs:regC} -| mark) + (0,-3cm)$)};
+    }
+  \end{canvas}
 
   %\begin{tikzpicture}
   %  % x, y
@@ -457,7 +471,7 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{Method of Moments for the Mixture of Linear Regressions.}
+  \frametitle{Recovering Parameters.}
   \centering
   
   \begin{itemize}
@@ -470,7 +484,7 @@
 
   \begin{canvas}
     \uncover<2->{%
-      \tensorfactorization{(-3cm,-1cm)};
+      \tensorfactorization{(-3cm,-2cm)};
     }
   \end{canvas}
 
@@ -496,8 +510,8 @@
   }
 
     \begin{align*}
-      \hat M_{\robustaltm<-2>{2}{\mathmb{3}}} &= \arg\min_{M} \sum_{(x,y)\in\mathcal{D}} \left(y^2 - 
-      \robustaltm<-2>{\innerp{M_2}{x\tp{2}}}{\mathmb{\innerp{M_3}{x\tp{3}}}}
+      \robustaltm<-2>{\hat M_2}{\mathmb{\hat M_3}} &= \arg\min_{M} \sum_{(x,y)\in\mathcal{D}} \left(y^2 - 
+      \robustaltm<-2>{\innerp{M}{x\tp{2}}}{\mathmb{\innerp{M}{x\tp{3}}}}
       - \textrm{bias}\right)^2 
       \uncover<2->{+
       \robustaltm<2>{\mathmb{\ub{\|M\|_{*}}_{\sum_i \sigma_i(M)}}}
@@ -508,9 +522,9 @@
   \begin{canvas}
     % x, y
     \alt<-2>{%
-      \matrixfactorization{(2cm,0)}
+      \matrixfactorization{(-3cm,-2cm)}
     }{%
-      \tensorfactorization{(2cm,0)}
+      \tensorfactorization{(-3cm,-2cm)}
     }
   \end{canvas}
 \end{frame}
@@ -544,7 +558,7 @@
 
   \begin{canvas}
     % x, y
-    \node[anchor=west] (em) at (-0.5cm,-1.5cm) {%
+    \node[anchor=west] (em) at (-6.5cm,-1.5cm) {%
       \includegraphics<1>[width=\textwidth,height=5cm,keepaspectratio]{figures/1-8-3.png}
       \includegraphics<2>[width=\textwidth,height=5cm,keepaspectratio]{figures/1-8-3-em.png}
       \includegraphics<3>[width=\textwidth,height=5cm,keepaspectratio]{figures/1-8-3-spec.png}
@@ -591,19 +605,28 @@ $d$ & $k$ & Spectral & EM & Spectral + EM \\
 \end{frame}
 
 \begin{frame}
-  \frametitle{Experimental Insights}
+  \frametitle{On Initialization (Cartoon)}
 
   \begin{tikzpicture}
-    \node at (0,0) {%
-      \includegraphics<1>[width=\textwidth,height=6cm,keepaspectratio]{figures/likelihood-mom.png}
-      \includegraphics<2>[width=\textwidth,height=6cm,keepaspectratio]{figures/likelihood-mom-em1.png}
-      \includegraphics<3>[width=\textwidth,height=6cm,keepaspectratio]{figures/likelihood-mom-em2.png}
-    };
-    \draw[-latex] (-6cm,-2.25cm) -- node[right,at end]{$-\log(p_{\theta}(x))$}  (-6cm,2cm);
-    \draw[-latex] (-6cm,-2.25cm) -- node[above,at end]{$\theta$}  (5cm,-2.25cm);
+    % x, y
+    \llhood{0}{0};
 
-    \node<2-> at (1.8cm,0.6cm) {$\hlmath{DarkGreen}{\theta_{spec}}$};
-    \node<3-> at (0.3cm,-0.8cm) {$\hlmath{blue}{\theta^{*}}$};
+    \node<2->[scale=0.7] at (em2) {x};
+    \node<2-> at ($(em2) + (0.6cm,0)$) {$\mathmr{\hat\theta_{\textrm{EM}}}$};
+    \draw<2->[-latex,smooth,line width=1pt,red] ($(em2-start) + (+0.1cm,+0.05cm)$) -- ($(em2) + (+0.15cm,0.00cm)$);
+    \draw<2->[dashed,red,line width=0.7pt] ($(em2)-(3.5cm,0)$) -- ($(em2)+(0.5cm,0)$);
+
+    \draw<3>[latex-latex,DarkGreen,line width=1pt,dashed] ($(mle) + (-1.2cm,0.8cm)$) -- node[above]{$\mathmg{\epsilon}$} ($(mle) + (+1.2cm,0.8cm)$);
+    \node<4->[scale=0.7] at (spec) {x};
+    \node<4-> at ($(spec) + (0.5cm,0.3cm)$) {$\mathmg{\hat\theta_{\textrm{spec}}}$};
+    \draw<4->[dashed,DarkGreen,line width=0.7pt] ($(spec)-(0.5cm,0)$) -- ($(spec)+(3.5cm,0)$);
+
+    \draw<5->[-latex,smooth,line width=1pt,DarkGreen] ($(spec) + (-0.1cm,+0.05cm)$) -- ($(mle) + (-0.30cm,+0.10cm)$);
+    %\node[scale=0.7] at (mle) {x};
+    \node<5->[anchor=west] at ($(mle) + (0.3cm,0)$) {$\mathmb{\theta^*}_{\textrm{spec + EM}}$};
+
+
+
   \end{tikzpicture}
 
 \end{frame}
