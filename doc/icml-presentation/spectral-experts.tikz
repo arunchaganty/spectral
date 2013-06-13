@@ -34,7 +34,7 @@
 \draw[fill=green,opacity=0.1,dashed] ($(m2.north east) + (-0.1cm,0.1cm)$) rectangle ($(params.south west) + (0.1cm,-1.0cm)$);
 \end{pgfonlayer}
 \node (params-mid) at ($(params-pos) !.5! (params)$) {};
-\point{reg-label}{($(data3) !.5! (m3) + (0, -1.0cm)$)};
+\point{reg-label}{($(data3.east) !.5! (m3.west) + (0, -1.0cm)$)};
 \point{tf-label}{(params-mid |- reg-label)};
 
 

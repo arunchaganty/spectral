@@ -53,7 +53,7 @@ def makePlot( data, trueBetas, specBetas, spemBetas, em0Betas, emBetas, outFile 
     for setting in [ [], ["EM"],["Spectral"],["Spectral","Spectral+EM"]]:
         fig = plt.figure()
         ax = plt.axes(xlim=(-1, 1), ylim=(-3, 5))
-        ax.set_xlabel("x")
+        ax.set_xlabel("t")
         ax.set_ylabel("y")
 
         # Plot the data

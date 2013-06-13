@@ -128,8 +128,8 @@
     \item<2-> Observable operator models
     \begin{itemize}
       \item Control Theory [Ljung, 1987]
-      \item Observable operator models [Jaeger, 2000; Singh et al., 2004]
-      \item \alert<2>{Hidden Markov models [Hsu et al, 2009]}
+      \item Observable operator models [Jaeger, 2000; Littman / Sutton / Singh, 2004]
+      \item \alert<2>{Hidden Markov models [Hsu/Kakade/Zhang]}
       \item Low-treewidth graphs [Parikh et al., 2012]
       \item Weighted finite state automata [Balle \& Mohri, 2012]
     \end{itemize}
@@ -149,7 +149,10 @@
   \splitcolumn{%
     \begin{itemize}
       \item \tikzmark{tensoring} Tensoring
-        $$x\tp{3}_{ijk} = x_i x_j x_k$$
+        \begin{align*}
+          x\tp{3}       &= x \otimes x \otimes x \\
+          x\tp{3}_{ijk} &= x_i x_j x_k
+        \end{align*}
       \item<2-> \tikzmark{innerp}Inner product
         \begin{align*}
           \innerp{A}{B} &= \sum_{ijk} A_{ijk} B_{ijk} \\
@@ -208,7 +211,7 @@
         h &\sim \Mult([\pi_1, \pi_2, \cdots, \pi_k]) \\
         x &\sim \normal{\beta_h}{\sigma^2}.
       \end{align*}
-      \item Moments:
+      \item<2-> Moments:
       \begin{align*}
           \uncover<2->{%
           \E[x|h] &= \beta_h \\
@@ -267,7 +270,7 @@
   \splitcolumn{%
     \begin{itemize}
       \item \tikzmark{gen}$\E[x\tp{3}] = \sum_{h=1}^k \pi_h \beta_h\tp{3}$.
-      \item<3-> If $\beta_h$ are orthogonal, the are eigenvectors!
+      \item<3-> If $\beta_h$ are orthogonal, they are eigenvectors!
         \begin{align*}
           \E[x\tp{3}](\beta_h,\beta_h) 
             %&= \sum_{h'=1}^k \pi_{h'} (\beta_{h}^T \beta_{h'})^2 \beta_{h'} \\
@@ -319,8 +322,11 @@
       \drawdisc{(0,0)}
     \end{tikzpicture}
     \begin{itemize}
-      \item<2-> $h \sim \Mult([\pi_1, \pi_2, \cdots, \pi_k])$.
-      \item<4-> $y = \beta_h^T x + \epsilon$.
+      \item<2-> Given x
+      \begin{itemize}
+        \item<2-> $h \sim \Mult([\pi_1, \pi_2, \cdots, \pi_k])$.
+        \item<3-> $y = \beta_h^T x + \epsilon$.
+      \end{itemize}
     \end{itemize}
   }{%
   }
@@ -406,10 +412,10 @@
   \begin{align*}
     y &= \innerpp{\robustaltm<1>{\beta_h}{\underbrace{\beta_h}_{\textmg{random}}}}
                 {x} + \epsilon \\
-    \uncover<4-6>{%
-    &= \robustaltm<4>{\innerp{\E[\beta_h]}{x}}
+    \uncover<3-5>{%
+    &= \robustaltm<3>{\innerp{\E[\beta_h]}{x}}
       {\mathmb{\ub{\innerp{\E[\beta_h]}{x}}_{\textrm{linear measurement}}}} 
-    + \robustaltm<4-5>{\innerp{(\beta_h - \E[\beta_h])}{x} + \epsilon}
+    + \robustaltm<3-4>{\innerp{(\beta_h - \E[\beta_h])}{x} + \epsilon}
     {\mathmr{\ub{\innerp{(\beta_h - \E[\beta_h])}{x} + \epsilon}_{\textrm{noise}}}} \\
     }
   \end{align*}
@@ -436,15 +442,15 @@
     &= 
     \color{blue}
       \robustaltm<3>{%
-            \innerp{\E[\beta_h\tp{2}]}{x\tp{2}}
+            \innerpp{\E[\beta_h\tp{2}]}{x\tp{2}}
         }{%
-          \ub{\innerp{\E[\beta_h\tp{2}]}{x\tp{2}}}_{M_2} 
+          \innerpp{\ub{\E[\beta_h\tp{2}]}_{M_2}}{x\tp{2}}
         }
         &&+ \color{DarkGreen} \textrm{bias} + \color{red} \textrm{noise} \\[4ex]
     }
     \action<5->{%
     y^3 \tikzmark{regC}
-    &= \color{blue} \ub{\innerp{\E[\beta_h\tp{3}]}{x\tp{3}}}_{M_3} &&+ \color{DarkGreen} \textrm{bias} + \color{red} \textrm{noise} 
+    &= \color{blue} \innerpp{\ub{\E[\beta_h\tp{3}]}_{M_3}}{x\tp{3}} &&+ \color{DarkGreen} \textrm{bias} + \color{red} \textrm{noise} 
     }
   \end{align*}
   }{%
@@ -510,10 +516,10 @@
   }
 
     \begin{align*}
-      \robustaltm<-2>{\hat M_2}{\mathmb{\hat M_3}} &= \arg\min_{M} \sum_{(x,y)\in\mathcal{D}} \left(y^2 - 
-      \robustaltm<-2>{\innerp{M}{x\tp{2}}}{\mathmb{\innerp{M}{x\tp{3}}}}
+      \robustaltm<-3>{\hat M_2}{\mathmb{\hat M_3}} &= \arg\min_{M} \sum_{(x,y)\in\mathcal{D}} \left(y^2 - 
+      \robustaltm<-3>{\innerp{M}{x\tp{2}}}{\mathmb{\innerp{M}{x\tp{3}}}}
       - \textrm{bias}\right)^2 
-      \uncover<2->{+
+      \uncover<3->{+
       \robustaltm<2>{\mathmb{\ub{\|M\|_{*}}_{\sum_i \sigma_i(M)}}}
         {\|M\|_{*}}
       } \\
@@ -521,9 +527,10 @@
 
   \begin{canvas}
     % x, y
-    \alt<-2>{%
+    \uncover<2-3>{
       \matrixfactorization{(-3cm,-2cm)}
-    }{%
+    }
+    \only<4>{
       \tensorfactorization{(-3cm,-2cm)}
     }
   \end{canvas}
@@ -538,7 +545,7 @@
 
   \begin{canvas}
     \input{spectral-experts.tikz}
-    \node[style=txt] at (reg-label) {{\color{blue}\bf low-rank} regression};
+    \node[style=txt] at (reg-label) {\robustalt<1>{\color{blue}\bf low-rank}{low-rank} regression};
     \node[style=txt] at (tf-label) {tensor factorization};
 
     % Error bounds
@@ -561,24 +568,24 @@
     \node[anchor=west] (em) at (-6.5cm,-0.0cm) {%
     \includegraphics<1>[width=\textwidth,height=5cm,keepaspectratio]{figures/1833.pdf}
       \includegraphics<2-3>[width=\textwidth,height=5cm,keepaspectratio]{figures/EM-1833.pdf}
-      \includegraphics<4-5>[width=\textwidth,height=5cm,keepaspectratio]{figures/Spectral-1833.pdf}
-      \includegraphics<6->[width=\textwidth,height=5cm,keepaspectratio]{figures/Spectral-Spectral+EM-1833.pdf}
+      \includegraphics<4>[width=\textwidth,height=5cm,keepaspectratio]{figures/Spectral-1833.pdf}
+      \includegraphics<5->[width=\textwidth,height=5cm,keepaspectratio]{figures/Spectral-Spectral+EM-1833.pdf}
       };
 
     \node<1-2>[anchor=west, right=1 cm of em.east] {%
         $y = \beta^T 
-            \begin{bmatrix} 
+            \ub{\begin{bmatrix} 
               1 \\
               t \\
               t^4 \\
               t^7
-            \end{bmatrix} + \epsilon$
+            \end{bmatrix}}_{x} + \epsilon$
       };
     % x, y
     \node[anchor=west, right=6.2cm of em] at (em.west) {%
-      \includegraphics<3-4>[width=\textwidth,height=5cm,keepaspectratio]{figures/EM-hist.pdf}
-      \includegraphics<5>[width=\textwidth,height=5cm,keepaspectratio]{figures/EM-Spectral-hist.pdf}
-      \includegraphics<6>[width=\textwidth,height=5cm,keepaspectratio]{figures/EM-Spectral-Spectral+EM-hist.pdf}
+      \includegraphics<3>[width=\textwidth,height=5cm,keepaspectratio]{figures/EM-hist.pdf}
+      \includegraphics<4>[width=\textwidth,height=5cm,keepaspectratio]{figures/EM-Spectral-hist.pdf}
+      \includegraphics<5>[width=\textwidth,height=5cm,keepaspectratio]{figures/EM-Spectral-Spectral+EM-hist.pdf}
     };
   \end{canvas}
 \end{frame}
