@@ -1,128 +1,168 @@
-% Spectral Experts
-% Arun Chaganty, Percy Liang
+% Talk Transcript
 
-\newcommand{\tp}[1]{^{\otimes #1}}
-\newcommand{\opX}{\mathfrak{X}}
-\newcommand{\cvec}{\textrm{cvec}}
+# Preamble (0:14 = 0:14) [0:15]
 
-# Introduction
+* Consistent parameter estimation for a simple discriminative model, the mixture of linear regressions.
 
-* Latent variable models (HMM, mixture models, CRFs, etc.) are extremely powerful models of data we've developed.
-* However, learning parameters in these models is typically hard because their likelihood functions are not convex in the parameters.
-* Most common approach is to use local methods like EM, variational techniques, etc.
-* Local optima are a serious concern when using these methods. 
-* Importantly, this is a problem that does not necessarily go away with more and more data!
-* Recently, there have been a number of _consistent estimators_ proposed based on the method of moments \todo{Include citations}.
-    + These are called "spectral methods" for how they utilize spectral decompositions to recover the parameters.
-* Our work extends this approach of learning parameters to the discriminative setting wherein the moments of the parameters are not directly observed.
-    + The crux of our approach will be to use regression to first learn these moments, followed by application of tensor decomposition to learn the parameters.
+# Generative vs. Discriminative Latent Variable Models (1:20 = 1:34) [1:00]
 
-# Background
+* Latent variable models are very powerful tools in machine learning. 
+* We can categorize these models into two broad classes; generative and discriminative. 
+* Generative models describe how observed variables, $x$, are generated conditioned on latent variables, $h$. 
+* Gaussian mixture models, hidden Markov models, and so on are examples of this class.
 
-## Mixture of Regressions
+* In contrast, in discriminative models describe how an output $y$ is generated from some input $x$, conditioned on the latent variables. 
+* Mixture of experts, latent CRFs, discriminative LDA are examples in this class.
+* Lot of prior work by in addressing consistent parameter estimation for the generative family, but not much work has been done in the discriminative setting. 
+* Important because discriminative models are amenable to including arbitrary features and tend to be more accurate.
+* Direction with this work.
 
-* The mixture of linear regressions model defines a conditional distribution over a response $y \in \Re$ given covariates $x \in \Re^d$.
-* The generative procedure is as follows,
-    i) Draw a mixture component $h \in [k] \sim Mult(\pi)$, where $\pi = [\pi_1 | ... | \pi_k]$ defines the mixture proportions.
-    ii) Draw the noise $\epsilon \sim \mathcal{E}$, where $\mathcal{E}$ is the noise distribution.
-    iii) Set $y = \beta_h^T x + \epsilon$, where $\{\beta_h\}_{h=1}^{k}$ are the conditional means of the regression coefficients.
-* The parameters that we would like to learn from this model are $\pi$ and $B = [ \beta_1 | ... | \beta_k ]$.
-* The challenge in our scenario is that the moments of the data give us very filtered information of the parameters.
+# Parameter estimation is hard (1:34 = 3:06) [1:20]
 
-## Method of Moments
+* Parameter estimation is in general hard because the latent variables introduce a non-convexity in the (negative) likelihood function. 
+* MLE is a consistent estimator; 
+  + true parameters, $\theta^*$ in the limit of infinite data. 
+  + Usually intractable.
+* In practice, we often use a local estimator, like EM or a gradient based method. 
+  + computationally tractable, but sensitive on initialization. 
+  + We can get stuck in local optima, like the $\hat \theta$; such local optima often occur in practice. 
+* Question we ask:
+  + Can we build a efficient and consistent estimator? One that will have a polynomial computational and sample complexity.
+  + Our approach is to use the method of moments.
 
-* Let us study how method of moment estimators work in general.
-* Consider a moment map $\mathcal{M}$ that maps the parameters $\theta$ to the moments $m$. For a Gaussian, we have that $\mathcal{M} = (\mu, \sigma^2)$.
-* In general, we will compute the inverse of the moment map to learn the parameters from the sample estimates.
-* By the central limit theorem, our sample estimates of the moments converge at a $1/\sqrt{n}$ rate, so we expect that our parameters will also converge at this rate.
+# Method of Moments / Related Work (0:54 = 4:10) [0:45]
 
+* Method of moments is an old technique, starting with Pearson in 1894.
+* One line of work focusses on recovering observable operators that are useful at prediction, but do not give us parameters. 
+  + This work found initial applications in control theory, but recently, there have been several applications in machine learning for example, the hidden Markov model by Hsu, Kakade and Zhang in 2009.
+* We build on another line of work focussed on parameter estimation. 
+  + In particular, we are influenced by the treatment of gaussian mixture models, by Anandkumar, Hsu and Kakade in 2012.
+    
+* Going ahead, 
+  + review tensor factorization by Anandkumar et al., 2012 
+  + apply this idea to our discriminative setting.
 
-# Algorithm
+# Aside: Tensor Operations (0:54 = 5:06) [0:30]
 
-## Recovering the moments
+* First, I'd like to review some basic tensor operations. 
+  + $x\tp{3}$ is $x$ outer product x outer product x, call $x$ cubed.
+  + Tensor whose $(i,j,k)$-th component is $x_i x_j x_k$.
+* Next, I'll use the angular brackets for a generalized inner product.
+  + Element-wise product and sum.
+  + Think of it as vectorize the tensors and taking a dot product.
 
-* As noted earlier, the first problem we run into is that we can't observe the moments of the parameters $B$ and $\pi$ directly!
-* However, observe that 
-\begin{align}
-  y &= \innerp{\beta_h}{x} + \epsilon \\
-    &= \innerp{M_1}{x} + \underbrace{ {\beta_h - M_1}{x} + \epsilon }_{\textrm{noise}},
-\end{align}
-  where $M_1 = \sum_{h=1}^k \pi_h \beta_h$, the mean regression coefficent. We note that while the noise term is dependent on $x$, it has a zero-mean. Thus, we could potentially recover $M_1$ through regression.
-* However, the first moments are insufficient to learn this model.
-* Let's look at the second and third moments of the data, 
-\begin{align*}
-  y^2 &= (\innerp{\beta_h}{x} + \epsilon)^2 \\
-    &= \innerp{M_2}{x\tp{2}} + \E[\epsilon^2] +
-     \underbrace{ \innerp{\beta_h\tp{2} - M_2}{x\tp{2}} + \innerp{\beta_h\tp{1} - M_1}{x\tp{1}} + (\epsilon^2 - \E[\epsilon^2]) }_{\textrm{noise}}, \\
-  y^3 &= (\innerp{\beta_h}{x} + \epsilon)^3 \\
-    &= \innerp{M_3}{x\tp{3}} + 3\E[\epsilon^2] \innerp{M_1}{x}  + \E[\epsilon^3] + {\textrm{noise}},
-\end{align*}
-* On it's own, $M_2$ is insufficient to identify the model, because it is invariant to rotations of $B$. 
-* However, it turns out that $M_2$ and $M_3$ are sufficient to identify the model, via tensor decomposition, if $k < d$.
-* An additional fact that we can exploit is that both $M_2$ and $M_3$ are low rank, so we can use low-rank regression to recover estimates $\hat M_2$ and $\hat M_3$ efficiently from data.
+# Example: Gaussian Mixture Model (2:44 = 7:50) [2:00]
 
-### Caveat: Requirements for Identifiability
+* Generative process for the GMM
+* $h$, which chooses the mixture component. 
+* For a $h$, we choose a mean $\beta_h$ and draw a Gaussian centered around $\beta_h$.
 
-* In ordinary linear regression, the regression coefficients $\beta \in
-\Re^d$ are identifiable if and only if the data has full rank:
-$\E[x\tp{2}] \succ 0$.
-* However, because we need regression on higher moments to recover $M_2$ and $M_3$, we also need that 
-$\E[\cvec(x\tp{p})\tp{2}] \succ 0$ for $p \in \{1,2,3\}$.
-* This has some subtle implications when the features are completely independent of each other.
-* For example, if $x = (1, t, t^2)$, then $\E[\cvec(x\tp{2})\tp{2}]$ is singular for any data distribution.
+* Conditional means are $\beta_h$, but we don't observe $h$.
+* Weighted sum of mean, but insufficient.
+* Weighted sum of each mean squared; not identifiable to orthogonal transformations.
+* Weighted sum of each mean cubed.
 
-## Recovering the parameters
+* Key idea presented in Anandkumar 2012 is that cubed are factorized and if orthogonal, they are eigenvectors.
+* In general, we can whiten the tensor using the second moments.
 
-* Now that we've the moments, let us review how the tensor decomposition technique can be used to learn the parameters.
-* The method exploits the fact that $M_2$ and $M_3$ share a basis, 
-  \begin{align*}
-    M_2 &= \sum_{h=1}^k \pi_h \beta_h\tp{2} \\
-    M_3 &= \sum_{h=1}^k \pi_h \beta_h\tp{3}.
-  \end{align*}
-* Decompositions are not unique however, but we can use the whitening transformation for $M_2$ to give _whiten_ $M_3$ such that it has a orthogonal decomposition.
-  \begin{align*}
-    I &= W^T M_2 W  \\
-      &= \sum_{h=1}^k (\underbrace{\sqrt{\pi_h} W^T \beta_h}_{v_h})\tp{2} \\
-    M_3(W,W,W) &= \sum_{h=1}^k \pi_h (W^T \beta_h)\tp{3} \\
-               &= \sum_{h=1}^k \frac{1}{\sqrt{\pi_h}} v_h\tp{3}.
-  \end{align*}
-* The robust tensor power method by \cite{AnandkumarHsuGe2012} find stable eigenvectors using the following iterative algorithm,
-$v_h \to \frac{T(I, v_h, v_h)}{||T(I, v_h, v_h)||_2}.$
+# Interlude: Discriminative vs. Generative (0:25 = 8:15) [0:20]
 
-# Theorem: Rates of Recovery
+* In the beginning, I talked about two classes of LVMS.
+* We looked at how the tensor factorization could be exploited in a generative model.
+* We are going to extend this to discriminative, with MLR.
 
-* The rate of convergence for the spectral experts algorithm to the
-true parameters breaks into two parts; the rates for learning the
-moments, which feeds into the rates for learning the parameters.
-* \todo{Diagram showing how the error breaks down.}
-* For low rank regression, we have the following bound on recovery by (Tomioka2011);
-  $$ || \hat M_p - M_p ||_F \le \frac{32 \lambda^{(p)}_n \sqrt{k}}{\kappa(\opX_p)}, $$
-where $\kappa(\opX_p)$ is the (restricted) strong convexity constant, and $\lambda^{(p)} > ||\opX^*_p(\eta)||$. 
-* Because we assume our noise is bounded, it is easy to show that the error concentrates. 
-* In the tensor recovery case, we will need to whiten $M_3$ before
-applying the tensor decomposition and unwhiten it afterwards; this
-modifies the error bounds slightly.
+# Mixture of Linear of Regressions (1:00 = 9:15) [1:00]
 
-# Spectral Experts in Practice
+* Let's look at the model. Data generated from lines.
+* Pick a line, pick a point.
+* In the data we're given, we don't observe lines.
 
-* We simulated the performance of spectral experts and compared it to EM. 
-    + We generated data from the mixtures of linear regressions model, with $x$ drawn uniformly in $[-1,1]^d$.
-* In a non-trivial number of cases, EM did not converge to the right parameters and got stuck in local optima.
-* As a specific instance, we studied this example, \todo{Include diagram}.
-    + Only 13 of a 100 attempts with EM successfully identified the true parameters.
-    + On the other hand, even with $O(10^5)$ samples, the parameters by the spectral method weren't great.
-    + However, EM when initialized with these parameters did extremely well. 
-* This finding that spectral methods should be a good initialization for EM is not surprising.
-    + The biggest sell for spectral methods is that they give a global guarantee on where the parameters are.
-    + The parameters might not be at the global optima, but will hopefully lie in the potential well around it.
-    + EM will then converge to the global optima.
-    + \todo{Include diagram.}
-* \todo{Summarize Other experiments.}
-    + Be frank, this isn't going to replace EM on it's own, but perhaps it highlights a principled approach to initializing EM.
++ Our objective: given data, can we recover parameters.
 
-# Conclusions
+# Finding Tensor (2:35 = 11:50) [2:30-3:00]
 
-* We can learn the parameters of conditional models where the observed moments on their own have such sparse information.
-* The key intuition is that we could construct a regression problem to learn the moments of the parameters from their projections onto the data.
-* We found that while the parameters learned this way are usually not better than those learned via local methods like EM, etc., they are a good way to initialize these local methods.
+* We are going to exploit the tensor factorization, but first we need to extract this tensor from our data.
+* Let's start with the equation for $y$.
+* Observation noise.
+* $\beta_h$ is random.
+* Linear measurement, noise.
+  + Noise = mixing noise plus observation noise. 
+  + Mixing noise depends on $x$.
+* Can we extend to higher powers of $\beta$ and recover $\beta^3$?
+
+* Let's look at $y^2$.
+  + Inner product between $\beta\tp{2}$ and $x\tp{2}$.
+  + known bias
+  + Call this $M_2$.
+* Next, $y^3$.
+
+* Now we have tensor $M_3$, we note that it has the same factorization structure.
+* We can apply the tensor factorization algo.
+
+# Algorithm overview (1:15 = 13:05) [1:30]
+
+* We have all the pieces to recover parameters.
+  + Start with regression on powers of the data
+  + Then do tensor factorization.
+
+{Talk about the details: assumptions}
+
+For regression to work, we need the assumption that $\E[\beta_h\tp{p}]$ has rank at least $k$, and for the tensor factorization step, we need that $k < d$ and that $B$ is full rank.
+
+# Low rank
+
+* Doing regression on these higher powers, we're doing regression with $d^2$ and $d^3$ dimensions, 
+* underlying dimensionality is just $kd$. 
+* Exploit using nuclear norm regularization.
+* Extended to tensors.
+
+# Sample Complexity
+
+* Both have polynomial computational complexity.
+* Explain $x^12$
+
+# Experimental insights (2:45 = 16:50) [2:30]
+
+* Some insights we derived from simulated experiments.
+* Consider this featurized 2-d example (y vs t).
+* parameters $k=3, d=4, n=10^5$.
+* Ran EM - stuck in local optima. 
+* Over 200 initializations; parameter error. Wide spread; about $13\%$ get stuck in local optima.
+* Spectral, it recovered parameters that aren't exact, but still separate components.
+* EM initialized with spectral.
+
+* We observed similar performance on simulated examples for several different $d$ and $k$.
+* These graphs plot parameter error averaged over 10 different examples with the particular $d$ and $k$, and over 10 different initializations each. 
+
+# On Initialization
+
+* Fit intuition painted early on.
+* EM can get stuck in a local optima but fit the data well.
+* Spectral, all we can say is we're in some interval epsilon; could not fit exactly.
+* EM from there will fit well.
+
+# Conclusions (0:45 = 17:35) [0:45]
+
+* In conclusion, I've presented a consistent estimator for the mixture of linear regressions.
+* The key idea was to expose the tensor structure through regression.
+* We showed that it indeed has polynomial sample and computational complexity.
+* Empirically, we found good initialization.
+* Going forward, we'd like to see how we could handle other disc. models.
+* In particular, how can we handle dependencies between $x$ and $h$? Allows us to model MoE.
+* Another direction we think is important is handling dependencies non-linear link functions like in logistic regression.
+
+# Thank you.
+
+# Question: Isn't it better to run EM with many random initializations then use your method?
+
+We found that the number of initializations that led to the true parameters were fairly small even on our toy data; it's unclear how many initializations you would need to reasonable find good parameters for larger settings. The spectral method is pretty efficient and in our experiments, took on the same order of time as running full EM, so I don't think there is a downside to using the method, provided you have enough sufficient data.
+
+# Question: In principle your method is supposed to converge. Does it?
+
+The convergence results we present only hold when we have sufficient samples for some conditions to hold; these conditions depend on the condition number of the powers of $\beta$. On experiments without any featurization, the condition numbers were usually quite reasonable and we observed convergence. On the polynomial featurizations we experimented with, we found the condition numbers to be much worse and it appeared we required more data than we could run our code for to observe convergence.
+
+# Question: Isn't it of concern that your method doesn't scale well for very large $d$? 
+
+The primary regime for the method is when $k << d$ but making this method work better with larger $d$ is an important next step.
+
 
