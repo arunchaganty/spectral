@@ -50,7 +50,7 @@ def makePlot( data, trueBetas, specBetas, spemBetas, em0Betas, emBetas, outFile 
 
     plt.rc("font",size=20)
 
-    for setting in [ [], ["EM"],["Spectral"],["Spectral","Spectral+EM"]]:
+    for setting in [ [], ["EM"],["Spectral"],["Spectral+EM"],["Spectral","Spectral+EM"]]:
         fig = plt.figure()
         ax = plt.axes(xlim=(-1, 1), ylim=(-3, 5))
         ax.set_xlabel("t")
@@ -60,7 +60,7 @@ def makePlot( data, trueBetas, specBetas, spemBetas, em0Betas, emBetas, outFile 
         if( len(setting) == 0 ):
             ax.scatter( data[0], data[1], alpha = 0.4 )
         else:
-            ax.scatter( data[0], data[1], alpha = 0.1 )
+            ax.scatter( data[0], data[1], alpha = 0.4 )
 
         if "True" in setting:
             # Now draw each line
@@ -70,10 +70,10 @@ def makePlot( data, trueBetas, specBetas, spemBetas, em0Betas, emBetas, outFile 
         plottables = []
         # Spectral is dashed
         if( "Spectral" in setting ):
-            lines = plotLines( ax, specBetas, "--" )
+            lines = plotLines( ax, specBetas, "-", colors=['g']*3 )
             plottables.append( lines[0] )
         if( "Spectral+EM" in setting ):
-            lines = plotLines( ax, spemBetas, "-" )
+            lines = plotLines( ax, spemBetas, "-", colors=['b']*3 )
             plottables.append( lines[0] )
 
         # EM is dash-dot
@@ -81,23 +81,24 @@ def makePlot( data, trueBetas, specBetas, spemBetas, em0Betas, emBetas, outFile 
             plotLines( ax, em0Betas, ":" )
         if( "EM" in setting ):
             for emBeta in (emBetas[0],):
-                lines = plotLines( ax, emBeta, ":" )
+                lines = plotLines( ax, emBeta, "-", colors=['r']*3 )
             plottables.append( lines[0] )
 
         #for plot in plottables:
         #    plot.set_color( "black" )
 
         if( len(plottables) > 0):
-            legend = plt.legend( plottables, setting )
+            legend = plt.legend( plottables[::-1], setting[::-1] )
         #legend = plt.legend( plottables, ["Spectral", "Spectral + EM", "EM"] )
         #legend = plt.legend( plottables, ["EM"] )
         #legend = plt.legend( plottables, ["Spectral"] )
         #legend = plt.legend( plottables, ["Spectral", "Spectral + EM"] )
 
+
         prefix = "-".join(setting + [outFile])
 
         plt.savefig( prefix, transparent=True )
-        #plt.show()
+        plt.show()
 
 
 def getBeta( specifier ):

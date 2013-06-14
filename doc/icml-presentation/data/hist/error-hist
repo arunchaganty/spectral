@@ -64,9 +64,15 @@ def plot_hist( values, bins = 10, out = None ):
             p(2)
 
         formatter = FuncFormatter(to_percent)
-        plt.gca().yaxis.set_major_formatter(formatter)
+        ax = plt.gca()
+        ax.yaxis.set_major_formatter(formatter)
 
-        plt.legend()
+        handles, labels = ax.get_legend_handles_labels()
+        # reverse the order
+        ax.legend(handles[::-1], labels[::-1])
+
+        #plt.legend()
+
         plt.savefig( "-".join(setting + ("hist.pdf",)), transparent=True)
         plt.show()
 
