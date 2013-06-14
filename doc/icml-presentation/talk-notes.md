@@ -2,20 +2,22 @@
 
 # Preamble (0:14 = 0:14) [0:15]
 
-* Consistent parameter estimation for a simple discriminative model, the mixture of linear regressions.
+Hi, I'm going to present our work on consistent parameter estimation for a simple discriminative latent variable model, the mixture of linear regressions.
 
 # Generative vs. Discriminative Latent Variable Models (1:20 = 1:34) [1:00]
+
+Latent variable models are very powerful tools in machine learning. They can be placed in two broad classes; generative and discriminative. Generative models describe how observed variables $x$ are generated conditioned on latent variables, $h$.
 
 * Latent variable models are very powerful tools in machine learning. 
 * We can categorize these models into two broad classes; generative and discriminative. 
 * Generative models describe how observed variables, $x$, are generated conditioned on latent variables, $h$. 
 * Gaussian mixture models, hidden Markov models, and so on are examples of this class.
 
-* In contrast, in discriminative models describe how an output $y$ is generated from some input $x$, conditioned on the latent variables. 
+* In contrast, in discriminative models describe how an output $y$ is generated from some input $x$, conditioned on the latent variables, $h$. 
 * Mixture of experts, latent CRFs, discriminative LDA are examples in this class.
-* Lot of prior work by in addressing consistent parameter estimation for the generative family, but not much work has been done in the discriminative setting. 
 * Important because discriminative models are amenable to including arbitrary features and tend to be more accurate.
-* Direction with this work.
+* Lot of prior work by in addressing consistent parameter estimation for the generative family, but not much so in the discriminative setting. 
+* That is the underlying direction with this work.
 
 # Parameter estimation is hard (1:34 = 3:06) [1:20]
 
@@ -33,7 +35,7 @@
 # Method of Moments / Related Work (0:54 = 4:10) [0:45]
 
 * Method of moments is an old technique, starting with Pearson in 1894.
-* One line of work focusses on recovering observable operators that are useful at prediction, but do not give us parameters. 
+* One line of work focusses on recovering a representation, observable operators that are useful at prediction, but do not give us parameters. 
   + This work found initial applications in control theory, but recently, there have been several applications in machine learning for example, the hidden Markov model by Hsu, Kakade and Zhang in 2009.
 * We build on another line of work focussed on parameter estimation. 
   + In particular, we are influenced by the treatment of gaussian mixture models, by Anandkumar, Hsu and Kakade in 2012.
