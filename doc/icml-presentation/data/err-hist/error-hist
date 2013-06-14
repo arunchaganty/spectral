@@ -48,8 +48,8 @@ def plot_hist( values, out = None ):
             plt.bar( po, v, yerr=e, label=label, hatch=hatch, color=color, alpha=0.9 )
         plt.xticks( pos + 0.25, labels )
 
-        ax = plt.gca()
-        ax.invert_yaxis()
+        #ax = plt.gca()
+        #ax.invert_yaxis()
 
         #plt.legend()
         plt.savefig( "err-hist-%d.pdf"%i, transparent=True )

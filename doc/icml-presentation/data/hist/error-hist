@@ -23,6 +23,20 @@ def read_from_files(files):
 
 def plot_hist( values, bins = 10, out = None ):
     import matplotlib.pyplot as plt
+    from matplotlib.ticker import FuncFormatter
+
+    import matplotlib
+
+    def to_percent(y, position):
+        # Ignore the passed in position. This has the effect of scaling the default
+        # tick locations.
+        s = str(100 * y)
+
+        # The percent symbol needs escaping in latex
+        if matplotlib.rcParams['text.usetex'] == True:
+            return s + r'$\%$'
+        else:
+            return s + '%'
 
     bins = np.linspace( 0, max( [ vs.max() for vs in values ] ), bins )
 
@@ -33,31 +47,28 @@ def plot_hist( values, bins = 10, out = None ):
         plt.clf()
         plt.grid()
         plt.xlabel("Parameter Error")
-        plt.ylim((0,200))
+        plt.ylim((0,1))
 
         colors = ["blue", "green", "red"]
         labels = ["Spectral+EM", "Spectral", "EM"]
         hatches = ["*", ".", "/"]
 
-        if "Spectral+EM" in setting :
-            plt.hist( values[0], bins=bins, label=labels[0], hatch=hatches[0], color=colors[0], alpha=0.9 )
-        if "Spectral" in setting :
-            plt.hist( values[1], bins=bins, label=labels[1], hatch=hatches[1], color=colors[1], alpha=0.9 )
-        if "EM" in setting :
-            plt.hist( values[2], bins=bins, label=labels[2], hatch=hatches[2], color=colors[2], alpha=0.9 )
+        def p(i):
+            plt.hist( values[i], bins=bins, label=labels[i], hatch=hatches[i], color=colors[i], alpha=0.9, weights=np.zeros_like(values[i]) + 1. / values[i].size)
 
-        ##for (label, vs, hatch, color) in zip(labels[2:], values[2:], hatches[2:], colors[2:]):
-        ##for (label, vs, hatch, color) in zip(labels[1:], values[1:], hatches[1:], colors[1:]):
-        #for (label, vs, hatch, color) in zip(labels[:], values[:], hatches[:], colors[:]):
-        #    plt.hist( vs, bins=bins, label=label, hatch=hatch, color=color, alpha=0.9 )
+        if "Spectral+EM" in setting :
+            p(0)
+        if "Spectral" in setting :
+            p(1)
+        if "EM" in setting :
+            p(2)
+
+        formatter = FuncFormatter(to_percent)
+        plt.gca().yaxis.set_major_formatter(formatter)
+
         plt.legend()
         plt.savefig( "-".join(setting + ("hist.pdf",)), transparent=True)
         plt.show()
-        #plt.savefig( "hist-em.pdf" )
-        #plt.savefig( "hist-spec.pdf" )
-        #plt.savefig( "hist-spem.pdf" )
-        #plt.show()
-    #plt.savefig( "hist.pdf" )
 
 def main(*args):
     if len(args) == 0 or args[0] == "-h":
