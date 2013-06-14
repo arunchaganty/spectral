@@ -63,7 +63,7 @@
 \tikzstyle{loop}=[smooth,dashed,in=-90,out=-90,looseness=0.75]
 
 \tikzstyle{node}=[circle,minimum size=2em,fill=white,draw=black]
-\tikzstyle{obsnode}=[circle,minimum size=2em,fill=green!70,draw=black]
+\tikzstyle{obsnode}=[circle,minimum size=2em,fill=gray!70,draw=black]
 
 \newcommand{\point}[2]{%
   \begin{pgfonlayer}{debug}
@@ -185,7 +185,7 @@
 
 \newcommand<>{\cornertext}[1]{%
   \uncover#2{%
-  \tikz[scale=0.7,overlay, remember picture] \node[style=txt] at (current page.north east) [left,xshift=-1em,yshift=-0.15\textheight] {\objw{6cm}{%
+  \tikz[scale=0.4,overlay, remember picture] \node[style=txt] at (current page.north east) [left,xshift=-1em,yshift=-0.15\textheight] {\objw{6cm}{%
   \begin{flushright}
     #1
   \end{flushright}

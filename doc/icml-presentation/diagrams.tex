@@ -4,7 +4,7 @@
     \point{start-gen}{#1}
     \node[style=node] (h) at (start-gen) {};
     \node[left=0.1cm of h] {$h$};
-    \node[style=node,fill=green!70,below=1cm of h] (x) {};
+    \node[style=obsnode,below=1cm of h] (x) {};
     \node[left=0.1cm of x] {$x$};
     \draw[-latex] (h) -- (x);
   }
@@ -167,6 +167,47 @@
     \innerpdiagt{(start-reg-c-A)}{(start-reg-c-B)};
 }
 
+\newcommand{\spectralexpertsdiag}{
+  % x, y
+  % Nodes
+  %\node[style=txt,anchor=south west] (data1) at (1cm,1cm) {$\left\{ x, y \right\}_{(x,y) \in \sD}$};
+  \node[style=txt] (data2) at (-4cm,1cm) {$\left\{ x\tp{2}, y^2 \right\}_{(x,y) \in \sD}$};
+  \node[style=txt,below=1cm of data2.center] (data3) {$\left\{ x\tp{3}, y^3 \right\}_{(x,y) \in \sD}$};
+
+  %\node[style=txt,anchor=south west] (m1) at (2cm,1cm) {$\E\left[\beta_h\right]$};
+  \node[style=txt] (m2) at (1cm,1cm) {$M_2$}; %{$\E\left[\beta_h\tp{2}\right]$};
+  \node[style=txt,below=1cm of m2.center] (m3) {$M_3$}; %{$\E\left[\beta_h\tp{3}\right]$};
+
+  \node[below=0.5cm of m2.center] (params-pos) {};
+  \node[style=txt,right=3.0cm of params-pos] (params) {$\pi, B$};
+
+  % Arrows
+  %\draw[-latex] (data1) -- (m1);
+  \draw[-latex] (data2) -- (m2);
+  \draw[-latex] (data3) -- (m3);
+
+  % Bias influence
+  %\draw[-latex,dashed,gray] (m1.east) -- ++(0.1cm,0) -- ++(0,-0.50cm) -- ++(-3.00cm,0) node (bias-1) {} -- ( bias-1 |- m3) -- (m3.west);
+
+  % Mean
+  \draw[-latex] (m2.east) -- ++(0.1cm,0) node (tf-1) {} -- (tf-1 |- params-pos) -- node[above,scale=0.5] {tensor factorization} (params);
+  \draw[-latex] (m3.east) -- ++(0.1cm,0) node (tf-2) {} -- (tf-2 |- params-pos) -- (params);
+
+  % Box for regression
+  \begin{pgfonlayer}{background}
+  %\draw[fill=blue,opacity=0.1,dashed] ($(data1.north east) + (-0.1cm,0.1cm)$) rectangle ($(m3.south west) + (0.1cm,-0.1cm)$);
+  \draw[fill=blue,opacity=0.1,dashed] ($(data2.north east) + (-0.1cm,0.1cm)$) rectangle ($(m3.south west) + (0.1cm,-0.1cm)$);
+  \end{pgfonlayer}
+
+  % tensor factorization
+  \begin{pgfonlayer}{background}
+  \draw[fill=green,opacity=0.1,dashed] ($(m2.north east) + (-0.1cm,0.1cm)$) rectangle ($(params.south west) + (0.1cm,-1.0cm)$);
+  \end{pgfonlayer}
+  \node (params-mid) at ($(params-pos) !.5! (params)$) {};
+  \point{reg-label}{($(data3.east) !.5! (m3.west) + (0, -1.0cm)$)};
+  \point{tf-label}{(params-mid |- reg-label)};
+}
+
 
 \newcommand{\mkmlrplot}[1]{%
 \begin{tikzpicture}
@@ -182,7 +223,6 @@
 \end{axis}
 \end{tikzpicture}
 }
-
 
 \newcommand{\mlrfull}{%
   \only<1>{%

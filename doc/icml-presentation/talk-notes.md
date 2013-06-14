@@ -54,12 +54,14 @@
 # Example: Gaussian Mixture Model (2:44 = 7:50) [2:00]
 
 * Generative process for the GMM
+* There are $K$ clusters.
 * $h$, which chooses the mixture component. 
 * For a $h$, we choose a mean $\beta_h$ and draw a Gaussian centered around $\beta_h$.
+* Goal is to recover $\pi$, $B$.
 
-* Conditional means are $\beta_h$, but we don't observe $h$.
+* Cluster centers (not cond. means) are $\beta_h$, but we don't observe $h$.
 * Weighted sum of mean, but insufficient.
-* Weighted sum of each mean squared; not identifiable to orthogonal transformations.
+* Weighted sum of each mean squared; not identifiable (no details).
 * Weighted sum of each mean cubed.
 
 * Key idea presented in Anandkumar 2012 is that cubed are factorized and if orthogonal, they are eigenvectors.
@@ -82,7 +84,7 @@
 # Finding Tensor (2:35 = 11:50) [2:30-3:00]
 
 * We are going to exploit the tensor factorization, but first we need to extract this tensor from our data.
-* Let's start with the equation for $y$.
+* Let's _mediate_ on the equation for $y$.
 * Observation noise.
 * $\beta_h$ is random.
 * Linear measurement, noise.
@@ -124,13 +126,13 @@ For regression to work, we need the assumption that $\E[\beta_h\tp{p}]$ has rank
 # Experimental insights (2:45 = 16:50) [2:30]
 
 * Some insights we derived from simulated experiments.
-* Consider this featurized 2-d example (y vs t).
+* Consider this example; inputs are a polynomial terms of $t$.
 * parameters $k=3, d=4, n=10^5$.
-* Ran EM - stuck in local optima. 
-* Over 200 initializations; parameter error. Wide spread; about $13\%$ get stuck in local optima.
-* Spectral, it recovered parameters that aren't exact, but still separate components.
+* Ran EM - stuck in local optima. Explain how.
+* Over 200 initializations; parameter error. 
+* Spectral, it did better than most EM, but not the best. "Doesn't hug the data, but right ball park."
 * EM initialized with spectral.
-
+* IMPORTANT: don't say that we don't recover the true parameters - be explicit about recovering in the limit.
 * We observed similar performance on simulated examples for several different $d$ and $k$.
 * These graphs plot parameter error averaged over 10 different examples with the particular $d$ and $k$, and over 10 different initializations each. 
 
