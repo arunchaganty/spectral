@@ -168,11 +168,9 @@
 }
 
 
-\newcommand{\mkmlrplot}[3]{%
+\newcommand{\mkmlrplot}[1]{%
 \begin{tikzpicture}
 \begin{axis}[ 
-    xshift=#1, 
-    yshift=#2, 
     height=5cm, width=5cm, 
     axis lines*=left, 
     xlabel=$x$, ylabel=$y$, 
@@ -180,29 +178,29 @@
     mark options={scale=0.3,line width=0},
     xmin=-1.2, xmax=1.2,
     ]
-  #3
+  #1
 \end{axis}
 \end{tikzpicture}
 }
 
 
-\newcommand{\mlrfull}[2]{%
+\newcommand{\mlrfull}{%
   \only<1>{%
-    \mkmlrplot{#1}{#2}{%
-       \addplot+[blue, line width=2pt, mark=none] {0.316 + -0.862*x};
-       \addplot+[green,line width=2pt, mark=none] {-0.715 + -0.268*x};
-       \addplot+[red,  line width=2pt, mark=none] {-1.076 + 0.595*x};
+    \mkmlrplot{%
+       \addplot+[blue,           , mark=none] {0.316 + -0.862*x};
+       \addplot+[green,          , mark=none] {-0.715 + -0.268*x};
+       \addplot+[red,            , mark=none] {-1.076 + 0.595*x};
      }
   }
   \only<2>{%
-    \mkmlrplot{#1}{#2}{%
+    \mkmlrplot{%
        \addplot+[blue,                 mark=none] {0.316 + -0.862*x};
        \addplot+[green,                mark=none] {-0.715 + -0.268*x};
        \addplot+[red,  line width=2pt, mark=none] {-1.076 + 0.595*x};
      }
   }
   \only<3>{%
-    \mkmlrplot{#1}{#2}{%
+    \mkmlrplot{%
        \addplot+[blue,                 mark=none] {0.316 + -0.862*x};
        \addplot+[green,                mark=none] {-0.715 + -0.268*x};
        \addplot+[red,  line width=2pt, mark=none] {-1.076 + 0.595*x};
@@ -210,7 +208,7 @@
      }
   }
   \only<4>{%
-    \mkmlrplot{#1}{#2}{%
+    \mkmlrplot{%
        \addplot+[blue, line width=2pt, mark=none] {0.316 + -0.862*x};
        \addplot+[green,                mark=none] {-0.715 + -0.268*x};
        \addplot+[red,                  mark=none] {-1.076 + 0.595*x};
@@ -218,7 +216,7 @@
      }
   }
   \only<5>{%
-    \mkmlrplot{#1}{#2}{%
+    \mkmlrplot{%
        \addplot+[blue, line width=2pt, mark=none] {0.316 + -0.862*x};
        \addplot+[green,                mark=none] {-0.715 + -0.268*x};
        \addplot+[red,                  mark=none] {-1.076 + 0.595*x};
@@ -226,7 +224,7 @@
      }
   }
   \only<6>{%
-    \mkmlrplot{#1}{#2}{%
+    \mkmlrplot{%
        \addplot[smooth, black, only marks] table {data/mlr.table};
        \addplot+[blue, line width=2pt, mark=none] {0.316 + -0.862*x};
        \addplot+[green,line width=2pt, mark=none] {-0.715 + -0.268*x};
@@ -234,15 +232,9 @@
      }
   }
   \only<7>{%
-    \mkmlrplot{#1}{#2}{%
+    \mkmlrplot{%
        \addplot[smooth, black, only marks] table {data/mlr.table};
      }
   }
-}
-
-\newcommand{\mlrdata}[2]{%
-    \mkmlrplot{#1}{#2}{%
-     \addplot[smooth, black, only marks] table {data/mlr.table};
-   }
 }
 
