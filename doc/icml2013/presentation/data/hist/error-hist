@@ -1,0 +1,97 @@
+#!/usr/bin/env python
+# vim:ft=python
+
+# Average over files specified in argument
+# Assumes first 'n' (default=1) columns are keys
+
+import sys
+import numpy as np
+
+def read_from_files(files):
+    # Store for the files
+
+    values = []
+    for f in files:
+        if f == "-":
+            f = sys.stdin
+        else:
+            f = open( f )
+        for line in f.xreadlines():
+            values.append( np.array( map( float, line.split() ) ) )
+
+    return np.array( values )
+
+def plot_hist( values, bins = 10, out = None ):
+    import matplotlib.pyplot as plt
+    from matplotlib.ticker import FuncFormatter
+
+    import matplotlib
+
+    def to_percent(y, position):
+        # Ignore the passed in position. This has the effect of scaling the default
+        # tick locations.
+        s = str(100 * y)
+
+        # The percent symbol needs escaping in latex
+        if matplotlib.rcParams['text.usetex'] == True:
+            return s + r'$\%$'
+        else:
+            return s + '%'
+
+    bins = np.linspace( 0, max( [ vs.max() for vs in values ] ), bins )
+
+    plt.rc("font",size=20)
+
+    for setting in [("EM",), ("EM","Spectral"), ("EM", "Spectral","Spectral+EM") ]:
+        print setting
+        plt.clf()
+        plt.grid()
+        plt.xlabel("Parameter Error")
+        plt.ylim((0,1))
+
+        colors = ["blue", "green", "red"]
+        labels = ["Spectral+EM", "Spectral", "EM"]
+        hatches = ["*", ".", "/"]
+
+        def p(i):
+            plt.hist( values[i], bins=bins, label=labels[i], hatch=hatches[i], color=colors[i], alpha=0.9, weights=np.zeros_like(values[i]) + 1. / values[i].size)
+
+        if "Spectral+EM" in setting :
+            p(0)
+        if "Spectral" in setting :
+            p(1)
+        if "EM" in setting :
+            p(2)
+
+        formatter = FuncFormatter(to_percent)
+        ax = plt.gca()
+        ax.yaxis.set_major_formatter(formatter)
+
+        handles, labels = ax.get_legend_handles_labels()
+        # reverse the order
+        ax.legend(handles[::-1], labels[::-1])
+
+        #plt.legend()
+
+        plt.savefig( "-".join(setting + ("hist.pdf",)), transparent=True)
+        plt.show()
+
+def main(*args):
+    if len(args) == 0 or args[0] == "-h":
+        print "Usage avrg [-h] [-bins x] <list-of-files>" 
+        sys.exit(1)
+
+    if args[0] == "-bins" or args[0] == "-b" :
+        bins = int( args[1] )
+        files = args[2:]
+    else:
+        bins = 10
+        files = args
+
+    values = [ read_from_files( [f] ) for f in files ]
+    plot_hist( values, bins )
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])
+
