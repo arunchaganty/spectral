@@ -50,7 +50,7 @@ def makePlot( data, trueBetas, specBetas, spemBetas, em0Betas, emBetas, outFile 
 
     plt.rc("font",size=20)
 
-    for setting in [ [], ["EM"],["Spectral"],["Spectral+EM"],["Spectral","Spectral+EM"]]:
+    for setting in [ [], ["EM"],["Spectral","Spectral+EM"]]: # ["Spectral"],["Spectral+EM"],
         fig = plt.figure()
         ax = plt.axes(xlim=(-1, 1), ylim=(-3, 5))
         ax.set_xlabel("t")
@@ -60,7 +60,7 @@ def makePlot( data, trueBetas, specBetas, spemBetas, em0Betas, emBetas, outFile 
         if( len(setting) == 0 ):
             ax.scatter( data[0], data[1], alpha = 0.4 )
         else:
-            ax.scatter( data[0], data[1], alpha = 0.4 )
+            ax.scatter( data[0], data[1], alpha = 0.1 )
 
         if "True" in setting:
             # Now draw each line
@@ -70,7 +70,7 @@ def makePlot( data, trueBetas, specBetas, spemBetas, em0Betas, emBetas, outFile 
         plottables = []
         # Spectral is dashed
         if( "Spectral" in setting ):
-            lines = plotLines( ax, specBetas, "-", colors=['g']*3 )
+            lines = plotLines( ax, specBetas, "--", colors=['g']*3 )
             plottables.append( lines[0] )
         if( "Spectral+EM" in setting ):
             lines = plotLines( ax, spemBetas, "-", colors=['b']*3 )
@@ -80,8 +80,8 @@ def makePlot( data, trueBetas, specBetas, spemBetas, em0Betas, emBetas, outFile 
         if( "EM0" in setting ):
             plotLines( ax, em0Betas, ":" )
         if( "EM" in setting ):
-            for emBeta in (emBetas[0],):
-                lines = plotLines( ax, emBeta, "-", colors=['r']*3 )
+            for emBeta in emBetas:
+                lines = plotLines( ax, emBeta, ":", colors=['r']*3 )
             plottables.append( lines[0] )
 
         if( len(plottables) > 0):

@@ -61,7 +61,8 @@ this, EM converged to the correct basin of attraction only 13\% of the time.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=0.50\textwidth]{figures/hist.png}
+  %\includegraphics[width=0.50\textwidth]{figures/hist.png}
+  \includegraphics[width=0.50\textwidth]{figures/EM-Spectral-Spectral+EM-hist.pdf}
   \caption{Histogram over recovery errors between the three algorithms when $b = 1, d = 4, k = 3, n = 500,000$.}
   \label{fig:hist}
 \end{figure}
@@ -70,10 +71,12 @@ this, EM converged to the correct basin of attraction only 13\% of the time.
 \begin{figure*}[p]
   \centering
   \subfigure[Spectral, Spectral+EM]{
-    \includegraphics[width=0.50\textwidth]{figures/curves-vis/1-8-3-specm.png}}
+    %\includegraphics[width=0.50\textwidth]{figures/curves-vis/1-8-3-specm.png}}
+    \includegraphics[width=0.50\textwidth]{figures/Spectral-Spectral+EM-1833.pdf}}
     \hspace{-2em}
   \subfigure[EM]{
-    \includegraphics[width=0.50\textwidth]{figures/curves-vis/1-8-3-em.png}}
+    %\includegraphics[width=0.50\textwidth]{figures/curves-vis/1-8-3-em.png}}
+    \includegraphics[width=0.50\textwidth]{figures/EM-1833.pdf}}
 %  \subfigure[Spectral + EM]{
 %    \includegraphics[width=0.34\textwidth]{figures/curves-vis/1-8-3-spem.png}}
   \caption{Visualization of the parameters estimated by Spectral Experts versus EM.
@@ -144,11 +147,13 @@ Variables ($b$) & Features ($d$) & Components ($k$) & Spectral & EM & Spectral +
 \begin{figure*}[tbhp]
   \centering
   \subfigure[Well-specified data]{
-    \includegraphics[width=0.50\textwidth]{figures/vs-n/1833-decay.png}
+    %\includegraphics[width=0.50\textwidth]{figures/vs-n/1833-decay.png}
+    \includegraphics[width=0.50\textwidth]{figures/vs-n-1833.pdf}
   }
     \hspace{-2em}
   \subfigure[Misspecified data]{
-    \includegraphics[width=0.50\textwidth]{figures/vs-n/1-8-3-3-rm.png}
+    \includegraphics[width=0.50\textwidth]{figures/vs-n-1833-rm.pdf}
+    %\includegraphics[width=0.50\textwidth]{figures/vs-n/1-8-3-3-rm.png}
   }
   \caption{Learning curves: parameter error as a function of the number of samples $n$ ($b = 1, d = 5, k = 3$).}
   \label{fig:vs-n}
