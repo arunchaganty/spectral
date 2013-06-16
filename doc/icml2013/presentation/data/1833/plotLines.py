@@ -43,7 +43,7 @@ def plotLines(ax, betas, modifier = "-", colors = None, W = 100):
     lines = []
     for beta, color in zip(betas.T, colors):
         X, Y = getLine( beta, fs153, W )
-        lines += ax.plot(X, Y, color, linewidth=5)
+        lines += ax.plot(X, Y, color, linewidth=4)
     return lines
 
 def makePlot( data, trueBetas, specBetas, spemBetas, em0Betas, emBetas, outFile ):
@@ -84,15 +84,9 @@ def makePlot( data, trueBetas, specBetas, spemBetas, em0Betas, emBetas, outFile 
                 lines = plotLines( ax, emBeta, "-", colors=['r']*3 )
             plottables.append( lines[0] )
 
-        #for plot in plottables:
-        #    plot.set_color( "black" )
-
         if( len(plottables) > 0):
-            legend = plt.legend( plottables[::-1], setting[::-1] )
-        #legend = plt.legend( plottables, ["Spectral", "Spectral + EM", "EM"] )
-        #legend = plt.legend( plottables, ["EM"] )
-        #legend = plt.legend( plottables, ["Spectral"] )
-        #legend = plt.legend( plottables, ["Spectral", "Spectral + EM"] )
+            plt.legend( plottables, setting )
+            #legend = plt.legend( plottables[::-1], setting[::-1] )
 
 
         prefix = "-".join(setting + [outFile])
