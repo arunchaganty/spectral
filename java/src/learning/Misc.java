@@ -242,7 +242,7 @@ public class Misc {
       correct += confusionMatrix[k][perm[k]];
     }
     double acc = (double) correct/ (double) total;
-    LogInfo.logs( "Accuracy: %d/%d = %f", correct, total, acc );
+    // LogInfo.logs( "Accuracy: %d/%d = %f", correct, total, acc );
 
     return acc;
   }

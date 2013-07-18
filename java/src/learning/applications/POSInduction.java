@@ -42,7 +42,7 @@ public class POSInduction implements Runnable {
 
 
   @Option(gloss="em iterations")
-  public int iterations = 1000;
+  public int iterations = 200;
   @Option(gloss="em eps")
   public double eps = 1e-4;
 
@@ -131,10 +131,10 @@ public class POSInduction implements Runnable {
 
     double lhood = Double.NEGATIVE_INFINITY;
     for( int iter = 0; iter < iterations; iter++ ) {
-      double lhood_ = model.compute(params, C.C, params_);
+      double lhood_ = model.compute(C.C, params_);
       double diff = lhood_ - lhood;
       LogInfo.logs( "%f - %f = %f", lhood_, lhood, diff);
-      assert( diff >= 0 );
+      //assert( diff >= -1 );
       
       // Update with parameters.
       lhood = lhood_;
@@ -144,13 +144,13 @@ public class POSInduction implements Runnable {
 
       // Report
       List<String> items = new ArrayList<String>();
-      items.add("iter="+iter);
+      items.add(logStat("iter", iter));
       items.add(logStat("lhood", lhood));
       items.add(logStat("accuracy", reportAccuracy( model, C ) ) );
       eventsOut.println(StrUtils.join(items, "\t"));
       eventsOut.flush();
 
-      if( diff < eps ) break;
+      //if( Math.abs(diff) < eps ) break;
     }
 
     LogInfo.end_track();

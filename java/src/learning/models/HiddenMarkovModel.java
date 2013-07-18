@@ -31,6 +31,10 @@ import java.util.Arrays;
  */
 public class HiddenMarkovModel implements EMOptimizable {
   // Model parameters
+
+  /**
+   * Params stores the parameters for the HMM model.
+   */
 	public static class Params implements Serializable {
 		private static final long serialVersionUID = 2704243416017266665L;
 
@@ -67,6 +71,24 @@ public class HiddenMarkovModel implements EMOptimizable {
 			this.T = T;
 			this.O = O;
 		}
+
+    public boolean isValid() {
+      boolean valid = true;
+      double sum;
+      sum = MatrixOps.sum(pi);
+      valid &= MatrixOps.equal(sum, 1.0);
+      assert valid;
+      for( int s = 0; s < stateCount; s++ ) {
+        sum = MatrixOps.sum(T[s]);
+        valid &=  MatrixOps.equal(sum, 1.0);
+        assert valid;
+        sum = MatrixOps.sum(O[s]);
+        valid &=  MatrixOps.equal(sum, 1.0);
+        assert valid;
+      }
+
+      return valid;
+    }
 		
 		@Override
 		public Params clone() {
@@ -98,6 +120,7 @@ public class HiddenMarkovModel implements EMOptimizable {
         }
       }
       assert( idx == numFeatures() );
+      assert( isValid() );
     }
     public static Params fromVector(int stateCount, int emissionCount, double[] weights) {
       Params params = new Params( stateCount, emissionCount );
@@ -345,8 +368,7 @@ public class HiddenMarkovModel implements EMOptimizable {
 		int [][] Ptr = new int[o.length][params.stateCount];
 		
 		// Initialize with 0 and path length
-		for( int s = 0; s < params.stateCount; s++ )
-		{
+		for( int s = 0; s < params.stateCount; s++ ) {
 			// P( o_0 | s_k ) \pi(s_k)
 			V[0][s] = params.O[s][o[0]] * params.pi[s];
 			Ptr[0][s] = -1; // Doesn't need to be defined.
@@ -355,8 +377,7 @@ public class HiddenMarkovModel implements EMOptimizable {
 		
 		// The dynamic program to find the optimal path
 		for( int i = 1; i < o.length; i++ ) {
-			for( int s = 0; s < params.stateCount; s++ )
-			{
+			for( int s = 0; s < params.stateCount; s++ ) {
 				// Find the max of T(s | s') V_(i-1)(s')
 				double T_max = 0.0;
 				int S_max = -1;
@@ -401,7 +422,8 @@ public class HiddenMarkovModel implements EMOptimizable {
 		double [][] f = new double[o.length][params.stateCount];
 		
     double c = 0;
-		// Initialise with the initial probabilty
+    double c_ = 0;
+		// Initialise with the initial probability
 		for( int s = 0; s < params.stateCount; s++ ) {
 			f[0][s] = params.pi[s] * params.O[s][o[0]];
 		}
@@ -417,9 +439,13 @@ public class HiddenMarkovModel implements EMOptimizable {
 				}
 				f[i][s] *= params.O[s][o[i]];
 			}
-      c += Math.log( MatrixOps.sum( f[i] ) );
-      MatrixOps.scale( f[i], 1/MatrixOps.sum(f[i]) );
+      double sum = MatrixOps.sum( f[i] );
+      assert( sum < 1 );
+      c_ = Math.log( sum );
+      c += Math.log( sum );
+      MatrixOps.scale( f[i], 1.0/sum );
     }
+    assert( c < 0 );
 
     return new Pair<>(f,c);
 	}
@@ -495,109 +521,147 @@ public class HiddenMarkovModel implements EMOptimizable {
 		return new HiddenMarkovModel(p_);
 	}
 
+  public void setParams(double[] params) {
+    this.params.updateFromVector(params);
+  }
+
   /**
    * Compute the expected log-likelihood.
    *
    */
-  public double compute(double[] p, int[][] X, double[] gradient) {
-    Params params = Params.fromVector(this.params.stateCount, this.params.emissionCount, p);
-    //params.updateFromVector(p);
-
+  public double compute(int[][] X, double[] gradient) {
     double value = 0.0;
     int N = X.length;
-
-    //MatrixOps.printVector( p );
 
     /** For each example, compute expected counts and update weights **/
     for( int n = 0; n < X.length; n++ ) {
       int[] o = X[n];
+      assert(o.length > 0);
 
       Pair<double [][],Double> fc = forward( o );
       double f[][] = fc.getValue0();
-      double c = fc.getValue1();
+      double c = fc.getValue1(); // the excess normalization constant.
       double b[][] = backward( o );
-      
-      value += (Math.log(MatrixOps.sum(f[o.length-1])) + c - value)/(n+1);
+
+      double lhood_incr = Math.log(MatrixOps.sum(f[o.length-1])) + c;
+      assert( lhood_incr < 0 );
+      value += (lhood_incr - value)/(n+1);
 
       if( gradient != null ) {
         // Construct the transition probability
-        double xi[][][] = new double[o.length-1][params.stateCount][params.stateCount];
+        double xi[][][] = new double[o.length][params.stateCount][params.stateCount];
 
         for( int t = 0; t < o.length-1; t++ ) {
-          // Compute xi = P(h_t = i, h_t+1 = j | O, \theta)
-          for( int i = 0; i < params.stateCount; i++ )
-            for( int j = 0; j < params.stateCount; j++ )
-              xi[t][i][j] = f[t][i] * params.T[i][j] * params.O[j][o[t+1]] * b[t+1][j];
+          // Compute xi = P(h_t = i, h_{t+1} = j | O, \theta)
+          //            = P(h_t = i | O, \theta) * P( h_{t+1} = j | h_t = i, O, \theta )
+          //            = P(h_t = i | O, \theta) * P( h_{t+1} = j | h_t = i, O_{t+1}) * P( O | h_{t+1} ) / P(O)
+          for( int i = 0; i < params.stateCount; i++ ) {
+            for( int j = 0; j < params.stateCount; j++ ) {
+              xi[t][i][j] = f[t][i] * params.T[i][j] * params.O[j][o[t+1]] * b[t+1][j]; // / norm;
+            }
+          }
+          double norm_ = MatrixOps.sum(xi[t]);
+          assert norm_ > 0;
           // Normalize
-          MatrixOps.scale(xi[t], 1.0/MatrixOps.sum(xi[t]));
+          MatrixOps.scale(xi[t], 1.0/norm_); //MatrixOps.sum(xi[t]));
+        } {
+          int t = o.length-1;
+          for( int i = 0; i < params.stateCount; i++ ) {
+            for( int j = 0; j < params.stateCount; j++ ) {
+              xi[t][i][j] = f[t][i]; // / norm;
+            }
+          }
+          double norm_ = MatrixOps.sum(xi[t]);
+          assert norm_ > 0;
+          // Normalize
+          MatrixOps.scale(xi[t], 1.0/norm_);
         }
-        //LogInfo.logs( "xi" );
-        //MatrixOps.printArray( xi );
 
-        //double z[][] = new double[o.length][params.stateCount];
-        //for( int t = 0; t < o.length-1; t++ ) {
-        //  // Compute xi = P(h_t = i, h_t+1 = j | O, \theta)
-        //  for( int i = 0; i < params.stateCount; i++ )
-        //    z[t][i] = MatrixOps.sum(xi[t][i]);
-        //}
-        //for( int i = 0; i < params.stateCount; i++ )
-        //  z[o.length-1][i] = f[o.length-1][i] * b[o.length-1][i];
-        //MatrixOps.scale( z[o.length-1], 1.0/MatrixOps.sum(z[o.length-1]) );
-        //LogInfo.logs( "z" );
-        //MatrixOps.printArray( z );
-
-        double z[][] = new double[o.length][params.stateCount];
-        for( int t = 0; t < o.length; t++ ) {
-          // Compute xi = P(h_t = i, h_t+1 = j | O, \theta)
-          for( int i = 0; i < params.stateCount; i++ )
-            z[t][i] = f[t][i] * b[t][i];
-          MatrixOps.scale( z[t], 1.0/MatrixOps.sum(z[t]) );
+        {
+          double norm = MatrixOps.sum(xi[0]);
+          assert norm > 0;
+          for( int h = 0; h < params.stateCount; h++ ) {
+            gradient[params.index_pi(h)] += MatrixOps.sum(xi[0][h])/norm;
+          }
+//          double sum;
+//          for( int h = 0; h < params.stateCount; h++ ) sum +=  gradient[params.index_pi(h)];
+//          assert( MatrixOps.equal( sum, 1 ) );
         }
-          
-        // update counts for pi
-        //LogInfo.logs( "- " + Fmt.D(gradient) );
-        for( int h = 0; h < params.stateCount; h++ ) {
-          gradient[params.index_pi(h)] += 1.0/N * 
-            z[0][h];
-        } 
+
         //LogInfo.logs( "pi " + Fmt.D(gradient) );
         // update counts for T
         if( o.length > 1 ) {
           for( int h = 0; h < params.stateCount; h++ ) {
-            double denom = 0; // Number of times we're in state h.
-            for( int t = 0; t < o.length-1; t++ ) denom += z[t][h]; 
+            double countH = 0.0;
+            for( int t = 0; t < o.length-1; t++ )  countH += MatrixOps.sum( xi[t][h] ); // Number of times we're in state h.
+            assert countH > 0;
 
             for( int h_ = 0; h_ < params.stateCount; h_++ ) {
-              double num = 0;
-              for( int t = 0; t < o.length-1; t++ ) {
-                num += xi[t][h][h_];
-              }
-              gradient[params.index_T(h,h_)] += 1.0/N * 
-                num/denom;
+              double countHH_ = 0; // Number of times we are going from h to h_
+              for( int t = 0; t < o.length-1; t++ )  countHH_ += xi[t][h][h_];
+              gradient[params.index_T(h,h_)] +=  countHH_/countH; // - gradient[params.index_T(h,h_)])/(n+1);
             }
-          } 
+//            double sum;
+//            for( int h_ = 0; h_ < params.stateCount; h_++ ) sum +=  gradient[params.index_T(h,h_)];
+//            assert( MatrixOps.equal( sum, 1 ) );
+          }
         }
         //LogInfo.logs( "T " + Fmt.D(gradient) );
         // update counts for O
-        for( int t = 0; t < o.length; t++ ) {
+        for( int t = 0; t < o.length-1; t++ ) {
+          double norm = MatrixOps.sum(xi[t]);
+          assert norm > 0;
           for( int h = 0; h < params.stateCount; h++ ) {
-            gradient[params.index_O(h,o[t])] +=  1.0/N *
-              z[t][h] /  MatrixOps.sum( z, 1, h );
+            // Adding expected count that state $h$ produced observation $o$
+            gradient[params.index_O(h,o[t])] += MatrixOps.sum(xi[t][h])/norm; // - gradient[params.index_O(h,o[t])]) / (n+1);
           }
-        } 
-        //LogInfo.logs( "O " + Fmt.D(gradient) );
+        }
+      }
+    }
+    // Normalize the gradient
+    if( gradient != null ) {
+      // Normalize pi
+      double smoothing = 1e-6;
+      {
+        double norm = 0.0;
+        for( int h = 0; h < params.stateCount; h++) {
+          gradient[params.index_pi(h)] += smoothing;
+          norm += gradient[params.index_pi(h)];
+        }
+        for( int h = 0; h < params.stateCount; h++) gradient[params.index_pi(h)] /= norm;
+      }
+      // Normalize T
+      {
+        for( int h = 0; h < params.stateCount; h++) {
+          double norm = 0.0;
+          for( int h_ = 0; h_ < params.stateCount; h_++) {
+            gradient[params.index_T(h,h_)] += smoothing;
+            norm += gradient[params.index_T(h,h_)];
+          }
+          for( int h_ = 0; h_ < params.stateCount; h_++) gradient[params.index_T(h,h_)] /= norm;
+        }
+      }
+      // Normalize O
+      {
+        for( int h = 0; h < params.stateCount; h++) {
+          double norm = 0.0;
+          for( int o_ = 0; o_ < params.emissionCount; o_++) {
+            gradient[params.index_O(h, o_)] += smoothing;
+            norm += gradient[params.index_O(h, o_)];
+          }
+          for( int o_ = 0; o_ < params.emissionCount; o_++) gradient[params.index_O(h, o_)] /= norm;
+        }
       }
     }
     //MatrixOps.scale( gradient, 1.0/N );
-      //LogInfo.logs( "grad " + Fmt.D(gradient) );
+    //LogInfo.logs( "grad " + Fmt.D(gradient) );
 
     return value;
   }
   public double baumWelchStep(int[][] X) {
-    double[] params_ = params.toVector();
-    double[] gradient = new double[ params_.length ];
-    double llhood = compute(params_, X, gradient);
-    params.updateFromVector( gradient );
+    double[] gradient = new double[ params.numFeatures() ];
+    double llhood = compute(X, gradient);
+    setParams(gradient);
     LogInfo.logs( Fmt.D( gradient ) );
     return llhood;
   }
