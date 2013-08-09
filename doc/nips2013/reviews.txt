@@ -1,0 +1,72 @@
+% NIPS 2013 Rebuttal
+
+# Concerning Experiments
+
+* (Reviewer 3): Needs a rigorous experimental evaluation with a
+comparison with alternative methods.
+    + We compare with EM.
+* How were the HMMs and mixture models generated?
+    + We generated parameters for both the mixture model and for the
+HMMs by generating the model parameter vector $\theta$ with uniform
+random entries in [-1,1]. Note that normalization is taken care of by
+the partition function.
+* "In the discussion, the authors mention that they have empirical
+evidence that their algorithm produces better results for factorial
+HMMs and the grid model but the experimental results only show results
+for HMMs and mixture models."
+    + :-/ uh oh.
+
+# Regarding the Measurements Objective
+
+* The author’s make what seems like a huge assumption, that the
+log-partition function is strongly convex. Do other methods for
+finding the parameters of log-linear models (EM L-BFGS) make this same
+assumption?
+    + We're really finding the best fit in the exponential family,
+which is reasonable.
+
+# Algorithm
+  * Do the authors believe that assumption 1 and 2 are likely to be
+true in practice?
+      + If $B$ weren't full column rank, then we are over-estimating
+the number of latent states, and should choose a smaller $k$.
+      + I don't think assumption 2 necessarily holds in practice.
+
+# Unshuffling
+
+* Is the size of the domain of the composite latent variable the
+product of the domains of the latent variables that compose it?
+    + Yes.
+* Isn't this method going to be incredibly sensitive to sampling
+error? There is a need to match match between the columns of L and
+combinations of { v_ia } - from my experience these kind of matching
+problems are very sensitive to sampling error, because a small
+continuous error (when values are close to each other) can cause a
+fundamental discrete change in order. What is the kind of separation
+conditions you need for this to work? Not theoretically, but even
+empirically.
+   + Yes :-/
+
+# Minor points:
+* In Figure 3: I thought that h was a discrete variable, but here it
+says that h is integer–valued. Am I missing something?
+    + $h$ is indeed a discrete variable, but we can represent it's
+values using an integer.
+* In 4a: does the algorithm or problem setup differ from the problem in [13]?
+    + While the problem setup is identical, in [13], the authors focus
+on the recovery of all the parameters of the HMM, requiring that only
+$x_{1}$, $x_{2}$ and $x_{3}$ be used to construct the moments. We
+posit that we can use _every_ subsequent triple of observed variables
+e.g. $x_{i-1}, x_{i}, x_{i+1}$, to form good estimates of the
+observation matrix $O$, and recover the remaining parameters using the
+measurements framework.
+
+* Note about observable operators: these methods *do* produce
+parameter estimates, just not for HMMs etc. They produce parameter
+estimates for a wider class of predictive models. For example the
+spectral learning algorithm for HMMs produces parameter estimates for
+an observable operator model.
+* I am not sure MLE with latent-variables is statistically efficient
+or even consistent when latent-variables are introduced. Please make
+sure it is correct.
+   + Where was this claim made?
