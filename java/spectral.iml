@@ -18,10 +18,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="deps" level="project" />
-    <orderEntry type="library" name="scala-compiler" level="application" />
-    <orderEntry type="library" name="scala" level="project" />
-    <orderEntry type="library" name="breeze" level="project" />
-    <orderEntry type="library" name="netlib-java" level="project" />
   </component>
 </module>
 

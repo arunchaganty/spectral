@@ -19,10 +19,43 @@ import static learning.models.loglinear.Models.*;
 // A term in the objective function.
 abstract class ObjectiveTerm {
   double value;
+  ParamsVec params;
   ParamsVec counts;
 
   // Populate |value| and |counts| based on the current state.
   public abstract void infer(boolean needGradient);
+
+  public void performGradientCheck() {
+    if( params == null ) return;
+    LogInfo.begin_track("gradient-check");
+    double epsilon = 1e-6;
+
+    // Save point
+    infer(true);
+    double[] currentGradient = Arrays.copyOf(counts.weights, counts.weights.length);
+    double[] currentPoint = Arrays.copyOf(params.weights, counts.weights.length);
+
+    // Set point to be +/- gradient
+    for( int i = 0; i < currentPoint.length; i++ ) {
+      params.weights[i] = currentPoint[i] + epsilon;
+      infer(false);
+      double valuePlus = value;
+
+      params.weights[i] = currentPoint[i] - epsilon;
+      infer(false);
+      double valueMinus = value;
+
+      double expectedValue = (valuePlus - valueMinus)/(2*epsilon);
+      double actualValue = currentGradient[i];
+
+      params.weights[i] = currentPoint[i];
+      infer(false);
+
+      assert MatrixOps.equal( expectedValue, actualValue, 1e-2 );
+    }
+    infer(true); // Restore the values of objective and gradient
+    LogInfo.end_track("gradient-check");
+  }
 }
 
 class ZeroTerm extends ObjectiveTerm {
@@ -32,7 +65,6 @@ class ZeroTerm extends ObjectiveTerm {
 
 // Linear function with given coefficients
 class LinearTerm extends ObjectiveTerm {
-  ParamsVec params;
   ParamsVec coeffs;
   boolean[] measuredFeatures;  // Which features to include
 
@@ -86,6 +118,7 @@ class ExamplesTerm extends ObjectiveTerm {
       // Cache the hypergraph
       if (Hq == null) Hq = model.createHypergraph(ex.x.length, ex, params.weights, counts.weights, 1.0/examples.size());
       if (storeHypergraphs) ex.Hq = Hq;
+      Hq = model.createHypergraph(ex.x.length, ex, params.weights, counts.weights, 1.0/examples.size());
 
       Hq.computePosteriors(false);
       if (needGradient) Hq.fetchPosteriors(false); // Places the posterior expectation $E_{Y|X}[\phi]$ into counts
@@ -167,16 +200,24 @@ class LikelihoodFunctionState implements Maximizer.FunctionState {
   public double[] gradient() { compute(true); return gradient.weights; }
 
   public void performGradientCheck() {
-    double epsilon = 1e-4;
+    LogInfo.begin_track("gradient-check");
+    // First check each part
+    pred.performGradientCheck();
+    target.performGradientCheck();
+
+    // Then the whole
+    double epsilon = 1e-5;
     // Save point
-    double[] currentGradient = gradient();
-    double[] currentPoint = point();
+    compute(true);
+    double[] currentGradient = Arrays.copyOf(gradient(), params.weights.length);
+    double[] currentPoint = Arrays.copyOf(point(), params.weights.length);
 
     // Set point to be +/- gradient
     for( int i = 0; i < currentPoint.length; i++ ) {
-      params.weights[i] = currentPoint[i] + epsilon * currentGradient[i];
+      if(!measuredFeatures[i]) continue;
+      params.weights[i] = currentPoint[i] + epsilon;
       double valuePlus = value();
-      params.weights[i] = currentPoint[i] - epsilon * currentGradient[i];
+      params.weights[i] = currentPoint[i] - epsilon;
       double valueMinus = value();
       params.weights[i] = currentPoint[i];
 
@@ -185,6 +226,8 @@ class LikelihoodFunctionState implements Maximizer.FunctionState {
 
       assert MatrixOps.equal( expectedValue, actualValue );
     }
+    compute(true); // Restore the values of objective and gradient
+    LogInfo.end_track("gradient-check");
   }
 
   public void compute(boolean needGradient) {
@@ -574,19 +617,19 @@ public class Main implements Runnable {
       LogInfo.end_track();
 
       // Switch to pure unsupervised
-      if (opts.objectiveType == Options.ObjectiveType.measurements && iter == opts.numMeasurementIters) {
-        LogInfo.logs("Switching over from measurements to unsupervised_gradient");
-        eTargetTerm = zeroTerm;
-        ePredTerm = zeroTerm;
-        mTargetTerm = mExamplesTerm;
-        mPredTerm = globalTerm;
-        eState = new LikelihoodFunctionState(
-            model, eParams, eTargetTerm, ePredTerm, measuredFeatures,
-            opts.eRegularization, opts.initRandom, opts.initParamsNoise);
-        mState = new LikelihoodFunctionState(
-            model, mParams, mTargetTerm, mPredTerm, allMeasuredFeatures,
-            opts.mRegularization, opts.initRandom, opts.initParamsNoise);
-      }
+//      if (opts.objectiveType == Options.ObjectiveType.measurements && iter == opts.numMeasurementIters) {
+//        LogInfo.logs("Switching over from measurements to unsupervised_gradient");
+//        eTargetTerm = zeroTerm;
+//        ePredTerm = zeroTerm;
+//        mTargetTerm = mExamplesTerm;
+//        mPredTerm = globalTerm;
+//        eState = new LikelihoodFunctionState(
+//            model, eParams, eTargetTerm, ePredTerm, measuredFeatures,
+//            opts.eRegularization, opts.initRandom, opts.initParamsNoise);
+//        mState = new LikelihoodFunctionState(
+//            model, mParams, mTargetTerm, mPredTerm, allMeasuredFeatures,
+//            opts.mRegularization, opts.initRandom, opts.initParamsNoise);
+//      }
     }
 
     if (done) LogInfo.logs("Converged");
