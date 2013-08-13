@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="scala" name="Scala">
+      <configuration>
+        <option name="compilerLibraryLevel" value="Project" />
+        <option name="compilerLibraryName" value="scala" />
+        <option name="explainTypeErrors" value="true" />
+      </configuration>
+    </facet>
+  </component>
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
@@ -9,6 +18,10 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="deps" level="project" />
+    <orderEntry type="library" name="scala-compiler" level="application" />
+    <orderEntry type="library" name="scala" level="project" />
+    <orderEntry type="library" name="breeze" level="project" />
+    <orderEntry type="library" name="netlib-java" level="project" />
   </component>
 </module>
 

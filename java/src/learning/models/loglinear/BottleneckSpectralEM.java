@@ -446,6 +446,7 @@ public class BottleneckSpectralEM implements Runnable {
     for (iter = 0; iter < numIters && !done; iter++) {
       LogInfo.begin_track("Iteration %s/%s", iter, numIters);
       done = maximizer.takeStep(state);
+      state.performGradientCheck();
       LogInfo.logs("objective=%f", state.value());
       //LogInfo.logs("counts=%s", Fmt.D(state.counts.weights));
 
@@ -717,6 +718,27 @@ public class BottleneckSpectralEM implements Runnable {
             gradient.weights[j] -= regularization * params.weights[j];
         }
         // LogInfo.logs("gradient: %s", Fmt.D(gradient.weights));
+      }
+    }
+
+    public void performGradientCheck() {
+      double epsilon = 1e-4;
+      // Save point
+      double[] currentGradient = gradient();
+      double[] currentPoint = point();
+
+      // Set point to be +/- gradient
+      for( int i = 0; i < currentPoint.length; i++ ) {
+        params.weights[i] = currentPoint[i] + epsilon * currentGradient[i];
+        double valuePlus = value();
+        params.weights[i] = currentPoint[i] - epsilon * currentGradient[i];
+        double valueMinus = value();
+        params.weights[i] = currentPoint[i];
+
+        double expectedValue = (valuePlus - valueMinus)/(2*epsilon);
+        double actualValue = currentGradient[i];
+
+        assert MatrixOps.equal( expectedValue, actualValue );
       }
     }
 

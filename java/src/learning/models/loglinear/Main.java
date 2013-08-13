@@ -166,6 +166,27 @@ class LikelihoodFunctionState implements Maximizer.FunctionState {
   public double value() { compute(false); return objective; }
   public double[] gradient() { compute(true); return gradient.weights; }
 
+  public void performGradientCheck() {
+    double epsilon = 1e-4;
+    // Save point
+    double[] currentGradient = gradient();
+    double[] currentPoint = point();
+
+    // Set point to be +/- gradient
+    for( int i = 0; i < currentPoint.length; i++ ) {
+      params.weights[i] = currentPoint[i] + epsilon * currentGradient[i];
+      double valuePlus = value();
+      params.weights[i] = currentPoint[i] - epsilon * currentGradient[i];
+      double valueMinus = value();
+      params.weights[i] = currentPoint[i];
+
+      double expectedValue = (valuePlus - valueMinus)/(2*epsilon);
+      double actualValue = currentGradient[i];
+
+      assert MatrixOps.equal( expectedValue, actualValue );
+    }
+  }
+
   public void compute(boolean needGradient) {
     //if (needGradient ? gradientValid : objectiveValid) return;
     objectiveValid = true;
@@ -466,7 +487,7 @@ public class Main implements Runnable {
         eTargetTerm = measurementsTerm; // <\tau,\beta> (both objective and gradient)
         ePredTerm = eExamplesTerm; // \sum_i B_i and \E_q[\sigma] (part of objective, and via hack, the gradient!)
         mTargetTerm = examplesOutTerm; // This is cleverly $B_i$ 
-        mPredTerm = globalTerm; // A(\hteta)
+        mPredTerm = globalTerm; // A(\theta)
         break;
       case unsupervised_em:
         eTargetTerm = zeroTerm;
@@ -583,6 +604,7 @@ public class Main implements Runnable {
     for (iter = 0; iter < numIters && !done; iter++) {
       LogInfo.begin_track("Iteration %s/%s", iter, numIters);
       done = maximizer.takeStep(state);
+      state.performGradientCheck();
       LogInfo.logs("%s objective = %f", stepName, state.value());
       LogInfo.end_track();
     }
