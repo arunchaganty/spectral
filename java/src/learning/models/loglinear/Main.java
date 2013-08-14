@@ -214,7 +214,7 @@ class LikelihoodFunctionState implements Maximizer.FunctionState {
 
     // Set point to be +/- gradient
     for( int i = 0; i < currentPoint.length; i++ ) {
-      if(!measuredFeatures[i]) continue;
+      if( !measuredFeatures[i] ) continue;
       params.weights[i] = currentPoint[i] + epsilon;
       double valuePlus = value();
       params.weights[i] = currentPoint[i] - epsilon;
