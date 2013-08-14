@@ -815,7 +815,13 @@ public class MatrixOps {
 
     for( int col = 0; col < nCols; col++ ) {
       // For each column, normalize the vector and zero out negative values.
-      columnNormalize( X, col );
+      // Get the majority sign
+      int positives = 0;
+      for( int row = 0; row < nRows; row++ ) positives += (X.get(row,col) > 0) ? 1 : 0;
+
+      // Flip sign
+      if( positives < nRows / 2 ) for( int row = 0; row < nRows; row++ )
+        X.set(row, col, -X.get(row,col));
 
       for( int row = 0; row < nRows; row++ ) {
         double x  = X_[ X.getIndex(row, col) ];
