@@ -211,6 +211,7 @@ public class POSInduction implements Runnable {
       HiddenMarkovModel model = new HiddenMarkovModel( 
           C.getTagDimension(), // K
           C.getDimension() ); // D
+      LogInfo.end_track("file-input");
 
       // Possibly load the measurements
       Params params;
