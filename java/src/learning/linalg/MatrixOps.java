@@ -20,6 +20,8 @@ import org.ejml.simple.SimpleEVD;
 import org.javatuples.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 
 public class MatrixOps {
 
@@ -1233,5 +1235,25 @@ public class MatrixOps {
         x[i] *= factor;
   }
 
+  /**
+   * Returns the indicies of decreasing values of col
+   * @param col
+   * @return
+   */
+  public static Integer[] argsort(final SimpleMatrix col) {
+    Integer[] indices = new Integer[col.getNumElements()];
+    for( int i = 0; i < indices.length; i++ ) indices[i] = i;
+
+    Arrays.sort(indices, new Comparator<Integer>() {
+      @Override
+      public int compare(Integer i1, Integer i2) {
+        return -Double.compare(col.get(i1), col.get(i2));
+      }
+    });
+    // Make sure it's in descending order
+    assert( col.get(indices[0]) > col.get(indices[indices.length-1]) );
+
+    return indices;
+  }
 }
 

@@ -18,6 +18,9 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="deps" level="project" />
+    <orderEntry type="library" name="breeze" level="project" />
+    <orderEntry type="library" name="netlib-java" level="project" />
+    <orderEntry type="library" name="scala" level="project" />
   </component>
 </module>
 

@@ -8,7 +8,7 @@ import java.util.*;
 public class ParsedCorpus extends Corpus {
   private static final long serialVersionUID = 3L;
   
-  String[] tagDict;
+  public String[] tagDict;
   /// Stores an integer representation of labels in the corpus, with each
   /// sentence as a sequence of integer indices into tags.
   public int[][] L; 
