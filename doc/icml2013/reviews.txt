@@ -1,0 +1,45 @@
+
+
+# Reviewer 2 
+
+* Major comments:
+
+(1) In order to apply Theorem 5.1 from [AGHKT12], the tensor \hat{T} should be close to a symmetric tensor with orthogonal decomposition T. In the proof of Theorem 1 you are applying that result to T = M_3(W,W,W) and \hat{T} = \hat{M}_3(\hat{W},\hat{W},\hat{W}), but the error bounds given in line 388 are only between M_p and \hat{M}_p. How do you bound the error incurred by the whitening step?
+
+(2) Related to (1), the bounds of Theorem 5.1 from [AGHKT12] apply to the decomposition of the whitened tensor. To bound the error on the \hat{\beta}_h in Theorem 1 you need to account for the error in the un-whitening step.
+
+* Minor comments:
+
+(3) Can you provide some intuition on what does the positive definiteness assumption on Sigma_p mean?
+
+(4) In the proof of Lemma 3, do the empirical expectations assume that h and epsilon are observed for each point in the dataset?
+
+(5) Other relevant references in the recent literature on spectral learning algorithms are: [BQC11] gave a spectral algorithm for learning a discriminative model over sequences in terms of observable operator models; [B11] used the ouput of a spectral learning algorithm as a starting point for EM; in [BM12] a similar two-step algorithm was given, first solving a convex matrix completion problem, then using its output as the moments on a spectral learning algorithm.
+
+[BQC11] A Spectral Learning Algorithm for Finite State Transducers. Balle, Quattoni, and Carreras. ECML-PKDD 2011
+[B11] Quadratic Weighted Automata: Spectral Algorithm and Likelihood Maximization. Bailly. ACML 2011
+[BM12] Spectral Learning of General Weighted Automata via Constrained Matrix Completion. Balle and Mohri. NIPS 2012
+
+(6) Since there is some space left in the paper, I suggest you expand the calculations involved in lines 482-483.
+
+(7) Definition (9) is not the same as in [TSHK11]. I think the i-th coordinate of X_p(M_p;D) should be the inner product between M_p and {x^(i)}^{\oprod p}.
+
+(8) What noise level \sigma was used in the experiments? Does it affect the results?
+
+(9) How did you set the regularization parameters in the experiments? Have you tried to optimize these parameters and compare them with the theoretical predictions?
+
+* Notation and typos:
+
+[L108] Please, define the mode-i unfolding
+[L116] Must X have rank K to define ||X||_*?
+[L121] Please define the Frobenius norm for tensors
+[L122] I think the dimensionality of cvec(X) should be (d+p+1 choose p) (number of multisets with p elements from a set of d elements)
+[L193] M_1 - \beta_ h -> \beta_h - M_1
+[Lemma 1] Be consistent with the use of _p
+[L460] Use the norm _op instead of _2 for X*
+[L463] I think some constant is missing from the bound
+[L476] X_p
+[L497] The equation should read s_min(\hat{\Sigma}_p) >= s_min(\Sigma_p) - ||...||
+[L515] Take the operator norm of the empirical expectation
+[L525] I think the bound should be 2L instead of L
+[L655] SpecTral 
