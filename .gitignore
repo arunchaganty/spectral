@@ -45,6 +45,8 @@ results/
 logs-*/
 results-*/
 
+.gitignore
+
 # Temporary stuff
 *.sh
 attic/
