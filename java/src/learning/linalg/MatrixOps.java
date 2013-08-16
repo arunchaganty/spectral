@@ -363,6 +363,17 @@ public class MatrixOps {
 
     return idx;
   }
+  public static int argmax( int[] x ) {
+    int idx = -1;
+    double max = Double.NEGATIVE_INFINITY;
+    for( int i = 0; i < x.length; i++ )
+      if( x[i] > max ) {
+        idx = i;
+        max = x[i];
+      }
+
+    return idx;
+  }
   public static int argmax( DenseMatrix64F X ) {
     return argmax( X.data );
   }

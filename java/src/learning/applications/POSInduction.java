@@ -97,6 +97,7 @@ public class POSInduction implements Runnable {
   }
 
   public double reportAccuracy( HiddenMarkovModel model, ParsedCorpus C ) {
+    begin_track("best-match accuracy");
     // Create a confusion matrix
     int K = C.getTagDimension();
     double[][] confusion = new double[K][K];
@@ -158,7 +159,81 @@ public class POSInduction implements Runnable {
       logsForce(topk);
     }
     LogInfo.end_track("Top-k words");
+    end_track("best-match accuracy");
 
+    return acc;
+  }
+
+  /**
+   * Greedy matching accuracy
+   * @param model
+   * @param C
+   * @return
+   */
+  public double reportVsAllAccuracy( HiddenMarkovModel model, ParsedCorpus C ) {
+    begin_track("vs-all accuracy");
+    // Create a confusion matrix
+    int K = C.getTagDimension();
+    double[][] confusion = new double[K][K];
+    for( int n = 0; n < C.getInstanceCount(); n++ ) {
+      int[] l = C.L[n];
+      int[] l_ = model.viterbi( C.C[n] );
+
+      for( int i = 0; i < l.length; i++ )
+        // NOTE: This is different than the alignment in reportAccuracy
+        confusion[l_[i]][l[i]] += 1;
+    }
+
+    // Find greedy alignment
+    int[] perm = new int[K];
+    for(int k = 0; k < K; k++) perm[k] = MatrixOps.argmax(confusion[k]);
+
+    // Compute hamming score
+    long correct = 0;
+    long total = 0;
+    for( int k = 0; k < K; k++ ) {
+      for( int k_ = 0; k_ < K; k_++ ) {
+        total += confusion[k][k_];
+      }
+      correct += confusion[k][perm[k]];
+    }
+    double acc = (double) correct/ (double) total;
+
+    // Now (a) print a confusion matrix
+    LogInfo.begin_track("Confusion matrix");
+    StringBuilder table = new StringBuilder();
+    table.append( "\t" );
+    for( int k = 0; k < K; k++ ) {
+      table.append(C.tagDict[k]).append("\t");
+    }
+    table.append( "\n" );
+    for( int k = 0; k < K; k++ ) {
+      table.append(C.tagDict[k]).append("\t");
+      for( int k_ = 0; k_ < K; k_++ ) {
+        table.append(confusion[k][perm[k_]]).append("\t");
+      }
+      table.append( "\n" );
+    }
+    logsForce(table);
+    LogInfo.end_track("Confusion matrix");
+
+    // (b) Print top 10 words
+    LogInfo.begin_track("Top-k words");
+    int TOP_K = 20;
+    for( int k = 0; k < K; k++ ) {
+      StringBuilder topk = new StringBuilder();
+      topk.append(C.tagDict[k]).append(": ");
+
+      int k_ = perm[k];
+      Integer[] sortedWords = MatrixOps.argsort(MatrixOps.col(model.getO(), k_));
+      for(int i = 0; i < TOP_K; i++ ) {
+        topk.append(C.dict[sortedWords[i]]).append(", ");
+      }
+      logsForce(topk);
+    }
+    LogInfo.end_track("Top-k words");
+
+    end_track("vs-all accuracy");
     return acc;
   }
 
@@ -198,6 +273,7 @@ public class POSInduction implements Runnable {
       items.add(logStat("iter", iter));
       items.add(logStat("lhood", lhood));
       items.add(logStat("accuracy", reportAccuracy( model, C ) ) );
+      items.add(logStat("all-accuracy", reportVsAllAccuracy( model, C ) ) );
       eventsOut.println(StrUtils.join(items, "\t"));
       eventsOut.flush();
 
