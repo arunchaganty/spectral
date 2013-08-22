@@ -48,8 +48,9 @@ class BottleneckSpectralEstimation {
 class EMObjective[U <: Vector[ DenseVector[Int]]](model : MixtureModel, data : U) extends DiffFunction[DenseVector[Double]] {
   def calculate(theta: DenseVector[Double]): (Double, DenseVector[Double]) = {
     val (l:Double) =  data.map( (datum : Vector[Int]) => model.marginalLogLikelihood(theta, datum) ).toDenseVector.sum
-    val counts = data.valuesIterator.foldLeft(DenseVector.zeros[Double](hidden.length))( (acc : DenseVector[Double], datum: Vector[Int]) => acc + model.posterior(theta, datum) )
-    val (grad : DenseVector[Double]) = counts
+//    val counts = data.valuesIterator.foldLeft(DenseVector.zeros[Double](model.hidden.length))( (acc : DenseVector[Double], datum: Vector[Int]) => acc + model.posterior(theta, datum) )
+//    val (grad : DenseVector[Double]) = counts
+    val (grad : DenseVector[Double]) = DenseVector.zeros[Double](model.features.size)
     (l, grad)
   }
 }

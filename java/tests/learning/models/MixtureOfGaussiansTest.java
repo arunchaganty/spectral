@@ -31,7 +31,7 @@ public class MixtureOfGaussiansTest {
 		int K = 2;
 		int D = 3;
 		int V = 3;
-    return generateMultiView( K, D, V, MeanDistribution.Identical );
+    return generateMultiView(K, D, V, MeanDistribution.Identical);
   }
   public static MixtureOfGaussians generateSmallEye() {
 		int K = 2;
@@ -62,6 +62,18 @@ public class MixtureOfGaussiansTest {
 		int D = 6;
 		int V = 3;
     return generateMultiView( K, D, V, MeanDistribution.Random );
+  }
+  public static MixtureOfGaussians generateSymmetricSparseEye() {
+    int K = 2;
+    int D = 8;
+    int V = 3;
+    return generateMultiView( K, D, V, MeanDistribution.Identical );
+  }
+  public static MixtureOfGaussians generateUnSymmetricSparseEye() {
+    int K = 2;
+    int D = 8;
+    int V = 3;
+    return generateMultiView( K, D, V, MeanDistribution.Hypercube );
   }
 
   public void testModel( int N, GenerationOptions options ) {

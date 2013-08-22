@@ -238,9 +238,9 @@ public class FullTensor implements Tensor, Serializable {
 
     int L1, L2, L3;
     switch(axis) {
-      case 0: L1 = M.numCols(); L2 = D2; L3 = D3; break;
-      case 1: L1 = D1; L2 = M.numCols(); L3 = D3; break;
-      case 2: L1 = D1; L2 = D2; L3 = M.numCols(); break;
+      case 0: assert( D1 == M.numRows() ); L1 = M.numCols(); L2 = D2; L3 = D3; break;
+      case 1: assert( D2 == M.numRows() ); L1 = D1; L2 = M.numCols(); L3 = D3; break;
+      case 2: assert( D3 == M.numRows() ); L1 = D1; L2 = D2; L3 = M.numCols(); break;
       default:
         throw new NoSuchMethodError("invalid axis");
     }

@@ -6,6 +6,7 @@
 package learning.models;
 
 import learning.Misc;
+import learning.data.ComputableMoments;
 import learning.linalg.*;
 
 import org.ejml.simple.SimpleMatrix;
@@ -83,6 +84,34 @@ public class MixtureOfGaussians {
       computeExactMoments() {
     return computeExactMoments( weights, means[0], means[1], means[2] ); 
   }
+  public ComputableMoments computeExactMoments_() {
+    final SimpleMatrix M1 = means[0];
+    final SimpleMatrix M2 = means[1];
+    final SimpleMatrix M3 = means[2];
+    return new ComputableMoments() {
+      @Override
+      public MatrixOps.Matrixable computeP13() {
+        return MatrixOps.matrixable(M1.mult( MatrixFactory.diag( weights ) ).mult( M3.transpose() ));
+      }
+
+      @Override
+      public MatrixOps.Matrixable computeP12() {
+        return MatrixOps.matrixable(M1.mult( MatrixFactory.diag( weights ) ).mult( M2.transpose() ));
+      }
+
+      @Override
+      public MatrixOps.Matrixable computeP32() {
+        return MatrixOps.matrixable(M3.mult( MatrixFactory.diag( weights ) ).mult( M2.transpose() ));
+      }
+
+      @Override
+      public MatrixOps.Tensorable computeP123() {
+        return MatrixOps.tensorable(FullTensor.fromDecomposition( weights, M1, M2, M3 ));
+      }
+    };
+  }
+
+
   public static Triplet<
         Pair<SimpleMatrix, FullTensor>,
         Pair<SimpleMatrix, FullTensor>,

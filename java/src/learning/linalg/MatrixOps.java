@@ -10,6 +10,8 @@ import learning.linalg.SimpleTensor;
 import learning.exceptions.NumericalException;
 
 import org.ejml.alg.dense.mult.VectorVectorMult;
+import org.ejml.factory.DecompositionFactory;
+import org.ejml.factory.QRDecomposition;
 import org.ejml.factory.SingularValueDecomposition;
 import org.ejml.ops.CommonOps;
 import org.ejml.ops.SpecializedOps;
@@ -22,6 +24,7 @@ import org.javatuples.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Random;
 
 public class MatrixOps {
 
@@ -137,6 +140,21 @@ public class MatrixOps {
   }
   public static double dot( DenseMatrix64F x, DenseMatrix64F y ) {
     return VectorVectorMult.innerProd( x, y );
+  }
+
+  public static double[][] mult( double[][] A, double[][] B ) {
+    assert( A[0].length == B.length );
+    int m = A.length;
+    int n = A[0].length;
+    int l = B[0].length;
+
+    double[][] C = new double[m][l];
+    for( int i = 0; i < m; i++ )
+      for( int j = 0; j < l; j++ )
+        for( int k = 0; k < l; k++ )
+          C[i][j] += A[i][k] * B[k][j];
+
+   return C;
   }
 
   /**
@@ -922,6 +940,14 @@ public class MatrixOps {
   public static Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> svdk( DenseMatrix64F X ) {
     return svdk(SimpleMatrix.wrap(X));
   }
+  public static Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> svd( SimpleMatrix X ) {
+    @SuppressWarnings("unchecked")
+    SimpleSVD<SimpleMatrix> UWV = X.svd(false);
+    SimpleMatrix U = UWV.getU();
+    SimpleMatrix W = UWV.getW();
+    SimpleMatrix V = UWV.getV();
+    return new Triplet<>(U, W, V);
+  }
 
   /**
    * Compute the best k-rank approximation of the SVD
@@ -1013,6 +1039,17 @@ public class MatrixOps {
     SimpleMatrix U = UDV.getValue0();
     SimpleMatrix D = UDV.getValue1();
     return U.mult(sqrt( D ).invert());
+  }
+  public static SimpleMatrix randomizedWhitener( SimpleMatrix X, SimpleMatrix Q, int K ) {
+    Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> UDV = svd(X);
+    SimpleMatrix U = UDV.getValue0();
+    U = Q.mult(U);
+    SimpleMatrix D = UDV.getValue1();
+    // Truncate
+    U = U.extractMatrix(0, SimpleMatrix.END, 0, K);
+    D = D.extractMatrix(0, K, 0, K);
+    SimpleMatrix Dsqrtinv = sqrt( D ).invert();
+    return U.mult(Dsqrtinv);
   }
   public static SimpleMatrix colorer( SimpleMatrix X ) {
     Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> UDV = svdk(X);
@@ -1198,6 +1235,25 @@ public class MatrixOps {
 
     return true;
   }
+  public static double symmetricSkewMeasure( FullTensor T ) {
+    double skew = 0.0;
+    assert(T.D1 == T.D2 && T.D2 == T.D3 );
+    int D = T.D1;
+
+    for( int d1 = 0; d1 < D; d1++ ) {
+      for( int d2 = 0; d2 < D; d2++ ) {
+        for( int d3 = 0; d3 < D; d3++ ) {
+          skew += ( Math.abs(T.X[d1][d2][d3] - T.X[d1][d3][d2]) +
+                    Math.abs(T.X[d1][d2][d3] - T.X[d2][d1][d3]) +
+                    Math.abs(T.X[d1][d2][d3] - T.X[d2][d3][d1]) +
+                    Math.abs(T.X[d1][d2][d3] - T.X[d3][d1][d2]) +
+                    Math.abs(T.X[d1][d2][d3] - T.X[d3][d2][d1]) ) / 5;
+        }
+      }
+    }
+
+    return skew;
+  }
 
   /**
    * Computes the reciprocal of a vector;
@@ -1265,6 +1321,150 @@ public class MatrixOps {
     assert( col.get(indices[0]) > col.get(indices[indices.length-1]) );
 
     return indices;
+  }
+
+  public static interface Matrixable {
+    public int numRows();
+    public int numCols();
+    // TODO: Change everything to be SimpleMatrix?
+    public SimpleMatrix rightMultiply(SimpleMatrix right);
+    public SimpleMatrix leftMultiply(SimpleMatrix left);
+    public SimpleMatrix doubleMultiply(SimpleMatrix left, SimpleMatrix right);
+  }
+  public static Matrixable matrixable(final SimpleMatrix M) {
+    return new Matrixable() {
+
+      @Override
+      public int numRows() {
+        return M.numRows();
+      }
+
+      @Override
+      public int numCols() {
+        return M.numCols();
+      }
+
+      @Override
+      public SimpleMatrix rightMultiply(SimpleMatrix right) {
+        return M.mult(right);
+      }
+
+      @Override
+      public SimpleMatrix leftMultiply(SimpleMatrix leftT) {
+        return leftT.transpose().mult(M);
+      }
+
+      @Override
+      public SimpleMatrix doubleMultiply(SimpleMatrix leftT, SimpleMatrix right) {
+        return leftT.transpose().mult(M).mult(right);
+      }
+    };
+  }
+
+  public static interface Tensorable {
+    public int numD1();
+    public int numD2();
+    public int numD3();
+    public FullTensor multiply1(SimpleMatrix M);
+    public FullTensor multiply2(SimpleMatrix M);
+    public FullTensor multiply12(SimpleMatrix M, SimpleMatrix N);
+    FullTensor multiply123(SimpleMatrix L, SimpleMatrix M, SimpleMatrix N);
+  }
+  public static Tensorable tensorable(final FullTensor T) {
+    return new Tensorable() {
+      @Override
+      public int numD1() {
+        return T.D1;
+      }
+
+      @Override
+      public int numD2() {
+        return T.D2;
+      }
+
+      @Override
+      public int numD3() {
+        return T.D3;
+      }
+
+      @Override
+      public FullTensor multiply1(SimpleMatrix M) {
+        return T.rotate(0, M);
+      }
+
+      @Override
+      public FullTensor multiply2(SimpleMatrix M) {
+        return T.rotate(1, M);
+      }
+
+      @Override
+      public FullTensor multiply12(SimpleMatrix M, SimpleMatrix N) {
+        return T.rotate(M, N, SimpleMatrix.identity(T.D3));
+      }
+      @Override
+      public FullTensor multiply123(SimpleMatrix L, SimpleMatrix M, SimpleMatrix N) {
+        return T.rotate(L, M, N);
+      }
+    };
+  }
+
+
+  /**
+   * Implements the randomized range finder routine from:
+   *   Finding structure with randomness: Probabilistic algorithms for constructing approximate matrix decompositions
+   *   Nathan Halko, Per-Gunnar Martinsson, Joel A. Tropp
+   *   http://arxiv.org/pdf/0909.4061
+   *
+   * @param M - object supporting multiply routines (used for random projections)
+   * @param p - Size of the random projection. Should be about $2k$, where $k$ is the rank approximation of $M$ you desire
+   * @param rnd - Random generator
+   * @return - the range of M, Q (i.e. A ~= Q Q* A)
+   */
+  public static SimpleMatrix randomizedRangeFinder(Matrixable M, int p, Random rnd) {
+    // Create a random matrix
+    int n = M.numRows();
+    SimpleMatrix Omega = RandomFactory.randn(rnd, n, p);
+
+    // Form the product Y = A Omega
+    DenseMatrix64F Y = M.rightMultiply(Omega).getMatrix();
+    QRDecomposition<DenseMatrix64F> qr = DecompositionFactory.qr(n, p);
+    qr.decompose(Y);
+    DenseMatrix64F Q = qr.getQ(null, true);
+
+    return SimpleMatrix.wrap(Q);
+  }
+
+  /**
+   * Compute the SVD approximately.
+   * @param M - object supporting matrix multiply routines
+   * @param Qt - range of M
+   * @return - SVD of M
+   */
+  public static Triplet<SimpleMatrix,SimpleMatrix,SimpleMatrix> randomizedSvd(Matrixable M, SimpleMatrix Qt) {
+    int N = M.numRows();
+
+    // Form B = Q* A
+    SimpleMatrix B = new SimpleMatrix(M.leftMultiply(Qt));
+    // Compute SVD of smaller matrix
+    Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> UDV = svd(B);
+
+    // Project up: $U = Q\tilde{U}$
+    SimpleMatrix U = (new SimpleMatrix(Qt)).mult(UDV.getValue0());
+
+    return Triplet.with(U, UDV.getValue1(), UDV.getValue2());
+  }
+  public static Triplet<SimpleMatrix,SimpleMatrix,SimpleMatrix> randomizedSvd(Matrixable M, SimpleMatrix Qt, int K) {
+    Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> UWV = randomizedSvd(M, Qt);
+    SimpleMatrix U = UWV.getValue0();
+    SimpleMatrix W = UWV.getValue1();
+    SimpleMatrix V = UWV.getValue2();
+
+    // Truncate U, W and V to k-rank
+    U = U.extractMatrix(0, SimpleMatrix.END, 0, K);
+    W = W.extractMatrix(0, K, 0, K);
+    V = V.extractMatrix(0, SimpleMatrix.END, 0, K);
+
+    return Triplet.with(U, W, V);
   }
 }
 

@@ -5,13 +5,11 @@
  */
 package learning.spectral;
 
+import learning.data.ComputableMoments;
 import learning.linalg.*;
 
-import learning.exceptions.NumericalException;
-import learning.exceptions.RecoveryFailure;
-
 import learning.models.MixtureOfGaussians;
-import learning.models.MixtureOfGaussians.*;
+
 import static learning.models.MixtureOfGaussiansTest.*;
 
 import org.javatuples.*;
@@ -184,6 +182,66 @@ public class TensorMethodTest {
     if( parser.parse( args ) ) {
     }
   }
+
+  public void testProjection( MixtureOfGaussians model ) {
+    int K = model.getK();
+    int D = model.getD();
+    ComputableMoments moments = model.computeExactMoments_();
+    Pair<SimpleMatrix,FullTensor> symmetricMoments = model.computeSymmetricMoments().getValue2();
+
+    TensorMethod algo = new TensorMethod();
+    FullTensor Triples = algo.preprocessSymmetricTensor(K, moments).getValue1();
+
+    // Test that these are symmetric indeed.
+
+    // Property tests
+    Assert.assertTrue( Triples.D1 == K ) ;
+    Assert.assertTrue( Triples.D2 == K ) ;
+    Assert.assertTrue( Triples.D3 == K ) ;
+
+    Assert.assertTrue( MatrixOps.isSymmetric( Triples ) );
+
+    // Equality Tests
+    SimpleMatrix W = MatrixOps.whitener(symmetricMoments.getValue0(), K);
+    FullTensor T = symmetricMoments.getValue1().rotate(W, W, W);
+    FullTensor Tm = T.clone().scale(-1.0);
+    // Either one is possible because of $W$
+    Assert.assertTrue( MatrixOps.allclose( T, Triples ) || MatrixOps.allclose( Tm, Triples ));
+  }
+  @Test
+  public void testProjection() { testProjection(generateSymmetricSparseEye()); }
+
+
+  public void testProjectedSymmetrization( MixtureOfGaussians model ) {
+    int K = model.getK();
+    int D = model.getD();
+    ComputableMoments moments = model.computeExactMoments_();
+
+    Pair<SimpleMatrix,FullTensor> symmetricMoments = model.computeSymmetricMoments().getValue2();
+
+    TensorMethod algo = new TensorMethod();
+    FullTensor Triples = algo.preprocessTensor(K, moments);
+
+    // Test that these are symmetric indeed.
+
+    // Property tests
+    Assert.assertTrue( Triples.D1 == K ) ;
+    Assert.assertTrue( Triples.D2 == K ) ;
+    Assert.assertTrue( Triples.D3 == K ) ;
+
+    Assert.assertTrue( MatrixOps.isSymmetric(Triples));
+
+    // Equality Tests
+    SimpleMatrix W = MatrixOps.whitener(symmetricMoments.getValue0(), K);
+    FullTensor T = symmetricMoments.getValue1().rotate(W, W, W);
+    FullTensor Tm = T.clone().scale(-1.0);
+    // TODO: Handle symmetries
+    Assert.assertTrue( MatrixOps.allclose( T, Triples, 1e-3 ) || MatrixOps.allclose( Tm, Triples, 1e-3 ));
+  }
+
+  @Test
+  public void testProjectedSymmetrization() { testProjectedSymmetrization(generateUnSymmetricSparseEye()); }
+
 
 }
 

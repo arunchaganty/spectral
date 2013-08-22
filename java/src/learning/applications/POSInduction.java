@@ -5,26 +5,25 @@
  */
 package learning.applications;
 
-import learning.Misc;
-import learning.linalg.*;
-import learning.data.*;
-import learning.em.*;
-import learning.spectral.*;
+import fig.basic.*;
+import fig.exec.Execution;
+import learning.data.ParsedCorpus;
+import learning.linalg.MatrixFactory;
+import learning.linalg.MatrixOps;
 import learning.models.HiddenMarkovModel;
 import learning.models.HiddenMarkovModel.Params;
-
 import org.ejml.simple.SimpleMatrix;
 import org.javatuples.Quartet;
 
-import fig.basic.*;
-import fig.exec.*;
-import fig.prob.*;
-import fig.record.*;
-import static fig.basic.LogInfo.*;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
-import java.io.*;
-import java.util.*;
-import static learning.Misc.*;
+import static fig.basic.LogInfo.*;
 
 /**
  * Perform POS induction, aka HMM learning.
@@ -166,9 +165,6 @@ public class POSInduction implements Runnable {
 
   /**
    * Greedy matching accuracy
-   * @param model
-   * @param C
-   * @return
    */
   public double reportVsAllAccuracy( HiddenMarkovModel model, ParsedCorpus C ) {
     begin_track("vs-all accuracy");
@@ -313,9 +309,7 @@ public class POSInduction implements Runnable {
           MatrixFactory.toArray(O)); 
       return params;
 
-    } catch( IOException e ) {
-      LogInfo.fail(e);
-    } catch( ClassNotFoundException e ) {
+    } catch( IOException | ClassNotFoundException e ) {
       LogInfo.fail(e);
     }
     return null;

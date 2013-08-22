@@ -23,6 +23,8 @@ public class TensorMethod implements Runnable {
   public int iters = 1000;
   @Option(gloss="Number of attempts to find good eigen-vectors")
   public int attempts = 10;
+  @Option(gloss="Random number generator for tensor method and random projections")
+  Random rnd = new Random(1);
 
   public TensorMethod() {}
   public TensorMethod(int iters, int attempts) {
@@ -140,8 +142,66 @@ public class TensorMethod implements Runnable {
 
     LogInfo.end_track("symmetrize-views");
     return new Pair<>(Pairs, Triples);
-  } 
+  }
 
+  /**
+   * Symmetrizes a (large) 3-view mixture model and whitens it.
+   * @param K - number of components
+   * @param obj - object with computable moments
+   * @return - a whitened tensor Triples_3
+   *  TODO: Have a better name
+   */
+  public FullTensor preprocessTensor( int K, ComputableMoments obj ) {
+    int p = 2*K;
+    // First, compute the range
+    SimpleMatrix Q2 = MatrixOps.randomizedRangeFinder(obj.computeP12(), p, rnd);
+    // Now do the SVD to compute the top-k range of both left and right spaces; truncates everything to $K$
+    Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> triplet = MatrixOps.randomizedSvd(obj.computeP12(), Q2, K);
+    SimpleMatrix Q1 = triplet.getValue0(); Q2 = triplet.getValue2(); // K x D
+    // Compute the range for view 3
+    SimpleMatrix Q3 = MatrixOps.randomizedRangeFinder(obj.computeP13(), p, rnd); // p x p
+
+    // Next, project P12, P32 and P13 to their ranges
+    SimpleMatrix P12 = obj.computeP12().doubleMultiply(Q1, Q2); // K x K
+    SimpleMatrix P32 = obj.computeP32().doubleMultiply(Q3, Q2); // p x K
+    SimpleMatrix P13 = obj.computeP13().doubleMultiply(Q1, Q3); // K x p
+    // Compute P12inv
+    SimpleMatrix P12inv = P12.invert();
+
+    // Finally, compute Pairs3, and whiten.
+    // P = U_3 P_{31} U_1^T (\tilde P_{21})^{-1} U_2 P_{23} U_3
+    SimpleMatrix Pairs = P32.mult(P12inv).mult(P13);
+    SimpleMatrix W = MatrixOps.whitener(Pairs, K);
+
+    // Use this to compute the whitened symmetrized Triples.
+    // T( W (P32 (P12)^-1), ((P12^-1)P13)^T, I )
+    SimpleMatrix first = W.transpose().mult(P32.mult(P12inv).mult(Q1.transpose()));
+    SimpleMatrix second = W.transpose().mult((Q2.mult(P12inv).mult(P13)).transpose());
+    SimpleMatrix third = W.transpose().mult(Q3.transpose());
+
+    FullTensor tensor = obj.computeP123().multiply123(first.transpose(), second.transpose(), third.transpose());
+
+    return tensor;
+  }
+
+  /**
+   * Compute the whitened full tensor
+   * @param K - Number of components to keep in the whitener
+   * @param obj - object with computable moments
+   * @return - Pair of whitener and whitened tensor
+   */
+  public Pair<SimpleMatrix, FullTensor> preprocessSymmetricTensor( int K, ComputableMoments obj ) {
+    int p = 2*K;
+    // First, compute the ranges
+    SimpleMatrix Q = MatrixOps.randomizedRangeFinder(obj.computeP12(), p, rnd);
+
+    // Compute "projected" Pairs, and whiten.
+    SimpleMatrix Pairs = obj.computeP12().doubleMultiply(Q, Q);
+    SimpleMatrix W = Q.mult(MatrixOps.whitener(Pairs, K));
+
+    FullTensor tensor = obj.computeP123().multiply123(W, W, W);
+    return Pair.with(W, tensor);
+  }
 
   /**
    * Extract parameters right from a data sequence.
@@ -226,9 +286,7 @@ public class TensorMethod implements Runnable {
       out.writeObject(parameters);
       out.close();
       LogInfo.end_track();
-    } catch( ClassNotFoundException e ) {
-      LogInfo.logsForce( e );
-    } catch ( IOException e ) {
+    } catch( ClassNotFoundException | IOException e ) {
       LogInfo.logsForce( e );
     }
   }
