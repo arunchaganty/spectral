@@ -4,7 +4,7 @@
     <facet type="scala" name="Scala">
       <configuration>
         <option name="compilerLibraryLevel" value="Project" />
-        <option name="compilerLibraryName" value="scala" />
+        <option name="compilerLibraryName" value="scala-2.10" />
         <option name="explainTypeErrors" value="true" />
       </configuration>
     </facet>
@@ -19,8 +19,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="deps" level="project" />
     <orderEntry type="library" name="breeze" level="project" />
-    <orderEntry type="library" name="netlib-java" level="project" />
-    <orderEntry type="library" name="scala" level="project" />
+    <orderEntry type="library" name="scala-2.10" level="project" />
   </component>
 </module>
 
