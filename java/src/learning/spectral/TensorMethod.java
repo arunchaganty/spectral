@@ -149,9 +149,8 @@ public class TensorMethod implements Runnable {
    * @param K - number of components
    * @param obj - object with computable moments
    * @return - a whitened tensor Triples_3
-   *  TODO: Have a better name
    */
-  public FullTensor preprocessTensor( int K, ComputableMoments obj ) {
+  public Pair<SimpleMatrix,FullTensor> randomizedTensorRecovery( int K, ComputableMoments obj ) {
     int p = 2*K;
     // First, compute the range
     SimpleMatrix Q2 = MatrixOps.randomizedRangeFinder(obj.computeP12(), p, rnd);
@@ -181,7 +180,7 @@ public class TensorMethod implements Runnable {
 
     FullTensor tensor = obj.computeP123().multiply123(first.transpose(), second.transpose(), third.transpose());
 
-    return tensor;
+    return Pair.with(W,tensor);
   }
 
   /**
@@ -190,7 +189,7 @@ public class TensorMethod implements Runnable {
    * @param obj - object with computable moments
    * @return - Pair of whitener and whitened tensor
    */
-  public Pair<SimpleMatrix, FullTensor> preprocessSymmetricTensor( int K, ComputableMoments obj ) {
+  public Pair<SimpleMatrix, FullTensor> randomizedSymmetricTensorRecovery( int K, ComputableMoments obj ) {
     int p = 2*K;
     // First, compute the ranges
     SimpleMatrix Q = MatrixOps.randomizedRangeFinder(obj.computeP12(), p, rnd);

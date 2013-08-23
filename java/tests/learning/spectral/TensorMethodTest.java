@@ -211,7 +211,6 @@ public class TensorMethodTest {
   @Test
   public void testProjection() { testProjection(generateSymmetricSparseEye()); }
 
-
   public void testProjectedSymmetrization( MixtureOfGaussians model ) {
     int K = model.getK();
     int D = model.getD();
@@ -235,13 +234,16 @@ public class TensorMethodTest {
     SimpleMatrix W = MatrixOps.whitener(symmetricMoments.getValue0(), K);
     FullTensor T = symmetricMoments.getValue1().rotate(W, W, W);
     FullTensor Tm = T.clone().scale(-1.0);
-    // TODO: Handle symmetries
+    System.out.println( Math.min( MatrixOps.maxdiff( T, Triples), MatrixOps.maxdiff( Tm, Triples) ) );
     Assert.assertTrue( MatrixOps.allclose( T, Triples, 1e-3 ) || MatrixOps.allclose( Tm, Triples, 1e-3 ));
   }
 
   @Test
   public void testProjectedSymmetrization() { testProjectedSymmetrization(generateUnSymmetricSparseEye()); }
 
+  // Note: this test fails
+  @Test
+  public void testProjectedSymmetrizationRandom() { testProjectedSymmetrization(generateUnSymmetricSparseRandom()); }
 
 }
 
