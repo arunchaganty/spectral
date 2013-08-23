@@ -190,7 +190,7 @@ public class TensorMethodTest {
     Pair<SimpleMatrix,FullTensor> symmetricMoments = model.computeSymmetricMoments().getValue2();
 
     TensorMethod algo = new TensorMethod();
-    FullTensor Triples = algo.preprocessSymmetricTensor(K, moments).getValue1();
+    FullTensor Triples = algo.randomizedSymmetricTensorRecovery(K, moments).getValue1();
 
     // Test that these are symmetric indeed.
 
@@ -219,7 +219,7 @@ public class TensorMethodTest {
     Pair<SimpleMatrix,FullTensor> symmetricMoments = model.computeSymmetricMoments().getValue2();
 
     TensorMethod algo = new TensorMethod();
-    FullTensor Triples = algo.preprocessTensor(K, moments);
+    FullTensor Triples = algo.randomizedTensorRecovery(K, moments).getValue1();
 
     // Test that these are symmetric indeed.
 

@@ -5,6 +5,8 @@
  */
 package learning.data;
 
+import learning.linalg.MatrixOps;
+
 import java.io.*;
 import java.util.*;
 
@@ -91,5 +93,4 @@ public class Corpus {
 
     return new Corpus( dict_, C_ );
   }
-
 }
