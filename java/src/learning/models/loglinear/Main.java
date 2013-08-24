@@ -440,8 +440,9 @@ public class Main implements Runnable {
 
       TensorMethod algo = new TensorMethod();
 
+      // FIXME: Use computable moments
       Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> 
-        bottleneckMoments = algo.recoverParameters( opts.K, opts.D, dataSeq );
+        bottleneckMoments = null; //algo.recoverParameters( opts.K, opts.D, dataSeq );
 
       // Set appropriate measuredFeatures to observed moments
       switch (opts.modelType) {

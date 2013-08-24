@@ -1,10 +1,11 @@
 package learning.linalg;
 
 import fig.basic.LogInfo;
-import org.ejml.data.DenseMatrix64F;
+import fig.basic.Option;
 import org.ejml.simple.SimpleMatrix;
-import org.ejml.simple.SimpleSVD;
 import org.javatuples.Pair;
+
+import java.util.Random;
 
 /**
  * Implements Anandkumar/Ge/Hsu/Kakade/Telgarsky, 2012.
@@ -13,12 +14,15 @@ import org.javatuples.Pair;
 public class TensorFactorization {
   static final double EPS_CLOSE = 1e-10;
 
+  @Option(gloss="Random number generator for tensor method and random projections")
+  Random rnd = new Random();
+
   /**
    * Perform a single eigen-decomposition step
-   * @param T
-   * @return
+   * @param T - Full tensor
+   * @return - (eigenvalue, eigenvector).
    */
-  protected static Pair<Double,SimpleMatrix> eigendecomposeStep( Tensor T, int attempts, int iters ) {
+  protected Pair<Double,SimpleMatrix> eigendecomposeStep( Tensor T, int attempts, int iters ) {
     int N = iters;
     int D = T.getDim(0);
 
@@ -26,7 +30,7 @@ public class TensorFactorization {
     SimpleMatrix maxEigenvector = null;
 
     for( int attempt = 0; attempt < attempts; attempt++ ) {
-      SimpleMatrix theta = RandomFactory.randn(1, D);
+      SimpleMatrix theta = RandomFactory.randn(rnd, 1, D);
       theta.scale(1.0/MatrixOps.norm(theta));
       if( attempt % 10 == 0 )
         LogInfo.logs("Attempt %d/%d", attempt, attempts);
@@ -56,28 +60,30 @@ public class TensorFactorization {
   /**
    * Return T - scale vector^{\otimes 3}
    * "Efficient" inplace deflation
-   * @param scale
-   * @param v
-   * @return
+   * @param scale - remove $v$ with this scale
+   * @param v - vector to remove
+   * @return - Deflated tensor
    */
-  protected static void deflate(FullTensor T, double scale, double[] v) {
+  protected void deflate(FullTensor T, double scale, double[] v) {
     int D = T.getDim(0);
     for( int d1 = 0; d1 < D; d1++ )
       for( int d2 = 0; d2 < D; d2++ )
         for( int d3 = 0; d3 < D; d3++ )
           T.set(d1,d2,d3, T.get(d1, d2, d3) - scale * v[d1] * v[d2] * v[d3] );
   }
-  protected static void deflate(FullTensor T, double scale, SimpleMatrix vector) {
+  protected void deflate(FullTensor T, double scale, SimpleMatrix vector) {
     deflate(T, scale, MatrixFactory.toVector(vector) );
   }
 
   /**
    * Find the first $k$ eigen-vectors and eigen-values of the tensor $T = \sum \lambda_i v_i^{\otimes 3}$
-   * @param T
+   * @param T - Tensor to be decomposed
    * @param K - largest K eigenvalues will be returned
+   * @param attempts - number of times each eigendecomposition step is run (to pick the eigenvector of largest magnitude)
+   * @param iters - Number of iterations to run the power method.
    * @return eigenvalues and eigenvectors
    */
-  public static Pair<SimpleMatrix, SimpleMatrix> eigendecompose( FullTensor T, int K, int attempts, int iters ) {
+  public Pair<SimpleMatrix, SimpleMatrix> eigendecompose( FullTensor T, int K, int attempts, int iters ) {
     int D = T.getDim(0);
 
     SimpleMatrix[] eigenvectors = new SimpleMatrix[K];
@@ -102,80 +108,30 @@ public class TensorFactorization {
       deflate(T, eigenvalues[k], eigenvectors[k]);
     }
 
-    return new Pair<>(MatrixFactory.fromVector(eigenvalues), MatrixFactory.columnStack(eigenvectors));
+    SimpleMatrix eigenvalues_ = MatrixFactory.fromVector(eigenvalues);
+    SimpleMatrix eigenvectors_ = MatrixFactory.columnStack(eigenvectors);;
+
+    {
+      assert( K == eigenvalues_.getNumElements() );
+      // Make sure this was a factorization
+      FullTensor T_ = FullTensor.fromDecomposition( eigenvalues_, eigenvectors_ );
+      LogInfo.logs( "T_: " + MatrixOps.diff(T, T_) );
+    }
+
+    return Pair.with(eigenvalues_, eigenvectors_);
   }
-  public static Pair<SimpleMatrix, SimpleMatrix> eigendecompose( FullTensor T, int K ) {
+  public Pair<SimpleMatrix, SimpleMatrix> eigendecompose( FullTensor T, int K ) {
     return eigendecompose(T, K, 10, 100);
   }
-  public static Pair<SimpleMatrix, SimpleMatrix> eigendecompose( FullTensor T ) {
+  public Pair<SimpleMatrix, SimpleMatrix> eigendecompose( FullTensor T ) {
     int K = T.getDim(0);
     return eigendecompose(T, K);
   }
 
   /**
-   * Whiten and decompose
-   * @param T - Tensor
-   * @param P - Second-moments
-   * @return
-   */
-  public static Pair<SimpleMatrix, SimpleMatrix> eigendecompose( FullTensor T, SimpleMatrix P, int K, int attempts, int iters ) {
-    LogInfo.begin_track("tensor-eigendecomposition");
-
-    // Whiten
-    LogInfo.logs( "k(P): " + MatrixOps.conditionNumber(P,K) );
-    SimpleMatrix W = MatrixOps.whitener(P, K);
-    //LogInfo.logs( "W: " + W );
-    SimpleMatrix Winv = MatrixOps.colorer(P, K);
-    FullTensor Tw = T.rotate(W,W,W);
-
-    Pair<SimpleMatrix, SimpleMatrix> pair = eigendecompose(Tw, K, attempts, iters);
-
-    // Color them in again
-    SimpleMatrix eigenvalues = pair.getValue0();
-    SimpleMatrix eigenvectors = pair.getValue1();
-
-    assert( K == eigenvalues.getNumElements() );
-    int D = Tw.getDim(0);
-
-    // TODO: Remove
-    // Make sure this was a factorization
-    FullTensor Tw_ = FullTensor.fromDecomposition( eigenvalues, eigenvectors );
-    LogInfo.logs( "Tw_: " + MatrixOps.diff(Tw, Tw_) );
-
-
-    // Scale the vectors by 1/sqrt(eigenvalues);
-    {
-      for( int k = 0; k < K; k++ )
-        for( int d = 0; d < D; d++ )
-          eigenvectors.set(d,k, eigenvectors.get(d,k) * eigenvalues.get(k) ) ;
-    }
-    eigenvectors = Winv.mult( eigenvectors );
-
-    // Eigenvalues are w^{-1/2}; w is what we want.
-    for(int i = 0; i < K; i++)
-      eigenvalues.set( i, Math.pow(eigenvalues.get(i), -2) );
-
-    FullTensor T_ = FullTensor.fromDecomposition( eigenvalues, eigenvectors );
-    LogInfo.logs( "T_: " + MatrixOps.diff(T, T_) );
-
-    LogInfo.end_track("tensor-eigendecomposition");
-    return new Pair<>(eigenvalues, eigenvectors);
-  }
-  public static Pair<SimpleMatrix, SimpleMatrix> eigendecompose( FullTensor T, SimpleMatrix P, int K ) {
-    return eigendecompose(T, P, K, 10, 100 );
-  }
-  public static Pair<SimpleMatrix, SimpleMatrix> eigendecompose( FullTensor T, SimpleMatrix P ) {
-    int K = MatrixOps.rank(P);
-    return eigendecompose(T, P, K);
-  }
-
-  /**
    * Check to see that v is indeed an eigenvector of T
-   * @param T
-   * @param v
-   * @return
    */
-  protected static boolean isEigenvector( Tensor T, SimpleMatrix v ) {
+  protected boolean isEigenvector( Tensor T, SimpleMatrix v ) {
     // Firstly, normalize $v$ - to be sure.
     v = MatrixOps.normalize(v);
     SimpleMatrix u = T.project2( 1, 2, v, v );

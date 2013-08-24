@@ -18,13 +18,15 @@ import org.apache.commons.io.FilenameUtils;
 /**
  * Recover parameters from symmetric multi-views using the Tensor powerup method
  */
-public class TensorMethod implements Runnable {
+public class TensorMethod {
   @Option(gloss="Number of iterations to run the power method to convergence")
   public int iters = 1000;
   @Option(gloss="Number of attempts to find good eigen-vectors")
   public int attempts = 10;
   @Option(gloss="Random number generator for tensor method and random projections")
-  Random rnd = new Random(1);
+  public Random rnd = new Random();
+  @OptionSet(name="Tensor Factorization method")
+  public TensorFactorization tf = new TensorFactorization();
 
   public TensorMethod() {}
   public TensorMethod(int iters, int attempts) {
@@ -33,25 +35,83 @@ public class TensorMethod implements Runnable {
   }
 
   /**
-   * The tensor factorization method is just finding
-   * the eigenvalues/eigenvectors of the tensor Triples.
-   * @param K
-   * @param Pairs
-   * @param Triples
-   * @return
+   * Whiten the tensor Triples using Pairs.
+   * @return - (unwhitening matrix, whitened tensor).
    */
-  public Pair<SimpleMatrix,SimpleMatrix> recoverParameters( int K, SimpleMatrix Pairs, FullTensor Triples ) {
-    Pair<SimpleMatrix, SimpleMatrix> pair = TensorFactorization.eigendecompose(Triples, Pairs, K, attempts, iters);
-    return pair;
+  protected Pair<SimpleMatrix, FullTensor> whiten(int K, SimpleMatrix Pairs, FullTensor Triples) {
+    // Whiten
+    LogInfo.begin_track("whitening");
+    LogInfo.logs( "k(P): " + MatrixOps.conditionNumber(Pairs,K) );
+    SimpleMatrix W = MatrixOps.whitener(Pairs, K);
+    SimpleMatrix Winv = MatrixOps.colorer(Pairs, K);
+    FullTensor Tw = Triples.rotate(W,W,W);
+    LogInfo.end_track("whitening");
+
+    return Pair.with(Winv, Tw);
+  }
+
+  /**
+   * Unwhiten the eigenvectors/eigenvalues.
+   */
+  protected Pair<SimpleMatrix, SimpleMatrix> unwhiten(SimpleMatrix eigenvalues, SimpleMatrix eigenvectors, SimpleMatrix Winv) {
+    int K = eigenvectors.numCols();
+    int D = eigenvectors.numRows();
+    // Color them in again
+    LogInfo.begin_track("un-whitening");
+
+    // Scale the vectors by 1/sqrt(eigenvalues);
+    {
+      for( int d = 0; d < D; d++ )
+          for( int k = 0; k < K; k++ )
+            eigenvectors.set(d,k, eigenvectors.get(d,k) * eigenvalues.get(k) ) ;
+    }
+    eigenvectors = Winv.mult( eigenvectors );
+
+    // Eigenvalues are w^{-1/2}; w is what we want.
+    for(int i = 0; i < K; i++)
+      eigenvalues.set( i, Math.pow(eigenvalues.get(i), -2) );
+    LogInfo.end_track("un-whitening");
+
+    return Pair.with(eigenvalues, eigenvectors);
   }
 
   /**
    * The tensor factorization method is just finding
    * the eigenvalues/eigenvectors of the tensor Triples.
-   * @param K
-   * @param Pairs
-   * @param Triples
-   * @return
+   * Whiten Triples before the eigendecomposition
+   * @param K - Rank of the model
+   * @param Pairs - 2nd order moments for factorization
+   * @param Triples - 3rd order moments.
+   * @return - (Eigenvalues, Eigenvectors)
+   */
+  public Pair<SimpleMatrix,SimpleMatrix> recoverParameters( int K, SimpleMatrix Pairs, FullTensor Triples ) {
+
+    Pair<SimpleMatrix,FullTensor> whitened = whiten(K, Pairs, Triples);
+    SimpleMatrix Winv = whitened.getValue0();
+    FullTensor Tw = whitened.getValue1();
+
+
+    Pair<SimpleMatrix, SimpleMatrix> pair = tf.eigendecompose(Tw, K, attempts, iters);
+    SimpleMatrix eigenvalues = pair.getValue0(); SimpleMatrix eigenvectors = pair.getValue1();
+
+    pair = unwhiten(eigenvalues, eigenvectors, Winv);
+    eigenvalues = pair.getValue0(); eigenvectors = pair.getValue1();
+
+    FullTensor T_ = FullTensor.fromDecomposition( eigenvalues, eigenvectors );
+    LogInfo.logs( "T_: " + MatrixOps.diff(Triples, T_) );
+
+    return Pair.with(eigenvalues, eigenvectors);
+  }
+
+  /**
+   * With un-symmetric views, this method will first symmetrize the views to recover the parameters M_3,
+   * and then do some post-processing to recover the remaining parameters M_1 and M_2.
+   * @param K - Rank of model
+   * @param M12 - Pairwise moments
+   * @param M13 - Pairwise moments
+   * @param M23 - Pairwise moments
+   * @param M123 - Tensor
+   * @return - (weights, M1, M2, M3).
    */
   public Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> 
       recoverParameters( int K, SimpleMatrix M12, 
@@ -144,14 +204,68 @@ public class TensorMethod implements Runnable {
     return new Pair<>(Pairs, Triples);
   }
 
+
+  /**
+   * Extract parameters right from a data sequence.
+   */
+//  @Deprecated
+//  public Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix>
+//      recoverParameters( int K, int D, Iterator<double[][]> dataSeq ) {
+//      // Compute moments
+//      MomentAggregator agg = new MomentAggregator(D, dataSeq);
+//      agg.run();
+//
+//      // In our case, the moments are symmetric.
+//      //Pair<SimpleMatrix,SimpleMatrix> params = recoverParameters( K, agg.getMoments().getValue0(),
+//      //  agg.getMoments().getValue3() );
+//      Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> params = recoverParameters( K, agg.getMoments() );
+//
+//      return new Quartet<>( params.getValue0(),
+//          params.getValue1(),
+//          params.getValue2(),
+//          params.getValue3() );
+//
+//      //return recoverParameters( K, agg.getMoments() );
+//    }
+
+  /**
+   * Compute the parameters of a tensor using random subspace estimation tricks.
+   * @param K - rank of model
+   * @param obj - object with computable moments
+   * @return - (eigenvalue, eigenvector)
+   */
+  public Pair<SimpleMatrix, SimpleMatrix> randomizedSymmetricRecoverParameters( int K, ComputableMoments obj ) {
+    int p = 2*K;
+    // First, compute the ranges
+    SimpleMatrix Q = MatrixOps.randomizedRangeFinder(obj.computeP12(), p, rnd);
+
+    // Compute "projected" Pairs, and whiten.
+    SimpleMatrix Pairs = obj.computeP12().doubleMultiply(Q, Q);
+    SimpleMatrix W = Q.mult(MatrixOps.whitener(Pairs, K));
+    SimpleMatrix Winv = Q.mult(MatrixOps.colorer(Pairs, K));
+    FullTensor Tw = obj.computeP123().multiply123(W, W, W);
+
+    // Eigendecompose to find stuff.
+    Pair<SimpleMatrix, SimpleMatrix> pair = tf.eigendecompose(Tw, K, attempts, iters);
+    SimpleMatrix eigenvalues = pair.getValue0(); SimpleMatrix eigenvectors = pair.getValue1();
+
+    // Unwhiten
+    pair = unwhiten(eigenvalues, eigenvectors, Winv);
+    eigenvalues = pair.getValue0(); eigenvectors = pair.getValue1();
+
+    return Pair.with(eigenvalues, eigenvectors);
+  }
+
   /**
    * Symmetrizes a (large) 3-view mixture model and whitens it.
    * @param K - number of components
    * @param obj - object with computable moments
    * @return - a whitened tensor Triples_3
    */
-  public Pair<SimpleMatrix,FullTensor> randomizedTensorRecovery( int K, ComputableMoments obj ) {
+  public Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> randomizedRecoverParameters( int K, ComputableMoments obj ) {
     int p = 2*K;
+
+    LogInfo.begin_track("find-ranges");
     // First, compute the range
     SimpleMatrix Q2 = MatrixOps.randomizedRangeFinder(obj.computeP12(), p, rnd);
     // Now do the SVD to compute the top-k range of both left and right spaces; truncates everything to $K$
@@ -159,7 +273,9 @@ public class TensorMethod implements Runnable {
     SimpleMatrix Q1 = triplet.getValue0(); Q2 = triplet.getValue2(); // K x D
     // Compute the range for view 3
     SimpleMatrix Q3 = MatrixOps.randomizedRangeFinder(obj.computeP13(), p, rnd); // p x p
+    LogInfo.end_track("find-ranges");
 
+    LogInfo.begin_track("symmetrize-views+whiten");
     // Next, project P12, P32 and P13 to their ranges
     SimpleMatrix P12 = obj.computeP12().doubleMultiply(Q1, Q2); // K x K
     SimpleMatrix P32 = obj.computeP32().doubleMultiply(Q3, Q2); // p x K
@@ -171,6 +287,7 @@ public class TensorMethod implements Runnable {
     // P = U_3 P_{31} U_1^T (\tilde P_{21})^{-1} U_2 P_{23} U_3
     SimpleMatrix Pairs = P32.mult(P12inv).mult(P13);
     SimpleMatrix W = MatrixOps.whitener(Pairs, K);
+    SimpleMatrix Winv = MatrixOps.colorer(Pairs, K);
 
     // Use this to compute the whitened symmetrized Triples.
     // T( W (P32 (P12)^-1), ((P12^-1)P13)^T, I )
@@ -178,125 +295,28 @@ public class TensorMethod implements Runnable {
     SimpleMatrix second = W.transpose().mult((Q2.mult(P12inv).mult(P13)).transpose());
     SimpleMatrix third = W.transpose().mult(Q3.transpose());
 
-    FullTensor tensor = obj.computeP123().multiply123(first.transpose(), second.transpose(), third.transpose());
+    FullTensor Tw = obj.computeP123().multiply123(first.transpose(), second.transpose(), third.transpose());
+    LogInfo.end_track("symmetrize-views+whiten");
 
-    return Pair.with(W,tensor);
-  }
+    // Recover parameters
+    Pair<SimpleMatrix, SimpleMatrix> pair = tf.eigendecompose(Tw, K, attempts, iters);
+    SimpleMatrix eigenvalues = pair.getValue0(); SimpleMatrix eigenvectors = pair.getValue1();
 
-  /**
-   * Compute the whitened full tensor
-   * @param K - Number of components to keep in the whitener
-   * @param obj - object with computable moments
-   * @return - Pair of whitener and whitened tensor
-   */
-  public Pair<SimpleMatrix, FullTensor> randomizedSymmetricTensorRecovery( int K, ComputableMoments obj ) {
-    int p = 2*K;
-    // First, compute the ranges
-    SimpleMatrix Q = MatrixOps.randomizedRangeFinder(obj.computeP12(), p, rnd);
+    // Unwhiten
+    pair = unwhiten(eigenvalues, eigenvectors, Winv);
+    SimpleMatrix weights = pair.getValue0(); SimpleMatrix M3_ = pair.getValue1();
 
-    // Compute "projected" Pairs, and whiten.
-    SimpleMatrix Pairs = obj.computeP12().doubleMultiply(Q, Q);
-    SimpleMatrix W = Q.mult(MatrixOps.whitener(Pairs, K));
+    LogInfo.begin_track("unsymmetrize");
+    // Invert M3 to get M1 and M2.
+    SimpleMatrix M3i = (M3_.transpose()).pseudoInverse().mult( MatrixFactory.diag( MatrixOps.reciprocal(weights) ) );
+    SimpleMatrix M1_ = P13.mult( M3i );
+    SimpleMatrix M2_ = M3i.transpose().mult(P32).transpose();
+    LogInfo.end_track("unsymmetrize");
 
-    FullTensor tensor = obj.computeP123().multiply123(W, W, W);
-    return Pair.with(W, tensor);
-  }
-
-  /**
-   * Extract parameters right from a data sequence.
-   */
-  public Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> 
-      recoverParameters( int K, int D, Iterator<double[][]> dataSeq ) {
-
-      // Compute moments 
-      MomentAggregator agg = new MomentAggregator(D, dataSeq);
-      agg.run();
-
-      // In our case, the moments are symmetric.
-      //Pair<SimpleMatrix,SimpleMatrix> params = recoverParameters( K, agg.getMoments().getValue0(),
-      //  agg.getMoments().getValue3() );
-      Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> params = recoverParameters( K, agg.getMoments() );
-
-      return new Quartet<>( params.getValue0(), 
-          params.getValue1(),
-          params.getValue2(),
-          params.getValue3() );
-
-      //return recoverParameters( K, agg.getMoments() );
-    }
-
-  public class ComputationOptions {
-    @OptionSet(name="moments")
-      public MomentComputer.Options momentOpts = new MomentComputer.Options();
-    @Option(gloss="Path to file containing moments information", required=true)
-      public String momentsPath;
-    @Option(gloss="Number of clusters to use for the factorization", required=true)
-      public int K;
-  }
-  public ComputationOptions opts = new ComputationOptions();
-
-  @SuppressWarnings("unchecked")
-  public void run() {
-    try { 
-      int K = opts.K;
-      MomentComputer.Options momentOpts = opts.momentOpts;
-      // Read moments from path. 
-      LogInfo.begin_track("file-input");
-      ObjectInputStream in = new ObjectInputStream( new FileInputStream( opts.momentsPath ) ); 
-      momentOpts.randomProjSeed = (int) in.readObject();
-      Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,FullTensor> moments = 
-        (Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,FullTensor>)
-        in.readObject();
-      momentOpts.randomProjDim = moments.getValue0().numRows();
-      in.close();
-      assert( moments.getValue0().numCols() == momentOpts.randomProjDim );
-
-      // Read corpus from path. Use seed from projection.
-      // This is mainly to "unproject"
-      ProjectedCorpus PC = new ProjectedCorpus( 
-          Corpus.parseText( momentOpts.dataPath, momentOpts.mapPath ),
-          momentOpts.randomProjDim, momentOpts.randomProjSeed );
-      LogInfo.end_track("file-input");
-
-      // Run the TensorFactorization algorithm
-      Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> 
-        parameters = recoverParameters( K, moments );
-      SimpleMatrix pi = parameters.getValue0();
-      SimpleMatrix M1 = parameters.getValue1();
-      SimpleMatrix M2 = parameters.getValue2();
-      SimpleMatrix M3 = parameters.getValue3();
-
-      // Unproject.
-      LogInfo.begin_track("unfeaturization");
-      MatrixOps.printSize( pi );
-      MatrixOps.printSize( M1 );
-      MatrixOps.printSize( PC.Pinv );
-      M1 = PC.unfeaturize( M1 );
-      M2 = PC.unfeaturize( M2 );
-      M3 = PC.unfeaturize( M3 );
-      LogInfo.end_track();
-
-      // Write.
-      LogInfo.begin_track("saving");
-      parameters = new Quartet<>(pi, M1, M2, M3);
-      String outFilename = Execution.getFile( FilenameUtils.getBaseName(momentOpts.dataPath) + 
-          "-" + momentOpts.randomProjDim + "-" + momentOpts.randomProjSeed + ".parameters" );
-      ObjectOutputStream out = new ObjectOutputStream( new FileOutputStream( outFilename ) ); 
-      out.writeObject(parameters);
-      out.close();
-      LogInfo.end_track();
-    } catch( ClassNotFoundException | IOException e ) {
-      LogInfo.logsForce( e );
-    }
-  }
-
-  /**
-   * Main routine reads moments from a file and runs the tensor factorization
-   * algorithm. 
-   * - It can also "unproject" if needed.
-   */
-  public static void main(String[] args) {
-    TensorMethod method = new TensorMethod(); 
-    Execution.run(args, method, method.opts);
+    // Now project everything back up using Q*
+    return Quartet.with( weights,
+        Q1.mult(M1_),
+        Q2.mult(M2_),
+        Q3.mult(M3_) );
   }
 }

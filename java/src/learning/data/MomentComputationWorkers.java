@@ -2,6 +2,7 @@ package learning.data;
 
 import fig.basic.LogInfo;
 import learning.linalg.FullTensor;
+import learning.linalg.MatrixOps;
 import org.ejml.simple.SimpleMatrix;
 
 /**
@@ -38,106 +39,84 @@ public class MomentComputationWorkers {
     public TensorWorker createWorker(Corpus C, int offset, int length);
   }
 
-  public class MatrixMomentComputer {
-    final int nThreads;
+  public static SimpleMatrix computeMatrix(final Corpus C, final int nThreads, final MatrixWorkerFactory factory) {
+    int offset = 0;
+    int totalLength = C.C.length;
+    int length = totalLength/nThreads;
 
-    public MatrixMomentComputer(int nThreads) {
-      this.nThreads = nThreads;
+    MatrixWorker[] comps = new MatrixWorker[nThreads];
+    // Map
+    for( int i = 0; i < nThreads; i++ ) {
+      comps[i] = factory.createWorker(C, offset, Math.min(length, totalLength - offset));
+      offset += length;
+      comps[i].start();
     }
-    public MatrixMomentComputer() {
-      this(4);
-    }
 
-    SimpleMatrix run(Corpus C, MatrixWorkerFactory factory) {
-      int offset = 0;
-      int totalLength = C.C.length;
-      int length = totalLength/nThreads;
-
-      MatrixWorker[] comps = new MatrixWorker[nThreads];
-      // Map
-      for( int i = 0; i < nThreads; i++ ) {
-        comps[i] = factory.createWorker(C, offset, length);
-        offset += length;
-        comps[i].start();
+    // Stall
+    for( int i = 0; i < nThreads; i++ ) {
+      try {
+        comps[i].join();
+      } catch (InterruptedException e) {
+        LogInfo.logsForce("Thread was interrupted: ", e.getMessage());
       }
+    }
 
-      // Stall
-      for( int i = 0; i < nThreads; i++ ) {
-        try {
-          comps[i].join();
-        } catch (InterruptedException e) {
-          LogInfo.logsForce("Thread was interrupted: ", e.getMessage());
+    // Reduce
+    // Average over all the comps
+    int rows = comps[0].M.length;
+    int cols = comps[0].M[0].length;
+    double[][] P = new double[rows][cols];
+    for(MatrixWorker comp : comps) {
+      for(int i = 0; i < rows; i++) {
+        for(int j = 0; j < cols; j++) {
+          double ratio = (double) comp.length/totalLength;
+          P[i][j] += ratio * comp.M[i][j];
         }
       }
-
-      // Reduce
-      // Average over all the comps
-      int rows = comps[0].M.length;
-      int cols = comps[0].M[0].length;
-      double[][] P = new double[rows][cols];
-      for(MatrixWorker comp : comps) {
-        for(int i = 0; i < rows; i++) {
-          for(int j = 0; j < cols; j++) {
-            double ratio = (double) comp.length/totalLength;
-            P[i][j] += ratio * comp.M[i][j];
-          }
-        }
-      }
-
-      return new SimpleMatrix(P);
     }
+
+    return new SimpleMatrix(P);
   }
-  public class TensorMomentComputer {
-    final int nThreads;
+  public static FullTensor computeTensor(final Corpus C, final int nThreads, final TensorWorkerFactory factory) {
+    int offset = 0;
+    int totalLength = C.C.length;
+    int length = totalLength/nThreads;
 
-    public TensorMomentComputer(int nThreads) {
-      this.nThreads = nThreads;
+    TensorWorker[] comps = new TensorWorker[nThreads];
+    // Map
+    for( int i = 0; i < nThreads; i++ ) {
+      comps[i] = factory.createWorker(C, offset, Math.min(length, totalLength - offset));
+      offset += length;
+      comps[i].start();
     }
-    public TensorMomentComputer() {
-      this(4);
+
+    // Stall
+    for( int i = 0; i < nThreads; i++ ) {
+      try {
+        comps[i].join();
+      } catch (InterruptedException e) {
+        LogInfo.logsForce("Thread was interrupted: ", e.getMessage());
+      }
     }
 
-    FullTensor run(Corpus C, TensorWorkerFactory factory) {
-      int offset = 0;
-      int totalLength = C.C.length;
-      int length = totalLength/nThreads;
-
-      TensorWorker[] comps = new TensorWorker[nThreads];
-      // Map
-      for( int i = 0; i < nThreads; i++ ) {
-        comps[i] = factory.createWorker(C, offset, length);
-        offset += length;
-        comps[i].start();
-      }
-
-      // Stall
-      for( int i = 0; i < nThreads; i++ ) {
-        try {
-          comps[i].join();
-        } catch (InterruptedException e) {
-          LogInfo.logsForce("Thread was interrupted: ", e.getMessage());
-        }
-      }
-
-      // Reduce
-      // Average over all the comps
-      int d1 = comps[0].T.length;
-      int d2 = comps[0].T[0].length;
-      int d3 = comps[0].T[0][0].length;
-      double[][][] T = new double[d1][d2][d3];
-      for(TensorWorker comp : comps) {
-        for(int i = 0; i < d1; i++) {
-          for(int j = 0; j < d2; j++) {
-            for(int k = 0; k < d3; k++) {
-              double ratio = (double) comp.length/totalLength;
-              T[i][j][k] += ratio * comp.T[i][j][k];
-            }
+    // Reduce
+    // Average over all the comps
+    int d1 = comps[0].T.length;
+    int d2 = comps[0].T[0].length;
+    int d3 = comps[0].T[0][0].length;
+    double[][][] T = new double[d1][d2][d3];
+    for(TensorWorker comp : comps) {
+      for(int i = 0; i < d1; i++) {
+        for(int j = 0; j < d2; j++) {
+          for(int k = 0; k < d3; k++) {
+            double ratio = (double) comp.length/totalLength;
+            T[i][j][k] += ratio * comp.T[i][j][k];
           }
         }
       }
-
-      return new FullTensor(T);
     }
+
+    return new FullTensor(T);
   }
 
   public static abstract class CorpusMatrixWorker extends MatrixWorker {
@@ -173,7 +152,6 @@ public class MomentComputationWorkers {
 
     public abstract void update(int bigram1, int bigram2, int count);
   }
-
 
   public static class RightMultiplyMatrixWorker extends CorpusMatrixWorker {
     final SimpleMatrix R;
@@ -281,4 +259,76 @@ public class MomentComputationWorkers {
       }
     }
   }
+
+  public static MatrixOps.Matrixable matrixable(final Corpus C, final int wordOffset1, final int wordOffset2, final int nThreads) {
+    return new MatrixOps.Matrixable() {
+      @Override
+      public int numRows() {
+        return C.getDimension();
+      }
+      @Override
+      public int numCols() {
+        return C.getDimension();
+      }
+      @Override
+      public SimpleMatrix rightMultiply(final SimpleMatrix right) {
+        return computeMatrix(C, nThreads, new MatrixWorkerFactory() {
+          @Override
+          public MatrixWorker createWorker(Corpus C, int offset, int length) {
+            return new RightMultiplyMatrixWorker(C, right, wordOffset1, wordOffset2, offset, length);
+          }
+        });
+      }
+      @Override
+      public SimpleMatrix leftMultiply(final SimpleMatrix leftT) {
+        return computeMatrix(C, nThreads, new MatrixWorkerFactory() {
+          @Override
+          public MatrixWorker createWorker(Corpus C, int offset, int length) {
+            return new LeftTMultiplyMatrixWorker( C, leftT, wordOffset1, wordOffset2, offset, length );
+          }
+        });
+      }
+      @Override
+      public SimpleMatrix doubleMultiply(final SimpleMatrix leftT, final SimpleMatrix right) {
+        return computeMatrix(C, nThreads, new MatrixWorkerFactory() {
+          @Override
+          public MatrixWorker createWorker(Corpus C, int offset, int length) {
+            return new DoubleMultiplyMatrixWorker( C, leftT, right, wordOffset1, wordOffset2, offset, length );
+          }
+        });
+      }
+    };
+  }
+
+  public static MatrixOps.Tensorable tensorable(final Corpus C, final int wordOffset1, final int wordOffset2, final int wordOffset3, final int nThreads) {
+    return new MatrixOps.Tensorable() {
+      @Override
+      public int numD1() {
+        return C.getDimension();
+      }
+
+      @Override
+      public int numD2() {
+        return C.getDimension();
+      }
+
+      @Override
+      public int numD3() {
+        return C.getDimension();
+      }
+
+      @Override
+      public FullTensor multiply123(final SimpleMatrix L, final SimpleMatrix M, final SimpleMatrix N) {
+        return computeTensor(C, nThreads, new TensorWorkerFactory() {
+          @Override
+          public TensorWorker createWorker(Corpus C, int offset, int length) {
+            return new FullMultiplyTensorWorker(C, L, M, N, wordOffset1, wordOffset2, wordOffset3, offset, length);
+          }
+        });
+      }
+    };
+  }
+
+
 }
+

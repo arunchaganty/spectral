@@ -952,7 +952,7 @@ public class MatrixOps {
   }
   public static Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> svd( SimpleMatrix X ) {
     @SuppressWarnings("unchecked")
-    SimpleSVD<SimpleMatrix> UWV = X.svd(false);
+    SimpleSVD<SimpleMatrix> UWV = X.svd(true);
     SimpleMatrix U = UWV.getU();
     SimpleMatrix W = UWV.getW();
     SimpleMatrix V = UWV.getV();
@@ -1375,9 +1375,10 @@ public class MatrixOps {
     public int numD1();
     public int numD2();
     public int numD3();
-    public FullTensor multiply1(SimpleMatrix M);
-    public FullTensor multiply2(SimpleMatrix M);
-    public FullTensor multiply12(SimpleMatrix M, SimpleMatrix N);
+    // TODO: Implement elsewhere
+//    public FullTensor multiply1(SimpleMatrix M);
+//    public FullTensor multiply2(SimpleMatrix M);
+//    public FullTensor multiply12(SimpleMatrix M, SimpleMatrix N);
     FullTensor multiply123(SimpleMatrix L, SimpleMatrix M, SimpleMatrix N);
   }
   public static Tensorable tensorable(final FullTensor T) {
@@ -1397,20 +1398,21 @@ public class MatrixOps {
         return T.D3;
       }
 
-      @Override
-      public FullTensor multiply1(SimpleMatrix M) {
-        return T.rotate(0, M);
-      }
-
-      @Override
-      public FullTensor multiply2(SimpleMatrix M) {
-        return T.rotate(1, M);
-      }
-
-      @Override
-      public FullTensor multiply12(SimpleMatrix M, SimpleMatrix N) {
-        return T.rotate(M, N, SimpleMatrix.identity(T.D3));
-      }
+      // TODO: Implement elsewhere
+//      @Override
+//      public FullTensor multiply1(SimpleMatrix M) {
+//        return T.rotate(0, M);
+//      }
+//
+//      @Override
+//      public FullTensor multiply2(SimpleMatrix M) {
+//        return T.rotate(1, M);
+//      }
+//
+//      @Override
+//      public FullTensor multiply12(SimpleMatrix M, SimpleMatrix N) {
+//        return T.rotate(M, N, SimpleMatrix.identity(T.D3));
+//      }
       @Override
       public FullTensor multiply123(SimpleMatrix L, SimpleMatrix M, SimpleMatrix N) {
         return T.rotate(L, M, N);

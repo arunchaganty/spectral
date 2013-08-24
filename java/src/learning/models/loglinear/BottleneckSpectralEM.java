@@ -418,9 +418,10 @@ public class BottleneckSpectralEM implements Runnable {
       // node.
       int K = model.K; int D = model.D;
 
+      // TODO: FIXME
       Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> bottleneckMoments = null;
       Iterator<double[][]> dataSeq = constructDataSequence( model, data );
-      bottleneckMoments = algo.recoverParameters( K, D, dataSeq );
+//      bottleneckMoments = //algo.recoverParameters( K, D, dataSeq );
       populateFeatures( model, bottleneckMoments, measurements, measuredFeatures ); 
     }
     LogInfo.logs("sum_counts: " + MatrixOps.sum(measurements.weights));

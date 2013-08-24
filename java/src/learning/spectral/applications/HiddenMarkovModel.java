@@ -6,27 +6,10 @@
 package learning.spectral.applications;
 
 import learning.spectral.TensorMethod;
-import learning.data.Corpus;
-import learning.data.ProjectedCorpus;
-import learning.data.MomentComputer;
 import learning.linalg.*;
 
 import org.ejml.simple.SimpleMatrix;
 import org.javatuples.*;
-
-import fig.basic.LogInfo;
-import fig.basic.Option;
-import fig.basic.OptionsParser;
-import fig.exec.Execution;
-
-import java.util.Date;
-import java.io.IOException;
-import java.io.FileNotFoundException;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.lang.ClassNotFoundException;
 
 /**
  * Word clustering using a HMM model

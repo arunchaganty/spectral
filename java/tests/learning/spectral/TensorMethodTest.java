@@ -34,7 +34,6 @@ public class TensorMethodTest {
     LogInfo.init();
   }
   // Actual tests
-
   public void testSymmetrization( MixtureOfGaussians model ) {
     int K = model.getK();
     int D = model.getD();
@@ -72,7 +71,6 @@ public class TensorMethodTest {
     Assert.assertTrue( MatrixOps.allclose( symmetricMoments.getValue0(), Pairs ) );
     Assert.assertTrue( MatrixOps.allclose( symmetricMoments.getValue1(), Triples ) );
   }
-
   @Test
   public void testSymmetrizationSmallEye() { testSymmetrization( generateSmallEye() ); }
   @Test
@@ -183,67 +181,93 @@ public class TensorMethodTest {
     }
   }
 
-  public void testProjection( MixtureOfGaussians model ) {
+  public void testRandomizedSymmetricRunner( MixtureOfGaussians model ) {
     int K = model.getK();
     int D = model.getD();
+    int V = model.getV();
+
     ComputableMoments moments = model.computeExactMoments_();
-    Pair<SimpleMatrix,FullTensor> symmetricMoments = model.computeSymmetricMoments().getValue2();
-
     TensorMethod algo = new TensorMethod();
-    FullTensor Triples = algo.randomizedSymmetricTensorRecovery(K, moments).getValue1();
+    Pair<SimpleMatrix, SimpleMatrix> params = algo.randomizedSymmetricRecoverParameters(K, moments);
+    SimpleMatrix weights_ = params.getValue0();
+    SimpleMatrix M_ = params.getValue1();
 
-    // Test that these are symmetric indeed.
+    // Properties
 
-    // Property tests
-    Assert.assertTrue( Triples.D1 == K ) ;
-    Assert.assertTrue( Triples.D2 == K ) ;
-    Assert.assertTrue( Triples.D3 == K ) ;
+    Assert.assertTrue( weights_.numRows() == 1 );
+    Assert.assertTrue( weights_.numCols() == K );
 
-    Assert.assertTrue( MatrixOps.isSymmetric( Triples ) );
+    Assert.assertTrue( M_.numRows() == D );
+    Assert.assertTrue( M_.numCols() == K );
 
-    // Equality Tests
-    SimpleMatrix W = MatrixOps.whitener(symmetricMoments.getValue0(), K);
-    FullTensor T = symmetricMoments.getValue1().rotate(W, W, W);
-    FullTensor Tm = T.clone().scale(-1.0);
-    // Either one is possible because of $W$
-    Assert.assertTrue( MatrixOps.allclose( T, Triples ) || MatrixOps.allclose( Tm, Triples ));
+    // Exact values
+    SimpleMatrix weights = model.getWeights();
+    SimpleMatrix M = model.getMeans()[0];
+
+    M_ = MatrixOps.alignMatrix( M_, M, true );
+
+    Assert.assertTrue( MatrixOps.allclose( weights, weights_) );
+    Assert.assertTrue( MatrixOps.allclose( M, M_) );
   }
   @Test
-  public void testProjection() { testProjection(generateSymmetricSparseEye()); }
+  public void testRandomizedSmallSymmetric() { testRandomizedSymmetricRunner( generateSmallSymmetric() ); }
+  @Test
+  public void testRandomizedMediumSymmetric() { testRandomizedSymmetricRunner( generateMediumSymmetric() ); }
 
-  public void testProjectedSymmetrization( MixtureOfGaussians model ) {
+  public void testRandomizedRunner( MixtureOfGaussians model ) {
     int K = model.getK();
     int D = model.getD();
+    int V = model.getV();
+
     ComputableMoments moments = model.computeExactMoments_();
-
-    Pair<SimpleMatrix,FullTensor> symmetricMoments = model.computeSymmetricMoments().getValue2();
-
     TensorMethod algo = new TensorMethod();
-    FullTensor Triples = algo.randomizedTensorRecovery(K, moments).getValue1();
+    Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, SimpleMatrix> params = algo.randomizedRecoverParameters( K, moments );
+    SimpleMatrix weights_ = params.getValue0();
+    SimpleMatrix M1_ = params.getValue1();
+    SimpleMatrix M2_ = params.getValue2();
+    SimpleMatrix M3_ = params.getValue3();
 
-    // Test that these are symmetric indeed.
+    // Properties
 
-    // Property tests
-    Assert.assertTrue( Triples.D1 == K ) ;
-    Assert.assertTrue( Triples.D2 == K ) ;
-    Assert.assertTrue( Triples.D3 == K ) ;
+    Assert.assertTrue( weights_.numRows() == 1 );
+    Assert.assertTrue( weights_.numCols() == K );
+    Assert.assertTrue( M1_.numRows() == D );
+    Assert.assertTrue( M1_.numCols() == K );
+    Assert.assertTrue( M2_.numRows() == D );
+    Assert.assertTrue( M2_.numRows() == D );
+    Assert.assertTrue( M3_.numCols() == K );
+    Assert.assertTrue( M3_.numCols() == K );
 
-    Assert.assertTrue( MatrixOps.isSymmetric(Triples));
+    // Exact values
+    SimpleMatrix weights = model.getWeights();
+    SimpleMatrix M1 = model.getMeans()[0];
+    SimpleMatrix M2 = model.getMeans()[1];
+    SimpleMatrix M3 = model.getMeans()[2];
 
-    // Equality Tests
-    SimpleMatrix W = MatrixOps.whitener(symmetricMoments.getValue0(), K);
-    FullTensor T = symmetricMoments.getValue1().rotate(W, W, W);
-    FullTensor Tm = T.clone().scale(-1.0);
-    System.out.println( Math.min( MatrixOps.maxdiff( T, Triples), MatrixOps.maxdiff( Tm, Triples) ) );
-    Assert.assertTrue( MatrixOps.allclose( T, Triples, 1e-3 ) || MatrixOps.allclose( Tm, Triples, 1e-3 ));
+    M1_ = MatrixOps.alignMatrix( M1_, M1, true );
+    M2_ = MatrixOps.alignMatrix( M2_, M2, true );
+    M3_ = MatrixOps.alignMatrix( M3_, M3, true );
+
+    Assert.assertTrue( MatrixOps.allclose( weights, weights_) );
+    Assert.assertTrue( MatrixOps.allclose( M1, M1_) );
+    Assert.assertTrue( MatrixOps.allclose( M2, M2_) );
+    Assert.assertTrue( MatrixOps.allclose( M3, M3_) );
   }
 
-  @Test
-  public void testProjectedSymmetrization() { testProjectedSymmetrization(generateUnSymmetricSparseEye()); }
 
-  // Note: this test fails
   @Test
-  public void testProjectedSymmetrizationRandom() { testProjectedSymmetrization(generateUnSymmetricSparseRandom()); }
+  public void testRandomizedSmallSymmetric_() { testRandomizedRunner( generateSmallSymmetric() ); }
+  @Test
+  public void testRandomizedMediumSymmetric_() { testRandomizedRunner( generateMediumSymmetric() ); }
+  @Test
+  public void testRandomizedSmallEye() { testRandomizedRunner( generateSmallEye() ); }
+  @Test
+  public void testRandomizedMediumEye() { testRandomizedRunner( generateMediumEye() ); }
+  @Test
+  public void testRandomizedSmallRandom() { testRandomizedRunner( generateSmallRandom() ); }
+  @Test
+  public void testRandomizedMediumRandom() { testRandomizedRunner( generateMediumRandom() ); }
+
 
 }
 

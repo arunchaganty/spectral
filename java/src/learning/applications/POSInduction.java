@@ -7,17 +7,19 @@ package learning.applications;
 
 import fig.basic.*;
 import fig.exec.Execution;
+import learning.data.ComputableMoments;
+import learning.data.Corpus;
+import learning.data.MomentComputationWorkers;
 import learning.data.ParsedCorpus;
 import learning.linalg.MatrixFactory;
 import learning.linalg.MatrixOps;
 import learning.models.HiddenMarkovModel;
 import learning.models.HiddenMarkovModel.Params;
+import learning.spectral.TensorMethod;
 import org.ejml.simple.SimpleMatrix;
 import org.javatuples.Quartet;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,22 +35,27 @@ public class POSInduction implements Runnable {
   //@OptionSet(name="bottleneck")
   //public BottleneckSpectralEM algo = new BottleneckSpectralEM();
   @Option(gloss="Seed to generate initial point")
-  public Random initRandom = new Random(1);
+  public Random initRandom = new Random();
   @Option(gloss="Noise in parameters")
   public double initParamsNoise = 1.0;
   @Option(gloss="useLBFGS")
   public boolean useLBFGS = false;
 
+  @OptionSet(name="Tensor Method")
+  public TensorMethod tensorMethod = new TensorMethod();
 
   @Option(gloss="em iterations")
   public int iterations = 200;
   @Option(gloss="em eps")
   public double eps = 1e-4;
 
-  @Option(gloss="Measurements Path (pre-cached measurements only) - empty for no measurements")
-  public String measurementsPath = "";
+  @Option(gloss="Initialize using spectral")
+  public boolean initializeSpectral = false;
   @Option(gloss="smoothMeasurements")
   public double smoothMeasurements = 0.0;
+  @Option(gloss="Number of threads to compute measurements")
+  public int nThreads = 1;
+
 
   @Option(gloss="File containing word-index representation of data", required=true)
     public String dataPath;
@@ -132,7 +139,7 @@ public class POSInduction implements Runnable {
     for( int k = 0; k < K; k++ ) {
       table.append(C.tagDict[k]).append("\t");
     }
-    table.append( "\n" );
+    table.append("\n");
     for( int k = 0; k < K; k++ ) {
       table.append(C.tagDict[k]).append("\t");
       for( int k_ = 0; k_ < K; k_++ ) {
@@ -265,7 +272,7 @@ public class POSInduction implements Runnable {
       model.params.updateFromVector( params );
 
       // Report
-      List<String> items = new ArrayList<String>();
+      List<String> items = new ArrayList<>();
       items.add(logStat("iter", iter));
       items.add(logStat("lhood", lhood));
       items.add(logStat("accuracy", reportAccuracy( model, C ) ) );
@@ -281,38 +288,67 @@ public class POSInduction implements Runnable {
     return lhood;
   }
 
-  @SuppressWarnings("unchecked")
-  public Params loadMeasurements( String filename ) {
-    try {
-      // Open the file
-      ObjectInputStream in = new ObjectInputStream( new FileInputStream( filename ) ); 
-      Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix>
-        measurements = (Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix>) in.readObject();
-      in.close();
+  public ComputableMoments corpusToMoments(final Corpus C) {
+    return new ComputableMoments() {
+      @Override
+      public MatrixOps.Matrixable computeP13() {
+        return MomentComputationWorkers.matrixable(C, 0, 2, nThreads);
+      }
 
-      // construct O T and pi
-      SimpleMatrix O = measurements.getValue2();
-      SimpleMatrix T = O.pseudoInverse().mult( measurements.getValue3() );
+      @Override
+      public MatrixOps.Matrixable computeP12() {
+        return MomentComputationWorkers.matrixable(C, 0, 1, nThreads);
+      }
 
-      // Initialize pi to be random.
-      SimpleMatrix pi = measurements.getValue0(); // This is just a random guess.
+      @Override
+      public MatrixOps.Matrixable computeP32() {
+        return MomentComputationWorkers.matrixable(C, 2, 1, nThreads);
+      }
 
-      // project and smooth 
-      // projectOntoSimplex normalizes columns!
-      pi = MatrixOps.projectOntoSimplex( pi.transpose(), smoothMeasurements );
-      T = MatrixOps.projectOntoSimplex( T, smoothMeasurements ).transpose();
-      O = MatrixOps.projectOntoSimplex( O, smoothMeasurements ).transpose();
+      @Override
+      public MatrixOps.Tensorable computeP123() {
+        return MomentComputationWorkers.tensorable(C, 1, 2, 3, nThreads);
+      }
+    };
+  }
 
-      Params params = new Params( 
-          MatrixFactory.toVector(pi), 
-          MatrixFactory.toArray(T), 
-          MatrixFactory.toArray(O)); 
-      return params;
+  /**
+   * Use tensor method to recover the parameters of the HMM.
+   * @param C - Corpus
+   * @return - Initial parameters
+   */
+  public Params spectralRecovery(Corpus C, int K) {
+    LogInfo.begin_track("spectral-recovery");
+    // Compute moments
+    ComputableMoments moments = corpusToMoments(C);
+    // Run tensor recovery
+    Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> measurements =
+        tensorMethod.randomizedRecoverParameters(K, moments);
 
-    } catch( IOException | ClassNotFoundException e ) {
-      LogInfo.fail(e);
-    }
-    return null;
+    // Populate params
+    // construct O T and pi
+    SimpleMatrix O = measurements.getValue2();
+    SimpleMatrix T = O.pseudoInverse().mult( measurements.getValue3() );
+
+    // Initialize pi to be random.
+    SimpleMatrix pi = measurements.getValue0(); // This is just a random guess.
+
+    // project and smooth
+    // projectOntoSimplex normalizes columns!
+    pi = MatrixOps.projectOntoSimplex( pi.transpose(), smoothMeasurements );
+    T = MatrixOps.projectOntoSimplex( T, smoothMeasurements ).transpose();
+    O = MatrixOps.projectOntoSimplex( O, smoothMeasurements ).transpose();
+
+    Params params = new Params(
+        MatrixFactory.toVector(pi),
+        MatrixFactory.toArray(T),
+        MatrixFactory.toArray(O));
+    LogInfo.end_track("spectral-recovery");
+
+    return params;
+  }
+  public Params spectralRecovery(ParsedCorpus C) {
+    return spectralRecovery(C, C.getTagDimension());
   }
 
   public void run() {
@@ -336,9 +372,9 @@ public class POSInduction implements Runnable {
 
       // Possibly load the measurements
       Params params;
-      if( measurementsPath.trim().length() != 0 ) {
+      if(initializeSpectral) {
         // Get measurements from path.
-        params = loadMeasurements( measurementsPath );
+        params = spectralRecovery(C);
       } else {
         // random
         params = Params.uniformWithNoise( 
