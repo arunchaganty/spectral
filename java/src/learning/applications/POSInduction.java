@@ -307,7 +307,7 @@ public class POSInduction implements Runnable {
 
       @Override
       public MatrixOps.Tensorable computeP123() {
-        return MomentComputationWorkers.tensorable(C, 1, 2, 3, nThreads);
+        return MomentComputationWorkers.tensorable(C, 0, 1, 2, nThreads);
       }
     };
   }

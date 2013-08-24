@@ -195,7 +195,7 @@ public class MomentComputationWorkers {
     public void update( int bigram1, int bigram2, int count ) {
       // Add omega_i e_j^T to matrix (basically place i-th row of Omega in j-th col).
       for( int row = 0; row < rows; row++ ) {
-        for( int col = 0; row < cols; col++ ) {
+        for( int col = 0; col < cols; col++ ) {
           M[row][col] += (Lt.get(bigram1,row) * R.get(bigram2,col)  - M[row][col])/count;
         }
       }
