@@ -25,7 +25,9 @@ public class TensorMethod {
   public int attempts = 10;
   @Option(gloss="Random number generator for tensor method and random projections")
   public Random rnd = new Random();
-  @OptionSet(name="Tensor Factorization method")
+  @Option(gloss="Oversampling factor for the random projection")
+  public double oversamplingFactor = 2.0;
+  @OptionSet(name="TensorFactorization")
   public TensorFactorization tf = new TensorFactorization();
 
   public TensorMethod() {}
@@ -235,7 +237,7 @@ public class TensorMethod {
    * @return - (eigenvalue, eigenvector)
    */
   public Pair<SimpleMatrix, SimpleMatrix> randomizedSymmetricRecoverParameters( int K, ComputableMoments obj ) {
-    int p = 2*K;
+    int p = (int) oversamplingFactor*K;
     // First, compute the ranges
     SimpleMatrix Q = MatrixOps.randomizedRangeFinder(obj.computeP12(), p, rnd);
 

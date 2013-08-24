@@ -41,7 +41,7 @@ public class POSInduction implements Runnable {
   @Option(gloss="useLBFGS")
   public boolean useLBFGS = false;
 
-  @OptionSet(name="Tensor Method")
+  @OptionSet(name="TensorMethod")
   public TensorMethod tensorMethod = new TensorMethod();
 
   @Option(gloss="em iterations")
