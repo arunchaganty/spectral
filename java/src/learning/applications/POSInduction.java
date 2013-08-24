@@ -102,6 +102,26 @@ public class POSInduction implements Runnable {
     C.L = L_;
   }
 
+  public void printTopK(HiddenMarkovModel model, ParsedCorpus C, int[] perm) {
+    int K = model.getStateCount();
+    // (b) Print top 10 words
+    LogInfo.begin_track("Top-k words");
+    int TOP_K = 20;
+    for( int k = 0; k < K; k++ ) {
+      StringBuilder topk = new StringBuilder();
+      topk.append(C.tagDict[k]).append(": ");
+
+      int k_ = perm[k];
+      Integer[] sortedWords = MatrixOps.argsort(MatrixOps.col(model.getO(), k_));
+      for(int i = 0; i < TOP_K; i++ ) {
+        topk.append(C.dict[sortedWords[i]]).append(", ");
+      }
+      logsForce(topk);
+    }
+    LogInfo.end_track("Top-k words");
+  }
+
+
   public double reportAccuracy( HiddenMarkovModel model, ParsedCorpus C ) {
     begin_track("best-match accuracy");
     // Create a confusion matrix
@@ -151,20 +171,7 @@ public class POSInduction implements Runnable {
     LogInfo.end_track("Confusion matrix");
 
     // (b) Print top 10 words
-    LogInfo.begin_track("Top-k words");
-    int TOP_K = 20;
-    for( int k = 0; k < K; k++ ) {
-      StringBuilder topk = new StringBuilder();
-      topk.append(C.tagDict[k]).append(": ");
-
-      int k_ = perm[k];
-      Integer[] sortedWords = MatrixOps.argsort(MatrixOps.col(model.getO(), k_));
-      for(int i = 0; i < TOP_K; i++ ) {
-        topk.append(C.dict[sortedWords[i]]).append(", ");
-      }
-      logsForce(topk);
-    }
-    LogInfo.end_track("Top-k words");
+    printTopK(model, C, perm);
     end_track("best-match accuracy");
 
     return acc;
@@ -257,6 +264,11 @@ public class POSInduction implements Runnable {
 
     // UGH.
     model.params.updateFromVector( params );
+    {
+      int[] perm = new int[C.getTagDimension()];
+      for(int i = 0; i < C.getTagDimension(); i++) perm[i] = i;
+      printTopK(model, C, perm);
+    }
 
     double lhood = Double.NEGATIVE_INFINITY;
     for( int iter = 0; iter < iterations; iter++ ) {
@@ -273,7 +285,7 @@ public class POSInduction implements Runnable {
 
       // Report
       List<String> items = new ArrayList<>();
-      items.add(logStat("iter", iter));
+      items.add(logStat("iter", iter+1));
       items.add(logStat("lhood", lhood));
       items.add(logStat("accuracy", reportAccuracy( model, C ) ) );
       items.add(logStat("all-accuracy", reportVsAllAccuracy( model, C ) ) );
