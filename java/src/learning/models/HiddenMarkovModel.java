@@ -5,6 +5,7 @@
  */
 package learning.models;
 
+import fig.prob.Multinomial;
 import learning.Misc;
 import learning.linalg.*;
 import learning.em.EMOptimizable;
@@ -311,10 +312,10 @@ public class HiddenMarkovModel implements EMOptimizable {
 	 */
 	public int[] sample(int n) {
 		int[] output = new int[n];
-		
+
 		// Pick a start state
 		int state = RandomFactory.multinomial(params.pi);
-		
+
 		for( int i = 0; i < n; i++)
 		{
 			// Generate a word
@@ -326,7 +327,7 @@ public class HiddenMarkovModel implements EMOptimizable {
 			// Transit to a new state
 			state = RandomFactory.multinomial( params.T[state] );
 		}
-		
+
 		return output;
 	}
 
@@ -336,10 +337,10 @@ public class HiddenMarkovModel implements EMOptimizable {
 	public Pair<int[], int[]> sampleWithHiddenVariables(int n) {
 		int[] observed = new int[n];
 		int[] hidden = new int[n];
-		
+
 		// Pick a start state
 		int state = RandomFactory.multinomial(params.pi);
-		
+
 		for( int i = 0; i < n; i++)
 		{
 			// Generate a word
@@ -356,7 +357,7 @@ public class HiddenMarkovModel implements EMOptimizable {
 
 		return new Pair<>( observed, hidden );
 	}
-	
+
 	/**
 	 * Use the Viterbi dynamic programming algorithm to find the hidden states for o.
 	 * @param o
@@ -366,7 +367,7 @@ public class HiddenMarkovModel implements EMOptimizable {
 		// Store the dynamic programming array and back pointers
 		double [][] V = new double[o.length][params.stateCount];
 		int [][] Ptr = new int[o.length][params.stateCount];
-		
+
 		// Initialize with 0 and path length
 		for( int s = 0; s < params.stateCount; s++ ) {
 			// P( o_0 | s_k ) \pi(s_k)
@@ -374,7 +375,7 @@ public class HiddenMarkovModel implements EMOptimizable {
 			Ptr[0][s] = -1; // Doesn't need to be defined.
 		}
     MatrixOps.normalize( V[0] );
-		
+
 		// The dynamic program to find the optimal path
 		for( int i = 1; i < o.length; i++ ) {
 			for( int s = 0; s < params.stateCount; s++ ) {
@@ -388,14 +389,14 @@ public class HiddenMarkovModel implements EMOptimizable {
 						S_max = s_;
 					}
 				}
-				
+
 				// P( o_i | s_k ) = P(o_i | s) *  max_j T(s | s') V_(i-1)(s')
 				V[i][s] = params.O[s][o[i]] * T_max;
-				Ptr[i][s] = S_max; 
+				Ptr[i][s] = S_max;
 			}
       MatrixOps.normalize( V[i] );
 		}
-		
+
 		int[] z = new int[o.length];
 		// Choose the best last state and back track from there
 		z[o.length-1] = MatrixOps.argmax(V[o.length-1]);
@@ -408,10 +409,10 @@ public class HiddenMarkovModel implements EMOptimizable {
       assert( z[i] != -1 );
 			z[i-1] = Ptr[i][z[i]];
     }
-		
+
 		return z;
 	}
-	
+
 	/**
 	 * Use the forward-backward algorithm to find the posterior probability over states
 	 * @param o
@@ -420,7 +421,7 @@ public class HiddenMarkovModel implements EMOptimizable {
 	public Pair<double[][],Double> forward( final int[] o ) {
 		// Store the forward probabilities
 		double [][] f = new double[o.length][params.stateCount];
-		
+
     double c = 0;
     double c_ = 0;
 		// Initialise with the initial probability
@@ -429,7 +430,7 @@ public class HiddenMarkovModel implements EMOptimizable {
 		}
     c += Math.log( MatrixOps.sum( f[0] ) );
     MatrixOps.scale( f[0], 1/MatrixOps.sum(f[0]) );
-		
+
 		// Compute the forward values as f_t(s) = sum_{s_} f_{t-1}(s_) * T( s_ | s ) * O( y | s )
 		for( int i = 1; i < o.length; i++ ) {
 			for( int s = 0; s < params.stateCount; s++ ) {
@@ -468,7 +469,7 @@ public class HiddenMarkovModel implements EMOptimizable {
     return b;
 	}
 
-  /** 
+  /**
    * Print the likelihood of a sequence.
    */
 	public double likelihood( final int[] o, final int[] z ) {
@@ -484,28 +485,28 @@ public class HiddenMarkovModel implements EMOptimizable {
     }
 		return lhood;
   }
-	
-	public static HiddenMarkovModel learnFullyObserved( int stateCount, int emissionCount, int[][] X, int[][] Z, 
+
+	public static HiddenMarkovModel learnFullyObserved( int stateCount, int emissionCount, int[][] X, int[][] Z,
 			boolean shouldSmooth) {
 		Params p = Params.fromCounts( stateCount, emissionCount, X, Z, shouldSmooth);
-		
+
 		return new HiddenMarkovModel(p);
-	}	
-		
-	public static HiddenMarkovModel learnFullyObserved( int stateCount, int emissionCount, int[][] X, int[][] Z, 
+	}
+
+	public static HiddenMarkovModel learnFullyObserved( int stateCount, int emissionCount, int[][] X, int[][] Z,
 			boolean shouldSmooth, int compressedEmissionCount) {
-		
+
 		Params p = Params.fromCounts( stateCount, emissionCount, X, Z, shouldSmooth);
-		
+
 		// If compressing, then sort the emissions for each state and keep only the top compressedEmissionCount
 		double[][] O_ = new double[stateCount][compressedEmissionCount];
 		// Sparse map for compressed emissions
 		int[][] map = new int[stateCount][compressedEmissionCount];
-		
+
 		for( int i = 0; i < stateCount; i++ ) {
 			Integer[] words_ = new Integer[emissionCount];
 			for(int j = 0; j <emissionCount; j++) words_[j] = j;
-			
+
 			// Choose top k words
 			Arrays.sort(words_, new Misc.IndexedComparator(p.O[i]) );
 			for( int j = 0; j < compressedEmissionCount; j++ ) {
@@ -514,12 +515,29 @@ public class HiddenMarkovModel implements EMOptimizable {
 			}
 			MatrixOps.normalize( O_[i] );
 		}
-		
+
 		Params p_ = new Params(stateCount, compressedEmissionCount);
 		p_.pi = p.pi; p_.T = p.T; p_.O = O_; p_.map = map;
-		
+
 		return new HiddenMarkovModel(p_);
 	}
+
+  /**
+   * Generate from the model
+   */
+  public Pair<int[],int[]> generate(Random rnd, int length) {
+    int[] observed = new int[length];
+    int[] hidden = new int[length];
+
+    int state = Multinomial.sample(rnd, params.pi);
+    for(int i = 0; i < length; i++) {
+      observed[i] = Multinomial.sample(rnd, params.O[state]);
+      hidden[i] = state;
+      state = Multinomial.sample(rnd, params.T[state]);
+    }
+
+    return Pair.with(observed, hidden);
+  }
 
   public void setParams(double[] params) {
     this.params.updateFromVector(params);
