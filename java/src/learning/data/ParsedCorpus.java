@@ -1,11 +1,23 @@
 package learning.data;
 
+import fig.basic.Option;
 import learning.data.Corpus;
 
 import java.io.*;
 import java.util.*;
 
 public class ParsedCorpus extends Corpus {
+  public static class Options {
+    @Option(gloss="File containing word-index representation of data", required=true)
+    public String dataPath;
+    @Option(gloss="File containing word-index to word map", required=true)
+    public String mapPath;
+    @Option(gloss="File containing tag-index of labelled data", required=true)
+    public String labelledDataPath;
+    @Option(gloss="File containing tag-index to tag map", required=true)
+    public String labelledMapPath;
+  }
+
   private static final long serialVersionUID = 3L;
   
   public String[] tagDict;
@@ -49,18 +61,7 @@ public class ParsedCorpus extends Corpus {
 
     BufferedReader reader;
 
-    // Read file, each line is a word
-    LinkedList<String> dict = new LinkedList<String>();
-    {
-      reader = new BufferedReader( new FileReader( tagDictFilename ) );
-      String line = null;
-      while ((line = reader.readLine()) != null) {
-        // Chunk up the line 
-        dict.add( line.trim() );
-      }
-      reader.close();
-    }
-
+    String[] tagDict = readTagDict(tagDictFilename);
     // Read file, each line is a seq of integers (indices into dict)
     LinkedList<int[]> L = new LinkedList<int[]>();
     {
@@ -78,9 +79,26 @@ public class ParsedCorpus extends Corpus {
       reader.close();
     }
 
-    String[] tagDict_ = dict.toArray(new String[0]);
     int[][] L_ = L.toArray(new int[0][0]);
 
-    return new ParsedCorpus( C, tagDict_, L_ );
+    return new ParsedCorpus( C, tagDict, L_ );
   }
+
+  public static String[] readTagDict(String tagDictFilename) throws IOException {
+    BufferedReader reader;
+    // Read file, each line is a word
+    LinkedList<String> dict = new LinkedList<String>();
+    {
+      reader = new BufferedReader( new FileReader( tagDictFilename ) );
+      String line = null;
+      while ((line = reader.readLine()) != null) {
+        // Chunk up the line
+        dict.add( line.trim() );
+      }
+      reader.close();
+    }
+
+    return dict.toArray(new String[dict.size()]);
+  }
+
 }

@@ -30,7 +30,7 @@ import java.util.Arrays;
 /**
  * A hidden markov model.
  */
-public class HiddenMarkovModel implements EMOptimizable {
+public class HiddenMarkovModel implements EMOptimizable, Serializable {
   // Model parameters
 
   /**

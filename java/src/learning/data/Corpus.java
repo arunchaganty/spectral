@@ -59,18 +59,7 @@ public class Corpus {
   public static Corpus parseText( String seqFilename, String dictFilename ) throws IOException {
     BufferedReader reader;
 
-    // Read file, each line is a word
-    LinkedList<String> dict = new LinkedList<String>();
-    {
-      reader = new BufferedReader( new FileReader( dictFilename ) );
-      String line = null;
-      while ((line = reader.readLine()) != null) {
-        // Chunk up the line 
-        dict.add( line.trim() );
-      }
-      reader.close();
-    }
-
+    String[] dict = readDict(dictFilename);
     // Read file, each line is a seq of integers (indices into dict)
     LinkedList<int[]> C = new LinkedList<int[]>();
     {
@@ -88,9 +77,26 @@ public class Corpus {
       reader.close();
     }
 
-    String[] dict_ = dict.toArray(new String[0]);
     int[][] C_ = C.toArray(new int[0][0]);
 
-    return new Corpus( dict_, C_ );
+    return new Corpus( dict, C_ );
   }
+
+  public static String[] readDict(String dictFilename) throws IOException {
+    BufferedReader reader;
+    // Read file, each line is a word
+    LinkedList<String> dict = new LinkedList<String>();
+    {
+      reader = new BufferedReader( new FileReader( dictFilename ) );
+      String line = null;
+      while ((line = reader.readLine()) != null) {
+        // Chunk up the line
+        dict.add( line.trim() );
+      }
+      reader.close();
+    }
+
+    return dict.toArray(new String[dict.size()]);
+  }
+
 }

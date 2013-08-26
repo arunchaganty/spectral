@@ -2,6 +2,7 @@ package learning.scripts;
 
 import fig.basic.LogInfo;
 import fig.basic.Option;
+import fig.basic.OptionSet;
 import fig.exec.Execution;
 import learning.data.ParsedCorpus;
 import learning.models.HiddenMarkovModel;
@@ -13,14 +14,8 @@ import java.io.*;
  */
 public class LearnHMM implements Runnable {
 
-  @Option(gloss="File containing word-index representation of data", required=true)
-  public String dataPath;
-  @Option(gloss="File containing word-index to word map", required=true)
-  public String mapPath;
-  @Option(gloss="File containing tag-index of labelled data", required=true)
-  public String labelledDataPath;
-  @Option(gloss="File containing tag-index to tag map", required=true)
-  public String labelledMapPath;
+  @OptionSet(name="corpus")
+  ParsedCorpus.Options corpusOptions = new ParsedCorpus.Options();
 
   @Option(gloss="File to output to", required=true)
   public String outputPath;
@@ -31,8 +26,8 @@ public class LearnHMM implements Runnable {
     // Read data as word-index sequences
     ParsedCorpus C = null;
       C = ParsedCorpus.parseText(
-              dataPath, mapPath,
-              labelledDataPath, labelledMapPath);
+              corpusOptions.dataPath, corpusOptions.mapPath,
+              corpusOptions.labelledDataPath, corpusOptions.labelledMapPath);
       LogInfo.end_track("file-input");
       LogInfo.begin_track("learn-model");
       HiddenMarkovModel model = HiddenMarkovModel.learnFullyObserved(
