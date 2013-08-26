@@ -15,7 +15,7 @@ import java.io.*;
 public class LearnHMM implements Runnable {
 
   @OptionSet(name="corpus")
-  ParsedCorpus.Options corpusOptions = new ParsedCorpus.Options();
+  public ParsedCorpus.Options corpusOptions = new ParsedCorpus.Options();
 
   @Option(gloss="File to output to", required=true)
   public String outputPath;

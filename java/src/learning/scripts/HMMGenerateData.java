@@ -2,6 +2,7 @@ package learning.scripts;
 
 import fig.basic.LogInfo;
 import fig.basic.Option;
+import fig.basic.OptionSet;
 import fig.exec.Execution;
 import learning.data.ParsedCorpus;
 import learning.models.HiddenMarkovModel;
@@ -16,7 +17,8 @@ import java.util.Random;
  */
 public class HMMGenerateData implements Runnable {
 
-  ParsedCorpus.Options corpusOptions = new ParsedCorpus.Options();
+  @OptionSet(name="Corpus")
+  public ParsedCorpus.Options corpusOptions = new ParsedCorpus.Options();
 
   @Option(gloss="HMM File to read from", required=true)
   public String inputPath;
@@ -56,7 +58,7 @@ public class HMMGenerateData implements Runnable {
         for(int i = 0; i < words.length; i++ ){
           wordOut.write( words[i] + " " );
           labelOut.write( tags[i] + " " );
-          rawOut.write( tags[i] + " " + words[i] + " ");
+          rawOut.write( tagDict[tags[i]] + " " + dict[words[i]] + " ");
         }
         wordOut.write("\n");
         labelOut.write("\n");
@@ -74,6 +76,6 @@ public class HMMGenerateData implements Runnable {
   }
 
   public static void main(String[] args) {
-    Execution.run(args, new LearnHMM());
+    Execution.run(args, new HMMGenerateData());
   }
 }
