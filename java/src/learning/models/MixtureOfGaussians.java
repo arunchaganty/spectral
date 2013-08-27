@@ -75,12 +75,14 @@ public class MixtureOfGaussians implements HasExactMoments, HasSampleMoments {
       computeExactMoments( SimpleMatrix weights, 
         SimpleMatrix M1, SimpleMatrix M2, SimpleMatrix M3 ) {
     // Compute the moments
-    SimpleMatrix M12 = M1.mult( MatrixFactory.diag( weights ) ).mult( M2.transpose() );
     SimpleMatrix M13 = M1.mult( MatrixFactory.diag( weights ) ).mult( M3.transpose() );
-    SimpleMatrix M23 = M2.mult( MatrixFactory.diag( weights ) ).mult( M3.transpose() );
+    SimpleMatrix M12 = M1.mult( MatrixFactory.diag( weights ) ).mult( M2.transpose() );
+    SimpleMatrix M32 = M3.mult( MatrixFactory.diag( weights ) ).mult( M2.transpose() );
     FullTensor M123 = FullTensor.fromDecomposition( weights, M1, M2, M3 );
 
-    return new Quartet<>( M12, M13, M23, M123 );
+    Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> x = MatrixOps.svd(M12);
+
+    return new Quartet<>( M13, M12, M32, M123 );
   }
   public Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor>
       computeExactMoments() {

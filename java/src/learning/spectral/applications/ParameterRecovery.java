@@ -21,12 +21,14 @@ public class ParameterRecovery {
   static HiddenMarkovModel recoverHMM(int K, Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> measurements, double smoothMeasurements) {
     LogInfo.begin_track("cast-conditional-means-to-hmm");
     // Populate params
-    // construct O T and pi
+    SimpleMatrix Tpi = measurements.getValue0();
+    // Ignoring M1 which is arbitrarily complicated.
     SimpleMatrix O = measurements.getValue2();
-    SimpleMatrix T = O.pseudoInverse().mult( measurements.getValue3() );
+    SimpleMatrix OT = measurements.getValue3();
+    // construct O T and pi
+    SimpleMatrix T = O.pseudoInverse().mult( OT );
 
-    // Initialize pi to be random.
-    SimpleMatrix pi = measurements.getValue0(); // This is just a random guess.
+    SimpleMatrix pi = T.pseudoInverse().mult(Tpi.transpose()).transpose(); // pi is pretty terrible...
 
     // project and smooth
     // projectOntoSimplex normalizes columns!

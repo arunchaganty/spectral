@@ -1262,7 +1262,8 @@ public class MatrixOps {
 
     for( int d = 0; d < D; d++ )
       for( int d_ = 0; d_ <= d; d_++ )
-        if( !equal(M.get( d, d_ ), M.get( d_, d ) ) ) return false;
+        if( !equal(M.get( d, d_ ), M.get( d_, d ) ) )
+          return false;
 
     return true;
   }

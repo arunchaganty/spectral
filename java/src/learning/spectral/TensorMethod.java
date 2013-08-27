@@ -109,9 +109,9 @@ public class TensorMethod {
    * With un-symmetric views, this method will first symmetrize the views to recover the parameters M_3,
    * and then do some post-processing to recover the remaining parameters M_1 and M_2.
    * @param K - Rank of model
-   * @param M12 - Pairwise moments
    * @param M13 - Pairwise moments
-   * @param M23 - Pairwise moments
+   * @param M12 - Pairwise moments
+   * @param M32 - Pairwise moments
    * @param M123 - Tensor
    * @return - (weights, M1, M2, M3).
    */
@@ -164,10 +164,8 @@ public class TensorMethod {
     int D = M12.numRows();
 
     Triplet<SimpleMatrix,SimpleMatrix,SimpleMatrix> U1WU2 = MatrixOps.svdk( M12, K );
-    Triplet<SimpleMatrix,SimpleMatrix,SimpleMatrix> U3WU2 = MatrixOps.svdk( M32, K );
     SimpleMatrix U1 = U1WU2.getValue0(); // d x k
     SimpleMatrix U2 = U1WU2.getValue2();
-    SimpleMatrix U3 = U3WU2.getValue0();
 
     MatrixOps.printSize( U1 );
 
@@ -175,31 +173,24 @@ public class TensorMethod {
     assert( U1.numCols() == K );
 
     // \tilde M_{12} = U_1^T M_{12} U_2
-    SimpleMatrix M12_ = // k x k
-      U1.transpose().mult // k x d
-      (M12).mult(U2); // d x k
-    SimpleMatrix M12_i = M12_.invert();
-    M32 = M32.mult(U2.transpose());
-    M13 = U1.mult(M32);
+    M12 = U1.transpose().mult(M12).mult(U2); // d x k
+    SimpleMatrix M12_i = M12.invert();
+    M32 = M32.mult(U2); // M32 U2
+    M13 = U1.transpose().mult(M13); // U1^T M13
 
     // P = M_{32} U_1^T (\tilde M_{12})^{-1} U_2 M_{13}
-    SimpleMatrix Pairs = // d x d 
-        M32.mult // d x k
-         (M12_i).mult // k x k
-         (M13);  // k x d
+    SimpleMatrix Pairs =  M32.mult(M12_i).mult(M13);
+    assert( MatrixOps.isSymmetric(Pairs) );
 
     // T = M_{123}( M_{32} U_2^T (\tilde M_{12})^{-1} U_1, M_{31} U_1^T (\tilde M_{21})^{-1} U_2,  I )
     // T( W (P32 (P12)^-1), ((P12^-1)P13)^T, I )
     FullTensor Triples =
       M123.rotate(
-        M32.mult
-          (M12_i).mult // k x k
-          (U1.transpose()), // k x d
-        M13.transpose().mult
-          (M12_i.transpose()).mult // k x k
-          (U2.transpose()), // k x d
-        MatrixFactory.eye(D)
+          (M32.mult(M12_i).mult(U1.transpose())).transpose(),
+          (M13.transpose().mult(M12_i.transpose()).mult(U2.transpose())).transpose(), // k x d
+          MatrixFactory.eye(D)
       );
+    assert( MatrixOps.isSymmetric(Triples) );
 
     LogInfo.end_track("symmetrize-views");
     return new Pair<>(Pairs, Triples);

@@ -39,22 +39,22 @@ public class HiddenMarkovModel implements EMOptimizable, Serializable, HasExactM
    */
   @Override
   public Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> computeExactMoments() {
-    SimpleMatrix pi = MatrixFactory.fromVector(params.pi);
+    SimpleMatrix pi = getPi();
     SimpleMatrix dpi = MatrixFactory.diag(pi);
-    SimpleMatrix O = new SimpleMatrix(params.O).transpose();
-    SimpleMatrix T = new SimpleMatrix(params.T).transpose();
+    SimpleMatrix O = getO();
+    SimpleMatrix T = getT();
+
+    SimpleMatrix w = T.mult(pi);
+    SimpleMatrix dw = MatrixFactory.diag(w);
+
     // M_1 = O \diag( \pi ) T^T \diag(T\pi)^{-1}
     SimpleMatrix M1 =
             O.mult(dpi).mult(T.transpose())
-                    .mult(MatrixFactory.diag(T.mult(pi.transpose())).invert());
+                    .mult(dw.invert());
     SimpleMatrix M2 = O;
     SimpleMatrix M3 = O.mult(T);
 
-    return Quartet.with(
-            M1.mult(dpi).mult(M3.transpose()),
-            M1.mult(dpi).mult(M2.transpose()),
-            M3.mult(dpi).mult(M2.transpose()),
-            FullTensor.fromDecomposition(pi, M1, M2, M3));
+    return MixtureOfGaussians.computeExactMoments(w, M1, M2, M3);
   }
 
   @Override

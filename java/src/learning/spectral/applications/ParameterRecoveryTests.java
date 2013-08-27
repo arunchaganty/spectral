@@ -53,7 +53,10 @@ public class ParameterRecoveryTests {
     HiddenMarkovModel model, model_;
     {
       int K = 2; int D = 2;
-      model = HiddenMarkovModel.generate(new HiddenMarkovModel.GenerationOptions(K, D));
+      model = new HiddenMarkovModel(new HiddenMarkovModel.Params(
+          new double[]{0.6,0.4},
+          new double[][]{{0.4, 0.6}, {0.6,0.4}},
+          new double[][]{{1.0, 0.0}, {0.0,1.0}}));
       model_ = ParameterRecovery.recoverHMM(K, model, 0.0);
       compareHMMs(model, model_, 1e-5);
     }

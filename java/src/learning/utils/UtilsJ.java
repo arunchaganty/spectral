@@ -11,7 +11,7 @@ import org.javatuples.Quartet;
 /**
  * Various utilities
  */
-public class Utils {
+public class UtilsJ {
   public static ComputableMoments fromExactMoments(HasExactMoments obj) {
     final Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> moments = obj.computeExactMoments();
     return new ComputableMoments() {
