@@ -33,6 +33,7 @@ public class TensorMethodTest {
     LogInfo.writeToStdout = false;
     LogInfo.init();
   }
+
   // Actual tests
   public void testSymmetrization( MixtureOfGaussians model ) {
     int K = model.getK();

@@ -116,12 +116,12 @@ public class TensorMethod {
    * @return - (weights, M1, M2, M3).
    */
   public Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> 
-      recoverParameters( int K, SimpleMatrix M12, 
-          SimpleMatrix M13, SimpleMatrix M23, 
+      recoverParameters( int K, SimpleMatrix M13,
+          SimpleMatrix M12, SimpleMatrix M32,
           FullTensor M123 ) {
     LogInfo.begin_track("recovery-asymmetric");
     // Symmetrize views to get M33, M333
-    Pair<SimpleMatrix,FullTensor> symmetricMoments = symmetrizeViews( K, M12, M13, M23, M123 );
+    Pair<SimpleMatrix,FullTensor> symmetricMoments = symmetrizeViews( K, M12, M13, M32, M123 );
     SimpleMatrix Pairs = symmetricMoments.getValue0();
     FullTensor Triples = symmetricMoments.getValue1();
 
@@ -131,11 +131,11 @@ public class TensorMethod {
     SimpleMatrix M3 = pair.getValue1();
 
     // Invert M3 to get M1 and M2.
+    SimpleMatrix M3i = (M3.transpose()).pseudoInverse().mult( MatrixFactory.diag( MatrixOps.reciprocal(pi) ) );
 
-    SimpleMatrix inversion = (M3.transpose()).pseudoInverse().mult( MatrixFactory.diag( MatrixOps.reciprocal(pi) ) );
+    SimpleMatrix M1 = M13.mult( M3i );
+    SimpleMatrix M2 = M3i.transpose().mult(M32).transpose();
 
-    SimpleMatrix M1 = M13.mult( inversion );
-    SimpleMatrix M2 = M23.mult( inversion );
     LogInfo.end_track("recovery-asymmetric");
 
     return new Quartet<>( pi, M1, M2, M3 );
@@ -155,19 +155,19 @@ public class TensorMethod {
    * Reduce the 3-view mixture model to 1 symmetric view.
    */
   public static Pair<SimpleMatrix,FullTensor> symmetrizeViews( int K, 
-        SimpleMatrix M12, 
-        SimpleMatrix M13, 
-        SimpleMatrix M23, 
+        SimpleMatrix M13,
+        SimpleMatrix M12,
+        SimpleMatrix M32,
         FullTensor M123 ) {
     LogInfo.begin_track("symmetrize-views");
 
     int D = M12.numRows();
 
     Triplet<SimpleMatrix,SimpleMatrix,SimpleMatrix> U1WU2 = MatrixOps.svdk( M12, K );
-    Triplet<SimpleMatrix,SimpleMatrix,SimpleMatrix> U2WU3 = MatrixOps.svdk( M23, K );
+    Triplet<SimpleMatrix,SimpleMatrix,SimpleMatrix> U3WU2 = MatrixOps.svdk( M32, K );
     SimpleMatrix U1 = U1WU2.getValue0(); // d x k
     SimpleMatrix U2 = U1WU2.getValue2();
-    SimpleMatrix U3 = U2WU3.getValue2();
+    SimpleMatrix U3 = U3WU2.getValue0();
 
     MatrixOps.printSize( U1 );
 
@@ -179,28 +179,27 @@ public class TensorMethod {
       U1.transpose().mult // k x d
       (M12).mult(U2); // d x k
     SimpleMatrix M12_i = M12_.invert();
+    M32 = M32.mult(U2.transpose());
+    M13 = U1.mult(M32);
 
-    // P = M_{31} U_1^T (\tilde M_{21})^{-1} U_2 M_{23}
+    // P = M_{32} U_1^T (\tilde M_{12})^{-1} U_2 M_{13}
     SimpleMatrix Pairs = // d x d 
-        M13.transpose().mult // d x d 
-        (U1).mult // d x k 
-         (M12_i.transpose()).mult // k x k
-         (U2.transpose()).mult // k x d
-         (M23);  // d x d 
+        M32.mult // d x k
+         (M12_i).mult // k x k
+         (M13);  // k x d
 
     // T = M_{123}( M_{32} U_2^T (\tilde M_{12})^{-1} U_1, M_{31} U_1^T (\tilde M_{21})^{-1} U_2,  I )
-    FullTensor Triples = 
+    // T( W (P32 (P12)^-1), ((P12^-1)P13)^T, I )
+    FullTensor Triples =
       M123.rotate(
-        (M23.transpose().mult // d x d
-          (U2).mult // d x k
+        M32.mult
           (M12_i).mult // k x k
-          (U1.transpose())).transpose(), // k x d
-        (M13.transpose().mult
-          (U1).mult
+          (U1.transpose()), // k x d
+        M13.transpose().mult
           (M12_i.transpose()).mult // k x k
-          (U2.transpose())).transpose(), // k x d
+          (U2.transpose()), // k x d
         MatrixFactory.eye(D)
-        );
+      );
 
     LogInfo.end_track("symmetrize-views");
     return new Pair<>(Pairs, Triples);

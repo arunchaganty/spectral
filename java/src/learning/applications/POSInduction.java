@@ -16,6 +16,7 @@ import learning.linalg.MatrixOps;
 import learning.models.HiddenMarkovModel;
 import learning.models.HiddenMarkovModel.Params;
 import learning.spectral.TensorMethod;
+import learning.spectral.applications.ParameterRecovery;
 import org.ejml.simple.SimpleMatrix;
 import org.javatuples.Quartet;
 
@@ -330,34 +331,9 @@ public class POSInduction implements Runnable {
    * @return - Initial parameters
    */
   public Params spectralRecovery(Corpus C, int K) {
-    LogInfo.begin_track("spectral-recovery");
     // Compute moments
-    ComputableMoments moments = corpusToMoments(C);
-    // Run tensor recovery
-    Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> measurements =
-        tensorMethod.randomizedRecoverParameters(K, moments);
-
-    // Populate params
-    // construct O T and pi
-    SimpleMatrix O = measurements.getValue2();
-    SimpleMatrix T = O.pseudoInverse().mult( measurements.getValue3() );
-
-    // Initialize pi to be random.
-    SimpleMatrix pi = measurements.getValue0(); // This is just a random guess.
-
-    // project and smooth
-    // projectOntoSimplex normalizes columns!
-    pi = MatrixOps.projectOntoSimplex( pi.transpose(), smoothMeasurements );
-    T = MatrixOps.projectOntoSimplex( T, smoothMeasurements ).transpose();
-    O = MatrixOps.projectOntoSimplex( O, smoothMeasurements ).transpose();
-
-    Params params = new Params(
-        MatrixFactory.toVector(pi),
-        MatrixFactory.toArray(T),
-        MatrixFactory.toArray(O));
-    LogInfo.end_track("spectral-recovery");
-
-    return params;
+    HiddenMarkovModel model = ParameterRecovery.recoverHMM(K, corpusToMoments(C), smoothMeasurements);
+    return model.getParams();
   }
   public Params spectralRecovery(ParsedCorpus C) {
     return spectralRecovery(C, C.getTagDimension());

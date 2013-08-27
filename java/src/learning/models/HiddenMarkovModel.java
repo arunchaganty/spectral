@@ -7,6 +7,8 @@ package learning.models;
 
 import fig.prob.Multinomial;
 import learning.Misc;
+import learning.data.HasExactMoments;
+import learning.data.HasSampleMoments;
 import learning.linalg.*;
 import learning.em.EMOptimizable;
 
@@ -30,8 +32,56 @@ import java.util.Arrays;
 /**
  * A hidden markov model.
  */
-public class HiddenMarkovModel implements EMOptimizable, Serializable {
-  // Model parameters
+public class HiddenMarkovModel implements EMOptimizable, Serializable, HasExactMoments, HasSampleMoments {
+  /**
+   * Compute exact moments from your parameters.
+   * @return - exact moments
+   */
+  @Override
+  public Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> computeExactMoments() {
+    SimpleMatrix pi = MatrixFactory.fromVector(params.pi);
+    SimpleMatrix dpi = MatrixFactory.diag(pi);
+    SimpleMatrix O = new SimpleMatrix(params.O).transpose();
+    SimpleMatrix T = new SimpleMatrix(params.T).transpose();
+    // M_1 = O \diag( \pi ) T^T \diag(T\pi)^{-1}
+    SimpleMatrix M1 =
+            O.mult(dpi).mult(T.transpose())
+                    .mult(MatrixFactory.diag(T.mult(pi.transpose())).invert());
+    SimpleMatrix M2 = O;
+    SimpleMatrix M3 = O.mult(T);
+
+    return Quartet.with(
+            M1.mult(dpi).mult(M3.transpose()),
+            M1.mult(dpi).mult(M2.transpose()),
+            M3.mult(dpi).mult(M2.transpose()),
+            FullTensor.fromDecomposition(pi, M1, M2, M3));
+  }
+
+  @Override
+  public Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> computeSampleMoments(int N) {
+    // Generate this much data and compute moments
+    SimpleMatrix P13 = new SimpleMatrix(getEmissionCount(), getEmissionCount());
+    SimpleMatrix P12 = new SimpleMatrix(getEmissionCount(), getEmissionCount());
+    SimpleMatrix P32 = new SimpleMatrix(getEmissionCount(), getEmissionCount());
+    FullTensor P123 = new FullTensor(getEmissionCount(), getEmissionCount(), getEmissionCount());
+
+    for(int i = 0; i < N; i++) {
+      int[] words = sample(3);
+      // Update counts in P.
+      P13.set(words[0], words[2], P13.get(words[0], words[2]) + 1);
+      P12.set(words[0], words[1], P13.get(words[0], words[1]) + 1);
+      P32.set(words[2], words[1], P13.get(words[2], words[1]) + 1);
+      P123.X[words[0]][words[1]][words[2]] += 1;
+    }
+
+    // Normalize
+    P13.scale(1.0/P13.elementSum());
+    P12.scale(1.0/P12.elementSum());
+    P32.scale(1.0/P32.elementSum());
+    P123.scale(1.0/P123.elementSum());
+
+    return Quartet.with(P13, P12, P32, P123);
+  }
 
   /**
    * Params stores the parameters for the HMM model.
@@ -355,8 +405,26 @@ public class HiddenMarkovModel implements EMOptimizable, Serializable {
 			state = RandomFactory.multinomial( params.T[state] );
 		}
 
-		return new Pair<>( observed, hidden );
+		return Pair.with( observed, hidden );
 	}
+
+  /**
+   * Generate from the model
+   */
+  @Deprecated
+  public Pair<int[],int[]> generate(Random rnd, int length) {
+    int[] observed = new int[length];
+    int[] hidden = new int[length];
+
+    int state = Multinomial.sample(rnd, params.pi);
+    for(int i = 0; i < length; i++) {
+      observed[i] = Multinomial.sample(rnd, params.O[state]);
+      hidden[i] = state;
+      state = Multinomial.sample(rnd, params.T[state]);
+    }
+
+    return Pair.with(observed, hidden);
+  }
 
 	/**
 	 * Use the Viterbi dynamic programming algorithm to find the hidden states for o.
@@ -522,23 +590,6 @@ public class HiddenMarkovModel implements EMOptimizable, Serializable {
 		return new HiddenMarkovModel(p_);
 	}
 
-  /**
-   * Generate from the model
-   */
-  public Pair<int[],int[]> generate(Random rnd, int length) {
-    int[] observed = new int[length];
-    int[] hidden = new int[length];
-
-    int state = Multinomial.sample(rnd, params.pi);
-    for(int i = 0; i < length; i++) {
-      observed[i] = Multinomial.sample(rnd, params.O[state]);
-      hidden[i] = state;
-      state = Multinomial.sample(rnd, params.T[state]);
-    }
-
-    return Pair.with(observed, hidden);
-  }
-
   public void setParams(double[] params) {
     this.params.updateFromVector(params);
   }
@@ -687,5 +738,6 @@ public class HiddenMarkovModel implements EMOptimizable, Serializable {
   public int numFeatures() {
     return params.numFeatures();
   }
+
 }
 

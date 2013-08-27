@@ -168,9 +168,9 @@ public class MatrixOpsTest {
     SimpleMatrix P123_1 = new SimpleMatrix( P123_1_ );
     SimpleMatrix P123_2 = new SimpleMatrix( P123_2_ );
 
-    SimpleTensor P123_ = MatrixOps.Triples( X1, X2, X3 );
-    SimpleMatrix P123_1a = P123_.project( 2, theta1 );
-    SimpleMatrix P123_2a = P123_.project( 2, theta2 );
+    FullTensor P123_ = MatrixOps.Triples( X1, X2, X3 );
+    SimpleMatrix P123_1a = P123_.project( 2, MatrixFactory.fromVector(theta1) );
+    SimpleMatrix P123_2a = P123_.project( 2, MatrixFactory.fromVector(theta2) );
 
     Assert.assertTrue( MatrixOps.allclose( P123_1, P123_1a ) );
     Assert.assertTrue( MatrixOps.allclose( P123_2, P123_2a ) );

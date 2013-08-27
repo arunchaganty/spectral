@@ -476,8 +476,42 @@ public class MatrixOps {
   /**
    * Compute Triples
    */
-  public static SimpleTensor Triples( SimpleMatrix X1, SimpleMatrix X2, SimpleMatrix X3 ) {
-    return new SimpleTensor( X1, X2, X3 );
+//  public static SimpleTensor Triples( SimpleMatrix X1, SimpleMatrix X2, SimpleMatrix X3 ) {
+//    return new SimpleTensor( X1, X2, X3 );
+//  }
+  public static FullTensor Triples( DenseMatrix64F X1, DenseMatrix64F X2, DenseMatrix64F X3 ) {
+    // TODO: Optimize
+    assert( X1.numRows == X2.numRows && X2.numRows == X3.numRows );
+
+    int nRows = X1.numRows;
+    int d1 = X1.numCols;
+    int d2 = X2.numCols;
+    int d3 = X3.numCols;
+
+    double[] X1_ = X1.data;
+    double[] X2_ = X2.data;
+    double[] X3_ = X3.data;
+    double[][][] Z = new double[d1][d2][d3];
+
+    // Average the outer products
+    for(int row = 0; row < nRows; row++ ) {
+      for( int i = 0; i < d1; i++ ) {
+        double x1 = X1_[X1.getIndex(row, i)];
+        for( int j = 0; j < d2; j++ ) {
+          double x2 = X2_[X2.getIndex(row, j)];
+          for( int k = 0; k < d3; k++ ) {
+            double x3 = X3_[X3.getIndex(row, k)];
+            // Rolling average
+            Z[i][j][k] += (x1*x2*x3 - Z[i][j][k])/(row+1);
+          }
+        }
+      }
+    }
+
+    return new FullTensor(Z);
+  }
+  public static FullTensor Triples( SimpleMatrix X1, SimpleMatrix X2, SimpleMatrix X3 ) {
+    return Triples(X1.getMatrix(), X2.getMatrix(), X3.getMatrix());
   }
 
   /**
@@ -652,7 +686,7 @@ public class MatrixOps {
   }
   public static SimpleMatrix normalize(SimpleMatrix x) {
     assert( isVector( x ) );
-    return x.scale( 1.0 / x.normF() );
+    return x.scale( 1.0 / x.elementSum() );
   }
 
   /**

@@ -7,6 +7,8 @@ package learning.models;
 
 import learning.Misc;
 import learning.data.ComputableMoments;
+import learning.data.HasExactMoments;
+import learning.data.HasSampleMoments;
 import learning.linalg.*;
 
 import org.ejml.simple.SimpleMatrix;
@@ -28,7 +30,7 @@ import org.javatuples.*;
 /**
  * A mixture of experts model
  */
-public class MixtureOfGaussians {
+public class MixtureOfGaussians implements HasExactMoments, HasSampleMoments {
 
   protected int K; // Number of components
   protected int D; // Dimensionality of space
@@ -84,6 +86,8 @@ public class MixtureOfGaussians {
       computeExactMoments() {
     return computeExactMoments( weights, means[0], means[1], means[2] ); 
   }
+
+  @Deprecated
   public ComputableMoments computeExactMoments_() {
     final SimpleMatrix M1 = means[0];
     final SimpleMatrix M2 = means[1];
@@ -213,6 +217,20 @@ public class MixtureOfGaussians {
     }
 
     return new Pair<>(X, h);
+  }
+
+  @Override
+  public Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> computeSampleMoments(int N) {
+    SimpleMatrix[] X = sample(N);
+    int K = getK();
+
+    // Compute the moments
+    SimpleMatrix P13 = MatrixOps.Pairs( X[0], X[2] );
+    SimpleMatrix P12 = MatrixOps.Pairs( X[0], X[1] );
+    SimpleMatrix P32 = MatrixOps.Pairs( X[2], X[1] );
+    FullTensor P123 = MatrixOps.Triples( X[0], X[1], X[2] );
+
+    return Quartet.with(P13, P12, P32, P123);
   }
 
   public static enum WeightDistribution {

@@ -519,4 +519,15 @@ public class FullTensor implements Tensor, Serializable {
   }
 
 
+  public double elementSum() {
+    double y = 0.0;
+    for( int d1 = 0; d1 < D1; d1++ ) {
+      for( int d2 = 0; d2 < D2; d2++ ) {
+        for( int d3 = 0; d3 < D3; d3++ ) {
+          y += X[d1][d2][d3];
+        }
+      }
+    }
+    return y;
+  }
 }
