@@ -274,6 +274,14 @@ public class MatrixOps {
   public static double norm(SimpleMatrix X) {
     return norm( X.getMatrix() );
   }
+  public static double norm(FullTensor T) {
+    double norm = 0.0;
+    for(int d1 = 0; d1 < T.D1; d1++ )
+      for(int d2 = 0; d2 < T.D2; d2++ )
+        for(int d3 = 0; d3 < T.D3; d3++ )
+          norm += (T.X[d1][d2][d3]) * (T.X[d1][d2][d3]);
+    return Math.sqrt(norm);
+  }
   public static double diff(DenseMatrix64F X, DenseMatrix64F Y) {
     return SpecializedOps.diffNormF(X, Y);
   }

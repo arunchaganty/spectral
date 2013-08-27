@@ -1,5 +1,6 @@
 package learning.linalg;
 
+import fig.basic.LBFGSMaximizer;
 import fig.basic.LogInfo;
 import fig.basic.Option;
 import org.ejml.simple.SimpleMatrix;
@@ -16,6 +17,7 @@ public class TensorFactorization {
 
   @Option(gloss="Random number generator for tensor method and random projections")
   Random rnd = new Random();
+
 
   /**
    * Perform a single eigen-decomposition step

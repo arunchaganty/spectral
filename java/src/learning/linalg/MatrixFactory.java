@@ -87,6 +87,13 @@ public class MatrixFactory {
     return M;
   }
 
+  public static double[] unitVector(int D, int idx) {
+    assert(idx < D);
+    double[] x = new double[D];
+    x[idx] = 1;
+    return x;
+  }
+
   /**
    * Create a matrix of dimension n x m filled with zeros
    * @param n
