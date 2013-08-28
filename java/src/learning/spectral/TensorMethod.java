@@ -140,6 +140,7 @@ public class TensorMethod {
 
     return new Quartet<>( pi, M1, M2, M3 );
   }
+  // TODO: Allow for some specification of permutation of moments?
   public Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> 
       recoverParameters( int K, 
         Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,FullTensor> moments ) {
@@ -180,6 +181,9 @@ public class TensorMethod {
 
     // P = M_{32} U_1^T (\tilde M_{12})^{-1} U_2 M_{13}
     SimpleMatrix Pairs =  M32.mult(M12_i).mult(M13);
+    double skew = MatrixOps.symmetricSkewMeasure(Pairs);
+    LogInfo.logs( "Pairs Skew: " + skew );
+    Pairs = MatrixOps.symmetrize(Pairs);
     assert( MatrixOps.isSymmetric(Pairs) );
 
     // T = M_{123}( M_{32} U_2^T (\tilde M_{12})^{-1} U_1, M_{31} U_1^T (\tilde M_{21})^{-1} U_2,  I )
@@ -190,6 +194,9 @@ public class TensorMethod {
           (M13.transpose().mult(M12_i.transpose()).mult(U2.transpose())).transpose(), // k x d
           MatrixFactory.eye(D)
       );
+    skew = MatrixOps.symmetricSkewMeasure(Triples);
+    LogInfo.logs( "Triples Skew: " + skew );
+    Triples = MatrixOps.symmetrize(Triples);
     assert( MatrixOps.isSymmetric(Triples) );
 
     LogInfo.end_track("symmetrize-views");

@@ -70,19 +70,48 @@ public class HiddenMarkovModel implements EMOptimizable, Serializable, HasExactM
       int[] words = sample(3);
       // Update counts in P.
       P13.set(words[0], words[2], P13.get(words[0], words[2]) + 1);
-      P12.set(words[0], words[1], P13.get(words[0], words[1]) + 1);
-      P32.set(words[2], words[1], P13.get(words[2], words[1]) + 1);
+      P12.set(words[0], words[1], P12.get(words[0], words[1]) + 1);
+      P32.set(words[2], words[1], P32.get(words[2], words[1]) + 1);
       P123.X[words[0]][words[1]][words[2]] += 1;
     }
 
     // Normalize
-    P13.scale(1.0/P13.elementSum());
-    P12.scale(1.0/P12.elementSum());
-    P32.scale(1.0/P32.elementSum());
-    P123.scale(1.0/P123.elementSum());
+    P13 = P13.scale(1.0/P13.elementSum());
+    P12 = P12.scale(1.0/P12.elementSum());
+    P32 = P32.scale(1.0/P32.elementSum());
+    P123 = P123.scale(1.0/P123.elementSum());
+
+    assert( MatrixOps.equal( P13.elementSum(), 1.0 ) );
+    assert( MatrixOps.equal( P12.elementSum(), 1.0 ) );
+    assert( MatrixOps.equal( P32.elementSum(), 1.0 ) );
+    assert( MatrixOps.equal( P123.elementSum(), 1.0 ) );
 
     return Quartet.with(P13, P12, P32, P123);
   }
+//  public Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> computeSampleMoments(int N) {
+//    // Generate this much data and compute moments
+//    SimpleMatrix P12 = new SimpleMatrix(getEmissionCount(), getEmissionCount());
+//    SimpleMatrix P13 = new SimpleMatrix(getEmissionCount(), getEmissionCount());
+//    SimpleMatrix P23 = new SimpleMatrix(getEmissionCount(), getEmissionCount());
+//    FullTensor P132 = new FullTensor(getEmissionCount(), getEmissionCount(), getEmissionCount());
+//
+//    for(int i = 0; i < N; i++) {
+//      int[] words = sample(3);
+//      // Update counts in P.
+//      P12.set(words[0], words[1], P12.get(words[0], words[1]) + 1);
+//      P13.set(words[0], words[2], P13.get(words[0], words[2]) + 1);
+//      P23.set(words[1], words[2], P23.get(words[1], words[2]) + 1);
+//      P132.X[words[0]][words[2]][words[1]] += 1;
+//    }
+//
+//    // Normalize
+//    P13 = P13.scale(1.0/P13.elementSum());
+//    P12 = P12.scale(1.0/P12.elementSum());
+//    P23 = P23.scale(1.0/P23.elementSum());
+//    P132 = P132.scale(1.0/P132.elementSum());
+//
+//    return Quartet.with(P12, P13, P23, P132);
+//  }
 
   /**
    * Params stores the parameters for the HMM model.
@@ -333,7 +362,7 @@ public class HiddenMarkovModel implements EMOptimizable, Serializable, HasExactM
   }
 
   public static HiddenMarkovModel generate( GenerationOptions options ) {
-		Params params = Params.uniformWithNoise( new Random(), options.stateCount, options.emissionCount, options.noise );
+		Params params = Params.uniformWithNoise( options.paramRandom, options.stateCount, options.emissionCount, options.noise );
     return new HiddenMarkovModel( params );
   }
 

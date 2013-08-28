@@ -1350,6 +1350,19 @@ public class MatrixOps {
 
     return skew;
   }
+  public static double symmetricSkewMeasure( SimpleMatrix M ) {
+    double skew = 0.0;
+    assert(M.numRows() == M.numCols());
+    int D = M.numRows();
+
+    for( int d1 = 0; d1 < D; d1++ ) {
+      for( int d2 = 0; d2 < D; d2++ ) {
+        skew += Math.abs(M.get(d1,d2) - M.get(d2,d1));
+      }
+    }
+
+    return skew;
+  }
 
   /**
    * Computes the reciprocal of a vector;
@@ -1417,6 +1430,28 @@ public class MatrixOps {
     assert( col.get(indices[0]) > col.get(indices[indices.length-1]) );
 
     return indices;
+  }
+
+  public static SimpleMatrix symmetrize(SimpleMatrix pairs) {
+    return pairs.plus(pairs.transpose()).divide(2.0);
+  }
+  public static FullTensor symmetrize(FullTensor triples) {
+    FullTensor triples_ = triples.clone();
+    for(int d1 = 0; d1 < triples.D1; d1++ ) {
+      for(int d2 = 0; d2 < triples.D2; d2++ ) {
+        for(int d3 = 0; d3 < triples.D3; d3++ ) {
+          triples_.X[d1][d2][d3] =
+              (triples.X[d1][d2][d3] +
+                  triples.X[d1][d3][d2] +
+                  triples.X[d2][d1][d3] +
+                  triples.X[d2][d3][d1] +
+                  triples.X[d3][d1][d2] +
+                  triples.X[d3][d2][d1] )/6.0;
+        }
+      }
+
+    }
+    return triples_;
   }
 
   public static interface Matrixable {

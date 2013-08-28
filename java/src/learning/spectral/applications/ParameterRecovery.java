@@ -25,6 +25,8 @@ public class ParameterRecovery {
     // Ignoring M1 which is arbitrarily complicated.
     SimpleMatrix O = measurements.getValue2();
     SimpleMatrix OT = measurements.getValue3();
+//    SimpleMatrix OT = measurements.getValue2();
+//    SimpleMatrix O = measurements.getValue3();
     // construct O T and pi
     SimpleMatrix T = O.pseudoInverse().mult( OT );
 
