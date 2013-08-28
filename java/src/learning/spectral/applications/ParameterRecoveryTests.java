@@ -25,22 +25,25 @@ public class ParameterRecoveryTests {
   }
 
   public void compareHMMs(HiddenMarkovModel model, HiddenMarkovModel model_, double eps) {
+    SimpleMatrix O = model.getO();
+    SimpleMatrix O_ = model_.getO();
+    int[] perm = MatrixOps.alignColumns(O_, O);
+    O_ = MatrixOps.permuteColumns(O_, perm);
+
     // Compare that the pi, T and O match
     SimpleMatrix pi = model.getPi();
     SimpleMatrix pi_ = model_.getPi();
-    pi_ = MatrixOps.alignMatrix(pi_, pi, true);
+    pi_ = MatrixOps.permuteRows(pi_, perm);
 
+    // Because of label permutation freedom, we can have permutation between rows and columns.
     SimpleMatrix T = model.getT();
     SimpleMatrix T_ = model_.getT();
-    T_ = MatrixOps.alignMatrix(T_, T, true);
-
-    SimpleMatrix O = model.getO();
-    SimpleMatrix O_ = model_.getO();
-    O_ = MatrixOps.alignMatrix(O_, O, true);
+    T_ = MatrixOps.permuteColumns(T_, perm);
+    T_ = MatrixOps.permuteRows(T_, perm);
 
     LogInfo.logs("pi error: " + MatrixOps.diff(pi, pi_));
-    LogInfo.logs("O error: " + MatrixOps.diff(T, T_));
-    LogInfo.logs("T error: " + MatrixOps.diff(O, O_));
+    LogInfo.logs("O error: " + MatrixOps.diff(O, O_));
+    LogInfo.logs("T error: " + MatrixOps.diff(T, T_));
 
     Assert.assertTrue( MatrixOps.allclose( O, O_, eps) );
     Assert.assertTrue( MatrixOps.allclose( pi, pi_, eps) );
@@ -57,6 +60,12 @@ public class ParameterRecoveryTests {
           new double[]{0.6,0.4},
           new double[][]{{0.4, 0.6}, {0.6,0.4}},
           new double[][]{{1.0, 0.0}, {0.0,1.0}}));
+      model_ = ParameterRecovery.recoverHMM(K, model, 0.0);
+      compareHMMs(model, model_, 1e-5);
+    }
+    {
+      int K = 2; int D = 2;
+      model = HiddenMarkovModel.generate(new HiddenMarkovModel.GenerationOptions(K, D));
       model_ = ParameterRecovery.recoverHMM(K, model, 0.0);
       compareHMMs(model, model_, 1e-5);
     }

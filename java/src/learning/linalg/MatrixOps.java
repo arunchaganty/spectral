@@ -1143,6 +1143,49 @@ public class MatrixOps {
     else
       return alignMatrix( X, Y );
   }
+  public static int[] alignRows( SimpleMatrix X, SimpleMatrix Y) {
+    assert( X.numRows() == Y.numRows() );
+    assert( X.numCols() == Y.numCols() );
+    int nRows = X.numRows();
+    int nCols = X.numCols();
+
+    // Populate the weight matrix
+    double[][] W = MatrixFactory.toArray( cdist( Y, X ) );
+    // Compute min-weight matching
+    int[][] matching = HungarianAlgorithm.findWeightedMatching( W, false );
+    // Shuffle rows
+    int[] perm = new int[nRows];
+    for( int[] match : matching )
+      perm[match[0]] = match[1];
+
+    return perm;
+  }
+  public static int[] alignColumns( SimpleMatrix X, SimpleMatrix Y) {
+    return alignRows( X.transpose(), Y.transpose() );
+  }
+
+  public static SimpleMatrix permuteRows( SimpleMatrix X, int[] perm ) {
+    int nRows = X.numRows();
+    int nCols = X.numCols();
+    SimpleMatrix X_ = new SimpleMatrix( nRows, nCols );
+    // Shuffle rows
+    for( int i = 0; i < nRows; i++ ) {
+      setRow( X_, i, row( X, perm[i] ) );
+    }
+
+    return X_;
+  }
+  public static SimpleMatrix permuteColumns( SimpleMatrix X, int[] perm ) {
+    int nRows = X.numRows();
+    int nCols = X.numCols();
+    SimpleMatrix X_ = new SimpleMatrix( nRows, nCols );
+    // Shuffle rows
+    for( int i = 0; i < nCols; i++ ) {
+      setCol( X_, i, col( X, perm[i] ) );
+    }
+
+    return X_;
+  }
 
   // Algebraic operations
   /**

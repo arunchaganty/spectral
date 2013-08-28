@@ -121,7 +121,7 @@ public class TensorMethod {
           FullTensor M123 ) {
     LogInfo.begin_track("recovery-asymmetric");
     // Symmetrize views to get M33, M333
-    Pair<SimpleMatrix,FullTensor> symmetricMoments = symmetrizeViews( K, M12, M13, M32, M123 );
+    Pair<SimpleMatrix,FullTensor> symmetricMoments = symmetrizeViews( K, M13, M12, M32, M123 );
     SimpleMatrix Pairs = symmetricMoments.getValue0();
     FullTensor Triples = symmetricMoments.getValue1();
 

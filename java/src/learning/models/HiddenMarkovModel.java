@@ -20,6 +20,7 @@ import fig.basic.Option;
 import fig.basic.OptionsParser;
 import fig.basic.LogInfo;
 import fig.basic.Fmt;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.FileOutputStream;
 import java.io.ObjectOutputStream;

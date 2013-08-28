@@ -32,22 +32,20 @@ public class TensorFactorization {
     SimpleMatrix maxEigenvector = null;
 
     for( int attempt = 0; attempt < attempts; attempt++ ) {
-      SimpleMatrix theta = RandomFactory.randn(rnd, 1, D);
+      // 1. Draw theta randomly from unit sphere
+      SimpleMatrix theta = RandomFactory.rand(rnd, 1, D);
       theta.scale(1.0/MatrixOps.norm(theta));
       if( attempt % 10 == 0 )
         LogInfo.logs("Attempt %d/%d", attempt, attempts);
 
-      // Hit the tensor with this vector and repeat till you converge
+      // 2. Compute power iteration update
       for(int n = 0; n < N; n++ ) {
         SimpleMatrix theta_ = T.project2(1, 2, theta, theta);
         // Normalize
         theta_ = theta_.scale(1.0 / MatrixOps.norm(theta_));
         double err = MatrixOps.norm(theta_.minus(theta));
-        if( err < EPS_CLOSE ) {
-          theta = theta_; break;
-        } else {
-          theta = theta_;
-        }
+        theta = theta_;
+        if( err < EPS_CLOSE ) break;
       }
       double eigenvalue = T.project3(theta, theta, theta);
       if(eigenvalue > maxEigenvalue) {
@@ -55,8 +53,19 @@ public class TensorFactorization {
         maxEigenvector = theta;
       }
     }
+    SimpleMatrix theta = maxEigenvector;
+    // 3. Do N iterations with this max eigenvector
+    for(int n = 0; n < N; n++ ) {
+      SimpleMatrix theta_ = T.project2(1, 2, theta, theta);
+      // Normalize
+      theta_ = theta_.scale(1.0 / MatrixOps.norm(theta_));
+      double err = MatrixOps.norm(theta_.minus(theta));
+      theta = theta_;
+      if( err < EPS_CLOSE ) break;
+    }
+    double eigenvalue = T.project3(theta, theta, theta);
 
-    return new Pair<>(maxEigenvalue, maxEigenvector);
+    return Pair.with(eigenvalue, theta);
   }
 
   /**
@@ -66,15 +75,12 @@ public class TensorFactorization {
    * @param v - vector to remove
    * @return - Deflated tensor
    */
-  protected void deflate(FullTensor T, double scale, double[] v) {
+  protected void deflate(FullTensor T, double scale, SimpleMatrix vector) {
     int D = T.getDim(0);
     for( int d1 = 0; d1 < D; d1++ )
       for( int d2 = 0; d2 < D; d2++ )
         for( int d3 = 0; d3 < D; d3++ )
-          T.set(d1,d2,d3, T.get(d1, d2, d3) - scale * v[d1] * v[d2] * v[d3] );
-  }
-  protected void deflate(FullTensor T, double scale, SimpleMatrix vector) {
-    deflate(T, scale, MatrixFactory.toVector(vector) );
+          T.set(d1,d2,d3, T.get(d1, d2, d3) - scale * vector.get(d1) * vector.get(d2) * vector.get(d3) );
   }
 
   /**
@@ -92,12 +98,12 @@ public class TensorFactorization {
     double[] eigenvalues = new double[K];
 
     // Make a copy of T because we're going to destroy it during deflation
-    T = T.clone();
+    FullTensor T_ = T.clone();
 
     for( int k = 0; k < K; k++ ) {
       // Extract the top eigenvalue/vector pair
       LogInfo.logs("Eigenvector %d/%d", k, K);
-      Pair<Double, SimpleMatrix> pair = eigendecomposeStep(T, attempts, iters);
+      Pair<Double, SimpleMatrix> pair = eigendecomposeStep(T_, attempts, iters);
 
       // When null, then we are done
       if( pair.getValue1() == null )
@@ -107,23 +113,23 @@ public class TensorFactorization {
       eigenvectors[k] = pair.getValue1();
 
       // Deflate
-      deflate(T, eigenvalues[k], eigenvectors[k]);
+      deflate(T_, eigenvalues[k], eigenvectors[k]);
     }
 
     SimpleMatrix eigenvalues_ = MatrixFactory.fromVector(eigenvalues);
-    SimpleMatrix eigenvectors_ = MatrixFactory.columnStack(eigenvectors);;
+    SimpleMatrix eigenvectors_ = MatrixFactory.columnStack(eigenvectors);
 
+    // Make sure we have a factorization.
     {
       assert( K == eigenvalues_.getNumElements() );
-      // Make sure this was a factorization
-      FullTensor T_ = FullTensor.fromDecomposition( eigenvalues_, eigenvectors_ );
-      LogInfo.logs( "T_: " + MatrixOps.diff(T, T_) );
+      FullTensor Treconstructed = FullTensor.fromDecomposition( eigenvalues_, eigenvectors_ );
+      LogInfo.logs( "T_: " + MatrixOps.diff(T, Treconstructed) );
     }
 
     return Pair.with(eigenvalues_, eigenvectors_);
   }
   public Pair<SimpleMatrix, SimpleMatrix> eigendecompose( FullTensor T, int K ) {
-    return eigendecompose(T, K, 10, 100);
+    return eigendecompose(T, K, 20, 50);
   }
   public Pair<SimpleMatrix, SimpleMatrix> eigendecompose( FullTensor T ) {
     int K = T.getDim(0);
