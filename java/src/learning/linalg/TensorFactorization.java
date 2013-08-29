@@ -1,8 +1,7 @@
 package learning.linalg;
 
-import fig.basic.LBFGSMaximizer;
-import fig.basic.LogInfo;
-import fig.basic.Option;
+import breeze.optimize.Minimizer;
+import fig.basic.*;
 import org.ejml.simple.SimpleMatrix;
 import org.javatuples.Pair;
 
@@ -24,7 +23,7 @@ public class TensorFactorization {
    * @param T - Full tensor
    * @return - (eigenvalue, eigenvector).
    */
-  protected Pair<Double,SimpleMatrix> eigendecomposeStep( Tensor T, int attempts, int iters ) {
+  protected Pair<Double,SimpleMatrix> eigendecomposeStep( FullTensor T, int attempts, int iters ) {
     int N = iters;
     int D = T.getDim(0);
 
@@ -67,6 +66,80 @@ public class TensorFactorization {
 
     return Pair.with(eigenvalue, theta);
   }
+
+  @OptionSet(name="lbfgs") public LBFGSMaximizer.Options lbfgs = new LBFGSMaximizer.Options();
+  @OptionSet(name="backtrack") public BacktrackingLineSearch.Options backtrack = new BacktrackingLineSearch.Options();
+
+  /**
+   * f(x) = \| T(x,x,x) - x^{3} \|.
+   */
+  public static class TensorFunctionState implements Maximizer.FunctionState {
+    double[] point;
+    FullTensor T;
+    double value;
+    double[] gradient;
+    boolean objectiveValid = false;
+    boolean gradientValid = false;
+
+    TensorFunctionState(FullTensor T) {
+      this.T = T;
+      assert( T.D1 == T.D2 && T.D2 == T.D3 );
+      point = new double[T.D1];
+      gradient = new double[T.D1];
+    }
+
+    @Override
+    public double[] point() {
+      return point;
+    }
+
+    @Override
+    public double value() {
+      if( !objectiveValid ) {
+        value = -(Math.pow(MatrixOps.norm(T),2.0) + Math.pow(MatrixOps.norm(point),6.0) - 2 * T.project3(point,point,point));
+        objectiveValid = true;
+      }
+      return value;
+    }
+
+    @Override
+    public double[] gradient() {
+      if( !gradientValid ) {
+        for( int i = 0; i < T.D1; i++ ) {
+          gradient[i] = -(- 6 * T.project3(point, point, MatrixFactory.unitVector(T.D1, i)) +
+              6 * Math.pow(MatrixOps.norm(point),4.0) * point[i]);
+        }
+        gradientValid = true;
+      }
+      return gradient;
+    }
+
+    @Override
+    public void invalidate() {
+      objectiveValid = gradientValid = false;
+    }
+  }
+
+  protected Pair<Double,SimpleMatrix> eigendecomposeStep_( FullTensor T, int attempts, int iters ) {
+    Maximizer max = new GradientMaximizer(backtrack); //LBFGSMaximizer(backtrack, lbfgs);
+    TensorFunctionState state = new TensorFunctionState(T);
+    Random rnd = new Random(1);
+    for( int i = 0; i < state.point.length; i++ )
+      state.point[i] = rnd.nextDouble();//maxEigenvector[i]; //1.0/(1+state.point.length);
+
+    boolean done = false;
+    LogInfo.begin_track("Optimization");
+    for( int i = 0; i < iters && !done; i++ ) {
+      done = max.takeStep(state);
+      LogInfo.logs("%s objective = %f, point = %s, gradient = %s", i, state.value(), Fmt.D(state.point()), Fmt.D(state.gradient()));
+    }
+    LogInfo.end_track();
+    SimpleMatrix eigenvector = MatrixFactory.fromVector(state.point());
+    double eigenvalue = T.project3(eigenvector, eigenvector, eigenvector);
+
+    return Pair.with(eigenvalue, eigenvector);
+  }
+
 
   /**
    * Return T - scale vector^{\otimes 3}
@@ -129,7 +202,7 @@ public class TensorFactorization {
     return Pair.with(eigenvalues_, eigenvectors_);
   }
   public Pair<SimpleMatrix, SimpleMatrix> eigendecompose( FullTensor T, int K ) {
-    return eigendecompose(T, K, 20, 50);
+    return eigendecompose(T, K, 100, 50);
   }
   public Pair<SimpleMatrix, SimpleMatrix> eigendecompose( FullTensor T ) {
     int K = T.getDim(0);

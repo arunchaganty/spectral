@@ -164,6 +164,10 @@ public class TensorMethod {
 
     int D = M12.numRows();
 
+    LogInfo.logs("M13 condition:" + MatrixOps.conditionNumber(M13, K)) ;
+    LogInfo.logs("M12 condition:" + MatrixOps.conditionNumber(M12, K)) ;
+    LogInfo.logs("M32 condition:" + MatrixOps.conditionNumber(M32, K)) ;
+
     Triplet<SimpleMatrix,SimpleMatrix,SimpleMatrix> U1WU2 = MatrixOps.svdk( M12, K );
     SimpleMatrix U1 = U1WU2.getValue0(); // d x k
     SimpleMatrix U2 = U1WU2.getValue2();

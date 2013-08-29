@@ -58,6 +58,26 @@ public class HiddenMarkovModel implements EMOptimizable, Serializable, HasExactM
     return MixtureOfGaussians.computeExactMoments(w, M1, M2, M3);
   }
 
+  public Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, SimpleMatrix> computeMixtureViews() {
+    SimpleMatrix pi = getPi();
+    SimpleMatrix dpi = MatrixFactory.diag(pi);
+    SimpleMatrix O = getO();
+    SimpleMatrix T = getT();
+
+    SimpleMatrix w = T.mult(pi);
+    SimpleMatrix dw = MatrixFactory.diag(w);
+
+    // M_1 = O \diag( \pi ) T^T \diag(T\pi)^{-1}
+    SimpleMatrix M1 =
+        O.mult(dpi).mult(T.transpose())
+            .mult(dw.invert());
+    SimpleMatrix M2 = O;
+    SimpleMatrix M3 = O.mult(T);
+
+    return Quartet.with(w, M1, M2, M3);
+  }
+
+
   @Override
   public Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> computeSampleMoments(int N) {
     // Generate this much data and compute moments
