@@ -1,6 +1,5 @@
 package learning.linalg;
 
-import breeze.optimize.Minimizer;
 import fig.basic.*;
 import org.ejml.simple.SimpleMatrix;
 import org.javatuples.Pair;
