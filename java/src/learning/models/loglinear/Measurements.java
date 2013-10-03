@@ -15,7 +15,9 @@ import static fig.basic.LogInfo.*;
 import java.util.List;
 
 /**
- * Implementation of the Measurements framework:
+ * Implementation of constrained-EM. Follows from the measurements framework (ref below), but in the M-step, we
+ * assume $q$ to be fixed instead of a function $\theta$ ($q \propto \exp(\beta^T \sigma + \theta^T \phi$).
+ *
  *   Learning from measurements in exponential families
  *   Percy Liang, Michael I. Jordan, Dan Klein
  *   http://machinelearning.org/archive/icml2009/papers/393.pdf
@@ -61,6 +63,11 @@ public class Measurements implements Runnable {
     }
   }
 
+  /**
+   * Implements the E objective
+   *    - L = (tau, \beta) - \sum_i B(\beta ; X_i) - 1/2 betaRegularization \|\beta\|^2
+   *    - dL = tau - \sum_i \E_\beta(\sigma(Y_i, X_i)) - 1/betaRegularization \beta
+   */
   class MeasurementsEObjective implements Maximizer.FunctionState {
     Model modelA, modelB;
     List<Example> X;
@@ -157,6 +164,11 @@ public class Measurements implements Runnable {
     }
   }
 
+  /**
+   * Implements the M objective
+   *    - L = \sum_i A(\theta ; X_i) + thetaRegularization/2 \|\theta\|^2
+   *    - dL = \sum_i \E_\theta(\phi(Y_i, X_i)) + thetaRegularization \theta
+   */
   class MeasurementsMObjective implements Maximizer.FunctionState {
     Model modelA, modelB;
     List<Example> X;
@@ -381,6 +393,8 @@ public class Measurements implements Runnable {
     // Scale measurements by number of examples
 //    ListUtils.multMut(measurements.weights, opts.genNumExamples);
 
+    ParamsVec trueMeasurements = new ParamsVec(measurements);
+
     trueParams.write(Execution.getFile("true.params"));
     measurements.write(Execution.getFile("true.counts"));
 
@@ -413,6 +427,11 @@ public class Measurements implements Runnable {
     Hp.fetchPosteriors(false);
     // Scale measurements by number of examples
     //ListUtils.multMut(measurements.weights, opts.genNumExamples);
+
+    int[] perm = new int[trueMeasurements.K];
+    double error = measurements.computeDiff(trueMeasurements, perm);
+    Execution.putOutput("error", error);
+    LogInfo.logs(error + " " + Fmt.D(perm));
 
     theta.write(Execution.getFile("fit.params"));
     Execution.putOutput("fit.beta", MatrixFactory.fromVector(beta.weights));
