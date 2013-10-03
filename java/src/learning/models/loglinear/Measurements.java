@@ -22,8 +22,11 @@ import java.util.List;
  */
 public class Measurements implements Runnable {
 
+  @Option(gloss="Regularization for theta") public double thetaRegularization = 1.0;
+  @Option(gloss="Regularization for beta") public double betaRegularization = 1.0;
+
   @Option(gloss="Number of iterations optimizing E") public int eIters = 100;
-  @Option(gloss="Number of iterations optimizing M") public int mIters = 100;
+  @Option(gloss="Number of iterations optimizing M") public int mIters = 10;
   @Option(gloss="Number of iterations") public int iters = 10;
 
   @Option(gloss="Type of optimization to use") public boolean useLBFGS = true;
@@ -58,7 +61,7 @@ public class Measurements implements Runnable {
     }
   }
 
-  static class MeasurementsEObjective implements Maximizer.FunctionState {
+  class MeasurementsEObjective implements Maximizer.FunctionState {
     Model modelA, modelB;
     List<Example> X;
     ParamsVec theta, beta, tau;
@@ -88,9 +91,9 @@ public class Measurements implements Runnable {
       for( Example X_i : X ) {
         Hypergraph<Example> Hp = modelA.createHypergraph(X_i, theta.weights, null, 0);
         Hp.computePosteriors(false);
-        objectiveOffset += Hp.getLogZ();
+        objectiveOffset += Hp.getLogZ() / X.size();
       }
-      objectiveOffset += 0.5 * theta.dot(theta);
+      objectiveOffset += 0.5 * thetaRegularization * theta.dot(theta);
     }
 
     @Override
@@ -107,7 +110,7 @@ public class Measurements implements Runnable {
      * The only things that change are B and h^*(\beta).
      */
     public double value() {
-//      if( objectiveValid ) return objective + objectiveOffset;
+      if( objectiveValid ) return objective + objectiveOffset;
       objective = 0.;
 
       // Add a linear term for (\tau, \beta)
@@ -120,17 +123,17 @@ public class Measurements implements Runnable {
          Hypergraph<Example> Hq = modelB.createHypergraph(X_i, params.weights, null, 0);
          Hq.computePosteriors(false);
          double logZ = Hq.getLogZ();
-         objective -= logZ;
+         objective -= logZ / X.size();
       }
       // Finally, subtract regularizer h^*(\beta) = 0.5 \|\beta\|^2
-      objective -= 0.5 * beta.dot(beta);
+      objective -= 0.5 * betaRegularization * beta.dot(beta);
 
       return objective + objectiveOffset;
     }
 
     @Override
     public double[] gradient() {
-//      if( gradientValid ) return gradient.weights;
+      if( gradientValid ) return gradient.weights;
 
       gradient.clear();
       // Add a term for \tau
@@ -141,22 +144,20 @@ public class Measurements implements Runnable {
       params = ParamsVec.plus(theta, beta, params);
       paramsGradient.clear();
       for( Example X_i : X ) {
-         Hypergraph<Example> Hq = modelB.createHypergraph(X_i, params.weights, paramsGradient.weights, -1);
+         Hypergraph<Example> Hq = modelB.createHypergraph(X_i, params.weights, paramsGradient.weights, -1./ X.size());
          Hq.computePosteriors(false);
          Hq.fetchPosteriors(false);
       }
       gradient = ParamsVec.plus(gradient, paramsGradient, gradient);
 
       // subtract \nabla h^*(\beta) = \beta
-      gradient.incr(-1.0, beta);
+      gradient.incr(-betaRegularization, beta);
 
       return gradient.weights;
     }
-
-    // TODO: Add gradient check
   }
 
-  static class MeasurementsMObjective implements Maximizer.FunctionState {
+  class MeasurementsMObjective implements Maximizer.FunctionState {
     Model modelA, modelB;
     List<Example> X;
     ParamsVec theta, beta, tau;
@@ -164,7 +165,6 @@ public class Measurements implements Runnable {
 
     double objective, objectiveOffset;
     boolean objectiveValid, gradientValid;
-    ParamsVec params, paramsGradient;
 
     public MeasurementsMObjective(Model modelA, Model modelB, List<Example> X, ParamsVec tau, ParamsVec theta, ParamsVec beta) {
       this.modelA = modelA;
@@ -174,17 +174,24 @@ public class Measurements implements Runnable {
       this.theta = theta;
       this.beta = beta;
       this.gradient = new ParamsVec(theta);
-      this.params = modelB.newParamsVec();
-      this.paramsGradient = modelB.newParamsVec();
     }
 
     public void updateOffset() {
       // Compute the offset to the value
       // $(tau, \beta) - h_\beta(\heta)
+      ParamsVec params = modelB.newParamsVec();
+      params.clear();
+
+      params = ParamsVec.plus(theta, beta, params);
 
       objectiveOffset = 0;
       objectiveOffset += tau.dot(beta);
-      objectiveOffset -= 0.5 * beta.dot(beta);
+      for( Example X_i : X ) {
+        Hypergraph<Example> Hq = modelB.createHypergraph(X_i, params.weights, null, 0);
+        Hq.computePosteriors(false);
+        objectiveOffset -=  Hq.getLogZ() / X.size() ;
+      }
+      objectiveOffset -= 0.5 * betaRegularization *  beta.dot(beta);
     }
 
     @Override
@@ -201,55 +208,37 @@ public class Measurements implements Runnable {
      * The only things that change are A, B and h(\theta).
      */
     public double value() {
-      //if( objectiveValid ) return - (objective + objectiveOffset);
+      if( objectiveValid ) return - (objective + objectiveOffset);
 
       objective = 0.;
 
-      // Go through each example, and compute A(\theta;X_i) - B(\theta, X_i)
+      // Go through each example, and compute A(\theta;X_i)
       for( Example X_i : X ) {
         Hypergraph<Example> Hp = modelA.createHypergraph(X_i, theta.weights, null, 0);
         Hp.computePosteriors(false);
-        objective +=  Hp.getLogZ();
-      }
-
-      params.clear();
-      params = ParamsVec.plus(theta, beta, params);
-      for( Example X_i : X ) {
-        Hypergraph<Example> Hq = modelB.createHypergraph(X_i, params.weights, null, 0);
-        Hq.computePosteriors(false);
-        objective -=  Hq.getLogZ();
+        objective +=  Hp.getLogZ() / X.size();
       }
       // Finally, add regularizer h(\theta) = 0.5 \|\theta\|^2
-      objective += 0.5 * theta.dot(theta);
+      objective += 0.5 * thetaRegularization * theta.dot(theta);
 
-      return - (objective + objectiveOffset);
+      return -(objective + objectiveOffset);
     }
 
     @Override
     public double[] gradient() {
-      //if( gradientValid ) return gradient.weights;
+      if( gradientValid ) return gradient.weights;
 
       gradient.clear();
 
       // Compute expected counts \E_p(\phi) - \E_q(\phi)
       for( Example X_i : X ) {
-        Hypergraph<Example> Hp = modelA.createHypergraph(X_i, theta.weights, gradient.weights, 1);
+        Hypergraph<Example> Hp = modelA.createHypergraph(X_i, theta.weights, gradient.weights, 1./X.size());
         Hp.computePosteriors(false);
         Hp.fetchPosteriors(false);
       }
 
-      params.clear();
-      params = ParamsVec.plus(theta, beta, params);
-      paramsGradient.clear();
-      for( Example X_i : X ) {
-        Hypergraph<Example> Hq = modelB.createHypergraph(X_i, params.weights, paramsGradient.weights, -1);
-        Hq.computePosteriors(false);
-        Hq.fetchPosteriors(false);
-      }
-      gradient = ParamsVec.plus(gradient, paramsGradient, gradient);
-
       // Add \nabla h(\theta)
-      gradient.incr(1.0, theta);
+      gradient.incr(thetaRegularization, theta);
 
       // Change the sign
       ListUtils.multMut(gradient.weights, -1);
@@ -314,9 +303,11 @@ public class Measurements implements Runnable {
     Maximizer mMaximizer = newMaximizer();
 
     // Create the E-objective (for $\beta$) - main computations are the partition function for B and expected counts
-    // Create the M-objective (for $\theta$) - main computations are the partition function for A, B and expected counts
     MeasurementsEObjective eObjective = new MeasurementsEObjective(modelA, modelB, data, measurements, theta, beta);
+    // Create the M-objective (for $\theta$) - main computations are the partition function for A, B and expected counts
     MeasurementsMObjective mObjective = new MeasurementsMObjective(modelA, modelB, data, measurements, theta, beta);
+    // Initialize
+    eObjective.updateOffset(); mObjective.updateOffset();
 
     boolean done = false;
     PrintWriter out = IOUtils.openOutHard(Execution.getFile("events"));
@@ -335,9 +326,11 @@ public class Measurements implements Runnable {
 
       // Optimize each one-by-one
       boolean done1 = optimize( eMaximizer, eObjective, "E-" + i, eIters );
+      eObjective.updateOffset();
       mObjective.updateOffset();
       boolean done2 = optimize( mMaximizer, mObjective, "M-" + i, mIters );
       eObjective.updateOffset();
+      mObjective.updateOffset();
 
       done = done1 && done2;
     }
@@ -386,7 +379,7 @@ public class Measurements implements Runnable {
     Hp.computePosteriors(false);
     Hp.fetchPosteriors(false);
     // Scale measurements by number of examples
-    ListUtils.multMut(measurements.weights, opts.genNumExamples);
+//    ListUtils.multMut(measurements.weights, opts.genNumExamples);
 
     trueParams.write(Execution.getFile("true.params"));
     measurements.write(Execution.getFile("true.counts"));
@@ -419,7 +412,7 @@ public class Measurements implements Runnable {
     Hp.computePosteriors(false);
     Hp.fetchPosteriors(false);
     // Scale measurements by number of examples
-    ListUtils.multMut(measurements.weights, opts.genNumExamples);
+    //ListUtils.multMut(measurements.weights, opts.genNumExamples);
 
     theta.write(Execution.getFile("fit.params"));
     Execution.putOutput("fit.beta", MatrixFactory.fromVector(beta.weights));
