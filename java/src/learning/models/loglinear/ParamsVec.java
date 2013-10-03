@@ -22,6 +22,13 @@ public class ParamsVec {
 
   public double[] weights;
 
+  public ParamsVec(ParamsVec that) {
+    this.K = that.K;
+    this.featureIndexer = that.featureIndexer;
+    this.numFeatures = featureIndexer.size();
+    this.weights = that.weights.clone();
+  }
+
   public void initRandom(Random random, double noise) {
     for (int j = 0; j < numFeatures; j++)
       weights[j] = noise * (2 * random.nextDouble() - 1);
@@ -30,6 +37,55 @@ public class ParamsVec {
   public void clear() { ListUtils.set(weights, 0); }
   public void incr(double scale, ParamsVec that) { ListUtils.incr(this.weights, scale, that.weights); }
   public double dot(ParamsVec that) { return ListUtils.dot(this.weights, that.weights); }
+
+  /**
+   * Add two params vecs and place result in vec3
+   * @param vec1
+   * @param vec2
+   * @param vec3
+   * @return
+   */
+  public static ParamsVec plus(ParamsVec vec1, ParamsVec vec2, ParamsVec vec3 ) {
+    for( Feature f : vec3.featureIndexer ) {
+      vec3.weights[vec3.featureIndexer.getIndex(f)] =
+              (vec1.featureIndexer.contains(f) ? vec1.weights[vec1.featureIndexer.getIndex(f)] : 0.)
+                      + (vec2.featureIndexer.contains(f) ? vec2.weights[vec2.featureIndexer.getIndex(f)] : 0.);
+    }
+
+    return vec3;
+  }
+
+  /**
+   * Subtract two params vecs and place result in vec3
+   * @param vec1
+   * @param vec2
+   * @param vec3
+   * @return
+   */
+  public static ParamsVec minus(ParamsVec vec1, ParamsVec vec2, ParamsVec vec3 ) {
+    for( Feature f : vec3.featureIndexer ) {
+      vec3.weights[vec3.featureIndexer.getIndex(f)] =
+              (vec1.featureIndexer.contains(f) ? vec1.weights[vec1.featureIndexer.getIndex(f)] : 0.)
+                      - (vec2.featureIndexer.contains(f) ? vec2.weights[vec2.featureIndexer.getIndex(f)] : 0.);
+    }
+
+    return vec3;
+  }
+
+  /**
+   * Set all weights of vec2 to be those of vec1 where vec1 has the fields
+   * @param vec1
+   * @param vec2
+   * @return
+   */
+  public static ParamsVec project(ParamsVec vec1, ParamsVec vec2 ) {
+    for( Feature f : vec2.featureIndexer ) {
+      if (vec1.featureIndexer.contains(f))
+        vec2.weights[vec2.featureIndexer.getIndex(f)] = vec1.weights[vec1.featureIndexer.getIndex(f)];
+    }
+
+    return vec2;
+  }
 
   public double computeDiff(ParamsVec that, int[] perm) {
     // Compute differences in ParamsVec with optimal permutation of parameters.

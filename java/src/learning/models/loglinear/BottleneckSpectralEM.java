@@ -899,6 +899,25 @@ public class BottleneckSpectralEM implements Runnable {
     return solveEM( data, initialParams );
   }
 
+//  ParamsVec solveMeasurements(List<Example> data, ParamsVec initialParams, Pair<ParamsVec,boolean[]> bottleneckCounts ) {
+//    LogInfo.begin_track("solveMeasurements");
+//    LogInfo.logs( "Solving for %d parameters, using %d instances",
+//        initialParams.numFeatures, data.size() );
+//    Maximizer maximizer = newMaximizer();
+//    EMObjective state = new MeasurementsObjective(
+//        model, initialParams,
+//        data, storeHypergraphs,
+//        mRegularization);
+//    // Optimize
+//    optimize( maximizer, state, numIters, data, "em" );
+//    state.params.write( Execution.getFile("params") );
+//    state.getCounts().write( Execution.getFile("counts") );
+//    LogInfo.end_track("solveMeasurements");
+//
+//    return initialParams;
+//  }
+
+
   public void setModel(Model model, int L) {
     this.model = model;
     // Run once to just instantiate features
@@ -1017,6 +1036,7 @@ public class BottleneckSpectralEM implements Runnable {
     analysis = new Analysis( model, trueParams, data );
 
     // Run the bottleneck spectral algorithm
+    //ParamsVec params = solveBottleneckEM(data);
     ParamsVec params = solveBottleneckEM(data);
 
     // Return the error in estimate
