@@ -283,6 +283,15 @@ public class Measurements implements Runnable {
 
       done = maximizer.takeStep(state);
     }
+    List<String> items = new ArrayList<String>();
+    items.add("iter = " + iter);
+    items.add("objective = " + state.value());
+    items.add("point = " + Fmt.D(state.point()));
+    items.add("gradient = " + Fmt.D(state.gradient()));
+    LogInfo.logs( StrUtils.join(items, "\t") );
+    out.println( StrUtils.join(items, "\t") );
+    out.flush();
+
     LogInfo.end_track();
     return done && iter == 1;  // Didn't make any updates
   }

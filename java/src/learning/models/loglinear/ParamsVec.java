@@ -73,18 +73,18 @@ public class ParamsVec {
   }
 
   /**
-   * Set all weights of vec2 to be those of vec1 where vec1 has the fields
-   * @param vec1
-   * @param vec2
+   * Set all weights of to to be those of from where from has the fields
+   * @param from
+   * @param to
    * @return
    */
-  public static ParamsVec project(ParamsVec vec1, ParamsVec vec2 ) {
-    for( Feature f : vec2.featureIndexer ) {
-      if (vec1.featureIndexer.contains(f))
-        vec2.weights[vec2.featureIndexer.getIndex(f)] = vec1.weights[vec1.featureIndexer.getIndex(f)];
+  public static ParamsVec project(ParamsVec from, ParamsVec to ) {
+    for( Feature f : to.featureIndexer ) {
+      if (from.featureIndexer.contains(f))
+        to.weights[to.featureIndexer.getIndex(f)] = from.weights[from.featureIndexer.getIndex(f)];
     }
 
-    return vec2;
+    return to;
   }
 
   public double computeDiff(ParamsVec that, int[] perm) {
