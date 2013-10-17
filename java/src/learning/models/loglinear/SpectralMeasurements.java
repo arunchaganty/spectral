@@ -23,7 +23,7 @@ import static learning.Misc.*;
  *  - Uses Hypergraph framework to represent a modelA.
  */
 public class SpectralMeasurements implements Runnable {
-  @OptionSet(name="measurements") public Measurements measurementsSolver = new Measurements();
+  @OptionSet(name="Measurements") public Measurements measurementsSolver = new Measurements();
 
   @Option(gloss="Random seed for initialization") public Random initRandom = new Random(1);
   @Option(gloss="How much variation in initial parameters") public double initParamsNoise = 0.01;

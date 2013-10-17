@@ -54,6 +54,15 @@ public class ParamsVec {
 
     return vec3;
   }
+  public static ParamsVec plus(ParamsVec vec1, ParamsVec vec2 ) {
+    Indexer<Feature> featureIndexer = new Indexer<>();
+    featureIndexer.addAll(vec1.featureIndexer);
+    featureIndexer.addAll(vec2.featureIndexer);
+
+    ParamsVec vec3 = new ParamsVec(vec1.K, featureIndexer);
+    plus( vec1, vec2, vec3 );
+    return vec3;
+  }
 
   /**
    * Subtract two params vecs and place result in vec3
@@ -69,6 +78,15 @@ public class ParamsVec {
                       - (vec2.featureIndexer.contains(f) ? vec2.weights[vec2.featureIndexer.getIndex(f)] : 0.);
     }
 
+    return vec3;
+  }
+  public static ParamsVec minus(ParamsVec vec1, ParamsVec vec2 ) {
+    Indexer<Feature> featureIndexer = new Indexer<>();
+    featureIndexer.addAll(vec1.featureIndexer);
+    featureIndexer.addAll(vec2.featureIndexer);
+
+    ParamsVec vec3 = new ParamsVec(vec1.K, featureIndexer);
+    minus( vec1, vec2, vec3 );
     return vec3;
   }
 
@@ -187,5 +205,12 @@ public class ParamsVec {
     for (int f = 0; f < numFeatures; f++)
       out.println(featureIndexer.getObject(f) + "\t" + weights[f]);
     out.close();
+  }
+
+  public String toString() {
+    StringBuilder builder = new StringBuilder();
+    for (int f = 0; f < numFeatures; f++)
+      builder.append(featureIndexer.getObject(f) + "\t" + weights[f] + " ");
+    return builder.toString();
   }
 }
