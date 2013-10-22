@@ -1,12 +1,9 @@
 package learning.models.loglinear;
 
-import java.io.*;
 import java.util.*;
 
 import fig.basic.*;
 import fig.exec.*;
-
-import static fig.basic.LogInfo.*;
 
 import org.ejml.simple.SimpleMatrix;
 import org.javatuples.Quartet;
@@ -23,7 +20,7 @@ import static learning.Misc.*;
  *  - Uses Hypergraph framework to represent a modelA.
  */
 public class SpectralMeasurements implements Runnable {
-  @OptionSet(name="Measurements") public Measurements measurementsSolver = new Measurements();
+  @OptionSet(name="MeasurementsEM") public MeasurementsEM measurementsEMSolver = new MeasurementsEM();
 
   @Option(gloss="Random seed for initialization") public Random initRandom = new Random(1);
   @Option(gloss="How much variation in initial parameters") public double initParamsNoise = 0.01;
@@ -56,10 +53,21 @@ public class SpectralMeasurements implements Runnable {
    */
   class Analysis {
     Model model;
-    Map<Integer,Hypergraph<Example>> Hp;
     ParamsVec trueParams; // \theta^*
     ParamsVec trueCounts; // E_{\theta^*}[ \phi(X) ]
     List<Example> examples;
+
+    double computeLikelihood(Model model, ParamsVec params) {
+      double lhood = 0;
+      for( Example ex : examples )  {
+        int L = ex.x.length;
+        Hypergraph<Example> H = model.createHypergraph(L, trueParams.weights, null, 0);
+        H.computePosteriors(false);
+        lhood += H.getLogZ();
+      }
+
+      return lhood;
+    }
 
     /**
      * Initializes the analysis object with true values
@@ -70,14 +78,11 @@ public class SpectralMeasurements implements Runnable {
       this.trueCounts = model.newParamsVec();
       this.examples = examples;
 
-      Hp = new HashMap<Integer, Hypergraph<Example>>();
-      for( Map.Entry<Integer,Integer> pair : getCountProfile(examples).entrySet() ) {
-        int L = pair.getKey(); int cnt = pair.getValue();
-        Hypergraph<Example> H = model.createHypergraph(L, trueParams.weights, trueCounts.weights, (double) cnt/examples.size());
+      for( Example ex : examples )  {
+        int L = ex.x.length;
+        Hypergraph<Example> H = model.createHypergraph(L, ex, trueParams.weights, trueCounts.weights, 1./examples.size());
         H.computePosteriors(false);
         H.fetchPosteriors(false);
-
-        Hp.put( L, H );
       }
 
       // Write to file
@@ -90,8 +95,26 @@ public class SpectralMeasurements implements Runnable {
      * the selected fields
      */
     public double reportParams(ParamsVec estimatedParams) {
-      double err = estimatedParams.computeDiff( trueParams, new int[model.K] );
+      estimatedParams.write(Execution.getFile("fit.params"));
+
+      ParamsVec estimatedCounts = model.newParamsVec();
+      for( Example ex : examples )  {
+        int L = ex.x.length;
+        Hypergraph<Example> H = model.createHypergraph(L, ex, estimatedParams.weights, estimatedCounts.weights, 1./examples.size());
+        H.computePosteriors(false);
+        H.fetchPosteriors(false);
+      }
+      // Write to file
+      estimatedCounts.write(Execution.getFile("fit.counts"));
+
+      double err = estimatedCounts.computeDiff( trueCounts, new int[model.K] );
+      Execution.putOutput("countsError", err);
+      LogInfo.logsForce("countsError="+err);
+
+      err = estimatedParams.computeDiff( trueParams, new int[model.K] );
+      Execution.putOutput("paramsError", err);
       LogInfo.logsForce("paramsError="+err);
+
       return err;
     }
 
@@ -456,13 +479,13 @@ public class SpectralMeasurements implements Runnable {
     bottleneckMeasurements.write(Execution.getFile("measurements.counts"));
 
     ParamsVec initialParams = modelA.newParamsVec();
-    ParamsVec beta = new ParamsVec( bottleneckMeasurements );
-
     initialParams.initRandom(genOpts.trueParamsRandom, genOpts.trueParamsNoise);
+
+    ParamsVec beta = modelB.newParamsVec();
     beta.initRandom(genOpts.trueParamsRandom, genOpts.trueParamsNoise);
 
     // Use these measurements to solve for parameters
-    ParamsVec theta_ = measurementsSolver.solveMeasurements(
+    ParamsVec theta_ = measurementsEMSolver.solveMeasurements(
         modelA, modelB, data, bottleneckMeasurements, initialParams, beta).getFirst();
     
     // solve EM
@@ -539,36 +562,33 @@ public class SpectralMeasurements implements Runnable {
   void initializeModels(ModelOptions opts) {
     switch (opts.modelType) {
       case mixture: {
-        MixtureModel model = new MixtureModel();
-        model.L = opts.L;
-        model.D = opts.D;
-        this.modelA = model;
-        this.modelB = model;
+        MixtureModel modelA_ = new MixtureModel();
+        modelA_.L = opts.L;
+        modelA_.D = opts.D;
+        this.modelA = modelA_;
+        MixtureModel modelB_ = new MixtureModel();
+        modelB_.L = opts.L;
+        modelB_.D = opts.D;
+        this.modelB = modelB_;
         break;
       }
       case hmm: {
-        HiddenMarkovModel model = new HiddenMarkovModel();
-        model.L = opts.L;
-        model.D = opts.D;
-        this.modelA = model;
-        this.modelB = model;
+        HiddenMarkovModel modelA_ = new HiddenMarkovModel();
+        modelA_.L = opts.L;
+        modelA_.D = opts.D;
+        this.modelA = modelA_;
+        HiddenMarkovModel modelB_ = new HiddenMarkovModel();
+        modelB_.L = opts.L;
+        modelB_.D = opts.D;
+        this.modelB = modelB_;
         break;
       }
       case tallMixture: {
-        TallMixture model = new TallMixture();
-        model.L = opts.L;
-        model.D = opts.D;
-        this.modelA = model;
         throw new RuntimeException("Tall mixture not implemented");
-//        this.modelB = model;
-
         //break;
       }
       case grid: {
-        GridModel model = new GridModel(opts.L, opts.D);
-        modelA = model;
-
-        throw new RuntimeException("Tall mixture not implemented");
+        throw new RuntimeException("grid model not implemented");
 //        break;
       }
       default:
@@ -577,17 +597,17 @@ public class SpectralMeasurements implements Runnable {
     modelA.K = opts.K;
     modelB.K = opts.K;
 
-    modelA.createHypergraph(opts.L, null, null, 0);
-    modelA.createHypergraph(opts.L, null, null, 0);
+    modelA.createHypergraph(opts.L, null, null, null, 0);
+    modelB.createHypergraph(opts.L, null, null, null, 0);
   }
 
   public void run() {
-
     // Setup modelA, modelB
     initializeModels( modelOpts );
 
     // Generate parameters
     ParamsVec trueParams = generateParameters( modelA, genOpts );
+
     // Get true parameters
     List<Example> data = generateData( modelA, trueParams, genOpts );
 

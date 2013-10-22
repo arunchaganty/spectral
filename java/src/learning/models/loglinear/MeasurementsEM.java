@@ -5,8 +5,6 @@ import java.util.*;
 
 import fig.basic.*;
 import fig.exec.*;
-import fig.prob.*;
-import fig.record.*;
 import learning.linalg.MatrixFactory;
 import learning.linalg.MatrixOps;
 
@@ -22,14 +20,14 @@ import java.util.List;
  *   Percy Liang, Michael I. Jordan, Dan Klein
  *   http://machinelearning.org/archive/icml2009/papers/393.pdf
  */
-public class Measurements implements Runnable {
+public class MeasurementsEM implements Runnable {
 
-  @Option(gloss="Regularization for theta") public double thetaRegularization = 1.0;
-  @Option(gloss="Regularization for beta") public double betaRegularization = 1.0;
+  @Option(gloss="Regularization for theta") public double thetaRegularization = 1e-5;
+  @Option(gloss="Regularization for beta") public double betaRegularization = 1e-5;
 
   @Option(gloss="Number of iterations optimizing E") public int eIters = 100;
   @Option(gloss="Number of iterations optimizing M") public int mIters = 1;
-  @Option(gloss="Number of iterations") public int iters = 10;
+  @Option(gloss="Number of iterations") public int iters = 100;
 
   @Option(gloss="Type of optimization to use") public boolean useLBFGS = true;
   @OptionSet(name="lbfgs") public LBFGSMaximizer.Options lbfgs = new LBFGSMaximizer.Options();
@@ -463,8 +461,8 @@ public class Measurements implements Runnable {
 
     ParamsVec theta = new ParamsVec(trueParams);
     ParamsVec beta = modelB.newParamsVec(); //new ParamsVec(trueParams);
-    //theta.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
-    // beta.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
+    theta.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
+    beta.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
 
     LogInfo.logs("likelihood(true): " + computeLogZ(modelA, opts.L, trueParams.weights, data) );
     LogInfo.logs("likelihood(est.): " + computeLogZ(modelA, opts.L, theta.weights, data) );
@@ -499,6 +497,6 @@ public class Measurements implements Runnable {
    * @param args
    */
   public static void main(String[] args) {
-    Execution.run(args, new Measurements(), "main", opts);
+    Execution.run(args, new MeasurementsEM(), "main", opts);
   }
 }

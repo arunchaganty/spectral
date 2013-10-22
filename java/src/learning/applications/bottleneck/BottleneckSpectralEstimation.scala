@@ -16,7 +16,7 @@ class BottleneckSpectralEstimation {
   val rnd = new Random(1)
 
   /**
-   * Measurements objective, as taken from
+   * MeasurementsEM objective, as taken from
    *    - "Learning from measurements in exponential families"; Percy Liang, Michael I. Jordan, Dan Klein.
    * $L(\beta, \theta | \tau, \phi, \sigma) =
    *  <\tau, \beta> - \sum_{i=1}^^n B(\beta, \theta, X_i)
