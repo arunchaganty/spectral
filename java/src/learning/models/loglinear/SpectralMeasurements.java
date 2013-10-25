@@ -511,10 +511,10 @@ public class SpectralMeasurements implements Runnable {
   @OptionSet(name="modelA") public ModelOptions modelOpts = new ModelOptions();
 
   public static class GenerationOptions {
-    @Option(gloss="Random seed for generating artificial data") public Random genRandom = new Random(1);
-    @Option(gloss="Random seed for the true modelA") public Random trueParamsRandom = new Random(1);
+    @Option(gloss="Random seed for generating artificial data") public Random genRandom = new Random(42);
+    @Option(gloss="Random seed for the true modelA") public Random trueParamsRandom = new Random(42);
     @Option(gloss="Number of examples to generate") public int genNumExamples = 100;
-    @Option(gloss="How much variation in true parameters") public double trueParamsNoise = 1;
+    @Option(gloss="How much variation in true parameters") public double trueParamsNoise = 0.01;
   }
   @OptionSet(name="gen") public GenerationOptions genOpts = new GenerationOptions();;
 
@@ -524,7 +524,9 @@ public class SpectralMeasurements implements Runnable {
    */
   ParamsVec generateParameters( Model model, GenerationOptions opts ) {
     ParamsVec trueParams = model.newParamsVec();
-    trueParams.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
+    //trueParams.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
+    for(int i = 0; i < trueParams.weights.length; i++)
+      trueParams.weights[i] = Math.sin(i);
     return trueParams;
   }
 

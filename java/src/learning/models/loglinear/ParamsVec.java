@@ -35,8 +35,19 @@ public class ParamsVec {
   }
 
   public void clear() { ListUtils.set(weights, 0); }
-  public void incr(double scale, ParamsVec that) { ListUtils.incr(this.weights, scale, that.weights); }
-  public double dot(ParamsVec that) { return ListUtils.dot(this.weights, that.weights); }
+  public void incr(double scale, ParamsVec that) {
+    for( Feature f : featureIndexer )
+      if( that.featureIndexer.contains(f) )
+        this.weights[featureIndexer.getIndex(f)] += scale * that.weights[that.featureIndexer.getIndex(f)];
+  }
+  public double dot(ParamsVec that) {
+    double prod = 0.;
+    for( Feature f : featureIndexer )
+      if( that.featureIndexer.contains(f) )
+        prod += this.weights[featureIndexer.getIndex(f)] * that.weights[that.featureIndexer.getIndex(f)];
+
+    return prod;
+  }
 
   /**
    * Add two params vecs and place result in vec3

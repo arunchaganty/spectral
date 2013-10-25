@@ -20,6 +20,13 @@ def tab_file_to_array(f):
         arr.append( split_tab( line ) )
     return np.array( arr )
 
+def get(options, partial_key):
+    for key in options:
+        if partial_key in key:
+            return options[key]
+    return None
+
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser( description='plot the objective' )
@@ -45,7 +52,7 @@ if __name__ == "__main__":
 
     # Read from all iterations
     inner_events = []
-    for i in xrange( int(options['Measurements.iters']) ):
+    for i in xrange( int(get(options,'MeasurementsEM.iters')) ):
         if os.path.exists( os.path.join( args.logdir, 'E-%d.events'%(i) ) ):
             events = tab_file_to_array( os.path.join( args.logdir, 'E-%d.events'%(i) ) )
             inner_events += list(np.array( events.T[1], dtype=np.double ))
