@@ -54,10 +54,10 @@ if __name__ == "__main__":
     inner_events = []
     for i in xrange( int(get(options,'MeasurementsEM.iters')) ):
         if os.path.exists( os.path.join( args.logdir, 'E-%d.events'%(i) ) ):
-            events = tab_file_to_array( os.path.join( args.logdir, 'E-%d.events'%(i) ) )
-            inner_events += list(np.array( events.T[1], dtype=np.double ))
+            #events = tab_file_to_array( os.path.join( args.logdir, 'E-%d.events'%(i) ) )
+            #inner_events += [list(np.array( events.T[1], dtype=np.double ))[-1]]
             events = tab_file_to_array( os.path.join( args.logdir, 'M-%d.events'%(i) ) )
-            inner_events += list(-np.array( events.T[1].T, dtype=np.double ))
+            inner_events += [list(-np.array( events.T[1], dtype=np.double ))[-1]]
     def plot_inner_events(events):
         plt.clf()
         plt.title("Inner iterations")
