@@ -480,55 +480,55 @@ public class HiddenMarkovModel implements EMOptimizable, Serializable, HasExactM
 	 * @param o
 	 * @return
 	 */
-	public int[] viterbi( final int[] o ) {
-		// Store the dynamic programming array and back pointers
-		double [][] V = new double[o.length][params.stateCount];
-		int [][] Ptr = new int[o.length][params.stateCount];
+  public int[] viterbi( final int[] o ) {
+      // Store the dynamic programming array and back pointers
+      double [][] V = new double[o.length][params.stateCount];
+      int [][] Ptr = new int[o.length][params.stateCount];
 
-		// Initialize with 0 and path length
-		for( int s = 0; s < params.stateCount; s++ ) {
-			// P( o_0 | s_k ) \pi(s_k)
-			V[0][s] = params.O[s][o[0]] * params.pi[s];
-			Ptr[0][s] = -1; // Doesn't need to be defined.
-		}
-    MatrixOps.normalize( V[0] );
+      // Initialize with 0 and path length
+      for( int s = 0; s < params.stateCount; s++ ) {
+          // P( o_0 | s_k ) \pi(s_k)
+          V[0][s] = params.O[s][o[0]] * params.pi[s];
+          Ptr[0][s] = -1; // Doesn't need to be defined.
+      }
+      MatrixOps.normalize( V[0] );
 
-		// The dynamic program to find the optimal path
-		for( int i = 1; i < o.length; i++ ) {
-			for( int s = 0; s < params.stateCount; s++ ) {
-				// Find the max of T(s | s') V_(i-1)(s')
-				double T_max = 0.0;
-				int S_max = -1;
-				for( int s_ = 0; s_ < params.stateCount; s_++ ) {
-          double t = params.T[s_][s] * V[i-1][s_];
-					if( t > T_max ) {
-						T_max = t;
-						S_max = s_;
-					}
-				}
+      // The dynamic program to find the optimal path
+      for( int i = 1; i < o.length; i++ ) {
+          for( int s = 0; s < params.stateCount; s++ ) {
+              // Find the max of T(s | s') V_(i-1)(s')
+              double T_max = 0.0;
+              int S_max = -1;
+              for( int s_ = 0; s_ < params.stateCount; s_++ ) {
+                  double t = params.T[s_][s] * V[i-1][s_];
+                  if( t > T_max ) {
+                      T_max = t;
+                      S_max = s_;
+                  }
+              }
 
-				// P( o_i | s_k ) = P(o_i | s) *  max_j T(s | s') V_(i-1)(s')
-				V[i][s] = params.O[s][o[i]] * T_max;
-				Ptr[i][s] = S_max;
-			}
-      MatrixOps.normalize( V[i] );
-		}
+              // P( o_i | s_k ) = P(o_i | s) *  max_j T(s | s') V_(i-1)(s')
+              V[i][s] = params.O[s][o[i]] * T_max;
+              Ptr[i][s] = S_max;
+          }
+          MatrixOps.normalize( V[i] );
+      }
 
-		int[] z = new int[o.length];
-		// Choose the best last state and back track from there
-		z[o.length-1] = MatrixOps.argmax(V[o.length-1]);
-    if( z[o.length-1] == -1 ) {
-      LogInfo.logs( Fmt.D( V ) );
-      LogInfo.logs( Fmt.D( params.T ) );
-    }
-    assert( z[o.length-1] != -1 );
-		for(int i = o.length-1; i >= 1; i-- )  {
-      assert( z[i] != -1 );
-			z[i-1] = Ptr[i][z[i]];
-    }
+      int[] z = new int[o.length];
+      // Choose the best last state and back track from there
+      z[o.length-1] = MatrixOps.argmax(V[o.length-1]);
+      if( z[o.length-1] == -1 ) {
+          LogInfo.logs( Fmt.D( V ) );
+          LogInfo.logs( Fmt.D( params.T ) );
+      }
+      assert( z[o.length-1] != -1 );
+      for(int i = o.length-1; i >= 1; i-- )  {
+          assert( z[i] != -1 );
+          z[i-1] = Ptr[i][z[i]];
+      }
 
-		return z;
-	}
+      return z;
+  }
 
 	/**
 	 * Use the forward-backward algorithm to find the posterior probability over states
