@@ -85,6 +85,8 @@ public class MeasurementsEM implements Runnable {
       this.gradient = new ParamsVec(beta);
       this.params = modelB.newParamsVec();
       this.paramsGradient = modelB.newParamsVec();
+
+      int L = X.get(0).x.length;
       updateOffset();
     }
 
@@ -92,11 +94,7 @@ public class MeasurementsEM implements Runnable {
       // Compute the offset to the value
       // $\sum_i A(\theta; X_i) + h_\theta(\theta)
       objectiveOffset = 0;
-      for( Example X_i : X ) {
-        Hypergraph<Example> Hp = modelA.createHypergraph(X_i, theta.weights, null, 0);
-        Hp.computePosteriors(false);
-        objectiveOffset += Hp.getLogZ() / X.size();
-      }
+      // TODO: Should I include the value of A here?
       objectiveOffset += 0.5 * thetaRegularization * theta.dot(theta);
     }
 
@@ -114,7 +112,7 @@ public class MeasurementsEM implements Runnable {
      * The only things that change are B and h^*(\beta).
      */
     public double value() {
-      //if( objectiveValid ) return (objective + objectiveOffset);
+      if( objectiveValid ) return (objective + objectiveOffset);
       objective = 0.;
 
       // Add a linear term for (\tau, \beta)
@@ -137,7 +135,7 @@ public class MeasurementsEM implements Runnable {
 
     @Override
     public double[] gradient() {
-      //if( gradientValid ) return gradient.weights;
+      if( gradientValid ) return gradient.weights;
 
       gradient.clear();
       // Add a term for \tau
@@ -175,6 +173,7 @@ public class MeasurementsEM implements Runnable {
 
     double objective, objectiveOffset;
     boolean objectiveValid, gradientValid;
+    Hypergraph<Example> Hp;
 
     public MeasurementsMObjective(Model modelA, Model modelB, List<Example> X, ParamsVec tau, ParamsVec theta, ParamsVec beta) {
       this.modelA = modelA;
@@ -186,6 +185,10 @@ public class MeasurementsEM implements Runnable {
       this.gradient = new ParamsVec(theta);
       this.params = modelB.newParamsVec();
       this.phi_sigma = modelB.newParamsVec();
+
+      int L = X.get(0).x.length;
+      Hp = modelA.createHypergraph(L, theta.weights, gradient.weights, 1.);
+
       updateOffset();
     }
 
@@ -228,16 +231,13 @@ public class MeasurementsEM implements Runnable {
      * The only things that change are A, B and h(\theta).
      */
     public double value() {
-      //if( objectiveValid ) return -(objective + objectiveOffset);
+      if( objectiveValid ) return -(objective + objectiveOffset);
 
       objective = 0.;
 
       // Go through each example, and compute A(\theta;X_i)
-      for( Example X_i : X ) {
-        Hypergraph<Example> Hp = modelA.createHypergraph(X_i, theta.weights, null, 0);
-        Hp.computePosteriors(false);
-        objective +=  Hp.getLogZ() / X.size();
-      }
+      Hp.computePosteriors(false);
+      objective +=  Hp.getLogZ();
       // - \theta^T \E_q[\phi(X,Y)]
       objective -= theta.dot(phi_sigma);
       // Finally, add regularizer h(\theta) = 0.5 \|\theta\|^2
@@ -248,16 +248,13 @@ public class MeasurementsEM implements Runnable {
 
     @Override
     public double[] gradient() {
-      //if( gradientValid ) return gradient.weights;
+      if( gradientValid ) return gradient.weights;
 
       gradient.clear();
 
-      // Compute expected counts \E_p(\phi) - \E_q(\phi)
-      for( Example X_i : X ) {
-        Hypergraph<Example> Hp = modelA.createHypergraph(X_i, theta.weights, gradient.weights, 1./X.size());
-        Hp.computePosteriors(false);
-        Hp.fetchPosteriors(false);
-      }
+      int L = X.get(0).x.length;
+      Hp.computePosteriors(false);
+      Hp.fetchPosteriors(false);
 
       ParamsVec phi = modelA.newParamsVec();
       ParamsVec.project( phi_sigma, phi );
@@ -285,8 +282,6 @@ public class MeasurementsEM implements Runnable {
     double oldObjective = Double.NEGATIVE_INFINITY;
 
     for (iter = 0; iter < numIters && !done; iter++) {
-      doGradientCheck(state);
-
       if( state instanceof MeasurementsEObjective ) {
         ((MeasurementsEObjective)state).updateOffset();
       }
@@ -299,8 +294,8 @@ public class MeasurementsEM implements Runnable {
       List<String> items = new ArrayList<String>();
       items.add("iter = " + iter);
       items.add("objective = " + state.value());
-      items.add("point = " + Fmt.D(state.point()));
-      items.add("gradient = " + Fmt.D(state.gradient()));
+      items.add("pointNorm = " + MatrixOps.norm(state.point()));
+      items.add("gradientNorm = " + MatrixOps.norm(state.gradient()));
       LogInfo.logs( StrUtils.join(items, "\t") );
       out.println( StrUtils.join(items, "\t") );
       out.flush();
@@ -311,11 +306,14 @@ public class MeasurementsEM implements Runnable {
 
       done = maximizer.takeStep(state);
     }
+    // Do a gradient check only at the very end.
+    doGradientCheck(state);
+
     List<String> items = new ArrayList<String>();
     items.add("iter = " + iter);
     items.add("objective = " + state.value());
-    items.add("point = " + Fmt.D(state.point()));
-    items.add("gradient = " + Fmt.D(state.gradient()));
+    items.add("pointNorm = " + MatrixOps.norm(state.point()));
+    items.add("gradientNorm = " + MatrixOps.norm(state.gradient()));
     LogInfo.logs( StrUtils.join(items, "\t") );
     out.println( StrUtils.join(items, "\t") );
     out.flush();
@@ -448,8 +446,8 @@ public class MeasurementsEM implements Runnable {
     LogInfo.begin_track("Creating data");
     ParamsVec trueParams = modelA.newParamsVec();
     for(int i = 0; i < trueParams.weights.length; i++)
-      //trueParams.weights[i] = Math.sin(i);
-      trueParams.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
+      trueParams.weights[i] = Math.sin(i);
+//      trueParams.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
     trueParams.write(Execution.getFile("true.params"));
 
     ParamsVec trueMeasurements = modelA.newParamsVec();
