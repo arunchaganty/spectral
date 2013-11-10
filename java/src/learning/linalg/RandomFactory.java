@@ -1,5 +1,8 @@
 package learning.linalg;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 
 import org.ejml.data.DenseMatrix64F;
@@ -239,5 +242,19 @@ public class RandomFactory {
     symmetric(N, X);
     return SimpleMatrix.wrap(X);
   }
+
+  /**
+   * Returns the permutation on n integers
+   * @param n - size of permutation
+   * @return list of size n to permute
+   */
+  public static List<Integer> permutation(int n, Random rnd) {
+    List<Integer> perm = new ArrayList<Integer>();
+    for( int i = 0; i < n; i++ ) perm.add(i);
+    Collections.shuffle(perm, rnd);
+    return perm;
+  }
+
+
 }
 
