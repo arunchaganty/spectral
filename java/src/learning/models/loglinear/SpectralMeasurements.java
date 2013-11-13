@@ -13,6 +13,7 @@ import org.ejml.simple.SimpleMatrix;
 import org.javatuples.Quartet;
 import learning.linalg.*;
 import learning.spectral.TensorMethod;
+import learning.utils.Counter;
 
 import static learning.models.loglinear.Models.*;
 import static learning.Misc.*;
@@ -59,7 +60,7 @@ public class SpectralMeasurements implements Runnable {
     Model model;
     ParamsVec trueParams; // \theta^*
     ParamsVec trueCounts; // E_{\theta^*}[ \phi(X) ]
-    List<Example> examples;
+    Counter<Example> examples;
     double Zp, perp_p;
     double Zq, perp_q;
 
@@ -78,15 +79,15 @@ public class SpectralMeasurements implements Runnable {
     /**
      * Initializes the analysis object with true values
      */
-    public Analysis( Model model, ParamsVec trueParams, List<Example> examples ) {
+    public Analysis( Model model, ParamsVec trueParams, Counter<Example> examples ) {
       this.model = model;
       this.trueParams = trueParams;
       this.trueCounts = model.newParamsVec();
       this.examples = examples;
 
       {
-        int L = examples.get(0).x.length;
-        Hypergraph<Example> H = model.createHypergraph(L, null, trueParams.weights, null, 1.0);
+        // TODO: Change to not be so dependent on structure.
+        Hypergraph<Example> H = model.createHypergraph(model.L, null, trueParams.weights, null, 1.0);
         H.computePosteriors(false);
         Zp = H.getLogZ();
       }
@@ -118,8 +119,7 @@ public class SpectralMeasurements implements Runnable {
       estimatedParams.write(Execution.getFile("fit.params"));
 
       {
-        int L = examples.get(0).x.length;
-        Hypergraph<Example> H = model.createHypergraph(L, null, estimatedParams.weights, null, 1.);
+        Hypergraph<Example> H = model.createHypergraph(model.L, null, estimatedParams.weights, null, 1.);
         H.computePosteriors(false);
         Zq = H.getLogZ();
       }
@@ -430,7 +430,7 @@ public class SpectralMeasurements implements Runnable {
    * to return expected potentials
    */
   @SuppressWarnings("unchecked")
-  ParamsVec solveBottleneck( final List<Example> data ) {
+  ParamsVec solveBottleneck( final Counter<Example> data ) {
     LogInfo.begin_track("solveBottleneck");
 
     ParamsVec measurements = null;
@@ -518,9 +518,8 @@ public class SpectralMeasurements implements Runnable {
         throw new RuntimeException("Not implemented yet");
       }
     }
-    int L = data.get(0).x.length;
-    LogInfo.logs("sum_counts: " + MatrixOps.sum(measurements.weights) / L);
-    if(analysis != null)  LogInfo.logs("sum_counts (true): " + MatrixOps.sum(analysis.trueCounts.weights) / L);
+    LogInfo.logs("sum_counts: " + MatrixOps.sum(measurements.weights) / modelA.L);
+    if(analysis != null)  LogInfo.logs("sum_counts (true): " + MatrixOps.sum(analysis.trueCounts.weights) / modelA.L);
 //    if(analysis != null) analysis.reportCounts( measurements, measuredFeatures );
 
     LogInfo.end_track("solveBottleneck");
@@ -567,7 +566,7 @@ public class SpectralMeasurements implements Runnable {
    * Uses method of moments to find moments along bottlenecks,
    * initializes parameters using them, and runs EM.
    */
-  public ParamsVec solveBottleneckEM( List<Example> data ) {
+  public ParamsVec solveBottleneckEM( Counter<Example> data ) {
     // Extract measurements via moments
     // Get moments
     ParamsVec bottleneckMeasurements = solveBottleneck( data );
@@ -629,7 +628,7 @@ public class SpectralMeasurements implements Runnable {
    * Generates random data from the modelA.
    *  - Uses genRand as a seed.
    */
-  List<Example> generateData( Model model, ParamsVec params, GenerationOptions opts ) {
+  Counter<Example> generateData(Model model, ParamsVec params, GenerationOptions opts) {
     LogInfo.begin_track("generateData");
     ParamsVec counts = model.newParamsVec();
     Hypergraph<Example> Hp = model.createHypergraph(modelOpts.L, params.weights, counts.weights, 1);
@@ -637,7 +636,7 @@ public class SpectralMeasurements implements Runnable {
     Hp.computePosteriors(false);
     Hp.fetchPosteriors(false);
 
-    List<Example> examples = new ArrayList<Example>();
+    Counter<Example> examples = new Counter<>();
 
     for (int i = 0; i < opts.genNumExamples; i++) {
       Example ex = model.newExample();
@@ -706,7 +705,7 @@ public class SpectralMeasurements implements Runnable {
     ParamsVec trueParams = generateParameters( modelA, genOpts );
 
     // Get true parameters
-    List<Example> data = generateData( modelA, trueParams, genOpts );
+    Counter<Example> data = generateData( modelA, trueParams, genOpts );
 
     analysis = new Analysis( modelA, trueParams, data );
 

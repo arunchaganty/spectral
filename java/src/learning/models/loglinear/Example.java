@@ -32,6 +32,36 @@ public class Example {
     return ex;
   }
 
+  @Override
+  /**
+   * Using hashcode from Java
+   */
+  public int hashCode() {
+    int hashCode = 1;
+    for( int i : x ) {
+      hashCode = 31*hashCode + i;
+    }
+    for( int i : h ) {
+      hashCode = 31*hashCode + i;
+    }
+
+    return hashCode;
+  }
+
+  public boolean equals(Object o) {
+    if(o instanceof  Example) {
+      Example other = (Example) o;
+      if( x.length != other.x.length ) return false;
+      for( int i = 0; i < x.length; i++ ) {
+        if( x[i] != other.x[i] ) return false;
+      }
+      if( h.length != other.h.length ) return false;
+      for( int i = 0; i < h.length; i++ ) {
+        if( h[i] != other.h[i] ) return false;
+      }
+      return true;
+    } else return false;
+  }
 }
 
 

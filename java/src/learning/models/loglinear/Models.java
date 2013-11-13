@@ -13,7 +13,6 @@ import static fig.basic.LogInfo.*;
 
 public class Models {
   public static class MixtureModel extends Model {
-    int L; // L = number of views, D = choices per view;
 
     public Example newExample() {
       Example ex = new Example();
@@ -64,7 +63,6 @@ public class Models {
   }
 
   public static class HiddenMarkovModel extends Model {
-    int L; // L = number of views, D = choices per view;
 
     public HiddenMarkovModel(int K, int D, int L) {
       this.K = K;
@@ -170,7 +168,7 @@ public class Models {
   }
 
   public static class TallMixture extends Model {
-    int L, D; // L = number of views, D = choices per view;
+    int D; // L = number of views, D = choices per view;
 
     public Example newExample() {
       Example ex = new Example();
@@ -267,7 +265,6 @@ public class Models {
   public static class GridModel extends Model {
     final int height = 2;
     int width;
-    int L; // L = number of grid cells, D = choices per X;
 
     public GridModel(int L, int D) {
       this.L = L;

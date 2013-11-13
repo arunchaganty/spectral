@@ -14,6 +14,7 @@ import static fig.basic.LogInfo.*;
 public abstract class Model {
   public int K;  // Number of latent states
   public int D;  // Number of emissions
+  public int L;
   public Indexer<Feature> featureIndexer = new Indexer<Feature>();
   public int numFeatures() { return featureIndexer.size(); }
 

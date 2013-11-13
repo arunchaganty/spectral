@@ -7,6 +7,7 @@ import fig.basic.*;
 import fig.exec.*;
 import learning.linalg.MatrixFactory;
 import learning.linalg.MatrixOps;
+import learning.utils.Counter;
 
 import static fig.basic.LogInfo.*;
 
@@ -67,7 +68,7 @@ public class MeasurementsEM implements Runnable {
    */
   class MeasurementsEObjective implements Maximizer.FunctionState {
     Model modelA, modelB;
-    List<Example> X;
+    Counter<Example> X;
     ParamsVec theta, beta, tau;
     ParamsVec gradient;
 
@@ -75,7 +76,7 @@ public class MeasurementsEM implements Runnable {
     boolean objectiveValid, gradientValid;
     ParamsVec params, paramsGradient;
 
-    public MeasurementsEObjective(Model modelA, Model modelB, List<Example> X, ParamsVec tau, ParamsVec theta, ParamsVec beta) {
+    public MeasurementsEObjective(Model modelA, Model modelB, Counter<Example> X, ParamsVec tau, ParamsVec theta, ParamsVec beta) {
       this.modelA = modelA;
       this.modelB = modelB;
       this.X = X;
@@ -86,7 +87,6 @@ public class MeasurementsEM implements Runnable {
       this.params = modelB.newParamsVec();
       this.paramsGradient = modelB.newParamsVec();
 
-      int L = X.get(0).x.length;
       updateOffset();
     }
 
@@ -125,7 +125,7 @@ public class MeasurementsEM implements Runnable {
          Hypergraph<Example> Hq = modelB.createHypergraph(X_i, params.weights, null, 0);
          Hq.computePosteriors(false);
          double logZ = Hq.getLogZ();
-         objective -= logZ / X.size();
+         objective -= X.getCount(X_i) * logZ / X.sum();
       }
       // Finally, subtract regularizer h^*(\beta) = 0.5 \|\beta\|^2
       objective -= 0.5 * betaRegularization * beta.dot(beta);
@@ -146,7 +146,7 @@ public class MeasurementsEM implements Runnable {
       params = ParamsVec.plus(theta, beta, params);
       paramsGradient.clear();
       for( Example X_i : X ) {
-         Hypergraph<Example> Hq = modelB.createHypergraph(X_i, params.weights, paramsGradient.weights, -1./ X.size());
+         Hypergraph<Example> Hq = modelB.createHypergraph(X_i, params.weights, paramsGradient.weights, - X.getCount(X_i)/ X.sum());
          Hq.computePosteriors(false);
          Hq.fetchPosteriors(false);
       }
@@ -166,7 +166,7 @@ public class MeasurementsEM implements Runnable {
    */
   class MeasurementsMObjective implements Maximizer.FunctionState {
     Model modelA, modelB;
-    List<Example> X;
+    Counter<Example> X;
     ParamsVec theta, beta, tau;
     ParamsVec params, phi_sigma;
     ParamsVec gradient;
@@ -175,7 +175,7 @@ public class MeasurementsEM implements Runnable {
     boolean objectiveValid, gradientValid;
     Hypergraph<Example> Hp;
 
-    public MeasurementsMObjective(Model modelA, Model modelB, List<Example> X, ParamsVec tau, ParamsVec theta, ParamsVec beta) {
+    public MeasurementsMObjective(Model modelA, Model modelB, Counter<Example> X, ParamsVec tau, ParamsVec theta, ParamsVec beta) {
       this.modelA = modelA;
       this.modelB = modelB;
       this.X = X;
@@ -186,8 +186,7 @@ public class MeasurementsEM implements Runnable {
       this.params = modelB.newParamsVec();
       this.phi_sigma = modelB.newParamsVec();
 
-      int L = X.get(0).x.length;
-      Hp = modelA.createHypergraph(L, theta.weights, gradient.weights, 1.);
+      Hp = modelA.createHypergraph(modelA.L, theta.weights, gradient.weights, 1.);
 
       updateOffset();
     }
@@ -203,10 +202,10 @@ public class MeasurementsEM implements Runnable {
       // \sum_i B
       phi_sigma.clear();
       for( Example X_i : X ) {
-        Hypergraph<Example> Hq = modelB.createHypergraph(X_i, params.weights, phi_sigma.weights, 1./X.size());
+        Hypergraph<Example> Hq = modelB.createHypergraph(X_i, params.weights, phi_sigma.weights, X.getCount(X_i)/X.sum());
         Hq.computePosteriors(false);
         Hq.fetchPosteriors(false);
-        objectiveOffset -=  Hq.getLogZ() / X.size() ;
+        objectiveOffset -=  X.getCount(X_i) * Hq.getLogZ() / X.sum() ;
       }
       objectiveOffset += theta.dot( phi_sigma );
       objectiveOffset += beta.dot( phi_sigma );
@@ -252,7 +251,6 @@ public class MeasurementsEM implements Runnable {
 
       gradient.clear();
 
-      int L = X.get(0).x.length;
       Hp.computePosteriors(false);
       Hp.fetchPosteriors(false);
 
@@ -337,14 +335,14 @@ public class MeasurementsEM implements Runnable {
   Pair<ParamsVec,ParamsVec> solveMeasurements(
           Model modelA,
           Model modelB,
-          List<Example> data,
+          Counter<Example> data,
           ParamsVec measurements,
           ParamsVec theta,
           ParamsVec beta
           ) {
     LogInfo.begin_track("solveMeasurements");
-    LogInfo.logs( "Solving measurements objective with %d + %d parameters, using %d instances",
-            theta.numFeatures, beta.numFeatures, data.size() );
+    LogInfo.logs( "Solving measurements objective with %d + %d parameters, using %f instances (%d unique)",
+            theta.numFeatures, beta.numFeatures, data.sum(), data.size() );
 
     Maximizer eMaximizer = newMaximizer();
     Maximizer mMaximizer = newMaximizer();
@@ -406,13 +404,14 @@ public class MeasurementsEM implements Runnable {
 
   public static Options opts = new Options();
 
-  public double computeLogZ(Model model, int L, double[] params, List<Example> data) {
+  public double computeLogZ(Model model, int L, double[] params, Counter<Example> data) {
     double lhood = 0.0;
     int cnt = 0;
     for( Example ex: data) {
       Hypergraph<Example> Hp = model.createHypergraph(L, ex, params, null, 0);
       Hp.computePosteriors(false);
-      lhood += (Hp.getLogZ() - lhood) / (++cnt);
+      cnt += data.getCount(ex);
+      lhood += data.getCount(ex) * (Hp.getLogZ() - lhood) / cnt;
     }
     return lhood;
   }
@@ -457,7 +456,7 @@ public class MeasurementsEM implements Runnable {
     trueMeasurements.write(Execution.getFile("true.counts"));
 
     // Generate examples from the model
-    List<Example> data = new ArrayList<Example>();
+    Counter<Example> data = new Counter<>();
     for (int i = 0; i < opts.genNumExamples; i++) {
       Example ex = modelA.newExample();
       Hp.fetchSampleHyperpath(opts.genRandom, ex);
@@ -489,7 +488,7 @@ public class MeasurementsEM implements Runnable {
     // Measurements
     measurements.clear();
     for (Example ex : data) {
-      Hypergraph<Example> Hq = modelA.createHypergraph(opts.L, ex, trueParams.weights, measurements.weights, 1./data.size());
+      Hypergraph<Example> Hq = modelA.createHypergraph(opts.L, ex, trueParams.weights, measurements.weights, data.getCount(ex)/data.sum());
       Hq.computePosteriors(false);
       Hq.fetchPosteriors(false);
     }
