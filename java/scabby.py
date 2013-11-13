@@ -30,3 +30,30 @@ def get_execs( root_dir, **kwargs ):
             for key, val in kwargs.iteritems()):
             yield exec_dir
 
+def running_average( avg, count, x ):
+    count += 1
+    for i in xrange(len(avg)):
+        avg[i] += float(x[i] - avg[i])/count
+    return avg, count
+
+def plot_many(lines, xlabel='x', ylabels=['y']):
+    """
+    Assumes lines is a list of np arrays
+    """
+    import matplotlib.pyplot as plt 
+    import matplotlib.markers as markers
+    figs = []
+    for i, ylabel in enumerate(ylabels):
+        fig = plt.figure(i)
+        fig.clear()
+        ax = fig.gca()
+        ax.set_ylabel(ylabel)
+        for (legend, line), marker in zip(lines, markers.MarkerStyle.filled_markers):
+            if len(line) == 0: continue
+            ax.plot( line.T[0], line.T[i+1], label=str(legend), marker=marker )
+        ax.legend()
+        ax.grid()
+
+        figs.append(fig)
+    return figs
+
