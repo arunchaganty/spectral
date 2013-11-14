@@ -10,15 +10,21 @@ from subprocess import Popen
 import shlex
 import random
 import numpy as np
+import scabby
 
 EXPT_NAME = "true_measurements_vs_n"
 
-KD_VALUES = [(2,2), (2,3), (3,3), (3,5), (3,10), (5,10)]
-#KD_VALUES = [(3,5), (3,10), (5,10)]
-#KD_VALUES = [(2,2), (2,3),]
+KD_VALUES = [(2,2), (2,3), (3,3),]# (3,5), (3,10), (5,10)]
 MEASUREMENT_PROB_VALUES = [1.0, 0.8, 0.6, 0.4, 0.2, 0.0]
-#MEASUREMENT_PROB_VALUES = [0.6]
-N_VALUES = [100, 500, 1000, 5000, 10000, 20000]
+N_VALUES = [100, 200, 500, 700, 1000, 2000, 5000, 7000, 10000, 20000, 50000, 70000, 100000]
+
+def get_settings(args):
+    for k,d in KD_VALUES:
+        assert k <= d
+        for measurement_prob in MEASUREMENT_PROB_VALUES:
+            for n in N_VALUES:
+                for initialization_seed in xrange( args.repeatIters ):
+                    yield dict(locals())
 
 def do_run(args):
     #random.seed(args.seed)
@@ -30,15 +36,7 @@ def do_run(args):
     if not os.path.exists(args.execdir):
         os.mkdir(args.execdir)
 
-    # Run for different k,d configurations
-    for k,d in KD_VALUES:
-        assert k <= d
-
-        for measurement_prob in MEASUREMENT_PROB_VALUES:
-            for n in N_VALUES:
-                # Run some number of iterations
-                for initialization_seed in xrange( args.runAverageIters ):
-                    cmd = '\
+    cmd = '\
 ./run.sh learning.models.loglinear.SpectralMeasurements\
  -execPoolDir {args.execdir}\
  -modelType {args.model}\
@@ -46,11 +44,15 @@ def do_run(args):
  -initRandom {initialization_seed}\
  -measurementProb {measurement_prob}\
  -genNumExamples {n}\
- -SpectralMeasurements.MeasurementsEM.iters 50 -eIters 500'.format(**locals())
+ -SpectralMeasurements.MeasurementsEM.iters 50 -eIters 500'
 
-                    # Actually run the script
-                    proc = Popen(shlex.split(cmd))
-                    proc.wait()
+    settings = get_settings(args)
+
+    if args.parallel:
+        scabby.parallel_spawn( args.exptdir, "qstart-short", cmd, args.njobs, settings )
+    else:
+        for setting in settings:
+            scabby.safe_run(cmd.format(**setting))
 
 def do_plot(args):
     import scabby
@@ -117,7 +119,9 @@ if __name__ == "__main__":
     subparsers = parser.add_subparsers()
 
     run_parser = subparsers.add_parser('run', help='Run the experiment' )
-    run_parser.add_argument( '--runAverageIters', type=int, default=5, help="Number of different initial seeds to run with" )
+    run_parser.add_argument( '--parallel', action='store_true', help="Spawn parallel jobs?" )
+    run_parser.add_argument( '--njobs', type=int, default=10, help="How many parallel jobs?" )
+    run_parser.add_argument( '--repeatIters', type=int, default=5, help="Number of different initial seeds to run with" )
     run_parser.add_argument( '--model', type=str, default="mixture", choices=["mixture","hmm"], help="Model to use" )
     #run_parser.add_argument( 'extra-args', type=str, nargs='+', help="Additional arguments for the actual program" )
     run_parser.set_defaults(func=do_run)

@@ -2,6 +2,28 @@
 #  
 
 import os
+import itertools as it
+from subprocess import Popen
+import shlex
+
+def safe_run( cmd, block = True ):
+    proc = Popen( shlex.split( cmd ) )
+    if block:
+        proc.wait()
+    return proc
+
+def parallel_spawn( exptdir, spawn_cmd, cmd, n_jobs, settings ):
+    """Spawn command interpreted with **kwargs"""
+    settings = list(settings)
+    batch_size = len(settings) / n_jobs
+    for i in xrange(n_jobs):
+        start, end = batch_size * i, min( batch_size * (i+1), len(settings))
+        batch_file = os.path.join(exptdir, 'batch-%d.sh'%(i))
+        with open(batch_file, 'w') as script:
+            for setting in settings[start:end]:
+                script.write( cmd.format(**setting) + "\n" )
+        safe_run( 'chmod +x %s'%(batch_file) )
+        safe_run( '%s ./%s'%( spawn_cmd, './'+batch_file ) )
 
 def read_options(fname):
     options = {}
