@@ -33,6 +33,7 @@ public class SpectralMeasurements implements Runnable {
   //@Option(gloss="Type of training to use") public ObjectiveType objectiveType = ObjectiveType.unsupervised_gradient;
   @Option(gloss="Use expected measurements (with respect to true distribution)") public boolean expectedMeasurements = true;
   @Option(gloss="Include each (true) measurement with this prob") public double measurementProb = 1;
+  @Option(gloss="Include gaussian noise with this variance to true measurements") public double trueMeasurementNoise = 0.0;
 
   @Option(gloss="Smooth measurements") public double smoothMeasurements = 0.0;
   @Option(gloss="Use T in SpectralMeasurements?") public boolean useTransitions = true;
@@ -450,6 +451,12 @@ public class SpectralMeasurements implements Runnable {
       // Now set the measurements to be the true counts
       measurements = new ParamsVec(modelB.K, measuredFeatureIndexer);
       ParamsVec.project(analysis.trueCounts, measurements);
+
+      // Add noise
+      if( trueMeasurementNoise > 0. ) {
+        for(int i = 0; i < measurements.weights.length; i++)
+          measurements.weights[i] += RandomFactory.randn(trueMeasurementNoise);
+      }
     } else { // From spectral methods
       // Construct triples of three observed variables around the hidden
       // node.
