@@ -16,10 +16,11 @@ import fig.prob.MultGaussian;
  * A set of functions to generate random variables
  */
 public class RandomFactory {
-  public static Random rand = new Random();
-  public int seed = 0;
+  public static long seed = 0;
+  public static Random rand = new Random(seed);
 
   public static void setSeed(long seed) {
+    RandomFactory.seed = seed;
     rand.setSeed( seed );
   }
 
