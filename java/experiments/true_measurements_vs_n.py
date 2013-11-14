@@ -23,8 +23,9 @@ def get_settings(args):
         assert k <= d
         for measurement_prob in MEASUREMENT_PROB_VALUES:
             for n in N_VALUES:
-                for initialization_seed in xrange( args.repeatIters ):
-                    yield dict(locals())
+                for measurement_noise in NOISE_VALUES:
+                    for initialization_seed in xrange( args.repeatIters ):
+                        yield dict(locals())
 
 def do_run(args):
     #random.seed(args.seed)
@@ -43,6 +44,7 @@ def do_run(args):
  -K {k} -D {d} -L 3\
  -initRandom {initialization_seed}\
  -measurementProb {measurement_prob}\
+ -trueMeasurementNoise {measurement_noise}\
  -genNumExamples {n}\
  -SpectralMeasurements.MeasurementsEM.iters 50 -eIters 500'
 
