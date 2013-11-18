@@ -161,6 +161,10 @@ public class Models {
         int i = L-1;
         for (int h = 0; h < K; h++) {  // And finally an end state.
           addEmission( H, i, h, ex, params, counts, increment );
+          // Add an end-transition state
+          // Create a link to the sum node that will enumerate over next states
+          String hNode = String.format("h_%d=%d", i, h );
+          H.addEdge(hNode, H.endNode); // Again, no potential required; hNode is a product node
         }
       }
       return H;
