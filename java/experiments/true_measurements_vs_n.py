@@ -13,10 +13,10 @@ import scabby
 
 EXPT_NAME = "true_measurements_vs_n"
 
-KD_VALUES = [(2,2), (2,3), (3,3),]# (3,5), (3,10), (5,10)]
-MEASUREMENT_PROB_VALUES = [1.0, 0.8, 0.6, 0.4, 0.2, 0.0]
-N_VALUES = [100, 200, 500, 700, 1000, 2000, 5000, 7000, 10000, 20000, 50000, 70000, 100000]
-NOISE_VALUES = [1e-3, 1e-2, 1e-1]
+KD_VALUES = [(2,2), (2,3), (3,3), (3,5),]# (3,10), (5,10)]
+MEASUREMENT_PROB_VALUES = [1.0, 0.7, 0.3, 0.0]
+N_VALUES = [1000, 2000, 5000, 7000, 10000, 20000, 50000, 70000, 1000000, 200000, 500000, 700000]
+NOISE_VALUES = [0., 1e-3, 1e-2]
 
 def get_settings(args):
     for k,d in KD_VALUES:
@@ -46,7 +46,7 @@ def do_run(args):
  -measurementProb {measurement_prob}\
  -trueMeasurementNoise {measurement_noise}\
  -genNumExamples {n}\
- -SpectralMeasurements.MeasurementsEM.iters 50 -eIters 500'
+ -SpectralMeasurements.MeasurementsEM.iters 200 -eIters 1000'
 
     settings = get_settings(args)
 

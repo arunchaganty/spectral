@@ -23,7 +23,7 @@ def parallel_spawn( exptdir, spawn_cmd, cmd, n_jobs, settings ):
             for setting in settings[start:end]:
                 script.write( cmd.format(**setting) + "\n" )
         safe_run( 'chmod +x %s'%(batch_file) )
-        safe_run( '%s ./%s'%( spawn_cmd, './'+batch_file ) )
+        print( '%s ./%s'%( spawn_cmd, './'+batch_file ) )
 
 def read_options(fname):
     options = {}
