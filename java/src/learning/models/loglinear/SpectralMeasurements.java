@@ -434,6 +434,8 @@ public class SpectralMeasurements implements Runnable {
 
       // Add noise
       if( trueMeasurementNoise > 0. ) {
+        // Anneal the noise at a 1/sqrt(n) rate.
+        trueMeasurementNoise = trueMeasurementNoise / Math.sqrt(data.sum());
         for(int i = 0; i < measurements.weights.length; i++)
           measurements.weights[i] += RandomFactory.randn(trueMeasurementNoise);
       }
