@@ -197,8 +197,6 @@ public class SpectralMeasurements implements Runnable {
       P123.scale(1./data.sum());
     }
 
-
-
     @Override
     public MatrixOps.Matrixable computeP13() {
       return MatrixOps.matrixable(P13);
@@ -300,6 +298,56 @@ public class SpectralMeasurements implements Runnable {
           }
         }
         Execution.putOutput("moments.params", MatrixFactory.fromVector(measurements.weights));
+      } else if( modelA instanceof  HiddenMarkovModel ) {
+        HiddenMarkovModel model = (HiddenMarkovModel) modelA;
+        // \phi_1, \phi_2, \phi_3
+
+        MixtureOfGaussians gmm = ParameterRecovery.recoverGMM(K, 0, (HasSampleMoments) new ExampleMoments(D, data, Arrays.asList(0, 1, 2)), 0.);
+        // TODO: Create a mixture of Bernoullis and move this stuff there.
+        SimpleMatrix pi = gmm.getWeights();
+        SimpleMatrix[] M = gmm.getMeans();
+        SimpleMatrix O = M[1];
+        SimpleMatrix OT = M[2];
+        SimpleMatrix T = O.pseudoInverse().mult(OT);
+
+        // Project onto simplices
+        O = MatrixOps.projectOntoSimplex( O, smoothMeasurements );
+        T = MatrixOps.projectOntoSimplex( T, smoothMeasurements );
+
+        // measurements.weights[ measurements.featureIndexer.getIndex(Feature("h=0,x=0"))] = 0.0;
+        Indexer<Feature> measuredFeatureIndexer = new Indexer<>();
+        for( int h = 0; h < K; h++ ) {
+          for( int d = 0; d < D; d++ ) {
+            // O
+            measuredFeatureIndexer.add( new UnaryFeature(h, "x="+d) );
+          }
+//          for( int h_ = 0; h_ < K; h_++ ) {
+//            // T
+//            measuredFeatureIndexer.add(new BinaryFeature(h, h_));
+//          }
+        }
+
+        measurements = new ParamsVec(model.K, measuredFeatureIndexer);
+
+        for( int h = 0; h < K; h++ ) {
+          for( int d = 0; d < D; d++ ) {
+            // Assuming identical distribution.
+            int f = measurements.featureIndexer.getIndex(new UnaryFeature(h, "x="+d));
+            // multiplying by pi to go from E[x|h] -> E[x,h]
+            // multiplying by L because true.counts aggregates
+            // over x1, x2 and x3.
+            measurements.weights[f] = model.L * O.get( d, h ) * pi.get(h);
+          }
+//          for( int h_ = 0; h_ < K; h_++ ) {
+//            // Assuming identical distribution.
+//            int f = measurements.featureIndexer.getIndex(new BinaryFeature(h, h_));
+//            // multiplying by pi to go from E[x|h] -> E[x,h]
+//            // multiplying by L because true.counts aggregates
+//            // over x1, x2 and x3.
+//            measurements.weights[f] = (model.L-1) * T.get( h_, h ) * pi.get(h);
+//          }
+        }
+        Execution.putOutput("moments.params", MatrixFactory.fromVector(measurements.weights));
       }
       else {
         throw new RuntimeException("Not implemented yet");
@@ -360,11 +408,10 @@ public class SpectralMeasurements implements Runnable {
     bottleneckMeasurements.write(Execution.getFile("measurements.counts"));
 
     ParamsVec initialParams = new ParamsVec(analysis.trueParams);
-    initialParams.initRandom(genOpts.trueParamsRandom, genOpts.trueParamsNoise);
+    initialParams.initRandom(initRandom, initParamsNoise);
 
     ParamsVec beta = new ParamsVec(bottleneckMeasurements);
     beta.clear();
-    //beta.initRandom(genOpts.trueParamsRandom, genOpts.trueParamsNoise);
 
     // Use these measurements to solve for parameters
     ParamsVec theta_ = measurementsEMSolver.solveMeasurements(
@@ -394,9 +441,9 @@ public class SpectralMeasurements implements Runnable {
 
   public static class GenerationOptions {
     @Option(gloss="Random seed for generating artificial data") public Random genRandom = new Random(42);
-    @Option(gloss="Random seed for the true modelA") public Random trueParamsRandom = new Random(42);
+    @Option(gloss="Random seed for the true modelA") public Random trueParamsRandom = new Random(43);
     @Option(gloss="Number of examples to generate") public int genNumExamples = 100;
-    @Option(gloss="How much variation in true parameters") public double trueParamsNoise = 0.01;
+    @Option(gloss="How much variation in true parameters") public double trueParamsNoise = 1.0;
   }
   @OptionSet(name="gen") public GenerationOptions genOpts = new GenerationOptions();;
 
@@ -406,9 +453,9 @@ public class SpectralMeasurements implements Runnable {
    */
   ParamsVec generateParameters( Model model, GenerationOptions opts ) {
     ParamsVec trueParams = model.newParamsVec();
-    //trueParams.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
-    for(int i = 0; i < trueParams.weights.length; i++)
-      trueParams.weights[i] = Math.sin(i);
+    trueParams.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
+//    for(int i = 0; i < trueParams.weights.length; i++)
+//      trueParams.weights[i] = Math.sin(i);
     return trueParams;
   }
 
