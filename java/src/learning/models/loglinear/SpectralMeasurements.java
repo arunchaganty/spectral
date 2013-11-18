@@ -560,10 +560,11 @@ public class SpectralMeasurements implements Runnable {
     bottleneckMeasurements.write(Execution.getFile("measurements.counts"));
 
     ParamsVec initialParams = new ParamsVec(analysis.trueParams);
-//    initialParams.initRandom(genOpts.trueParamsRandom, genOpts.trueParamsNoise);
+    initialParams.initRandom(genOpts.trueParamsRandom, genOpts.trueParamsNoise);
 
     ParamsVec beta = new ParamsVec(bottleneckMeasurements);
-    beta.initRandom(genOpts.trueParamsRandom, genOpts.trueParamsNoise);
+    beta.clear();
+    //beta.initRandom(genOpts.trueParamsRandom, genOpts.trueParamsNoise);
 
     // Use these measurements to solve for parameters
     ParamsVec theta_ = measurementsEMSolver.solveMeasurements(

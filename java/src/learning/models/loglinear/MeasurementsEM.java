@@ -23,7 +23,7 @@ import java.util.List;
 public class MeasurementsEM implements Runnable {
 
   @Option(gloss="Regularization for theta") public double thetaRegularization = 1e-5;
-  @Option(gloss="Regularization for beta") public double betaRegularization = 1e-5;
+  @Option(gloss="Regularization for beta") public double betaRegularization = 1e+3;
 
   @Option(gloss="Number of iterations optimizing E") public int eIters = 100;
   @Option(gloss="Number of iterations optimizing M") public int mIters = 1;
