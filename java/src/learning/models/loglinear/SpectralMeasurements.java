@@ -69,9 +69,9 @@ public class SpectralMeasurements implements Runnable {
       double lhood = 0;
       for( Example ex : examples )  {
         int L = ex.x.length;
-        Hypergraph<Example> H = model.createHypergraph(L, trueParams.weights, null, 0);
+        Hypergraph<Example> H = model.createHypergraph(L, ex, trueParams.weights, null, 0);
         H.computePosteriors(false);
-        lhood += H.getLogZ();
+        lhood += examples.getCount(ex) * H.getLogZ();
       }
 
       return lhood;
@@ -87,25 +87,23 @@ public class SpectralMeasurements implements Runnable {
       this.examples = examples;
 
       {
-        // TODO: Change to not be so dependent on structure.
-        Hypergraph<Example> H = model.createHypergraph(model.L, null, trueParams.weights, null, 1.0);
+        // TODO: Change to not be so dependent on fixed L..
+        Hypergraph<Example> H = model.createHypergraph(model.L, null, trueParams.weights, trueCounts.weights, 1.0);
         H.computePosteriors(false);
+        H.fetchPosteriors(false);
         Zp = H.getLogZ();
       }
 
       double lhood = 0.0;
       for( Example ex : examples )  {
         int L = ex.x.length;
-        Hypergraph<Example> H = model.createHypergraph(L, ex, trueParams.weights, trueCounts.weights, 1./examples.size());
+        Hypergraph<Example> H = model.createHypergraph(L, ex, trueParams.weights, null, 0.);
         H.computePosteriors(false);
-        H.fetchPosteriors(false);
-        lhood += H.getLogZ() / examples.size();
+        lhood += examples.getCount(ex) * (H.getLogZ() - Zp) / examples.size();
       }
-      perp_p = lhood - Zp;
+      perp_p = lhood;
       Execution.putOutput("true-perp", perp_p);
       LogInfo.logsForce("true-perp=" + perp_p);
-
-
 
       // Write to file
       trueParams.write(Execution.getFile("true.params"));
@@ -119,22 +117,22 @@ public class SpectralMeasurements implements Runnable {
     public double reportParams(ParamsVec estimatedParams) {
       estimatedParams.write(Execution.getFile("fit.params"));
 
+      ParamsVec estimatedCounts = model.newParamsVec();
       {
-        Hypergraph<Example> H = model.createHypergraph(model.L, null, estimatedParams.weights, null, 1.);
+        Hypergraph<Example> H = model.createHypergraph(model.L, null, estimatedParams.weights, estimatedCounts.weights, 1.);
         H.computePosteriors(false);
+        H.fetchPosteriors(false);
         Zq = H.getLogZ();
       }
 
-      ParamsVec estimatedCounts = model.newParamsVec();
       double lhood = 0.;
       for( Example ex : examples )  {
         int L = ex.x.length;
-        Hypergraph<Example> H = model.createHypergraph(L, ex, estimatedParams.weights, estimatedCounts.weights, 1./examples.size());
+        Hypergraph<Example> H = model.createHypergraph(L, ex, estimatedParams.weights, null, 0.);
         H.computePosteriors(false);
-        H.fetchPosteriors(false);
-        lhood += H.getLogZ() / examples.size();
+        lhood += examples.getCount(ex) * (H.getLogZ() - Zq) / examples.size();
       }
-      perp_q = lhood - Zq;
+      perp_q = lhood;
       LogInfo.logsForce("true-perp="+perp_p);
       Execution.putOutput("fit-perp", perp_q);
       LogInfo.logsForce("fit-perp="+perp_q);
@@ -154,24 +152,6 @@ public class SpectralMeasurements implements Runnable {
       return err;
     }
 
-    /**
-     * Reports error between estimated moments and true moments on
-     * the selected fields
-     * TODO: Don't use boolean[] measuredFeatures again.
-     */
-    @Deprecated
-    public double reportCounts(ParamsVec estimatedCounts, boolean[] measuredFeatures) {
-      double err = estimatedCounts.computeDiff( trueCounts, measuredFeatures, null );
-      //LogInfo.logsForce("countsError(%s)=%f [%s] - [%s]", Fmt.D(measuredFeatures), err, Fmt.D(estimatedCounts.weights), Fmt.D(trueCounts.weights));
-      LogInfo.logsForce("countsError(%.1f %% of features)=%f", 100*(double)MatrixOps.sum(measuredFeatures)/measuredFeatures.length, err );
-      return err;
-    }
-    public double reportCounts(ParamsVec estimatedCounts) {
-      boolean[] allMeasuredFeatures = new boolean[estimatedCounts.numFeatures];
-      Arrays.fill( allMeasuredFeatures, true );
-
-      return reportCounts(estimatedCounts, allMeasuredFeatures);
-    }
   }
   public Analysis analysis;
 
@@ -579,11 +559,11 @@ public class SpectralMeasurements implements Runnable {
     ParamsVec bottleneckMeasurements = solveBottleneck( data );
     bottleneckMeasurements.write(Execution.getFile("measurements.counts"));
 
-    ParamsVec initialParams = modelA.newParamsVec();
-    initialParams.initRandom(genOpts.trueParamsRandom, genOpts.trueParamsNoise);
+    ParamsVec initialParams = new ParamsVec(analysis.trueParams);
+    //initialParams.initRandom(genOpts.trueParamsRandom, genOpts.trueParamsNoise);
 
     ParamsVec beta = modelB.newParamsVec();
-    beta.initRandom(genOpts.trueParamsRandom, genOpts.trueParamsNoise);
+    //beta.initRandom(genOpts.trueParamsRandom, genOpts.trueParamsNoise);
 
     // Use these measurements to solve for parameters
     ParamsVec theta_ = measurementsEMSolver.solveMeasurements(

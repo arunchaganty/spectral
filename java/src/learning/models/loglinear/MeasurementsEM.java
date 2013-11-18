@@ -289,7 +289,7 @@ public class MeasurementsEM implements Runnable {
       state.invalidate();
 
       // Logging stuff
-      List<String> items = new ArrayList<String>();
+      List<String> items = new ArrayList<>();
       items.add("iter = " + iter);
       items.add("objective = " + state.value());
       items.add("pointNorm = " + MatrixOps.norm(state.point()));
@@ -307,7 +307,7 @@ public class MeasurementsEM implements Runnable {
     // Do a gradient check only at the very end.
     doGradientCheck(state);
 
-    List<String> items = new ArrayList<String>();
+    List<String> items = new ArrayList<>();
     items.add("iter = " + iter);
     items.add("objective = " + state.value());
     items.add("pointNorm = " + MatrixOps.norm(state.point()));
@@ -361,7 +361,7 @@ public class MeasurementsEM implements Runnable {
       assert eObjective.theta == mObjective.theta;
       assert eObjective.beta == mObjective.beta;
 
-      List<String> items = new ArrayList<String>();
+      List<String> items = new ArrayList<>();
       items.add("iter = " + i);
       items.add("eObjective = " + eObjective.value());
       items.add("mObjective = " + mObjective.value());
