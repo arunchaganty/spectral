@@ -7,6 +7,7 @@ import fig.exec.*;
 import fig.prob.*;
 
 import learning.data.ComputableMoments;
+import learning.data.HasSampleMoments;
 import learning.models.MixtureOfGaussians;
 import learning.spectral.applications.ParameterRecovery;
 import org.ejml.simple.SimpleMatrix;
@@ -160,252 +161,70 @@ public class SpectralMeasurements implements Runnable {
   Model modelB;
 
   /**
-   * Model specific unrolling of the data elements to create three-view data.
-   * TODO: Move to Model?
+   * Computes moments from the sequences in an Example.
    */
-  Iterator<double[][]> constructDataSequence( Model model, final List<Example> data ) {
-    LogInfo.begin_track("construct-data-sequence");
-    Iterator<double[][]> dataSeq;
-    if( model instanceof MixtureModel) {
-      final MixtureModel mixModel = (MixtureModel) model;
-      int K = mixModel.K; int D = mixModel.D;
-      assert( mixModel.L == 3 );
+  class ExampleMoments implements ComputableMoments, HasSampleMoments {
+    final Counter<Example> data;
+    List<Integer> indices;
+    SimpleMatrix P13;
+    SimpleMatrix P12;
+    SimpleMatrix P32;
+    FullTensor P123;
 
-      // x_{1,2,3} 
-      dataSeq = (new Iterator<double[][]>() {
-        Iterator<Example> iter = data.iterator();
-        public boolean hasNext() {
-          return iter.hasNext();
-        }
-        public double[][] next() {
-          Example ex = iter.next();
-          double[][] data = new double[3][mixModel.D]; // Each datum is a one-hot vector
-          for( int v = 0; v < 3; v++ ) {
-            data[v][ex.x[v]] = 1.0;
-          }
+    ExampleMoments(int D, final Counter<Example> data, final List<Integer> indices) {
+      this.data = data;
+      this.indices = indices;
 
-          return data;
-        }
-        public void remove() {
-          throw new RuntimeException();
-        }
-      });
-    } else if( model instanceof HiddenMarkovModel) {
-      final HiddenMarkovModel hmmModel = (HiddenMarkovModel) model;
-      int K = hmmModel.K; int D = hmmModel.D;
+      // Create P13
+      P13 = new SimpleMatrix(D, D);
+      P12 = new SimpleMatrix(D, D);
+      P32 = new SimpleMatrix(D, D);
+      P123 = new FullTensor(D,D,D);
+      for( Example ex : data ) {
+        int x1 = ex.x[indices.get(0)];
+        int x2 = ex.x[indices.get(1)];
+        int x3 = ex.x[indices.get(2)];
 
-      // x_{1,2,3} 
-      dataSeq = (new Iterator<double[][]>() {
-        Iterator<Example> iter = data.iterator();
-        int[] current; int idx = 0; 
-        public boolean hasNext() {
-          if( current != null && idx < current.length - 2) 
-        return true;
-          else
-        return iter.hasNext();
-        }
-        public double[][] next() {
-          // Walk through every example, and return triples from the
-          // examples.
-          if( current == null || idx > current.length - 3 ) {
-            Example ex = iter.next();
-            current = ex.x;
-            idx = 0;
-          }
-
-          // Efficiently memoize the random projections here.
-          double[][] data = new double[3][hmmModel.D]; // Each datum is a one-hot vector
-          for( int v = 0; v < 3; v++ ) {
-            data[v][current[idx+v]] = 1.0;
-          }
-          idx++;
-
-          return data;
-        }
-        public void remove() {
-          throw new RuntimeException();
-        }
-      });
-    } else if( model instanceof GridModel) {
-      final GridModel gModel = (GridModel) model;
-      final int K = gModel.K; final int D = gModel.D;
-      final int L = gModel.L;
-
-      // x_{1,2,3} 
-      dataSeq = (new Iterator<double[][]>() {
-        Iterator<Example> iter = data.iterator();
-        Example current; int idx = 0; 
-        public boolean hasNext() {
-          if( current != null && idx < current.h.length ) 
-        return true;
-          else
-        return iter.hasNext();
-        }
-        public double[][] next() {
-          // Walk through every example, and return triples from the
-          // examples.
-          if( current == null || idx >= current.h.length ) {
-            current = iter.next();
-            idx = 0;
-          }
-
-          // Efficiently memoize the random projections here.
-          double[][] data = new double[3][D]; // Each datum is a one-hot vector
-          for( int v = 0; v < 3; v++ ) {
-            // VERY subtly constructed; h[idx] is the hidden node, so x[2*idx],
-            // x[2*idx+1] are the children. However, the tensor fact. is
-            // most stable for x3, so I'm making these the last two nodes.
-            // Hate me later.
-            data[v][current.x[(2*idx + (2-v)) % current.x.length]] = 1.0;
-          }
-          idx++;
-          return data;
-        }
-        public void remove() {
-          throw new RuntimeException();
-        }
-      });
-    } else {
-      throw new RuntimeException("Unhandled modelA type: " + model.getClass() );
+        P13.set( x1, x3, P13.get( x1, x3 ) + data.getCount(ex));
+        P12.set( x1, x2, P12.get( x1, x2 ) + data.getCount(ex));
+        P32.set( x3, x2, P32.get( x3, x2 ) + data.getCount(ex));
+        P123.set( x1, x2, x3, P123.get(x1, x2, x3) + data.getCount(ex));
+      }
+      // Scale down everything
+      P13 = P13.scale(1./data.sum());
+      P12 = P12.scale(1./data.sum());
+      P32 = P32.scale(1./data.sum());
+      P123.scale(1./data.sum());
     }
-    LogInfo.end_track();
-    return dataSeq;
-  }
-  /**
-   * Use the moments returned by MoM to estimate counts.
-   * TODO: Move to Model?
-   */
-  void populateFeatures( Model model, 
-        Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> bottleneckMoments,
-        ParamsVec measurements, boolean[] measuredFeatures ) {
-    LogInfo.begin_track("populate-features");
 
-    int K = model.K; int D = model.D;
 
-    double[] pi = MatrixFactory.toVector( bottleneckMoments.getValue0() );
-    MatrixOps.projectOntoSimplex( pi, 1.0 + smoothMeasurements );
-    SimpleMatrix M[] = {bottleneckMoments.getValue1(), bottleneckMoments.getValue2(), bottleneckMoments.getValue3()};
 
-      LogInfo.logs( Fmt.D( pi ) );
-      LogInfo.logs( M[0] );
-      LogInfo.logs( M[1] );
-      LogInfo.logs( M[2] );
-  
-    // Set appropriate measuredFeatures to observed moments
-    if( model instanceof MixtureModel ) {
-      int L = ((MixtureModel)(model)).L; // Extract from the modelA in a clever way.
-      assert( M[2].numRows() == D );
-      assert( M[2].numCols() == K );
-      // Each column corresponds to a particular hidden moment.
-      // Project onto the simplex
-      
-      // Average over the three M's
-      for(int i = 0; i < L; i++ )
-        M[i] = MatrixOps.projectOntoSimplex( M[i], smoothMeasurements );
-      SimpleMatrix M3 = (M[0].plus(M[1]).plus(M[2])).scale(1.0/3.0);
-      //SimpleMatrix M3 = M[2]; // M3 is most accurate.
-      M3 = MatrixOps.projectOntoSimplex( M3, smoothMeasurements );
-      LogInfo.logs( "pi: " + Fmt.D(pi) );
-      LogInfo.logs( "M3: " + M3 );
-
-      for( int h = 0; h < K; h++ ) {
-        for( int d = 0; d < D; d++ ) {
-          // Assuming identical distribution.
-          int f = measurements.featureIndexer.getIndex(new UnaryFeature(h, "x="+d));
-          measuredFeatures[f] = true;
-          // multiplying by pi to go from E[x|h] -> E[x,h]
-          // multiplying by 3 because true.counts aggregates
-          // over x1, x2 and x3.
-          measurements.weights[f] = L * M3.get( d, h ) * pi[h]; 
-        }
-      }
-      Execution.putOutput("moments.params", MatrixFactory.fromVector(measurements.weights));
-    } else if( model instanceof HiddenMarkovModel ) {
-      int L = ((HiddenMarkovModel)(model)).L; // Extract from the modelA in a clever way.
-      // M[1] is O 
-      SimpleMatrix O = M[1];
-      // M[2] is OT 
-      SimpleMatrix T = O.pseudoInverse().mult(M[2]);
-      assert( O.numRows() == D ); assert( O.numCols() == K );
-      assert( T.numRows() == K ); assert( T.numCols() == K );
-
-      // Each column corresponds to a particular hidden moment.
-      // Project onto the simplex
-      // Note: We might need to invert the random projection here.
-      O = MatrixOps.projectOntoSimplex( O, smoothMeasurements );
-      // smooth measurements by adding a little 
-      T = MatrixOps.projectOntoSimplex( T, smoothMeasurements ).transpose();
-      LogInfo.logs( "pi: " + Fmt.D(pi) );
-      LogInfo.logs( "O: " + O );
-      LogInfo.logs( "T: " + T );
-
-      double[][] T_ = MatrixFactory.toArray( T );
-      double[][] O_ = MatrixFactory.toArray( O.transpose() );
-
-      for( int i = 0; i < K; i ++) {
-        assert( MatrixOps.equal( MatrixOps.sum( T_[i] ), 1 ) );
-        assert( MatrixOps.equal( MatrixOps.sum( O_[i] ), 1 ) );
-      }
-
-      // Put the observed moments back into the counts.
-      for( int h = 0; h < K; h++ ) {
-        for( int d = 0; d < D; d++ ) {
-          int f = measurements.featureIndexer.getIndex(new UnaryFeature(h, "x="+d));
-          measuredFeatures[f] = true;
-          // multiplying by pi to go from E[x|h] -> E[x,h]
-          // multiplying by 3 because true.counts aggregates
-          // over x1, x2 and x3.
-          measurements.weights[f] = L * O.get( d, h ) * pi[h];
-        }
-        // 
-        // TODO: Experiment with using T.
-        if( useTransitions ) {
-          for( int h_ = 0; h_ < K; h_++ ) {
-            int f = measurements.featureIndexer.getIndex(new BinaryFeature(h,h_));
-            measuredFeatures[f] = true;
-            // multiplying by pi to go from E[x|h] -> E[x,h]
-            // multiplying by 3 because true.counts aggregates
-            // over x1, x2 and x3.
-            measurements.weights[f] = (L-1) * T.get( h, h_ ) * pi[h]; 
-          }
-        }
-      }
-      Execution.putOutput("moments.params", Fmt.D( measurements.weights ));
-    } else if( model instanceof GridModel) {
-      int L = ((GridModel)(model)).L; // Extract from the modelA in a clever way.
-      assert( M[2].numRows() == D );
-      assert( M[2].numCols() == K );
-      // Each column corresponds to a particular hidden moment.
-      // Project onto the simplex
-      
-      // Average over the last two M's
-      for(int i = 1; i < 3; i++ )
-        M[i] = MatrixOps.projectOntoSimplex( M[i], smoothMeasurements );
-      SimpleMatrix M3 = (M[1]).plus(M[2]).scale(1.0/2.0);
-      //SimpleMatrix M3 = M[2]; // M3 is most accurate.
-      M3 = MatrixOps.projectOntoSimplex( M3, smoothMeasurements );
-      LogInfo.logs( "pi: " + Fmt.D(pi) );
-      LogInfo.logs( "M3: " + M3 );
-
-      for( int h = 0; h < K; h++ ) {
-        for( int d = 0; d < D; d++ ) {
-          // Assuming identical distribution.
-          int f = measurements.featureIndexer.getIndex(new UnaryFeature(h, "x="+d));
-          measuredFeatures[f] = true;
-          // multiplying by pi to go from E[x|h] -> E[x,h]
-          // multiplying by 3 because true.counts aggregates
-          // over x1, x2 and x3.
-          measurements.weights[f] = L * M3.get( d, h ) * pi[h]; 
-        }
-      }
-      Execution.putOutput("moments.params", MatrixFactory.fromVector(measurements.weights));
-
-    } else {
-      throw new RuntimeException("Unhandled modelA type: " + model.getClass() );
+    @Override
+    public MatrixOps.Matrixable computeP13() {
+      return MatrixOps.matrixable(P13);
     }
-  
-    LogInfo.end_track();
+
+    @Override
+    public MatrixOps.Matrixable computeP12() {
+      return MatrixOps.matrixable(P12);
+    }
+
+    @Override
+    public MatrixOps.Matrixable computeP32() {
+      return MatrixOps.matrixable(P32);
+    }
+
+    @Override
+    public MatrixOps.Tensorable computeP123() {
+      return MatrixOps.tensorable(P123);
+    }
+
+    @Override
+    public Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> computeSampleMoments(int N) {
+      return Quartet.with(P13, P12, P32, P123);
+    }
   }
+
   /**
    * Unrolls data along bottleneck nodes and uses method of moments
    * to return expected potentials
@@ -446,39 +265,18 @@ public class SpectralMeasurements implements Runnable {
 
       if( modelA instanceof  MixtureModel ) {
         MixtureModel model = (MixtureModel) modelA;
-        MixtureOfGaussians gmm = ParameterRecovery.recoverGMM(K, new ComputableMoments() {
-          @Override
-          public MatrixOps.Matrixable computeP13() {
-
-            return null;  //To change body of implemented methods use File | Settings | File Templates.
-          }
-
-          @Override
-          public MatrixOps.Matrixable computeP12() {
-            return null;  //To change body of implemented methods use File | Settings | File Templates.
-          }
-
-          @Override
-          public MatrixOps.Matrixable computeP32() {
-            return null;  //To change body of implemented methods use File | Settings | File Templates.
-          }
-
-          @Override
-          public MatrixOps.Tensorable computeP123() {
-            return null;  //To change body of implemented methods use File | Settings | File Templates.
-          }
-        }, 1.0);
         // \phi_1, \phi_2, \phi_3
-        // Smooth measurements
+
+        MixtureOfGaussians gmm = ParameterRecovery.recoverGMM(K, 0, (HasSampleMoments) new ExampleMoments(D, data, Arrays.asList(0, 1, 2)), 0.);
+        // TODO: Create a mixture of Bernoullis and move this stuff there.
         SimpleMatrix pi = gmm.getWeights();
         SimpleMatrix[] M = gmm.getMeans();
         for(int i = 0; i < model.L; i++ )
           M[i] = MatrixOps.projectOntoSimplex( M[i], smoothMeasurements );
-
+        // Average the three Ms
         SimpleMatrix M3 = (M[0].plus(M[1]).plus(M[2])).scale(1.0/3.0);
         //SimpleMatrix M3 = M[2]; // M3 is most accurate.
         M3 = MatrixOps.projectOntoSimplex( M3, smoothMeasurements );
-        pi = MatrixOps.projectOntoSimplex( pi, smoothMeasurements );
 
         // measurements.weights[ measurements.featureIndexer.getIndex(Feature("h=0,x=0"))] = 0.0;
         Indexer<Feature> measuredFeatureIndexer = new Indexer<>();
@@ -496,7 +294,7 @@ public class SpectralMeasurements implements Runnable {
             // Assuming identical distribution.
             int f = measurements.featureIndexer.getIndex(new UnaryFeature(h, "x="+d));
             // multiplying by pi to go from E[x|h] -> E[x,h]
-            // multiplying by 3 because true.counts aggregates
+            // multiplying by L because true.counts aggregates
             // over x1, x2 and x3.
             measurements.weights[f] = model.L * M3.get( d, h ) * pi.get(h);
           }
