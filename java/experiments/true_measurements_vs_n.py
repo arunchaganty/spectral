@@ -110,18 +110,20 @@ def do_process(args):
                     measurementProb=measurement_prob ).next() )
             except StopIteration:
                 continue
-
-            for n in N_VALUES:
-                agg = aggegrate_values( scabby.get_execs( 
-                            args.execdir, 
-                            K=k, D=d, 
-                            modelType=args.model, 
-                            measurementProb=measurement_prob, 
-                            genNumExamples=n ) )
-                if agg is None: continue
-                agg['n'] = n
-                agg['measured_fraction'] = true_measurement_prob
-                data.append(dict(agg))
+            for noise in NOISE_VALUES:
+                for n in N_VALUES:
+                    agg = aggegrate_values( scabby.get_execs( 
+                                args.execdir, 
+                                K=k, D=d, 
+                                modelType=args.model, 
+                                measurement_noise=noise,
+                                measurementProb=measurement_prob, 
+                                genNumExamples=n ) )
+                    if agg is None: continue
+                    agg['n'] = n
+                    agg['noise'] = measurement_noise
+                    agg['measured_fraction'] = true_measurement_prob
+                    data.append(dict(agg))
         return data
 
     # One plot per k,d value
