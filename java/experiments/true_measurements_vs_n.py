@@ -56,7 +56,7 @@ def do_run(args):
         for setting in settings:
             scabby.safe_run(cmd.format(**setting))
 
-def do_plot(args):
+def do_process(args):
     import scabby
     #import matplotlib.pyplot as plt 
     # Load a all the files that meet the settings and average over them
@@ -91,7 +91,7 @@ def do_plot(args):
                         agg[Y] = min( agg[Y], out[Y] )
                 else:
                     for Y in YS:
-                        agg[Y] += ( out[Y] - agg[Y] ) / cnt
+                        agg[Y] += ( float(out[Y]) - agg[Y] ) / cnt
             except KeyError:
                 continue
             except IOError:
@@ -100,37 +100,40 @@ def do_plot(args):
             return agg
 
     def get_data( k, d ):
-        panel = {}
+        data = []
         for measurement_prob in MEASUREMENT_PROB_VALUES:
-            # Create a Data frame.
-            df = pd.DataFrame( { n : aggegrate_values( scabby.get_execs( 
-                        args.execdir, 
-                        K=k, D=d, 
-                        modelType=args.model, 
-                        measurementProb=measurement_prob, 
-                        genNumExamples=n ) )
-                for n in N_VALUES } )
-            # Peek one of the exec_dirs and get the true measurement
-            # prob
-            true_measurement_prob = get_measurement_prob( scabby.get_execs( 
-                args.execdir, 
-                K=k, D=d, 
-                modelType=args.model, 
-                measurementProb=measurement_prob ).next())
-            panel[true_measurement_prob] = df
-        return pd.Panel(panel)
+            try:
+                true_measurement_prob = get_measurement_prob( scabby.get_execs( 
+                    args.execdir, 
+                    K=k, D=d, 
+                    modelType=args.model, 
+                    measurementProb=measurement_prob ).next() )
+            except StopIteration:
+                continue
 
+            for n in N_VALUES:
+                agg = aggegrate_values( scabby.get_execs( 
+                            args.execdir, 
+                            K=k, D=d, 
+                            modelType=args.model, 
+                            measurementProb=measurement_prob, 
+                            genNumExamples=n ) )
+                if agg is None: continue
+                agg['n'] = n
+                agg['measured_fraction'] = true_measurement_prob
+                data.append(dict(agg))
+        return data
 
     # One plot per k,d value
     for k,d in KD_VALUES:
         assert k <= d
-        print k,d
-        panel = get_data(k,d)
-
-        figs = scabby.plot_many( panel, xlabel='n', ylabels=YS )
-        for fig, y in zip(figs, YS):
-            fig.savefig(os.path.join(args.exptdir, '{args.model}-min-{y}-{k}-{d}.png'.format(**locals())))
-        #print plot
+        print k, d
+        out_path = os.path.join(args.exptdir, '%s-%d-%d.values' % (args.model, k, d) )
+        with open( out_path, 'w' ) as out:
+            data = get_data(k,d)
+            for datum in data:
+                out.write(scabby.dict_to_tab(datum))
+                out.write('\n')
 
 if __name__ == "__main__":
     import argparse
@@ -148,10 +151,10 @@ if __name__ == "__main__":
     #run_parser.add_argument( 'extra-args', type=str, nargs='+', help="Additional arguments for the actual program" )
     run_parser.set_defaults(func=do_run)
 
-    plot_parser = subparsers.add_parser('plot', help='Plot results from the experiment' )
+    plot_parser = subparsers.add_parser('process', help='Plot results from the experiment' )
     plot_parser.add_argument( '--model', type=str, default="mixture", choices=["mixture","hmm"], help="Model to use" )
     plot_parser.add_argument( '--best', action="store_true", help="When plotting, choose the best over the different runs." )
-    plot_parser.set_defaults(func=do_plot)
+    plot_parser.set_defaults(func=do_process)
 
     ARGS = parser.parse_args()
     ARGS.func(ARGS)

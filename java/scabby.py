@@ -25,12 +25,17 @@ def parallel_spawn( exptdir, spawn_cmd, cmd, n_jobs, settings ):
         safe_run( 'chmod +x %s'%(batch_file) )
         safe_run( '%s ./%s'%( spawn_cmd, './'+batch_file ) )
 
+def dict_to_tab(data):
+    return "\t".join( str(key) + '=' + str(val) for key, val in data.iteritems() )
+
 def read_options(fname):
     options = {}
     for line in open(fname,'r'):
         if line == '': continue
-        key, val = line.split('\t', 1)
-        options[key.strip()] = val.strip()
+        opts = line.split('\t', 1)
+        if len(opts) > 1:
+            key, val = line.split('\t', 1)
+            options[key.strip()] = val.strip()
     return options
 
 def get_execs( root_dir, **kwargs ):
