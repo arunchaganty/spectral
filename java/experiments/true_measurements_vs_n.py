@@ -57,7 +57,6 @@ def do_run(args):
             scabby.safe_run(cmd.format(**setting))
 
 def do_process(args):
-    import scabby
     import plumbum as pb
 
     for k, d in KD_VALUES:
