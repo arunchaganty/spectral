@@ -44,7 +44,10 @@ def do_plot(args):
     for (datum, label, marker) in zip(data, labels, scabby.MARKERS):
         scabby.plot( ax, datum, x_key, y_key, label=label, marker=marker)
     ax.legend()
-    plt.show()
+    if args.output is not None:
+        plt.savefig(args.output)
+    else:
+        plt.show()
 
 if __name__ == "__main__":
     import sys
@@ -74,6 +77,7 @@ if __name__ == "__main__":
     plot_parser.add_argument( '--plot-options', nargs='*', help="Options for plot; e.g. xlabel, ylabel" )
     plot_parser.add_argument( '--labels', nargs='+', help="Labels for each data file" )
     plot_parser.add_argument( '--keys', nargs='+', help="Keys to plot on (X, Y)" )
+    plot_parser.add_argument( '--output', type='str', nargs='?', help="Where to save the plot" )
     plot_parser.add_argument( 'tabs', type=file, nargs='+', default=sys.stdin, help="Tab file" )
     plot_parser.set_defaults(func=do_plot)
 
