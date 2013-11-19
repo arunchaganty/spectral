@@ -5,7 +5,7 @@ import scabby
 from collections import Counter
 
 def do_extract(args):
-    filters = scabby.optlist_to_dict( args.filters ) if args.filters is not None else {}
+    filters = scabby.list_to_dict( args.filters ) if args.filters is not None else {}
     keys = args.keys
     for execdir in scabby.get_execs( args.execdir, **filters ) :
         try:
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     plot_parser.add_argument( '--plot-options', nargs='*', help="Options for plot; e.g. xlabel, ylabel" )
     plot_parser.add_argument( '--labels', nargs='+', help="Labels for each data file" )
     plot_parser.add_argument( '--keys', nargs='+', help="Keys to plot on (X, Y)" )
-    plot_parser.add_argument( '--output', type='str', nargs='?', help="Where to save the plot" )
+    plot_parser.add_argument( '--output', help="Where to save the plot" )
     plot_parser.add_argument( 'tabs', type=file, nargs='+', default=sys.stdin, help="Tab file" )
     plot_parser.set_defaults(func=do_plot)
 

@@ -58,84 +58,25 @@ def do_run(args):
 
 def do_process(args):
     import scabby
-    #import matplotlib.pyplot as plt 
-    # Load a all the files that meet the settings and average over them
-    # to generate a couple of data points
-    YS = ['countsError', 'paramsError', 'fit-perp', 'true-perp']
+    import plumbum as pb
 
-    def get_measurement_prob(exec_dir):
-        for line in open(os.path.join(exec_dir, 'log')):
-            line = line.strip()
-            if line.startswith('sum_counts:'):
-                _, prob = line.split(':')
-                return float(prob)
-#scabby.get_execs( args.execdir, K=k, D=d, modelType=args.model, measurementProb=measurement_prob, genNumExamples=n ):
-
-
-    def aggegrate_values( exec_dirs ):
-        if args.best:
-            agg, cnt = { 'countsError' : float('inf'), 
-                    'paramsError' : float('inf'), 
-                    'fit-perp' : float('-inf'), 
-                    'true-perp' : float('-inf') }, 0 
-        else:
-            agg, cnt = { Y : 0 for Y in YS }, 0
-
-        for exec_dir in exec_dirs:
-            try:
-                out = scabby.read_options(os.path.join( exec_dir, 'output.map' ))
-                #avg, cnt = scabby.running_average( avg, cnt, x )
-                cnt = cnt + 1
-                if args.best:
-                    for Y in YS:
-                        agg[Y] = min( agg[Y], out[Y] )
-                else:
-                    for Y in YS:
-                        agg[Y] += ( float(out[Y]) - agg[Y] ) / cnt
-            except KeyError:
-                continue
-            except IOError:
-                continue
-        if cnt > 0:
-            return agg
-
-    def get_data( k, d ):
-        data = []
+    for k, d in KD_VALUES:
         for measurement_prob in MEASUREMENT_PROB_VALUES:
-            try:
-                true_measurement_prob = get_measurement_prob( scabby.get_execs( 
-                    args.execdir, 
-                    K=k, D=d, 
-                    modelType=args.model, 
-                    measurementProb=measurement_prob ).next() )
-            except StopIteration:
-                continue
-            for noise in NOISE_VALUES:
-                for n in N_VALUES:
-                    agg = aggegrate_values( scabby.get_execs( 
-                                args.execdir, 
-                                K=k, D=d, 
-                                modelType=args.model, 
-                                measurement_noise=noise,
-                                measurementProb=measurement_prob, 
-                                genNumExamples=n ) )
-                    if agg is None: continue
-                    agg['n'] = n
-                    agg['noise'] = measurement_noise
-                    agg['measured_fraction'] = true_measurement_prob
-                    data.append(dict(agg))
-        return data
+            for measurement_noise in NOISE_VALUES:
+                print k, d, measurement_prob, measurement_noise
+                cmd = 'tab.py extract \
+--execdir {args.execdir} \
+--filters K={k} D={k} modelType={args.model} measurementProb={measurement_prob} trueMeasurementNoise={measurement_noise} \
+--keys genNumExamples measurementProb trueMeasurementNoise paramsError countsError fit-perp'.format(**locals())
+                raw_path = os.path.join( args.exptdir, '{args.model}-{k}-{d}-{measurement_prob}-{measurement_noise}.raw.tab'.format(**locals()) )
+                print (pb.local['python2.7'][cmd.split()] > raw_path)
+                (pb.local['python2.7'][cmd.split()] > raw_path)()
 
-    # One plot per k,d value
-    for k,d in KD_VALUES:
-        assert k <= d
-        print k, d
-        out_path = os.path.join(args.exptdir, '%s-%d-%d.values' % (args.model, k, d) )
-        with open( out_path, 'w' ) as out:
-            data = get_data(k,d)
-            for datum in data:
-                out.write(scabby.dict_to_tab(datum))
-                out.write('\n')
+                agg_path = os.path.join( args.exptdir, '{args.model}-{k}-{d}-{measurement_prob}-{measurement_noise}.agg.tab'.format(**locals()) )
+                cmd = 'tab.py agg genNumExamples'.format(**locals())
+                cmd_ = 'tab.py sort genNumExamples'.format(**locals())
+                (pb.local['cat'][raw_path] | pb.local['python2.7'][cmd.split()] | pb.local['python2.7'][cmd_.split()] > agg_path)()
+
 
 if __name__ == "__main__":
     import argparse
