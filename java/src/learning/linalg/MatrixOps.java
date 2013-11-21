@@ -1599,5 +1599,41 @@ public class MatrixOps {
 
     return Triplet.with(U, W, V);
   }
+
+  /**
+   * Collapse the 3rd order moment along index;
+   * E[x_1 \otimes x_2 ] = \sum_{x_3} \E[ x_1 \otimes x_2 \otimes x_3]
+   * @param T - tensor
+   * @param index1 - Primary key of the resultant 2nd order moment
+   * @param index2 - Secondary key of the resultant 2nd order moment
+   * @param index3 - Index to Eliminate
+   * @return - 2nd order moment
+   */
+  public static SimpleMatrix condenseMoment( FullTensor T, int index1, int index2, int index3 ) {
+    SimpleMatrix M = new SimpleMatrix(T.getDim(index1), T.getDim(index2));
+
+    int I = T.getDim(index1);
+    int J = T.getDim(index2);
+    int K = T.getDim(index3);
+
+    for(int i = 0; i < I; i++ ) {
+      for(int j = 0; j < J; j++ ) {
+        // Collapse all these entries.
+        double val = 0.;
+        for(int k = 0; k < K; k++ ) {
+          int[] idx = new int[3];
+          idx[index1] = i; idx[index2] = j; idx[index3] = k;
+          val += T.X[idx[0]][idx[1]][idx[2]];
+        }
+        M.set(i,j, val);
+      }
+    }
+
+    return M;
+  }
+  public static SimpleMatrix condenseMoment( FullTensor T ) {
+    return condenseMoment(T, 0, 1, 2);
+  }
+
 }
 

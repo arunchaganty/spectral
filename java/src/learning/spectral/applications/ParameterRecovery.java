@@ -1,6 +1,7 @@
 package learning.spectral.applications;
 
 import fig.basic.LogInfo;
+import fig.basic.Option;
 import learning.data.ComputableMoments;
 import learning.data.HasExactMoments;
 import learning.data.HasSampleMoments;
@@ -102,7 +103,8 @@ public class ParameterRecovery {
       LogInfo.logs( "P32 error: " + MatrixOps.diff(moments_.getValue2(), momentsExact.getValue2() ) );
       LogInfo.logs( "P123 error: " + MatrixOps.diff(moments_.getValue3(), momentsExact.getValue3() ) );
     }
-    return recoverHMM(K, tensorMethod.recoverParameters(K, moments_), smoothMeasurements);
+//    return recoverHMM(K, tensorMethod.recoverParameters(K, moments_), smoothMeasurements);
+    return recoverHMM(K, tensorMethod.recoverParametersAsymmetric(K, moments_.getValue3()), smoothMeasurements);
   }
 
   static MixtureOfGaussians recoverGMM(int K, Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> measurements, double smoothMeasurements) {
@@ -141,7 +143,8 @@ public class ParameterRecovery {
       LogInfo.logs( "P32 error: " + MatrixOps.diff(moments_.getValue2(), momentsExact.getValue2() ) );
       LogInfo.logs( "P123 error: " + MatrixOps.diff(moments_.getValue3(), momentsExact.getValue3() ) );
     }
-    return recoverGMM(K, tensorMethod.recoverParameters(K, moments_), smoothMeasurements);
+    return recoverGMM(K, tensorMethod.recoverParametersAsymmetric(K, moments_.getValue3()), smoothMeasurements);
+//    return recoverGMM(K, tensorMethod.recoverParameters(K, moments_), smoothMeasurements);
   }
 
 }

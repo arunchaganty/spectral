@@ -36,6 +36,7 @@ public class SpectralMeasurements implements Runnable {
   @Option(gloss="Include each (true) measurement with this prob") public double measurementProb = 1;
   @Option(gloss="Include gaussian noise with this variance to true measurements") public double trueMeasurementNoise = 0.0;
 
+  @Option(gloss="Preconditioning") public double preconditioning = 0.0;
   @Option(gloss="Smooth measurements") public double smoothMeasurements = 0.0;
   @Option(gloss="Use T in SpectralMeasurements?") public boolean useTransitions = true;
   @OptionSet(name="tensor") public TensorMethod algo = new TensorMethod();
@@ -195,6 +196,15 @@ public class SpectralMeasurements implements Runnable {
       P12 = P12.scale(1./data.sum());
       P32 = P32.scale(1./data.sum());
       P123.scale(1./data.sum());
+
+      // Add some to the diagonal term
+      if( preconditioning > 0. ) {
+        for( int d = 0; d < D; d++ ) {
+          P123.set(d,d,d, P123.get(d,d,d) + preconditioning);
+        }
+      }
+      P123.scale(1./P123.elementSum());
+
     }
 
     @Override
@@ -302,13 +312,20 @@ public class SpectralMeasurements implements Runnable {
         HiddenMarkovModel model = (HiddenMarkovModel) modelA;
         // \phi_1, \phi_2, \phi_3
 
-        MixtureOfGaussians gmm = ParameterRecovery.recoverGMM(K, 0, (HasSampleMoments) new ExampleMoments(D, data, Arrays.asList(0, 1, 2)), 0.);
+        MixtureOfGaussians gmm = ParameterRecovery.recoverGMM(K, 0, (HasSampleMoments) new ExampleMoments(D, data, Arrays.asList(0, 1, 2)), smoothMeasurements);
         // TODO: Create a mixture of Bernoullis and move this stuff there.
         SimpleMatrix pi = gmm.getWeights();
+        // The pi are always really bad. Ignore?
         SimpleMatrix[] M = gmm.getMeans();
         SimpleMatrix O = M[1];
         SimpleMatrix OT = M[2];
         SimpleMatrix T = O.pseudoInverse().mult(OT);
+
+        Execution.putOutput("pi", pi);
+        Execution.putOutput("O", O);
+        Execution.putOutput("T", T);
+
+//        pi = MatrixFactory.ones(K).scale(1./K);
 
         // Project onto simplices
         O = MatrixOps.projectOntoSimplex( O, smoothMeasurements );

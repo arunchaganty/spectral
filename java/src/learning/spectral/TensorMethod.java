@@ -1,5 +1,6 @@
 package learning.spectral;
 
+import fig.basic.IOUtils;
 import learning.linalg.*;
 import learning.data.*;
 
@@ -85,8 +86,13 @@ public class TensorMethod {
    * @param Pairs - 2nd order moments for factorization
    * @param Triples - 3rd order moments.
    * @return - (Eigenvalues, Eigenvectors)
+   * // TODO: Make private
    */
   public Pair<SimpleMatrix,SimpleMatrix> recoverParameters( int K, SimpleMatrix Pairs, FullTensor Triples ) {
+    // This is actually true!
+//    SimpleMatrix Pairs_ = MatrixOps.condenseMoment(Triples);
+//    LogInfo.logsForce( "%f", MatrixOps.diff(Pairs, Pairs_));
+//    assert  MatrixOps.allclose(Pairs, Pairs_);
 
     Pair<SimpleMatrix,FullTensor> whitened = whiten(K, Pairs, Triples);
     SimpleMatrix Winv = whitened.getValue0();
@@ -104,6 +110,10 @@ public class TensorMethod {
 
     return Pair.with(eigenvalues, eigenvectors);
   }
+  public Pair<SimpleMatrix,SimpleMatrix> recoverParameters( int K, FullTensor Triples ) {
+    SimpleMatrix Pairs = MatrixOps.condenseMoment(Triples);
+    return recoverParameters(K, Pairs, Triples);
+  }
 
   /**
    * With un-symmetric views, this method will first symmetrize the views to recover the parameters M_3,
@@ -115,7 +125,7 @@ public class TensorMethod {
    * @param M123 - Tensor
    * @return - (weights, M1, M2, M3).
    */
-  public Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> 
+  public Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix>
       recoverParameters( int K, SimpleMatrix M13,
           SimpleMatrix M12, SimpleMatrix M32,
           FullTensor M123 ) {
@@ -136,10 +146,29 @@ public class TensorMethod {
     SimpleMatrix M1 = M13.mult( M3i );
     SimpleMatrix M2 = M3i.transpose().mult(M32).transpose();
 
+    try {
+      if( Execution.getActualExecDir() != null ){
+        IOUtils.writeLines( Execution.getFile("tensor-method.results"),
+                Arrays.asList(pi.toString(),
+                M1.toString(),
+                M2.toString(),
+                M3.toString()));
+      }
+    } catch (IOException ignored) {
+    }
+
     LogInfo.end_track("recovery-asymmetric");
 
     return new Quartet<>( pi, M1, M2, M3 );
   }
+
+  public Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> recoverParametersAsymmetric( int K, FullTensor M123 ) {
+    SimpleMatrix M13 = MatrixOps.condenseMoment(M123, 0, 2, 1);
+    SimpleMatrix M12 = MatrixOps.condenseMoment(M123, 0, 1, 2);
+    SimpleMatrix M32 = MatrixOps.condenseMoment(M123, 2, 1, 0);
+    return recoverParameters(K, M13, M12, M32, M123);
+  }
+
   // TODO: Allow for some specification of permutation of moments?
   public Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> 
       recoverParameters( int K, 

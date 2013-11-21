@@ -91,7 +91,8 @@ public class TensorMethodTest {
     SimpleMatrix Pairs = moments.getValue0();
     FullTensor Triples = moments.getValue3();
     TensorMethod algo = new TensorMethod();
-    Pair<SimpleMatrix, SimpleMatrix> params = algo.recoverParameters( K, Pairs, Triples  );
+//    Pair<SimpleMatrix, SimpleMatrix> params = algo.recoverParameters( K, Pairs, Triples  );
+    Pair<SimpleMatrix, SimpleMatrix> params = algo.recoverParameters( K, Triples  );
     SimpleMatrix weights_ = params.getValue0();
     SimpleMatrix M_ = params.getValue1();
 
@@ -127,7 +128,8 @@ public class TensorMethodTest {
         model.computeExactMoments();
 
     TensorMethod algo = new TensorMethod();
-    Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, SimpleMatrix> params = algo.recoverParameters( K, moments );
+//    Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, SimpleMatrix> params = algo.recoverParameters( K, moments );
+    Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, SimpleMatrix> params = algo.recoverParametersAsymmetric( K, moments.getValue3() );
     SimpleMatrix weights_ = params.getValue0();
     SimpleMatrix M1_ = params.getValue1();
     SimpleMatrix M2_ = params.getValue2();
