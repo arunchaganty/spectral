@@ -186,7 +186,7 @@ public class MeasurementsEM implements Runnable {
       this.params = modelB.newParamsVec();
       this.phi_sigma = modelB.newParamsVec();
 
-      Hp = modelA.createHypergraph(modelA.L, theta.weights, gradient.weights, 1.);
+      Hp = modelA.createHypergraph(theta.weights, gradient.weights, 1.);
 
       updateOffset();
     }

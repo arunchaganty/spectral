@@ -13,6 +13,13 @@ import static fig.basic.LogInfo.*;
 
 public class Models {
   public static class MixtureModel extends Model {
+    public MixtureModel(int K, int D, int L) {
+      this.K = K;
+      this.D = D;
+      this.L = L;
+    }
+    public MixtureModel() {
+    }
 
     public Example newExample() {
       Example ex = new Example();
@@ -26,10 +33,10 @@ public class Models {
       return new Example( x, new int[1] );
     }
 
-    public Hypergraph<Example> createHypergraph(int L, Example ex, double[] params, double[] counts, double increment) {
+    public Hypergraph<Example> createHypergraph(Example ex, double[] params, double[] counts, double increment) {
       Hypergraph<Example> H = new Hypergraph<Example>();
-      //H.debug = true;
-      
+      // H.debug = true;
+
       // The root node disjuncts over the possible hidden state values
       Object rootNode = H.sumStartNode();
       for (int h = 0; h < K; h++) {  // For each value of hidden states...
@@ -37,14 +44,12 @@ public class Models {
         H.addProdNode(hNode); // this is product node over each view
 
         // probability of choosing this value for h.
-        //int hf = featureIndexer.getIndex(new UnaryFeature(h, "pi"));
-        //H.addEdge(rootNode, hNode, edgeInfo(params, counts, hf, increment));
-        H.addEdge(rootNode, hNode, hiddenEdgeInfo(0,h) ); 
+        H.addEdge(rootNode, hNode, hiddenEdgeInfo(0,h) );
 
-        for (int j = 0; j < L; j++) {  // For each view j...
-          String xNode = "h="+h+",x"+j;
+        for (int l = 0; l < L; l++) {  // For each view l...
+          String xNode = "h="+h+",x"+l;
           if (ex != null) {  // Numerator: generate x[j]
-            int f = featureIndexer.getIndex(new UnaryFeature(h, "x="+ex.x[j]));
+            int f = featureIndexer.getIndex(new UnaryFeature(h, "x="+ex.x[l]));
             if (params != null)
               H.addEdge(hNode, H.endNode, edgeInfo(params, counts, f, increment));
           } else {  // Denominator: generate each possible assignment x[j] = a
@@ -53,7 +58,7 @@ public class Models {
             for (int a = 0; a < D; a++) {
               int f = featureIndexer.getIndex(new UnaryFeature(h, "x="+a));
               if (params != null)
-                H.addEdge(xNode, H.endNode, edgeInfo(params, counts, f, increment, j, a));
+                H.addEdge(xNode, H.endNode, edgeInfo(params, counts, f, increment, l, a));
             }
           }
         }
@@ -61,6 +66,7 @@ public class Models {
       return H;
     }
   }
+
 
   public static class HiddenMarkovModel extends Model {
 
@@ -137,7 +143,7 @@ public class Models {
       }
     }
 
-    public Hypergraph<Example> createHypergraph(int L, Example ex, double[] params, double[] counts, double increment) {
+    public Hypergraph<Example> createHypergraph(Example ex, double[] params, double[] counts, double increment) {
       // Set length to be length of example data.
       assert( (ex == null) || ex.x.length == L );
 
@@ -163,8 +169,8 @@ public class Models {
           addEmission( H, i, h, ex, params, counts, increment );
           // Add an end-transition state
           // Create a link to the sum node that will enumerate over next states
-          String hNode = String.format("h_%d=%d", i, h );
-          H.addEdge(hNode, H.endNode); // Again, no potential required; hNode is a product node
+//          String hNode = String.format("h_%d=%d", i, h );
+//          H.addEdge(hNode, H.endNode); // Again, no potential required; hNode is a product node
         }
       }
       return H;
@@ -237,7 +243,7 @@ public class Models {
     }
 
 
-    public Hypergraph<Example> createHypergraph(int L, Example ex, double[] params, double[] counts, double increment) {
+    public Hypergraph<Example> createHypergraph(Example ex, double[] params, double[] counts, double increment) {
       // Set length to be length of example data.
       assert( (ex == null) || ex.x.length == L );
 
@@ -363,7 +369,7 @@ public class Models {
       return node;
     }
 
-    public Hypergraph<Example> createHypergraph(int L, Example ex, double[] params, double[] counts, double increment) {
+    public Hypergraph<Example> createHypergraph(Example ex, double[] params, double[] counts, double increment) {
       Hypergraph<Example> H = new Hypergraph<Example>();
       //H.debug = true;
       H.addEdge(H.sumStartNode(), transNode(H, ex, params, counts, increment, 0, -1, -1));

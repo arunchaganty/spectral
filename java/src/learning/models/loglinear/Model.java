@@ -12,24 +12,24 @@ import fig.record.*;
 import static fig.basic.LogInfo.*;
 
 public abstract class Model {
-  public int K;  // Number of latent states
-  public int D;  // Number of emissions
-  public int L;
+  public int K; // Number of latent states
+  public int D; // Number of emissions
+  public int L; // Number of 'views' or length.
   public Indexer<Feature> featureIndexer = new Indexer<Feature>();
   public int numFeatures() { return featureIndexer.size(); }
-
   ParamsVec newParamsVec() { return new ParamsVec(K, featureIndexer); }
 
   abstract Example newExample();
   abstract Example newExample(int[] x);
   // L gives the length of the observation sequence.
-  public Hypergraph<Example> createHypergraph(int L, double[] params, double[] counts, double increment) {
-    return createHypergraph( L, null, params, counts, increment );
+  public Hypergraph<Example> createHypergraph(double[] params, double[] counts, double increment) {
+    return createHypergraph( null, params, counts, increment );
   }
-  public Hypergraph<Example> createHypergraph(Example ex, double[] params, double[] counts, double increment) {
-    return createHypergraph( ex.x.length, ex, params, counts, increment );
+  abstract Hypergraph<Example> createHypergraph(Example ex, double[] params, double[] counts, double increment);
+  @Deprecated
+  public Hypergraph<Example> createHypergraph(int L, Example ex, double[] params, double[] counts, double increment) {
+    return createHypergraph( ex, params, counts, increment );
   }
-  abstract Hypergraph<Example> createHypergraph(int L, Example ex, double[] params, double[] counts, double increment);
 
   Hypergraph.LogHyperedgeInfo<Example> nullInfo = new Hypergraph.LogHyperedgeInfo<Example>() {
     public double getLogWeight() { return 0; }

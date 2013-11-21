@@ -49,6 +49,13 @@ public class ParamsVec {
     return prod;
   }
 
+  public double get(Feature f) {
+    return this.weights[featureIndexer.getIndex(f)];
+  }
+  public void set(Feature f, double val) {
+    this.weights[featureIndexer.getIndex(f)] = val;
+  }
+
   /**
    * Add two params vecs and place result in vec3
    * @param vec1

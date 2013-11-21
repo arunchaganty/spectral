@@ -424,7 +424,7 @@ public class SpectralMeasurements implements Runnable {
   public void setModel(Model model, int L) {
     this.modelA = model;
     // Run once to just instantiate features
-    model.createHypergraph(L, null, null, 0);
+    model.createHypergraph(null, null, 0);
   }
 
   ///////////////////////////////////
@@ -466,7 +466,7 @@ public class SpectralMeasurements implements Runnable {
   Counter<Example> generateData(Model model, ParamsVec params, GenerationOptions opts) {
     LogInfo.begin_track("generateData");
     ParamsVec counts = model.newParamsVec();
-    Hypergraph<Example> Hp = model.createHypergraph(modelOpts.L, params.weights, counts.weights, 1);
+    Hypergraph<Example> Hp = model.createHypergraph(params.weights, counts.weights, 1);
     // Necessary preprocessing before you can generate hyperpaths
     Hp.computePosteriors(false);
     Hp.fetchPosteriors(false);

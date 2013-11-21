@@ -87,7 +87,7 @@ public class BottleneckSpectralEM implements Runnable {
       Hp = new HashMap<Integer, Hypergraph<Example>>();
       for( Map.Entry<Integer,Integer> pair : getCountProfile(examples).entrySet() ) {
         int L = pair.getKey(); int cnt = pair.getValue();
-        Hypergraph<Example> H = model.createHypergraph(L, trueParams.weights, trueCounts.weights, (double) cnt/examples.size());
+        Hypergraph<Example> H = model.createHypergraph(trueParams.weights, trueCounts.weights, (double) cnt/examples.size());
         H.computePosteriors(false);
         H.fetchPosteriors(false);
 
@@ -509,7 +509,7 @@ public class BottleneckSpectralEM implements Runnable {
         int L = pair.getKey(); int cnt = pair.getValue();
 
         LogInfo.logs( "%d instances of %d length", cnt, L );
-        Hp.put( model.createHypergraph(L, params.weights, gradient.weights, (double) cnt/examples.size()),
+        Hp.put( model.createHypergraph(params.weights, gradient.weights, (double) cnt/examples.size()),
             cnt );
         //Hp.put( model.createHypergraph(L, params.weights, gradient.weights, (double) 1), 1 );
         //break; // Cheating because we're running out of memory.
@@ -918,10 +918,10 @@ public class BottleneckSpectralEM implements Runnable {
 //  }
 
 
-  public void setModel(Model model, int L) {
+  public void setModel(Model model) {
     this.model = model;
     // Run once to just instantiate features
-    model.createHypergraph(L, null, null, 0);
+    model.createHypergraph(null, null, 0);
   }
 
   ///////////////////////////////////
@@ -961,7 +961,7 @@ public class BottleneckSpectralEM implements Runnable {
   List<Example> generateData( Model model, ParamsVec params, GenerationOptions opts ) {
     LogInfo.begin_track("generateData");
     ParamsVec counts = model.newParamsVec();
-    Hypergraph<Example> Hp = model.createHypergraph(modelOpts.L, params.weights, counts.weights, 1);
+    Hypergraph<Example> Hp = model.createHypergraph(params.weights, counts.weights, 1);
     // Necessary preprocessing before you can generate hyperpaths
     Hp.computePosteriors(false);
     Hp.fetchPosteriors(false);
@@ -1026,7 +1026,7 @@ public class BottleneckSpectralEM implements Runnable {
 
     // Setup; generate model 
     Model model = generateModel( modelOpts );
-    setModel( model, modelOpts.L );
+    setModel( model);
 
     // Generate parameters
     ParamsVec trueParams = generateParameters( model, genOpts );
