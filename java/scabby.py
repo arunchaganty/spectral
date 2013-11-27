@@ -120,16 +120,16 @@ def running_aggregate( agg, count, x, agg_fn  ):
     count += 1
     if isinstance( agg, dict ):
         for key in agg:
-            agg[key] += agg_fn(agg[key], count, x[key])
+            agg[key] = agg_fn(agg[key], count, x[key])
     elif isinstance( agg, list ):
         for key in xrange(len(agg)):
-            agg[key] += agg_fn(agg[key], count, x[key])
+            agg[key] = agg_fn(agg[key], count, x[key])
 
     return agg, count
 
 def running_average( agg, count, x ):
     return running_aggregate( agg, count, x, 
-            lambda agg, count, x: float(x - agg)/count)
+            lambda agg, count, x: agg + float(x - agg)/count)
 def running_max( agg, count, x ):
     return running_aggregate( agg, count, x, 
             lambda agg, count, x: max(x, agg))

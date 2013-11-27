@@ -16,7 +16,7 @@ EXPT_NAME = "true_measurements_vs_n"
 KD_VALUES = [(2,2), (2,3), (3,3), (3,5),]# (3,10), (5,10)]
 MEASUREMENT_PROB_VALUES = [1.0, 0.7, 0.3, 0.0]
 N_VALUES = [1000, 2000, 5000, 7000, 10000, 20000, 50000, 70000, 1000000, 200000, 500000, 700000]
-NOISE_VALUES = [0., 1e-3, 1e-2]
+NOISE_VALUES = [0., 1e-1]
 
 def get_settings(args):
     for k,d in KD_VALUES:
@@ -43,10 +43,11 @@ def do_run(args):
  -modelType {args.model}\
  -K {k} -D {d} -L 3\
  -initRandom {initialization_seed}\
+ -initParamsNoise 1.0\
  -measurementProb {measurement_prob}\
  -trueMeasurementNoise {measurement_noise}\
  -genNumExamples {n}\
- -SpectralMeasurements.MeasurementsEM.iters 200 -eIters 1000'
+ -SpectralMeasurements.MeasurementsEM.iters 200 -eIters 10000'
 
     settings = get_settings(args)
 
@@ -65,14 +66,16 @@ def do_process(args):
                 print k, d, measurement_prob, measurement_noise
                 cmd = 'tab.py extract \
 --execdir {args.execdir} \
---filters K={k} D={k} modelType={args.model} measurementProb={measurement_prob} trueMeasurementNoise={measurement_noise} \
+--filters K={k} D={d} modelType={args.model} measurementProb={measurement_prob} trueMeasurementNoise={measurement_noise} \
 --keys genNumExamples measurementProb trueMeasurementNoise paramsError countsError fit-perp'.format(**locals())
                 raw_path = os.path.join( args.exptdir, '{args.model}-{k}-{d}-{measurement_prob}-{measurement_noise}.raw.tab'.format(**locals()) )
-                print (pb.local['python2.7'][cmd.split()] > raw_path)
                 (pb.local['python2.7'][cmd.split()] > raw_path)()
 
                 agg_path = os.path.join( args.exptdir, '{args.model}-{k}-{d}-{measurement_prob}-{measurement_noise}.agg.tab'.format(**locals()) )
-                cmd = 'tab.py agg genNumExamples'.format(**locals())
+                if args.best:
+                    cmd = 'tab.py agg --mode min genNumExamples'.format(**locals())
+                else:
+                    cmd = 'tab.py agg genNumExamples'.format(**locals())
                 cmd_ = 'tab.py sort genNumExamples'.format(**locals())
                 (pb.local['cat'][raw_path] | pb.local['python2.7'][cmd.split()] | pb.local['python2.7'][cmd_.split()] > agg_path)()
 

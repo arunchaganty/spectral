@@ -4,6 +4,11 @@ import os
 import scabby
 from collections import Counter
 
+def do_list(args):
+    filters = scabby.list_to_dict( args.filters ) if args.filters is not None else {}
+    for execdir in scabby.get_execs( args.execdir, **filters ) :
+        print execdir
+
 def do_extract(args):
     filters = scabby.list_to_dict( args.filters ) if args.filters is not None else {}
     keys = args.keys
@@ -55,6 +60,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser( description='Tab file swissknife' )
 
     subparsers = parser.add_subparsers()
+
+    list_parser = subparsers.add_parser('list', help='Extract a tab file from a dir of execs' )
+    list_parser.add_argument( '--execdir', type=str, help="Path to execution directory" )
+    list_parser.add_argument( '--filters', type=str, nargs='*', help="Additional key=value filters" )
+    list_parser.set_defaults(func=do_list)
 
     extract_parser = subparsers.add_parser('extract', help='Extract a tab file from a dir of execs' )
     extract_parser.add_argument( '--execdir', type=str, help="Path to execution directory" )

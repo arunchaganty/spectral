@@ -17,13 +17,15 @@ KD_VALUES = [(2,2), (2,3), (3,3), (3,5),]# (3,10), (5,10)]
 #MEASUREMENT_PROB_VALUES = [1.0, 0.7, 0.3, 0.0]
 N_VALUES = [1000, 2000, 5000, 7000, 10000, 20000, 50000, 70000, 1000000, 200000, 500000, 700000]
 #NOISE_VALUES = [0., 1e-3, 1e-2]
+PRECONDITIONG_VALUES = [0.0]#, 1e-1, 1e-2, 1e-3]
 
 def get_settings(args):
     for k,d in KD_VALUES:
         assert k <= d
         for n in N_VALUES:
-            for initialization_seed in xrange( args.repeatIters ):
-                yield dict(locals())
+            for preconditioning in PRECONDITIONG_VALUES:
+                for initialization_seed in xrange( args.repeatIters ):
+                    yield dict(locals())
 
 def do_run(args):
     #random.seed(args.seed)
@@ -41,9 +43,11 @@ def do_run(args):
  -modelType {args.model}\
  -K {k} -D {d} -L 3\
  -initRandom {initialization_seed}\
+ -initParamsNoise 1.0\
  -expectedMeasurements False\
  -betaRegularization 1e-2\
  -genNumExamples {n}\
+ -smoothMeasurements 1e-5\
  -SpectralMeasurements.MeasurementsEM.iters 200 -eIters 1000'
 
     settings = get_settings(args)
@@ -59,18 +63,21 @@ def do_process(args):
 
     for k, d in KD_VALUES:
         print k, d
-        cmd = 'tab.py extract \
---execdir {args.execdir} \
---filters K={k} D={k} modelType={args.model} \
---keys genNumExamples paramsError countsError fit-perp'.format(**locals())
-        raw_path = os.path.join( args.exptdir, '{args.model}-{k}-{d}.raw.tab'.format(**locals()) )
-        print (pb.local['python2.7'][cmd.split()] > raw_path)
-        (pb.local['python2.7'][cmd.split()] > raw_path)()
+        for preconditioning in PRECONDITIONG_VALUES:
+            cmd = 'tab.py extract \
+    --execdir {args.execdir} \
+    --filters K={k} D={d} modelType={args.model} \
+    --keys genNumExamples paramsError countsError fit-perp'.format(**locals())
+            raw_path = os.path.join( args.exptdir, '{args.model}-{k}-{d}-{preconditioning}.raw.tab'.format(**locals()) )
+            (pb.local['python2.7'][cmd.split()] > raw_path)()
 
-        agg_path = os.path.join( args.exptdir, '{args.model}-{k}-{d}.agg.tab'.format(**locals()) )
-        cmd = 'tab.py agg genNumExamples'.format(**locals())
-        cmd_ = 'tab.py sort genNumExamples'.format(**locals())
-        (pb.local['cat'][raw_path] | pb.local['python2.7'][cmd.split()] | pb.local['python2.7'][cmd_.split()] > agg_path)()
+            agg_path = os.path.join( args.exptdir, '{args.model}-{k}-{d}-{preconditioning}.agg.tab'.format(**locals()) )
+            if args.best:
+                cmd = 'tab.py agg --mode min genNumExamples'.format(**locals())
+            else:
+                cmd = 'tab.py agg genNumExamples'.format(**locals())
+            cmd_ = 'tab.py sort genNumExamples'.format(**locals())
+            (pb.local['cat'][raw_path] | pb.local['python2.7'][cmd.split()] | pb.local['python2.7'][cmd_.split()] > agg_path)()
 
 if __name__ == "__main__":
     import argparse
