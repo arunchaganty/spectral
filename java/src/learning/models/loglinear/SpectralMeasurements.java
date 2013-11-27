@@ -4,7 +4,6 @@ import java.util.*;
 
 import fig.basic.*;
 import fig.exec.*;
-import fig.prob.*;
 
 import learning.data.ComputableMoments;
 import learning.data.HasSampleMoments;
@@ -27,6 +26,7 @@ import static learning.Misc.*;
  */
 public class SpectralMeasurements implements Runnable {
   @OptionSet(name="MeasurementsEM") public MeasurementsEM measurementsEMSolver = new MeasurementsEM();
+  @OptionSet(name="EMSolver") public ExpectationMaximization emSolver = new ExpectationMaximization();
 
   @Option(gloss="Random seed for initialization") public Random initRandom = new Random(1);
   @Option(gloss="How much variation in initial parameters") public double initParamsNoise = 0.01;
@@ -35,6 +35,8 @@ public class SpectralMeasurements implements Runnable {
   @Option(gloss="Use expected measurements (with respect to true distribution)") public boolean expectedMeasurements = true;
   @Option(gloss="Include each (true) measurement with this prob") public double measurementProb = 1;
   @Option(gloss="Include gaussian noise with this variance to true measurements") public double trueMeasurementNoise = 0.0;
+
+  @Option(gloss="Use EM") public boolean useEM = false;
 
   @Option(gloss="Preconditioning") public double preconditioning = 0.0;
   @Option(gloss="Smooth measurements") public double smoothMeasurements = 0.0;
@@ -206,7 +208,6 @@ public class SpectralMeasurements implements Runnable {
       P123.scale(1./P123.elementSum());
 
     }
-
     @Override
     public MatrixOps.Matrixable computeP13() {
       return MatrixOps.matrixable(P13);
@@ -419,23 +420,25 @@ public class SpectralMeasurements implements Runnable {
    * initializes parameters using them, and runs EM.
    */
   public ParamsVec solveBottleneckEM( Counter<Example> data ) {
-    // Extract measurements via moments
-    // Get moments
-    ParamsVec bottleneckMeasurements = solveBottleneck( data );
-    bottleneckMeasurements.write(Execution.getFile("measurements.counts"));
-
     ParamsVec initialParams = new ParamsVec(analysis.trueParams);
     initialParams.initRandom(initRandom, initParamsNoise);
 
-    ParamsVec beta = new ParamsVec(bottleneckMeasurements);
-    beta.clear();
+    if( useEM ) {
+      return emSolver.solveEM(modelA, data, initialParams);
+    } else {
+      // Extract measurements via moments
+      // Get moments
+      ParamsVec bottleneckMeasurements = solveBottleneck( data );
+      bottleneckMeasurements.write(Execution.getFile("measurements.counts"));
 
-    // Use these measurements to solve for parameters
-    ParamsVec theta_ = measurementsEMSolver.solveMeasurements(
-        modelA, modelB, data, bottleneckMeasurements, initialParams, beta).getFirst();
+      ParamsVec beta = new ParamsVec(bottleneckMeasurements);
+      beta.clear();
+
+      // Use these measurements to solve for parameters
+      return measurementsEMSolver.solveMeasurements(
+              modelA, modelB, data, bottleneckMeasurements, initialParams, beta).getFirst();
+    }
     
-    // solve EM
-    return theta_;
   }
 
   public void setModel(Model model, int L) {

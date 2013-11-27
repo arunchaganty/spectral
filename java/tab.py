@@ -39,6 +39,9 @@ def do_plot(args):
     assert len( args.keys ) == 2 
     x_key, y_key = args.keys
 
+    if args.tabs == None:
+        args.tabs = [sys.stdin]
+
     data = [ scabby.read_tab_file(tab) for tab in args.tabs ]
     labels = args.labels if args.labels is not None else range(len(data))
 
@@ -88,7 +91,7 @@ if __name__ == "__main__":
     plot_parser.add_argument( '--labels', nargs='+', help="Labels for each data file" )
     plot_parser.add_argument( '--keys', nargs='+', help="Keys to plot on (X, Y)" )
     plot_parser.add_argument( '--output', help="Where to save the plot" )
-    plot_parser.add_argument( 'tabs', type=file, nargs='+', default=sys.stdin, help="Tab file" )
+    plot_parser.add_argument( 'tabs', type=file, nargs='*', default=sys.stdin, help="Tab file" )
     plot_parser.set_defaults(func=do_plot)
 
     ARGS = parser.parse_args()

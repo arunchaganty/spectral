@@ -8,8 +8,10 @@ import fig.exec.*;
 import learning.linalg.MatrixFactory;
 import learning.linalg.MatrixOps;
 import learning.utils.Counter;
+import learning.utils.UtilsJ;
 
 import static fig.basic.LogInfo.*;
+import static learning.utils.UtilsJ.doGradientCheck;
 
 import java.util.List;
 
@@ -36,29 +38,6 @@ public class MeasurementsEM implements Runnable {
   Maximizer newMaximizer() {
     if (useLBFGS) return new LBFGSMaximizer(backtrack, lbfgs);
     return new GradientMaximizer(backtrack);
-  }
-
-  void doGradientCheck(Maximizer.FunctionState state) {
-    double epsilon = 1e-4;
-    // Save point
-    double[] point = state.point();
-    double[] gradient = state.gradient();
-    double[] currentGradient = gradient.clone();
-    double[] currentPoint = point.clone();
-
-
-    // Set point to be +/- gradient
-    for( int i = 0; i < currentPoint.length; i++ ) {
-      point[i] = currentPoint[i] + epsilon;
-      double valuePlus = state.value();
-      point[i] = currentPoint[i] - epsilon;
-      double valueMinus = state.value();
-      point[i] = currentPoint[i];
-
-      double expectedValue = (valuePlus - valueMinus)/(2*epsilon);
-      double actualValue = currentGradient[i];
-      assert MatrixOps.equal(expectedValue, actualValue, 1e-4);
-    }
   }
 
   /**
@@ -94,8 +73,11 @@ public class MeasurementsEM implements Runnable {
       // Compute the offset to the value
       // $\sum_i A(\theta; X_i) + h_\theta(\theta)
       objectiveOffset = 0;
-      // TODO: Should I include the value of A here?
       objectiveOffset += 0.5 * thetaRegularization * theta.dot(theta);
+
+      Hypergraph<Example> Hp = modelA.createHypergraph(theta.weights, null, 0.);
+      Hp.computePosteriors(false);
+      objectiveOffset += Hp.getLogZ();
     }
 
     @Override
@@ -112,7 +94,7 @@ public class MeasurementsEM implements Runnable {
      * The only things that change are B and h^*(\beta).
      */
     public double value() {
-      if( objectiveValid ) return (objective + objectiveOffset);
+      if( objectiveValid ) return objective;
       objective = 0.;
 
       // Add a linear term for (\tau, \beta)
@@ -130,7 +112,8 @@ public class MeasurementsEM implements Runnable {
       // Finally, subtract regularizer h^*(\beta) = 0.5 \|\beta\|^2
       objective -= 0.5 * betaRegularization * beta.dot(beta);
 
-      return (objective + objectiveOffset);
+      return objective;
+//      return (objective + objectiveOffset);
     }
 
     @Override
@@ -204,12 +187,10 @@ public class MeasurementsEM implements Runnable {
       for( Example X_i : X ) {
         Hypergraph<Example> Hq = modelB.createHypergraph(X_i, params.weights, phi_sigma.weights, X.getCount(X_i)/X.sum());
         Hq.computePosteriors(false);
+//        Hq.computeELogZEntropy(false);
         Hq.fetchPosteriors(false);
-        objectiveOffset -=  X.getCount(X_i) * Hq.getLogZ() / X.sum() ;
+//        objectiveOffset -=  X.getCount(X_i) * Hq.getEntropy();
       }
-      objectiveOffset += theta.dot( phi_sigma );
-      objectiveOffset += beta.dot( phi_sigma );
-
       // h_\sigma( \tau - \E[\sigma(x,y) );
       ParamsVec tau_hat = new ParamsVec(tau);
       ParamsVec.project( phi_sigma, tau_hat );
@@ -230,7 +211,7 @@ public class MeasurementsEM implements Runnable {
      * The only things that change are A, B and h(\theta).
      */
     public double value() {
-      if( objectiveValid ) return -(objective + objectiveOffset);
+      if( objectiveValid ) return objective;
 
       objective = 0.;
 
@@ -242,7 +223,10 @@ public class MeasurementsEM implements Runnable {
       // Finally, add regularizer h(\theta) = 0.5 \|\theta\|^2
       objective += 0.5 * thetaRegularization * theta.dot(theta);
 
-      return -(objective + objectiveOffset);
+//      objective = -(objective + objectiveOffset);
+      objective = -objective;
+
+      return objective;
     }
 
     @Override
@@ -250,7 +234,6 @@ public class MeasurementsEM implements Runnable {
       if( gradientValid ) return gradient.weights;
 
       gradient.clear();
-
       Hp.computePosteriors(false);
       Hp.fetchPosteriors(false);
 
@@ -280,12 +263,6 @@ public class MeasurementsEM implements Runnable {
     double oldObjective = Double.NEGATIVE_INFINITY;
 
     for (iter = 0; iter < numIters && !done; iter++) {
-      if( state instanceof MeasurementsEObjective ) {
-        ((MeasurementsEObjective)state).updateOffset();
-      }
-      else if( state instanceof MeasurementsMObjective ) {
-        ((MeasurementsMObjective)state).updateOffset();
-      }
       state.invalidate();
 
       // Logging stuff
@@ -353,9 +330,9 @@ public class MeasurementsEM implements Runnable {
     MeasurementsMObjective mObjective = new MeasurementsMObjective(modelA, modelB, data, measurements, theta, beta);
     // Initialize
     eObjective.updateOffset(); mObjective.updateOffset();
-
     boolean done = false;
     PrintWriter out = IOUtils.openOutHard(Execution.getFile("events"));
+    ParamsVec oldTheta = new ParamsVec(theta);
     for( int i = 0; i < iters && !done; i++ ) {
 
       assert eObjective.theta == mObjective.theta;
@@ -371,17 +348,15 @@ public class MeasurementsEM implements Runnable {
 
       // Optimize each one-by-one
       boolean done1 = optimize( eMaximizer, eObjective, "E-" + i, eIters );
-      eObjective.updateOffset();
       mObjective.updateOffset();
-      eObjective.invalidate();
       mObjective.invalidate();
       LogInfo.logs( "==== midway: eObjective = %f, mObjective = %f", eObjective.value(), mObjective.value() );
       boolean done2 = optimize( mMaximizer, mObjective, "M-" + i, mIters );
       eObjective.updateOffset();
-      mObjective.updateOffset();
       eObjective.invalidate();
-      mObjective.invalidate();
       LogInfo.logs("==== midway: eObjective = %f, mObjective = %f", eObjective.value(), mObjective.value());
+
+      System.arraycopy(theta.weights, 0, oldTheta.weights, 0, theta.weights.length);
 
       done = done1 && done2;
     }
