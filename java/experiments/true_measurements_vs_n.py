@@ -24,8 +24,9 @@ def get_settings(args):
         for measured_fraction in MEASUREMENT_PROB_VALUES:
             for n in N_VALUES:
                 for measurement_noise in NOISE_VALUES:
-                    for initialization_seed in xrange( args.repeatIters ):
-                        yield dict(locals())
+                    for model_seed in xrange( args.instantiations ):
+                        for initialization_seed in xrange( args.initializations ):
+                            yield dict(locals())
 
 def do_run(args):
     #random.seed(args.seed)
@@ -44,6 +45,7 @@ def do_run(args):
  -K {k} -D {d} -L 3\
  -initRandom {initialization_seed}\
  -initParamsNoise 1.0\
+ -trueParamsRandom {model_seed}\
  -mode TrueMeasurements\
  -measuredFraction {measured_fraction}\
  -trueMeasurementNoise {measurement_noise}\
@@ -90,7 +92,8 @@ if __name__ == "__main__":
     run_parser = subparsers.add_parser('run', help='Run the experiment' )
     run_parser.add_argument( '--parallel', action='store_true', help="Spawn parallel jobs?" )
     run_parser.add_argument( '--njobs', type=int, default=10, help="How many parallel jobs?" )
-    run_parser.add_argument( '--repeatIters', type=int, default=5, help="Number of different initial seeds to run with" )
+    run_parser.add_argument( '--initializations', type=int, default=3, help="Number of different initial seeds to run with" )
+    run_parser.add_argument( '--instantiations', type=int, default=3, help="Number of different initial seeds to run with" )
     run_parser.add_argument( '--model', type=str, default="mixture", choices=["mixture","hmm"], help="Model to use" )
     #run_parser.add_argument( 'extra-args', type=str, nargs='+', help="Additional arguments for the actual program" )
     run_parser.set_defaults(func=do_run)
