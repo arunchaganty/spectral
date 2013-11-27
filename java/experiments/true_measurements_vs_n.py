@@ -62,23 +62,21 @@ def do_process(args):
     import plumbum as pb
 
     for k, d in KD_VALUES:
-        for measurement_prob in MEASUREMENT_PROB_VALUES:
-            for measurement_noise in NOISE_VALUES:
-                print k, d, measurement_prob, measurement_noise
-                cmd = 'tab.py extract \
---execdir {args.execdir} \
---filters K={k} D={d} modelType={args.model} measurementProb={measurement_prob} trueMeasurementNoise={measurement_noise} \
---keys genNumExamples measurementProb trueMeasurementNoise paramsError countsError fit-perp'.format(**locals())
-                raw_path = os.path.join( args.exptdir, '{args.model}-{k}-{d}-{measurement_prob}-{measurement_noise}.raw.tab'.format(**locals()) )
-                (pb.local['python2.7'][cmd.split()] > raw_path)()
+        print k, d
+        cmd = 'tab.py extract\
+ --execdir {args.execdir}\
+ --filters K={k} D={d} modelType={args.model}\
+ --keys genNumExamples measurementProb trueMeasurementNoise paramsError countsError fit-perp'.format(**locals())
+        raw_path = os.path.join( args.exptdir, '{args.model}-{k}-{d}.raw.tab'.format(**locals()) )
+        (pb.local['python2.7'][cmd.split()] > raw_path)()
 
-                agg_path = os.path.join( args.exptdir, '{args.model}-{k}-{d}-{measurement_prob}-{measurement_noise}.agg.tab'.format(**locals()) )
-                if args.best:
-                    cmd = 'tab.py agg --mode min genNumExamples'.format(**locals())
-                else:
-                    cmd = 'tab.py agg genNumExamples'.format(**locals())
-                cmd_ = 'tab.py sort genNumExamples'.format(**locals())
-                (pb.local['cat'][raw_path] | pb.local['python2.7'][cmd.split()] | pb.local['python2.7'][cmd_.split()] > agg_path)()
+        agg_path = os.path.join( args.exptdir, '{args.model}-{k}-{d}.agg.tab'.format(**locals()) )
+        if args.best:
+            cmd = 'tab.py agg --mode min genNumExamples measurementProb trueMeasurementNoise'.format(**locals())
+        else:
+            cmd = 'tab.py agg genNumExamples measurementProb trueMeasurementNoise'.format(**locals())
+        cmd_ = 'tab.py sort genNumExamples'.format(**locals())
+        (pb.local['cat'][raw_path] | pb.local['python2.7'][cmd.split()] | pb.local['python2.7'][cmd_.split()] > agg_path)()
 
 
 if __name__ == "__main__":
