@@ -9,6 +9,8 @@ import learning.utils.Counter;
 import java.io.PrintWriter;
 import java.util.*;
 
+import static learning.utils.UtilsJ.doGradientCheck;
+
 /**
  * Expectation Maximization for a model
  */
@@ -26,29 +28,6 @@ public class ExpectationMaximization implements Runnable {
   Maximizer newMaximizer() {
     if (useLBFGS) return new LBFGSMaximizer(backtrack, lbfgs);
     return new GradientMaximizer(backtrack);
-  }
-
-  void doGradientCheck(Maximizer.FunctionState state) {
-    double epsilon = 1e-4;
-    // Save point
-    double[] point = state.point();
-    double[] gradient = state.gradient();
-    double[] currentGradient = gradient.clone();
-    double[] currentPoint = point.clone();
-
-
-    // Set point to be +/- gradient
-    for( int i = 0; i < currentPoint.length; i++ ) {
-      point[i] = currentPoint[i] + epsilon;
-      double valuePlus = state.value();
-      point[i] = currentPoint[i] - epsilon;
-      double valueMinus = state.value();
-      point[i] = currentPoint[i];
-
-      double expectedValue = (valuePlus - valueMinus)/(2*epsilon);
-      double actualValue = currentGradient[i];
-      assert MatrixOps.equal(expectedValue, actualValue, 1e-4);
-    }
   }
 
   /**
