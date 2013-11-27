@@ -399,7 +399,7 @@ public class Main implements Runnable {
       // Currently, using true measurements
       for (int j = 0; j < model.numFeatures(); j++) {
         // TODO: Revert to the original.
-        //measuredFeatures[j] = random.nextDouble() < opts.measurementProb;
+        //measuredFeatures[j] = random.nextDouble() < opts.measuredFraction;
         if( j == 1 )
           measuredFeatures[j] = true;
         if (measuredFeatures[j])
