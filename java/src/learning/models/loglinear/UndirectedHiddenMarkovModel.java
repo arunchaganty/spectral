@@ -18,17 +18,18 @@ public class UndirectedHiddenMarkovModel implements ExponentialFamilyModel<Examp
   public int L;
   Indexer<Feature> indexer;
 
-  private static Feature o(int h, int x) {
+  public static Feature o(int h, int x) {
     return new UnaryFeature(h, "x="+x);
   }
-  private static Feature t(int h, int h_) {
-    return new BinaryFeature(h, h_);
+  public static Feature t(int h_, int h) {
+    return new BinaryFeature(h_, h);
   }
 
   public UndirectedHiddenMarkovModel(int K, int D, int L) {
     this.K = K;
     this.D = D;
     this.L = L;
+    indexer = new Indexer<>();
 
     for(int h = 0; h < K; h++) {
       for(int x = 0; x < D; x++) {
@@ -79,12 +80,16 @@ public class UndirectedHiddenMarkovModel implements ExponentialFamilyModel<Examp
     double value = 0.;
     if( ex != null ) {
       value = params.get(o(y,ex.x[t]));
-      value *=  (t > 0) ? params.get(t(y_, y)) : 1.;
+      value +=  (t > 0) ? params.get(t(y_, y)) : 0.;
+      return Math.exp(value);
     } else {
-      for(int x = 0; x < D; x++) value += params.get(o(y,x));
-      value *= (t > 0) ? params.get(t(y_, y)) : 1.;
+      for(int x = 0; x < D; x++) {
+        double value_ = params.get(o(y, x));
+        value_ += (t > 0) ? params.get(t(y_, y)) : 0.;
+        value += Math.exp(value_);
+      }
+      return value;
     }
-    return value;
   }
 
   /**
@@ -138,10 +143,10 @@ public class UndirectedHiddenMarkovModel implements ExponentialFamilyModel<Examp
     }
 
     // Backward_{T-1}[k] = \sum y_{t} Backward_[t][y_t] G(y_{t-1},y_t)
-    for(int t = T-2; t <= 0; t--) {
+    for(int t = T-2; t >= 0; t--) {
       for(int y_ = 0; y_ < K; y_++) {
           for(int y = 0; y < K; y++){
-          backwards[t][y_] += backwards[t+1][y] * G(params, t, y_, y, ex);
+          backwards[t][y_] += backwards[t+1][y] * G(params, t+1, y_, y, ex);
         }
       }
       // Normalize
@@ -222,13 +227,13 @@ public class UndirectedHiddenMarkovModel implements ExponentialFamilyModel<Examp
           if( ex != null ) {
             marginals[t][y][x] *= (x == ex.x[t]) ? 1. : 0.; // p(x|h)
           } else {
-            marginals[t][y][x] *= params.get(o(y, x)); // p(x|h)
+            marginals[t][y][x] *= Math.exp( params.get(o(y, x)) ); // p(x|h)
           }
         }
-        // Normalize; we want a distribution of p(y,x).
-        double z = MatrixOps.sum(marginals[t]);
-        MatrixOps.scale(marginals[t], 1./z);
       }
+      // Normalize; we want a distribution of p(x,y).
+      double z = MatrixOps.sum(marginals[t]);
+      MatrixOps.scale(marginals[t], 1./z);
     }
     return marginals;
   }
@@ -264,18 +269,16 @@ public class UndirectedHiddenMarkovModel implements ExponentialFamilyModel<Examp
       // Add the emission marginal
       for( int y = 0; y < K; y++ ) {
         if( ex != null ) {
-          marginals.set(o(y,ex.x[t]), emissionMarginals[t][y][ex.x[t]]);
+          marginals.set(o(y,ex.x[t]), marginals.get(o(y,ex.x[t])) + emissionMarginals[t][y][ex.x[t]]);
         } else {
           for( int x = 0; x < D; x++ ) {
-            marginals.set(o(y,x), emissionMarginals[t][y][x]);
+            marginals.set(o(y,x), marginals.get(o(y,x)) + emissionMarginals[t][y][x]);
           }
         }
         // Add the transition marginal
         if( t > 0 ) {
           for( int y_ = 0; y_ < K; y_++ ) {
-            if( ex != null ) {
-              marginals.set(t(y_,y), edgeMarginals[t][y_][y]);
-            }
+            marginals.set(t(y_,y), marginals.get(t(y_,y)) + edgeMarginals[t][y_][y]);
           }
         }
       }
@@ -325,7 +328,7 @@ public class UndirectedHiddenMarkovModel implements ExponentialFamilyModel<Examp
     double[][] emissions = new double[K][D];
     for( int y = 0; y < K; y++ ) {
       for( int x = 0; x < D; x++ ) {
-        emissions[y][x] = parameters.get(o(y,x));
+        emissions[y][x] = Math.exp( parameters.get(o(y,x)) );
       }
       MatrixOps.normalize(emissions[y]);
     }
