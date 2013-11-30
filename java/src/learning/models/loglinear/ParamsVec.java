@@ -231,4 +231,9 @@ public class ParamsVec {
       builder.append(featureIndexer.getObject(f) + "\t" + weights[f] + " ");
     return builder.toString();
   }
+
+  public void scale(double scale) {
+    for(int i = 0; i < weights.length; i++)
+      weights[i] *= scale;
+  }
 }

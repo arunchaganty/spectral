@@ -7,6 +7,7 @@ import fig.basic.*;
 import fig.exec.*;
 import learning.linalg.MatrixFactory;
 import learning.linalg.MatrixOps;
+import learning.models.ExponentialFamilyModel;
 import learning.utils.Counter;
 import learning.utils.UtilsJ;
 
@@ -45,7 +46,8 @@ public class MeasurementsEM implements Runnable {
    *    - dL = tau - \sum_i \E_\beta(\sigma(Y_i, X_i)) - 1/betaRegularization \beta
    */
   class MeasurementsEObjective implements Maximizer.FunctionState {
-    Model modelA, modelB;
+    ExponentialFamilyModel<Example> modelA;
+    ExponentialFamilyModel<Example> modelB;
     Counter<Example> X;
     ParamsVec theta, beta, tau;
     ParamsVec gradient;
@@ -54,7 +56,7 @@ public class MeasurementsEM implements Runnable {
     boolean objectiveValid, gradientValid;
     ParamsVec params, paramsGradient;
 
-    public MeasurementsEObjective(Model modelA, Model modelB, Counter<Example> X, ParamsVec tau, ParamsVec theta, ParamsVec beta) {
+    public MeasurementsEObjective(ExponentialFamilyModel<Example> modelA, ExponentialFamilyModel<Example> modelB, Counter<Example> X, ParamsVec tau, ParamsVec theta, ParamsVec beta) {
       this.modelA = modelA;
       this.modelB = modelB;
       this.X = X;
@@ -74,9 +76,7 @@ public class MeasurementsEM implements Runnable {
       objectiveOffset = 0;
       objectiveOffset += 0.5 * thetaRegularization * theta.dot(theta);
 
-      Hypergraph<Example> Hp = modelA.createHypergraph(theta.weights, null, 0.);
-      Hp.computePosteriors(false);
-      objectiveOffset += Hp.getLogZ();
+      objectiveOffset += modelA.getLogLikelihood(theta);
     }
 
     @Override
@@ -102,12 +102,7 @@ public class MeasurementsEM implements Runnable {
       // Go through each example, and add - B(\theta, X_i)
       params.clear();
       params = ParamsVec.plus(theta, beta, params);
-      for( Example X_i : X ) {
-         Hypergraph<Example> Hq = modelB.createHypergraph(X_i, params.weights, null, 0);
-         Hq.computePosteriors(false);
-         double logZ = Hq.getLogZ();
-         objective -= X.getCount(X_i) * logZ / X.sum();
-      }
+      objective -= modelB.getLogLikelihood(params, X);
       // Finally, subtract regularizer h^*(\beta) = 0.5 \|\beta\|^2
       objective -= 0.5 * betaRegularization * beta.dot(beta);
 
@@ -126,13 +121,8 @@ public class MeasurementsEM implements Runnable {
       // Compute expected counts - \E_q(\sigma)
       params.clear();
       params = ParamsVec.plus(theta, beta, params);
-      paramsGradient.clear();
-      for( Example X_i : X ) {
-         Hypergraph<Example> Hq = modelB.createHypergraph(X_i, params.weights, paramsGradient.weights, - X.getCount(X_i)/ X.sum());
-         Hq.computePosteriors(false);
-         Hq.fetchPosteriors(false);
-      }
-      gradient = ParamsVec.plus(gradient, paramsGradient, gradient);
+      paramsGradient = modelB.getMarginals(params, X);
+      gradient = ParamsVec.minus(gradient, paramsGradient, gradient);
 
       // subtract \nabla h^*(\beta) = \beta
       gradient.incr(-betaRegularization, beta);
@@ -147,7 +137,8 @@ public class MeasurementsEM implements Runnable {
    *    - dL = \sum_i \E_\theta(\phi(Y_i, X_i)) + thetaRegularization \theta
    */
   class MeasurementsMObjective implements Maximizer.FunctionState {
-    Model modelA, modelB;
+    ExponentialFamilyModel<Example> modelA;
+    ExponentialFamilyModel<Example> modelB;
     Counter<Example> X;
     ParamsVec theta, beta, tau;
     ParamsVec params, phi_sigma;
@@ -157,7 +148,7 @@ public class MeasurementsEM implements Runnable {
     boolean objectiveValid, gradientValid;
     Hypergraph<Example> Hp;
 
-    public MeasurementsMObjective(Model modelA, Model modelB, Counter<Example> X, ParamsVec tau, ParamsVec theta, ParamsVec beta) {
+    public MeasurementsMObjective(ExponentialFamilyModel<Example> modelA, ExponentialFamilyModel<Example> modelB, Counter<Example> X, ParamsVec tau, ParamsVec theta, ParamsVec beta) {
       this.modelA = modelA;
       this.modelB = modelB;
       this.X = X;
@@ -167,8 +158,6 @@ public class MeasurementsEM implements Runnable {
       this.gradient = new ParamsVec(theta);
       this.params = modelB.newParamsVec();
       this.phi_sigma = modelB.newParamsVec();
-
-      Hp = modelA.createHypergraph(theta.weights, gradient.weights, 1.);
 
       updateOffset();
     }
@@ -183,13 +172,8 @@ public class MeasurementsEM implements Runnable {
       // -H(q) = \theta_0^T \E_q[\phi(x,y)] + \beta_0^T \E_q[\phi(x,y)] -
       // \sum_i B
       phi_sigma.clear();
-      for( Example X_i : X ) {
-        Hypergraph<Example> Hq = modelB.createHypergraph(X_i, params.weights, phi_sigma.weights, X.getCount(X_i)/X.sum());
-        Hq.computePosteriors(false);
-//        Hq.computeELogZEntropy(false);
-        Hq.fetchPosteriors(false);
-//        objectiveOffset -=  X.getCount(X_i) * Hq.getEntropy();
-      }
+      phi_sigma = modelB.getMarginals(params, X);
+
       // h_\sigma( \tau - \E[\sigma(x,y) );
       ParamsVec tau_hat = new ParamsVec(tau);
       ParamsVec.project( phi_sigma, tau_hat );
@@ -300,6 +284,7 @@ public class MeasurementsEM implements Runnable {
    * Find parameters that optimize the measurements objective:
    * $L = \langle\tau, \beta\rangle + \sum_i A(\theta; X_i) - \sum_i B(\theta, \beta; X_i)
    *          + h_\theta(\theta) - h^*_\beta(\beta)$.
+   *
    * @param modelA - exponential family model that has the partition function $A$ above
    * @param modelB - exponential family model that has the partition function $B$ above
    * @param data - The $X_i$'s
@@ -309,8 +294,8 @@ public class MeasurementsEM implements Runnable {
    * @return - (theta, beta) that optimize.
    */
   Pair<ParamsVec,ParamsVec> solveMeasurements(
-          Model modelA,
-          Model modelB,
+          ExponentialFamilyModel<Example> modelA,
+          ExponentialFamilyModel<Example> modelB,
           Counter<Example> data,
           ParamsVec measurements,
           ParamsVec theta,
@@ -380,16 +365,8 @@ public class MeasurementsEM implements Runnable {
 
   public static Options opts = new Options();
 
-  public double computeLogZ(Model model, int L, double[] params, Counter<Example> data) {
-    double lhood = 0.0;
-    int cnt = 0;
-    for( Example ex: data) {
-      Hypergraph<Example> Hp = model.createHypergraph(L, ex, params, null, 0);
-      Hp.computePosteriors(false);
-      cnt += data.getCount(ex);
-      lhood += data.getCount(ex) * (Hp.getLogZ() - lhood) / cnt;
-    }
-    return lhood;
+  public double computeLogZ(ExponentialFamilyModel<Example> model, ParamsVec params, Counter<Example> data) {
+    return model.getLogLikelihood(params, data);
   }
 
   Pair<Model, Model> createModels() {
@@ -450,8 +427,8 @@ public class MeasurementsEM implements Runnable {
     theta.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
     beta.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
 
-    LogInfo.logs("likelihood(true): " + computeLogZ(modelA, opts.L, trueParams.weights, data) );
-    LogInfo.logs("likelihood(est.): " + computeLogZ(modelA, opts.L, theta.weights, data) );
+    LogInfo.logs("likelihood(true): " + computeLogZ(modelA, trueParams, data) );
+    LogInfo.logs("likelihood(est.): " + computeLogZ(modelA, theta, data) );
 
     ParamsVec measurements = modelA.newParamsVec();
     theta.write(Execution.getFile("fit0.params"));
@@ -486,8 +463,8 @@ public class MeasurementsEM implements Runnable {
     error = measurements.computeDiff(trueMeasurements, perm);
     Execution.putOutput("counts-error", error);
     LogInfo.logs("counts error: " + error + " " + Fmt.D(perm));
-    LogInfo.logs("likelihood(true): " + computeLogZ(modelA, opts.L, trueParams.weights, data) );
-    LogInfo.logs("likelihood(est.): " + computeLogZ(modelA, opts.L, theta.weights, data) );
+    LogInfo.logs("likelihood(true): " + computeLogZ(modelA, trueParams, data) );
+    LogInfo.logs("likelihood(est.): " + computeLogZ(modelA, theta, data) );
 
     // Compute the likelihoods
     theta.write(Execution.getFile("fit.params"));

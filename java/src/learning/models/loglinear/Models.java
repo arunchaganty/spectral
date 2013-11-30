@@ -17,6 +17,8 @@ public class Models {
       this.K = K;
       this.D = D;
       this.L = L;
+
+      createHypergraph(null,null,0);
     }
     public MixtureModel() {
     }
@@ -74,6 +76,7 @@ public class Models {
       this.K = K;
       this.D = D;
       this.L = L;
+      createHypergraph(null,null,0);
     }
     HiddenMarkovModel(){}
 

@@ -9,15 +9,21 @@ import fig.basic.*;
 import fig.exec.*;
 import fig.prob.*;
 import fig.record.*;
+import learning.models.ExponentialFamilyModel;
+import learning.utils.Counter;
+import scala.tools.nsc.transform.patmat.Debugging;
+
 import static fig.basic.LogInfo.*;
 
-public abstract class Model {
-  public int K; // Number of latent states
-  public int D; // Number of emissions
+public abstract class Model implements ExponentialFamilyModel<Example> {
+  public int K;
+  public int getK() { return K; }
+  public int D;
+  public int getD() { return D; }
   public int L; // Number of 'views' or length.
   public Indexer<Feature> featureIndexer = new Indexer<Feature>();
   public int numFeatures() { return featureIndexer.size(); }
-  ParamsVec newParamsVec() { return new ParamsVec(K, featureIndexer); }
+  public ParamsVec newParamsVec() { return new ParamsVec(K, featureIndexer); }
 
   abstract Example newExample();
   abstract Example newExample(int[] x);
@@ -92,5 +98,68 @@ public abstract class Model {
   Hypergraph.LogHyperedgeInfo<Example> edgeInfo(double[] params, double[] counts, int f, double increment, final int j, final int v) {
     return new UpdatingMultinomialEdgeInfo(params, counts, f, increment, j, v, false);
   }
+
+  public double getLogLikelihood(ParamsVec parameters) {
+    Hypergraph<Example> Hp = createHypergraph(parameters.weights, null, 0.);
+    Hp.computePosteriors(false);
+    return Hp.getLogZ();
+  }
+  public double getLogLikelihood(ParamsVec parameters, Example example) {
+    Hypergraph<Example> Hp = createHypergraph(example, parameters.weights, null, 0.);
+    Hp.computePosteriors(false);
+    return Hp.getLogZ();
+  }
+  public double getLogLikelihood(ParamsVec parameters, Counter<Example> examples) {
+    double lhood = 0.;
+    for(Example example: examples) {
+      Hypergraph<Example> Hp = createHypergraph(example, parameters.weights, null, 0.);
+      Hp.computePosteriors(false);
+      lhood += examples.getCount(example)/examples.sum() * Hp.getLogZ();
+    }
+    return lhood;
+  }
+  public ParamsVec getMarginals(ParamsVec parameters) {
+    ParamsVec counts = newParamsVec();
+    Hypergraph<Example> Hp = createHypergraph(parameters.weights, counts.weights, 1.);
+    Hp.computePosteriors(false);
+    Hp.fetchPosteriors(false);
+    return counts;
+  }
+  public ParamsVec getMarginals(ParamsVec parameters, Example example) {
+    ParamsVec counts = newParamsVec();
+    Hypergraph<Example> Hp = createHypergraph(example, parameters.weights, counts.weights, 1.);
+    Hp.computePosteriors(false);
+    Hp.fetchPosteriors(false);
+    return counts;
+  }
+  public ParamsVec getMarginals(ParamsVec parameters, Counter<Example> examples) {
+    ParamsVec counts = newParamsVec();
+    for(Example example: examples) {
+      Hypergraph<Example> Hp = createHypergraph(example, parameters.weights, counts.weights, examples.getCount(example)/examples.sum());
+      Hp.computePosteriors(false);
+      Hp.fetchPosteriors(false);
+    }
+    return counts;
+  }
+  public Counter<Example> drawSamples(ParamsVec parameters, Random rnd, int n) {
+    ParamsVec counts = newParamsVec();
+    Hypergraph<Example> Hp = createHypergraph(parameters.weights, counts.weights, 1);
+    // Necessary preprocessing before you can generate hyperpaths
+    Hp.computePosteriors(false);
+    Hp.fetchPosteriors(false);
+
+    Counter<Example> examples = new Counter<>();
+    for (int i = 0; i < n; i++) {
+      Example ex = newExample();
+      Hp.fetchSampleHyperpath(rnd, ex);
+      examples.add(ex);
+    }
+    return examples;
+  }
+  public Example drawSample(ParamsVec parameters, Random rnd) {
+    return drawSamples(parameters, rnd, 1).iterator().next();
+  }
+
+
 }
 
