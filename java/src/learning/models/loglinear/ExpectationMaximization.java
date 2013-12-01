@@ -125,6 +125,8 @@ public class ExpectationMaximization implements Runnable {
 
     for (iter = 0; iter < numIters && !done; iter++) {
       state.invalidate();
+      // Do a gradient check only at the very end.
+      doGradientCheck(state);
 
       // Logging stuff
       List<String> items = new ArrayList<>();
@@ -280,7 +282,7 @@ public class ExpectationMaximization implements Runnable {
     // Measurements
     measurements.clear();
     for (Example ex : data) {
-      Hypergraph<Example> Hq = modelA.createHypergraph(ex, trueParams.weights, measurements.weights, data.getCount(ex)/data.sum());
+      Hypergraph<Example> Hq = modelA.createHypergraph(ex, trueParams.weights, measurements.weights, data.getFraction(ex));
       Hq.computePosteriors(false);
       Hq.fetchPosteriors(false);
     }

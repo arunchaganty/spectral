@@ -11,7 +11,6 @@ import fig.prob.*;
 import fig.record.*;
 import learning.models.ExponentialFamilyModel;
 import learning.utils.Counter;
-import scala.tools.nsc.transform.patmat.Debugging;
 
 import static fig.basic.LogInfo.*;
 
@@ -114,7 +113,7 @@ public abstract class Model implements ExponentialFamilyModel<Example> {
     for(Example example: examples) {
       Hypergraph<Example> Hp = createHypergraph(example, parameters.weights, null, 0.);
       Hp.computePosteriors(false);
-      lhood += examples.getCount(example)/examples.sum() * Hp.getLogZ();
+      lhood += examples.getFraction(example) * Hp.getLogZ();
     }
     return lhood;
   }
@@ -135,7 +134,7 @@ public abstract class Model implements ExponentialFamilyModel<Example> {
   public ParamsVec getMarginals(ParamsVec parameters, Counter<Example> examples) {
     ParamsVec counts = newParamsVec();
     for(Example example: examples) {
-      Hypergraph<Example> Hp = createHypergraph(example, parameters.weights, counts.weights, examples.getCount(example)/examples.sum());
+      Hypergraph<Example> Hp = createHypergraph(example, parameters.weights, counts.weights, examples.getFraction(example));
       Hp.computePosteriors(false);
       Hp.fetchPosteriors(false);
     }

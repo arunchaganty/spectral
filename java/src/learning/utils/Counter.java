@@ -71,6 +71,10 @@ public class Counter<V> implements Collection<V> {
       return 0.;
   }
 
+  public double getFraction(V item) {
+    return getCount(item)/sum();
+  }
+
   public double sum() {
     double total = 0.;
     for( Double count : map.values() ) {

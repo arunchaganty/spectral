@@ -21,8 +21,10 @@ public interface ExponentialFamilyModel<T> {
   public ParamsVec getMarginals(ParamsVec parameters);
   public ParamsVec getMarginals(ParamsVec parameters, T example);
   public ParamsVec getMarginals(ParamsVec parameters, Counter<T> examples);
+  public ParamsVec getSampleMarginals(Counter<T> examples);
 
   public T drawSample(ParamsVec parameters, Random genRandom);
   public Counter<T> drawSamples(ParamsVec parameters, Random genRandom, int n);
+
 }
 
