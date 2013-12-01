@@ -174,8 +174,7 @@ public class UndirectedHiddenMarkovModel implements ExponentialFamilyModel<Examp
 
     // T_0
     {
-      int t = 0;
-      int y_ = 0;
+      int t = 0; int y_ = 0;
       for( int y = 0; y < K; y++ ) {
         marginals[0][y_][y] = G(params, t, y_, y, ex) * backwards[0][y];
       }
@@ -222,18 +221,22 @@ public class UndirectedHiddenMarkovModel implements ExponentialFamilyModel<Examp
 
     for( int t = 0; t < T; t++) {
       for( int y = 0; y < K; y++) {
+        // Compute p(x|y)
         for( int x = 0; x < D; x++) {
-          marginals[t][y][x] = nodes[t][y]; // p(h)
           if( ex != null ) {
-            marginals[t][y][x] *= (x == ex.x[t]) ? 1. : 0.; // p(x|h)
+            marginals[t][y][x] = (x == ex.x[t]) ? 1. : 0.; // p(x|h)
           } else {
-            marginals[t][y][x] *= Math.exp( params.get(o(y, x)) ); // p(x|h)
+            marginals[t][y][x] = Math.exp( params.get(o(y, x)) ); // p(x|h)
           }
         }
+        double z = MatrixOps.sum(marginals[t][y]);
+        MatrixOps.scale(marginals[t][y], 1./z);
+
+        // We want a distribution of p(x,y).
+        for( int x = 0; x < D; x++) {
+          marginals[t][y][x] *= nodes[t][y]; // p(h)
+        }
       }
-      // Normalize; we want a distribution of p(x,y).
-      double z = MatrixOps.sum(marginals[t]);
-      MatrixOps.scale(marginals[t], 1./z);
     }
     return marginals;
   }
@@ -252,7 +255,7 @@ public class UndirectedHiddenMarkovModel implements ExponentialFamilyModel<Examp
   public double getLogLikelihood(ParamsVec parameters, Counter<Example> examples) {
     double lhood = 0.;
     for(Example ex : examples) {
-      lhood += examples.getCount(ex) / examples.sum() * getLogLikelihood(parameters, ex);
+      lhood += examples.getFraction(ex) * getLogLikelihood(parameters, ex);
     }
     return lhood;
   }
@@ -269,17 +272,21 @@ public class UndirectedHiddenMarkovModel implements ExponentialFamilyModel<Examp
       // Add the emission marginal
       for( int y = 0; y < K; y++ ) {
         if( ex != null ) {
-          marginals.set(o(y,ex.x[t]), marginals.get(o(y,ex.x[t])) + emissionMarginals[t][y][ex.x[t]]);
+          int x = ex.x[t];
+          marginals.set(o(y,x), marginals.get(o(y,x)) + emissionMarginals[t][y][x]);
         } else {
           for( int x = 0; x < D; x++ ) {
             marginals.set(o(y,x), marginals.get(o(y,x)) + emissionMarginals[t][y][x]);
           }
         }
+      }
+    }
+    for(int t = 1; t < T; t++) {
+      // Add the emission marginal
+      for( int y = 0; y < K; y++ ) {
         // Add the transition marginal
-        if( t > 0 ) {
-          for( int y_ = 0; y_ < K; y_++ ) {
-            marginals.set(t(y_,y), marginals.get(t(y_,y)) + edgeMarginals[t][y_][y]);
-          }
+        for( int y_ = 0; y_ < K; y_++ ) {
+          marginals.set(t(y_,y), marginals.get(t(y_,y)) + edgeMarginals[t][y_][y]);
         }
       }
     }
@@ -297,7 +304,7 @@ public class UndirectedHiddenMarkovModel implements ExponentialFamilyModel<Examp
     ParamsVec marginals = newParamsVec();
     for(Example ex: examples) {
       ParamsVec marginals_ = getMarginals(parameters, ex);
-      marginals.incr( examples.getCount(ex) / examples.sum(), marginals_ );
+      marginals.incr( examples.getFraction(ex), marginals_ );
     }
     return marginals;  //To change body of implemented methods use File | Settings | File Templates.
   }
@@ -320,8 +327,8 @@ public class UndirectedHiddenMarkovModel implements ExponentialFamilyModel<Examp
     // Compute the edge marginals. This will let you draw the hs.
     double[][][] edgeMarginals = computeEdgeMarginals(parameters, null);
     for( int t = 0; t < T; t++ ) {
-      for( int y = 0; y < K; y++ ) {
-        MatrixOps.normalize(edgeMarginals[t][y]);
+      for( int y_= 0; y_ < K; y_++ ) {
+        MatrixOps.normalize(edgeMarginals[t][y_]);
       }
     }
 
@@ -354,7 +361,7 @@ public class UndirectedHiddenMarkovModel implements ExponentialFamilyModel<Examp
       ex.h[t] = RandomFactory.multinomial(genRandom, edgeMarginals[t][y_]);
     }
     // Draw each x_t
-    for(int t = 1; t < T; t++) {
+    for(int t = 0; t < T; t++) {
       int y = ex.h[t];
       ex.x[t] = RandomFactory.multinomial(genRandom, emissions[y]);
     }
@@ -365,6 +372,21 @@ public class UndirectedHiddenMarkovModel implements ExponentialFamilyModel<Examp
   @Override
   public Example drawSample(ParamsVec parameters, Random genRandom) {
     return drawSamples(parameters, genRandom, 1).iterator().next();
+  }
+
+  public ParamsVec getSampleMarginals(Counter<Example> examples) {
+    ParamsVec marginals = newParamsVec();
+    for(Example ex : examples) {
+      for(int t = 0; t < ex.x.length; t++) {
+        int y = ex.h[t]; int x = ex.x[t];
+        marginals.incr(o(y, x), examples.getFraction(ex));
+        if( t > 0 ) {
+          int y_ = ex.h[t-1];
+          marginals.incr(t(y_, y), examples.getFraction(ex));
+        }
+      }
+    }
+    return marginals;
   }
 
 }

@@ -222,28 +222,31 @@ public class UndirectedHiddenMarkovModelTest {
     }
 
     {
+      model.L = 2;
       ParamsVec marginals = model.getMarginals(model1);
-      Assert.assertEquals(marginals.get(o(0, 0)), 0.45, 1e-1 );
-      Assert.assertEquals(marginals.get(o(0, 1)), 0.90, 1e-1 );
-      Assert.assertEquals(marginals.get(o(1, 0)), 0.82, 1e-1 );
-      Assert.assertEquals(marginals.get(o(1, 1)), 0.82, 1e-1 );
+      model.L = 3;
+      Assert.assertEquals(marginals.get(o(0, 0)), 0.291, 1e-1 );
+      Assert.assertEquals(marginals.get(o(0, 1)), 0.581, 1e-1 );
+      Assert.assertEquals(marginals.get(o(1, 0)), 0.564, 1e-1 );
+      Assert.assertEquals(marginals.get(o(1, 1)), 0.564, 1e-1 );
 
-      Assert.assertEquals(marginals.get(t(0, 0)), 0.21, 1e-1);
-      Assert.assertEquals(marginals.get(t(0, 1)), 0.469, 1e-1);
-      Assert.assertEquals(marginals.get(t(1, 0)), 0.568, 1e-1);
-      Assert.assertEquals(marginals.get(t(1, 1)), 0.745, 1e-1);
+      Assert.assertEquals(marginals.get(t(0, 0)), 0.164, 1e-1);
+      Assert.assertEquals(marginals.get(t(0, 1)), 0.218, 1e-1);
+      Assert.assertEquals(marginals.get(t(1, 0)), 0.327, 1e-1);
+      Assert.assertEquals(marginals.get(t(1, 1)), 0.291, 1e-1);
     }
     {
-      ParamsVec marginals = model.getMarginals(model1, ex);
-      Assert.assertEquals(marginals.get(o(0, 0)), 0.94, 1e-1 );
+      Example ex_ = new Example(new int[]{0,0}, new int[]{0,0});
+      ParamsVec marginals = model.getMarginals(model1, ex_);
+      Assert.assertEquals(marginals.get(o(0, 0)), 0.7, 1e-1 );
       Assert.assertEquals(marginals.get(o(0, 1)), 0.0, 1e-1 );
-      Assert.assertEquals(marginals.get(o(1, 0)), 2.05, 1e-1 );
+      Assert.assertEquals(marginals.get(o(1, 0)), 1.3, 1e-1 );
       Assert.assertEquals(marginals.get(o(1, 1)), 0.0, 1e-1 );
 
-      Assert.assertEquals(marginals.get(t(0, 0)), 0.13, 1e-1);
-      Assert.assertEquals(marginals.get(t(0, 1)), 0.407, 1e-1);
-      Assert.assertEquals(marginals.get(t(1, 0)), 0.5, 1e-1);
-      Assert.assertEquals(marginals.get(t(1, 1)), 0.963, 1e-1);
+      Assert.assertEquals(marginals.get(t(0, 0)), 0.1, 1e-1);
+      Assert.assertEquals(marginals.get(t(0, 1)), 0.2, 1e-1);
+      Assert.assertEquals(marginals.get(t(1, 0)), 0.3, 1e-1);
+      Assert.assertEquals(marginals.get(t(1, 1)), 0.4, 1e-1);
     }
   }
 
@@ -254,12 +257,53 @@ public class UndirectedHiddenMarkovModelTest {
       // Equal distribution
       Counter<Example> examples = model.drawSamples(model0, new Random(1), 10000);
       for( Example ex : examples ) {
-        double fraction = examples.getCount(ex) / examples.sum();
+        double fraction = examples.getFraction(ex);
         Assert.assertEquals(1./examples.size(), fraction, 1e-2);
       }
     }
     {
       Counter<Example> examples = model.drawSamples(model1, new Random(1), 1000);
+    }
+  }
+
+  @Test
+  public void testMarginalGradient() {
+    double eps = 1e-4;
+    // Is the gradent of likelihood this?
+    ParamsVec params = new ParamsVec(model1);
+
+    ParamsVec marginal = model.getMarginals(params);
+    for(int i = 0; i < marginal.weights.length; i++) {
+      params.weights[i] += eps;
+      double valuePlus = model.getLogLikelihood(params);
+      params.weights[i] -= 2*eps;
+      double valueMinus = model.getLogLikelihood(params);
+      params.weights[i] += eps;
+
+      double expectedGradient = (valuePlus - valueMinus)/(2*eps);
+      double actualGradient = marginal.weights[i];
+
+      Assert.assertTrue( Math.abs(expectedGradient - actualGradient) < 1e-4);
+    }
+  }
+
+  @Test
+  public void testSampleMarginals() {
+    Counter<Example> data = model.drawSamples(model1, new Random(1), 1000000);
+    ParamsVec marginal = model.getMarginals(model1, data);
+    ParamsVec marginal_ = model.getSampleMarginals(data);
+    for(int i = 0; i < marginal.weights.length; i++) {
+      Assert.assertTrue(Math.abs(marginal.weights[i] - marginal_.weights[i]) < 1e-1);
+    }
+  }
+
+  @Test
+  public void testSample2() {
+    Counter<Example> data = model.drawSamples(model1, new Random(1), 1000000);
+    ParamsVec marginal = model.getMarginals(model1);
+    ParamsVec marginal_ = model.getSampleMarginals(data);
+    for(int i = 0; i < marginal.weights.length; i++) {
+      Assert.assertTrue(Math.abs(marginal.weights[i] - marginal_.weights[i]) < 1e-1);
     }
   }
 

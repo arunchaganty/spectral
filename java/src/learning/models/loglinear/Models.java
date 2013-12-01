@@ -9,6 +9,8 @@ import fig.basic.*;
 import fig.exec.*;
 import fig.prob.*;
 import fig.record.*;
+import learning.utils.Counter;
+
 import static fig.basic.LogInfo.*;
 
 public class Models {
@@ -67,6 +69,18 @@ public class Models {
       }
       return H;
     }
+
+    public ParamsVec getSampleMarginals(Counter<Example> examples) {
+      ParamsVec marginals = newParamsVec();
+      for(Example ex : examples) {
+        int y = ex.h[0];
+        for( int x : ex.x ) {
+          marginals.incr(new UnaryFeature(y, "x="+x), examples.getFraction(ex));
+        }
+      }
+      return marginals;
+    }
+
   }
 
 
@@ -178,6 +192,21 @@ public class Models {
       }
       return H;
     }
+
+    public ParamsVec getSampleMarginals(Counter<Example> examples) {
+      ParamsVec marginals = newParamsVec();
+      for(Example ex : examples) {
+        for(int t = 0; t < ex.x.length; t++) {
+          int y = ex.h[t]; int x = ex.x[t];
+          marginals.incr(new UnaryFeature(y, "x="+x), examples.getFraction(ex));
+          if( t > 0 ) {
+            int y_ = ex.h[t-1];
+            marginals.incr(new BinaryFeature(y_, y), examples.getFraction(ex));
+          }
+        }
+      }
+      return marginals;
+    }
   }
 
   public static class TallMixture extends Model {
@@ -267,6 +296,10 @@ public class Models {
         }
       }
       return H;
+    }
+
+    public ParamsVec getSampleMarginals(Counter<Example> examples) {
+      throw new RuntimeException();
     }
   }
 
@@ -378,5 +411,11 @@ public class Models {
       H.addEdge(H.sumStartNode(), transNode(H, ex, params, counts, increment, 0, -1, -1));
       return H;
     }
+
+    public ParamsVec getSampleMarginals(Counter<Example> examples) {
+      throw new RuntimeException();
+    }
   }
+
+
 }

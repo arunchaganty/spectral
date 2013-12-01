@@ -55,7 +55,7 @@ public class SpectralMeasurements implements Runnable {
    * Stores the true counts to be used to print error statistics
    */
   class Analysis {
-    ExponentialFamilyModel model;
+    ExponentialFamilyModel<Example> model;
     ParamsVec trueParams; // \theta^*
     ParamsVec trueCounts; // E_{\theta^*}[ \phi(X) ]
     Counter<Example> examples;
@@ -450,8 +450,10 @@ public class SpectralMeasurements implements Runnable {
         break;
       }
       case hmm: {
-        modelA = new HiddenMarkovModel(opts.K, opts.D, opts.L);
-        modelB = new HiddenMarkovModel(opts.K, opts.D, opts.L);
+        modelA = new UndirectedHiddenMarkovModel(opts.K, opts.D, opts.L);
+        modelB = new UndirectedHiddenMarkovModel(opts.K, opts.D, opts.L);
+//        modelA = new HiddenMarkovModel(opts.K, opts.D, opts.L);
+//        modelB = new HiddenMarkovModel(opts.K, opts.D, opts.L);
         break;
       }
       case tallMixture: {
