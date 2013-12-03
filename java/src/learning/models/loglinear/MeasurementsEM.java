@@ -300,7 +300,7 @@ public class MeasurementsEM implements Runnable {
     LogInfo.logs( "Solving measurements objective with %d + %d parameters, using %f instances (%d unique)",
             theta.numFeatures, beta.numFeatures, data.sum(), data.size() );
 
-    Execution.putOutput( "measuredFraction", measurements.numFeatures / (float) theta.numFeatures );
+    Execution.putOutput( "actualMeasuredFraction", measurements.numFeatures / (float) theta.numFeatures );
 
     Maximizer eMaximizer = newMaximizer();
     Maximizer mMaximizer = newMaximizer();
