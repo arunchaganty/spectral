@@ -7,12 +7,14 @@ import learning.linalg.RandomFactory;
 import learning.models.ExponentialFamilyModel;
 import learning.utils.Counter;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 /**
  * Undirected hidden Markov model
  */
-public class UndirectedHiddenMarkovModel implements ExponentialFamilyModel<Example> {
+public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example> {
   public int K;
   public int D;
   public int L;
@@ -251,10 +253,6 @@ public class UndirectedHiddenMarkovModel implements ExponentialFamilyModel<Examp
     return getLogLikelihood(parameters, (Example)null);
   }
 
-  public double getProbability(ParamsVec parameters, Example ex) {
-    return Math.exp( getLogLikelihood(parameters, ex)- getLogLikelihood(parameters, (Example)null) );
-  }
-
   public double getFullProbability(ParamsVec parameters, Example ex) {
     assert( ex.h != null );
     double lhood = 0.0;
@@ -264,7 +262,7 @@ public class UndirectedHiddenMarkovModel implements ExponentialFamilyModel<Examp
     }
     for(int t = 1; t < ex.x.length; t++ ) {
       int y_ = ex.h[t-1]; int y = ex.x[t];
-      lhood += parameters.get(t(y_,y));
+      lhood += parameters.get(t(y_, y));
     }
 
     return Math.exp( lhood - getLogLikelihood(parameters, (Example)null) );
@@ -388,11 +386,6 @@ public class UndirectedHiddenMarkovModel implements ExponentialFamilyModel<Examp
     return ex;
   }
 
-  @Override
-  public Example drawSample(ParamsVec parameters, Random genRandom) {
-    return drawSamples(parameters, genRandom, 1).iterator().next();
-  }
-
   public ParamsVec getSampleMarginals(Counter<Example> examples) {
     ParamsVec marginals = newParamsVec();
     for(Example ex : examples) {
@@ -407,5 +400,38 @@ public class UndirectedHiddenMarkovModel implements ExponentialFamilyModel<Examp
     }
     return marginals;
   }
+
+
+  /**
+   * Choose idx
+   */
+  void generateExamples(Example current, int idx, List<Example> examples) {
+    if( idx == current.x.length ) {
+      examples.add(new Example(current.x));
+    } else {
+      // Make a choice for this index
+      current.x[idx] = 0;
+      generateExamples(current, idx+1, examples);
+      current.x[idx] = 1;
+      generateExamples(current, idx+1, examples);
+    }
+  }
+  List<Example> generateExamples(int L) {
+    List<Example> examples = new ArrayList<>((int)Math.pow(2,L));
+    Example ex = new Example(new int[L]);
+    generateExamples(ex, 0, examples);
+    return examples;
+  }
+
+  @Override
+  public Counter<Example> getDistribution(ParamsVec params) {
+    Counter<Example> examples = new Counter<>();
+    examples.addAll(generateExamples(L));
+    for(Example ex: examples) {
+      examples.set( ex, getProbability(params, ex));
+    }
+    return examples;
+  }
+
 
 }

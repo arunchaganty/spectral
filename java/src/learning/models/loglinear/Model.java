@@ -14,7 +14,7 @@ import learning.utils.Counter;
 
 import static fig.basic.LogInfo.*;
 
-public abstract class Model implements ExponentialFamilyModel<Example> {
+public abstract class Model extends ExponentialFamilyModel<Example> {
   public int K;
   public int getK() { return K; }
   public int D;
@@ -155,8 +155,26 @@ public abstract class Model implements ExponentialFamilyModel<Example> {
     }
     return examples;
   }
-  public Example drawSample(ParamsVec parameters, Random rnd) {
-    return drawSamples(parameters, rnd, 1).iterator().next();
+
+  /**
+   * Choose idx
+   */
+  void generateExamples(Example current, int idx, List<Example> examples) {
+    if( idx == current.x.length ) {
+      examples.add(new Example(current.x));
+    } else {
+      // Make a choice for this index
+      current.x[idx] = 0;
+      generateExamples(current, idx+1, examples);
+      current.x[idx] = 1;
+      generateExamples(current, idx+1, examples);
+    }
+  }
+  List<Example> generateExamples(int L) {
+    List<Example> examples = new ArrayList<>((int)Math.pow(2,L));
+    Example ex = new Example(new int[L]);
+    generateExamples(ex, 0, examples);
+    return examples;
   }
 
 

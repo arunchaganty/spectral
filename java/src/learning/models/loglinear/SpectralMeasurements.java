@@ -1,5 +1,6 @@
 package learning.models.loglinear;
 
+import java.io.IOException;
 import java.util.*;
 
 import fig.basic.*;
@@ -59,6 +60,7 @@ public class SpectralMeasurements implements Runnable {
     ExponentialFamilyModel<Example> model;
     ParamsVec trueParams; // \theta^*
     ParamsVec trueCounts; // E_{\theta^*}[ \phi(X) ]
+    Counter<Example> trueMarginal;
     Counter<Example> examples;
     double Zp, perp_p;
     double Zq, perp_q;
@@ -74,13 +76,16 @@ public class SpectralMeasurements implements Runnable {
 
       Zp = model.getLogLikelihood(trueParams);
       trueCounts = model.getMarginals(trueParams);
-      perp_p = model.getLogLikelihood(trueParams,examples) - Zp;
+      perp_p = -(model.getLogLikelihood(trueParams,examples) - Zp);
       Execution.putOutput("true-perp", perp_p);
       LogInfo.logsForce("true-perp=" + perp_p);
+
+      trueMarginal = model.getDistribution(trueParams);
 
       // Write to file
       trueParams.write(Execution.getFile("true.params"));
       trueCounts.write(Execution.getFile("true.counts"));
+      IOUtils.writeLinesHard(Execution.getFile("true.marginal"), Collections.<String>singletonList(trueMarginal.toString()));
     }
 
     /**
@@ -92,7 +97,9 @@ public class SpectralMeasurements implements Runnable {
 
       Zq = model.getLogLikelihood(estimatedParams);
       ParamsVec estimatedCounts = model.getMarginals(estimatedParams);
-      perp_q = model.getLogLikelihood(estimatedParams, examples) - Zq;
+      perp_q = -(model.getLogLikelihood(estimatedParams, examples) - Zq);
+
+      Counter<Example> fitMarginal = model.getDistribution(estimatedParams);
 
       LogInfo.logsForce("true-perp="+perp_p);
       Execution.putOutput("fit-perp", perp_q);
@@ -101,6 +108,7 @@ public class SpectralMeasurements implements Runnable {
 
       // Write to file
       estimatedCounts.write(Execution.getFile("fit.counts"));
+      IOUtils.writeLinesHard(Execution.getFile("fit.marginal"), Collections.<String>singletonList(fitMarginal.toString()));
 
       double err = estimatedCounts.computeDiff( trueCounts, new int[trueParams.K] );
       Execution.putOutput("countsError", err);
@@ -109,6 +117,9 @@ public class SpectralMeasurements implements Runnable {
       err = estimatedParams.computeDiff( trueParams, new int[trueParams.K] );
       Execution.putOutput("paramsError", err);
       LogInfo.logsForce("paramsError="+err);
+
+      err = Counter.diff(trueMarginal, fitMarginal);
+      LogInfo.logsForce("marginalError="+err);
 
       return err;
     }

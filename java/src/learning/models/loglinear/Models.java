@@ -81,6 +81,16 @@ public class Models {
       return marginals;
     }
 
+    @Override
+    public Counter<Example> getDistribution(ParamsVec params) {
+      Counter<Example> examples = new Counter<>();
+      examples.addAll(generateExamples(L));
+      for(Example ex: examples) {
+        examples.set( ex, getProbability(params, ex));
+      }
+      return examples;
+    }
+
   }
 
 
@@ -206,6 +216,16 @@ public class Models {
         }
       }
       return marginals;
+    }
+
+    @Override
+    public Counter<Example> getDistribution(ParamsVec params) {
+      Counter<Example> examples = new Counter<>();
+      examples.addAll(generateExamples(L));
+      for(Example ex: examples) {
+        examples.set( ex, getProbability(params, ex));
+      }
+      return examples;
     }
   }
 
@@ -410,10 +430,6 @@ public class Models {
       //H.debug = true;
       H.addEdge(H.sumStartNode(), transNode(H, ex, params, counts, increment, 0, -1, -1));
       return H;
-    }
-
-    public ParamsVec getSampleMarginals(Counter<Example> examples) {
-      throw new RuntimeException();
     }
   }
 

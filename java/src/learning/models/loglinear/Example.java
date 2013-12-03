@@ -45,8 +45,10 @@ public class Example {
     for( int i : x ) {
       hashCode = 31*hashCode + i;
     }
-    for( int i : h ) {
-      hashCode = 31*hashCode + i;
+    if( h != null ) {
+      for( int i : h ) {
+        hashCode = 31*hashCode + i;
+      }
     }
 
     return hashCode;
@@ -59,9 +61,12 @@ public class Example {
       for( int i = 0; i < x.length; i++ ) {
         if( x[i] != other.x[i] ) return false;
       }
-      if( h.length != other.h.length ) return false;
-      for( int i = 0; i < h.length; i++ ) {
-        if( h[i] != other.h[i] ) return false;
+      if( (h != null) ^ (other.h != null) ) return false;
+      if( h != null ) {
+        if( h.length != other.h.length ) return false;
+        for( int i = 0; i < h.length; i++ ) {
+          if( h[i] != other.h[i] ) return false;
+        }
       }
       return true;
     } else return false;
