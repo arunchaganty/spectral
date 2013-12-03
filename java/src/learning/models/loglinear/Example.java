@@ -8,6 +8,10 @@ public class Example {
   public int[] x;  // Values of observed nodes
   public int[] h;  // Values of labelled (hidden) nodes
   public Example() {}
+  public Example(int L) {
+    x = new int[L];
+    h = new int[L];
+  }
   public Example(int[] x) {
     this.x = new int[x.length];
     System.arraycopy(x, 0, this.x, 0, x.length);
@@ -41,8 +45,10 @@ public class Example {
     for( int i : x ) {
       hashCode = 31*hashCode + i;
     }
-    for( int i : h ) {
-      hashCode = 31*hashCode + i;
+    if( h != null ) {
+      for( int i : h ) {
+        hashCode = 31*hashCode + i;
+      }
     }
 
     return hashCode;
@@ -55,9 +61,12 @@ public class Example {
       for( int i = 0; i < x.length; i++ ) {
         if( x[i] != other.x[i] ) return false;
       }
-      if( h.length != other.h.length ) return false;
-      for( int i = 0; i < h.length; i++ ) {
-        if( h[i] != other.h[i] ) return false;
+      if( (h != null) ^ (other.h != null) ) return false;
+      if( h != null ) {
+        if( h.length != other.h.length ) return false;
+        for( int i = 0; i < h.length; i++ ) {
+          if( h[i] != other.h[i] ) return false;
+        }
       }
       return true;
     } else return false;

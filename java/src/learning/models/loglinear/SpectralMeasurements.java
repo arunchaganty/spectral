@@ -1,5 +1,6 @@
 package learning.models.loglinear;
 
+import java.io.IOException;
 import java.util.*;
 
 import fig.basic.*;
@@ -7,6 +8,7 @@ import fig.exec.*;
 
 import learning.data.ComputableMoments;
 import learning.data.HasSampleMoments;
+import learning.models.ExponentialFamilyModel;
 import learning.models.MixtureOfGaussians;
 import learning.spectral.applications.ParameterRecovery;
 import org.ejml.simple.SimpleMatrix;
@@ -37,12 +39,13 @@ public class SpectralMeasurements implements Runnable {
   @OptionSet(name="EMSolver") public ExpectationMaximization emSolver = new ExpectationMaximization();
 
   @Option(gloss="Random seed for initialization") public Random initRandom = new Random(1);
-  @Option(gloss="How much variation in initial parameters") public double initParamsNoise = 0.01;
+  @Option(gloss="How much variation in initial parameters") public double initParamsNoise = 1.0;
 
   //@Option(gloss="Type of training to use") public ObjectiveType objectiveType = ObjectiveType.unsupervised_gradient;
   @Option(gloss="Include each (true) measurement with this prob") public double measuredFraction = 1.;
   @Option(gloss="Include gaussian noise with this variance to true measurements") public double trueMeasurementNoise = 0.0;
 
+  @Option(gloss="Initialize with exact") public boolean initializeWithExact = false;
   @Option(gloss="Preconditioning") public double preconditioning = 0.0;
   @Option(gloss="Smooth measurements") public double smoothMeasurements = 0.0;
   @Option(gloss="Use T in SpectralMeasurements?") public boolean useTransitions = false;
@@ -54,9 +57,10 @@ public class SpectralMeasurements implements Runnable {
    * Stores the true counts to be used to print error statistics
    */
   class Analysis {
-    Model model;
+    ExponentialFamilyModel<Example> model;
     ParamsVec trueParams; // \theta^*
     ParamsVec trueCounts; // E_{\theta^*}[ \phi(X) ]
+    Counter<Example> trueMarginal;
     Counter<Example> examples;
     double Zp, perp_p;
     double Zq, perp_q;
@@ -64,33 +68,24 @@ public class SpectralMeasurements implements Runnable {
     /**
      * Initializes the analysis object with true values
      */
-    public Analysis( Model model, ParamsVec trueParams, Counter<Example> examples ) {
+    public Analysis( ExponentialFamilyModel<Example> model, ParamsVec trueParams, Counter<Example> examples ) {
       this.model = model;
       this.trueParams = trueParams;
       this.trueCounts = model.newParamsVec();
       this.examples = examples;
 
-      {
-        Hypergraph<Example> H = model.createHypergraph(trueParams.weights, trueCounts.weights, 1.0);
-        H.computePosteriors(false);
-        H.fetchPosteriors(false);
-        Zp = H.getLogZ();
-      }
-
-      double lhood = 0.0;
-      for( Example ex : examples )  {
-        int L = ex.x.length;
-        Hypergraph<Example> H = model.createHypergraph(ex, trueParams.weights, null, 0.);
-        H.computePosteriors(false);
-        lhood += examples.getCount(ex) * (H.getLogZ() - Zp) / examples.size();
-      }
-      perp_p = lhood;
+      Zp = model.getLogLikelihood(trueParams);
+      trueCounts = model.getMarginals(trueParams);
+      perp_p = -(model.getLogLikelihood(trueParams,examples) - Zp);
       Execution.putOutput("true-perp", perp_p);
       LogInfo.logsForce("true-perp=" + perp_p);
+
+      trueMarginal = model.getDistribution(trueParams);
 
       // Write to file
       trueParams.write(Execution.getFile("true.params"));
       trueCounts.write(Execution.getFile("true.counts"));
+      IOUtils.writeLinesHard(Execution.getFile("true.marginal"), Collections.<String>singletonList(trueMarginal.toString()));
     }
 
     /**
@@ -100,22 +95,12 @@ public class SpectralMeasurements implements Runnable {
     public double reportParams(ParamsVec estimatedParams) {
       estimatedParams.write(Execution.getFile("fit.params"));
 
-      ParamsVec estimatedCounts = model.newParamsVec();
-      {
-        Hypergraph<Example> H = model.createHypergraph(estimatedParams.weights, estimatedCounts.weights, 1.);
-        H.computePosteriors(false);
-        H.fetchPosteriors(false);
-        Zq = H.getLogZ();
-      }
+      Zq = model.getLogLikelihood(estimatedParams);
+      ParamsVec estimatedCounts = model.getMarginals(estimatedParams);
+      perp_q = -(model.getLogLikelihood(estimatedParams, examples) - Zq);
 
-      double lhood = 0.;
-      for( Example ex : examples )  {
-        int L = ex.x.length;
-        Hypergraph<Example> H = model.createHypergraph(ex, estimatedParams.weights, null, 0.);
-        H.computePosteriors(false);
-        lhood += examples.getCount(ex) * (H.getLogZ() - Zq) / examples.size();
-      }
-      perp_q = lhood;
+      Counter<Example> fitMarginal = model.getDistribution(estimatedParams);
+
       LogInfo.logsForce("true-perp="+perp_p);
       Execution.putOutput("fit-perp", perp_q);
       LogInfo.logsForce("fit-perp="+perp_q);
@@ -123,14 +108,18 @@ public class SpectralMeasurements implements Runnable {
 
       // Write to file
       estimatedCounts.write(Execution.getFile("fit.counts"));
+      IOUtils.writeLinesHard(Execution.getFile("fit.marginal"), Collections.<String>singletonList(fitMarginal.toString()));
 
-      double err = estimatedCounts.computeDiff( trueCounts, new int[model.K] );
+      double err = estimatedCounts.computeDiff( trueCounts, new int[trueParams.K] );
       Execution.putOutput("countsError", err);
       LogInfo.logsForce("countsError="+err);
 
-      err = estimatedParams.computeDiff( trueParams, new int[model.K] );
+      err = estimatedParams.computeDiff( trueParams, new int[trueParams.K] );
       Execution.putOutput("paramsError", err);
       LogInfo.logsForce("paramsError="+err);
+
+      err = Counter.diff(trueMarginal, fitMarginal);
+      LogInfo.logsForce("marginalError="+err);
 
       return err;
     }
@@ -139,8 +128,8 @@ public class SpectralMeasurements implements Runnable {
   public Analysis analysis;
 
   // Algorithm parameters
-  Model modelA;
-  Model modelB;
+  ExponentialFamilyModel<Example> modelA;
+  ExponentialFamilyModel<Example> modelB;
 
   /**
    * Computes moments from the sequences in an Example.
@@ -220,15 +209,16 @@ public class SpectralMeasurements implements Runnable {
     // Choose the measured features.
     Indexer<Feature> measuredFeatureIndexer = new Indexer<>();
     // This is an initialization of sorts
-    int numFeatures = modelA.featureIndexer.size();
+    Indexer<Feature> features = modelA.newParamsVec().featureIndexer;
+    int numFeatures = modelA.numFeatures();
     List<Integer> perm = RandomFactory.permutation(numFeatures, initRandom);
 
     for(int i = 0; i < Math.round(measuredFraction * numFeatures); i++) {
-      Feature feature = modelA.featureIndexer.getObject(perm.get(i));
+      Feature feature = features.getObject(perm.get(i));
       measuredFeatureIndexer.add(feature);
     }
     // Now set the measurements to be the true counts
-    ParamsVec measurements = new ParamsVec(modelB.K, measuredFeatureIndexer);
+    ParamsVec measurements = new ParamsVec(modelB.getK(), measuredFeatureIndexer);
     ParamsVec.project(analysis.trueCounts, measurements);
 
     // Add noise
@@ -251,7 +241,7 @@ public class SpectralMeasurements implements Runnable {
     ParamsVec measurements;
     // Construct triples of three observed variables around the hidden
     // node.
-    int K = modelA.K; int D = modelA.D;
+    int K = modelA.getK(); int D = modelA.getD();
 
     if( modelA instanceof  MixtureModel ) {
       MixtureModel model = (MixtureModel) modelA;
@@ -290,8 +280,10 @@ public class SpectralMeasurements implements Runnable {
         }
       }
       Execution.putOutput("moments.params", MatrixFactory.fromVector(measurements.weights));
-    } else if( modelA instanceof  HiddenMarkovModel ) {
-      HiddenMarkovModel model = (HiddenMarkovModel) modelA;
+    } else if( modelA instanceof  HiddenMarkovModel || modelA instanceof UndirectedHiddenMarkovModel ) {
+
+//      HiddenMarkovModel model = (HiddenMarkovModel) modelA;
+      UndirectedHiddenMarkovModel model = (UndirectedHiddenMarkovModel) modelA;
       // \phi_1, \phi_2, \phi_3
 
       MixtureOfGaussians gmm = ParameterRecovery.recoverGMM(K, 0, (HasSampleMoments) new ExampleMoments(D, data, Arrays.asList(0, 1, 2)), smoothMeasurements);
@@ -360,40 +352,40 @@ public class SpectralMeasurements implements Runnable {
     return measurements;
   }
 
-  /**
-   * Uses the params and modelA to label the hidden labels for each
-   * data point and reports Hamming errors. 
-   */
-  @SuppressWarnings("unchecked")
-  public double reportAccuracy( ParamsVec params, List<Example> examples ) {
-    LogInfo.begin_track("report-accuracy");
-    ParamsVec counts = modelA.newParamsVec();
-    int K = modelA.K;
-
-    // Create a confusion matrix with prediced vs estimated label choices
-    double[][] labelMapping = new double[K][K];
-    for(int i = 0; i < examples.size(); i++ ) {
-      Example ex = examples.get(i);
-      // Create a copy of the example with just the data; use this to
-      // guess the labels.
-      Example ex_ = ex.copyData();
-      // Cache the hypergraph
-      Hypergraph Hq = modelA.createHypergraph(ex_, params.weights, counts.weights, 1.0/examples.size());
-      Hq.computePosteriors(false);
-      Hq.fetchPosteriors(false); // Places the posterior expectation $E_{Y|X}[\phi]$ into counts
-      // Fill in the ex_.h values
-      Hq.fetchBestHyperpath(ex_);
-
-      for( int l = 0; l < ex.h.length; l++ )  
-        labelMapping[ex.h[l]][ex_.h[l]] += 1; 
-    }
-    //if( debug )
-      LogInfo.dbg( "Label mapping: \n" + Fmt.D( labelMapping ) );
-    double acc = bestAccuracy( labelMapping );
-    LogInfo.end_track();
-
-    return acc;
-  }
+//  /**
+//   * Uses the params and modelA to label the hidden labels for each
+//   * data point and reports Hamming errors.
+//   */
+//  @SuppressWarnings("unchecked")
+//  public double reportAccuracy( ParamsVec params, List<Example> examples ) {
+//    LogInfo.begin_track("report-accuracy");
+//    ParamsVec counts = modelA.newParamsVec();
+//    int K = modelA.getK();
+//
+//    // Create a confusion matrix with prediced vs estimated label choices
+//    double[][] labelMapping = new double[K][K];
+//    for(int i = 0; i < examples.size(); i++ ) {
+//      Example ex = examples.get(i);
+//      // Create a copy of the example with just the data; use this to
+//      // guess the labels.
+//      Example ex_ = ex.copyData();
+//      // Cache the hypergraph
+//      Hypergraph Hq = modelA.createHypergraph(ex_, params.weights, counts.weights, 1.0/examples.size());
+//      Hq.computePosteriors(false);
+//      Hq.fetchPosteriors(false); // Places the posterior expectation $E_{Y|X}[\phi]$ into counts
+//      // Fill in the ex_.h values
+//      Hq.fetchBestHyperpath(ex_);
+//
+//      for( int l = 0; l < ex.h.length; l++ )
+//        labelMapping[ex.h[l]][ex_.h[l]] += 1;
+//    }
+//    //if( debug )
+//      LogInfo.dbg( "Label mapping: \n" + Fmt.D( labelMapping ) );
+//    double acc = bestAccuracy( labelMapping );
+//    LogInfo.end_track();
+//
+//    return acc;
+//  }
 
   public void setModel(Model model, int L) {
     this.modelA = model;
@@ -425,7 +417,7 @@ public class SpectralMeasurements implements Runnable {
    * Generates random data from the modelA.
    *  - Uses genRand as a seed.
    */
-  ParamsVec generateParameters( Model model, GenerationOptions opts ) {
+  ParamsVec generateParameters( ExponentialFamilyModel<Example> model, GenerationOptions opts ) {
     ParamsVec trueParams = model.newParamsVec();
     trueParams.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
 //    for(int i = 0; i < trueParams.weights.length; i++)
@@ -467,25 +459,15 @@ public class SpectralMeasurements implements Runnable {
   void initializeModels(ModelOptions opts) {
     switch (opts.modelType) {
       case mixture: {
-        MixtureModel modelA_ = new MixtureModel();
-        modelA_.L = opts.L;
-        modelA_.D = opts.D;
-        this.modelA = modelA_;
-        MixtureModel modelB_ = new MixtureModel();
-        modelB_.L = opts.L;
-        modelB_.D = opts.D;
-        this.modelB = modelB_;
+        modelA = new MixtureModel(opts.K, opts.D, opts.L);
+        modelB = new MixtureModel(opts.K, opts.D, opts.L);
         break;
       }
       case hmm: {
-        HiddenMarkovModel modelA_ = new HiddenMarkovModel();
-        modelA_.L = opts.L;
-        modelA_.D = opts.D;
-        this.modelA = modelA_;
-        HiddenMarkovModel modelB_ = new HiddenMarkovModel();
-        modelB_.L = opts.L;
-        modelB_.D = opts.D;
-        this.modelB = modelB_;
+//        modelA = new UndirectedHiddenMarkovModel(opts.K, opts.D, opts.L);
+//        modelB = new UndirectedHiddenMarkovModel(opts.K, opts.D, opts.L);
+        modelA = new HiddenMarkovModel(opts.K, opts.D, opts.L);
+        modelB = new HiddenMarkovModel(opts.K, opts.D, opts.L);
         break;
       }
       case tallMixture: {
@@ -499,11 +481,6 @@ public class SpectralMeasurements implements Runnable {
       default:
         throw new RuntimeException("Unhandled modelA type: " + opts.modelType);
     }
-    modelA.K = opts.K;
-    modelB.K = opts.K;
-
-    modelA.createHypergraph( null, null, null, 0);
-    modelB.createHypergraph( null, null, null, 0);
   }
 
   public void run() {
@@ -514,13 +491,18 @@ public class SpectralMeasurements implements Runnable {
     ParamsVec trueParams = generateParameters( modelA, genOpts );
 
     // Get true parameters
-    Counter<Example> data = generateData( modelA, trueParams, genOpts );
+    Counter<Example> data = modelA.drawSamples(trueParams, genOpts.genRandom, genOpts.genNumExamples);
 
     analysis = new Analysis( modelA, trueParams, data );
 
-
     ParamsVec params = new ParamsVec(analysis.trueParams);
-    params.initRandom(initRandom, initParamsNoise);
+    if(!initializeWithExact)
+      params.initRandom(initRandom, initParamsNoise);
+    else {
+      ParamsVec noise = modelA.newParamsVec();
+      noise.initRandom(initRandom, initParamsNoise);
+      params.incr(Math.sqrt(0.01), noise);
+    }
 
     // Run the bottleneck spectral algorithm
     switch( mode ) {

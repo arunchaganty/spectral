@@ -29,6 +29,11 @@ public class ParamsVec {
     this.weights = that.weights.clone();
   }
 
+  public void copy(ParamsVec that) {
+    assert( that.weights.length == this.weights.length );
+    System.arraycopy(that.weights, 0, this.weights, 0, this.weights.length);
+  }
+
   public void initRandom(Random random, double noise) {
     for (int j = 0; j < numFeatures; j++)
       weights[j] = noise * (2 * random.nextDouble() - 1);
@@ -54,6 +59,9 @@ public class ParamsVec {
   }
   public void set(Feature f, double val) {
     this.weights[featureIndexer.getIndex(f)] = val;
+  }
+  public void incr(Feature f, double val) {
+    this.weights[featureIndexer.getIndex(f)] += val;
   }
 
   /**
@@ -230,5 +238,10 @@ public class ParamsVec {
     for (int f = 0; f < numFeatures; f++)
       builder.append(featureIndexer.getObject(f) + "\t" + weights[f] + " ");
     return builder.toString();
+  }
+
+  public void scale(double scale) {
+    for(int i = 0; i < weights.length; i++)
+      weights[i] *= scale;
   }
 }

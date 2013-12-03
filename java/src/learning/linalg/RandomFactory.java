@@ -71,7 +71,7 @@ public class RandomFactory {
 
   /**
    * Generate a single random variable
-   * @param sigma - noise
+   * @param sigma2 - noise
    * @return
    */
   public static double randn(double sigma2) {
@@ -136,8 +136,11 @@ public class RandomFactory {
    * @param pi
    * @return
    */
+  public static int multinomial(Random rnd, SimpleMatrix pi) {
+    return multinomial( rnd, pi.getMatrix().data );
+  }
   public static int multinomial(SimpleMatrix pi) {
-    return multinomial( pi.getMatrix().data );
+    return multinomial(rand, pi);
   }
 
   /**
@@ -145,8 +148,8 @@ public class RandomFactory {
    * @param pi
    * @return
    */
-  public static int multinomial(double[] pi) {
-    double x = rand.nextDouble();
+  public static int multinomial(Random rnd, double[] pi) {
+    double x = rnd.nextDouble();
     for( int i = 0; i < pi.length; i++ )
     {
       if( x <= pi[i] )
@@ -158,6 +161,9 @@ public class RandomFactory {
     // The remaining probability is assigned to the last element in the sequence.
     return pi.length-1;
   }
+  public static int multinomial(double[] pi) {
+    return multinomial(rand, pi);
+  }
 
   /**
    * Draw many elements from a multinomial distribution with weights given in matrix.
@@ -165,22 +171,26 @@ public class RandomFactory {
    * @param pi - Parameters
    * @return - Vector with count of number of times a value was drawn
    */
-  public static double[] multinomial(double[] pi, int n) {
+  public static double[] multinomial(Random rnd, double[] pi, int n) {
     double[] cnt = new double[pi.length];
 
     for( int i = 0; i < n; i++)
-      cnt[ multinomial(pi) ] += 1;
+      cnt[ multinomial(rnd, pi) ] += 1;
 
     return cnt;
   }
+  public static double[] multinomial(double[] pi, int n) {
+    return multinomial(rand, pi, n);
+  }
+  public static SimpleMatrix multinomial(Random rnd, SimpleMatrix pi, int n) {
+    return MatrixFactory.fromVector( multinomial( rnd, MatrixFactory.toVector( pi ), n ) );
+  }
   public static SimpleMatrix multinomial(SimpleMatrix pi, int n) {
-    return MatrixFactory.fromVector( multinomial( MatrixFactory.toVector( pi ), n ) );
+    return multinomial(rand, pi, n);
   }
 
   /**
    * Generate a random matrix with standard normal entries.
-   * @param D
-   * @return
    */
   public static double[][] multivariateGaussian(double[] mean, double[][] cov, int count) {
     MultGaussian gaussian = new MultGaussian( mean, cov );
@@ -203,9 +213,6 @@ public class RandomFactory {
 
   /**
    * Generate a D x D x D tensor of rank K (w.h.p.)
-   * @param K
-   * @param D
-   * @return
    */
   public static FullTensor symmetricTensor(int K, int D) {
     SimpleMatrix w = RandomFactory.rand(1, K);

@@ -1,9 +1,6 @@
 package learning.utils;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 /**
  * The usual Counter
@@ -48,6 +45,10 @@ public class Counter<V> implements Collection<V> {
     return map.keySet().toArray(a);
   }
 
+  public void set(V item, Double value) {
+    map.put(item, value);
+  }
+
   public boolean add(V item) {
     if(!map.containsKey(item))
       map.put(item, 1.0);
@@ -69,6 +70,10 @@ public class Counter<V> implements Collection<V> {
       return map.get(item);
     else
       return 0.;
+  }
+
+  public double getFraction(V item) {
+    return getCount(item)/sum();
   }
 
   public double sum() {
@@ -118,4 +123,28 @@ public class Counter<V> implements Collection<V> {
   public void clear() {
     map.clear();
   }
+
+  public String toString() {
+    StringBuilder builder = new StringBuilder();
+    builder.append("{");
+    for( Map.Entry<V,Double> item : map.entrySet() )
+      builder.append(item.getKey()).append(": ").append(item.getValue()).append(", ");
+    builder.append("}");
+    return builder.toString();
+  }
+
+  public static <V> double diff(Counter<V> e1, Counter<V> e2) {
+    Set<V> keys = new HashSet<V>();
+    keys.addAll(e1.map.keySet());
+    keys.addAll(e2.map.keySet());
+
+    double diff = 0.;
+
+    for(V key : keys) {
+      diff += Math.pow(e1.getCount(key) - e2.getCount(key), 2);
+    }
+
+    return diff;
+  }
+
 }

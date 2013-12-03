@@ -50,10 +50,13 @@ public class UtilsJ {
     // Set point to be +/- gradient
     for( int i = 0; i < currentPoint.length; i++ ) {
       point[i] = currentPoint[i] + epsilon;
+      state.invalidate();
       double valuePlus = state.value();
       point[i] = currentPoint[i] - epsilon;
+      state.invalidate();
       double valueMinus = state.value();
       point[i] = currentPoint[i];
+      state.invalidate();
 
       double expectedValue = (valuePlus - valueMinus)/(2*epsilon);
       double actualValue = currentGradient[i];

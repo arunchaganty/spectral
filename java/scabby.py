@@ -170,12 +170,26 @@ def plot(ax, data, x_key, y_key, **kwargs):
     ax.plot( xs, ys, **kwargs )
     return ax
 
+def scatter(ax, data, x_key, y_key, **kwargs):
+    xs, ys = zip(*[ (datum[x_key], datum[y_key]) for datum in data ] )
+    ax.scatter( xs, ys, **kwargs )
+    return ax
+
 def read_tab_file(fhandle):
     return (tab_to_dict(line) for line in fhandle)
 
 def write_tab_file(dicts, out=sys.stdout):
     out.writelines(dict_to_tab(val) + "\n" for val in dicts)
 
+def filter_tab(tab, **kwargs):
+    def do_filter(point):
+        return all( 
+            # approximate match key and value
+            any(key_.endswith( key ) and str(val_) == str(val) for key_, val_ in point.iteritems())
+            for key, val in kwargs.iteritems())
+    return filter( do_filter, tab )
+
 import matplotlib.markers as markers
 MARKERS = markers.MarkerStyle.filled_markers
+COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 
