@@ -203,6 +203,11 @@ public class ExpectationMaximization implements Runnable {
       done = optimize( mMaximizer, mObjective, "M-" + i, mIters );
       mObjective.invalidate();
     }
+    Execution.putOutput("optimization-done", done);
+
+    LogInfo.logs( "Expected: " + modelA.getMarginals(theta));
+    LogInfo.logs( "Data-Expected: " + modelA.getMarginals(theta, data));
+    LogInfo.logs( "Data-Only: " + modelA.getSampleMarginals(data));
 
     LogInfo.end_track("solveEM");
 

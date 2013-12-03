@@ -251,6 +251,25 @@ public class UndirectedHiddenMarkovModel implements ExponentialFamilyModel<Examp
     return getLogLikelihood(parameters, (Example)null);
   }
 
+  public double getProbability(ParamsVec parameters, Example ex) {
+    return Math.exp( getLogLikelihood(parameters, ex)- getLogLikelihood(parameters, (Example)null) );
+  }
+
+  public double getFullProbability(ParamsVec parameters, Example ex) {
+    assert( ex.h != null );
+    double lhood = 0.0;
+    for(int t = 0; t < ex.x.length; t++ ) {
+      int y = ex.h[t]; int x = ex.x[t];
+      lhood += parameters.get(o(y,x));
+    }
+    for(int t = 1; t < ex.x.length; t++ ) {
+      int y_ = ex.h[t-1]; int y = ex.x[t];
+      lhood += parameters.get(t(y_,y));
+    }
+
+    return Math.exp( lhood - getLogLikelihood(parameters, (Example)null) );
+  }
+
   @Override
   public double getLogLikelihood(ParamsVec parameters, Counter<Example> examples) {
     double lhood = 0.;

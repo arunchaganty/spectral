@@ -38,12 +38,13 @@ public class SpectralMeasurements implements Runnable {
   @OptionSet(name="EMSolver") public ExpectationMaximization emSolver = new ExpectationMaximization();
 
   @Option(gloss="Random seed for initialization") public Random initRandom = new Random(1);
-  @Option(gloss="How much variation in initial parameters") public double initParamsNoise = 0.01;
+  @Option(gloss="How much variation in initial parameters") public double initParamsNoise = 1.0;
 
   //@Option(gloss="Type of training to use") public ObjectiveType objectiveType = ObjectiveType.unsupervised_gradient;
   @Option(gloss="Include each (true) measurement with this prob") public double measuredFraction = 1.;
   @Option(gloss="Include gaussian noise with this variance to true measurements") public double trueMeasurementNoise = 0.0;
 
+  @Option(gloss="Initialize with exact") public boolean initializeWithExact = false;
   @Option(gloss="Preconditioning") public double preconditioning = 0.0;
   @Option(gloss="Smooth measurements") public double smoothMeasurements = 0.0;
   @Option(gloss="Use T in SpectralMeasurements?") public boolean useTransitions = false;
@@ -73,7 +74,7 @@ public class SpectralMeasurements implements Runnable {
 
       Zp = model.getLogLikelihood(trueParams);
       trueCounts = model.getMarginals(trueParams);
-      perp_p = model.getLogLikelihood(trueParams,examples);
+      perp_p = model.getLogLikelihood(trueParams,examples) - Zp;
       Execution.putOutput("true-perp", perp_p);
       LogInfo.logsForce("true-perp=" + perp_p);
 
@@ -91,7 +92,7 @@ public class SpectralMeasurements implements Runnable {
 
       Zq = model.getLogLikelihood(estimatedParams);
       ParamsVec estimatedCounts = model.getMarginals(estimatedParams);
-      perp_q = model.getLogLikelihood(estimatedParams, examples);
+      perp_q = model.getLogLikelihood(estimatedParams, examples) - Zq;
 
       LogInfo.logsForce("true-perp="+perp_p);
       Execution.putOutput("fit-perp", perp_q);
@@ -268,8 +269,10 @@ public class SpectralMeasurements implements Runnable {
         }
       }
       Execution.putOutput("moments.params", MatrixFactory.fromVector(measurements.weights));
-    } else if( modelA instanceof  HiddenMarkovModel ) {
-      HiddenMarkovModel model = (HiddenMarkovModel) modelA;
+    } else if( modelA instanceof  HiddenMarkovModel || modelA instanceof UndirectedHiddenMarkovModel ) {
+
+//      HiddenMarkovModel model = (HiddenMarkovModel) modelA;
+      UndirectedHiddenMarkovModel model = (UndirectedHiddenMarkovModel) modelA;
       // \phi_1, \phi_2, \phi_3
 
       MixtureOfGaussians gmm = ParameterRecovery.recoverGMM(K, 0, (HasSampleMoments) new ExampleMoments(D, data, Arrays.asList(0, 1, 2)), smoothMeasurements);
@@ -450,10 +453,10 @@ public class SpectralMeasurements implements Runnable {
         break;
       }
       case hmm: {
-        modelA = new UndirectedHiddenMarkovModel(opts.K, opts.D, opts.L);
-        modelB = new UndirectedHiddenMarkovModel(opts.K, opts.D, opts.L);
-//        modelA = new HiddenMarkovModel(opts.K, opts.D, opts.L);
-//        modelB = new HiddenMarkovModel(opts.K, opts.D, opts.L);
+//        modelA = new UndirectedHiddenMarkovModel(opts.K, opts.D, opts.L);
+//        modelB = new UndirectedHiddenMarkovModel(opts.K, opts.D, opts.L);
+        modelA = new HiddenMarkovModel(opts.K, opts.D, opts.L);
+        modelB = new HiddenMarkovModel(opts.K, opts.D, opts.L);
         break;
       }
       case tallMixture: {
@@ -482,7 +485,13 @@ public class SpectralMeasurements implements Runnable {
     analysis = new Analysis( modelA, trueParams, data );
 
     ParamsVec params = new ParamsVec(analysis.trueParams);
-    params.initRandom(initRandom, initParamsNoise);
+    if(!initializeWithExact)
+      params.initRandom(initRandom, initParamsNoise);
+    else {
+      ParamsVec noise = modelA.newParamsVec();
+      noise.initRandom(initRandom, initParamsNoise);
+      params.incr(Math.sqrt(0.01), noise);
+    }
 
     // Run the bottleneck spectral algorithm
     switch( mode ) {
