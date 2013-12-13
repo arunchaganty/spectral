@@ -17,7 +17,7 @@ def do_extract(args):
             values = {}
             opts = scabby.read_options( os.path.join( execdir, 'options.map' ) )
             out = scabby.read_options( os.path.join( execdir, 'output.map' ) )
-            out.update( opts ) # Temporary hack
+            opts.update( out ) 
             values = { key : scabby.fuzzy_get(opts,key) for key in keys }
             print scabby.dict_to_tab(values)
         except KeyError:
@@ -28,6 +28,14 @@ def do_extract(args):
 def do_agg(args):
     # Read each line, and aggegate
     scabby.write_tab_file( scabby.aggregate( scabby.read_tab_file(args.tab), args.keys, args.mode ) )
+
+def do_filter(args):
+    # Read each line, and sort on these indices
+    data = scabby.read_tab_file(args.tab)
+    filters = scabby.list_to_dict( args.filters ) if args.filters is not None else {}
+    data = scabby.filter_tab( data, **filters )
+    print data
+    scabby.write_tab_file( data )
 
 def do_sort(args):
     # Read each line, and sort on these indices
@@ -91,6 +99,11 @@ if __name__ == "__main__":
     extract_parser.add_argument( '--filters', type=str, nargs='*', help="Additional key=value filters" )
     extract_parser.add_argument( '--keys', type=str, nargs='+', help="Additional key=value filters" )
     extract_parser.set_defaults(func=do_extract)
+
+    filter_parser = subparsers.add_parser('filter', help='Filter rows of a tab file' )
+    filter_parser.add_argument( '--tab', type=file, help="Tab file" )
+    filter_parser.add_argument( 'filters', type=str, nargs='+', help="Additional key=value filters" )
+    filter_parser.set_defaults(func=do_filter)
 
     agg_parser = subparsers.add_parser('agg', help='Aggregate over a tab file' )
     agg_parser.add_argument( '--mode', default='avg', choices=['avg','max', 'min'], help="Tab file" )
