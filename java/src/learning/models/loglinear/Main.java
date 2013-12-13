@@ -358,15 +358,15 @@ public class Main implements Runnable {
         this.model = model;
         break;
       }
-      case tallMixture: {
-        TallMixture model = new TallMixture();
-        model.L = opts.L;
-        model.D = opts.D;
-        this.model = model;
-        break;
-      }
+      //case tallMixture: {
+      //  TallMixture model = new TallMixture();
+      //  model.L = opts.L;
+      //  model.D = opts.D;
+      //  this.model = model;
+      //  break;
+      //}
       case grid: {
-        GridModel model = new GridModel(opts.L, opts.D);
+        GridModel model = new GridModel(opts.K, opts.D, opts.L);
         this.model = model;
         break;
       }

@@ -1002,15 +1002,15 @@ public class BottleneckSpectralEM implements Runnable {
         model_ = model;
         break;
       }
-      case tallMixture: {
-        TallMixture model = new TallMixture();
-        model.L = opts.L;
-        model.D = opts.D;
-        model_ = model;
-        break;
-      }
+//      case tallMixture: {
+//        TallMixture model = new TallMixture();
+//        model.L = opts.L;
+//        model.D = opts.D;
+//        model_ = model;
+//        break;
+//      }
       case grid: {
-        GridModel model = new GridModel(opts.L, opts.D);
+        GridModel model = new GridModel(opts.K, opts.D, opts.L);
         model_ = model;
         break;
       }
