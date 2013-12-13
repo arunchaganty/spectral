@@ -28,6 +28,7 @@ def parallel_spawn( exptdir, spawn_cmd, cmd, n_jobs, settings ):
                 script.write( cmd.format(**setting) + "\n" )
         safe_run( 'chmod +x %s'%(batch_file) )
         print( '%s ./%s'%( spawn_cmd, './'+batch_file ) )
+        safe_run( '%s ./%s'%( spawn_cmd, './'+batch_file ) )
 
 def dict_to_tab(data, sep='\t'):
     return sep.join( str(key) + '=' + str(val) for key, val in data.iteritems() )
@@ -189,7 +190,7 @@ def filter_tab(tab, **kwargs):
             for key, val in kwargs.iteritems())
     return filter( do_filter, tab )
 
-import matplotlib.markers as markers
-MARKERS = markers.MarkerStyle.filled_markers
-COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+#import matplotlib.markers as markers
+#MARKERS = markers.MarkerStyle.filled_markers
+#COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 

@@ -13,10 +13,10 @@ import scabby
 
 EXPT_NAME = "true_measurements_vs_n"
 
-KD_VALUES = [(2,2), (2,3), (3,3), (3,5),]# (3,10), (5,10)]
+KD_VALUES = [(2,2), (3,3)] #[(2,2), (2,3), (3,3), (3,5),]# (3,10), (5,10)]
 MEASUREMENT_PROB_VALUES = [1.0, 0.7, 0.3, 0.0]
 N_VALUES = [1000, 2000, 5000, 7000, 10000, 20000, 50000, 70000, 1000000, 200000, 500000, 700000]
-NOISE_VALUES = [0., 1e-1, 1e-2]
+NOISE_VALUES = [0.,] # 1e-1, 1e-2]
 
 def get_settings(args):
     for k,d in KD_VALUES:
@@ -42,7 +42,7 @@ def do_run(args):
 ./run.sh learning.models.loglinear.SpectralMeasurements\
  -execPoolDir {args.execdir}\
  -modelType {args.model}\
- -K {k} -D {d} -L 3\
+ -K {k} -D {d} -L 4\
  -initRandom {initialization_seed}\
  -initParamsNoise 1.0\
  -trueParamsRandom {model_seed}\
@@ -68,15 +68,15 @@ def do_process(args):
         cmd = 'tab.py extract\
  --execdir {args.execdir}\
  --filters K={k} D={d} modelType={args.model}\
- --keys genNumExamples measurementProb trueMeasurementNoise paramsError countsError fit-perp'.format(**locals())
+ --keys trueParamsRandom genNumExamples measuredFraction trueMeasurementNoise marginalError paramsError countsError fit-perp'.format(**locals())
         raw_path = os.path.join( args.exptdir, '{args.model}-{k}-{d}.raw.tab'.format(**locals()) )
         (pb.local['python2.7'][cmd.split()] > raw_path)()
 
         agg_path = os.path.join( args.exptdir, '{args.model}-{k}-{d}.agg.tab'.format(**locals()) )
         if args.best:
-            cmd = 'tab.py agg --mode min genNumExamples measurementProb trueMeasurementNoise'.format(**locals())
+            cmd = 'tab.py agg --mode min genNumExamples measuredFraction trueMeasurementNoise'.format(**locals())
         else:
-            cmd = 'tab.py agg genNumExamples measurementProb trueMeasurementNoise'.format(**locals())
+            cmd = 'tab.py agg genNumExamples measuredFraction trueMeasurementNoise'.format(**locals())
         cmd_ = 'tab.py sort genNumExamples'.format(**locals())
         (pb.local['cat'][raw_path] | pb.local['python2.7'][cmd.split()] | pb.local['python2.7'][cmd_.split()] > agg_path)()
 
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     run_parser.add_argument( '--njobs', type=int, default=10, help="How many parallel jobs?" )
     run_parser.add_argument( '--initializations', type=int, default=3, help="Number of different initial seeds to run with" )
     run_parser.add_argument( '--instantiations', type=int, default=3, help="Number of different initial seeds to run with" )
-    run_parser.add_argument( '--model', type=str, default="mixture", choices=["mixture","hmm"], help="Model to use" )
+    run_parser.add_argument( '--model', type=str, default="mixture", choices=["mixture","hmm", "grid"], help="Model to use" )
     #run_parser.add_argument( 'extra-args', type=str, nargs='+', help="Additional arguments for the actual program" )
     run_parser.set_defaults(func=do_run)
 

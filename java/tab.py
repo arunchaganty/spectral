@@ -17,7 +17,7 @@ def do_extract(args):
             values = {}
             opts = scabby.read_options( os.path.join( execdir, 'options.map' ) )
             out = scabby.read_options( os.path.join( execdir, 'output.map' ) )
-            out.update( opts ) # Temporary hack
+            opts.update( out )
             values = { key : scabby.fuzzy_get(opts,key) for key in keys }
             print scabby.dict_to_tab(values)
         except KeyError:
