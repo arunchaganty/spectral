@@ -3,6 +3,7 @@ package learning.models.loglinear;
 import java.io.*;
 import java.util.*;
 
+import learning.linalg.FullTensor;
 import learning.linalg.MatrixOps;
 
 import fig.basic.*;
@@ -10,6 +11,7 @@ import fig.exec.*;
 import fig.prob.*;
 import fig.record.*;
 import learning.utils.Counter;
+import org.ejml.simple.SimpleMatrix;
 
 import static fig.basic.LogInfo.*;
 
@@ -91,11 +93,21 @@ public class Models {
       return examples;
     }
 
+    @Override
+    public double updateMoments(Example ex, double count, SimpleMatrix P12, SimpleMatrix P13, SimpleMatrix P32, FullTensor P123) {
+      int x1 = ex.x[0];
+      int x2 = ex.x[1];
+      int x3 = ex.x[2];
+      P13.set( x1, x3, P13.get( x1, x3 ) + count);
+      P12.set( x1, x2, P12.get( x1, x2 ) + count);
+      P32.set( x3, x2, P32.get( x3, x2 ) + count);
+      P123.set( x1, x2, x3, P123.get(x1, x2, x3) + count );
+      return count;
+    }
   }
 
-
   public static class HiddenMarkovModel extends Model {
-
+    int avgWindow = 1;
     public HiddenMarkovModel(int K, int D, int L) {
       this.K = K;
       this.D = D;
@@ -227,9 +239,43 @@ public class Models {
       }
       return examples;
     }
+    @Override
+    public double updateMoments(Example ex, double count, SimpleMatrix P12, SimpleMatrix P13, SimpleMatrix P32, FullTensor P123) {
+      double updates = 0.;
+      for(int start = 0; start < ex.x.length - 2; start++ ) {
+        int x1 = ex.x[(start)];
+        int x3 = ex.x[(start+1)]; // The most stable one we want to actually recover
+        int x2 = ex.x[(start+2)];
+        P13.set( x1, x3, P13.get( x1, x3 ) + count);
+        P12.set( x1, x2, P12.get( x1, x2 ) + count);
+        P32.set( x3, x2, P32.get( x3, x2 ) + count);
+        P123.set( x1, x2, x3, P123.get(x1, x2, x3) + count );
+
+        updates += count;
+      }
+
+      return updates;
+    }
+
+    // Version with a window: Obsolete.
+//    @Override
+//    public void updateMoments(Example ex, double count, SimpleMatrix P12, SimpleMatrix P13, SimpleMatrix P32, FullTensor P123) {
+//      int window = avgWindow;
+//      for(int start = 0; start < ex.x.length - 2; start++ ) {
+//        int x1 = ex.x[(start)];
+//        int x3 = ex.x[(start+1)]; // The most stable one we want to actually recover
+//        for(int extent = 0; extent < window && start + 2 + extent < ex.x.length; extent++) {
+//          int x2 = ex.x[start+2+extent];
+//          P13.set( x1, x3, P13.get( x1, x3 ) + count);
+//          P12.set( x1, x2, P12.get( x1, x2 ) + count);
+//          P32.set( x3, x2, P32.get( x3, x2 ) + count);
+//          P123.set( x1, x2, x3, P123.get(x1, x2, x3) + count );
+//        }
+//      }
+//    }
   }
 
-  public static class TallMixture extends Model {
+  public abstract static class TallMixture extends Model {
     int D; // L = number of views, D = choices per view;
 
     public Example newExample() {
@@ -332,11 +378,13 @@ public class Models {
     final int height = 2;
     int width;
 
-    public GridModel(int L, int D) {
+    public GridModel(int K, int D, int L) {
+      this.K = K;
       this.L = L;
       this.D = D;
       this.width = L / height;
       assert L % height == 0 : L;
+      createHypergraph(null,null,0);
     }
 
     public Example newExample() {
@@ -430,6 +478,61 @@ public class Models {
       //H.debug = true;
       H.addEdge(H.sumStartNode(), transNode(H, ex, params, counts, increment, 0, -1, -1));
       return H;
+    }
+
+    public ParamsVec getSampleMarginals(Counter<Example> examples) {
+      ParamsVec marginals = newParamsVec();
+      for(Example ex : examples) {
+        for(int r = 0; r < height; r++) {
+          for(int c = 0; c < width; c++) {
+            int y = ex.h[hiddenNodeIndex(r,c)];
+            {
+              int x0 = ex.x[observedNodeIndex(r,c,0)];
+              int x1 = ex.x[observedNodeIndex(r,c,1)];
+              marginals.incr(new UnaryFeature(y, "x="+x0), examples.getFraction(ex));
+              marginals.incr(new UnaryFeature(y, "x="+x1), examples.getFraction(ex));
+            }
+            if(r > 0) {
+              int y_ = ex.h[hiddenNodeIndex(r-1,c)];
+              marginals.incr(new BinaryFeature(y_, y), examples.getFraction(ex));
+            }
+            if(c > 0) {
+              int y_ = ex.h[hiddenNodeIndex(r,c-1)];
+              marginals.incr(new BinaryFeature(y_, y), examples.getFraction(ex));
+            }
+          }
+        }
+      }
+      return marginals;
+    }
+
+    @Override
+    public Counter<Example> getDistribution(ParamsVec params) {
+      Counter<Example> examples = new Counter<>();
+      examples.addAll(generateExamples(2*L));
+      for(Example ex: examples) {
+        examples.set( ex, getProbability(params, ex));
+      }
+      return examples;
+    }
+
+    @Override
+    public double updateMoments(Example ex, double count, SimpleMatrix P12, SimpleMatrix P13, SimpleMatrix P32, FullTensor P123) {
+      double updates = 0;
+      for( int r = 0; r < height; r++ ) {
+        for( int c = 0; c < width; c++ ) {
+          int x2 = ex.x[observedNodeIndex(r,c,0)];
+          int x3 = ex.x[observedNodeIndex(r,c,1)]; // Just because we extract M3 - so lets pivot around this.
+          // TODO: Average over all the other possibilities
+          int x1 = ex.x[observedNodeIndex(r+1 % height,c,0)];
+          P13.set( x1, x3, P13.get( x1, x3 ) + count);
+          P12.set( x1, x2, P12.get( x1, x2 ) + count);
+          P32.set( x3, x2, P32.get( x3, x2 ) + count);
+          P123.set( x1, x2, x3, P123.get(x1, x2, x3) + count );
+          updates += count;
+        }
+      }
+      return updates;
     }
   }
 

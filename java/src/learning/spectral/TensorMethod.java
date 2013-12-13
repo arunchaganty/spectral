@@ -94,6 +94,10 @@ public class TensorMethod {
 //    LogInfo.logsForce( "%f", MatrixOps.diff(Pairs, Pairs_));
 //    assert  MatrixOps.allclose(Pairs, Pairs_);
 
+    // print error notes
+    Execution.putOutput("sigmak", MatrixOps.sigmak(Pairs, K));
+    Execution.putOutput("condition-number", MatrixOps.conditionNumber(Pairs, K));
+
     Pair<SimpleMatrix,FullTensor> whitened = whiten(K, Pairs, Triples);
     SimpleMatrix Winv = whitened.getValue0();
     FullTensor Tw = whitened.getValue1();
@@ -106,7 +110,7 @@ public class TensorMethod {
     eigenvalues = pair.getValue0(); eigenvectors = pair.getValue1();
 
     FullTensor T_ = FullTensor.fromDecomposition( eigenvalues, eigenvectors );
-    LogInfo.logs( "T_: " + MatrixOps.diff(Triples, T_) );
+    Execution.putOutput("tensor-recovery-error", MatrixOps.diff(Triples, T_));
 
     return Pair.with(eigenvalues, eigenvectors);
   }
@@ -145,6 +149,8 @@ public class TensorMethod {
 
     SimpleMatrix M1 = M13.mult( M3i );
     SimpleMatrix M2 = M3i.transpose().mult(M32).transpose();
+
+    Execution.putOutput("tensor-reconstruction-error", MatrixOps.diff(M123, FullTensor.fromDecomposition(pi, M1, M2, M3)));
 
     try {
       if( Execution.getActualExecDir() != null ){

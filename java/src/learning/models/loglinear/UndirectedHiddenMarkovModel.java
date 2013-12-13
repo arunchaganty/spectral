@@ -2,10 +2,12 @@ package learning.models.loglinear;
 
 import fig.basic.Indexer;
 import fig.basic.Pair;
+import learning.linalg.FullTensor;
 import learning.linalg.MatrixOps;
 import learning.linalg.RandomFactory;
 import learning.models.ExponentialFamilyModel;
 import learning.utils.Counter;
+import org.ejml.simple.SimpleMatrix;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -433,5 +435,21 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     return examples;
   }
 
+  @Override
+  public double updateMoments(Example ex, double count, SimpleMatrix P12, SimpleMatrix P13, SimpleMatrix P32, FullTensor P123) {
+    double updates = 0.0;
+    for(int start = 0; start < ex.x.length - 2; start++ ) {
+      int x1 = ex.x[(start)];
+      int x3 = ex.x[(start+1)]; // The most stable one we want to actually recover
+      int x2 = ex.x[(start+2)];
+      P13.set( x1, x3, P13.get( x1, x3 ) + count);
+      P12.set( x1, x2, P12.get( x1, x2 ) + count);
+      P32.set( x3, x2, P32.get( x3, x2 ) + count);
+      P123.set( x1, x2, x3, P123.get(x1, x2, x3) + count );
+      updates += count;
+    }
+
+    return updates;
+  }
 
 }

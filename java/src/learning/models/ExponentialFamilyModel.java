@@ -1,10 +1,12 @@
 package learning.models;
 
 import fig.basic.Indexer;
+import learning.linalg.FullTensor;
 import learning.models.loglinear.Example;
 import learning.models.loglinear.Feature;
 import learning.models.loglinear.ParamsVec;
 import learning.utils.Counter;
+import org.ejml.simple.SimpleMatrix;
 
 import java.util.Random;
 
@@ -38,6 +40,18 @@ public abstract class ExponentialFamilyModel<T> {
   public T drawSample(ParamsVec parameters, Random rnd) {
     return drawSamples(parameters, rnd, 1).iterator().next();
   }
+
+  /**
+   * Update the moments
+   * @param ex
+   * @param count
+   * @param P12
+   * @param P13
+   * @param P32
+   * @param P123
+   * @return - the number of updates made
+   */
+  public abstract double updateMoments(T ex, double count, SimpleMatrix P12, SimpleMatrix P13, SimpleMatrix P32, FullTensor P123);
 
 }
 
