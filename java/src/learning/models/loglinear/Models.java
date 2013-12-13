@@ -524,7 +524,7 @@ public class Models {
           int x2 = ex.x[observedNodeIndex(r,c,0)];
           int x3 = ex.x[observedNodeIndex(r,c,1)]; // Just because we extract M3 - so lets pivot around this.
           // TODO: Average over all the other possibilities
-          int x1 = ex.x[observedNodeIndex(r+1 % height,c,0)];
+          int x1 = ex.x[observedNodeIndex( (r+1) % height,c,0)];
           P13.set( x1, x3, P13.get( x1, x3 ) + count);
           P12.set( x1, x2, P12.get( x1, x2 ) + count);
           P32.set( x3, x2, P32.get( x3, x2 ) + count);
