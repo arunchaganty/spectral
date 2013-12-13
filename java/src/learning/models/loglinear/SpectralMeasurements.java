@@ -119,6 +119,7 @@ public class SpectralMeasurements implements Runnable {
       LogInfo.logsForce("paramsError="+err);
 
       err = Counter.diff(trueMarginal, fitMarginal);
+      Execution.putOutput("marginalError", err);
       LogInfo.logsForce("marginalError="+err);
 
       return err;
@@ -464,10 +465,10 @@ public class SpectralMeasurements implements Runnable {
         break;
       }
       case hmm: {
-//        modelA = new UndirectedHiddenMarkovModel(opts.K, opts.D, opts.L);
-//        modelB = new UndirectedHiddenMarkovModel(opts.K, opts.D, opts.L);
-        modelA = new HiddenMarkovModel(opts.K, opts.D, opts.L);
-        modelB = new HiddenMarkovModel(opts.K, opts.D, opts.L);
+        modelA = new UndirectedHiddenMarkovModel(opts.K, opts.D, opts.L);
+        modelB = new UndirectedHiddenMarkovModel(opts.K, opts.D, opts.L);
+ //       modelA = new HiddenMarkovModel(opts.K, opts.D, opts.L);
+ //       modelB = new HiddenMarkovModel(opts.K, opts.D, opts.L);
         break;
       }
       case tallMixture: {
