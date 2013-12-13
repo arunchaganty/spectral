@@ -172,8 +172,10 @@ def plot(ax, data, x_key, y_key, **kwargs):
     return ax
 
 def scatter(ax, data, x_key, y_key, **kwargs):
+    opts = {'alpha':0.8}
+    opts.update(kwargs)
     xs, ys = zip(*[ (datum[x_key], datum[y_key]) for datum in data ] )
-    ax.scatter( xs, ys, **kwargs )
+    ax.scatter( xs, ys, **opts )
     return ax
 
 def read_tab_file(fhandle):

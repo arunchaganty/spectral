@@ -48,7 +48,10 @@ public class SpectralMeasurements implements Runnable {
   @Option(gloss="Initialize with exact") public boolean initializeWithExact = false;
   @Option(gloss="Preconditioning") public double preconditioning = 0.0;
   @Option(gloss="Smooth measurements") public double smoothMeasurements = 0.0;
+
   @Option(gloss="Use T in SpectralMeasurements?") public boolean useTransitions = false;
+  @Option(gloss="HMM window size") public int windowSize = 1;
+
   @OptionSet(name="tensor") public TensorMethod algo = new TensorMethod();
 
   @Option(gloss="Print all the things") public boolean debug = false;
@@ -136,37 +139,28 @@ public class SpectralMeasurements implements Runnable {
    * Computes moments from the sequences in an Example.
    */
   class ExampleMoments implements ComputableMoments, HasSampleMoments {
-    final Counter<Example> data;
-    List<Integer> indices;
+    //List<Integer> indices;
     SimpleMatrix P13;
     SimpleMatrix P12;
     SimpleMatrix P32;
     FullTensor P123;
 
-    ExampleMoments(int D, final Counter<Example> data, final List<Integer> indices) {
-      this.data = data;
-      this.indices = indices;
-
+    <T> ExampleMoments(ExponentialFamilyModel<T> model, final Counter<T> data) {
+      int D = model.getD();
       // Create P13
       P13 = new SimpleMatrix(D, D);
       P12 = new SimpleMatrix(D, D);
       P32 = new SimpleMatrix(D, D);
       P123 = new FullTensor(D,D,D);
-      for( Example ex : data ) {
-        int x1 = ex.x[indices.get(0)];
-        int x2 = ex.x[indices.get(1)];
-        int x3 = ex.x[indices.get(2)];
-
-        P13.set( x1, x3, P13.get( x1, x3 ) + data.getCount(ex));
-        P12.set( x1, x2, P12.get( x1, x2 ) + data.getCount(ex));
-        P32.set( x3, x2, P32.get( x3, x2 ) + data.getCount(ex));
-        P123.set( x1, x2, x3, P123.get(x1, x2, x3) + data.getCount(ex));
+      double count = 0;
+      for( T ex : data ) {
+        count += model.updateMoments(ex, data.getCount(ex), P12, P13, P32, P123);
       }
       // Scale down everything
-      P13 = P13.scale(1./data.sum());
-      P12 = P12.scale(1./data.sum());
-      P32 = P32.scale(1./data.sum());
-      P123.scale(1./data.sum());
+      P13 = P13.scale(1./count);
+      P12 = P12.scale(1./count);
+      P32 = P32.scale(1./count);
+      P123.scale(1./count);
 
       // Add some to the diagonal term
       if( preconditioning > 0. ) {
@@ -175,8 +169,8 @@ public class SpectralMeasurements implements Runnable {
         }
       }
       P123.scale(1./P123.elementSum());
-
     }
+
     @Override
     public MatrixOps.Matrixable computeP13() {
       return MatrixOps.matrixable(P13);
@@ -202,7 +196,6 @@ public class SpectralMeasurements implements Runnable {
       return Quartet.with(P13, P12, P32, P123);
     }
   }
-
 
   ParamsVec computeTrueMeasurements( final Counter<Example> data ) {
     assert( analysis != null );
@@ -248,7 +241,7 @@ public class SpectralMeasurements implements Runnable {
       MixtureModel model = (MixtureModel) modelA;
       // \phi_1, \phi_2, \phi_3
 
-      MixtureOfGaussians gmm = ParameterRecovery.recoverGMM(K, 0, (HasSampleMoments) new ExampleMoments(D, data, Arrays.asList(0, 1, 2)), 0.);
+      MixtureOfGaussians gmm = ParameterRecovery.recoverGMM(K, 0, new ExampleMoments(model, data), smoothMeasurements);
       // TODO: Create a mixture of Bernoullis and move this stuff there.
       SimpleMatrix pi = gmm.getWeights();
       SimpleMatrix[] M = gmm.getMeans();
@@ -282,42 +275,30 @@ public class SpectralMeasurements implements Runnable {
       }
       Execution.putOutput("moments.params", MatrixFactory.fromVector(measurements.weights));
     } else if( modelA instanceof  HiddenMarkovModel || modelA instanceof UndirectedHiddenMarkovModel ) {
-
 //      HiddenMarkovModel model = (HiddenMarkovModel) modelA;
       UndirectedHiddenMarkovModel model = (UndirectedHiddenMarkovModel) modelA;
       // \phi_1, \phi_2, \phi_3
 
-      MixtureOfGaussians gmm = ParameterRecovery.recoverGMM(K, 0, (HasSampleMoments) new ExampleMoments(D, data, Arrays.asList(0, 1, 2)), smoothMeasurements);
+      MixtureOfGaussians gmm = ParameterRecovery.recoverGMM(K, 0, new ExampleMoments(model, data), smoothMeasurements);
       // TODO: Create a mixture of Bernoullis and move this stuff there.
       SimpleMatrix pi = gmm.getWeights();
       // The pi are always really bad. Ignore?
       SimpleMatrix[] M = gmm.getMeans();
-      SimpleMatrix O = M[1];
-      SimpleMatrix OT = M[2];
-      SimpleMatrix T = O.pseudoInverse().mult(OT);
+      SimpleMatrix O = M[2];
 
       Execution.putOutput("pi", pi);
       Execution.putOutput("O", O);
-      Execution.putOutput("T", T);
 
 //        pi = MatrixFactory.ones(K).scale(1./K);
 
       // Project onto simplices
       O = MatrixOps.projectOntoSimplex( O, smoothMeasurements );
-      T = MatrixOps.projectOntoSimplex( T, smoothMeasurements );
 
-      // measurements.weights[ measurements.featureIndexer.getIndex(Feature("h=0,x=0"))] = 0.0;
       Indexer<Feature> measuredFeatureIndexer = new Indexer<>();
       for( int h = 0; h < K; h++ ) {
         for( int d = 0; d < D; d++ ) {
           // O
           measuredFeatureIndexer.add( new UnaryFeature(h, "x="+d) );
-        }
-        if(useTransitions) {
-          for( int h_ = 0; h_ < K; h_++ ) {
-            // T
-            measuredFeatureIndexer.add(new BinaryFeature(h, h_));
-          }
         }
       }
 
@@ -332,20 +313,63 @@ public class SpectralMeasurements implements Runnable {
           // over x1, x2 and x3.
           measurements.weights[f] = model.L * O.get( d, h ) * pi.get(h);
         }
-        if( useTransitions ) {
-          for( int h_ = 0; h_ < K; h_++ ) {
-            // Assuming identical distribution.
-            int f = measurements.featureIndexer.getIndex(new BinaryFeature(h, h_));
-            // multiplying by pi to go from E[x|h] -> E[x,h]
-            // multiplying by L because true.counts aggregates
-            // over x1, x2 and x3.
-            measurements.weights[f] = (model.L-1) * T.get( h_, h ) * pi.get(h);
-          }
+//        if( useTransitions ) {
+//          for( int h_ = 0; h_ < K; h_++ ) {
+//            // Assuming identical distribution.
+//            int f = measurements.featureIndexer.getIndex(new BinaryFeature(h, h_));
+//            // multiplying by pi to go from E[x|h] -> E[x,h]
+//            // multiplying by L because true.counts aggregates
+//            // over x1, x2 and x3.
+//            measurements.weights[f] = (model.L-1) * T.get( h_, h ) * pi.get(h);
+//          }
+//        }
+      }
+      Execution.putOutput("moments.params", MatrixFactory.fromVector(measurements.weights));
+    } else if( modelA instanceof  GridModel ) {
+      GridModel model = (GridModel) modelA;
+      // \phi_1, \phi_2, \phi_3
+
+      MixtureOfGaussians gmm = ParameterRecovery.recoverGMM(K, 0, new ExampleMoments(model, data), smoothMeasurements);
+      SimpleMatrix pi = gmm.getWeights();
+      // The pi are always really bad. Ignore?
+      SimpleMatrix[] M = gmm.getMeans();
+      SimpleMatrix O = M[2];
+      SimpleMatrix O_ = M[1];
+
+      Execution.putOutput("pi", pi);
+      Execution.putOutput("O", O);
+
+      // Average the two
+      O = O.plus(O_).scale(0.5);
+
+      // Project onto simplices
+      O = MatrixOps.projectOntoSimplex( O, smoothMeasurements );
+      Execution.putOutput("O", O);
+
+      // measurements.weights[ measurements.featureIndexer.getIndex(Feature("h=0,x=0"))] = 0.0;
+      Indexer<Feature> measuredFeatureIndexer = new Indexer<>();
+      for( int h = 0; h < K; h++ ) {
+        for( int d = 0; d < D; d++ ) {
+          // O
+          measuredFeatureIndexer.add( new UnaryFeature(h, "x="+d) );
+        }
+      }
+
+      measurements = new ParamsVec(model.K, measuredFeatureIndexer);
+
+      for( int h = 0; h < K; h++ ) {
+        for( int d = 0; d < D; d++ ) {
+          // Assuming identical distribution.
+          int f = measurements.featureIndexer.getIndex(new UnaryFeature(h, "x="+d));
+          // multiplying by pi to go from E[x|h] -> E[x,h]
+          // multiplying by L because true.counts aggregates
+          // over x1, x2 and x3.
+          measurements.weights[f] = model.L * O.get( d, h ) * pi.get(h);
         }
       }
       Execution.putOutput("moments.params", MatrixFactory.fromVector(measurements.weights));
-    }
-    else {
+
+    } else {
       throw new RuntimeException("Not implemented yet");
     }
     LogInfo.end_track("solveBottleneck");
@@ -387,12 +411,6 @@ public class SpectralMeasurements implements Runnable {
 //
 //    return acc;
 //  }
-
-  public void setModel(Model model, int L) {
-    this.modelA = model;
-    // Run once to just instantiate features
-    model.createHypergraph(null, null, 0);
-  }
 
   ///////////////////////////////////
   // Instantiation stuff
@@ -467,8 +485,8 @@ public class SpectralMeasurements implements Runnable {
       case hmm: {
         modelA = new UndirectedHiddenMarkovModel(opts.K, opts.D, opts.L);
         modelB = new UndirectedHiddenMarkovModel(opts.K, opts.D, opts.L);
- //       modelA = new HiddenMarkovModel(opts.K, opts.D, opts.L);
- //       modelB = new HiddenMarkovModel(opts.K, opts.D, opts.L);
+//        modelA = new HiddenMarkovModel(opts.K, opts.D, opts.L);
+//        modelB = new HiddenMarkovModel(opts.K, opts.D, opts.L);
         break;
       }
       case tallMixture: {
@@ -476,8 +494,9 @@ public class SpectralMeasurements implements Runnable {
         //break;
       }
       case grid: {
-        throw new RuntimeException("grid model not implemented");
-//        break;
+        modelA = new GridModel(opts.K, opts.D, opts.L);
+        modelB = new GridModel(opts.K, opts.D, opts.L);
+        break;
       }
       default:
         throw new RuntimeException("Unhandled modelA type: " + opts.modelType);

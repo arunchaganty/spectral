@@ -3,6 +3,7 @@ package learning.models.loglinear;
 import java.io.*;
 import java.util.*;
 
+import learning.linalg.FullTensor;
 import learning.linalg.MatrixOps;
 
 import fig.basic.*;
@@ -11,6 +12,7 @@ import fig.prob.*;
 import fig.record.*;
 import learning.models.ExponentialFamilyModel;
 import learning.utils.Counter;
+import org.ejml.simple.SimpleMatrix;
 
 import static fig.basic.LogInfo.*;
 
@@ -176,7 +178,6 @@ public abstract class Model extends ExponentialFamilyModel<Example> {
     generateExamples(ex, 0, examples);
     return examples;
   }
-
 
 }
 
