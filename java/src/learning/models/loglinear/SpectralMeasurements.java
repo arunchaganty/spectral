@@ -445,34 +445,6 @@ public class SpectralMeasurements implements Runnable {
   }
 
   /**
-   * Generates random data from the modelA.
-   *  - Uses genRand as a seed.
-   */
-  Counter<Example> generateData(Model model, ParamsVec params, GenerationOptions opts) {
-    LogInfo.begin_track("generateData");
-    ParamsVec counts = model.newParamsVec();
-    Hypergraph<Example> Hp = model.createHypergraph(params.weights, counts.weights, 1);
-    // Necessary preprocessing before you can generate hyperpaths
-    Hp.computePosteriors(false);
-    Hp.fetchPosteriors(false);
-
-    Counter<Example> examples = new Counter<>();
-
-    for (int i = 0; i < opts.genNumExamples; i++) {
-      Example ex = model.newExample();
-      Hp.fetchSampleHyperpath(opts.genRandom, ex);
-      examples.add(ex);
-      if( debug ) {
-        LogInfo.logs("x = %s", Fmt.D(ex.x));
-        LogInfo.logs("h = %s", Fmt.D(ex.h));
-      }
-    }
-    LogInfo.end_track();
-
-    return examples;
-  }
-
-  /**
    * Generates a modelA of a particular type
    */
   void initializeModels(ModelOptions opts) {

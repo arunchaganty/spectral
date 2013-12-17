@@ -166,10 +166,10 @@ public abstract class Model extends ExponentialFamilyModel<Example> {
       examples.add(new Example(current.x));
     } else {
       // Make a choice for this index
-      current.x[idx] = 0;
-      generateExamples(current, idx+1, examples);
-      current.x[idx] = 1;
-      generateExamples(current, idx+1, examples);
+      for(int i = 0; i < D; i++) {
+        current.x[idx] = i;
+        generateExamples(current, idx+1, examples);
+      }
     }
   }
   List<Example> generateExamples(int L) {

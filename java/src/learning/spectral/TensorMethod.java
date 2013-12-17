@@ -21,20 +21,41 @@ import org.apache.commons.io.FilenameUtils;
  */
 public class TensorMethod {
   @Option(gloss="Number of iterations to run the power method to convergence")
-  public int iters = 1000;
+  public int iters = 100;
   @Option(gloss="Number of attempts to find good eigen-vectors")
-  public int attempts = 10;
+  public int attempts = 100;
   @Option(gloss="Random number generator for tensor method and random projections")
   public Random rnd = new Random();
   @Option(gloss="Oversampling factor for the random projection")
   public double oversamplingFactor = 2.0;
-  @OptionSet(name="TensorFactorization")
-  public TensorFactorization tf = new TensorFactorization();
 
-  public TensorMethod() {}
+  public enum Method {
+    PowerMethod,
+    GradientPowerMethod
+  };
+  @Option(gloss="Method for tensor factorization")
+  public Method method = Method.PowerMethod;
+
+  public TensorMethod() {
+  }
   public TensorMethod(int iters, int attempts) {
+    this();
     this.iters = iters;
     this.attempts = attempts;
+  }
+  TensorFactorizationAlgorithm getMethod() {
+    TensorFactorizationAlgorithm tf;
+    switch(method) {
+      case PowerMethod:
+        tf = new TensorPowerMethod();
+        break;
+      case GradientPowerMethod:
+        tf = new TensorGradientDescent();
+        break;
+      default:
+        throw new RuntimeException("Invalid method");
+    }
+    return tf;
   }
 
   /**
@@ -103,7 +124,7 @@ public class TensorMethod {
     FullTensor Tw = whitened.getValue1();
 
 
-    Pair<SimpleMatrix, SimpleMatrix> pair = tf.eigendecompose(Tw, K, attempts, iters);
+    Pair<SimpleMatrix, SimpleMatrix> pair = getMethod().symmetricFactorize(Tw, K);
     SimpleMatrix eigenvalues = pair.getValue0(); SimpleMatrix eigenvectors = pair.getValue1();
 
     pair = unwhiten(eigenvalues, eigenvectors, Winv);
@@ -284,7 +305,7 @@ public class TensorMethod {
     FullTensor Tw = obj.computeP123().multiply123(W, W, W);
 
     // Eigendecompose to find stuff.
-    Pair<SimpleMatrix, SimpleMatrix> pair = tf.eigendecompose(Tw, K, attempts, iters);
+    Pair<SimpleMatrix, SimpleMatrix> pair = getMethod().symmetricFactorize(Tw, K);
     SimpleMatrix eigenvalues = pair.getValue0(); SimpleMatrix eigenvectors = pair.getValue1();
 
     // Unwhiten
@@ -337,7 +358,7 @@ public class TensorMethod {
     LogInfo.end_track("symmetrize-views+whiten");
 
     // Recover parameters
-    Pair<SimpleMatrix, SimpleMatrix> pair = tf.eigendecompose(Tw, K, attempts, iters);
+    Pair<SimpleMatrix, SimpleMatrix> pair = getMethod().symmetricFactorize(Tw, K);
     SimpleMatrix eigenvalues = pair.getValue0(); SimpleMatrix eigenvectors = pair.getValue1();
 
     // Unwhiten

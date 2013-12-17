@@ -475,7 +475,7 @@ public class Models {
 
     public Hypergraph<Example> createHypergraph(Example ex, double[] params, double[] counts, double increment) {
       Hypergraph<Example> H = new Hypergraph<Example>();
-      //H.debug = true;
+      H.debug = true;
       H.addEdge(H.sumStartNode(), transNode(H, ex, params, counts, increment, 0, -1, -1));
       return H;
     }
