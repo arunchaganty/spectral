@@ -40,6 +40,7 @@ public class MixtureOfGaussians implements HasExactMoments, HasSampleMoments {
   protected SimpleMatrix weights;
   protected SimpleMatrix[] means;
   protected SimpleMatrix[][] covs;
+  protected SimpleMatrix[][] invcovs;
 
   Random rnd = new Random();
 
@@ -50,7 +51,18 @@ public class MixtureOfGaussians implements HasExactMoments, HasSampleMoments {
 
     this.weights = weights;
     this.means = means;
+    // The covs are unit? So be it.
+    if(covs == null) {
+      covs = new SimpleMatrix[V][K];
+      for(int view = 0; view < V; view++)
+        for(int k = 0; k < K; k++)
+          covs[view][k] = MatrixFactory.eye(D);
+    }
     this.covs = covs;
+    this.invcovs = new SimpleMatrix[V][K];
+    for(int view = 0; view < V; view++)
+      for(int k = 0; k < K; k++)
+        invcovs[view][k] = covs[view][k].invert();
   }
 
   public SimpleMatrix getWeights() {
@@ -219,6 +231,25 @@ public class MixtureOfGaussians implements HasExactMoments, HasSampleMoments {
     }
 
     return new Pair<>(X, h);
+  }
+
+  public double computeLikelihood(SimpleMatrix[] data) {
+    double lhood = 0.;
+    for(int view = 0; view < V; view++) {
+      SimpleMatrix data_ = data[view];
+      SimpleMatrix means_ = means[view];
+      for(int row = 0; row < data_.numRows(); row++) {
+        // Add the Gaussian of each component.
+        SimpleMatrix datum = MatrixOps.row(data_, row);
+        for(int k = 0; k < K; k++ ) {
+          SimpleMatrix mean = MatrixOps.col(means_,k).transpose();
+          lhood += 0.5 * (datum.minus(mean).normF() * datum.minus(mean).normF()) - Math.log(K);
+//                  MatrixOps.xMy(datum.minus(mean), invcovs[view][k], datum.minus(mean));
+        }
+      }
+    }
+
+    return lhood;
   }
 
   @Override
@@ -419,6 +450,9 @@ public class MixtureOfGaussians implements HasExactMoments, HasSampleMoments {
     public String covs = "eye";
     @Option(gloss="variance parameter") 
     public double sigma = 0.01;
+
+    @Option(gloss="genRandom")
+    Random genRandom = new Random(42);
   }
   public static class OutputOptions {
     @Option(gloss="Output file: '-' for STDOUT") 

@@ -1245,6 +1245,9 @@ public class MatrixOps {
   public static double xMy(final DenseMatrix64F x, final DenseMatrix64F M, final DenseMatrix64F y) {
     return VectorVectorMult.innerProdA(x, M, y);
   }
+  public static double xMy(final SimpleMatrix x, final SimpleMatrix M, final SimpleMatrix y) {
+    return xMy(x.getMatrix(), M.getMatrix(), y.getMatrix());
+  }
   public static void quadraticForm(final DenseMatrix64F X, final DenseMatrix64F M, DenseMatrix64F y) {
     int N = X.numRows;
     int D = X.numCols;
