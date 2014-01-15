@@ -1,11 +1,15 @@
 package learning.linalg;
 
-import fig.basic.BacktrackingLineSearch;
-import fig.basic.LBFGSMaximizer;
-import fig.basic.Maximizer;
-import fig.basic.OptionSet;
+import fig.basic.*;
+import fig.exec.Execution;
+import learning.utils.UtilsJ;
 import org.ejml.simple.SimpleMatrix;
 import org.javatuples.Pair;
+
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Jointly solve for a factorization for T and P:
@@ -70,6 +74,51 @@ public class TensorJointGradientDescent implements  TensorFactorizationAlgorithm
     }
   }
 
+  boolean optimize( Maximizer maximizer, Maximizer.FunctionState state, String label, int numIters ) {
+    LogInfo.begin_track("optimize " + label);
+    state.invalidate();
+    boolean done = false;
+    // E-step
+    int iter;
+
+    PrintWriter out = IOUtils.openOutHard(Execution.getFile(label + ".events"));
+
+    double oldObjective = Double.NEGATIVE_INFINITY;
+
+    for (iter = 0; iter < numIters && !done; iter++) {
+      state.invalidate();
+
+      // Logging stuff
+      List<String> items = new ArrayList<>();
+      items.add("iter = " + iter);
+      items.add("objective = " + state.value());
+      items.add("pointNorm = " + MatrixOps.norm(state.point()));
+      items.add("gradientNorm = " + MatrixOps.norm(state.gradient()));
+      LogInfo.logs( StrUtils.join(items, "\t") );
+      out.println( StrUtils.join(items, "\t") );
+      out.flush();
+
+      double objective = state.value();
+      assert objective > oldObjective;
+      oldObjective = objective;
+
+      done = maximizer.takeStep(state);
+    }
+    // Do a gradient check only at the very end.
+    UtilsJ.doGradientCheck(state);
+
+    List<String> items = new ArrayList<>();
+    items.add("iter = " + iter);
+    items.add("objective = " + state.value());
+    items.add("pointNorm = " + MatrixOps.norm(state.point()));
+    items.add("gradientNorm = " + MatrixOps.norm(state.gradient()));
+    LogInfo.logs( StrUtils.join(items, "\t") );
+    out.println( StrUtils.join(items, "\t") );
+    out.flush();
+
+    LogInfo.end_track();
+    return done && iter == 1;  // Didn't make any updates
+  }
 
   /**
    * min_{l,X} \|T - l_i X_i \otimes X_i \otimes X_i\|_F^2 + \|P - l_i X_i \otimes X_i \|_F^2 + \|X\|^2_F.
@@ -79,8 +128,14 @@ public class TensorJointGradientDescent implements  TensorFactorizationAlgorithm
    */
   @Override
   public Pair<SimpleMatrix, SimpleMatrix> symmetricFactorize(FullTensor T, int K) {
+    double[] lambda = new double[K];
+    Arrays.fill(lambda, 1.0/K);
+    SymmetricStateVectors state = new SymmetricStateVectors(T, K, lambda);
 
-    return null;
+    LBFGSMaximizer maximizer = new LBFGSMaximizer(backtrack, lbfgs);
+    optimize(maximizer, state, "JointTensor", 100);
+
+    throw new RuntimeException("Not yet implemented");
   }
 
   @Override
