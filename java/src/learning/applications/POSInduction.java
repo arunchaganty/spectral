@@ -23,6 +23,7 @@ import learning.models.loglinear.UndirectedHiddenMarkovModel;
 import learning.spectral.TensorMethod;
 import learning.spectral.applications.ParameterRecovery;
 import learning.utils.Counter;
+import learning.utils.UtilsJ;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -352,15 +353,39 @@ public class POSInduction implements Runnable {
    * Reads a data file in the format word_TAG,
    * Example:
    *    Pierre_NNP Vinken_NNP ,_, 61_CD years_NNS old_JJ ,_, will_MD join_VB the_DT board_NN as_IN a_DT nonexecutive_JJ director_NN Nov._NNP 29_CD ._.
-   * @param in
+   * @param input
    * @return
    */
-  public static ParsedCorpus readData(Reader in) {
+  public static ParsedCorpus readData(File input) {
     Indexer<String> wordIndex = new Indexer<>();
     Indexer<String> tagIndex = new Indexer<>();
     List<int[]> sentences = new ArrayList<>();
     List<int[]> answers = new ArrayList<>();
-    try(BufferedReader stream = new BufferedReader(in)) {
+    Counter<String> counter = new Counter<>();
+
+    wordIndex.add(Corpus.UPPER_CLASS);
+    wordIndex.add(Corpus.LOWER_CLASS);
+    wordIndex.add(Corpus.DIGIT_CLASS);
+    wordIndex.add(Corpus.MISC_CLASS);
+    // Anything that appears less than THRESHOLD times is set to rare
+    int THRESHOLD = 5;
+
+    try(BufferedReader stream = UtilsJ.openReader(input)) {
+      // Compute the words and statistics
+      for(String line : IOUtils.readLines(stream)) {
+        for(String token : line.split(" ")) {
+          String[] word_tag = token.split("_");
+          assert word_tag.length == 2;
+          String word = word_tag[0];
+          counter.add(word);
+        }
+      }
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    try(BufferedReader stream = UtilsJ.openReader(input)) {
+      // Go back and actually add the words to the corpus
       for(String line : IOUtils.readLines(stream)) {
         String[] tokens = line.split(" ");
         if(tokens.length == 0) continue;
@@ -372,6 +397,19 @@ public class POSInduction implements Runnable {
           String[] word_tag = token.split("_");
           assert word_tag.length == 2;
           String word = word_tag[0];
+
+          // Handle rare words
+          if( counter.getCount(word) < THRESHOLD ) {
+            if(Character.isUpperCase(word.charAt(0)))
+              word = Corpus.UPPER_CLASS;
+            else if(Character.isDigit(word.charAt(0)))
+              word = Corpus.DIGIT_CLASS;
+            else if(Character.isLowerCase(word.charAt(0)))
+              word = Corpus.LOWER_CLASS;
+            else
+              word = Corpus.MISC_CLASS;
+          }
+
           String tag = word_tag[1];
           words[i] = wordIndex.getIndex(word);
           tags[i] = tagIndex.getIndex(tag);
@@ -379,6 +417,7 @@ public class POSInduction implements Runnable {
         sentences.add(words);
         answers.add(tags);
       }
+      // TODO: handle close with a finally
     } catch (IOException e) {
         throw new RuntimeException(e);
     }
@@ -389,9 +428,6 @@ public class POSInduction implements Runnable {
       tagIndex.toArray(new String[tagIndex.size()]),
               answers.toArray(new int[answers.size()][])
       );
-  }
-  public static ParsedCorpus readData(File in) throws IOException {
-    return readData(new FileReader(in));
   }
 
   public void train() {

@@ -192,7 +192,7 @@ def filter_tab(tab, **kwargs):
             for key, val in kwargs.iteritems())
     return filter( do_filter, tab )
 
-#import matplotlib.markers as markers
-#MARKERS = markers.MarkerStyle.filled_markers
-#COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+import matplotlib.markers as markers
+MARKERS = markers.MarkerStyle.filled_markers
+COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 

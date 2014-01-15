@@ -4,10 +4,11 @@ import learning.data.ParsedCorpus;
 import org.junit.Test;
 import org.junit.Assert;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.List;
 
 /**
@@ -16,13 +17,14 @@ import java.util.List;
 public class POSInductionTest {
 
   @Test
-  public void testReadData() throws IOException {
-    InputStream in = this.getClass().getClassLoader()
-                                .getResourceAsStream("learning/applications/POSInduction_data.txt");
-    in.mark(0);
-    List<String> input = fig.basic.IOUtils.readLines(new BufferedReader(new InputStreamReader(in)));
-    in.reset();
-    ParsedCorpus out = POSInduction.readData(new InputStreamReader(in));
+  public void testReadData() throws IOException, URISyntaxException {
+    URL url = this.getClass().getClassLoader()
+            .getResource("learning/applications/POSInduction_data.txt");
+    File in = null;
+    in = new File(url.toURI());
+
+    List<String> input = fig.basic.IOUtils.readLines(Files.newBufferedReader(in.toPath(), Charset.forName("UTF-8")));
+    ParsedCorpus out = POSInduction.readData(in);
     List<String> output = out.toLines();
     Assert.assertEquals(input, output);
   }

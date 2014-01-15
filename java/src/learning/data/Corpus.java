@@ -27,6 +27,7 @@ public class Corpus {
   public static final String LOWER_CLASS = "@LOWER@";
   public static final String UPPER_CLASS = "@UPPER@";
   public static final String MISC_CLASS = "@MISC@";
+  public static final String RARE_CLASS = "@RARE@";
   // TODO: Add support here for auxillary features defined in
   // KirkpatrikBouchard2010
 

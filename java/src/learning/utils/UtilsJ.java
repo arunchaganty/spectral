@@ -9,8 +9,7 @@ import learning.linalg.MatrixOps;
 import org.ejml.simple.SimpleMatrix;
 import org.javatuples.Quartet;
 
-import java.io.BufferedReader;
-import java.io.IOException;
+import java.io.*;
 
 /**
  * Various utilities
@@ -73,6 +72,10 @@ public class UtilsJ {
     while( (line = reader.readLine()) != null )
       sb.append(line).append("\n");
     return sb.toString().trim();
+  }
+
+  public static BufferedReader openReader(File file) throws FileNotFoundException {
+    return new BufferedReader(new FileReader(file));
   }
 
 }
