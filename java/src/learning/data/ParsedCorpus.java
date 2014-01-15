@@ -34,7 +34,7 @@ public class ParsedCorpus extends Corpus {
   }
 
   public ParsedCorpus( Corpus C, String[] tagDict, int[][] L ) {
-    super((Corpus) C);
+    super(C);
     this.tagDict = tagDict;
     this.L = L;
   }
@@ -99,6 +99,35 @@ public class ParsedCorpus extends Corpus {
     }
 
     return dict.toArray(new String[dict.size()]);
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    for(int sentence = 0; sentence < C.length; sentence++) {
+      for(int word = 0; word < C[sentence].length; word++) {
+        sb.append(dict[C[sentence][word]]).append("_").append(tagDict[L[sentence][word]]);
+        sb.append(" ");
+      }
+      if(sentence < C.length-1)
+        sb.append("\n");
+    }
+
+    return sb.toString();
+  }
+
+  public List<String> toLines() {
+    List<String> lines = new ArrayList<>();
+    for(int sentence = 0; sentence < C.length; sentence++) {
+      StringBuilder sb = new StringBuilder();
+      for(int word = 0; word < C[sentence].length; word++) {
+        sb.append(dict[C[sentence][word]]).append("_").append(tagDict[L[sentence][word]]);
+        sb.append(" ");
+      }
+      lines.add(sb.toString());
+    }
+
+    return lines;
   }
 
 }

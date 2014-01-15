@@ -20,6 +20,7 @@
     <orderEntry type="library" name="deps" level="project" />
     <orderEntry type="library" name="breeze" level="project" />
     <orderEntry type="library" name="scala-2.10" level="project" />
+    <orderEntry type="library" name="test_data" level="project" />
   </component>
 </module>
 

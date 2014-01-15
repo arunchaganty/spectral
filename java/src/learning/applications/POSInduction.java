@@ -6,22 +6,25 @@
 package learning.applications;
 
 import fig.basic.*;
+import fig.basic.IOUtils;
 import fig.exec.Execution;
 import learning.data.ComputableMoments;
 import learning.data.Corpus;
 import learning.data.MomentComputationWorkers;
 import learning.data.ParsedCorpus;
-import learning.linalg.MatrixFactory;
 import learning.linalg.MatrixOps;
+import learning.models.ExponentialFamilyModel;
 import learning.models.HiddenMarkovModel;
 import learning.models.HiddenMarkovModel.Params;
+import learning.models.loglinear.Example;
+import learning.models.loglinear.ExpectationMaximization;
+import learning.models.loglinear.ParamsVec;
+import learning.models.loglinear.UndirectedHiddenMarkovModel;
 import learning.spectral.TensorMethod;
 import learning.spectral.applications.ParameterRecovery;
-import org.ejml.simple.SimpleMatrix;
-import org.javatuples.Quartet;
+import learning.utils.Counter;
 
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -57,37 +60,43 @@ public class POSInduction implements Runnable {
   @Option(gloss="Number of threads to compute measurements")
   public int nThreads = 1;
 
+  @Option(gloss="File containing text in word_TAG format", required=true)
+  public File trainingData;
+  @Option(gloss="File containing text in word_TAG format", required=true)
+  public File testData;
+  @Option(gloss="File containing trained model parameters")
+  public File modelPath;
 
-  @Option(gloss="File containing word-index representation of data", required=true)
-    public String dataPath;
-  @Option(gloss="File containing word-index to word map", required=true)
-    public String mapPath;
-  @Option(gloss="File containing tag-index of labelled data")
-    public String labelledDataPath = null;
-  @Option(gloss="File containing tag-index to tag map")
-    public String labelledMapPath = null;
+  public static enum TrainMode {
+    EM,
+    TrueMeasurements,
+    SpectralMeasurements
+  }
+  @Option(gloss="Training mode")
+  public TrainMode mode = TrainMode.EM;
+
   @Option(gloss="Possibly truncate the number of sentences read")
     public int maxSentences = Integer.MAX_VALUE;
 
-  // public List<Example> corpusToExamples( Corpus C, int maxN ) {
-  //   List<Example> examples = new ArrayList<Example>();
+  public List<Example> corpusToExamples( Corpus C, int maxN ) {
+     List<Example> examples = new ArrayList<>();
 
-  //   for( int i = 0; i < C.getInstanceCount() && i < maxN; i++ ) {
-  //     examples.add( new Example( C.C[i] ) );
-  //   }
+     for( int i = 0; i < C.getInstanceCount() && i < maxN; i++ ) {
+       examples.add( new Example( C.C[i] ) );
+     }
 
-  //   return examples;
-  // }
-  // public List<Example> corpusToExamples( ParsedCorpus C, int maxN ) {
-  //   List<Example> examples = new ArrayList<Example>();
+     return examples;
+  }
+  public List<Example> corpusToExamples( ParsedCorpus C, int maxN ) {
+     List<Example> examples = new ArrayList<>();
 
-  //   for( int i = 0; i < C.getInstanceCount() && i < maxN; i++ ) {
-  //     Example ex = new Example( C.C[i], C.L[i] );
-  //     examples.add( ex );
-  //     // LogInfo.logs( Fmt.D( ex.x ) );
-  //   }
-  //   return examples;
-  // }
+     for( int i = 0; i < C.getInstanceCount() && i < maxN; i++ ) {
+       Example ex = new Example( C.C[i], C.L[i] );
+       examples.add( ex );
+       // LogInfo.logs( Fmt.D( ex.x ) );
+     }
+     return examples;
+  }
   public void truncate( ParsedCorpus C, int maxN ) {
     if( maxN > C.getInstanceCount() ) return;
 
@@ -339,44 +348,122 @@ public class POSInduction implements Runnable {
     return spectralRecovery(C, C.getTagDimension());
   }
 
-  public void run() {
-    try { 
+  /**
+   * Reads a data file in the format word_TAG,
+   * Example:
+   *    Pierre_NNP Vinken_NNP ,_, 61_CD years_NNS old_JJ ,_, will_MD join_VB the_DT board_NN as_IN a_DT nonexecutive_JJ director_NN Nov._NNP 29_CD ._.
+   * @param in
+   * @return
+   */
+  public static ParsedCorpus readData(Reader in) {
+    Indexer<String> wordIndex = new Indexer<>();
+    Indexer<String> tagIndex = new Indexer<>();
+    List<int[]> sentences = new ArrayList<>();
+    List<int[]> answers = new ArrayList<>();
+    try(BufferedReader stream = new BufferedReader(in)) {
+      for(String line : IOUtils.readLines(stream)) {
+        String[] tokens = line.split(" ");
+        if(tokens.length == 0) continue;
+
+        int[] words = new int[tokens.length];
+        int[] tags = new int[tokens.length];
+        for(int i = 0; i < tokens.length; i++) {
+          String token = tokens[i];
+          String[] word_tag = token.split("_");
+          assert word_tag.length == 2;
+          String word = word_tag[0];
+          String tag = word_tag[1];
+          words[i] = wordIndex.getIndex(word);
+          tags[i] = tagIndex.getIndex(tag);
+        }
+        sentences.add(words);
+        answers.add(tags);
+      }
+    } catch (IOException e) {
+        throw new RuntimeException(e);
+    }
+
+    return new ParsedCorpus(
+      wordIndex.toArray(new String[wordIndex.size()]),
+            sentences.toArray(new int[sentences.size()][]),
+      tagIndex.toArray(new String[tagIndex.size()]),
+              answers.toArray(new int[answers.size()][])
+      );
+  }
+  public static ParsedCorpus readData(File in) throws IOException {
+    return readData(new FileReader(in));
+  }
+
+  public void train() {
+    try {
       LogInfo.begin_track("file-input");
       // Read data as word-index sequences
-      ParsedCorpus C = ParsedCorpus.parseText( 
-          dataPath, mapPath, 
-          labelledDataPath, labelledMapPath );
+      ParsedCorpus C = readData(trainingData);
       // Convert to Example sequences
       LogInfo.logs( "Corpus has %d instances, with %d words and %d tags",
-          C.getInstanceCount(), C.getDimension(), C.getTagDimension() );
+              C.getInstanceCount(), C.getDimension(), C.getTagDimension() );
       truncate( C, maxSentences );
       LogInfo.end_track();
-      ///
-      
-      HiddenMarkovModel model = new HiddenMarkovModel( 
-          C.getTagDimension(), // K
-          C.getDimension() ); // D
-      LogInfo.end_track("file-input");
 
-      // Possibly load the measurements
-      Params params;
-      if(initializeSpectral) {
-        // Get measurements from path.
-        params = spectralRecovery(C);
-      } else {
-        // random
-        params = Params.uniformWithNoise( 
-            initRandom,
-            model.params.stateCount,
-            model.params.emissionCount,
-            initParamsNoise
-            );
+      Counter<Example> data = new Counter<>(corpusToExamples(C, C.getInstanceCount()));
+
+      // TODO: Optionally featurize the data.
+      // Train an (undirected) HMM
+      int K = C.getTagDimension();
+      int D = C.getDimension();
+      int L = 3;
+      UndirectedHiddenMarkovModel hmm = new UndirectedHiddenMarkovModel(K, D, L);
+      ParamsVec params = hmm.newParamsVec();
+      switch(mode) {
+        case EM: {
+          ExpectationMaximization solver = new ExpectationMaximization();
+          solver.solveEM(hmm, data, params);
+        } break;
+        default:
+          throw new RuntimeException("Method not supported.");
       }
-      optimize( model, params.toVector(), C );
 
-    } catch( IOException e ) {
-      LogInfo.logsForce( e );
+      String output = Execution.getFile(String.format("model-%s.ser", mode));
+      IOUtils.writeObjFile(output, params);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
+  }
+
+  public void test() {
+    try {
+      LogInfo.begin_track("file-input");
+      // Read data as word-index sequences
+      ParsedCorpus C = readData(testData);
+      // Convert to Example sequences
+      LogInfo.logs( "Corpus has %d instances, with %d words and %d tags",
+              C.getInstanceCount(), C.getDimension(), C.getTagDimension() );
+      truncate( C, maxSentences );
+      LogInfo.end_track();
+
+      Counter<Example> data = new Counter<>(corpusToExamples(C, C.getInstanceCount()));
+
+      // TODO: Optionally featurize the data.
+      // Train an (undirected) HMM
+      int K = C.getTagDimension();
+      int D = C.getDimension();
+      int L = 3;
+      UndirectedHiddenMarkovModel hmm = new UndirectedHiddenMarkovModel(K, D, L);
+      ParamsVec params = (ParamsVec) IOUtils.readObjFile(modelPath);
+
+      // TODO: evaluate
+
+    } catch (IOException | ClassNotFoundException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public void run() {
+    // Train an (undirected) HMM
+    train();
+    // Evaluate a (undirected) HMM
+    test();
+
   }
   
   public static void main(String[] args) {
