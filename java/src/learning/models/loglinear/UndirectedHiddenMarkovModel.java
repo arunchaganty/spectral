@@ -48,7 +48,6 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
 
   }
 
-
   @Override
   public int getK() {
     return K;
@@ -68,8 +67,6 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
   public ParamsVec newParamsVec() {
     return new ParamsVec(K, indexer);
   }
-
-  // TODO: compute forward and backward messages (marginals)
 
   /**
    * Return \theta^T [\phi(y_{t-1}, y_{t}), \phi(y_{t}, x_{t}) ]

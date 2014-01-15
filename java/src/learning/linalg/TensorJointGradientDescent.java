@@ -80,6 +80,7 @@ public class TensorJointGradientDescent implements  TensorFactorizationAlgorithm
   @Override
   public Pair<SimpleMatrix, SimpleMatrix> symmetricFactorize(FullTensor T, int K) {
 
+    return null;
   }
 
   @Override

@@ -170,7 +170,7 @@ public class ExpectationMaximization implements Runnable {
    * @param theta - initial parameters for $\theta$
    * @return - (theta, beta) that optimize.
    */
-  ParamsVec solveEM(
+  public ParamsVec solveEM(
           ExponentialFamilyModel<Example> modelA,
           Counter<Example> data,
           ParamsVec theta
@@ -324,7 +324,7 @@ public class ExpectationMaximization implements Runnable {
    * @param args
    */
   public static void main(String[] args) {
-    Execution.run(args, new MeasurementsEM(), "main", opts);
+    Execution.run(args, new ExpectationMaximization(), "main", opts);
   }
 }
 

@@ -121,7 +121,7 @@ public class ParameterRecovery {
 
     MixtureOfGaussians model = new MixtureOfGaussians( K, D, 3,
         pi, new SimpleMatrix[]{M1,M2,M3},
-        new SimpleMatrix[][]{} ); // I know nothing about these covariances
+        null ); // I know nothing about these covariances
     LogInfo.end_track("cast-conditional-means-to-hmm");
 
     return model;
@@ -132,6 +132,7 @@ public class ParameterRecovery {
 
   public static MixtureOfGaussians recoverGMM(int K, HasExactMoments moments, double smoothMeasurements) {
     return recoverGMM(K, tensorMethod.recoverParameters(K, moments.computeExactMoments()), smoothMeasurements);
+//    return recoverGMM(K, tensorMethod.recoverParametersAsymmetric(K, moments.computeExactMoments().getValue3()), smoothMeasurements);
   }
 
   public static MixtureOfGaussians recoverGMM(int K, int N, HasSampleMoments moments, double smoothMeasurements) {
@@ -143,8 +144,8 @@ public class ParameterRecovery {
       LogInfo.logs( "P32 error: " + MatrixOps.diff(moments_.getValue2(), momentsExact.getValue2() ) );
       LogInfo.logs( "P123 error: " + MatrixOps.diff(moments_.getValue3(), momentsExact.getValue3() ) );
     }
-    return recoverGMM(K, tensorMethod.recoverParametersAsymmetric(K, moments_.getValue3()), smoothMeasurements);
-//    return recoverGMM(K, tensorMethod.recoverParameters(K, moments_), smoothMeasurements);
+//    return recoverGMM(K, tensorMethod.recoverParametersAsymmetric(K, moments_.getValue3()), smoothMeasurements);
+    return recoverGMM(K, tensorMethod.recoverParameters(K, moments_), smoothMeasurements);
   }
 
 }

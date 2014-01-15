@@ -14,6 +14,12 @@ public class Counter<V> implements Collection<V> {
   public Counter(int initialCapacity) {
     map = new HashMap<>(initialCapacity);
   }
+  public Counter(Collection<V> initial) {
+    this(initial.size());
+    for(V elem : initial) {
+      add(elem);
+    }
+  }
 
   @Override
   public int size() {

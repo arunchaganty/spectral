@@ -9,6 +9,9 @@ import learning.linalg.MatrixOps;
 import org.ejml.simple.SimpleMatrix;
 import org.javatuples.Quartet;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+
 /**
  * Various utilities
  */
@@ -62,6 +65,14 @@ public class UtilsJ {
       double actualValue = currentGradient[i];
       assert MatrixOps.equal(expectedValue, actualValue, 1e-4);
     }
+  }
+
+  public static String readFully(BufferedReader reader) throws IOException {
+    StringBuilder sb = new StringBuilder();
+    String line;
+    while( (line = reader.readLine()) != null )
+      sb.append(line).append("\n");
+    return sb.toString().trim();
   }
 
 }
