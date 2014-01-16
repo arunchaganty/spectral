@@ -45,7 +45,7 @@ public class UndirectedHiddenMarkovModelTest {
       Assert.assertEquals(Math.log(K * D) * T, Z, 1e-4);
       for( int t = 0; t < T; t++ ) {
         for( int y = 0; y < K; y++ ) {
-          Assert.assertEquals(1. / K, forwards[t][y], 1e-4);
+          Assert.assertEquals(Math.log(1. / K), forwards[t][y], 1e-4);
         }
       }
     }
@@ -59,7 +59,7 @@ public class UndirectedHiddenMarkovModelTest {
       Assert.assertEquals(Math.log(K) * T, Z, 1e-4);
       for( int t = 0; t < T; t++ ) {
         for( int y = 0; y < K; y++ ) {
-          Assert.assertEquals(1. / K, forwards[t][y], 1e-4);
+          Assert.assertEquals(Math.log(1. / K), forwards[t][y], 1e-4);
         }
       }
     }
@@ -70,9 +70,9 @@ public class UndirectedHiddenMarkovModelTest {
       double Z = Zforwards.getFirst(); double[][] forwards = Zforwards.getSecond();
 
       Assert.assertEquals(6.4997, Z, 1e-3);
-      Assert.assertArrayEquals(forwards[0], new double[]{0.6, 0.4}, 1e-2);
-      Assert.assertArrayEquals(forwards[1], new double[]{0.49, 0.51}, 1e-2);
-      Assert.assertArrayEquals(forwards[2], new double[]{0.501, 0.499}, 1e-2);
+      Assert.assertArrayEquals(forwards[0], new double[]{Math.log(0.6), Math.log(0.4)}, 1e-2);
+      Assert.assertArrayEquals(forwards[1], new double[]{Math.log(0.49), Math.log(0.51)}, 1e-2);
+      Assert.assertArrayEquals(forwards[2], new double[]{Math.log(0.501), Math.log(0.499)}, 1e-2);
     }
     //
 
@@ -82,9 +82,9 @@ public class UndirectedHiddenMarkovModelTest {
       Pair<Double, double[][]> Zforwards = model.forward(model1, ex);
       double Z = Zforwards.getFirst(); double[][] forwards = Zforwards.getSecond();
       Assert.assertEquals(Math.log(54), Z, 1e-4);
-      Assert.assertArrayEquals(forwards[0], new double[]{0.5, 0.5}, 1e-2);
-      Assert.assertArrayEquals(forwards[1], new double[]{0.4, 0.6}, 1e-2);
-      Assert.assertArrayEquals(forwards[2], new double[] { 0.407, 0.593 }, 1e-2);
+      Assert.assertArrayEquals(forwards[0], new double[]{Math.log(0.5), Math.log(0.5)}, 1e-2);
+      Assert.assertArrayEquals(forwards[1], new double[]{Math.log(.4), Math.log(0.6)}, 1e-2);
+      Assert.assertArrayEquals(forwards[2], new double[]{Math.log(0.407), Math.log(0.593) }, 1e-2);
     }
   }
 
@@ -96,7 +96,7 @@ public class UndirectedHiddenMarkovModelTest {
       double[][] backwards = model.backward(model0, null);
       for( int t = 0; t < T; t++ ) {
         for( int y = 0; y < K; y++ ) {
-          Assert.assertEquals(1. / K, backwards[t][y], 1e-4);
+          Assert.assertEquals(Math.log(1. / K), backwards[t][y], 1e-4);
         }
       }
     }
@@ -108,7 +108,7 @@ public class UndirectedHiddenMarkovModelTest {
       double[][] backwards = model.backward(model0, ex);
       for( int t = 0; t < T; t++ ) {
         for( int y = 0; y < K; y++ ) {
-          Assert.assertEquals(1. / K, backwards[t][y], 1e-4);
+          Assert.assertEquals(Math.log(1. / K), backwards[t][y], 1e-4);
         }
       }
     }
@@ -116,9 +116,9 @@ public class UndirectedHiddenMarkovModelTest {
     // The second model, things have non-unit weights.
     {
       double[][] backwards = model.backward(model1, null);
-      Assert.assertArrayEquals(new double[]{0.5, 0.5}, backwards[2], 1e-2);
-      Assert.assertArrayEquals(new double[]{0.292, 0.708}, backwards[1], 1e-2);
-      Assert.assertArrayEquals(new double[]{0.309, 0.691 }, backwards[0], 1e-2);
+      Assert.assertArrayEquals(new double[]{Math.log(0.5),   Math.log(0.5)}, backwards[2], 1e-2);
+      Assert.assertArrayEquals(new double[]{Math.log(0.292), Math.log(0.708)}, backwards[1], 1e-2);
+      Assert.assertArrayEquals(new double[]{Math.log(0.309), Math.log(0.691)}, backwards[0], 1e-2);
     }
     //
 
@@ -126,9 +126,9 @@ public class UndirectedHiddenMarkovModelTest {
       Example ex = new Example(new int[]{0,0,0}, new int[]{0,0,0});
       T = ex.x.length;
       double[][] backwards = model.backward(model1, ex);
-      Assert.assertArrayEquals(new double[]{0.5, 0.5}, backwards[2], 1e-2);
-      Assert.assertArrayEquals(new double[]{0.3, 0.7}, backwards[1], 1e-2);
-      Assert.assertArrayEquals(new double[]{0.314, 0.686 }, backwards[0], 1e-2);
+      Assert.assertArrayEquals(new double[]{Math.log(0.5),   Math.log(0.5)}, backwards[2], 1e-2);
+      Assert.assertArrayEquals(new double[]{Math.log(0.3),   Math.log(0.7)}, backwards[1], 1e-2);
+      Assert.assertArrayEquals(new double[]{Math.log(0.314), Math.log(0.686) }, backwards[0], 1e-2);
     }
   }
 

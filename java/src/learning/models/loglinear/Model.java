@@ -103,16 +103,6 @@ public abstract class Model extends ExponentialFamilyModel<Example> {
     Hp.computePosteriors(false);
     return Hp.getLogZ();
   }
-  public double getLogLikelihood(Params params, Counter<Example> examples) {
-    ParamsVec parameters = (ParamsVec) params;
-    double lhood = 0.;
-    for(Example example: examples) {
-      Hypergraph<Example> Hp = createHypergraph(example, parameters.weights, null, 0.);
-      Hp.computePosteriors(false);
-      lhood += examples.getFraction(example) * Hp.getLogZ();
-    }
-    return lhood;
-  }
   @Override
   public void updateMarginals(Params params, Example example, double scale, Params marginals_) {
     ParamsVec parameters = (ParamsVec) params;

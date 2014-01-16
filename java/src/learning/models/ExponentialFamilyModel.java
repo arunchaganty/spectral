@@ -18,6 +18,7 @@ public abstract class ExponentialFamilyModel<T> {
   abstract public int numFeatures();
   abstract public Params newParams();
   abstract public double getLogLikelihood(Params parameters, T example);
+
   public double getLogLikelihood(Params parameters) {
     return getLogLikelihood(parameters, (T) null);
   }

@@ -1,5 +1,6 @@
 package learning.models;
 
+import java.io.Serializable;
 import java.util.Random;
 
 import static learning.utils.UtilsJ.writeStringHard;
@@ -7,7 +8,7 @@ import static learning.utils.UtilsJ.writeStringHard;
 /**
  * Uniform interface for (vectorizable)-parameters
  */
-public abstract class Params {
+public abstract class Params implements Serializable {
 
   /**
    * Create another params with the same configuration

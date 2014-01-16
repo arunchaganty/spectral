@@ -20,7 +20,7 @@ public class ExpectationMaximizationTest {
 
     solver.backtrack.tolerance = 1e-3;
     solver.mIters = 1;
-    solver.iters = 1000;
+    solver.iters = 500;
 
     if(testBetterThanTrue)
       solver.thetaRegularization = 0.0;

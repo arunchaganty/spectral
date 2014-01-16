@@ -143,6 +143,7 @@ public class ExpectationMaximization implements Runnable {
       List<String> items = new ArrayList<>();
       items.add("iter = " + i);
       items.add("mObjective = " + mObjective.value());
+      items.add("likelihood = " + (modelA.getLogLikelihood(theta, data) - modelA.getLogLikelihood(theta)));
       LogInfo.log(StrUtils.join(items, "\t"));
       if(out != null) {
         out.println( StrUtils.join(items, "\t") );
