@@ -2,25 +2,27 @@ package learning.models.loglinear;
 
 import fig.basic.*;
 import fig.exec.Execution;
-import learning.linalg.MatrixFactory;
-import learning.linalg.MatrixOps;
 import learning.models.ExponentialFamilyModel;
+import learning.models.Params;
 import learning.utils.Counter;
 
 import java.io.PrintWriter;
 import java.util.*;
 
-import static learning.utils.UtilsJ.doGradientCheck;
+import static learning.utils.UtilsJ.optimize;
+import static learning.utils.UtilsJ.writeStringHard;
 
 /**
  * Expectation Maximization for a model
  */
 public class ExpectationMaximization implements Runnable {
 
-  @Option(gloss="Regularization for theta") public double thetaRegularization = 0; //1e-3;
+  @Option(gloss="Regularization for theta") public double thetaRegularization = 1e-5; //0; //1e-3;
 
-  @Option(gloss="Number of iterations") public int iters = 400;
-  @Option(gloss="Number of iterations") public int mIters = 1000;
+  @Option(gloss="Number of iterations") public int iters = 1000;
+  @Option(gloss="Number of iterations") public int mIters = 3;
+
+  @Option(gloss="Diagnostic mode") public boolean diagnosticMode = false;
 
   @Option(gloss="Type of optimization to use") public boolean useLBFGS = true;
   @OptionSet(name="lbfgs") public LBFGSMaximizer.Options lbfgs = new LBFGSMaximizer.Options();
@@ -39,29 +41,27 @@ public class ExpectationMaximization implements Runnable {
   class Objective implements Maximizer.FunctionState {
     ExponentialFamilyModel<Example> modelA;
     Counter<Example> X;
-    ParamsVec theta;
-    ParamsVec gradient;
-    final ParamsVec q; // Marginal distribution $z|x$
-//    final Hypergraph<Example> Hp;
+    Params theta;
+    Params gradient;
+    final Params q; // Marginal distribution $z|x$
 
     double objective;
     boolean objectiveValid, gradientValid;
 
-    public Objective(ExponentialFamilyModel<Example> modelA, Counter<Example> X, ParamsVec theta, final ParamsVec q) {
+    public Objective(ExponentialFamilyModel<Example> modelA, Counter<Example> X, Params theta, final Params q) {
       this.modelA = modelA;
       this.X = X;
       this.theta = theta;
-      this.gradient = new ParamsVec(theta);
+      this.gradient = theta.copy();
 
       this.q = q;
-//      Hp = modelA.createHypergraph(theta.weights, gradient.weights, -1.);
     }
 
     @Override
     public void invalidate() { objectiveValid = gradientValid = false; }
 
     @Override
-    public double[] point() { return theta.weights; }
+    public double[] point() { return theta.toArray(); }
 
     @Override
     /**
@@ -81,83 +81,31 @@ public class ExpectationMaximization implements Runnable {
       objective -= modelA.getLogLikelihood(theta);
 
       // Finally, subtract regularizer = 0.5 \eta_\theta \|\theta\|^2
-//      objective += 0.5 * thetaRegularization * theta.dot(theta);
+      objective -= 0.5 * thetaRegularization * theta.dot(theta);
 
       return objective;
     }
 
     @Override
     public double[] gradient() {
-      if( gradientValid ) return gradient.weights;
+      if( gradientValid ) return gradient.toArray();
 
       gradient.clear();
 
 
       // Go through each example, and add 1/|X| \sum_x \sum_z q(z | x) * \phi(x,z)
-      gradient.incr(1.0, q);
+      gradient.plusEquals(1.0, q);
 
       // Subtract the log partition function - log Z(\theta)
-      ParamsVec marginals = modelA.getMarginals(theta);
-      ParamsVec.minus(gradient, marginals, gradient);
+//      modelA.updateMarginals(theta, null, -1.0, gradient);
+      Params marginals = modelA.getMarginals(theta);
+      gradient.plusEquals(-1.0, marginals);
 
       // subtract \nabla h^*(\beta) = \beta
-//      gradient.incr(-thetaRegularization, theta);
+      gradient.plusEquals(-thetaRegularization, theta);
 
-      return gradient.weights;
+      return gradient.toArray();
     }
-  }
-
-  public void updateMarginals(ExponentialFamilyModel<Example> modelA, ParamsVec params, Counter<Example> X, ParamsVec marginals) {
-    ParamsVec marginals_ = modelA.getMarginals(params,X);
-    System.arraycopy(marginals_.weights, 0, marginals.weights, 0, marginals.weights.length );
-  }
-
-  boolean optimize( Maximizer maximizer, Maximizer.FunctionState state, String label, int numIters ) {
-    LogInfo.begin_track("optimize " + label);
-    state.invalidate();
-    boolean done = false;
-    // E-step
-    int iter;
-
-    PrintWriter out = IOUtils.openOutHard(Execution.getFile(label + ".events"));
-
-    double oldObjective = Double.NEGATIVE_INFINITY;
-
-    for (iter = 0; iter < numIters && !done; iter++) {
-      state.invalidate();
-      // Do a gradient check only at the very end.
-      doGradientCheck(state);
-
-      // Logging stuff
-      List<String> items = new ArrayList<>();
-      items.add("iter = " + iter);
-      items.add("objective = " + state.value());
-      items.add("pointNorm = " + MatrixOps.norm(state.point()));
-      items.add("gradientNorm = " + MatrixOps.norm(state.gradient()));
-      LogInfo.logs( StrUtils.join(items, "\t") );
-      out.println( StrUtils.join(items, "\t") );
-      out.flush();
-
-      double objective = state.value();
-      assert objective > oldObjective;
-      oldObjective = objective;
-
-      done = maximizer.takeStep(state);
-    }
-    // Do a gradient check only at the very end.
-    doGradientCheck(state);
-
-    List<String> items = new ArrayList<>();
-    items.add("iter = " + iter);
-    items.add("objective = " + state.value());
-    items.add("pointNorm = " + MatrixOps.norm(state.point()));
-    items.add("gradientNorm = " + MatrixOps.norm(state.gradient()));
-    LogInfo.logs( StrUtils.join(items, "\t") );
-    out.println( StrUtils.join(items, "\t") );
-    out.flush();
-
-    LogInfo.end_track();
-    return done && iter == 1;  // Didn't make any updates
   }
 
   /**
@@ -170,44 +118,52 @@ public class ExpectationMaximization implements Runnable {
    * @param theta - initial parameters for $\theta$
    * @return - (theta, beta) that optimize.
    */
-  public ParamsVec solveEM(
+  public Params solveEM(
           ExponentialFamilyModel<Example> modelA,
           Counter<Example> data,
-          ParamsVec theta
+          Params theta
           ) {
     LogInfo.begin_track("solveEM");
     LogInfo.logs( "Solving EM objective with %d parameters, using %f instances (%d unique)",
-            theta.numFeatures, data.sum(), data.size() );
+            theta.size(), data.sum(), data.size() );
 
     Maximizer mMaximizer = newMaximizer();
 
-    final ParamsVec marginals = modelA.newParamsVec();
+    final Params marginals = modelA.newParams();
 
     // Create the M-objective (for $\theta$) - main computations are the partition function for A, B and expected counts
     Objective mObjective = new Objective(modelA, data, theta, marginals);
-    updateMarginals(modelA, theta, data, marginals);
 
     boolean done = false;
-    PrintWriter out = IOUtils.openOutHard(Execution.getFile("events"));
+    PrintWriter out = null;
+    if(Execution.getActualExecDir() != null) {
+      out = IOUtils.openOutHard(Execution.getFile("events"));
+    }
     for( int i = 0; i < iters && !done; i++ ) {
       List<String> items = new ArrayList<>();
       items.add("iter = " + i);
       items.add("mObjective = " + mObjective.value());
-      LogInfo.logs( StrUtils.join(items, "\t") );
-      out.println( StrUtils.join(items, "\t") );
-      out.flush();
+      LogInfo.log(StrUtils.join(items, "\t"));
+      if(out != null) {
+        out.println( StrUtils.join(items, "\t") );
+        out.flush();
+      }
 
       // Optimize each one-by-one
       // Get marginals
-      updateMarginals(modelA, theta, data, marginals);
-      done = optimize( mMaximizer, mObjective, "M-" + i, mIters );
+      marginals.clear();
+      modelA.updateMarginals(theta, data, marginals);
+      done = optimize(mMaximizer, mObjective, "M-" + i, mIters, diagnosticMode);
       mObjective.invalidate();
     }
     Execution.putOutput("optimization-done", done);
 
-    LogInfo.logs( "Expected: " + modelA.getMarginals(theta));
-    LogInfo.logs( "Data-Expected: " + modelA.getMarginals(theta, data));
-    LogInfo.logs( "Data-Only: " + modelA.getSampleMarginals(data));
+    // Used to diagnose
+    if(diagnosticMode) {
+      LogInfo.log("Expected: " + modelA.getMarginals(theta));
+      LogInfo.log("Data-Expected: " + modelA.getMarginals(theta, data));
+      LogInfo.log("Data-Only: " + modelA.getSampleMarginals(data));
+    }
 
     LogInfo.end_track("solveEM");
 
@@ -215,14 +171,14 @@ public class ExpectationMaximization implements Runnable {
   }
 
   public static class Options {
-    @Option(gloss="Seed for parameters") public Random trueParamsRandom = new Random(42);
+    @Option(gloss="Seed for parameters") public Random trueParamsRandom = new Random(44);
     @Option(gloss="Seed for generated data") public Random genRandom = new Random(42);
-    @Option(gloss="Noise") public double trueParamsNoise = 0.01;
+    @Option(gloss="Noise") public double trueParamsNoise = 1.0;
     @Option(gloss="K") public int K = 2;
-    @Option(gloss="D") public int D = 2;
+    @Option(gloss="D") public int D = 3;
     @Option(gloss="L") public int L = 1;
 
-    @Option(gloss="data points") public int genNumExamples = 100;
+    @Option(gloss="data points") public int genNumExamples = (int) 1e6;
   }
 
   public static Options opts = new Options();
@@ -231,38 +187,31 @@ public class ExpectationMaximization implements Runnable {
     LogInfo.begin_track("Creating models");
     // Create two simple models
     Models.MixtureModel modelA = new Models.MixtureModel(opts.K, opts.D, opts.L);
-    modelA.createHypergraph(null, null, null, 0);
-
     LogInfo.end_track("Creating models");
 
     return modelA;
   }
 
   public void run(){
-
     Model modelA = createModels();
 
     // Create some data
     LogInfo.begin_track("Creating data");
-    ParamsVec trueParams = modelA.newParamsVec();
-    for(int i = 0; i < trueParams.weights.length; i++)
-      trueParams.weights[i] = Math.sin(i);
-//      trueParams.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
+    Params trueParams = modelA.newParams();
+    {
+      double[] params = trueParams.toArray();
+      for(int i = 0; i < params.length; i++)
+        params[i] = Math.sin(i);
+//      params[i] = Math.sin(i);
+    }
+//    trueParams.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
     trueParams.write(Execution.getFile("true.params"));
 
-    ParamsVec trueMeasurements = modelA.newParamsVec();
-    Hypergraph<Example> Hp = modelA.createHypergraph(null, trueParams.weights, trueMeasurements.weights, 1.);
-    Hp.computePosteriors(false);
-    Hp.fetchPosteriors(false);
+    Params trueMeasurements = modelA.getMarginals(trueParams);
     trueMeasurements.write(Execution.getFile("true.counts"));
 
     // Generate examples from the model
-    Counter<Example> data = new Counter<>();
-    for (int i = 0; i < opts.genNumExamples; i++) {
-      Example ex = modelA.newExample();
-      Hp.fetchSampleHyperpath(opts.genRandom, ex);
-      data.add(ex);
-    }
+    Counter<Example> data =  modelA.drawSamples(trueParams, opts.genRandom, opts.genNumExamples);
     LogInfo.logs("Generated %d examples", data.size());
     LogInfo.end_track("Creating data");
 
@@ -270,52 +219,44 @@ public class ExpectationMaximization implements Runnable {
     LogInfo.begin_track("Fitting model");
 
     // Initializing stuff
-    ParamsVec theta = new ParamsVec(trueParams);
+    Params theta = trueParams.copy();
     theta.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
+    writeStringHard(Execution.getFile("fit0.params"), theta.toString());
 
-    LogInfo.logs("likelihood(true): " + modelA.getLogLikelihood(trueParams, data));
-    LogInfo.logs("likelihood(est.): " +  modelA.getLogLikelihood(theta, data));
+    LogInfo.log("likelihood(true): " + modelA.getLogLikelihood(trueParams, data));
+    LogInfo.log("likelihood(est.): " +  modelA.getLogLikelihood(theta, data));
 
-    ParamsVec measurements = modelA.newParamsVec();
-    theta.write(Execution.getFile("fit0.params"));
-    measurements.clear();
-    Hp = modelA.createHypergraph(null, theta.weights, measurements.weights, 1);
-    Hp.computePosteriors(false);
-    Hp.fetchPosteriors(false);
-    measurements.write(Execution.getFile("fit0.counts"));
+    Params measurements;
 
-    // Measurements
-    measurements.clear();
-    for (Example ex : data) {
-      Hypergraph<Example> Hq = modelA.createHypergraph(ex, trueParams.weights, measurements.weights, data.getFraction(ex));
-      Hq.computePosteriors(false);
-      Hq.fetchPosteriors(false);
+    measurements = modelA.getMarginals(theta);
+    writeStringHard(Execution.getFile("fit0.counts"), measurements.toString());
+
+    theta = solveEM(modelA, data, theta);
+
+    Counter<Example> dist = modelA.getDistribution(trueParams);
+    Counter<Example> dist_ = modelA.getDistribution(theta);
+
+    for( Example ex : dist ) {
+      LogInfo.logs("%s: %f vs %f", ex, dist.getCount(ex), dist_.getCount(ex));
     }
-    measurements.write(Execution.getFile("true.counts"));
-
-    solveEM(modelA, data, theta);
-
-    measurements.clear();
-    Hp = modelA.createHypergraph(null, theta.weights, measurements.weights, 1);
-    Hp.computePosteriors(false);
-    Hp.fetchPosteriors(false);
-
-    int[] perm = new int[trueMeasurements.K];
-
-    double error = theta.computeDiff(trueParams, perm);
-    Execution.putOutput("params-error", error);
-    LogInfo.logs("params error: " + error + " " + Fmt.D(perm));
-
-    error = measurements.computeDiff(trueMeasurements, perm);
-    Execution.putOutput("counts-error", error);
-    LogInfo.logs("counts error: " + error + " " + Fmt.D(perm));
-    LogInfo.logs("likelihood(true): " + modelA.getLogLikelihood(trueParams, data) );
-    LogInfo.logs("likelihood(est.): " + modelA.getLogLikelihood(theta, data) );
+//      List<Example> hiddenStates = generateExamples(L);
+//    measurements = modelA.getMarginals(theta);
+//    int[] perm = new int[trueMeasurements.K];
+//
+//    double error = theta.computeDiff(trueParams, perm);
+//    Execution.putOutput("params-error", error);
+//    LogInfo.logs("params error: " + error + " " + Fmt.D(perm));
+//
+//    error = measurements.computeDiff(trueMeasurements, perm);
+//    Execution.putOutput("counts-error", error);
+//    LogInfo.logs("counts error: " + error + " " + Fmt.D(perm));
+    LogInfo.log("likelihood(true): " + modelA.getLogLikelihood(trueParams, data));
+    LogInfo.log("likelihood(est.): " + modelA.getLogLikelihood(theta, data));
 
     // Compute the likelihoods
     theta.write(Execution.getFile("fit.params"));
-    measurements.write(Execution.getFile("fit.counts"));
-
+////    measurements.write(Execution.getFile("fit.counts"));
+////
     LogInfo.end_track("Fitting model");
   }
 

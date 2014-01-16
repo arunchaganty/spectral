@@ -1,6 +1,10 @@
 package learning.utils;
 
+import fig.basic.IOUtils;
+import fig.basic.LogInfo;
 import fig.basic.Maximizer;
+import fig.basic.StrUtils;
+import fig.exec.Execution;
 import learning.data.ComputableMoments;
 import learning.data.HasExactMoments;
 import learning.linalg.FullTensor;
@@ -10,6 +14,10 @@ import org.ejml.simple.SimpleMatrix;
 import org.javatuples.Quartet;
 
 import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Various utilities
@@ -43,6 +51,7 @@ public class UtilsJ {
   public static void doGradientCheck(Maximizer.FunctionState state) {
     double epsilon = 1e-4;
     // Save point
+    state.invalidate();
     double[] point = state.point();
     double[] gradient = state.gradient();
     double[] currentGradient = gradient.clone();
@@ -74,8 +83,73 @@ public class UtilsJ {
     return sb.toString().trim();
   }
 
+  public static void writeString(String path, String str) throws IOException {
+    BufferedWriter writer = Files.newBufferedWriter(new File(path).toPath(), Charset.defaultCharset());
+    writer.write(str);
+    writer.close();
+  }
+  public static void writeStringHard(String path, String str) {
+    try {
+      writeString(path, str);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   public static BufferedReader openReader(File file) throws FileNotFoundException {
     return new BufferedReader(new FileReader(file));
   }
+
+  public static boolean optimize(Maximizer maximizer, Maximizer.FunctionState state, String label, int numIters, boolean diagnosticMode) {
+    LogInfo.begin_track("optimize " + label);
+    state.invalidate();
+
+    PrintWriter out = null;
+    if(Execution.getActualExecDir() != null) {
+      out = IOUtils.openOutHard(Execution.getFile(label + ".events"));
+    }
+
+    boolean done = false;
+    double oldObjective = Double.NEGATIVE_INFINITY;
+    int iter;
+    for (iter = 0; iter < numIters && !done; iter++) {
+      // Logging stuff
+      List<String> items = new ArrayList<>();
+      items.add("iter = " + iter);
+      items.add("objective = " + state.value());
+      items.add("pointNorm = " + MatrixOps.norm(state.point()));
+      items.add("gradientNorm = " + MatrixOps.norm(state.gradient()));
+      LogInfo.log( StrUtils.join(items, "\t") );
+      if(out != null) {
+        out.println( StrUtils.join(items, "\t") );
+        out.flush();
+      }
+
+      double objective = state.value();
+      assert objective > oldObjective;
+      oldObjective = objective;
+
+      done = maximizer.takeStep(state);
+    }
+    // Do a gradient check only at the very end.
+    if(diagnosticMode) {
+      doGradientCheck(state);
+    }
+
+    List<String> items = new ArrayList<>();
+    items.add("iter = " + iter);
+    items.add("objective = " + state.value());
+    items.add("pointNorm = " + MatrixOps.norm(state.point()));
+    items.add("gradientNorm = " + MatrixOps.norm(state.gradient()));
+    LogInfo.log( StrUtils.join(items, "\t") );
+    if(out!=null){
+      out.println( StrUtils.join(items, "\t") );
+      out.flush();
+    }
+
+    LogInfo.end_track();
+    return done && iter == 1;  // Didn't make any updates
+  }
+
 
 }

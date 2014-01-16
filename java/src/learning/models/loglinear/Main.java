@@ -5,8 +5,7 @@ import java.util.*;
 
 import fig.basic.*;
 import fig.exec.*;
-import fig.prob.*;
-import fig.record.*;
+
 import static fig.basic.LogInfo.*;
 
 import org.ejml.simple.SimpleMatrix;
@@ -190,7 +189,7 @@ class LikelihoodFunctionState implements Maximizer.FunctionState {
     this.regularization = regularization;
 
     // Create state
-    this.gradient = model.newParamsVec();
+    this.gradient = model.newParams();
     this.params.initRandom(initRandom, initNoise);
   }
 
@@ -316,9 +315,9 @@ public class Main implements Runnable {
 
   void generateExamples() {
     // Create the true parameters
-    trueParams = model.newParamsVec();
+    trueParams = model.newParams();
     trueParams.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
-    trueCounts = model.newParamsVec();
+    trueCounts = model.newParams();
 
     Hypergraph<Example> Hp = model.createHypergraph(opts.L, null, trueParams.weights, trueCounts.weights, 1);
     Hp.computePosteriors(false);
@@ -394,7 +393,7 @@ public class Main implements Runnable {
 
     Random random = new Random(3);
     if (opts.expectedMeasurements) {
-      measurements = model.newParamsVec();
+      measurements = model.newParams();
 
       // Currently, using true measurements
       for (int j = 0; j < model.numFeatures(); j++) {
@@ -407,7 +406,7 @@ public class Main implements Runnable {
       }
     } else {
       assert(false); // Don't do this yet.
-      measurements = model.newParamsVec();
+      measurements = model.newParams();
       // Construct triples of three observed variables around the hidden
       // node.
       Iterator<double[][]> dataSeq;
@@ -495,20 +494,20 @@ public class Main implements Runnable {
 
   // Goal: min KL(q||p)
   void optimize() {
-    ParamsVec eParams = model.newParamsVec();  // beta + theta (q)
-    ParamsVec mParams = model.newParamsVec();  // theta (p)
-    ParamsVec mCounts = model.newParamsVec();  // mu (deterministic function of mParams)
+    ParamsVec eParams = model.newParams();  // beta + theta (q)
+    ParamsVec mParams = model.newParams();  // theta (p)
+    ParamsVec mCounts = model.newParams();  // mu (deterministic function of mParams)
 
     boolean[] allMeasuredFeatures = new boolean[model.numFeatures()];
     for (int j = 0; j < model.numFeatures(); j++) allMeasuredFeatures[j] = true;
 
-    ZeroTerm zeroTerm = new ZeroTerm(model.newParamsVec());
+    ZeroTerm zeroTerm = new ZeroTerm(model.newParams());
     LinearTerm measurementsTerm = new LinearTerm(eParams, measurements, measuredFeatures);  // \tau
     // WARNING: This actually contains terms for all the variables; only
     // the "measured" subset is selected inside the LikelihoodFunctionState.
-    ExamplesTerm eExamplesTerm = new ExamplesTerm(model, eParams, model.newParamsVec(), examples, opts.storeHypergraphs);
+    ExamplesTerm eExamplesTerm = new ExamplesTerm(model, eParams, model.newParams(), examples, opts.storeHypergraphs);
 
-    ExamplesTerm mExamplesTerm = new ExamplesTerm(model, mParams, model.newParamsVec(), examples, opts.storeHypergraphs);
+    ExamplesTerm mExamplesTerm = new ExamplesTerm(model, mParams, model.newParams(), examples, opts.storeHypergraphs);
     LinearTerm supervisedTerm = new LinearTerm(mParams, trueCounts, allMeasuredFeatures);  // Infinite data
     LinearTerm examplesOutTerm = new LinearTerm(mParams, eExamplesTerm.counts, allMeasuredFeatures); // <\theta, E_q[\phi]> - this is Q(\theta | \theta^t)
     GlobalTerm globalTerm = new GlobalTerm(model, opts.L, mParams, mCounts); // A_i, E_p[\phi]
@@ -569,7 +568,7 @@ public class Main implements Runnable {
 
     boolean done = false;
     for (int iter = 0; iter < opts.numIters && !done; iter++) {
-      ParamsVec old_mParams = model.newParamsVec();
+      ParamsVec old_mParams = model.newParams();
       ListUtils.set(old_mParams.weights, mParams.weights);
 
       LogInfo.begin_track("Iteration %d/%d", iter, opts.numIters);

@@ -1,20 +1,11 @@
 package learning.models.loglinear;
 
-import java.io.*;
 import java.util.*;
 
-import learning.linalg.FullTensor;
-import learning.linalg.MatrixOps;
-
 import fig.basic.*;
-import fig.exec.*;
-import fig.prob.*;
-import fig.record.*;
 import learning.models.ExponentialFamilyModel;
+import learning.models.Params;
 import learning.utils.Counter;
-import org.ejml.simple.SimpleMatrix;
-
-import static fig.basic.LogInfo.*;
 
 public abstract class Model extends ExponentialFamilyModel<Example> {
   public int K;
@@ -24,7 +15,7 @@ public abstract class Model extends ExponentialFamilyModel<Example> {
   public int L; // Number of 'views' or length.
   public Indexer<Feature> featureIndexer = new Indexer<Feature>();
   public int numFeatures() { return featureIndexer.size(); }
-  public ParamsVec newParamsVec() { return new ParamsVec(K, featureIndexer); }
+  public ParamsVec newParams() { return new ParamsVec(K, featureIndexer); }
 
   abstract Example newExample();
   abstract Example newExample(int[] x);
@@ -100,17 +91,20 @@ public abstract class Model extends ExponentialFamilyModel<Example> {
     return new UpdatingMultinomialEdgeInfo(params, counts, f, increment, j, v, false);
   }
 
-  public double getLogLikelihood(ParamsVec parameters) {
+  public double getLogLikelihood(Params params) {
+    ParamsVec parameters = (ParamsVec) params;
     Hypergraph<Example> Hp = createHypergraph(parameters.weights, null, 0.);
     Hp.computePosteriors(false);
     return Hp.getLogZ();
   }
-  public double getLogLikelihood(ParamsVec parameters, Example example) {
+  public double getLogLikelihood(Params params, Example example) {
+    ParamsVec parameters = (ParamsVec) params;
     Hypergraph<Example> Hp = createHypergraph(example, parameters.weights, null, 0.);
     Hp.computePosteriors(false);
     return Hp.getLogZ();
   }
-  public double getLogLikelihood(ParamsVec parameters, Counter<Example> examples) {
+  public double getLogLikelihood(Params params, Counter<Example> examples) {
+    ParamsVec parameters = (ParamsVec) params;
     double lhood = 0.;
     for(Example example: examples) {
       Hypergraph<Example> Hp = createHypergraph(example, parameters.weights, null, 0.);
@@ -119,31 +113,18 @@ public abstract class Model extends ExponentialFamilyModel<Example> {
     }
     return lhood;
   }
-  public ParamsVec getMarginals(ParamsVec parameters) {
-    ParamsVec counts = newParamsVec();
-    Hypergraph<Example> Hp = createHypergraph(parameters.weights, counts.weights, 1.);
+  @Override
+  public void updateMarginals(Params params, Example example, double scale, Params marginals_) {
+    ParamsVec parameters = (ParamsVec) params;
+    ParamsVec marginals = (ParamsVec) marginals_;
+    Hypergraph<Example> Hp = createHypergraph(example, parameters.weights, marginals.weights, scale);
     Hp.computePosteriors(false);
     Hp.fetchPosteriors(false);
-    return counts;
   }
-  public ParamsVec getMarginals(ParamsVec parameters, Example example) {
-    ParamsVec counts = newParamsVec();
-    Hypergraph<Example> Hp = createHypergraph(example, parameters.weights, counts.weights, 1.);
-    Hp.computePosteriors(false);
-    Hp.fetchPosteriors(false);
-    return counts;
-  }
-  public ParamsVec getMarginals(ParamsVec parameters, Counter<Example> examples) {
-    ParamsVec counts = newParamsVec();
-    for(Example example: examples) {
-      Hypergraph<Example> Hp = createHypergraph(example, parameters.weights, counts.weights, examples.getFraction(example));
-      Hp.computePosteriors(false);
-      Hp.fetchPosteriors(false);
-    }
-    return counts;
-  }
-  public Counter<Example> drawSamples(ParamsVec parameters, Random rnd, int n) {
-    ParamsVec counts = newParamsVec();
+  @Override
+  public Counter<Example> drawSamples(Params params, Random rnd, int n) {
+    ParamsVec parameters = (ParamsVec) params;
+    ParamsVec counts = newParams();
     Hypergraph<Example> Hp = createHypergraph(parameters.weights, counts.weights, 1);
     // Necessary preprocessing before you can generate hyperpaths
     Hp.computePosteriors(false);

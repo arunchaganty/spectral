@@ -7,6 +7,7 @@ import java.util.*;
  */
 public class Counter<V> implements Collection<V> {
   HashMap<V, Double> map;
+  public double sum = 0.;
 
   public Counter() {
     map = new HashMap<>();
@@ -60,6 +61,7 @@ public class Counter<V> implements Collection<V> {
       map.put(item, 1.0);
     else
       map.put(item, map.get(item) + 1.0);
+    sum += 1.0;
     return true;
   }
 
@@ -68,6 +70,7 @@ public class Counter<V> implements Collection<V> {
       map.put(item, value);
     else
       map.put(item, map.get(item) + value);
+    sum += value;
     return true;
   }
 
@@ -79,7 +82,7 @@ public class Counter<V> implements Collection<V> {
   }
 
   public double getFraction(V item) {
-    return getCount(item)/sum();
+    return getCount(item)/sum;
   }
 
   public double sum() {
@@ -92,7 +95,9 @@ public class Counter<V> implements Collection<V> {
 
   @Override
   public boolean remove(Object o) {
-    return map.remove(o) != null;
+    Double count = map.remove(o);
+    sum -= (count != null) ? count : 0.;
+    return count != null;
   }
 
   @Override

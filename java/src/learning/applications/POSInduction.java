@@ -13,12 +13,10 @@ import learning.data.Corpus;
 import learning.data.MomentComputationWorkers;
 import learning.data.ParsedCorpus;
 import learning.linalg.MatrixOps;
-import learning.models.ExponentialFamilyModel;
 import learning.models.HiddenMarkovModel;
-import learning.models.HiddenMarkovModel.Params;
+import learning.models.Params;
 import learning.models.loglinear.Example;
 import learning.models.loglinear.ExpectationMaximization;
-import learning.models.loglinear.ParamsVec;
 import learning.models.loglinear.UndirectedHiddenMarkovModel;
 import learning.spectral.TensorMethod;
 import learning.spectral.applications.ParameterRecovery;
@@ -43,8 +41,6 @@ public class POSInduction implements Runnable {
   public Random initRandom = new Random();
   @Option(gloss="Noise in parameters")
   public double initParamsNoise = 1.0;
-  @Option(gloss="useLBFGS")
-  public boolean useLBFGS = false;
 
   @OptionSet(name="TensorMethod")
   public TensorMethod tensorMethod = new TensorMethod();
@@ -340,14 +336,14 @@ public class POSInduction implements Runnable {
    * @param C - Corpus
    * @return - Initial parameters
    */
-  public Params spectralRecovery(Corpus C, int K) {
-    // Compute moments
-    HiddenMarkovModel model = ParameterRecovery.recoverHMM(K, corpusToMoments(C), smoothMeasurements);
-    return model.getParams();
-  }
-  public Params spectralRecovery(ParsedCorpus C) {
-    return spectralRecovery(C, C.getTagDimension());
-  }
+//  public Params spectralRecovery(Corpus C, int K) {
+//    // Compute moments
+//    HiddenMarkovModel model = ParameterRecovery.recoverHMM(K, corpusToMoments(C), smoothMeasurements);
+//    return model.getParams();
+//  }
+//  public Params spectralRecovery(ParsedCorpus C) {
+//    return spectralRecovery(C, C.getTagDimension());
+//  }
 
   /**
    * Reads a data file in the format word_TAG,
@@ -356,7 +352,7 @@ public class POSInduction implements Runnable {
    * @param input
    * @return
    */
-  public static ParsedCorpus readData(File input) {
+  public ParsedCorpus readData(File input) {
     Indexer<String> wordIndex = new Indexer<>();
     Indexer<String> tagIndex = new Indexer<>();
     List<int[]> sentences = new ArrayList<>();
@@ -372,6 +368,7 @@ public class POSInduction implements Runnable {
 
     try(BufferedReader stream = UtilsJ.openReader(input)) {
       // Compute the words and statistics
+      int lineCount = 0;
       for(String line : IOUtils.readLines(stream)) {
         for(String token : line.split(" ")) {
           String[] word_tag = token.split("_");
@@ -379,6 +376,7 @@ public class POSInduction implements Runnable {
           String word = word_tag[0];
           counter.add(word);
         }
+        if(++lineCount > maxSentences) break;
       }
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -386,6 +384,7 @@ public class POSInduction implements Runnable {
 
     try(BufferedReader stream = UtilsJ.openReader(input)) {
       // Go back and actually add the words to the corpus
+      int lineCount = 0;
       for(String line : IOUtils.readLines(stream)) {
         String[] tokens = line.split(" ");
         if(tokens.length == 0) continue;
@@ -416,6 +415,8 @@ public class POSInduction implements Runnable {
         }
         sentences.add(words);
         answers.add(tags);
+
+        if(++lineCount > maxSentences) break;
       }
       // TODO: handle close with a finally
     } catch (IOException e) {
@@ -449,10 +450,15 @@ public class POSInduction implements Runnable {
       int D = C.getDimension();
       int L = 3;
       UndirectedHiddenMarkovModel hmm = new UndirectedHiddenMarkovModel(K, D, L);
-      ParamsVec params = hmm.newParamsVec();
+      Params params = hmm.newParams();
+      params.initRandom(initRandom, initParamsNoise);
       switch(mode) {
         case EM: {
           ExpectationMaximization solver = new ExpectationMaximization();
+          solver.backtrack.tolerance = 1e-3;
+          solver.mIters = 1;
+          solver.iters = 1000;
+          solver.thetaRegularization = 1e-3;
           solver.solveEM(hmm, data, params);
         } break;
         default:
@@ -474,7 +480,7 @@ public class POSInduction implements Runnable {
       // Convert to Example sequences
       LogInfo.logs( "Corpus has %d instances, with %d words and %d tags",
               C.getInstanceCount(), C.getDimension(), C.getTagDimension() );
-      truncate( C, maxSentences );
+//      truncate( C, maxSentences );
       LogInfo.end_track();
 
       Counter<Example> data = new Counter<>(corpusToExamples(C, C.getInstanceCount()));
@@ -485,7 +491,7 @@ public class POSInduction implements Runnable {
       int D = C.getDimension();
       int L = 3;
       UndirectedHiddenMarkovModel hmm = new UndirectedHiddenMarkovModel(K, D, L);
-      ParamsVec params = (ParamsVec) IOUtils.readObjFile(modelPath);
+      UndirectedHiddenMarkovModel.Parameters params = (UndirectedHiddenMarkovModel.Parameters) IOUtils.readObjFile(modelPath);
 
       // TODO: evaluate
 

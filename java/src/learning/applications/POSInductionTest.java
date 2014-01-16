@@ -24,7 +24,8 @@ public class POSInductionTest {
     in = new File(url.toURI());
 
     List<String> input = fig.basic.IOUtils.readLines(Files.newBufferedReader(in.toPath(), Charset.forName("UTF-8")));
-    ParsedCorpus out = POSInduction.readData(in);
+    POSInduction program = new POSInduction();
+    ParsedCorpus out = program.readData(in);
     List<String> output = out.toLines();
     Assert.assertEquals(input, output);
   }

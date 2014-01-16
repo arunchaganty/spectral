@@ -6,21 +6,16 @@ import learning.data.ComputableMoments;
 import learning.data.HasSampleMoments;
 import learning.linalg.FullTensor;
 import learning.linalg.MatrixOps;
-import learning.linalg.TensorPowerMethod;
 import learning.models.ExponentialFamilyModel;
-import learning.models.MixtureOfGaussians;
 import learning.models.loglinear.Example;
 import learning.models.loglinear.Models;
 import learning.models.loglinear.ParamsVec;
 import learning.models.loglinear.UndirectedHiddenMarkovModel;
 import learning.spectral.TensorMethod;
-import learning.spectral.applications.ParameterRecovery;
 import learning.utils.Counter;
 import org.ejml.simple.SimpleMatrix;
 import org.javatuples.Quartet;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 /**
@@ -54,7 +49,7 @@ public class TensorRecovery implements  Runnable {
    *  - Uses genRand as a seed.
    */
   ParamsVec generateParameters( ExponentialFamilyModel<Example> model, GenerationOptions opts ) {
-    ParamsVec trueParams = model.newParamsVec();
+    ParamsVec trueParams = (ParamsVec) model.newParams();
     trueParams.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
 //    for(int i = 0; i < trueParams.weights.length; i++)
 //      trueParams.weights[i] = Math.sin(i);

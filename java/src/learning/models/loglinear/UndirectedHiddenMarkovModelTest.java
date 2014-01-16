@@ -5,36 +5,34 @@ import learning.utils.Counter;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import learning.models.loglinear.UndirectedHiddenMarkovModel.Parameters;
 
 import java.util.Random;
-
-import static learning.models.loglinear.UndirectedHiddenMarkovModel.o;
-import static learning.models.loglinear.UndirectedHiddenMarkovModel.t;
 
 /**
  *
  */
 public class UndirectedHiddenMarkovModelTest {
   UndirectedHiddenMarkovModel model;
-  ParamsVec model0;
-  ParamsVec model1;
+  Parameters model0;
+  Parameters model1;
 
   @Before
   public void initialize() {
     int K = 2, D = 2, L = 3;
     model = new UndirectedHiddenMarkovModel(K, D, L);
-    model0 = model.newParamsVec();
+    model0 = (Parameters) model.newParams();
 
-    model1 = model.newParamsVec();
-    model1.set(new UnaryFeature(0, "x=" + 0), Math.log(1.));
-    model1.set(new UnaryFeature(0, "x=" + 1), Math.log(2.));
-    model1.set(new UnaryFeature(1, "x=" + 0), Math.log(1.));
-    model1.set(new UnaryFeature(1, "x=" + 1), Math.log(1.));
+    model1 = (Parameters) model.newParams();
+    model1.weights[model.o(0,0)] = Math.log(1.);
+    model1.weights[model.o(0,1)] = Math.log(2.);
+    model1.weights[model.o(1,0)] = Math.log(1.);
+    model1.weights[model.o(1,1)] = Math.log(1.);
 
-    model1.set(new BinaryFeature(0, 0), Math.log(1.));
-    model1.set(new BinaryFeature(0, 1), Math.log(2.));
-    model1.set(new BinaryFeature(1, 0), Math.log(3.));
-    model1.set(new BinaryFeature(1, 1), Math.log(4.));
+    model1.weights[model.t(0,0)] = Math.log(1.);
+    model1.weights[model.t(0,1)] = Math.log(2.);
+    model1.weights[model.t(1,0)] = Math.log(3.);
+    model1.weights[model.t(1,1)] = Math.log(4.);
   }
 
   @Test
@@ -195,58 +193,58 @@ public class UndirectedHiddenMarkovModelTest {
   public void testMarginals() {
     Example ex = new Example(new int[]{0,0,0}, new int[]{0,0,0});
     {
-      ParamsVec marginals = model.getMarginals(model0);
+      Parameters marginals = (Parameters) model.getMarginals(model0);
       int T = model.L;
-      Assert.assertEquals(marginals.get(o(0, 0)), 0.25 * T, 1e-3 );
-      Assert.assertEquals(marginals.get(o(0, 1)), 0.25 * T, 1e-3 );
-      Assert.assertEquals(marginals.get(o(1, 0)), 0.25 * T, 1e-3 );
-      Assert.assertEquals(marginals.get(o(1, 1)), 0.25 * T, 1e-3 );
+      Assert.assertEquals(marginals.weights[model.o(0, 0)], 0.25 * T, 1e-3 );
+      Assert.assertEquals(marginals.weights[model.o(0, 1)], 0.25 * T, 1e-3 );
+      Assert.assertEquals(marginals.weights[model.o(1, 0)], 0.25 * T, 1e-3 );
+      Assert.assertEquals(marginals.weights[model.o(1, 1)], 0.25 * T, 1e-3 );
 
-      Assert.assertEquals(marginals.get(t(0, 0)), 0.25 * (T-1), 1e-3);
-      Assert.assertEquals(marginals.get(t(0, 1)), 0.25 * (T-1), 1e-3);
-      Assert.assertEquals(marginals.get(t(1, 0)), 0.25 * (T-1), 1e-3);
-      Assert.assertEquals(marginals.get(t(1, 1)), 0.25 * (T-1), 1e-3);
+      Assert.assertEquals(marginals.weights[model.t(0, 0)], 0.25 * (T-1), 1e-3);
+      Assert.assertEquals(marginals.weights[model.t(0, 1)], 0.25 * (T-1), 1e-3);
+      Assert.assertEquals(marginals.weights[model.t(1, 0)], 0.25 * (T-1), 1e-3);
+      Assert.assertEquals(marginals.weights[model.t(1, 1)], 0.25 * (T-1), 1e-3);
     }
     {
       int T = model.L;
-      ParamsVec marginals = model.getMarginals(model0, ex);
-      Assert.assertEquals(marginals.get(o(0, 0)), 0.5 * T, 1e-3 );
-      Assert.assertEquals(marginals.get(o(0, 1)), 0.0 * T, 1e-3 );
-      Assert.assertEquals(marginals.get(o(1, 0)), 0.5 * T, 1e-3 );
-      Assert.assertEquals(marginals.get(o(1, 1)), 0.0 * T, 1e-3 );
+      Parameters marginals = (Parameters) model.getMarginals(model0, ex);
+      Assert.assertEquals(marginals.weights[model.o(0, 0)], 0.5 * T, 1e-3 );
+      Assert.assertEquals(marginals.weights[model.o(0, 1)], 0.0 * T, 1e-3 );
+      Assert.assertEquals(marginals.weights[model.o(1, 0)], 0.5 * T, 1e-3 );
+      Assert.assertEquals(marginals.weights[model.o(1, 1)], 0.0 * T, 1e-3 );
 
-      Assert.assertEquals(marginals.get(t(0, 0)), 0.25 * (T-1), 1e-3);
-      Assert.assertEquals(marginals.get(t(0, 1)), 0.25 * (T-1), 1e-3);
-      Assert.assertEquals(marginals.get(t(1, 0)), 0.25 * (T-1), 1e-3);
-      Assert.assertEquals(marginals.get(t(1, 1)), 0.25 * (T-1), 1e-3);
+      Assert.assertEquals(marginals.weights[model.t(0, 0)], 0.25 * (T-1), 1e-3);
+      Assert.assertEquals(marginals.weights[model.t(0, 1)], 0.25 * (T-1), 1e-3);
+      Assert.assertEquals(marginals.weights[model.t(1, 0)], 0.25 * (T-1), 1e-3);
+      Assert.assertEquals(marginals.weights[model.t(1, 1)], 0.25 * (T-1), 1e-3);
     }
 
     {
       model.L = 2;
-      ParamsVec marginals = model.getMarginals(model1);
+      Parameters marginals = (Parameters) model.getMarginals(model1);
       model.L = 3;
-      Assert.assertEquals(marginals.get(o(0, 0)), 0.291, 1e-1 );
-      Assert.assertEquals(marginals.get(o(0, 1)), 0.581, 1e-1 );
-      Assert.assertEquals(marginals.get(o(1, 0)), 0.564, 1e-1 );
-      Assert.assertEquals(marginals.get(o(1, 1)), 0.564, 1e-1 );
+      Assert.assertEquals(marginals.weights[model.o(0, 0)], 0.291, 1e-1 );
+      Assert.assertEquals(marginals.weights[model.o(0, 1)], 0.581, 1e-1 );
+      Assert.assertEquals(marginals.weights[model.o(1, 0)], 0.564, 1e-1 );
+      Assert.assertEquals(marginals.weights[model.o(1, 1)], 0.564, 1e-1 );
 
-      Assert.assertEquals(marginals.get(t(0, 0)), 0.164, 1e-1);
-      Assert.assertEquals(marginals.get(t(0, 1)), 0.218, 1e-1);
-      Assert.assertEquals(marginals.get(t(1, 0)), 0.327, 1e-1);
-      Assert.assertEquals(marginals.get(t(1, 1)), 0.291, 1e-1);
+      Assert.assertEquals(marginals.weights[model.t(0, 0)], 0.164, 1e-1);
+      Assert.assertEquals(marginals.weights[model.t(0, 1)], 0.218, 1e-1);
+      Assert.assertEquals(marginals.weights[model.t(1, 0)], 0.327, 1e-1);
+      Assert.assertEquals(marginals.weights[model.t(1, 1)], 0.291, 1e-1);
     }
     {
       Example ex_ = new Example(new int[]{0,0}, new int[]{0,0});
-      ParamsVec marginals = model.getMarginals(model1, ex_);
-      Assert.assertEquals(marginals.get(o(0, 0)), 0.7, 1e-1 );
-      Assert.assertEquals(marginals.get(o(0, 1)), 0.0, 1e-1 );
-      Assert.assertEquals(marginals.get(o(1, 0)), 1.3, 1e-1 );
-      Assert.assertEquals(marginals.get(o(1, 1)), 0.0, 1e-1 );
+      Parameters marginals = (Parameters) model.getMarginals(model1, ex_);
+      Assert.assertEquals(marginals.weights[model.o(0, 0)], 0.7, 1e-1 );
+      Assert.assertEquals(marginals.weights[model.o(0, 1)], 0.0, 1e-1 );
+      Assert.assertEquals(marginals.weights[model.o(1, 0)], 1.3, 1e-1 );
+      Assert.assertEquals(marginals.weights[model.o(1, 1)], 0.0, 1e-1 );
 
-      Assert.assertEquals(marginals.get(t(0, 0)), 0.1, 1e-1);
-      Assert.assertEquals(marginals.get(t(0, 1)), 0.2, 1e-1);
-      Assert.assertEquals(marginals.get(t(1, 0)), 0.3, 1e-1);
-      Assert.assertEquals(marginals.get(t(1, 1)), 0.4, 1e-1);
+      Assert.assertEquals(marginals.weights[model.t(0, 0)], 0.1, 1e-1);
+      Assert.assertEquals(marginals.weights[model.t(0, 1)], 0.2, 1e-1);
+      Assert.assertEquals(marginals.weights[model.t(1, 0)], 0.3, 1e-1);
+      Assert.assertEquals(marginals.weights[model.t(1, 1)], 0.4, 1e-1);
     }
   }
 
@@ -270,9 +268,9 @@ public class UndirectedHiddenMarkovModelTest {
   public void testMarginalGradient() {
     double eps = 1e-4;
     // Is the gradent of likelihood this?
-    ParamsVec params = new ParamsVec(model1);
+    Parameters params = (Parameters) model1.copy();
 
-    ParamsVec marginal = model.getMarginals(params);
+    Parameters marginal = (Parameters) model.getMarginals(params);
     for(int i = 0; i < marginal.weights.length; i++) {
       params.weights[i] += eps;
       double valuePlus = model.getLogLikelihood(params);
@@ -290,8 +288,8 @@ public class UndirectedHiddenMarkovModelTest {
   @Test
   public void testSampleMarginals() {
     Counter<Example> data = model.drawSamples(model1, new Random(1), 1000000);
-    ParamsVec marginal = model.getMarginals(model1, data);
-    ParamsVec marginal_ = model.getSampleMarginals(data);
+    Parameters marginal = (Parameters) model.getMarginals(model1, data);
+    Parameters marginal_ = model.getSampleMarginals(data);
     for(int i = 0; i < marginal.weights.length; i++) {
       Assert.assertTrue(Math.abs(marginal.weights[i] - marginal_.weights[i]) < 1e-1);
     }
@@ -300,8 +298,8 @@ public class UndirectedHiddenMarkovModelTest {
   @Test
   public void testSample2() {
     Counter<Example> data = model.drawSamples(model1, new Random(1), 1000000);
-    ParamsVec marginal = model.getMarginals(model1);
-    ParamsVec marginal_ = model.getSampleMarginals(data);
+    Parameters marginal = (Parameters) model.getMarginals(model1);
+    Parameters marginal_ = model.getSampleMarginals(data);
     for(int i = 0; i < marginal.weights.length; i++) {
       Assert.assertTrue(Math.abs(marginal.weights[i] - marginal_.weights[i]) < 1e-1);
     }

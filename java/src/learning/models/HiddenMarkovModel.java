@@ -276,7 +276,7 @@ public class HiddenMarkovModel implements EMOptimizable, Serializable, HasExactM
 			// Pi
 			for(int i = 0; i < stateCount; i++) {
 				p.pi[i] = 1.0/stateCount;
-				// Dividing the noise by the sqrt(size) so that the total noise is as given
+				// Dividing the noise by the sqrt(size) so that the sum noise is as given
 				p.pi[i] += rand.nextGaussian() * Math.sqrt(noise/stateCount);
 				// Ensure positive
 				p.pi[i] = Math.abs( p.pi[i] );
@@ -287,7 +287,7 @@ public class HiddenMarkovModel implements EMOptimizable, Serializable, HasExactM
 			for(int i = 0; i < stateCount; i++) {
 				for(int j = 0; j < stateCount; j++) {
 					p.T[i][j] = 1.0/stateCount;
-					// Dividing the noise by the sqrt(size) so that the total noise is as given
+					// Dividing the noise by the sqrt(size) so that the sum noise is as given
 					p.T[i][j] += rand.nextGaussian() * Math.sqrt(noise/stateCount);
 					// Ensure positive
 					p.T[i][j] = Math.abs( p.T[i][j] );
@@ -299,7 +299,7 @@ public class HiddenMarkovModel implements EMOptimizable, Serializable, HasExactM
 			for(int i = 0; i < stateCount; i++) {
 				for(int j = 0; j < emissionCount; j++) {
 					p.O[i][j] = 1.0/emissionCount;
-					// Dividing the noise by the sqrt(size) so that the total noise is as given
+					// Dividing the noise by the sqrt(size) so that the sum noise is as given
 					p.O[i][j] += rand.nextGaussian() * Math.sqrt(noise/emissionCount);
 					// Ensure positive
 					p.O[i][j] = Math.abs( p.O[i][j] );

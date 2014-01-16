@@ -5,14 +5,14 @@ import java.util.*;
 
 import fig.basic.*;
 import fig.exec.*;
-import learning.linalg.MatrixFactory;
 import learning.linalg.MatrixOps;
 import learning.models.ExponentialFamilyModel;
+import learning.models.Params;
 import learning.utils.Counter;
-import learning.utils.UtilsJ;
 
 import static fig.basic.LogInfo.*;
 import static learning.utils.UtilsJ.doGradientCheck;
+import static learning.utils.UtilsJ.writeStringHard;
 
 import java.util.List;
 
@@ -49,23 +49,23 @@ public class MeasurementsEM implements Runnable {
     ExponentialFamilyModel<Example> modelA;
     ExponentialFamilyModel<Example> modelB;
     Counter<Example> X;
-    final ParamsVec theta, beta, tau;
-    final ParamsVec gradient;
+    final Params theta, beta, tau;
+    final Params gradient;
 
     double objective, objectiveOffset;
     boolean objectiveValid, gradientValid;
-    final ParamsVec params, paramsGradient;
+    final Params params, paramsGradient;
 
-    public MeasurementsEObjective(ExponentialFamilyModel<Example> modelA, ExponentialFamilyModel<Example> modelB, Counter<Example> X, ParamsVec tau, ParamsVec theta, ParamsVec beta) {
+    public MeasurementsEObjective(ExponentialFamilyModel<Example> modelA, ExponentialFamilyModel<Example> modelB, Counter<Example> X, Params tau, Params theta, Params beta) {
       this.modelA = modelA;
       this.modelB = modelB;
       this.X = X;
       this.tau = tau;
       this.theta = theta;
       this.beta = beta;
-      this.gradient = new ParamsVec(beta);
-      this.params = modelB.newParamsVec();
-      this.paramsGradient = modelB.newParamsVec();
+      this.gradient = beta.copy();
+      this.params = modelB.newParams();
+      this.paramsGradient = modelB.newParams();
 
       updateOffset();
     }
@@ -83,7 +83,7 @@ public class MeasurementsEM implements Runnable {
     public void invalidate() { objectiveValid = gradientValid = false; }
 
     @Override
-    public double[] point() { return beta.weights; }
+    public double[] point() { return beta.toArray(); }
 
     @Override
     /**
@@ -101,7 +101,8 @@ public class MeasurementsEM implements Runnable {
 
       // Go through each example, and add - B(\theta, X_i)
       params.clear();
-      ParamsVec.plus(theta, beta, params);
+      params.plusEquals(1.0, beta);
+      params.plusEquals(1.0, theta);
       objective -= modelB.getLogLikelihood(params, X);
       // Finally, subtract regularizer h^*(\beta) = 0.5 \|\beta\|^2
       objective -= 0.5 * betaRegularization * beta.dot(beta);
@@ -112,22 +113,23 @@ public class MeasurementsEM implements Runnable {
 
     @Override
     public double[] gradient() {
-      if( gradientValid ) return gradient.weights;
+      if( gradientValid ) return gradient.toArray();
 
       gradient.clear();
       // Add a term for \tau
-      gradient.incr(1.0, tau);
+      gradient.plusEquals(1.0, tau);
 
       // Compute expected counts - \E_q(\sigma)
       params.clear();
-      ParamsVec.plus(theta, beta, params);
-      paramsGradient.copy( modelB.getMarginals(params, X) );
-      ParamsVec.minus(gradient, paramsGradient, gradient);
+      params.plusEquals(1.0, theta);
+      params.plusEquals(1.0, beta);
+      paramsGradient.copyOver(modelB.getMarginals(params, X));
+      gradient.plusEquals(-1.0, paramsGradient);
 
       // subtract \nabla h^*(\beta) = \beta
-      gradient.incr(-betaRegularization, beta);
+      gradient.plusEquals(-betaRegularization, beta);
 
-      return gradient.weights;
+      return gradient.toArray();
     }
   }
 
@@ -140,23 +142,23 @@ public class MeasurementsEM implements Runnable {
     ExponentialFamilyModel<Example> modelA;
     ExponentialFamilyModel<Example> modelB;
     Counter<Example> X;
-    final ParamsVec theta, beta, tau;
-    final ParamsVec params, phi_sigma;
-    final ParamsVec gradient;
+    final Params theta, beta, tau;
+    final Params params, phi_sigma;
+    final Params gradient;
 
     double objective, objectiveOffset;
     boolean objectiveValid, gradientValid;
 
-    public MeasurementsMObjective(ExponentialFamilyModel<Example> modelA, ExponentialFamilyModel<Example> modelB, Counter<Example> X, ParamsVec tau, ParamsVec theta, ParamsVec beta) {
+    public MeasurementsMObjective(ExponentialFamilyModel<Example> modelA, ExponentialFamilyModel<Example> modelB, Counter<Example> X, Params tau, Params theta, Params beta) {
       this.modelA = modelA;
       this.modelB = modelB;
       this.X = X;
       this.tau = tau;
       this.theta = theta;
       this.beta = beta;
-      this.gradient = new ParamsVec(theta);
-      this.params = modelB.newParamsVec();
-      this.phi_sigma = modelB.newParamsVec();
+      this.gradient = theta.copy();
+      this.params = modelB.newParams();
+      this.phi_sigma = modelB.newParams();
 
       updateOffset();
     }
@@ -165,25 +167,26 @@ public class MeasurementsEM implements Runnable {
       // Compute the offset to the value
       // $(tau, \beta) - h_\beta(\heta)
       params.clear();
-      ParamsVec.plus(theta, beta, params);
+      params.plusEquals(1.0, theta);
+      params.plusEquals(1.0, beta);
 
       objectiveOffset = 0;
       // -H(q) = \theta_0^T \E_q[\phi(x,y)] + \beta_0^T \E_q[\phi(x,y)] -
       // \sum_i B
       phi_sigma.clear();
-      phi_sigma.copy( modelB.getMarginals(params, X) );
+      phi_sigma.copyOver(modelB.getMarginals(params, X));
 
       // h_\sigma( \tau - \E[\sigma(x,y) );
-      ParamsVec tau_hat = new ParamsVec(tau);
-      ParamsVec.project( phi_sigma, tau_hat );
-      objectiveOffset += 0.5  * betaRegularization * MatrixOps.norm( ParamsVec.minus(tau, tau_hat).weights );
+      Params tau_hat = tau.copy();
+      tau_hat.copyOver(phi_sigma);
+      objectiveOffset += 0.5  * betaRegularization * MatrixOps.norm( tau.plus(-1.0, tau_hat).toArray() );
     }
 
     @Override
     public void invalidate() { objectiveValid = gradientValid = false; }
 
     @Override
-    public double[] point() { return theta.weights; }
+    public double[] point() { return theta.toArray(); }
 
     @Override
     /**
@@ -211,21 +214,21 @@ public class MeasurementsEM implements Runnable {
 
     @Override
     public double[] gradient() {
-      if( gradientValid ) return gradient.weights;
+      if( gradientValid ) return gradient.toArray();
 
-      gradient.copy(modelA.getMarginals(theta));
+      gradient.copyOver(modelA.getMarginals(theta));
 
-//      ParamsVec phi = modelA.newParamsVec();
-//      ParamsVec.project( phi_sigma, phi );
-      gradient.incr( -1.0, phi_sigma );
+//      Params phi = modelA.newParams();
+//      Params.project( phi_sigma, phi );
+      gradient.plusEquals(-1.0, phi_sigma);
 
       // Add \nabla h(\theta)
-      gradient.incr(thetaRegularization, theta);
+      gradient.plusEquals(thetaRegularization, theta);
 
       // Change the sign
-      ListUtils.multMut(gradient.weights, -1);
+      ListUtils.multMut(gradient.toArray(), -1);
 
-      return gradient.weights;
+      return gradient.toArray();
     }
   }
 
@@ -288,19 +291,19 @@ public class MeasurementsEM implements Runnable {
    * @param beta - initial parameters for $\beta$
    * @return - (theta, beta) that optimize.
    */
-  Pair<ParamsVec,ParamsVec> solveMeasurements(
+  Pair<Params,Params> solveMeasurements(
           ExponentialFamilyModel<Example> modelA,
           ExponentialFamilyModel<Example> modelB,
           Counter<Example> data,
-          ParamsVec measurements,
-          ParamsVec theta,
-          ParamsVec beta
+          Params measurements,
+          Params theta,
+          Params beta
           ) {
     LogInfo.begin_track("solveMeasurements");
     LogInfo.logs( "Solving measurements objective with %d + %d parameters, using %f instances (%d unique)",
-            theta.numFeatures, beta.numFeatures, data.sum(), data.size() );
+            theta.size(), beta.size(), data.sum(), data.size() );
 
-    Execution.putOutput( "actualMeasuredFraction", measurements.numFeatures / (float) theta.numFeatures );
+    Execution.putOutput( "actualMeasuredFraction", measurements.size() / (float) theta.size() );
 
     Maximizer eMaximizer = newMaximizer();
     Maximizer mMaximizer = newMaximizer();
@@ -313,7 +316,7 @@ public class MeasurementsEM implements Runnable {
     eObjective.updateOffset(); mObjective.updateOffset();
     boolean done = false;
     PrintWriter out = IOUtils.openOutHard(Execution.getFile("events"));
-    ParamsVec oldTheta = new ParamsVec(theta);
+    Params oldTheta = theta.copy();
     for( int i = 0; i < iters && !done; i++ ) {
 
       assert eObjective.theta == mObjective.theta;
@@ -337,7 +340,7 @@ public class MeasurementsEM implements Runnable {
       eObjective.invalidate();
       LogInfo.logs("==== midway: eObjective = %f, mObjective = %f", eObjective.value(), mObjective.value());
 
-      System.arraycopy(theta.weights, 0, oldTheta.weights, 0, theta.weights.length);
+      oldTheta.copyOver(theta);
 
       done = done1 && done2;
     }
@@ -360,7 +363,7 @@ public class MeasurementsEM implements Runnable {
 
   public static Options opts = new Options();
 
-  public double computeLogZ(ExponentialFamilyModel<Example> model, ParamsVec params, Counter<Example> data) {
+  public double computeLogZ(ExponentialFamilyModel<Example> model, Params params, Counter<Example> data) {
     return model.getLogLikelihood(params, data);
   }
 
@@ -389,14 +392,15 @@ public class MeasurementsEM implements Runnable {
 
     // Create some data
     LogInfo.begin_track("Creating data");
-    ParamsVec trueParams = modelA.newParamsVec();
-    for(int i = 0; i < trueParams.weights.length; i++)
-      trueParams.weights[i] = Math.sin(i);
+    Params trueParams = modelA.newParams();
+    for(int i = 0; i < trueParams.size(); i++)
+      trueParams.toArray()[i] = Math.sin(i);
 //      trueParams.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
-    trueParams.write(Execution.getFile("true.params"));
+    writeStringHard(Execution.getFile("true.params"), trueParams.toString());
+//    trueParams.write(Execution.getFile("true.params"));
 
-    ParamsVec trueMeasurements = modelA.getMarginals(trueParams);
-    trueMeasurements.write(Execution.getFile("true.counts"));
+    Params trueMeasurements = modelA.getMarginals(trueParams);
+    writeStringHard(Execution.getFile("true.counts"), trueMeasurements.toString());
 
     // Generate examples from the model
     Counter<Example> data = modelA.drawSamples(trueParams, opts.genRandom, opts.genNumExamples);
@@ -407,10 +411,10 @@ public class MeasurementsEM implements Runnable {
     LogInfo.begin_track("Fitting model");
 
     // Initializing stuff
-    ParamsVec theta = new ParamsVec(trueParams);
-    theta.write(Execution.getFile("fit0.params"));
+    Params theta = trueParams.copy();
+    writeStringHard(Execution.getFile("fit0.params"), theta.toString());
 
-    ParamsVec beta = modelB.newParamsVec(); //new ParamsVec(trueParams);
+    Params beta = modelB.newParams(); //new Params(trueParams);
     theta.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
     beta.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
 
@@ -418,34 +422,32 @@ public class MeasurementsEM implements Runnable {
     LogInfo.logs("likelihood(est.): " + computeLogZ(modelA, theta, data) );
 
 
-    ParamsVec measurements = modelA.getMarginals(theta);
-    measurements.write(Execution.getFile("fit0.counts"));
+    Params measurements = modelA.getMarginals(theta);
+    writeStringHard(Execution.getFile("fit0.counts"), measurements.toString());
 
     // Measurements
     measurements = modelA.getMarginals(trueParams, data);
-    measurements.write(Execution.getFile("measurements.counts"));
+    writeStringHard(Execution.getFile("measurements.counts"), measurements.toString());
 
     solveMeasurements( modelA, modelB, data, measurements, theta, beta);
 
     measurements = modelA.getMarginals(theta);
 
-    int[] perm = new int[trueMeasurements.K];
-
-    double error = theta.computeDiff(trueParams, perm);
-    Execution.putOutput("params-error", error);
-    LogInfo.logs("params error: " + error + " " + Fmt.D(perm));
-
-    error = measurements.computeDiff(trueMeasurements, perm);
-    Execution.putOutput("counts-error", error);
-    LogInfo.logs("counts error: " + error + " " + Fmt.D(perm));
+//    int[] perm = new int[trueMeasurements.K];
+//    double error = theta.computeDiff(trueParams, perm);
+//    Execution.putOutput("params-error", error);
+//    LogInfo.logs("params error: " + error + " " + Fmt.D(perm));
+//
+//    error = measurements.computeDiff(trueMeasurements, perm);
+//    Execution.putOutput("counts-error", error);
+//    LogInfo.logs("counts error: " + error + " " + Fmt.D(perm));
     LogInfo.logs("likelihood(true): " + computeLogZ(modelA, trueParams, data) );
     LogInfo.logs("likelihood(est.): " + computeLogZ(modelA, theta, data) );
 
     // Compute the likelihoods
-    theta.write(Execution.getFile("fit.params"));
-    Execution.putOutput("fit.beta", MatrixFactory.fromVector(beta.weights));
-    measurements.write(Execution.getFile("fit.counts"));
-
+    writeStringHard(Execution.getFile("fit.params"), theta.toString());
+    Execution.putOutput("fit.beta", Fmt.D(beta.toArray()));
+    writeStringHard(Execution.getFile("fit.counts"), measurements.toString());
 
     LogInfo.end_track("Fitting model");
   }

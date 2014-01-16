@@ -1,15 +1,16 @@
 package learning.models.loglinear;
 
-import fig.basic.Indexer;
 import fig.basic.Pair;
 import learning.linalg.FullTensor;
 import learning.linalg.MatrixOps;
 import learning.linalg.RandomFactory;
 import learning.models.ExponentialFamilyModel;
+import learning.models.Params;
 import learning.utils.Counter;
 import org.ejml.simple.SimpleMatrix;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -20,32 +21,108 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
   public int K;
   public int D;
   public int L;
-  Indexer<Feature> indexer;
 
-  public static Feature o(int h, int x) {
-    return new UnaryFeature(h, "x="+x);
+  // TODO: Support initial state
+  // First K*D features are observations
+  public int o(int h, int x) {
+    return h * D + x;
   }
-  public static Feature t(int h_, int h) {
-    return new BinaryFeature(h_, h);
+  // Last K*K features are transitions
+  public int t(int h_, int h) {
+    return K * D + h_ * K + h;
+  }
+
+  public class Parameters extends Params {
+    final int K;
+    final int D;
+    final double[] weights;
+
+    public Parameters(int K, int D) {
+      this.K = K;
+      this.D = D;
+      this.weights = new double[K*D + K*K];
+    }
+
+    @Override
+    public Params newParams() {
+      return new Parameters(K,D);
+    }
+
+    @Override
+    public void initRandom(Random random, double noise) {
+      for (int j = 0; j < weights.length; j++)
+        weights[j] = noise * (2 * random.nextDouble() - 1);
+    }
+
+    @Override
+    public void copyOver(Params other_) {
+      if(other_ instanceof Parameters) {
+        Parameters other = (Parameters) other_;
+        System.arraycopy(weights, 0, other.weights, 0, weights.length);
+      } else {
+        throw new IllegalArgumentException();
+      }
+
+    }
+    @Override
+    public Params merge(Params other_) {
+      // Nothing the merge, just add
+      return plus(other_);
+    }
+
+    @Override
+    public double[] toArray() {
+      return weights;
+    }
+    @Override
+    public int size() {
+      return weights.length;
+    }
+
+    @Override
+    public void clear() {
+      Arrays.fill(weights, 0.);
+    }
+
+    @Override
+    public void plusEquals(double scale, Params other_) {
+      if(other_ instanceof Parameters) {
+        Parameters other = (Parameters) other_;
+        for(int i = 0; i < weights.length; i++)
+          weights[i] += other.weights[i];
+      } else {
+        throw new IllegalArgumentException();
+      }
+
+    }
+
+    @Override
+    public void scaleEquals(double scale) {
+      for(int i = 0; i < weights.length; i++)
+        weights[i] *= scale;
+    }
+
+    @Override
+    public double dot(Params other_) {
+      if(other_ instanceof Parameters) {
+        Parameters other = (Parameters) other_;
+
+        double prod = 0.;
+
+        for(int i = 0; i < weights.length; i++)
+          prod += weights[i] * other.weights[i];
+
+        return prod;
+      } else {
+        throw new IllegalArgumentException();
+      }
+    }
   }
 
   public UndirectedHiddenMarkovModel(int K, int D, int L) {
     this.K = K;
     this.D = D;
     this.L = L;
-    indexer = new Indexer<>();
-
-    for(int h = 0; h < K; h++) {
-      for(int x = 0; x < D; x++) {
-        indexer.add(o(h,x));
-      }
-      if( L > 1 ) {
-        for(int h_ = 0; h_ < K; h_++) {
-          indexer.add(t(h_,h));
-        }
-      }
-    }
-
   }
 
   @Override
@@ -60,33 +137,27 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
 
   @Override
   public int numFeatures() {
-    return indexer.size();
+    return K*D + K*K;
   }
 
   @Override
-  public ParamsVec newParamsVec() {
-    return new ParamsVec(K, indexer);
+  public Params newParams() {
+    return new Parameters(K, D);
   }
 
   /**
    * Return \theta^T [\phi(y_{t-1}, y_{t}), \phi(y_{t}, x_{t}) ]
-   * @param params
-   * @param t
-   * @param y_
-   * @param y
-   * @param ex
-   * @return
    */
-  double G(ParamsVec params, int t, int y_, int y, Example ex) {
+  double G(Parameters params, int t, int y_, int y, Example ex) {
     double value = 0.;
     if( ex != null ) {
-      value = params.get(o(y,ex.x[t]));
-      value +=  (t > 0) ? params.get(t(y_, y)) : 0.;
+      value = params.weights[o(y, ex.x[t])];
+      value +=  (t > 0) ? params.weights[t(y_, y)] : 0.;
       return Math.exp(value);
     } else {
       for(int x = 0; x < D; x++) {
-        double value_ = params.get(o(y, x));
-        value_ += (t > 0) ? params.get(t(y_, y)) : 0.;
+        double value_ = params.weights[o(y, x)];
+        value_ += (t > 0) ? params.weights[t(y_, y)] : 0.;
         value += Math.exp(value_);
       }
       return value;
@@ -95,9 +166,28 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
 
   /**
    * Forward_t(y_{t}) = \sum_{y_{t-1}} G_t(y_{t-1}, y_t; x, \theta) Forward{t-1}(y_{t-1}).
-   * @return
+   * TODO: No matter of threadsafe.
    */
-  public Pair<Double, double[][]> forward(ParamsVec params, Example ex) {
+  private class IntermediateState {
+    boolean use = false;
+    Pair<Double, double[][]> forward;
+    double[][] backward;
+
+    void start() {
+      use = true;
+      forward = null;
+      backward = null;
+    }
+    void stop() {
+      use = false;
+      forward = null;
+      backward = null;
+    }
+  }
+  private final IntermediateState intermediateState = new IntermediateState();
+
+  public Pair<Double, double[][]> forward(Parameters params, Example ex) {
+    if(intermediateState.use && intermediateState.forward != null) return intermediateState.forward;
     int T = (ex != null) ? ex.x.length : L;
     double[][] forwards = new double[T][K];
     double A = 0; // Collected constants
@@ -125,11 +215,12 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
       MatrixOps.scale(forwards[t],1./z);
       A += Math.log(z);
     }
-
-    return Pair.makePair(A, forwards);
+    return intermediateState.forward = Pair.newPair(A, forwards);
   }
 
-  public double[][] backward(ParamsVec params, Example ex) {
+  public double[][] backward(Parameters params, Example ex) {
+    if(intermediateState.use && intermediateState.backward != null) return intermediateState.backward;
+
     int T = (ex != null) ? ex.x.length : L;
     double[][] backwards = new double[T][K];
 
@@ -155,17 +246,14 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
       MatrixOps.scale(backwards[t],1./z);
     }
 
-    return backwards;
+    return intermediateState.backward = backwards;
   }
 
   /**
    * Return p(y_{t-1}, y_t) 0 \le t \le T-1. The base case of p(y_{-1}, y_0) is when
    * y_{-1} is the -BEGIN- tag; in other words the initial probability of y_{-1}.
-   * @param params
-   * @param ex
-   * @return
    */
-  public double[][][] computeEdgeMarginals(ParamsVec params, Example ex) {
+  public double[][][] computeEdgeMarginals(Parameters params, Example ex) {
     int T = (ex != null) ? ex.x.length : L;
 
     double[][] forwards = forward(params,ex).getSecond();
@@ -177,7 +265,7 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     {
       int t = 0; int y_ = 0;
       for( int y = 0; y < K; y++ ) {
-        marginals[0][y_][y] = G(params, t, y_, y, ex) * backwards[0][y];
+        marginals[t][y_][y] = 1.0 * G(params, t, y_, y, ex) * backwards[t][y];
       }
       // Normalize
       double z = MatrixOps.sum(marginals[t]);
@@ -195,7 +283,7 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
 
     return marginals;
   }
-  public double[][] computeHiddenNodeMarginals(ParamsVec params, Example ex) {
+  public double[][] computeHiddenNodeMarginals(Parameters params, Example ex) {
     int T = (ex != null) ? ex.x.length : L;
 
     double[][] forwards = forward(params,ex).getSecond();
@@ -213,29 +301,34 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
 
     return marginals;
   }
-  public double[][][] computeEmissionMarginals(ParamsVec params, Example ex) {
+  public double[][][] computeEmissionMarginals(Parameters params, Example ex) {
     int T = (ex != null) ? ex.x.length : L;
 
     double[][] nodes = computeHiddenNodeMarginals(params, ex);
 
-    double[][][] marginals = new double[T][K][D];
+    double[][][] marginals;
+    if(ex != null) {
+      marginals = new double[T][K][1];
+    } else {
+      marginals = new double[T][K][D];
+    }
 
     for( int t = 0; t < T; t++) {
       for( int y = 0; y < K; y++) {
         // Compute p(x|y)
-        for( int x = 0; x < D; x++) {
-          if( ex != null ) {
-            marginals[t][y][x] = (x == ex.x[t]) ? 1. : 0.; // p(x|h)
-          } else {
-            marginals[t][y][x] = Math.exp( params.get(o(y, x)) ); // p(x|h)
+        if(ex != null) {
+          // Default update here
+          marginals[t][y][0] = 1.;
+          marginals[t][y][0] *= nodes[t][y]; // p(h)
+        } else {
+          for( int x = 0; x < D; x++)
+            marginals[t][y][x] = Math.exp( params.weights[o(y, x)] ); // p(x|h)
+          double z = MatrixOps.sum(marginals[t][y]);
+          MatrixOps.scale(marginals[t][y], 1./z);
+          // We want a distribution of p(x,y).
+          for( int x = 0; x < D; x++) {
+            marginals[t][y][x] *= nodes[t][y]; // p(h)
           }
-        }
-        double z = MatrixOps.sum(marginals[t][y]);
-        MatrixOps.scale(marginals[t][y], 1./z);
-
-        // We want a distribution of p(x,y).
-        for( int x = 0; x < D; x++) {
-          marginals[t][y][x] *= nodes[t][y]; // p(h)
         }
       }
     }
@@ -243,56 +336,58 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
   }
 
   @Override
-  public double getLogLikelihood(ParamsVec parameters, Example example) {
-    return forward(parameters, example).getFirst();
+  public double getLogLikelihood(Params params, Example example) {
+    if(params instanceof Parameters)
+      return forward((Parameters) params, example).getFirst();
+    else
+      throw new IllegalArgumentException();
   }
 
-  @Override
-  public double getLogLikelihood(ParamsVec parameters) {
-    return getLogLikelihood(parameters, (Example)null);
-  }
+  public double getFullProbability(Params params, Example ex) {
+    if(!(params instanceof Parameters))
+      throw new IllegalArgumentException();
+    Parameters parameters = (Parameters) params;
 
-  public double getFullProbability(ParamsVec parameters, Example ex) {
+
     assert( ex.h != null );
     double lhood = 0.0;
     for(int t = 0; t < ex.x.length; t++ ) {
       int y = ex.h[t]; int x = ex.x[t];
-      lhood += parameters.get(o(y,x));
+      lhood += parameters.weights[o(y, x)];
     }
     for(int t = 1; t < ex.x.length; t++ ) {
       int y_ = ex.h[t-1]; int y = ex.x[t];
-      lhood += parameters.get(t(y_, y));
+      lhood += parameters.weights[t(y_, y)];
     }
 
     return Math.exp( lhood - getLogLikelihood(parameters, (Example)null) );
   }
 
   @Override
-  public double getLogLikelihood(ParamsVec parameters, Counter<Example> examples) {
-    double lhood = 0.;
-    for(Example ex : examples) {
-      lhood += examples.getFraction(ex) * getLogLikelihood(parameters, ex);
-    }
-    return lhood;
-  }
-
-  @Override
-  public ParamsVec getMarginals(ParamsVec parameters, Example ex) {
-    double[][][] emissionMarginals = computeEmissionMarginals(parameters, ex);
-    double[][][] edgeMarginals = computeEdgeMarginals(parameters, ex);
+  public void updateMarginals(Params params, Example ex, double scale, Params marginals_) {
+    if(!(params instanceof Parameters))
+      throw new IllegalArgumentException();
+    if(!(marginals_ instanceof Parameters))
+      throw new IllegalArgumentException();
+    intermediateState.start();
+    Parameters parameters = (Parameters) params;
+    Parameters marginals = (Parameters) marginals_;
 
     int T = (ex != null) ? ex.x.length : L;
 
-    ParamsVec marginals = newParamsVec();
+    double[][][] emissionMarginals = computeEmissionMarginals(parameters, ex);
+    double[][][] edgeMarginals = computeEdgeMarginals(parameters, ex);
+
+    // This will be a sparse update.
     for(int t = 0; t < T; t++) {
       // Add the emission marginal
       for( int y = 0; y < K; y++ ) {
         if( ex != null ) {
           int x = ex.x[t];
-          marginals.set(o(y,x), marginals.get(o(y,x)) + emissionMarginals[t][y][x]);
+          marginals.weights[o(y, x)] += scale * emissionMarginals[t][y][0];
         } else {
           for( int x = 0; x < D; x++ ) {
-            marginals.set(o(y,x), marginals.get(o(y,x)) + emissionMarginals[t][y][x]);
+            marginals.weights[o(y, x)] += scale * emissionMarginals[t][y][x];
           }
         }
       }
@@ -302,41 +397,28 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
       for( int y = 0; y < K; y++ ) {
         // Add the transition marginal
         for( int y_ = 0; y_ < K; y_++ ) {
-          marginals.set(t(y_,y), marginals.get(t(y_,y)) + edgeMarginals[t][y_][y]);
+          marginals.weights[t(y_, y)] +=  scale * edgeMarginals[t][y_][y];
         }
       }
     }
-
-    return marginals;
+    intermediateState.stop();
   }
-
-  @Override
-  public ParamsVec getMarginals(ParamsVec parameters) {
-    return getMarginals(parameters, (Example) null);
-  }
-
-  @Override
-  public ParamsVec getMarginals(ParamsVec parameters, Counter<Example> examples) {
-    ParamsVec marginals = newParamsVec();
-    for(Example ex: examples) {
-      ParamsVec marginals_ = getMarginals(parameters, ex);
-      marginals.incr( examples.getFraction(ex), marginals_ );
-    }
-    return marginals;  //To change body of implemented methods use File | Settings | File Templates.
-  }
-
   /**
    * Draw samples in this procedure;
    *    draw h_0, x_0, h_1, x_1, ...;
    *      - Compute p(h_0) and draw
    *      - drawing from p(h_0) is easy.
    *      - drawing from p(h_1 | h_2) is easy too.
-   * @param parameters
+   * @param params
    * @param genRandom
+   * @param N
    * @return
    */
   @Override
-  public Counter<Example> drawSamples(ParamsVec parameters, Random genRandom, int N) {
+  public Counter<Example> drawSamples(Params params, Random genRandom, int N) {
+    if(!(params instanceof Parameters))
+      throw new IllegalArgumentException();
+    Parameters parameters = (Parameters) params;
     int T = L;
 
     // Pre-processing for edge and emission marginals.
@@ -351,7 +433,7 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     double[][] emissions = new double[K][D];
     for( int y = 0; y < K; y++ ) {
       for( int x = 0; x < D; x++ ) {
-        emissions[y][x] = Math.exp( parameters.get(o(y,x)) );
+        emissions[y][x] = Math.exp( parameters.weights[o(y,x)] );
       }
       MatrixOps.normalize(emissions[y]);
     }
@@ -364,7 +446,7 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     return examples;
   }
 
-  public Example drawSample(ParamsVec parameters, Random genRandom, double[][][] edgeMarginals, double[][] emissions) {
+  public Example drawSample(Parameters parameters, Random genRandom, double[][][] edgeMarginals, double[][] emissions) {
     int T = L;
     Example ex = new Example(T);
     // Draw each $h_t$
@@ -385,15 +467,15 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     return ex;
   }
 
-  public ParamsVec getSampleMarginals(Counter<Example> examples) {
-    ParamsVec marginals = newParamsVec();
+  public Parameters getSampleMarginals(Counter<Example> examples) {
+    Parameters marginals = new Parameters(K, D);
     for(Example ex : examples) {
       for(int t = 0; t < ex.x.length; t++) {
         int y = ex.h[t]; int x = ex.x[t];
-        marginals.incr(o(y, x), examples.getFraction(ex));
+        marginals.weights[o(y, x)] += examples.getFraction(ex);
         if( t > 0 ) {
           int y_ = ex.h[t-1];
-          marginals.incr(t(y_, y), examples.getFraction(ex));
+          marginals.weights[t(y_, y)] += examples.getFraction(ex);
         }
       }
     }
@@ -423,7 +505,7 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
   }
 
   @Override
-  public Counter<Example> getDistribution(ParamsVec params) {
+  public Counter<Example> getDistribution(Params params) {
     Counter<Example> examples = new Counter<>();
     examples.addAll(generateExamples(L));
     for(Example ex: examples) {

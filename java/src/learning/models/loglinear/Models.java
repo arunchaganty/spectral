@@ -1,19 +1,11 @@
 package learning.models.loglinear;
 
-import java.io.*;
-import java.util.*;
-
 import learning.linalg.FullTensor;
-import learning.linalg.MatrixOps;
 
 import fig.basic.*;
-import fig.exec.*;
-import fig.prob.*;
-import fig.record.*;
+import learning.models.Params;
 import learning.utils.Counter;
 import org.ejml.simple.SimpleMatrix;
-
-import static fig.basic.LogInfo.*;
 
 public class Models {
   public static class MixtureModel extends Model {
@@ -73,7 +65,7 @@ public class Models {
     }
 
     public ParamsVec getSampleMarginals(Counter<Example> examples) {
-      ParamsVec marginals = newParamsVec();
+      ParamsVec marginals = newParams();
       for(Example ex : examples) {
         int y = ex.h[0];
         for( int x : ex.x ) {
@@ -84,7 +76,8 @@ public class Models {
     }
 
     @Override
-    public Counter<Example> getDistribution(ParamsVec params) {
+    public Counter<Example> getDistribution(Params params_) {
+      ParamsVec params = (ParamsVec) params_;
       Counter<Example> examples = new Counter<>();
       examples.addAll(generateExamples(L));
       for(Example ex: examples) {
@@ -216,7 +209,7 @@ public class Models {
     }
 
     public ParamsVec getSampleMarginals(Counter<Example> examples) {
-      ParamsVec marginals = newParamsVec();
+      ParamsVec marginals = newParams();
       for(Example ex : examples) {
         for(int t = 0; t < ex.x.length; t++) {
           int y = ex.h[t]; int x = ex.x[t];
@@ -231,7 +224,8 @@ public class Models {
     }
 
     @Override
-    public Counter<Example> getDistribution(ParamsVec params) {
+    public Counter<Example> getDistribution(Params params_) {
+      ParamsVec params = (ParamsVec) params_;
       Counter<Example> examples = new Counter<>();
       examples.addAll(generateExamples(L));
       for(Example ex: examples) {
@@ -481,7 +475,7 @@ public class Models {
     }
 
     public ParamsVec getSampleMarginals(Counter<Example> examples) {
-      ParamsVec marginals = newParamsVec();
+      ParamsVec marginals = newParams();
       for(Example ex : examples) {
         for(int r = 0; r < height; r++) {
           for(int c = 0; c < width; c++) {
@@ -507,7 +501,8 @@ public class Models {
     }
 
     @Override
-    public Counter<Example> getDistribution(ParamsVec params) {
+    public Counter<Example> getDistribution(Params params_) {
+      ParamsVec params = (ParamsVec) params_;
       Counter<Example> examples = new Counter<>();
       examples.addAll(generateExamples(2*L));
       for(Example ex: examples) {

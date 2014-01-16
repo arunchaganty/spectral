@@ -1,10 +1,9 @@
 package learning.models;
 
-import fig.basic.Indexer;
+import fig.basic.LogInfo;
+import fig.basic.StopWatch;
 import learning.linalg.FullTensor;
 import learning.models.loglinear.Example;
-import learning.models.loglinear.Feature;
-import learning.models.loglinear.ParamsVec;
 import learning.utils.Counter;
 import org.ejml.simple.SimpleMatrix;
 
@@ -17,27 +16,64 @@ public abstract class ExponentialFamilyModel<T> {
   abstract public int getK();
   abstract public int getD();
   abstract public int numFeatures();
-  abstract public ParamsVec newParamsVec();
-  abstract public double getLogLikelihood(ParamsVec parameters);
-  abstract public double getLogLikelihood(ParamsVec parameters, T example);
-  abstract public double getLogLikelihood(ParamsVec parameters, Counter<T> examples);
+  abstract public Params newParams();
+  abstract public double getLogLikelihood(Params parameters, T example);
+  public double getLogLikelihood(Params parameters) {
+    return getLogLikelihood(parameters, (T) null);
+  }
+  public double getLogLikelihood(Params parameters, Counter<T> examples) {
+    double lhood = 0.;
+    for(T ex : examples) {
+      lhood += examples.getFraction(ex) * getLogLikelihood(parameters, ex);
+    }
+    return lhood;
+  }
 
-  public double getProbability(ParamsVec parameters, T ex) {
+  public double getProbability(Params parameters, T ex) {
     return Math.exp( getLogLikelihood(parameters,ex) - getLogLikelihood(parameters));
   }
 
-  abstract public ParamsVec getMarginals(ParamsVec parameters);
-  abstract public ParamsVec getMarginals(ParamsVec parameters, T example);
-  abstract public ParamsVec getMarginals(ParamsVec parameters, Counter<T> examples);
-  public ParamsVec getSampleMarginals(Counter<Example> examples) {
+  abstract public void updateMarginals(Params parameters, T example, double scale, Params marginals);
+
+  public void updateMarginals(Params parameters, Counter<T> examples, Params marginals) {
+    int progress = 0;
+    StopWatch sw = new StopWatch();
+    sw.start();
+    for(T example : examples) {
+      updateMarginals(parameters, example, examples.getFraction(example), marginals);
+      if( progress++ % 1000 == 0 ) {
+        LogInfo.logs( "%d / %d [%f ms/ex]", progress, examples.size(), sw.getCurrTimeLong() / (1000.));
+        sw.reset();
+        sw.start();
+      }
+    }
+  }
+
+
+  public Params getMarginals(Params parameters) {
+    Params marginals = newParams();
+    updateMarginals(parameters, null, 1.0, marginals);
+    return marginals;
+  }
+  public Params getMarginals(Params parameters, T example) {
+    Params marginals = newParams();
+    updateMarginals(parameters, example, 1.0, marginals);
+    return marginals;
+  }
+  public Params getMarginals(Params parameters, Counter<T> examples) {
+    Params marginals = newParams();
+    updateMarginals(parameters, examples, marginals);
+    return marginals;
+  }
+  public Params getSampleMarginals(Counter<Example> examples) {
     throw new RuntimeException();
   }
-  public Counter<Example> getDistribution(ParamsVec params) {
+  public Counter<T> getDistribution(Params params) {
     throw new RuntimeException();
   }
 
-  abstract public Counter<T> drawSamples(ParamsVec parameters, Random genRandom, int n);
-  public T drawSample(ParamsVec parameters, Random rnd) {
+  abstract public Counter<T> drawSamples(Params parameters, Random genRandom, int n);
+  public T drawSample(Params parameters, Random rnd) {
     return drawSamples(parameters, rnd, 1).iterator().next();
   }
 
