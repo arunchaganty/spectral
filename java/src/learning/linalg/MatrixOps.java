@@ -1434,6 +1434,21 @@ public class MatrixOps {
 
     return indices;
   }
+  public static Integer[] argsort(final double[] col) {
+    Integer[] indices = new Integer[col.length];
+    for( int i = 0; i < indices.length; i++ ) indices[i] = i;
+
+    Arrays.sort(indices, new Comparator<Integer>() {
+      @Override
+      public int compare(Integer i1, Integer i2) {
+        return -Double.compare(col[i1], col[i2]);
+      }
+    });
+    // Make sure it's in descending order
+    assert( col[indices[0]] > col[indices[indices.length-1]] );
+
+    return indices;
+  }
 
   public static SimpleMatrix symmetrize(SimpleMatrix pairs) {
     return pairs.plus(pairs.transpose()).divide(2.0);

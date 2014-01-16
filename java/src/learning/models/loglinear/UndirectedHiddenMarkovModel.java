@@ -1,5 +1,7 @@
 package learning.models.loglinear;
 
+import fig.basic.Fmt;
+import fig.basic.LogInfo;
 import fig.basic.Pair;
 import learning.linalg.FullTensor;
 import learning.linalg.MatrixOps;
@@ -33,9 +35,9 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
   }
 
   public static class Parameters extends Params {
-    final int K;
-    final int D;
-    final double[] weights;
+    final public int K;
+    final public int D;
+    final public double[] weights;
 
     final double[] expWeights;
     boolean cacheValid = false;
@@ -126,15 +128,78 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
       for(int i = 0; i < weights.length; i++){
         expWeights[i] = Math.exp(weights[i]);
       }
+      precomputeG();
       cacheValid = true;
     }
+    double[][][] cachedG;
+    void precomputeG() {
+      // Use a special index for t = 0 and for examples = 0
+      Example ex = new Example(new int[]{0, 0});
+      cachedG = new double[K+1][K][D+1];
+      for(int y_ = -1; y_ < K; y_++) {
+        for(int y = 0; y < K; y++) {
+          for(int x = 0; x < D; x++) {
+            if(y_ == -1) {
+              ex.x[0] = x;
+              cachedG[y_+1][y][x+1] = G(0, y_, y, ex);
+            } else {
+              ex.x[1] = x;
+              cachedG[y_+1][y][x+1] = G(1, y_, y, ex);
+            }
+          }
+          // Now compute the aggregate for 0
+          cachedG[y_+1][y][0] = MatrixOps.sum(cachedG[y_+1][y]);
+        }
+      }
+    }
+
 
     @Override
     public void invalidateCache() {
       cacheValid = false;
     }
-  }
 
+    /**
+     * Return \theta^T [\phi(y_{t-1}, y_{t}), \phi(y_{t}, x_{t}) ]
+     */
+    double G(int t, int y_, int y, Example ex) {
+      double value = 0.;
+      if(cacheValid) {
+        if( ex != null ) {
+          if(t > 0)
+            return cachedG[y_+1][y][ex.x[t]+1];
+          else
+            return cachedG[0][y][ex.x[t]+1];
+        } else {
+          if(t > 0)
+            return cachedG[y_+1][y][0];
+          else
+            return cachedG[0][y][0];
+        }
+      } else {
+        if( ex != null ) {
+          value = weights[o(y, ex.x[t])];
+          value +=  (t > 0) ? weights[t(y_, y)] : 0.;
+          return Math.exp(value);
+        } else {
+          for(int x = 0; x < D; x++) {
+            double value_ = weights[o(y, x)];
+            value += Math.exp(value_);
+          }
+          value *= (t > 0) ? Math.exp(weights[t(y_, y)]) : 1.;
+          return value;
+        }
+      }
+    }
+
+    public int o(int h, int x) {
+      return h * D + x;
+    }
+    // Last K*K features are transitions
+    public int t(int h_, int h) {
+      return K * D + h_ * K + h;
+    }
+  }
 
   public UndirectedHiddenMarkovModel(int K, int D, int L) {
     this.K = K;
@@ -162,42 +227,6 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     return new Parameters(K, D);
   }
 
-//  double[][][] cachedG;
-//  void precomputeG(Parameters params) {
-//    cachedG = new double[2][]
-//    double value_ = params.weights[o(y, x)];
-//    value_ += (t > 0) ? params.weights[t(y_, y)] : 0.;
-//    value += Math.exp(value_);
-//
-//  }
-  /**
-   * Return \theta^T [\phi(y_{t-1}, y_{t}), \phi(y_{t}, x_{t}) ]
-   */
-  double G(Parameters params, int t, int y_, int y, Example ex) {
-    double value = 0.;
-    if(params.cacheValid) {
-      if( ex != null ) {
-        value = params.expWeights[o(y, ex.x[t])];
-      } else {
-        for(int x = 0; x < D; x++) value += params.expWeights[o(y, x)];
-      }
-      value *= (t > 0) ? params.expWeights[t(y_, y)] : 1.;
-      return value;
-    } else {
-      if( ex != null ) {
-        value = params.weights[o(y, ex.x[t])];
-        value +=  (t > 0) ? params.weights[t(y_, y)] : 0.;
-        return Math.exp(value);
-      } else {
-        for(int x = 0; x < D; x++) {
-          double value_ = params.weights[o(y, x)];
-          value += Math.exp(value_);
-        }
-        value *= (t > 0) ? Math.exp(params.weights[t(y_, y)]) : 1.;
-        return value;
-      }
-    }
-  }
 
   /**
    * Forward_t(y_{t}) = \sum_{y_{t-1}} G_t(y_{t-1}, y_t; x, \theta) Forward{t-1}(y_{t-1}).
@@ -232,7 +261,7 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     {
       // TODO: Support arbitrary initial features`
       for( int y = 0; y < K; y++ )
-        forwards[0][y] = G(params, 0, -1, y, ex);
+        forwards[0][y] = params.G(0, -1, y, ex);
       // Normalize
       double z = MatrixOps.sum(forwards[0]);
       MatrixOps.scale(forwards[0],1./z);
@@ -243,7 +272,7 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     for(int t = 1; t < T; t++) {
       for(int y = 0; y < K; y++){
         for(int y_ = 0; y_ < K; y_++) {
-          forwards[t][y] += forwards[t-1][y_] * G(params, t, y_, y, ex);
+          forwards[t][y] += forwards[t-1][y_] * params.G(t, y_, y, ex);
         }
       }
       // Normalize
@@ -274,7 +303,7 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     for(int t = T-2; t >= 0; t--) {
       for(int y_ = 0; y_ < K; y_++) {
           for(int y = 0; y < K; y++){
-          backwards[t][y_] += backwards[t+1][y] * G(params, t+1, y_, y, ex);
+          backwards[t][y_] += backwards[t+1][y] * params.G(t+1, y_, y, ex);
         }
       }
       // Normalize
@@ -301,7 +330,7 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     {
       int t = 0; int y_ = 0;
       for( int y = 0; y < K; y++ ) {
-        marginals[t][y_][y] = G(params, t, y_, y, ex) * backwards[t][y];
+        marginals[t][y_][y] = params.G(t, y_, y, ex) * backwards[t][y];
       }
       // Normalize
       double z = MatrixOps.sum(marginals[t]);
@@ -310,7 +339,7 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     for( int t = 1; t < T; t++ ) {
       for(int y_ = 0; y_ < K; y_++){
         for(int y = 0; y < K; y++){
-          marginals[t][y_][y] = forwards[t-1][y_] * G(params, t, y_, y, ex) * backwards[t][y];
+          marginals[t][y_][y] = forwards[t-1][y_] * params.G(t, y_, y, ex) * backwards[t][y];
         }
       }
       double z = MatrixOps.sum(marginals[t]);
@@ -360,15 +389,68 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
         } else {
           for( int x = 0; x < D; x++)
             marginals[t][y][x] = params.weights[o(y, x)]; // p(x|h)
-          double z = MatrixOps.logsumexp(marginals[t][y]);
-          // We want a distribution of p(x,y).
-          for( int x = 0; x < D; x++)
-            marginals[t][y][x] = Math.exp(marginals[t][y][x] - z) * nodes[t][y]; // p(h)
+          double z = MatrixOps.sum(marginals[t][y]);
+          MatrixOps.scale(marginals[t][y], 1./z);
         }
       }
     }
     return marginals;
   }
+
+  /**
+   * Use the Viterbi dynamic programming algorithm to find the hidden states for o.
+   * @return
+   */
+  public int[] viterbi( final Parameters params, final Example ex ) {
+    assert ex != null;
+    int T = ex.x.length;
+    // Store the dynamic programming array and back pointers
+    double [][] V = new double[T][K];
+    int [][] Ptr = new int[T][K];
+
+    // Initialize with 0 and path length
+    {
+      int  t = 0; int y_ = -1;
+      for( int y = 0; y < K; y++ ) {
+        // P( o_0 , s_k )
+        V[t][y] = params.G(t, y_, y, ex);
+        Ptr[t][y] = -1; // Doesn't need to be defined.
+      }
+      MatrixOps.normalize( V[0] );
+    }
+
+    // The dynamic program to find the optimal path
+    for( int t = 1; t < T; t++ ) {
+      for( int y = 0; y < K; y++ ) {
+        int bestY = 0; double bestV = Double.NEGATIVE_INFINITY;
+        for( int y_ = 0; y_ < K; y_++ ) {
+          double v = V[t-1][y_] * params.G(t, y_, y, ex);
+          if(v > bestV) {
+            bestV = v; bestY = y_;
+          }
+        }
+        V[t][y] = bestV; Ptr[t][y] = bestY;
+      }
+      MatrixOps.normalize( V[t] );
+    }
+
+    int[] z = new int[T];
+    // Choose the best last state and back track from there
+    z[T-1] = MatrixOps.argmax(V[T-1]);
+    if( z[T-1] == -1 ) {
+      LogInfo.log(Fmt.D(V));
+      LogInfo.log(Fmt.D(T));
+    }
+    assert( z[T-1] != -1 );
+    for(int i = T-1; i >= 1; i-- )  {
+      assert( z[i] != -1 );
+      z[i-1] = Ptr[i][z[i]];
+    }
+
+    return z;
+  }
+
+
 
   @Override
   public double getLogLikelihood(Params params, Example example) {
@@ -580,5 +662,6 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
 
     return updates;
   }
+
 
 }

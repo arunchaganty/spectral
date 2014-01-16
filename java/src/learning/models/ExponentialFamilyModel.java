@@ -109,5 +109,9 @@ public abstract class ExponentialFamilyModel<T> {
    */
   public abstract double updateMoments(T ex, double count, SimpleMatrix P12, SimpleMatrix P13, SimpleMatrix P32, FullTensor P123);
 
+  public T bestLabelling(Params params, T ex) {
+    throw new RuntimeException("not supported");
+  }
+
 }
 

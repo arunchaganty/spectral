@@ -94,6 +94,7 @@ public class ExpectationMaximization implements Runnable {
     @Override
     public double[] gradient() {
       if( gradientValid ) return gradient.toArray();
+      theta.invalidateCache();
       theta.cache();
 
       gradient.clear();

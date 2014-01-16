@@ -19,7 +19,6 @@ import learning.models.loglinear.Example;
 import learning.models.loglinear.ExpectationMaximization;
 import learning.models.loglinear.UndirectedHiddenMarkovModel;
 import learning.spectral.TensorMethod;
-import learning.spectral.applications.ParameterRecovery;
 import learning.utils.Counter;
 import learning.utils.UtilsJ;
 
@@ -29,6 +28,7 @@ import java.util.List;
 import java.util.Random;
 
 import static fig.basic.LogInfo.*;
+import static learning.models.loglinear.UndirectedHiddenMarkovModel.*;
 
 /**
  * Perform POS induction, aka HMM learning.
@@ -57,9 +57,9 @@ public class POSInduction implements Runnable {
   @Option(gloss="Number of threads to compute measurements")
   public int nThreads = 1;
 
-  @Option(gloss="File containing text in word_TAG format", required=true)
-  public File trainingData;
-  @Option(gloss="File containing text in word_TAG format", required=true)
+  @Option(gloss="File containing text in word_TAG format")
+  public File trainData;
+  @Option(gloss="File containing text in word_TAG format")
   public File testData;
   @Option(gloss="File containing trained model parameters")
   public File modelPath;
@@ -109,8 +109,8 @@ public class POSInduction implements Runnable {
     C.L = L_;
   }
 
-  public void printTopK(HiddenMarkovModel model, ParsedCorpus C, int[] perm) {
-    int K = model.getStateCount();
+  public void printTopK(UndirectedHiddenMarkovModel model, Params params, ParsedCorpus C, int[] perm) {
+    int K = model.getK();
     // (b) Print top 10 words
     LogInfo.begin_track("Top-k words");
     int TOP_K = 20;
@@ -119,7 +119,12 @@ public class POSInduction implements Runnable {
       topk.append(C.tagDict[k]).append(": ");
 
       int k_ = perm[k];
-      Integer[] sortedWords = MatrixOps.argsort(MatrixOps.col(model.getO(), k_));
+
+      Parameters parameters = (Parameters) params;
+      double[] options = new double[model.D];
+      for(int d = 0; d < model.D; d++)
+        options[d] = parameters.weights[parameters.o(k_, d)];
+      Integer[] sortedWords = MatrixOps.argsort(options);
       for(int i = 0; i < TOP_K; i++ ) {
         topk.append(C.dict[sortedWords[i]]).append(", ");
       }
@@ -129,14 +134,14 @@ public class POSInduction implements Runnable {
   }
 
 
-  public double reportAccuracy( HiddenMarkovModel model, ParsedCorpus C ) {
+  public double reportAccuracy( UndirectedHiddenMarkovModel model, Params params, ParsedCorpus C ) {
     begin_track("best-match accuracy");
     // Create a confusion matrix
     int K = C.getTagDimension();
     double[][] confusion = new double[K][K];
     for( int n = 0; n < C.getInstanceCount(); n++ ) {
       int[] l = C.L[n];
-      int[] l_ = model.viterbi( C.C[n] );
+      int[] l_ = model.viterbi( (Parameters)params, new Example(C.C[n]) );
 
       for( int i = 0; i < l.length; i++ )  
         confusion[l[i]][l_[i]] += 1; 
@@ -178,7 +183,7 @@ public class POSInduction implements Runnable {
     LogInfo.end_track("Confusion matrix");
 
     // (b) Print top 10 words
-    printTopK(model, C, perm);
+    printTopK(model, params, C, perm);
     end_track("best-match accuracy");
 
     return acc;
@@ -187,14 +192,14 @@ public class POSInduction implements Runnable {
   /**
    * Greedy matching accuracy
    */
-  public double reportVsAllAccuracy( HiddenMarkovModel model, ParsedCorpus C ) {
+  public double reportVsAllAccuracy( UndirectedHiddenMarkovModel model, Params params, ParsedCorpus C ) {
     begin_track("vs-all accuracy");
     // Create a confusion matrix
     int K = C.getTagDimension();
     double[][] confusion = new double[K][K];
     for( int n = 0; n < C.getInstanceCount(); n++ ) {
       int[] l = C.L[n];
-      int[] l_ = model.viterbi( C.C[n] );
+      int[] l_ = model.viterbi((Parameters) params, new Example(C.C[n]) );
 
       for( int i = 0; i < l.length; i++ )
         // NOTE: This is different than the alignment in reportAccuracy
@@ -234,21 +239,7 @@ public class POSInduction implements Runnable {
     logsForce(table);
     LogInfo.end_track("Confusion matrix");
 
-    // (b) Print top 10 words
-    LogInfo.begin_track("Top-k words");
-    int TOP_K = 20;
-    for( int k = 0; k < K; k++ ) {
-      StringBuilder topk = new StringBuilder();
-      topk.append(C.tagDict[k]).append(": ");
-
-      int k_ = perm[k];
-      Integer[] sortedWords = MatrixOps.argsort(MatrixOps.col(model.getO(), k_));
-      for(int i = 0; i < TOP_K; i++ ) {
-        topk.append(C.dict[sortedWords[i]]).append(", ");
-      }
-      logsForce(topk);
-    }
-    LogInfo.end_track("Top-k words");
+    printTopK(model, params, C, perm);
 
     end_track("vs-all accuracy");
     return acc;
@@ -274,7 +265,7 @@ public class POSInduction implements Runnable {
     {
       int[] perm = new int[C.getTagDimension()];
       for(int i = 0; i < C.getTagDimension(); i++) perm[i] = i;
-      printTopK(model, C, perm);
+//      printTopK(model, params, C, perm);
     }
 
     double lhood = Double.NEGATIVE_INFINITY;
@@ -294,8 +285,8 @@ public class POSInduction implements Runnable {
       List<String> items = new ArrayList<>();
       items.add(logStat("iter", iter+1));
       items.add(logStat("lhood", lhood));
-      items.add(logStat("accuracy", reportAccuracy( model, C ) ) );
-      items.add(logStat("all-accuracy", reportVsAllAccuracy( model, C ) ) );
+//      items.add(logStat("accuracy", reportAccuracy( model, C ) ) );
+//      items.add(logStat("all-accuracy", reportVsAllAccuracy( model, C ) ) );
       eventsOut.println(StrUtils.join(items, "\t"));
       eventsOut.flush();
 
@@ -431,11 +422,11 @@ public class POSInduction implements Runnable {
       );
   }
 
-  public void train() {
+  public void train(File dataFile) {
     try {
       LogInfo.begin_track("file-input");
       // Read data as word-index sequences
-      ParsedCorpus C = readData(trainingData);
+      ParsedCorpus C = readData(dataFile);
       // Convert to Example sequences
       LogInfo.logs( "Corpus has %d instances, with %d words and %d tags",
               C.getInstanceCount(), C.getDimension(), C.getTagDimension() );
@@ -455,9 +446,9 @@ public class POSInduction implements Runnable {
       switch(mode) {
         case EM: {
           ExpectationMaximization solver = new ExpectationMaximization();
-          solver.backtrack.tolerance = 1e-3;
+          solver.backtrack.tolerance = 1e-4;
           solver.mIters = 3;
-          solver.iters = 1000;
+          solver.iters = 40;
           solver.thetaRegularization = 1e-3;
           solver.solveEM(hmm, data, params);
         } break;
@@ -467,16 +458,18 @@ public class POSInduction implements Runnable {
 
       String output = Execution.getFile(String.format("model-%s.ser", mode));
       IOUtils.writeObjFile(output, params);
+
+      test(dataFile, new File(output));
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  public void test() {
+  public void test(File dataFile, File modelPath) {
     try {
       LogInfo.begin_track("file-input");
       // Read data as word-index sequences
-      ParsedCorpus C = readData(testData);
+      ParsedCorpus C = readData(dataFile);
       // Convert to Example sequences
       LogInfo.logs( "Corpus has %d instances, with %d words and %d tags",
               C.getInstanceCount(), C.getDimension(), C.getTagDimension() );
@@ -490,11 +483,14 @@ public class POSInduction implements Runnable {
       int K = C.getTagDimension();
       int D = C.getDimension();
       int L = 3;
+      // TODO: Label the damn data.
       UndirectedHiddenMarkovModel hmm = new UndirectedHiddenMarkovModel(K, D, L);
-      UndirectedHiddenMarkovModel.Parameters params = (UndirectedHiddenMarkovModel.Parameters) IOUtils.readObjFile(modelPath);
+      Parameters params = (Parameters) IOUtils.readObjFile(modelPath);
+
+      logStat("accuracy", reportAccuracy(hmm, params, C));
+      logStat("all-accuracy", reportVsAllAccuracy(hmm, params, C));
 
       // TODO: evaluate
-
     } catch (IOException | ClassNotFoundException e) {
       throw new RuntimeException(e);
     }
@@ -502,9 +498,9 @@ public class POSInduction implements Runnable {
 
   public void run() {
     // Train an (undirected) HMM
-    train();
+    train(trainData);
     // Evaluate a (undirected) HMM
-    test();
+//    test(testData, modelPath);
 
   }
   
