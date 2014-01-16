@@ -3,6 +3,7 @@ package learning.models;
 import fig.basic.LogInfo;
 import fig.basic.StopWatch;
 import learning.linalg.FullTensor;
+import learning.linalg.MatrixOps;
 import learning.models.loglinear.Example;
 import learning.utils.Counter;
 import org.ejml.simple.SimpleMatrix;
@@ -17,10 +18,20 @@ public abstract class ExponentialFamilyModel<T> {
   abstract public int getD();
   abstract public int numFeatures();
   abstract public Params newParams();
+  abstract public double getLogLikelihood(Params parameters, int L);
   abstract public double getLogLikelihood(Params parameters, T example);
 
   public double getLogLikelihood(Params parameters) {
     return getLogLikelihood(parameters, (T) null);
+  }
+  public double getLogLikelihood(Params parameters, int[] histogram) {
+    double sum = MatrixOps.sum(histogram);
+    double lhood = 0.;
+    for(int length = 0; length < histogram.length; length++) {
+      if(histogram[length] > 0.)
+        lhood += histogram[length]/sum * getLogLikelihood(parameters, length);
+    }
+    return lhood;
   }
   public double getLogLikelihood(Params parameters, Counter<T> examples) {
     double lhood = 0.;
@@ -35,13 +46,14 @@ public abstract class ExponentialFamilyModel<T> {
   }
 
   abstract public void updateMarginals(Params parameters, T example, double scale, Params marginals);
+  abstract public void updateMarginals(Params parameters, int L, double scale, Params marginals);
 
-  public void updateMarginals(Params parameters, Counter<T> examples, Params marginals) {
+  public void updateMarginals(Params parameters, Counter<T> examples, double scale, Params marginals) {
     int progress = 0;
     StopWatch sw = new StopWatch();
     sw.start();
     for(T example : examples) {
-      updateMarginals(parameters, example, examples.getFraction(example), marginals);
+      updateMarginals(parameters, example, scale * examples.getFraction(example), marginals);
       if( progress++ % 1000 == 0 ) {
         LogInfo.logs( "%d / %d [%f ms/ex]", progress, examples.size(), sw.getCurrTimeLong() / (1000.));
         sw.reset();
@@ -49,11 +61,18 @@ public abstract class ExponentialFamilyModel<T> {
       }
     }
   }
+  public void updateMarginals(Params parameters, int[] histogram, double scale, Params marginals) {
+    double sum = MatrixOps.sum(histogram);
+    for(int length = 0; length < histogram.length; length++) {
+      if(histogram[length] > 0.)
+        updateMarginals(parameters, length, scale * histogram[length]/sum, marginals);
+    }
+  }
 
 
   public Params getMarginals(Params parameters) {
     Params marginals = newParams();
-    updateMarginals(parameters, null, 1.0, marginals);
+    updateMarginals(parameters, (T) null, 1.0, marginals);
     return marginals;
   }
   public Params getMarginals(Params parameters, T example) {
@@ -63,7 +82,7 @@ public abstract class ExponentialFamilyModel<T> {
   }
   public Params getMarginals(Params parameters, Counter<T> examples) {
     Params marginals = newParams();
-    updateMarginals(parameters, examples, marginals);
+    updateMarginals(parameters, examples, 1.0, marginals);
     return marginals;
   }
   public Params getSampleMarginals(Counter<Example> examples) {

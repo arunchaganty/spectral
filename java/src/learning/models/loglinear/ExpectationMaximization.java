@@ -39,11 +39,12 @@ public class ExpectationMaximization implements Runnable {
    *    - dL = tau - \sum_i \E_\beta(\sigma(Y_i, X_i)) - 1/betaRegularization \beta
    */
   class Objective implements Maximizer.FunctionState {
-    ExponentialFamilyModel<Example> modelA;
-    Counter<Example> X;
-    Params theta;
-    Params gradient;
+    final ExponentialFamilyModel<Example> modelA;
+    final Counter<Example> X;
+    final Params theta;
+    final Params gradient;
     final Params q; // Marginal distribution $z|x$
+    final int[] histogram;
 
     double objective;
     boolean objectiveValid, gradientValid;
@@ -53,6 +54,8 @@ public class ExpectationMaximization implements Runnable {
       this.X = X;
       this.theta = theta;
       this.gradient = theta.copy();
+
+      histogram = computeHistogram(X);
 
       this.q = q;
     }
@@ -72,13 +75,15 @@ public class ExpectationMaximization implements Runnable {
   public double value() {
       if( objectiveValid ) return (objective);
       objective = 0.;
+      theta.invalidateCache();
+      theta.cache();
 
 
       // Go through each example, and add 1/|X| \sum_x \sum_z q(z | x) * \theta^T \phi(x,z)
       objective += theta.dot(q);
 
       // Subtract the log partition function - log Z(\theta)
-      objective -= modelA.getLogLikelihood(theta);
+      objective -= modelA.getLogLikelihood(theta, histogram);
 
       // Finally, subtract regularizer = 0.5 \eta_\theta \|\theta\|^2
       objective -= 0.5 * thetaRegularization * theta.dot(theta);
@@ -89,6 +94,7 @@ public class ExpectationMaximization implements Runnable {
     @Override
     public double[] gradient() {
       if( gradientValid ) return gradient.toArray();
+      theta.cache();
 
       gradient.clear();
 
@@ -97,15 +103,30 @@ public class ExpectationMaximization implements Runnable {
       gradient.plusEquals(1.0, q);
 
       // Subtract the log partition function - log Z(\theta)
-//      modelA.updateMarginals(theta, null, -1.0, gradient);
-      Params marginals = modelA.getMarginals(theta);
-      gradient.plusEquals(-1.0, marginals);
+      modelA.updateMarginals(theta, histogram, -1.0, gradient);
+//      Params marginals = modelA.getMarginals(theta, histogram);
+//      gradient.plusEquals(-1.0, marginals);
 
       // subtract \nabla h^*(\beta) = \beta
       gradient.plusEquals(-thetaRegularization, theta);
 
       return gradient.toArray();
     }
+  }
+
+  int[] computeHistogram(Counter<Example> examples) {
+    // Get max length
+    int maxLength = 0;
+    for(Example ex : examples) {
+      if(ex.x.length > maxLength) maxLength = ex.x.length;
+    }
+    // Populate
+    int[] histogram = new int[maxLength+1];
+    for(Example ex : examples) {
+      histogram[ex.x.length]++;
+    }
+
+    return histogram;
   }
 
   /**
@@ -131,6 +152,7 @@ public class ExpectationMaximization implements Runnable {
 
     final Params marginals = modelA.newParams();
 
+    int[] histogram = computeHistogram(data);
     // Create the M-objective (for $\theta$) - main computations are the partition function for A, B and expected counts
     Objective mObjective = new Objective(modelA, data, theta, marginals);
 
@@ -140,10 +162,11 @@ public class ExpectationMaximization implements Runnable {
       out = IOUtils.openOutHard(Execution.getFile("events"));
     }
     for( int i = 0; i < iters && !done; i++ ) {
+      theta.cache();
       List<String> items = new ArrayList<>();
       items.add("iter = " + i);
       items.add("mObjective = " + mObjective.value());
-      items.add("likelihood = " + (modelA.getLogLikelihood(theta, data) - modelA.getLogLikelihood(theta)));
+      items.add("likelihood = " + (modelA.getLogLikelihood(theta, data) - modelA.getLogLikelihood(theta, histogram)));
       LogInfo.log(StrUtils.join(items, "\t"));
       if(out != null) {
         out.println( StrUtils.join(items, "\t") );
@@ -153,7 +176,7 @@ public class ExpectationMaximization implements Runnable {
       // Optimize each one-by-one
       // Get marginals
       marginals.clear();
-      modelA.updateMarginals(theta, data, marginals);
+      modelA.updateMarginals(theta, data, 1.0, marginals);
       done = optimize(mMaximizer, mObjective, "M-" + i, mIters, diagnosticMode);
       mObjective.invalidate();
     }

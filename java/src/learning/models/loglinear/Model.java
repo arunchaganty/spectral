@@ -91,17 +91,28 @@ public abstract class Model extends ExponentialFamilyModel<Example> {
     return new UpdatingMultinomialEdgeInfo(params, counts, f, increment, j, v, false);
   }
 
-  public double getLogLikelihood(Params params) {
-    ParamsVec parameters = (ParamsVec) params;
-    Hypergraph<Example> Hp = createHypergraph(parameters.weights, null, 0.);
-    Hp.computePosteriors(false);
-    return Hp.getLogZ();
+  @Override
+  public double getLogLikelihood(Params params, int L) {
+    int temp = this.L;
+    this.L = L;
+    double lhood = getLogLikelihood(params);
+    this.L = temp;
+    return lhood;
   }
+  @Override
   public double getLogLikelihood(Params params, Example example) {
     ParamsVec parameters = (ParamsVec) params;
     Hypergraph<Example> Hp = createHypergraph(example, parameters.weights, null, 0.);
     Hp.computePosteriors(false);
     return Hp.getLogZ();
+  }
+
+  @Override
+  public void updateMarginals(Params params, int L, double scale, Params marginals_) {
+    int temp = this.L;
+    this.L = L;
+    updateMarginals(params, (Example) null, scale, marginals_);
+    this.L = temp;
   }
   @Override
   public void updateMarginals(Params params, Example example, double scale, Params marginals_) {

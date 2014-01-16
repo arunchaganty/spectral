@@ -37,10 +37,14 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     final int D;
     final double[] weights;
 
+    final double[] expWeights;
+    boolean cacheValid = false;
+
     public Parameters(int K, int D) {
       this.K = K;
       this.D = D;
       this.weights = new double[K*D + K*K];
+      this.expWeights = new double[K*D + K*K];
     }
 
     @Override
@@ -116,7 +120,21 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
         throw new IllegalArgumentException();
       }
     }
+
+    @Override
+    public void cache() {
+      for(int i = 0; i < weights.length; i++){
+        expWeights[i] = Math.exp(weights[i]);
+      }
+      cacheValid = true;
+    }
+
+    @Override
+    public void invalidateCache() {
+      cacheValid = false;
+    }
   }
+
 
   public UndirectedHiddenMarkovModel(int K, int D, int L) {
     this.K = K;
@@ -144,37 +162,40 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     return new Parameters(K, D);
   }
 
+//  double[][][] cachedG;
+//  void precomputeG(Parameters params) {
+//    cachedG = new double[2][]
+//    double value_ = params.weights[o(y, x)];
+//    value_ += (t > 0) ? params.weights[t(y_, y)] : 0.;
+//    value += Math.exp(value_);
+//
+//  }
   /**
    * Return \theta^T [\phi(y_{t-1}, y_{t}), \phi(y_{t}, x_{t}) ]
    */
   double G(Parameters params, int t, int y_, int y, Example ex) {
     double value = 0.;
-    if( ex != null ) {
-      value = params.weights[o(y, ex.x[t])];
-      value +=  (t > 0) ? params.weights[t(y_, y)] : 0.;
-      return Math.exp(value);
-    } else {
-      for(int x = 0; x < D; x++) {
-        double value_ = params.weights[o(y, x)];
-        value_ += (t > 0) ? params.weights[t(y_, y)] : 0.;
-        value += Math.exp(value_);
+    if(params.cacheValid) {
+      if( ex != null ) {
+        value = params.expWeights[o(y, ex.x[t])];
+      } else {
+        for(int x = 0; x < D; x++) value += params.expWeights[o(y, x)];
       }
-      return value;
-    }
-  }
-  double logG(Parameters params, int t, int y_, int y, Example ex) {
-    double value = Double.NEGATIVE_INFINITY;
-    if( ex != null ) {
-      value = params.weights[o(y, ex.x[t])];
-      value +=  (t > 0) ? params.weights[t(y_, y)] : 0.;
+      value *= (t > 0) ? params.expWeights[t(y_, y)] : 1.;
       return value;
     } else {
-      for(int x = 0; x < D; x++) {
-        double value_ = params.weights[o(y, x)];
-        value_ += (t > 0) ? params.weights[t(y_, y)] : 0.;
-        value = MatrixOps.logsumexp(value, value_);
+      if( ex != null ) {
+        value = params.weights[o(y, ex.x[t])];
+        value +=  (t > 0) ? params.weights[t(y_, y)] : 0.;
+        return Math.exp(value);
+      } else {
+        for(int x = 0; x < D; x++) {
+          double value_ = params.weights[o(y, x)];
+          value += Math.exp(value_);
+        }
+        value *= (t > 0) ? Math.exp(params.weights[t(y_, y)]) : 1.;
+        return value;
       }
-      return value;
     }
   }
 
@@ -182,7 +203,7 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
    * Forward_t(y_{t}) = \sum_{y_{t-1}} G_t(y_{t-1}, y_t; x, \theta) Forward{t-1}(y_{t-1}).
    * TODO: No matter of threadsafe.
    */
-  private class IntermediateState {
+  protected class IntermediateState {
     boolean use = false;
     Pair<Double, double[][]> forward;
     double[][] backward;
@@ -197,132 +218,68 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
       forward = null;
       backward = null;
     }
-  }
-  private final IntermediateState intermediateState = new IntermediateState();
 
-//  public Pair<Double, double[][]> forward(Parameters params, Example ex) {
-//    if(intermediateState.use && intermediateState.forward != null) return intermediateState.forward;
-//    int T = (ex != null) ? ex.x.length : L;
-//    double[][] forwards = new double[T][K];
-//    double A = 0; // Collected constants
-//
-//    // Forward_0[k] = theta[BinaryFeature(-1, 0)];
-//    {
-//      // TODO: Support arbitrary initial features`
-//      for( int y = 0; y < K; y++ )
-//        forwards[0][y] = G(params, 0, -1, y, ex);
-//      // Normalize
-//      double z = MatrixOps.sum(forwards[0]);
-//      MatrixOps.scale(forwards[0],1./z);
-//      A += Math.log(z);
-//    }
-//
-//    // Forward_t[k] = \sum y_{t-1} Forward_[t-1][y_t-1] G(y_{t-1},y_t)
-//    for(int t = 1; t < T; t++) {
-//      for(int y = 0; y < K; y++){
-//        for(int y_ = 0; y_ < K; y_++) {
-//          forwards[t][y] += forwards[t-1][y_] * G(params, t, y_, y, ex);
-//        }
-//      }
-//      // Normalize
-//      double z = MatrixOps.sum(forwards[t]);
-//      MatrixOps.scale(forwards[t],1./z);
-//      A += Math.log(z);
-//    }
-//    return intermediateState.forward = Pair.newPair(A, forwards);
-//  }
+  }
+  protected final IntermediateState intermediateState = new IntermediateState();
+
   public Pair<Double, double[][]> forward(Parameters params, Example ex) {
-//    if(intermediateState.use && intermediateState.forward != null) return intermediateState.forward;
+    if(intermediateState.use && intermediateState.forward != null) return intermediateState.forward;
     int T = (ex != null) ? ex.x.length : L;
     double[][] forwards = new double[T][K];
-    for(int t = 0; t < T; t++)
-      Arrays.fill(forwards[t], Double.NEGATIVE_INFINITY); // Zeros!
     double A = 0; // Collected constants
 
     // Forward_0[k] = theta[BinaryFeature(-1, 0)];
     {
       // TODO: Support arbitrary initial features`
       for( int y = 0; y < K; y++ )
-        forwards[0][y] = logG(params, 0, -1, y, ex);
+        forwards[0][y] = G(params, 0, -1, y, ex);
       // Normalize
-      double z = MatrixOps.logsumexp(forwards[0]);
-      MatrixOps.minus(forwards[0],z);
-      A += z;
+      double z = MatrixOps.sum(forwards[0]);
+      MatrixOps.scale(forwards[0],1./z);
+      A += Math.log(z);
     }
 
     // Forward_t[k] = \sum y_{t-1} Forward_[t-1][y_t-1] G(y_{t-1},y_t)
     for(int t = 1; t < T; t++) {
       for(int y = 0; y < K; y++){
         for(int y_ = 0; y_ < K; y_++) {
-          forwards[t][y] = MatrixOps.logsumexp(forwards[t][y], forwards[t-1][y_] + logG(params, t, y_, y, ex));
+          forwards[t][y] += forwards[t-1][y_] * G(params, t, y_, y, ex);
         }
       }
       // Normalize
-      double z = MatrixOps.logsumexp(forwards[t]);
-      MatrixOps.minus(forwards[t],z);
-      A += z;
+      double z = MatrixOps.sum(forwards[t]);
+      MatrixOps.scale(forwards[t],1./z);
+      A += Math.log(z);
     }
     return intermediateState.forward = Pair.newPair(A, forwards);
   }
 
-//  public double[][] backward(Parameters params, Example ex) {
-//    if(intermediateState.use && intermediateState.backward != null) return intermediateState.backward;
-//
-//    int T = (ex != null) ? ex.x.length : L;
-//    double[][] backwards = new double[T][K];
-//
-//    // Backward_{T-1}[k] = 1.
-//    {
-//      // TODO: Support arbitrary initial features`
-//      for( int y = 0; y < K; y++ )
-//        backwards[T-1][y] = 1.;
-//      // Normalize
-//      double z = MatrixOps.sum(backwards[T-1]);
-//      MatrixOps.scale(backwards[T-1],1./z);
-//    }
-//
-//    // Backward_{T-1}[k] = \sum y_{t} Backward_[t][y_t] G(y_{t-1},y_t)
-//    for(int t = T-2; t >= 0; t--) {
-//      for(int y_ = 0; y_ < K; y_++) {
-//          for(int y = 0; y < K; y++){
-//          backwards[t][y_] += backwards[t+1][y] * G(params, t+1, y_, y, ex);
-//        }
-//      }
-//      // Normalize
-//      double z = MatrixOps.sum(backwards[t]);
-//      MatrixOps.scale(backwards[t],1./z);
-//    }
-//
-//    return intermediateState.backward = backwards;
-//  }
   public double[][] backward(Parameters params, Example ex) {
-//    if(intermediateState.use && intermediateState.backward != null) return intermediateState.backward;
+    if(intermediateState.use && intermediateState.backward != null) return intermediateState.backward;
 
     int T = (ex != null) ? ex.x.length : L;
     double[][] backwards = new double[T][K];
-    for(int t = 0; t < T; t++)
-      Arrays.fill(backwards[t], Double.NEGATIVE_INFINITY); // Zeros!
 
     // Backward_{T-1}[k] = 1.
     {
       // TODO: Support arbitrary initial features`
       for( int y = 0; y < K; y++ )
-        backwards[T-1][y] = 0.;
+        backwards[T-1][y] = 1.;
       // Normalize
-      double z = MatrixOps.logsumexp(backwards[T-1]);
-      MatrixOps.minus(backwards[T-1],z);
+      double z = MatrixOps.sum(backwards[T-1]);
+      MatrixOps.scale(backwards[T-1],1./z);
     }
 
     // Backward_{T-1}[k] = \sum y_{t} Backward_[t][y_t] G(y_{t-1},y_t)
     for(int t = T-2; t >= 0; t--) {
       for(int y_ = 0; y_ < K; y_++) {
-        for(int y = 0; y < K; y++){
-          backwards[t][y_] = MatrixOps.logsumexp(backwards[t][y_], backwards[t+1][y] + logG(params, t+1, y_, y, ex));
+          for(int y = 0; y < K; y++){
+          backwards[t][y_] += backwards[t+1][y] * G(params, t+1, y_, y, ex);
         }
       }
       // Normalize
-      double z = MatrixOps.logsumexp(backwards[t]);
-      MatrixOps.minus(backwards[t],z);
+      double z = MatrixOps.sum(backwards[t]);
+      MatrixOps.scale(backwards[t],1./z);
     }
 
     return intermediateState.backward = backwards;
@@ -344,29 +301,20 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     {
       int t = 0; int y_ = 0;
       for( int y = 0; y < K; y++ ) {
-        marginals[t][y_][y] = logG(params, t, y_, y, ex) + backwards[t][y];
+        marginals[t][y_][y] = G(params, t, y_, y, ex) * backwards[t][y];
       }
       // Normalize
-      double z = MatrixOps.logsumexp(marginals[t][y_]);
-      for( int y = 0; y < K; y++ ) {
-        marginals[t][y_][y] = Math.exp(marginals[t][y_][y] - z);
-      }
+      double z = MatrixOps.sum(marginals[t]);
+      MatrixOps.scale(marginals[t], 1./z);
     }
     for( int t = 1; t < T; t++ ) {
       for(int y_ = 0; y_ < K; y_++){
         for(int y = 0; y < K; y++){
-          marginals[t][y_][y] = forwards[t-1][y_] + logG(params, t, y_, y, ex) + backwards[t][y];
+          marginals[t][y_][y] = forwards[t-1][y_] * G(params, t, y_, y, ex) * backwards[t][y];
         }
       }
-      double z = Double.NEGATIVE_INFINITY;
-      for(int y_ = 0; y_ < K; y_++){
-        z = MatrixOps.logsumexp(z, MatrixOps.logsumexp(marginals[t][y_]));
-      }
-      for(int y_ = 0; y_ < K; y_++){
-        for(int y = 0; y < K; y++){
-          marginals[t][y_][y] = Math.exp(marginals[t][y_][y]  - z);
-        }
-      }
+      double z = MatrixOps.sum(marginals[t]);
+      MatrixOps.scale(marginals[t], 1./z);
     }
 
     return marginals;
@@ -378,18 +326,14 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     double[][] backwards = backward(params,ex);
 
     double[][] marginals = new double[T][K];
-    for(int t = 0; t < T; t++)
-      Arrays.fill(marginals[t], Double.NEGATIVE_INFINITY); // Zeros!
 
     for( int t = 0; t < T; t++) {
       for( int y = 0; y < K; y++) {
-        marginals[t][y] = MatrixOps.logsumexp(marginals[t][y], forwards[t][y] + backwards[t][y]);
+        marginals[t][y] += forwards[t][y] * backwards[t][y];
       }
       // Normalize
-      double z = MatrixOps.logsumexp(marginals[t]);
-      for( int y = 0; y < K; y++) {
-        marginals[t][y] = Math.exp(marginals[t][y] - z);
-      }
+      double z = MatrixOps.sum(marginals[t]);
+      MatrixOps.scale(marginals[t], 1./z);
     }
 
     return marginals;
@@ -433,6 +377,13 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     else
       throw new IllegalArgumentException();
   }
+  public double getLogLikelihood(Params params, int L) {
+    int temp = this.L;
+    this.L = L;
+    double lhood = getLogLikelihood(params, (Example) null);
+    this.L = temp;
+    return lhood;
+  }
 
   public double getFullProbability(Params params, Example ex) {
     if(!(params instanceof Parameters))
@@ -452,6 +403,14 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     }
 
     return Math.exp( lhood - getLogLikelihood(parameters, (Example)null) );
+  }
+
+  @Override
+  public void updateMarginals(Params params, int L, double scale, Params marginals_) {
+    int temp = this.L;
+    this.L = L;
+    updateMarginals(params, (Example)null, scale, marginals_);
+    this.L = temp;
   }
 
   @Override

@@ -90,5 +90,9 @@ public abstract class Params implements Serializable {
     writeStringHard(path, toString());
   }
 
+  public void cache() {
+  }
+  public void invalidateCache() {
+  }
 
 }
