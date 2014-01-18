@@ -1,0 +1,59 @@
+\documentclass[tablecaption=bottom]{jmlr}
+
+\jmlrproceedings{}{}
+\jmlrpages{}{}
+\usepackage[cm]{fullpage}
+\usepackage{booktabs}
+\usepackage{ctable}
+
+\title{Counting local-optima in a log-linear model}
+
+\author{Arun Tejasvi Chaganty \Email{chaganty@cs.stanford.edu}}
+
+\input{macros}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+At the high-level, we're looking to count the number of the local optima
+of a log-linear model,
+\begin{align}
+p_{\theta}(x) &= \sum_z \exp(\theta^T \phi(x,z) - A(\theta)).
+\end{align}
+
+This procedure does not exactly cover the mixture of Gaussians though.
+
+\section{Preliminaries}
+
+\section{Mixture of Gaussians}
+
+\section{Log-linear models}
+
+\todo{Write down log-likelihood}
+
+\begin{definition}(Trapping Region)
+  $\sT(\theta)$ is a closed subset of $\Re^n$ such that for every
+  $\theta' \in \partial \sT(\theta)$, $\sL(\theta', q(\theta')) \le \sL(
+  \theta, q(\theta) )$.
+\end{definition}
+
+\begin{lemma}(Trapping property of $\sT(\theta)$)
+  For any $\theta$, EM converges to a fixed point in $\sT(\theta)$.
+\end{lemma}
+\begin{proof}
+  Let $\theta', q(\theta')$ be the new set of parameters after one
+  iteration of EM. We will prove by contradiction that $\theta'$ must
+  lie within $\sT(\theta)$. 
+  
+  Consider a trajectory $\sP$ from $\theta$ to $\theta'$, defined as follows,
+  \begin{align}
+    \theta^\alpha = \alpha \theta + (1-\alpha) \theta'.
+  \end{align}
+
+
+\end{proof}
+
+\end{document}
