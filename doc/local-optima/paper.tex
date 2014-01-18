@@ -24,7 +24,7 @@ of a log-linear model,
 p_{\theta}(x) &= \sum_z \exp(\theta^T \phi(x,z) - A(\theta)).
 \end{align}
 
-This procedure does not exactly cover the mixture of Gaussians though.
+\todo{Describe mixtures of Gaussians}
 
 \section{Preliminaries}
 
@@ -32,28 +32,78 @@ This procedure does not exactly cover the mixture of Gaussians though.
 
 \section{Log-linear models}
 
-\todo{Write down log-likelihood}
+In EM, we maximize a lower bound on the log-likelihood of model which is
+derived as follows,
+\begin{align}
+  \sL(\theta ; \sD) 
+    &\defeq \sum_{x_n \in \sD} \log p_{\theta}(x_n) \\
+    &= \sum_{x_n \in \sD} \log \sum_z \exp(\theta^T \phi(x,z) - A(\theta)) \\
+    &= \sum_{x_n \in \sD} \log \sum_z \frac{q(z|x_n)}{q(z|x_n)} \exp(\theta^T \phi(x,z) - A(\theta)) \\
+    &= \sum_{x_n \in \sD} \sum_z q(z|x_n) \log \frac{1}{q(z|x_n)} \exp(\theta^T \phi(x,z) - A(\theta)) \\
+    &\le \sum_{x_n \in \sD} \sum_z q(z|x_n) [\theta^T \phi(x,z) - A(\theta) - \log q(z|x_n)].
+\end{align}
+
+We use the notation $\sL(\theta, q) \defeq \sum_{x_n \in \sD} \sum_z
+q(z|x_n) [\theta^T \phi(x,z) - A(\theta) - \log q(z|x_n)]$. The solution
+to EM is $\max_\theta \max_q \sL(\theta,q)$ which we do via alternating
+maximization between $\theta$ and $q$.
+
+Furthermore, it can be shown that local optima of $\sL(\theta, q)$ are
+also local optima of the original function, $\sL(\theta ; \sD)$.
+
+Finally, we derive closed form solutions to the E and M steps,
+\begin{align}
+  q^*(\theta) 
+    &\defeq \max_{q \in \Delta_{n-1}} \sL(\theta,q)\\
+  \diff{\sL(\theta,q)}{q(z|x_n)} 
+    &= \theta^T \phi(x_n,z) - A(\theta) - \log q(z|x_n) - 1 + \lambda \\
+  q^*(z|x_n) &\propto \exp(\theta^T \phi(x_n,z) - A(\theta)) \\
+  q^*(z|x_n) &= \frac{exp(\theta^T \phi(x_n,z) - A(\theta))}{\sum_{z'} exp(\theta^T \phi(x_n,z') - A(\theta))}.
+\end{align}
+
+\begin{align}
+  \theta^*(q)
+    &\defeq \max_{\theta \in \Re^{n}} \sL(\theta,q)\\
+  \diff{\sL(\theta,q)}{\theta} 
+  &= \sum_{x_n \sD}\sum_{z} q(z|x_n) \phi(x_n,z) - \diff{A(\theta)}{\theta} \\
+  &= \sum_{x_n \sD}\sum_{z} q(z|x_n) \phi(x_n,z) - \E_{\theta}(\phi(x,z)) \\
+  &= \hat\E_{q}[\phi(x_n,z)] - \E_{\theta}(\phi(x,z)) \\
+  \E_{\theta^*}(\phi(x,z)) &= \hat\E_{q}[\phi(x_n,z)].
+\end{align}
 
 \begin{definition}(Trapping Region)
-  $\sT(\theta)$ is a closed subset of $\Re^n$ such that for every
-  $\theta' \in \partial \sT(\theta)$, $\sL(\theta', q(\theta')) \le \sL(
-  \theta, q(\theta) )$.
+  A closed subset of $\Re^n$ is said to be trapping for $\theta \in
+  \Re^n$ if for every $\theta' \in \del R$, $\sL(\theta',
+  q(\theta')) \le \sL( \theta, q(\theta) )$.
 \end{definition}
 
-\begin{lemma}(Trapping property of $\sT(\theta)$)
-  For any $\theta$, EM converges to a fixed point in $\sT(\theta)$.
+\begin{lemma}(Trapping property)
+  For any $\theta$ and a trapping region $R$ containing $\theta$, expectation
+  maximization initialized at $\theta$ converges to a fixed point in $R$.
 \end{lemma}
 \begin{proof}
   Let $\theta', q(\theta')$ be the new set of parameters after one
-  iteration of EM. We will prove by contradiction that $\theta'$ must
-  lie within $\sT(\theta)$. 
-  
-  Consider a trajectory $\sP$ from $\theta$ to $\theta'$, defined as follows,
+  iteration of EM. The proof proceeds by constructing a path $\sP$ from
+  $\theta$ to $\theta'$ such that every point along the path
+  $\theta^\alpha \in \sP$ has a higher likelihood than $\theta$ and thus
+  could not cross the boundary $\del R$. 
+
+  Let us define a trajectory $\sP : \Re \to \Re^n$ from $\theta$ to
+  $\theta'$ as follows,
   \begin{align}
-    \theta^\alpha = \alpha \theta + (1-\alpha) \theta'.
+    \sP(\alpha) &\defeq \alpha \theta + (1-\alpha) \theta'.
   \end{align}
+  For notational convenience, we use $\theta_{\alpha} \defeq \sP(\alpha)$.
 
+  Now, note that with $q$ fixed, $\sL(\theta,q)$ is {\em convex} in $\theta$. Thus, 
+  $\sL(\theta^\alpha, q) = (1-\alpha)\sL(\theta, q) + \alpha
+  \sL(\theta', q) > \sL(\theta, q)$. Furthermore, $\sL(\theta^\alpha,
+  q^*(\theta^\alpha)) \ge \sL(\theta^\alpha, q) > \sL(\theta, q)$.
 
+  \todo{Refine with a path for $q$ too}
 \end{proof}
+
+Next, we will define a local region around some parameter $\theta$ that is trapping.
+
 
 \end{document}
