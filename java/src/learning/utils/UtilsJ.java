@@ -113,6 +113,9 @@ public class UtilsJ {
     double oldObjective = Double.NEGATIVE_INFINITY;
     int iter;
     for (iter = 0; iter < numIters && !done; iter++) {
+      if(diagnosticMode) {
+        doGradientCheck(state);
+      }
       // Logging stuff
       List<String> items = new ArrayList<>();
       items.add("iter = " + iter);

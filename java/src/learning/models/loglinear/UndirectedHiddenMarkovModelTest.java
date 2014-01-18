@@ -1,6 +1,7 @@
 package learning.models.loglinear;
 
 import fig.basic.Pair;
+import learning.models.Params;
 import learning.models.loglinear.UndirectedHiddenMarkovModel.Parameters;
 import learning.utils.Counter;
 import org.junit.Assert;
@@ -303,6 +304,37 @@ public class UndirectedHiddenMarkovModelTest {
     for(int i = 0; i < marginal.weights.length; i++) {
       Assert.assertTrue(Math.abs(marginal.weights[i] - marginal_.weights[i]) < 1e-1);
     }
+  }
+
+  @Test
+  public void testCaching() {
+    int D = model.D; int K = model.K; int T = model.L;
+    Example ex = new Example(new int[T], new int[T]);
+
+    for(int t = 0; t < T; t++) {
+      for(int y_ = 0; y_ < K; y_++) {
+        for(int y = 0; y < K; y++) {
+          for(int x = 0; x < K; x++) {
+            ex.x[t] = x;
+            Assert.assertEquals( model1.G(t,y_,y,ex), model1.G_(t,y_,y,ex), 1e-2);
+          }
+        }
+      }
+    }
+    model1.cache();
+    for(int t = 0; t < T; t++) {
+      for(int y_ = 0; y_ < K; y_++) {
+        for(int y = 0; y < K; y++) {
+          for(int x = 0; x < K; x++) {
+            ex.x[t] = x;
+            Assert.assertEquals( model1.G_(t,y_,y,ex), model1.G(t,y_,y,ex), 1e-2);
+          }
+        }
+      }
+    }
+    model1.invalidateCache();
+
+
   }
 
 }

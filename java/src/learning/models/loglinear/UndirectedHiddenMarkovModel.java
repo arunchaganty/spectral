@@ -38,15 +38,13 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     final public int K;
     final public int D;
     final public double[] weights;
-
-    final double[] expWeights;
-    boolean cacheValid = false;
+    final double[] expWeight;
 
     public Parameters(int K, int D) {
       this.K = K;
       this.D = D;
       this.weights = new double[K*D + K*K];
-      this.expWeights = new double[K*D + K*K];
+      this.expWeight = new double[K*D + K*K];
     }
 
     @Override
@@ -123,15 +121,14 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
       }
     }
 
+    boolean cacheValid = false;
+    double[][][] cachedG;
     @Override
     public void cache() {
-      for(int i = 0; i < weights.length; i++){
-        expWeights[i] = Math.exp(weights[i]);
-      }
+      if(cacheValid) return;
       precomputeG();
       cacheValid = true;
     }
-    double[][][] cachedG;
     void precomputeG() {
       // Use a special index for t = 0 and for examples = 0
       Example ex = new Example(new int[]{0, 0});
@@ -141,15 +138,19 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
           for(int x = 0; x < D; x++) {
             if(y_ == -1) {
               ex.x[0] = x;
-              cachedG[y_+1][y][x+1] = G(0, y_, y, ex);
+              cachedG[y_+1][y][x+1] = G_(0, y_, y, ex);
             } else {
               ex.x[1] = x;
-              cachedG[y_+1][y][x+1] = G(1, y_, y, ex);
+              cachedG[y_+1][y][x+1] = G_(1, y_, y, ex);
             }
           }
           // Now compute the aggregate for 0
           cachedG[y_+1][y][0] = MatrixOps.sum(cachedG[y_+1][y]);
         }
+      }
+
+      for(int i = 0; i < weights.length; i++) {
+        expWeight[i] = weights[i];
       }
     }
 
@@ -158,37 +159,29 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     public void invalidateCache() {
       cacheValid = false;
     }
-
     /**
      * Return \theta^T [\phi(y_{t-1}, y_{t}), \phi(y_{t}, x_{t}) ]
      */
     double G(int t, int y_, int y, Example ex) {
-      double value = 0.;
       if(cacheValid) {
-        if( ex != null ) {
-          if(t > 0)
-            return cachedG[y_+1][y][ex.x[t]+1];
-          else
-            return cachedG[0][y][ex.x[t]+1];
-        } else {
-          if(t > 0)
-            return cachedG[y_+1][y][0];
-          else
-            return cachedG[0][y][0];
-        }
+        return cachedG[t > 0 ? y_+1 : 0][y][ex != null ? ex.x[t]+1 : 0];
       } else {
-        if( ex != null ) {
-          value = weights[o(y, ex.x[t])];
-          value +=  (t > 0) ? weights[t(y_, y)] : 0.;
-          return Math.exp(value);
-        } else {
-          for(int x = 0; x < D; x++) {
-            double value_ = weights[o(y, x)];
-            value += Math.exp(value_);
-          }
-          value *= (t > 0) ? Math.exp(weights[t(y_, y)]) : 1.;
-          return value;
+        return G_(t,y_,y,ex);
+      }
+    }
+    double G_(int t, int y_, int y, Example ex) {
+      double value = 0.;
+      if( ex != null ) {
+        value = weights[o(y, ex.x[t])];
+        value +=  (t > 0) ? weights[t(y_, y)] : 0.;
+        return Math.exp(value);
+      } else {
+        for(int x = 0; x < D; x++) {
+          double value_ = weights[o(y, x)];
+          value += Math.exp(value_);
         }
+        value *= (t > 0) ? Math.exp(weights[t(y_, y)]) : 1.;
+        return value;
       }
     }
 
@@ -388,9 +381,11 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
           marginals[t][y][0] *= nodes[t][y]; // p(h)
         } else {
           for( int x = 0; x < D; x++)
-            marginals[t][y][x] = params.weights[o(y, x)]; // p(x|h)
+            marginals[t][y][x] = Math.exp(params.weights[o(y, x)]); // p(x|h)
           double z = MatrixOps.sum(marginals[t][y]);
           MatrixOps.scale(marginals[t][y], 1./z);
+          for( int x = 0; x < D; x++)
+            marginals[t][y][x] *= nodes[t][y]; // p(h)
         }
       }
     }

@@ -116,14 +116,14 @@ public class POSInduction implements Runnable {
     int TOP_K = 20;
     for( int k = 0; k < K; k++ ) {
       StringBuilder topk = new StringBuilder();
-      topk.append(C.tagDict[k]).append(": ");
-
       int k_ = perm[k];
+
+      topk.append(C.tagDict[k_]).append(": ");
 
       Parameters parameters = (Parameters) params;
       double[] options = new double[model.D];
       for(int d = 0; d < model.D; d++)
-        options[d] = parameters.weights[parameters.o(k_, d)];
+        options[d] = parameters.weights[parameters.o(k, d)];
       Integer[] sortedWords = MatrixOps.argsort(options);
       for(int i = 0; i < TOP_K; i++ ) {
         topk.append(C.dict[sortedWords[i]]).append(", ");
@@ -238,8 +238,6 @@ public class POSInduction implements Runnable {
     }
     logsForce(table);
     LogInfo.end_track("Confusion matrix");
-
-    printTopK(model, params, C, perm);
 
     end_track("vs-all accuracy");
     return acc;
@@ -446,9 +444,9 @@ public class POSInduction implements Runnable {
       switch(mode) {
         case EM: {
           ExpectationMaximization solver = new ExpectationMaximization();
-          solver.backtrack.tolerance = 1e-4;
-          solver.mIters = 3;
-          solver.iters = 40;
+//          solver.backtrack.tolerance = 1e-4;
+          solver.mIters = 2;
+          solver.iters = 100;
           solver.thetaRegularization = 1e-3;
           solver.solveEM(hmm, data, params);
         } break;

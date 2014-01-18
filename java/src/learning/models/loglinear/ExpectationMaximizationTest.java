@@ -21,11 +21,12 @@ public class ExpectationMaximizationTest {
     solver.backtrack.tolerance = 1e-3;
     solver.mIters = 1;
     solver.iters = 500;
+    solver.diagnosticMode = true;
 
     if(testBetterThanTrue)
       solver.thetaRegularization = 0.0;
     else
-      solver.thetaRegularization = 1e-5;
+      solver.thetaRegularization = 0.;//1e-2;
     // Generate examples from the model
     Counter<Example> data =  model.drawSamples(trueParams, rnd, (int) 1e5);
 
@@ -219,6 +220,18 @@ public class ExpectationMaximizationTest {
   @Test
   public void testUndirectedHiddenMarkovModelEstimationLarge() {
     int K = 5; int D = 100; int L = 3;
+    UndirectedHiddenMarkovModel modelA = new UndirectedHiddenMarkovModel(K, D, L);
+    // Set parameters to be sin
+    Params trueParams = modelA.newParams();
+    trueParams.initRandom(rnd, 1.0);
+    Params initParams = trueParams.newParams();
+    initParams.initRandom(rnd, 1.0);
+
+    testRecovery(modelA, trueParams, initParams, false, true);
+  }
+  @Test
+  public void testUndirectedHiddenMarkovModelEstimationLarge1e3() {
+    int K = 5; int D = 1000; int L = 3;
     UndirectedHiddenMarkovModel modelA = new UndirectedHiddenMarkovModel(K, D, L);
     // Set parameters to be sin
     Params trueParams = modelA.newParams();

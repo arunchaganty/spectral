@@ -20,7 +20,7 @@ public class ExpectationMaximization implements Runnable {
   @Option(gloss="Regularization for theta") public double thetaRegularization = 1e-5; //0; //1e-3;
 
   @Option(gloss="Number of iterations") public int iters = 1000;
-  @Option(gloss="Number of iterations") public int mIters = 3;
+  @Option(gloss="Number of iterations") public int mIters = 1;
 
   @Option(gloss="Diagnostic mode") public boolean diagnosticMode = false;
 
@@ -29,6 +29,7 @@ public class ExpectationMaximization implements Runnable {
   @OptionSet(name="backtrack") public BacktrackingLineSearch.Options backtrack = new BacktrackingLineSearch.Options();
 
   Maximizer newMaximizer() {
+    backtrack.verbose = 5;
     if (useLBFGS) return new LBFGSMaximizer(backtrack, lbfgs);
     return new GradientMaximizer(backtrack);
   }
@@ -61,7 +62,7 @@ public class ExpectationMaximization implements Runnable {
     }
 
     @Override
-    public void invalidate() { objectiveValid = gradientValid = false; }
+    public void invalidate() { objectiveValid = gradientValid = false; theta.invalidateCache(); }
 
     @Override
     public double[] point() { return theta.toArray(); }
@@ -75,7 +76,6 @@ public class ExpectationMaximization implements Runnable {
   public double value() {
       if( objectiveValid ) return (objective);
       objective = 0.;
-      theta.invalidateCache();
       theta.cache();
 
 
@@ -94,8 +94,7 @@ public class ExpectationMaximization implements Runnable {
     @Override
     public double[] gradient() {
       if( gradientValid ) return gradient.toArray();
-      theta.invalidateCache();
-      theta.cache();
+        theta.cache();
 
       gradient.clear();
 
@@ -164,6 +163,12 @@ public class ExpectationMaximization implements Runnable {
     }
     for( int i = 0; i < iters && !done; i++ ) {
       theta.cache();
+
+      // Optimize each one-by-one
+      // Get marginals
+      marginals.clear();
+      modelA.updateMarginals(theta, data, 1.0, marginals);
+
       List<String> items = new ArrayList<>();
       items.add("iter = " + i);
       items.add("mObjective = " + mObjective.value());
@@ -174,12 +179,10 @@ public class ExpectationMaximization implements Runnable {
         out.flush();
       }
 
-      // Optimize each one-by-one
-      // Get marginals
-      marginals.clear();
-      modelA.updateMarginals(theta, data, 1.0, marginals);
+
       done = optimize(mMaximizer, mObjective, "M-" + i, mIters, diagnosticMode);
       mObjective.invalidate();
+//      done = false;
     }
     Execution.putOutput("optimization-done", done);
 
