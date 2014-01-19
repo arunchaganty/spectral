@@ -446,7 +446,7 @@ public class POSInduction implements Runnable {
           ExpectationMaximization solver = new ExpectationMaximization();
 //          solver.backtrack.tolerance = 1e-4;
           solver.mIters = 2;
-          solver.iters = 100;
+          solver.iters = 300;
           solver.thetaRegularization = 1e-3;
           solver.solveEM(hmm, data, params);
         } break;

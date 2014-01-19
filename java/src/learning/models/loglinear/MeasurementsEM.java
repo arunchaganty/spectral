@@ -11,7 +11,7 @@ import learning.models.Params;
 import learning.utils.Counter;
 
 import static fig.basic.LogInfo.*;
-import static learning.utils.UtilsJ.doGradientCheck;
+import static learning.utils.UtilsJ.optimize;
 import static learning.utils.UtilsJ.writeStringHard;
 
 import java.util.List;
@@ -24,8 +24,8 @@ import java.util.List;
  *   http://machinelearning.org/archive/icml2009/papers/393.pdf
  */
 public class MeasurementsEM implements Runnable {
-  @Option(gloss="Regularization for theta") public double thetaRegularization = 1e-3;
-  @Option(gloss="Regularization for beta") public double betaRegularization = 1e-3;
+  @Option(gloss="Regularization for theta") public double thetaRegularization = 0;// 1e-3;
+  @Option(gloss="Regularization for beta") public double betaRegularization = 0; //1e-3;
 
   @Option(gloss="Number of iterations optimizing E") public int eIters = 100;
   @Option(gloss="Number of iterations optimizing M") public int mIters = 1;
@@ -35,7 +35,10 @@ public class MeasurementsEM implements Runnable {
   @OptionSet(name="lbfgs") public LBFGSMaximizer.Options lbfgs = new LBFGSMaximizer.Options();
   @OptionSet(name="backtrack") public BacktrackingLineSearch.Options backtrack = new BacktrackingLineSearch.Options();
 
+  @Option(gloss="Do extra careful checks") public boolean diagnosticMode = false; //true;
+
   Maximizer newMaximizer() {
+    backtrack.verbose = 5;
     if (useLBFGS) return new LBFGSMaximizer(backtrack, lbfgs);
     return new GradientMaximizer(backtrack);
   }
@@ -153,10 +156,13 @@ public class MeasurementsEM implements Runnable {
       this.modelA = modelA;
       this.modelB = modelB;
       this.X = X;
+
       this.tau = tau;
       this.theta = theta;
       this.beta = beta;
-      this.gradient = theta.copy();
+
+      this.gradient = theta.newParams();
+
       this.params = modelB.newParams();
       this.phi_sigma = modelB.newParams();
 
@@ -170,16 +176,16 @@ public class MeasurementsEM implements Runnable {
       params.plusEquals(1.0, theta);
       params.plusEquals(1.0, beta);
 
-      objectiveOffset = 0;
+//      objectiveOffset = 0;
       // -H(q) = \theta_0^T \E_q[\phi(x,y)] + \beta_0^T \E_q[\phi(x,y)] -
       // \sum_i B
       phi_sigma.clear();
       phi_sigma.copyOver(modelB.getMarginals(params, X));
 
       // h_\sigma( \tau - \E[\sigma(x,y) );
-      Params tau_hat = tau.copy();
-      tau_hat.copyOver(phi_sigma);
-      objectiveOffset += 0.5  * betaRegularization * MatrixOps.norm( tau.plus(-1.0, tau_hat).toArray() );
+//      Params tau_hat = tau.copy();
+//      tau_hat.copyOver(phi_sigma);
+//      objectiveOffset += 0.5  * betaRegularization * MatrixOps.norm( tau.plus(-1.0, tau_hat).toArray() );
     }
 
     @Override
@@ -216,7 +222,8 @@ public class MeasurementsEM implements Runnable {
     public double[] gradient() {
       if( gradientValid ) return gradient.toArray();
 
-      gradient.copyOver(modelA.getMarginals(theta));
+      Params marginals = modelA.getMarginals(theta);
+      gradient.copyOver(marginals);
 
 //      Params phi = modelA.newParams();
 //      Params.project( phi_sigma, phi );
@@ -226,56 +233,10 @@ public class MeasurementsEM implements Runnable {
       gradient.plusEquals(thetaRegularization, theta);
 
       // Change the sign
-      ListUtils.multMut(gradient.toArray(), -1);
+      gradient.scaleEquals(-1.0);
 
       return gradient.toArray();
     }
-  }
-
-  boolean optimize( Maximizer maximizer, Maximizer.FunctionState state, String label, int numIters ) {
-    LogInfo.begin_track("optimize " + label);
-    state.invalidate();
-    boolean done = false;
-    // E-step
-    int iter;
-
-    PrintWriter out = IOUtils.openOutHard(Execution.getFile(label + ".events"));
-
-    double oldObjective = Double.NEGATIVE_INFINITY;
-
-    for (iter = 0; iter < numIters && !done; iter++) {
-      state.invalidate();
-
-      // Logging stuff
-      List<String> items = new ArrayList<>();
-      items.add("iter = " + iter);
-      items.add("objective = " + state.value());
-      items.add("pointNorm = " + MatrixOps.norm(state.point()));
-      items.add("gradientNorm = " + MatrixOps.norm(state.gradient()));
-      LogInfo.logs( StrUtils.join(items, "\t") );
-      out.println( StrUtils.join(items, "\t") );
-      out.flush();
-
-      double objective = state.value();
-      assert objective > oldObjective;
-      oldObjective = objective;
-
-      done = maximizer.takeStep(state);
-    }
-    // Do a gradient check only at the very end.
-    doGradientCheck(state);
-
-    List<String> items = new ArrayList<>();
-    items.add("iter = " + iter);
-    items.add("objective = " + state.value());
-    items.add("pointNorm = " + MatrixOps.norm(state.point()));
-    items.add("gradientNorm = " + MatrixOps.norm(state.gradient()));
-    LogInfo.logs( StrUtils.join(items, "\t") );
-    out.println( StrUtils.join(items, "\t") );
-    out.flush();
-
-    LogInfo.end_track();
-    return done && iter == 1;  // Didn't make any updates
   }
 
   /**
@@ -303,7 +264,8 @@ public class MeasurementsEM implements Runnable {
     LogInfo.logs( "Solving measurements objective with %d + %d parameters, using %f instances (%d unique)",
             theta.size(), beta.size(), data.sum(), data.size() );
 
-    Execution.putOutput( "actualMeasuredFraction", measurements.size() / (float) theta.size() );
+    if(Execution.getActualExecDir() != null)
+      Execution.putOutput( "actualMeasuredFraction", measurements.size() / (float) theta.size() );
 
     Maximizer eMaximizer = newMaximizer();
     Maximizer mMaximizer = newMaximizer();
@@ -313,9 +275,13 @@ public class MeasurementsEM implements Runnable {
     // Create the M-objective (for $\theta$) - main computations are the partition function for A, B and expected counts
     MeasurementsMObjective mObjective = new MeasurementsMObjective(modelA, modelB, data, measurements, theta, beta);
     // Initialize
-    eObjective.updateOffset(); mObjective.updateOffset();
+    if(diagnosticMode) {
+      eObjective.updateOffset(); mObjective.updateOffset();
+    }
     boolean done = false;
-    PrintWriter out = IOUtils.openOutHard(Execution.getFile("events"));
+    PrintWriter out = null;
+    if(Execution.getActualExecDir() != null)
+      out = IOUtils.openOutHard(Execution.getFile("events"));
     Params oldTheta = theta.copy();
     for( int i = 0; i < iters && !done; i++ ) {
 
@@ -326,18 +292,24 @@ public class MeasurementsEM implements Runnable {
       items.add("iter = " + i);
       items.add("eObjective = " + eObjective.value());
       items.add("mObjective = " + mObjective.value());
-      LogInfo.logs( StrUtils.join(items, "\t") );
-      out.println( StrUtils.join(items, "\t") );
-      out.flush();
+      LogInfo.log(StrUtils.join(items, "\t"));
+      if(out != null){
+        out.println( StrUtils.join(items, "\t") );
+        out.flush();
+      }
 
       // Optimize each one-by-one
-      boolean done1 = optimize( eMaximizer, eObjective, "E-" + i, eIters );
+      boolean done1 = optimize( eMaximizer, eObjective, "E-" + i, eIters, diagnosticMode );
       mObjective.updateOffset();
       mObjective.invalidate();
-      LogInfo.logs( "==== midway: eObjective = %f, mObjective = %f", eObjective.value(), mObjective.value() );
-      boolean done2 = optimize( mMaximizer, mObjective, "M-" + i, mIters );
+      if(diagnosticMode) {
+      }
+      LogInfo.logs("==== midway: eObjective = %f, mObjective = %f", eObjective.value(), mObjective.value());
+      boolean done2 = optimize( mMaximizer, mObjective, "M-" + i, mIters, diagnosticMode );
       eObjective.updateOffset();
       eObjective.invalidate();
+      if(diagnosticMode) {
+      }
       LogInfo.logs("==== midway: eObjective = %f, mObjective = %f", eObjective.value(), mObjective.value());
 
       oldTheta.copyOver(theta);
@@ -347,7 +319,7 @@ public class MeasurementsEM implements Runnable {
 
     LogInfo.end_track("solveMeasurements");
 
-    return Pair.makePair(theta, beta);
+    return Pair.newPair(theta, beta);
   }
 
   public static class Options {
@@ -356,7 +328,7 @@ public class MeasurementsEM implements Runnable {
     @Option(gloss="Noise") public double trueParamsNoise = 0.01;
     @Option(gloss="K") public int K = 2;
     @Option(gloss="D") public int D = 2;
-    @Option(gloss="L") public int L = 1;
+    @Option(gloss="L") public int L = 3;
 
     @Option(gloss="data points") public int genNumExamples = 100;
   }
@@ -370,18 +342,12 @@ public class MeasurementsEM implements Runnable {
   Pair<ExponentialFamilyModel<Example>, ExponentialFamilyModel<Example>> createModels() {
     LogInfo.begin_track("Creating models");
     // Create two simple models
-    Models.MixtureModel modelA = new Models.MixtureModel();
-    modelA.K = opts.K;
-    modelA.D = opts.D;
-    modelA.L = opts.L;
+    Models.MixtureModel modelA = new Models.MixtureModel(opts.K, opts.D, opts.L);
 
-    Models.MixtureModel modelB = new Models.MixtureModel();
-    modelB.K = modelA.K;
-    modelB.D = modelA.D;
-    modelB.L = modelA.L;
+    Models.MixtureModel modelB = new Models.MixtureModel(opts.K, opts.D, opts.L);
     LogInfo.end_track("Creating models");
 
-    return Pair.makePair( (ExponentialFamilyModel<Example>)modelA, (ExponentialFamilyModel<Example>)modelB );
+    return Pair.newPair((ExponentialFamilyModel<Example>) modelA, (ExponentialFamilyModel<Example>) modelB);
   }
 
   public void run(){
@@ -396,14 +362,17 @@ public class MeasurementsEM implements Runnable {
     for(int i = 0; i < trueParams.size(); i++)
       trueParams.toArray()[i] = Math.sin(i);
 //      trueParams.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
+    if(Execution.getActualExecDir() != null)
     writeStringHard(Execution.getFile("true.params"), trueParams.toString());
 //    trueParams.write(Execution.getFile("true.params"));
 
     Params trueMeasurements = modelA.getMarginals(trueParams);
+    if(Execution.getActualExecDir() != null)
     writeStringHard(Execution.getFile("true.counts"), trueMeasurements.toString());
 
     // Generate examples from the model
-    Counter<Example> data = modelA.drawSamples(trueParams, opts.genRandom, opts.genNumExamples);
+//    Counter<Example> data = modelA.drawSamples(trueParams, opts.genRandom, opts.genNumExamples);
+    Counter<Example> data = modelA.getDistribution(trueParams);
     logs("Generated %d examples", data.size());
     LogInfo.end_track("Creating data");
 
@@ -412,26 +381,35 @@ public class MeasurementsEM implements Runnable {
 
     // Initializing stuff
     Params theta = trueParams.copy();
+    if(Execution.getActualExecDir() != null)
     writeStringHard(Execution.getFile("fit0.params"), theta.toString());
 
-    Params beta = modelB.newParams(); //new Params(trueParams);
-    theta.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
-    beta.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
+    Params beta = modelB.newParams();
+//    beta.copyOver(trueParams);
+    Params noise = modelA.newParams();
+    noise.initRandom(opts.trueParamsRandom, 1.);
+    theta.plusEquals(noise);
+//    theta.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
+//    beta.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
 
-    LogInfo.logs("likelihood(true): " + computeLogZ(modelA, trueParams, data) );
-    LogInfo.logs("likelihood(est.): " + computeLogZ(modelA, theta, data) );
+    LogInfo.log("likelihood(true): " + computeLogZ(modelA, trueParams, data));
+    LogInfo.log("likelihood(est.): " + computeLogZ(modelA, theta, data));
 
-
-    Params measurements = modelA.getMarginals(theta);
-    writeStringHard(Execution.getFile("fit0.counts"), measurements.toString());
 
     // Measurements
+    Params measurements = modelA.getMarginals(theta);
+    if(Execution.getActualExecDir() != null)
+    writeStringHard(Execution.getFile("fit0.counts"), measurements.toString());
+
     measurements = modelA.getMarginals(trueParams, data);
+    if(Execution.getActualExecDir() != null)
     writeStringHard(Execution.getFile("measurements.counts"), measurements.toString());
 
     solveMeasurements( modelA, modelB, data, measurements, theta, beta);
 
     measurements = modelA.getMarginals(theta);
+    log( Fmt.D(trueMeasurements.toArray()));
+    log( Fmt.D(measurements.toArray()));
 
 //    int[] perm = new int[trueMeasurements.K];
 //    double error = theta.computeDiff(trueParams, perm);
@@ -441,12 +419,15 @@ public class MeasurementsEM implements Runnable {
 //    error = measurements.computeDiff(trueMeasurements, perm);
 //    Execution.putOutput("counts-error", error);
 //    LogInfo.logs("counts error: " + error + " " + Fmt.D(perm));
-    LogInfo.logs("likelihood(true): " + computeLogZ(modelA, trueParams, data) );
-    LogInfo.logs("likelihood(est.): " + computeLogZ(modelA, theta, data) );
+    LogInfo.log("likelihood(true): " + computeLogZ(modelA, trueParams, data));
+    LogInfo.log("likelihood(est.): " + computeLogZ(modelA, theta, data));
 
     // Compute the likelihoods
+    if(Execution.getActualExecDir() != null)
     writeStringHard(Execution.getFile("fit.params"), theta.toString());
+    if(Execution.getActualExecDir() != null)
     Execution.putOutput("fit.beta", Fmt.D(beta.toArray()));
+    if(Execution.getActualExecDir() != null)
     writeStringHard(Execution.getFile("fit.counts"), measurements.toString());
 
     LogInfo.end_track("Fitting model");

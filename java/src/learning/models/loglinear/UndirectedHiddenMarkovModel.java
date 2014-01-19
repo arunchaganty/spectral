@@ -1,11 +1,13 @@
 package learning.models.loglinear;
 
 import fig.basic.Fmt;
+import fig.basic.Indexer;
 import fig.basic.LogInfo;
 import fig.basic.Pair;
 import learning.linalg.FullTensor;
 import learning.linalg.MatrixOps;
 import learning.linalg.RandomFactory;
+import learning.models.BasicParams;
 import learning.models.ExponentialFamilyModel;
 import learning.models.Params;
 import learning.utils.Counter;
@@ -39,86 +41,56 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     final public int D;
     final public double[] weights;
     final double[] expWeight;
+    final Indexer<String> featureIndexer;
 
-    public Parameters(int K, int D) {
+    public Parameters(int K, int D, Indexer<String> featureIndexer) {
       this.K = K;
       this.D = D;
       this.weights = new double[K*D + K*K];
       this.expWeight = new double[K*D + K*K];
+
+      this.featureIndexer = featureIndexer;
     }
 
     @Override
     public Params newParams() {
-      return new Parameters(K,D);
+      return new Parameters(K,D, featureIndexer);
     }
 
     @Override
-    public void initRandom(Random random, double noise) {
-      for (int j = 0; j < weights.length; j++)
-        weights[j] = noise * (2 * random.nextDouble() - 1);
+    public Indexer<String> getFeatureIndexer() {
+      return featureIndexer;
     }
 
-    @Override
-    public void copyOver(Params other_) {
-      if(other_ instanceof Parameters) {
-        Parameters other = (Parameters) other_;
-        System.arraycopy(other.weights, 0, weights, 0, weights.length);
-      } else {
-        throw new IllegalArgumentException();
-      }
-    }
     @Override
     public Params merge(Params other_) {
-      // Nothing the merge, just add
-      return plus(other_);
+      Indexer<String> jointIndexer = new Indexer<>();
+      for(String feature : featureIndexer.getObjects()) {
+        jointIndexer.getIndex(feature);
+      }
+      for(String feature : other_.getFeatureIndexer().getObjects()) {
+        jointIndexer.getIndex(feature);
+      }
+
+      double[] weights_ = other_.toArray();
+
+      // Now merge
+      Params joint = new BasicParams(jointIndexer);
+      //noinspection MismatchedReadAndWriteOfArray
+      double [] weights = joint.toArray();
+      for(String feature : featureIndexer.getObjects()) {
+        weights[jointIndexer.indexOf(feature)] = this.weights[jointIndexer.indexOf(feature)];
+      }
+      for(String feature : other_.getFeatureIndexer().getObjects()) {
+        weights[jointIndexer.indexOf(feature)] = weights_[jointIndexer.indexOf(feature)];
+      }
+
+      return joint;
     }
 
     @Override
     public double[] toArray() {
       return weights;
-    }
-    @Override
-    public int size() {
-      return weights.length;
-    }
-
-    @Override
-    public void clear() {
-      Arrays.fill(weights, 0.);
-    }
-
-    @Override
-    public void plusEquals(double scale, Params other_) {
-      if(other_ instanceof Parameters) {
-        Parameters other = (Parameters) other_;
-        for(int i = 0; i < weights.length; i++)
-          weights[i] += scale * other.weights[i];
-      } else {
-        throw new IllegalArgumentException();
-      }
-
-    }
-
-    @Override
-    public void scaleEquals(double scale) {
-      for(int i = 0; i < weights.length; i++)
-        weights[i] *= scale;
-    }
-
-    @Override
-    public double dot(Params other_) {
-      if(other_ instanceof Parameters) {
-        Parameters other = (Parameters) other_;
-
-        double prod = 0.;
-
-        for(int i = 0; i < weights.length; i++)
-          prod += weights[i] * other.weights[i];
-
-        return prod;
-      } else {
-        throw new IllegalArgumentException();
-      }
     }
 
     boolean cacheValid = false;
@@ -149,9 +121,7 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
         }
       }
 
-      for(int i = 0; i < weights.length; i++) {
-        expWeight[i] = weights[i];
-      }
+      System.arraycopy(weights, 0, expWeight, 0, weights.length);
     }
 
 
@@ -194,10 +164,27 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     }
   }
 
+  final Indexer<String> featureIndexer;
   public UndirectedHiddenMarkovModel(int K, int D, int L) {
     this.K = K;
     this.D = D;
     this.L = L;
+
+
+    // Careful - this must follow the same ordering as the index numbers
+    this.featureIndexer = new Indexer<>();
+    for(int h = 0; h < K; h++) {
+      for(int x = 0; x < D; x++) {
+        featureIndexer.add(String.format("o[h_=%d,x=%d", h, x));
+        assert featureIndexer.indexOf(String.format("o[h_=%d,x=%d", h, x)) == o(h, x);
+      }
+    }
+    for(int h_ = 0; h_ < K; h_++) {
+      for(int h = 0; h < K; h++) {
+        featureIndexer.add(String.format("t[h_=%d,h=%d", h_, h));
+        assert featureIndexer.indexOf( String.format("t[h_=%d,h=%d", h_, h) )  == t(h_,h);
+      }
+    }
   }
 
   @Override
@@ -216,8 +203,8 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
   }
 
   @Override
-  public Params newParams() {
-    return new Parameters(K, D);
+  public Parameters newParams() {
+    return new Parameters(K, D, featureIndexer);
   }
 
 
@@ -595,7 +582,7 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
   }
 
   public Parameters getSampleMarginals(Counter<Example> examples) {
-    Parameters marginals = new Parameters(K, D);
+    Parameters marginals = newParams();
     for(Example ex : examples) {
       for(int t = 0; t < ex.x.length; t++) {
         int y = ex.h[t]; int x = ex.x[t];
