@@ -174,5 +174,8 @@ public abstract class Params implements Serializable {
   }
   public void invalidateCache() {
   }
+  public boolean isCacheValid() {
+    return false;
+  }
 
 }

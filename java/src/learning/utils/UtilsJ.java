@@ -53,6 +53,7 @@ public class UtilsJ {
     // Save point
     state.invalidate();
     double[] point = state.point();
+//    double value = state.value();
     double[] gradient = state.gradient();
     double[] currentGradient = gradient.clone();
     double[] currentPoint = point.clone();
@@ -102,7 +103,7 @@ public class UtilsJ {
 
   public static boolean optimize(Maximizer maximizer, Maximizer.FunctionState state, String label, int numIters, boolean diagnosticMode) {
     LogInfo.begin_track("optimize " + label);
-    state.invalidate();
+//    state.invalidate();
 
     PrintWriter out = null;
     if(Execution.getActualExecDir() != null) {
@@ -154,5 +155,16 @@ public class UtilsJ {
     return done && iter == 1;  // Didn't make any updates
   }
 
+
+  public static String outputList(Object... items) {
+    // Each item is a pair
+    assert items.length % 2 == 0;
+    StringBuilder sb = new StringBuilder();
+    for(int item = 0; item < items.length; item += 2) {
+      sb.append(items[item]).append(" = ").append(items[item+1]).append("\t");
+    }
+
+    return sb.toString().trim();
+  }
 
 }

@@ -101,7 +101,13 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
       precomputeG();
       cacheValid = true;
     }
+    public boolean isCacheValid() {
+      return cacheValid;
+    }
     void precomputeG() {
+      for(int i = 0; i < weights.length; i++)
+        expWeight[i] = Math.exp(weights[i]);
+
       // Use a special index for t = 0 and for examples = 0
       Example ex = new Example(new int[]{0, 0});
       cachedG = new double[K+1][K][D+1];
@@ -110,21 +116,17 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
           for(int x = 0; x < D; x++) {
             if(y_ == -1) {
               ex.x[0] = x;
-              cachedG[y_+1][y][x+1] = G_(0, y_, y, ex);
+              cachedG[y_+1][y][x+1] = G__(0, y_, y, ex);
             } else {
               ex.x[1] = x;
-              cachedG[y_+1][y][x+1] = G_(1, y_, y, ex);
+              cachedG[y_+1][y][x+1] = G__(1, y_, y, ex);
             }
           }
           // Now compute the aggregate for 0
           cachedG[y_+1][y][0] = MatrixOps.sum(cachedG[y_+1][y]);
         }
       }
-
-      System.arraycopy(weights, 0, expWeight, 0, weights.length);
     }
-
-
     @Override
     public void invalidateCache() {
       cacheValid = false;
@@ -137,6 +139,20 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
         return cachedG[t > 0 ? y_+1 : 0][y][ex != null ? ex.x[t]+1 : 0];
       } else {
         return G_(t,y_,y,ex);
+      }
+    }
+    double G__(int t, int y_, int y, Example ex) {
+      double value = 0.;
+      if( ex != null ) {
+        value = expWeight[o(y, ex.x[t])];
+        value *=  (t > 0) ? expWeight[t(y_, y)] : 1.;
+        return value;
+      } else {
+        for(int x = 0; x < D; x++) {
+          value *= expWeight[o(y, x)];
+        }
+        value *= (t > 0) ? expWeight[t(y_, y)] : 1.;
+        return value;
       }
     }
     double G_(int t, int y_, int y, Example ex) {
@@ -368,7 +384,10 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
           marginals[t][y][0] *= nodes[t][y]; // p(h)
         } else {
           for( int x = 0; x < D; x++)
-            marginals[t][y][x] = Math.exp(params.weights[o(y, x)]); // p(x|h)
+            marginals[t][y][x] =
+                    params.cacheValid
+                            ? params.expWeight[o(y,x)]
+                            : Math.exp(params.weights[o(y, x)]); // p(x|h)
           double z = MatrixOps.sum(marginals[t][y]);
           MatrixOps.scale(marginals[t][y], 1./z);
           for( int x = 0; x < D; x++)
@@ -430,6 +449,12 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     }
 
     return z;
+  }
+  public int[] viterbi( final Params params, final Example ex ) {
+    if(params instanceof Parameters)
+      return viterbi((Parameters) params, ex);
+    else
+      throw new IllegalArgumentException();
   }
 
 

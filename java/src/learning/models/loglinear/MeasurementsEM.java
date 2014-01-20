@@ -389,6 +389,7 @@ public class MeasurementsEM implements Runnable {
     Params noise = modelA.newParams();
     noise.initRandom(opts.trueParamsRandom, 1.);
     theta.plusEquals(noise);
+//    theta.initRandom(opts.trueParamsRandom, 3.0);
 //    theta.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
 //    beta.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
 

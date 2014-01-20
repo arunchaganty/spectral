@@ -51,7 +51,6 @@ public class ParsedCorpus extends Corpus {
 
   /**
    * Parse a text file into a corpus.
-   * @param fname
    * @return
    * @throws IOException
    */
@@ -128,6 +127,14 @@ public class ParsedCorpus extends Corpus {
     }
 
     return lines;
+  }
+
+  public String translateTags(int[] tags) {
+    StringBuilder sb = new StringBuilder();
+    for( int tag : tags )
+      sb.append(tagDict[tag]).append(" ");
+
+    return sb.toString().trim();
   }
 
 }
