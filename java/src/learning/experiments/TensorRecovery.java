@@ -12,7 +12,7 @@ import learning.models.loglinear.Models;
 import learning.models.loglinear.ParamsVec;
 import learning.models.loglinear.UndirectedHiddenMarkovModel;
 import learning.spectral.TensorMethod;
-import learning.utils.Counter;
+import learning.common.Counter;
 import org.ejml.simple.SimpleMatrix;
 import org.javatuples.Quartet;
 

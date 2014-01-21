@@ -1,18 +1,19 @@
-package learning.models.loglinear;
+package learning.unsupervised;
 
 import java.io.*;
 import java.util.*;
 
 import fig.basic.*;
 import fig.exec.*;
-import learning.linalg.MatrixOps;
 import learning.models.ExponentialFamilyModel;
 import learning.models.Params;
-import learning.utils.Counter;
+import learning.models.loglinear.Example;
+import learning.models.loglinear.Models;
+import learning.common.Counter;
 
 import static fig.basic.LogInfo.*;
-import static learning.utils.UtilsJ.optimize;
-import static learning.utils.UtilsJ.writeStringHard;
+import static learning.common.Utils.optimize;
+import static learning.common.Utils.writeStringHard;
 
 import java.util.List;
 
@@ -252,7 +253,7 @@ public class MeasurementsEM implements Runnable {
    * @param beta - initial parameters for $\beta$
    * @return - (theta, beta) that optimize.
    */
-  Pair<Params,Params> solveMeasurements(
+  public Pair<Params,Params> solveMeasurements(
           ExponentialFamilyModel<Example> modelA,
           ExponentialFamilyModel<Example> modelB,
           Counter<Example> data,
@@ -406,11 +407,11 @@ public class MeasurementsEM implements Runnable {
     if(Execution.getActualExecDir() != null)
     writeStringHard(Execution.getFile("measurements.counts"), measurements.toString());
 
-    solveMeasurements( modelA, modelB, data, measurements, theta, beta);
+    solveMeasurements(modelA, modelB, data, measurements, theta, beta);
 
     measurements = modelA.getMarginals(theta);
-    log( Fmt.D(trueMeasurements.toArray()));
-    log( Fmt.D(measurements.toArray()));
+    log(Fmt.D(trueMeasurements.toArray()));
+    log(Fmt.D(measurements.toArray()));
 
 //    int[] perm = new int[trueMeasurements.K];
 //    double error = theta.computeDiff(trueParams, perm);

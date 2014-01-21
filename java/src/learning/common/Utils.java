@@ -1,4 +1,4 @@
-package learning.utils;
+package learning.common;
 
 import fig.basic.IOUtils;
 import fig.basic.LogInfo;
@@ -8,7 +8,6 @@ import fig.exec.Execution;
 import learning.data.ComputableMoments;
 import learning.data.HasExactMoments;
 import learning.linalg.FullTensor;
-import learning.linalg.MatrixFactory;
 import learning.linalg.MatrixOps;
 import org.ejml.simple.SimpleMatrix;
 import org.javatuples.Quartet;
@@ -22,7 +21,7 @@ import java.util.List;
 /**
  * Various utilities
  */
-public class UtilsJ {
+public class Utils {
   public static ComputableMoments fromExactMoments(HasExactMoments obj) {
     final Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> moments = obj.computeExactMoments();
     return new ComputableMoments() {

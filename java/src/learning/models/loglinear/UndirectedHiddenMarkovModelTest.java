@@ -1,9 +1,8 @@
 package learning.models.loglinear;
 
 import fig.basic.Pair;
-import learning.models.Params;
 import learning.models.loglinear.UndirectedHiddenMarkovModel.Parameters;
-import learning.utils.Counter;
+import learning.common.Counter;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

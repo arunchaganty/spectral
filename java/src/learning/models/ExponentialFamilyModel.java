@@ -1,11 +1,9 @@
 package learning.models;
 
-import fig.basic.LogInfo;
-import fig.basic.StopWatch;
 import learning.linalg.FullTensor;
 import learning.linalg.MatrixOps;
 import learning.models.loglinear.Example;
-import learning.utils.Counter;
+import learning.common.Counter;
 import org.ejml.simple.SimpleMatrix;
 
 import java.util.Random;

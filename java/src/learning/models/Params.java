@@ -6,7 +6,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Random;
 
-import static learning.utils.UtilsJ.writeStringHard;
+import static learning.common.Utils.writeStringHard;
 
 /**
  * Uniform interface for (vectorizable)-parameters

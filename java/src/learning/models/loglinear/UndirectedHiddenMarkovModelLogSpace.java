@@ -1,18 +1,9 @@
 package learning.models.loglinear;
 
         import fig.basic.Pair;
-        import learning.linalg.FullTensor;
         import learning.linalg.MatrixOps;
-        import learning.linalg.RandomFactory;
-        import learning.models.ExponentialFamilyModel;
-        import learning.models.Params;
-        import learning.utils.Counter;
-        import org.ejml.simple.SimpleMatrix;
 
-        import java.util.ArrayList;
         import java.util.Arrays;
-        import java.util.List;
-        import java.util.Random;
 
 /**
  * Undirected hidden Markov model

@@ -1,16 +1,19 @@
-package learning.models.loglinear;
+package learning.unsupervised;
 
 import fig.basic.*;
 import fig.exec.Execution;
 import learning.models.ExponentialFamilyModel;
 import learning.models.Params;
-import learning.utils.Counter;
+import learning.models.loglinear.Example;
+import learning.models.loglinear.Model;
+import learning.models.loglinear.Models;
+import learning.common.Counter;
 
 import java.io.PrintWriter;
 import java.util.*;
 
-import static learning.utils.UtilsJ.optimize;
-import static learning.utils.UtilsJ.writeStringHard;
+import static learning.common.Utils.optimize;
+import static learning.common.Utils.writeStringHard;
 
 /**
  * Expectation Maximization for a model

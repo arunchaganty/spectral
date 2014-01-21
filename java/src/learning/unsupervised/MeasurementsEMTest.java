@@ -1,8 +1,11 @@
-package learning.models.loglinear;
+package learning.unsupervised;
 
 import learning.models.ExponentialFamilyModel;
 import learning.models.Params;
-import learning.utils.Counter;
+import learning.models.loglinear.Example;
+import learning.models.loglinear.Models;
+import learning.models.loglinear.UndirectedHiddenMarkovModel;
+import learning.common.Counter;
 import org.junit.Assert;
 import org.junit.Test;
 

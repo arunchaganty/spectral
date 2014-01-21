@@ -4,7 +4,7 @@ import learning.linalg.FullTensor;
 
 import fig.basic.*;
 import learning.models.Params;
-import learning.utils.Counter;
+import learning.common.Counter;
 import org.ejml.simple.SimpleMatrix;
 
 public class Models {

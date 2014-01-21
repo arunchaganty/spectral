@@ -1,4 +1,4 @@
-package learning.models.loglinear;
+package learning.experiments;
 
 import java.util.*;
 
@@ -8,20 +8,22 @@ import fig.exec.*;
 import learning.data.ComputableMoments;
 import learning.data.HasSampleMoments;
 import learning.models.ExponentialFamilyModel;
-import learning.models.MixtureOfGaussians;
 import learning.models.Params;
-import learning.spectral.applications.ParameterRecovery;
+import learning.models.loglinear.Example;
+import learning.models.loglinear.UndirectedHiddenMarkovModel;
+import learning.unsupervised.ExpectationMaximization;
+import learning.unsupervised.MeasurementsEM;
 import org.ejml.simple.SimpleMatrix;
 import org.javatuples.Quartet;
 import learning.linalg.*;
 import learning.spectral.TensorMethod;
-import learning.utils.Counter;
+import learning.common.Counter;
 
 import static learning.models.loglinear.Models.*;
-import static learning.models.loglinear.SpectralMeasurements.Mode.*;
+import static learning.experiments.SpectralMeasurements.Mode.*;
 
 /**
- * NIPS 2013
+ * ICML 2014
  * Uses method of moments to initialize parameters 
  * for EM for general log-linear models.
  *  - Uses Hypergraph framework to represent a modelA.

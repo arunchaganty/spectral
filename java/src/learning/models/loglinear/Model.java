@@ -5,7 +5,7 @@ import java.util.*;
 import fig.basic.*;
 import learning.models.ExponentialFamilyModel;
 import learning.models.Params;
-import learning.utils.Counter;
+import learning.common.Counter;
 
 public abstract class Model extends ExponentialFamilyModel<Example> {
   public int K;

@@ -1,4 +1,4 @@
-package learning.utils;
+package learning.common;
 
 import java.util.*;
 

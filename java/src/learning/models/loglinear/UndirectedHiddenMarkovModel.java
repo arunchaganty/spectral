@@ -10,11 +10,10 @@ import learning.linalg.RandomFactory;
 import learning.models.BasicParams;
 import learning.models.ExponentialFamilyModel;
 import learning.models.Params;
-import learning.utils.Counter;
+import learning.common.Counter;
 import org.ejml.simple.SimpleMatrix;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 

@@ -2,7 +2,6 @@ package learning.linalg;
 
 import fig.basic.*;
 import fig.exec.Execution;
-import learning.utils.UtilsJ;
 import org.ejml.simple.SimpleMatrix;
 import org.javatuples.Pair;
 
@@ -105,7 +104,7 @@ public class TensorJointGradientDescent implements  TensorFactorizationAlgorithm
       done = maximizer.takeStep(state);
     }
     // Do a gradient check only at the very end.
-    UtilsJ.doGradientCheck(state);
+    learning.common.Utils.doGradientCheck(state);
 
     List<String> items = new ArrayList<>();
     items.add("iter = " + iter);

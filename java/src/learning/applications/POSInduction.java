@@ -8,19 +8,16 @@
 import fig.basic.*;
 import fig.basic.IOUtils;
 import fig.exec.Execution;
-import learning.data.ComputableMoments;
 import learning.data.Corpus;
-import learning.data.MomentComputationWorkers;
 import learning.data.ParsedCorpus;
 import learning.linalg.MatrixOps;
-import learning.models.HiddenMarkovModel;
 import learning.models.Params;
 import learning.models.loglinear.Example;
-import learning.models.loglinear.ExpectationMaximization;
+import learning.unsupervised.ExpectationMaximization;
 import learning.models.loglinear.UndirectedHiddenMarkovModel;
 import learning.spectral.TensorMethod;
-import learning.utils.Counter;
-import learning.utils.UtilsJ;
+import learning.common.*;
+import learning.common.Utils;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -29,7 +26,7 @@ import java.util.Random;
 
 import static fig.basic.LogInfo.*;
 import static learning.models.loglinear.UndirectedHiddenMarkovModel.*;
-import static learning.utils.UtilsJ.outputList;
+import static learning.common.Utils.outputList;
 
 /**
  * Perform POS induction, aka HMM learning.
@@ -386,7 +383,7 @@ public class POSInduction implements Runnable {
     wordIndex.add(Corpus.DIGIT_CLASS);
     wordIndex.add(Corpus.MISC_CLASS);
     // Anything that appears less than THRESHOLD times is set to rare
-    try(BufferedReader stream = UtilsJ.openReader(input)) {
+    try(BufferedReader stream = Utils.openReader(input)) {
       // Compute the words and statistics
       int lineCount = 0;
       for(String line : IOUtils.readLines(stream)) {
@@ -402,7 +399,7 @@ public class POSInduction implements Runnable {
       throw new RuntimeException(e);
     }
 
-    try(BufferedReader stream = UtilsJ.openReader(input)) {
+    try(BufferedReader stream = learning.common.Utils.openReader(input)) {
       // Go back and actually add the words to the corpus
       int lineCount = 0;
       for(String line : IOUtils.readLines(stream)) {

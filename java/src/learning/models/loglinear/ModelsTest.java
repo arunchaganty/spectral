@@ -1,12 +1,5 @@
 package learning.models.loglinear;
 
-import junit.framework.Assert;
-import learning.linalg.MatrixOps;
-import learning.utils.Counter;
-import org.junit.Test;
-
-import java.util.Random;
-
 /**
  * Test that models are correctly implemented
  */
