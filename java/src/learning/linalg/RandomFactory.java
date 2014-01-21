@@ -74,6 +74,10 @@ public class RandomFactory {
    * @param sigma2 - noise
    * @return
    */
+  public static double randn(Random rand, double sigma2) {
+    return rand.nextGaussian() * Math.sqrt(sigma2);
+  }
+  @Deprecated
   public static double randn(double sigma2) {
     return rand.nextGaussian() * Math.sqrt(sigma2);
   }

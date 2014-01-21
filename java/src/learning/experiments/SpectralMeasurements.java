@@ -7,6 +7,7 @@ import fig.exec.*;
 
 import learning.data.ComputableMoments;
 import learning.data.HasSampleMoments;
+import learning.models.BasicParams;
 import learning.models.ExponentialFamilyModel;
 import learning.models.Params;
 import learning.models.loglinear.Example;
@@ -202,29 +203,28 @@ public class SpectralMeasurements implements Runnable {
   Params computeTrueMeasurements( final Counter<Example> data ) {
     assert( analysis != null );
 
-//    // Choose the measured features.
-//    Indexer<Feature> measuredFeatureIndexer = new Indexer<>();
-//    // This is an initialization of sorts
-//    Indexer<Feature> features = modelA.newParams().featureIndexer;
-//    int numFeatures = modelA.numFeatures();
-//    List<Integer> perm = RandomFactory.permutation(numFeatures, initRandom);
-//
-//    for(int i = 0; i < Math.round(measuredFraction * numFeatures); i++) {
-//      Feature feature = features.getObject(perm.get(i));
-//      measuredFeatureIndexer.add(feature);
-//    }
-//    // Now set the measurements to be the true counts
-//    Params measurements = new ParamsVec(modelB.getK(), measuredFeatureIndexer);
-//    measurements.copyOver(analysis.trueCounts);
-    Params measurements = analysis.trueCounts.copy();
-//
-//    // Add noise
-//    if( trueMeasurementNoise > 0. ) {
-//      // Anneal the noise at a 1/sqrt(n) rate.
-//      trueMeasurementNoise = trueMeasurementNoise / Math.sqrt(data.sum());
-//      for(int i = 0; i < measurements.weights.length; i++)
-//        measurements.weights[i] += RandomFactory.randn(trueMeasurementNoise);
-//    }
+    // Choose the measured features.
+    Indexer<String> measuredFeatureIndexer = new Indexer<>();
+    // This is an initialization of sorts
+    Indexer<String> features = modelA.newParams().getFeatureIndexer();
+    int numFeatures = modelA.numFeatures();
+    List<Integer> perm = RandomFactory.permutation(numFeatures, initRandom);
+
+    for(int i = 0; i < Math.round(measuredFraction * numFeatures); i++) {
+      String feature = features.getObject(perm.get(i));
+      measuredFeatureIndexer.add(feature);
+    }
+    // Now set the measurements to be the true counts
+    Params measurements = new BasicParams(measuredFeatureIndexer);
+    measurements.copyOver(analysis.trueCounts);
+
+    // Add noise
+    if( trueMeasurementNoise > 0. ) {
+      // Anneal the noise at a 1/sqrt(n) rate.
+      trueMeasurementNoise = trueMeasurementNoise / Math.sqrt(data.sum());
+      for(int i = 0; i < measurements.size(); i++)
+        measurements.toArray()[i] += RandomFactory.randn(initRandom, trueMeasurementNoise);
+    }
 
     return measurements;
   }
@@ -436,18 +436,6 @@ public class SpectralMeasurements implements Runnable {
   @OptionSet(name="gen") public GenerationOptions genOpts = new GenerationOptions();;
 
   /**
-   * Generates random data from the modelA.
-   *  - Uses genRand as a seed.
-   */
-  Params generateParameters( ExponentialFamilyModel<Example> model, GenerationOptions opts ) {
-    Params trueParams = model.newParams();
-    trueParams.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
-//    for(int i = 0; i < trueParams.weights.length; i++)
-//      trueParams.weights[i] = Math.sin(i);
-    return trueParams;
-  }
-
-  /**
    * Generates a modelA of a particular type
    */
   void initializeModels(ModelOptions opts) {
@@ -458,10 +446,8 @@ public class SpectralMeasurements implements Runnable {
         break;
       }
       case hmm: {
-        modelA = new UndirectedHiddenMarkovModel(opts.K, opts.D, opts.L);
-        modelB = new UndirectedHiddenMarkovModel(opts.K, opts.D, opts.L);
-//        modelA = new HiddenMarkovModel(opts.K, opts.D, opts.L);
-//        modelB = new HiddenMarkovModel(opts.K, opts.D, opts.L);
+        modelA = new HiddenMarkovModel(opts.K, opts.D, opts.L);
+        modelB = new HiddenMarkovModel(opts.K, opts.D, opts.L);
         break;
       }
       case tallMixture: {
@@ -483,11 +469,13 @@ public class SpectralMeasurements implements Runnable {
     initializeModels( modelOpts );
 
     // Generate parameters
-    Params trueParams = generateParameters( modelA, genOpts );
+    Params trueParams = modelA.newParams();
+    trueParams.initRandom(genOpts.trueParamsRandom, genOpts.trueParamsNoise);
 
     // Get true parameters
     Counter<Example> data = modelA.drawSamples(trueParams, genOpts.genRandom, genOpts.genNumExamples);
 
+    // Setup analysis
     analysis = new Analysis( modelA, trueParams, data );
 
     Params params = analysis.trueParams.copy();
@@ -495,8 +483,8 @@ public class SpectralMeasurements implements Runnable {
       params.initRandom(initRandom, initParamsNoise);
     else {
       Params noise = modelA.newParams();
-      noise.initRandom(initRandom, initParamsNoise);
-      params.plusEquals(Math.sqrt(0.01), noise);
+      noise.initRandom(initRandom, 0.1);
+      params.plusEquals(1.0, noise);
     }
 
     // Run the bottleneck spectral algorithm

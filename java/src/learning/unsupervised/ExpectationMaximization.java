@@ -13,6 +13,7 @@ import java.io.PrintWriter;
 import java.util.*;
 
 import static learning.common.Utils.optimize;
+import static learning.common.Utils.outputList;
 import static learning.common.Utils.writeStringHard;
 
 /**
@@ -213,23 +214,14 @@ public class ExpectationMaximization implements Runnable {
             theta.size(), data.sum(), data.size() );
     EMState state = new EMState(modelA, data, theta);
 
-    PrintWriter out = null;
-    if(Execution.getActualExecDir() != null) {
-      out = IOUtils.openOutHard(Execution.getFile("events"));
-    }
     boolean done = false;
     for( int i = 0; i < iters && !done; i++ ) {
-//      List<String> items = new ArrayList<>();
-//      items.add("iter = " + i);
-//      items.add("mObjective = " + state.objective.value());
-////      items.add("likelihood = " + (modelA.getLogLikelihood(state.theta, data) - modelA.getLogLikelihood(state.theta, state.histogram)));
-//      LogInfo.log(StrUtils.join(items, "\t"));
-//      if(out != null) {
-//        out.println( StrUtils.join(items, "\t") );
-//        out.flush();
-//      }
+      LogInfo.log(outputList(
+              "iter", i,
+              "mObjective", state.objective.value(),
+              "likelihood", (modelA.getLogLikelihood(state.theta, data) - modelA.getLogLikelihood(state.theta, state.histogram))
+      ));
       done = takeStep(state);
-
     }
     if(done) LogInfo.log("Reached optimum");
     Execution.putOutput("optimization-done", done);
@@ -245,7 +237,6 @@ public class ExpectationMaximization implements Runnable {
 
     return theta;
   }
-
 
   public static class Options {
     @Option(gloss="Seed for parameters") public Random trueParamsRandom = new Random(44);
