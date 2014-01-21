@@ -167,6 +167,7 @@ public class SpectralMeasurements implements Runnable {
       P123 = new FullTensor(D,D,D);
       double count = 0;
       for( T ex : data ) {
+        // IMPORTANT: This automagically makes what we want x3, which should be the most stable thing.
         count += model.updateMoments(ex, data.getCount(ex), P12, P13, P32, P123);
       }
       // Scale down everything

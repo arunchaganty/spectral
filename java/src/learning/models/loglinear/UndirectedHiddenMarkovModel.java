@@ -179,6 +179,13 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     }
   }
 
+  public static String oString(int h, int x) {
+    return String.format("o[h_=%d,x=%d", h, x);
+  }
+  public static String tString(int h_, int h) {
+    return String.format("t[h_=%d,h=%d", h_, h);
+  }
+
   final Indexer<String> featureIndexer;
   public UndirectedHiddenMarkovModel(int K, int D, int L) {
     this.K = K;
@@ -190,14 +197,14 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     this.featureIndexer = new Indexer<>();
     for(int h = 0; h < K; h++) {
       for(int x = 0; x < D; x++) {
-        featureIndexer.add(String.format("o[h_=%d,x=%d", h, x));
-        assert featureIndexer.indexOf(String.format("o[h_=%d,x=%d", h, x)) == o(h, x);
+        featureIndexer.add(oString(h,x));
+        assert featureIndexer.indexOf(oString(h,x)) == o(h, x);
       }
     }
     for(int h_ = 0; h_ < K; h_++) {
       for(int h = 0; h < K; h++) {
-        featureIndexer.add(String.format("t[h_=%d,h=%d", h_, h));
-        assert featureIndexer.indexOf( String.format("t[h_=%d,h=%d", h_, h) )  == t(h_,h);
+        featureIndexer.add(tString(h_,h));
+        assert featureIndexer.indexOf( tString( h_, h) )  == t(h_,h);
       }
     }
   }
@@ -431,6 +438,7 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
         }
         V[t][y] = bestV; Ptr[t][y] = bestY;
       }
+      assert !Double.isNaN(MatrixOps.sum(V[t])) && !Double.isInfinite(MatrixOps.sum(V[t]));
       MatrixOps.normalize( V[t] );
     }
 

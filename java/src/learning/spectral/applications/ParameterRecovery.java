@@ -44,10 +44,10 @@ public class ParameterRecovery {
       M2_ = MatrixOps.permuteColumns(M2_, perm);
       M3_ = MatrixOps.permuteColumns(M3_, perm);
 
-      LogInfo.logs("w error: " + MatrixOps.diff(w, w_));
-      LogInfo.logs("M1 error: " + MatrixOps.diff(M1, M1_));
-      LogInfo.logs("M2 error: " + MatrixOps.diff(M2, M2_));
-      LogInfo.logs("M3 error: " + MatrixOps.diff(M3, M3_));
+      LogInfo.log("w error: " + MatrixOps.diff(w, w_));
+      LogInfo.log("M1 error: " + MatrixOps.diff(M1, M1_));
+      LogInfo.log("M2 error: " + MatrixOps.diff(M2, M2_));
+      LogInfo.log("M3 error: " + MatrixOps.diff(M3, M3_));
     }
   }
   public static HMMAnalysis hmmAnalysis;
@@ -98,10 +98,10 @@ public class ParameterRecovery {
     Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> moments_ = moments.computeSampleMoments(N);
     if( moments instanceof HasExactMoments) {
       Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> momentsExact = ((HasExactMoments) moments).computeExactMoments();
-      LogInfo.logs( "P13 error: " + MatrixOps.diff(moments_.getValue0(), momentsExact.getValue0() ) );
-      LogInfo.logs( "P12 error: " + MatrixOps.diff(moments_.getValue1(), momentsExact.getValue1() ) );
-      LogInfo.logs( "P32 error: " + MatrixOps.diff(moments_.getValue2(), momentsExact.getValue2() ) );
-      LogInfo.logs( "P123 error: " + MatrixOps.diff(moments_.getValue3(), momentsExact.getValue3() ) );
+      LogInfo.log( "P13 error: " + MatrixOps.diff(moments_.getValue0(), momentsExact.getValue0() ) );
+      LogInfo.log( "P12 error: " + MatrixOps.diff(moments_.getValue1(), momentsExact.getValue1() ) );
+      LogInfo.log( "P32 error: " + MatrixOps.diff(moments_.getValue2(), momentsExact.getValue2() ) );
+      LogInfo.log( "P123 error: " + MatrixOps.diff(moments_.getValue3(), momentsExact.getValue3() ) );
     }
 //    return recoverHMM(K, tensorMethod.recoverParameters(K, moments_), smoothMeasurements);
     return recoverHMM(K, tensorMethod.recoverParametersAsymmetric(K, moments_.getValue3()), smoothMeasurements);
@@ -139,10 +139,10 @@ public class ParameterRecovery {
     Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> moments_ = moments.computeSampleMoments(N);
     if( moments instanceof HasExactMoments) {
       Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> momentsExact = ((HasExactMoments) moments).computeExactMoments();
-      LogInfo.logs( "P13 error: " + MatrixOps.diff(moments_.getValue0(), momentsExact.getValue0() ) );
-      LogInfo.logs( "P12 error: " + MatrixOps.diff(moments_.getValue1(), momentsExact.getValue1() ) );
-      LogInfo.logs( "P32 error: " + MatrixOps.diff(moments_.getValue2(), momentsExact.getValue2() ) );
-      LogInfo.logs( "P123 error: " + MatrixOps.diff(moments_.getValue3(), momentsExact.getValue3() ) );
+      LogInfo.log( "P13 error: " + MatrixOps.diff(moments_.getValue0(), momentsExact.getValue0() ) );
+      LogInfo.log( "P12 error: " + MatrixOps.diff(moments_.getValue1(), momentsExact.getValue1() ) );
+      LogInfo.log( "P32 error: " + MatrixOps.diff(moments_.getValue2(), momentsExact.getValue2() ) );
+      LogInfo.log( "P123 error: " + MatrixOps.diff(moments_.getValue3(), momentsExact.getValue3() ) );
     }
 //    return recoverGMM(K, tensorMethod.recoverParametersAsymmetric(K, moments_.getValue3()), smoothMeasurements);
     return recoverGMM(K, tensorMethod.recoverParameters(K, moments_), smoothMeasurements);

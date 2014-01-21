@@ -8,9 +8,12 @@
 import fig.basic.*;
 import fig.basic.IOUtils;
 import fig.exec.Execution;
+import learning.data.ComputableMoments;
 import learning.data.Corpus;
+import learning.data.MomentComputationWorkers;
 import learning.data.ParsedCorpus;
 import learning.linalg.MatrixOps;
+import learning.models.BasicParams;
 import learning.models.Params;
 import learning.models.loglinear.Example;
 import learning.unsupervised.ExpectationMaximization;
@@ -18,6 +21,9 @@ import learning.models.loglinear.UndirectedHiddenMarkovModel;
 import learning.spectral.TensorMethod;
 import learning.common.*;
 import learning.common.Utils;
+import learning.unsupervised.MeasurementsEM;
+import org.ejml.simple.SimpleMatrix;
+import org.javatuples.Quartet;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -35,6 +41,8 @@ public class POSInduction implements Runnable {
 
   @OptionSet(name="em")
   public ExpectationMaximization emSolver = new ExpectationMaximization();
+  @OptionSet(name="mem")
+  public MeasurementsEM mEMSolver = new MeasurementsEM();
   @Option(gloss="em iterations")
   public int iters = 200;
   @Option(gloss="em eps")
@@ -56,6 +64,12 @@ public class POSInduction implements Runnable {
   public File modelPath;
   @Option(gloss="Threshold before grouping words into classes")
   public int THRESHOLD = 0;
+
+  @Option(gloss="Smooth the spectral measurements")
+  public double smoothMeasurements = 1e-2;
+
+  @Option(gloss="Threads")
+  public int nThreads = 1;
 
   @Option(gloss="Verbosity")
   public int VERBOSE = 0;
@@ -240,129 +254,88 @@ public class POSInduction implements Runnable {
     return Pair.newPair(acc, accVsAll);
   }
 
-  @Deprecated
-  public Pair<Double, int[]> reportAccuracy( UndirectedHiddenMarkovModel model, Params params, ParsedCorpus C, boolean verbose ) {
-    begin_track("best-match accuracy");
-    params.cache(); // Useful!
-    // Create a confusion matrix
-    int K = C.getTagDimension();
-    double[][] confusion = new double[K][K];
-    for( int n = 0; n < C.getInstanceCount(); n++ ) {
-      int[] l = C.L[n];
-      int[] l_ = model.viterbi( (Parameters)params, new Example(C.C[n]) );
-
-      for( int i = 0; i < l.length; i++ )  
-        confusion[l[i]][l_[i]] += 1; 
-    }
-
-    //double acc = bestAccuracy(confusion);
-    // Additional debug information
-
-    // Find best alignment
-    BipartiteMatcher matcher = new BipartiteMatcher();
-    int[] perm = matcher.findMaxWeightAssignment(confusion);
-    // Compute hamming score
-    long correct = 0;
-    long total = 0;
-    for( int k = 0; k < K; k++ ) {
-      for( int k_ = 0; k_ < K; k_++ ) {
-        total += confusion[k][k_];
-      }
-      correct += confusion[k][perm[k]];
-    }
-    double acc = (double) correct/ (double) total;
-
-    // Now (a) print a confusion matrix
-    if(verbose) {
-      LogInfo.begin_track("Confusion matrix");
-      StringBuilder table = new StringBuilder();
-      table.append( "\t" );
-      for( int k = 0; k < K; k++ ) {
-        table.append(C.tagDict[k]).append("\t");
-      }
-      table.append("\n");
-      for( int k = 0; k < K; k++ ) {
-        table.append(C.tagDict[k]).append("\t");
-        for( int k_ = 0; k_ < K; k_++ ) {
-          table.append(confusion[k][perm[k_]]).append("\t");
-        }
-        table.append( "\n" );
-      }
-      logsForce(table);
-      LogInfo.end_track("Confusion matrix");
-
-      // (b) Print top 10 words
-      printTopK(model, params, C, perm);
-    }
-    end_track("best-match accuracy");
-
-    return Pair.newPair(acc, perm);
-  }
-
-  /**
-   * Greedy matching accuracy
-   */
-  @Deprecated
-  public double reportVsAllAccuracy( UndirectedHiddenMarkovModel model, Params params, ParsedCorpus C, boolean verbose ) {
-    begin_track("vs-all accuracy");
-    params.cache(); // Useful!
-    // Create a confusion matrix
-    int K = C.getTagDimension();
-    double[][] confusion = new double[K][K];
-    for( int n = 0; n < C.getInstanceCount(); n++ ) {
-      int[] l = C.L[n];
-      int[] l_ = model.viterbi((Parameters) params, new Example(C.C[n]) );
-
-      for( int i = 0; i < l.length; i++ )
-        // NOTE: This is different than the alignment in reportAccuracy
-        confusion[l_[i]][l[i]] += 1;
-    }
-
-    // Find greedy alignment
-    int[] perm = new int[K];
-    for(int k = 0; k < K; k++) perm[k] = MatrixOps.argmax(confusion[k]);
-
-    // Compute hamming score
-    long correct = 0;
-    long total = 0;
-    for( int k = 0; k < K; k++ ) {
-      for( int k_ = 0; k_ < K; k_++ ) {
-        total += confusion[k][k_];
-      }
-      correct += confusion[k][perm[k]];
-    }
-    double acc = (double) correct/ (double) total;
-
-    if(verbose) {
-      // Now (a) print a confusion matrix
-      LogInfo.begin_track("Confusion matrix");
-      StringBuilder table = new StringBuilder();
-      table.append( "\t" );
-      for( int k = 0; k < K; k++ ) {
-        table.append(C.tagDict[k]).append("\t");
-      }
-      table.append( "\n" );
-      for( int k = 0; k < K; k++ ) {
-        table.append(C.tagDict[k]).append("\t");
-        for( int k_ = 0; k_ < K; k_++ ) {
-          table.append(confusion[k][perm[k_]]).append("\t");
-        }
-        table.append( "\n" );
-      }
-      logsForce(table);
-      LogInfo.end_track("Confusion matrix");
-    }
-
-
-    end_track("vs-all accuracy");
-    return acc;
-  }
-
   String logStat(String key, Object value) {
     LogInfo.logs("%s = %s", key, value);
     Execution.putOutput(key, value);
     return key+"="+value;
   }
+
+  double getAverageLength(final Corpus C) {
+    double avgLength = 0.;
+    int count = 0;
+    for(int[] sentence : C.C) {
+      avgLength += (sentence.length - avgLength)/(++count);
+    }
+
+    return avgLength;
+  }
+
+  Params computeFromSpectral(final ParsedCorpus C) {
+    int D = C.getDimension();
+    int K = C.getTagDimension();
+
+    LogInfo.begin_track("Spectral recovery");
+
+    Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, SimpleMatrix> result =
+            tensorMethod.randomizedRecoverParameters(K,
+                    new ComputableMoments() {
+                      @Override
+                      public MatrixOps.Matrixable computeP13() {
+                        // NOTE: We want the middle element ("x2") to be 'x3' for stable recovery
+                        return MomentComputationWorkers.matrixable(C, 0, 1, nThreads);
+                      }
+
+                      @Override
+                      public MatrixOps.Matrixable computeP12() {
+                        return MomentComputationWorkers.matrixable(C, 0, 2, nThreads);
+                      }
+
+                      @Override
+                      public MatrixOps.Matrixable computeP32() {
+                        return MomentComputationWorkers.matrixable(C, 1, 2, nThreads);
+                      }
+
+                      @Override
+                      public MatrixOps.Tensorable computeP123() {
+                        return MomentComputationWorkers.tensorable(C, 0, 2, 1, nThreads);
+                      }
+                    });
+    // Create a fake indexer for all of this
+    SimpleMatrix pi = result.getValue0();
+    SimpleMatrix O = result.getValue3(); // Because of above magic
+    pi = MatrixOps.projectOntoSimplex( pi.transpose(), smoothMeasurements ).transpose();
+    O = MatrixOps.projectOntoSimplex( O, smoothMeasurements );
+    LogInfo.end_track("Spectral recovery");
+
+    LogInfo.begin_track("Converting to measurements");
+    Indexer<String> measuredFeatureIndexer = new Indexer<>();
+    for( int h = 0; h < K; h++ ) {
+      for( int x = 0; x < D; x++ ) {
+        // O
+        measuredFeatureIndexer.add( UndirectedHiddenMarkovModel.oString(h, x) );
+      }
+    }
+
+    Params measurements = new BasicParams(measuredFeatureIndexer);
+    double L = getAverageLength(C);
+    for( int h = 0; h < K; h++ ) {
+      for( int x = 0; x < D; x++ ) {
+        // Assuming identical distribution.
+        // multiplying by pi to go from E[x|h] -> E[x,h]
+        // multiplying by L because true.counts aggregates
+        // over x1, x2 and x3.
+        measurements.set(
+                UndirectedHiddenMarkovModel.oString(h, x),
+                L * O.get( x, h ) * pi.get(h));
+      }
+    }
+    LogInfo.end_track("Converting to measurements");
+
+    return measurements;
+  }
+
+
+
 
   /**
    * Reads a data file in the format word_TAG,
@@ -448,6 +421,7 @@ public class POSInduction implements Runnable {
       );
   }
 
+
   public void train(File dataFile) {
     try {
       LogInfo.begin_track("file-input");
@@ -470,14 +444,10 @@ public class POSInduction implements Runnable {
       Params params = hmm.newParams();
       params.initRandom(initRandom, initParamsNoise);
 
-
       switch(mode) {
         case EM: {
-          ExpectationMaximization solver = new ExpectationMaximization();
+          ExpectationMaximization solver = emSolver;
           solver.backtrack.tolerance = eps;
-          solver.mIters = 2;
-          solver.iters = 300;
-          solver.thetaRegularization = 1e-3;
 
           ExpectationMaximization.EMState state = solver.newState(hmm, data, params);
 
@@ -498,6 +468,40 @@ public class POSInduction implements Runnable {
           Pair<Double, Double> acc = reportAccuracies(hmm, params, C, VERBOSE);
           LogInfo.log(outputList(
                   "objective", state.objective.value(),
+                  "accuracy", acc.getFirst(),
+                  "vs-all-accuracy", acc.getSecond())
+          );
+        } break;
+        case SpectralMeasurements: {
+          MeasurementsEM solver = mEMSolver;
+          solver.backtrack.tolerance = eps;
+
+          // Recover from spectral
+          Params measurements = computeFromSpectral(C);
+
+          Params beta = measurements.newParams();
+
+          MeasurementsEM.State state = solver.newState(hmm, hmm, data, measurements, params, beta);
+
+          for(int i = 0; i < iters; i++) {
+            // Report likelihood.
+            Pair<Double, Double> acc = reportAccuracies(hmm, params, C, VERBOSE);
+            LogInfo.log(outputList(
+                    "iter", i,
+                    "m-objective", state.mObjective.value(),
+                    "e-objective", state.eObjective.value(),
+                    "accuracy", acc.getFirst(),
+                    "vs-all-accuracy", acc.getSecond())
+            );
+            // Print information.
+            solver.takeStep(state);
+          }
+
+          // Report likelihood.
+          Pair<Double, Double> acc = reportAccuracies(hmm, params, C, VERBOSE);
+          LogInfo.log(outputList(
+                  "m-objective", state.mObjective.value(),
+                  "e-objective", state.eObjective.value(),
                   "accuracy", acc.getFirst(),
                   "vs-all-accuracy", acc.getSecond())
           );

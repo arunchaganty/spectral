@@ -49,7 +49,7 @@ public class MeasurementsEM implements Runnable {
    *    - L = (tau, \beta) - \sum_i B(\beta ; X_i) - 1/2 betaRegularization \|\beta\|^2
    *    - dL = tau - \sum_i \E_\beta(\sigma(Y_i, X_i)) - 1/betaRegularization \beta
    */
-  class MeasurementsEObjective implements Maximizer.FunctionState {
+  public class MeasurementsEObjective implements Maximizer.FunctionState {
     ExponentialFamilyModel<Example> modelA;
     ExponentialFamilyModel<Example> modelB;
     Counter<Example> X;
@@ -146,7 +146,7 @@ public class MeasurementsEM implements Runnable {
    *    - L = \sum_i A(\theta ; X_i) + thetaRegularization/2 \|\theta\|^2
    *    - dL = \sum_i \E_\theta(\phi(Y_i, X_i)) + thetaRegularization \theta
    */
-  class MeasurementsMObjective implements Maximizer.FunctionState {
+  public class MeasurementsMObjective implements Maximizer.FunctionState {
     ExponentialFamilyModel<Example> modelA;
     ExponentialFamilyModel<Example> modelB;
     Counter<Example> X;
@@ -237,15 +237,15 @@ public class MeasurementsEM implements Runnable {
 
     Counter<Example> data;
 
-    Params measurements;
-    Params theta;
-    Params beta;
+    public Params measurements;
+    public Params theta;
+    public Params beta;
 
     final Maximizer eMaximizer;
     final Maximizer mMaximizer;
 
-    final MeasurementsEObjective eObjective;
-    final MeasurementsMObjective mObjective;
+    public final MeasurementsEObjective eObjective;
+    public final MeasurementsMObjective mObjective;
 
 
     public State(
