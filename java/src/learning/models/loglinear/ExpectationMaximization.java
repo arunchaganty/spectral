@@ -29,7 +29,6 @@ public class ExpectationMaximization implements Runnable {
   @OptionSet(name="backtrack") public BacktrackingLineSearch.Options backtrack = new BacktrackingLineSearch.Options();
 
   Maximizer newMaximizer() {
-    backtrack.verbose = 5;
     if (useLBFGS) return new LBFGSMaximizer(backtrack, lbfgs);
     return new GradientMaximizer(backtrack);
   }
@@ -39,7 +38,7 @@ public class ExpectationMaximization implements Runnable {
    *    - q = \E_{\theta}(z | x)
    *    - dL = tau - \sum_i \E_\beta(\sigma(Y_i, X_i)) - 1/betaRegularization \beta
    */
-  class Objective implements Maximizer.FunctionState {
+  public class Objective implements Maximizer.FunctionState {
     final ExponentialFamilyModel<Example> modelA;
     final Counter<Example> X;
     final Params theta;
@@ -75,10 +74,10 @@ public class ExpectationMaximization implements Runnable {
      */
   public double value() {
       if( objectiveValid ) return (objective);
-      objective = 0.;
+      // Every time the point changes, re-cache
       theta.cache();
 
-
+      objective = 0.;
       // Go through each example, and add 1/|X| \sum_x \sum_z q(z | x) * \theta^T \phi(x,z)
       objective += theta.dot(q);
 
@@ -88,16 +87,17 @@ public class ExpectationMaximization implements Runnable {
       // Finally, subtract regularizer = 0.5 \eta_\theta \|\theta\|^2
       objective -= 0.5 * thetaRegularization * theta.dot(theta);
 
+      objectiveValid = true;
       return objective;
     }
 
     @Override
     public double[] gradient() {
       if( gradientValid ) return gradient.toArray();
-        theta.cache();
+      // Every time the point changes, re-cache
+      theta.cache();
 
       gradient.clear();
-
 
       // Go through each example, and add 1/|X| \sum_x \sum_z q(z | x) * \phi(x,z)
       gradient.plusEquals(1.0, q);
@@ -110,11 +110,12 @@ public class ExpectationMaximization implements Runnable {
       // subtract \nabla h^*(\beta) = \beta
       gradient.plusEquals(-thetaRegularization, theta);
 
+      gradientValid = true;
       return gradient.toArray();
     }
   }
 
-  int[] computeHistogram(Counter<Example> examples) {
+  static int[] computeHistogram(Counter<Example> examples) {
     // Get max length
     int maxLength = 0;
     for(Example ex : examples) {
@@ -127,6 +128,62 @@ public class ExpectationMaximization implements Runnable {
     }
 
     return histogram;
+  }
+
+  public class EMState {
+    public ExponentialFamilyModel<Example> model;
+    public Counter<Example> data;
+    public int[] histogram;
+
+    final Maximizer maximizer;
+    public final Params marginals;
+    public final Params theta;
+
+    public final Objective objective;
+
+    public EMState(
+            ExponentialFamilyModel<Example> model,
+            Counter<Example> data,
+            Params theta
+    ) {
+      LogInfo.begin_track("solveEM");
+      LogInfo.logs( "Solving EM objective with %d parameters, using %f instances (%d unique)",
+              theta.size(), data.sum(), data.size() );
+
+      this.model = model;
+      this.data = data;
+      this.theta = theta;
+      histogram = computeHistogram(data);
+
+      maximizer = newMaximizer();
+      marginals = model.newParams();
+
+      // Create the M-objective (for $\theta$) - main computations are the partition function for A, B and expected counts
+      this.objective = new Objective(model, data, theta, marginals);
+    }
+  }
+
+  public boolean takeStep(EMState state) {
+    state.objective.invalidate();
+    state.theta.cache();
+
+    // Optimize each one-by-one
+    // Get marginals
+    state.marginals.clear();
+    state.model.updateMarginals(state.theta, state.data, 1.0, state.marginals);
+
+    boolean done = optimize(state.maximizer, state.objective, "M", mIters, diagnosticMode);
+    state.objective.invalidate();
+    return done;
+  }
+
+
+  public EMState newState(
+          ExponentialFamilyModel<Example> modelA,
+          Counter<Example> data,
+          Params theta
+  ) {
+    return new EMState(modelA, data, theta);
   }
 
   /**
@@ -147,43 +204,27 @@ public class ExpectationMaximization implements Runnable {
     LogInfo.begin_track("solveEM");
     LogInfo.logs( "Solving EM objective with %d parameters, using %f instances (%d unique)",
             theta.size(), data.sum(), data.size() );
+    EMState state = new EMState(modelA, data, theta);
 
-    Maximizer mMaximizer = newMaximizer();
-
-    final Params marginals = modelA.newParams();
-
-    int[] histogram = computeHistogram(data);
-    // Create the M-objective (for $\theta$) - main computations are the partition function for A, B and expected counts
-    Objective mObjective = new Objective(modelA, data, theta, marginals);
-
-    boolean done = false;
     PrintWriter out = null;
     if(Execution.getActualExecDir() != null) {
       out = IOUtils.openOutHard(Execution.getFile("events"));
     }
+    boolean done = false;
     for( int i = 0; i < iters && !done; i++ ) {
-      theta.cache();
+//      List<String> items = new ArrayList<>();
+//      items.add("iter = " + i);
+//      items.add("mObjective = " + state.objective.value());
+////      items.add("likelihood = " + (modelA.getLogLikelihood(state.theta, data) - modelA.getLogLikelihood(state.theta, state.histogram)));
+//      LogInfo.log(StrUtils.join(items, "\t"));
+//      if(out != null) {
+//        out.println( StrUtils.join(items, "\t") );
+//        out.flush();
+//      }
+      done = takeStep(state);
 
-      // Optimize each one-by-one
-      // Get marginals
-      marginals.clear();
-      modelA.updateMarginals(theta, data, 1.0, marginals);
-
-      List<String> items = new ArrayList<>();
-      items.add("iter = " + i);
-      items.add("mObjective = " + mObjective.value());
-      items.add("likelihood = " + (modelA.getLogLikelihood(theta, data) - modelA.getLogLikelihood(theta, histogram)));
-      LogInfo.log(StrUtils.join(items, "\t"));
-      if(out != null) {
-        out.println( StrUtils.join(items, "\t") );
-        out.flush();
-      }
-
-
-      done = optimize(mMaximizer, mObjective, "M-" + i, mIters, diagnosticMode);
-      mObjective.invalidate();
-//      done = false;
     }
+    if(done) LogInfo.log("Reached optimum");
     Execution.putOutput("optimization-done", done);
 
     // Used to diagnose
@@ -197,6 +238,7 @@ public class ExpectationMaximization implements Runnable {
 
     return theta;
   }
+
 
   public static class Options {
     @Option(gloss="Seed for parameters") public Random trueParamsRandom = new Random(44);

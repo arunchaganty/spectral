@@ -53,7 +53,11 @@ public class Counter<V> implements Collection<V> {
   }
 
   public void set(V item, Double value) {
+    if(map.containsKey(item)) {
+      sum -= map.get(item);
+    }
     map.put(item, value);
+    sum += value;
   }
 
   public boolean add(V item) {

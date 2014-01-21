@@ -16,6 +16,7 @@ public class Models {
 
       createHypergraph(null,null,0);
     }
+    @Deprecated
     public MixtureModel() {
     }
 

@@ -1,6 +1,9 @@
 package learning.models;
 
+import fig.basic.Indexer;
+
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Random;
 
 import static learning.utils.UtilsJ.writeStringHard;
@@ -15,36 +18,113 @@ public abstract class Params implements Serializable {
    * @return new empty params
    */
   public abstract Params newParams();
-  public abstract void initRandom(Random rnd, double variance);
-  /**
-   * Replace with other
-   */
-  public abstract void copyOver(Params other);
-  /**
-   * Replace with other
-   */
-  public abstract Params merge(Params other);
+
+  public abstract Indexer<String> getFeatureIndexer();
   /**
    * To double array
    */
   public abstract double[] toArray();
-  public abstract int size();
 
-  public abstract void clear();
+  /**
+   * Replace with other
+   */
+  public abstract Params merge(Params other);
+
+  public void initRandom(Random random, double noise) {
+    double[] weights = toArray();
+    for (int j = 0; j < weights.length; j++)
+      weights[j] = noise * (2 * random.nextDouble() - 1);
+  }
+
+  public double get(String featureName) {
+    return toArray()[getFeatureIndexer().indexOf(featureName)];
+  }
+  public void set(String featureName, double value) {
+    toArray()[getFeatureIndexer().indexOf(featureName)] = value;
+  }
+
+  public int size() {
+    return toArray().length;
+  }
+  public void clear() {
+    Arrays.fill(toArray(), 0.);
+  }
+
+  /**
+   * Replace with other
+   */
+  public void copyOver(Params other) {
+    // The weights are compatible - copy!
+    Indexer<String> indexer = getFeatureIndexer();
+    Indexer<String> indexer_ = other.getFeatureIndexer();
+    double[] weights = toArray();
+    double[] weights_ = other.toArray();
+    if(indexer == indexer_)
+      System.arraycopy(weights_, 0, weights, 0, weights.length);
+    else { // Copy over slowly.
+      for(int i = 0; i < weights.length; i++) {
+        String feature = indexer.getObject(i);
+        if(indexer_.contains(feature))
+          weights[i] = weights_[indexer_.indexOf(feature)];
+      }
+    }
+  }
 
   // Algebraic operations
   /**
    * Update by adding other with scale
    */
-  public abstract void plusEquals(double scale, Params other);
+  public void plusEquals(double scale, Params other) {
+    // The weights are compatible - copy!
+    Indexer<String> indexer = getFeatureIndexer();
+    Indexer<String> indexer_ = other.getFeatureIndexer();
+    double[] weights = toArray();
+    double[] weights_ = other.toArray();
+    if(indexer == indexer_)
+      for(int i = 0; i < weights.length; i++)
+        weights[i] += scale * weights_[i];
+    else { // Copy over slowly.
+      for(int i = 0; i < weights.length; i++) {
+        String feature = indexer.getObject(i);
+        if(indexer_.contains(feature))
+          weights[i] += scale * weights_[indexer_.indexOf(feature)];
+      }
+    }
+  }
   /**
    * Update by scaling each entry
    */
-  public abstract void scaleEquals(double scale);
+  public void scaleEquals(double scale) {
+    double[] weights = toArray();
+    for(int i = 0; i < weights.length; i++)
+      weights[i] *= scale;
+  }
+
   /**
    * Take the dot product of two params
    */
-  public abstract double dot(Params other);
+  public double dot(Params other) {
+    double prod = 0.;
+
+    // The weights are compatible - copy!
+    Indexer<String> indexer = getFeatureIndexer();
+    Indexer<String> indexer_ = other.getFeatureIndexer();
+    double[] weights = toArray();
+    double[] weights_ = other.toArray();
+
+    if(indexer == indexer_)
+      for(int i = 0; i < weights.length; i++)
+        prod +=  weights[i] * weights_[i];
+    else { // Copy over slowly.
+      for(int i = 0; i < weights.length; i++) {
+        String feature = indexer.getObject(i);
+        if(indexer_.contains(feature))
+          prod += weights[i] * weights_[indexer_.indexOf(feature)];
+      }
+    }
+
+    return prod;
+  }
 
   // TODO: Support matching
 
@@ -93,6 +173,9 @@ public abstract class Params implements Serializable {
   public void cache() {
   }
   public void invalidateCache() {
+  }
+  public boolean isCacheValid() {
+    return false;
   }
 
 }

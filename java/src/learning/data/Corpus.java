@@ -100,4 +100,11 @@ public class Corpus {
     return dict.toArray(new String[dict.size()]);
   }
 
+  public String translateSentence(int[] words) {
+    StringBuilder sb = new StringBuilder();
+    for( int word : words )
+      sb.append(dict[word]).append(" ");
+
+    return sb.toString().trim();
+  }
 }

@@ -3,7 +3,7 @@
  * Arun Chaganty <chaganty@stanford.edu
  *
  */
-package learning.applications;
+  package learning.applications;
 
 import fig.basic.*;
 import fig.basic.IOUtils;
@@ -29,14 +29,20 @@ import java.util.Random;
 
 import static fig.basic.LogInfo.*;
 import static learning.models.loglinear.UndirectedHiddenMarkovModel.*;
+import static learning.utils.UtilsJ.outputList;
 
 /**
  * Perform POS induction, aka HMM learning.
  */
 public class POSInduction implements Runnable {
 
-  //@OptionSet(name="bottleneck")
-  //public BottleneckSpectralEM algo = new BottleneckSpectralEM();
+  @OptionSet(name="em")
+  public ExpectationMaximization emSolver = new ExpectationMaximization();
+  @Option(gloss="em iterations")
+  public int iters = 200;
+  @Option(gloss="em eps")
+  public double eps = 1e-4;
+
   @Option(gloss="Seed to generate initial point")
   public Random initRandom = new Random();
   @Option(gloss="Noise in parameters")
@@ -45,24 +51,17 @@ public class POSInduction implements Runnable {
   @OptionSet(name="TensorMethod")
   public TensorMethod tensorMethod = new TensorMethod();
 
-  @Option(gloss="em iterations")
-  public int iterations = 200;
-  @Option(gloss="em eps")
-  public double eps = 1e-4;
-
-  @Option(gloss="Initialize using spectral")
-  public boolean initializeSpectral = false;
-  @Option(gloss="smoothMeasurements")
-  public double smoothMeasurements = 0.0;
-  @Option(gloss="Number of threads to compute measurements")
-  public int nThreads = 1;
-
   @Option(gloss="File containing text in word_TAG format")
   public File trainData;
   @Option(gloss="File containing text in word_TAG format")
   public File testData;
   @Option(gloss="File containing trained model parameters")
   public File modelPath;
+  @Option(gloss="Threshold before grouping words into classes")
+  public int THRESHOLD = 0;
+
+  @Option(gloss="Verbosity")
+  public int VERBOSE = 0;
 
   public static enum TrainMode {
     EM,
@@ -133,9 +132,121 @@ public class POSInduction implements Runnable {
     LogInfo.end_track("Top-k words");
   }
 
+  /**
+   * Print the viterbi decoding of the first @nExamples of @C
+   */
+  public void printExamples(UndirectedHiddenMarkovModel model, Params params, ParsedCorpus C, int nExamples, int[] perm) {
+    begin_track("Examples");
+    for(int i = 0; i < nExamples; i++) {
+      begin_track("Example " + i);
+      Example ex = new Example( C.C[i], C.L[i]);
+      int[] tags = model.viterbi(params, ex);
+      // Push through the dictionary
+      for(int tag = 0; tag < tags.length; tag++) tags[tag] = perm[tags[tag]];
 
-  public double reportAccuracy( UndirectedHiddenMarkovModel model, Params params, ParsedCorpus C ) {
+      // Print example and sentence.
+      log(C.translateSentence(C.C[i]));
+      log(C.translateTags(tags));
+      end_track("Example " + i);
+    }
+
+    end_track("Examples");
+  }
+
+  public Pair<Double, Double> reportAccuracies(UndirectedHiddenMarkovModel model, Params params, ParsedCorpus C, int verbose) {
+    begin_track("accuracy");
+    params.cache(); // Useful!
+    // Create a confusion matrix
+    int K = C.getTagDimension();
+    double[][] confusion = new double[K][K];
+    double[][] confusionVsAll = new double[K][K]; // Align differently
+    for( int n = 0; n < C.getInstanceCount(); n++ ) {
+      int[] l = C.L[n];
+      int[] l_ = model.viterbi( (Parameters)params, new Example(C.C[n]) );
+
+      for( int i = 0; i < l.length; i++ ) {
+        confusion[l[i]][l_[i]] += 1;
+        confusionVsAll[l_[i]][l[i]] += 1;
+      }
+    }
+
     begin_track("best-match accuracy");
+    double acc; int[] perm;
+    {
+      // Find best alignment
+      BipartiteMatcher matcher = new BipartiteMatcher();
+      perm = matcher.findMaxWeightAssignment(confusion);
+      // Compute hamming score
+      long correct = 0;
+      long total = 0;
+      for( int k = 0; k < K; k++ ) {
+        for( int k_ = 0; k_ < K; k_++ ) {
+          total += confusion[k][k_];
+        }
+        correct += confusion[k][perm[k]];
+      }
+      acc = (double) correct/ (double) total;
+    }
+    end_track("best-match accuracy");
+
+    begin_track("vs-all accuracy");
+    double accVsAll;
+    {
+      // Find greedy alignment
+      int[] permVsAll = new int[K];
+      for(int k = 0; k < K; k++) permVsAll[k] = MatrixOps.argmax(confusionVsAll[k]);
+
+      // Compute hamming score
+      long correct = 0;
+      long total = 0;
+      for( int k = 0; k < K; k++ ) {
+        for( int k_ = 0; k_ < K; k_++ ) {
+          total += confusionVsAll[k][k_];
+        }
+        correct += confusionVsAll[k][permVsAll[k]];
+      }
+      accVsAll = (double) correct/ (double) total;
+    }
+    end_track("vs-all accuracy");
+
+
+
+
+    // Now (a) print a confusion matrix
+    if(verbose > 2) {
+      LogInfo.begin_track("Confusion matrix");
+      StringBuilder table = new StringBuilder();
+      table.append( "\t" );
+      for( int k = 0; k < K; k++ ) {
+        table.append(C.tagDict[k]).append("\t");
+      }
+      table.append("\n");
+      for( int k = 0; k < K; k++ ) {
+        table.append(C.tagDict[k]).append("\t");
+        for( int k_ = 0; k_ < K; k_++ ) {
+          table.append(confusion[k][perm[k_]]).append("\t");
+        }
+        table.append( "\n" );
+      }
+      logsForce(table);
+      LogInfo.end_track("Confusion matrix");
+    }
+    if(verbose > 1)
+      // (b) Print top 10 words
+      printTopK(model, params, C, perm);
+    if(verbose > 0)
+      // (c) print top 10 examples
+      printExamples(model, params, C, 10, perm);
+
+    end_track("accuracy");
+
+    return Pair.newPair(acc, accVsAll);
+  }
+
+  @Deprecated
+  public Pair<Double, int[]> reportAccuracy( UndirectedHiddenMarkovModel model, Params params, ParsedCorpus C, boolean verbose ) {
+    begin_track("best-match accuracy");
+    params.cache(); // Useful!
     // Create a confusion matrix
     int K = C.getTagDimension();
     double[][] confusion = new double[K][K];
@@ -165,35 +276,39 @@ public class POSInduction implements Runnable {
     double acc = (double) correct/ (double) total;
 
     // Now (a) print a confusion matrix
-    LogInfo.begin_track("Confusion matrix");
-    StringBuilder table = new StringBuilder();
-    table.append( "\t" );
-    for( int k = 0; k < K; k++ ) {
-      table.append(C.tagDict[k]).append("\t");
-    }
-    table.append("\n");
-    for( int k = 0; k < K; k++ ) {
-      table.append(C.tagDict[k]).append("\t");
-      for( int k_ = 0; k_ < K; k_++ ) {
-        table.append(confusion[k][perm[k_]]).append("\t");
+    if(verbose) {
+      LogInfo.begin_track("Confusion matrix");
+      StringBuilder table = new StringBuilder();
+      table.append( "\t" );
+      for( int k = 0; k < K; k++ ) {
+        table.append(C.tagDict[k]).append("\t");
       }
-      table.append( "\n" );
-    }
-    logsForce(table);
-    LogInfo.end_track("Confusion matrix");
+      table.append("\n");
+      for( int k = 0; k < K; k++ ) {
+        table.append(C.tagDict[k]).append("\t");
+        for( int k_ = 0; k_ < K; k_++ ) {
+          table.append(confusion[k][perm[k_]]).append("\t");
+        }
+        table.append( "\n" );
+      }
+      logsForce(table);
+      LogInfo.end_track("Confusion matrix");
 
-    // (b) Print top 10 words
-    printTopK(model, params, C, perm);
+      // (b) Print top 10 words
+      printTopK(model, params, C, perm);
+    }
     end_track("best-match accuracy");
 
-    return acc;
+    return Pair.newPair(acc, perm);
   }
 
   /**
    * Greedy matching accuracy
    */
-  public double reportVsAllAccuracy( UndirectedHiddenMarkovModel model, Params params, ParsedCorpus C ) {
+  @Deprecated
+  public double reportVsAllAccuracy( UndirectedHiddenMarkovModel model, Params params, ParsedCorpus C, boolean verbose ) {
     begin_track("vs-all accuracy");
+    params.cache(); // Useful!
     // Create a confusion matrix
     int K = C.getTagDimension();
     double[][] confusion = new double[K][K];
@@ -221,23 +336,26 @@ public class POSInduction implements Runnable {
     }
     double acc = (double) correct/ (double) total;
 
-    // Now (a) print a confusion matrix
-    LogInfo.begin_track("Confusion matrix");
-    StringBuilder table = new StringBuilder();
-    table.append( "\t" );
-    for( int k = 0; k < K; k++ ) {
-      table.append(C.tagDict[k]).append("\t");
-    }
-    table.append( "\n" );
-    for( int k = 0; k < K; k++ ) {
-      table.append(C.tagDict[k]).append("\t");
-      for( int k_ = 0; k_ < K; k_++ ) {
-        table.append(confusion[k][perm[k_]]).append("\t");
+    if(verbose) {
+      // Now (a) print a confusion matrix
+      LogInfo.begin_track("Confusion matrix");
+      StringBuilder table = new StringBuilder();
+      table.append( "\t" );
+      for( int k = 0; k < K; k++ ) {
+        table.append(C.tagDict[k]).append("\t");
       }
       table.append( "\n" );
+      for( int k = 0; k < K; k++ ) {
+        table.append(C.tagDict[k]).append("\t");
+        for( int k_ = 0; k_ < K; k_++ ) {
+          table.append(confusion[k][perm[k_]]).append("\t");
+        }
+        table.append( "\n" );
+      }
+      logsForce(table);
+      LogInfo.end_track("Confusion matrix");
     }
-    logsForce(table);
-    LogInfo.end_track("Confusion matrix");
+
 
     end_track("vs-all accuracy");
     return acc;
@@ -248,91 +366,6 @@ public class POSInduction implements Runnable {
     Execution.putOutput(key, value);
     return key+"="+value;
   }
-
-  // WARNING: I'm updating the model with params.
-  public double optimize( HiddenMarkovModel model, double[] params, ParsedCorpus C ) {
-    assert( params.length == model.numFeatures() );
-    LogInfo.begin_track( "em.optimize" );
-
-    PrintWriter eventsOut = IOUtils.openOutHard(Execution.getFile("events"));
-
-    double[] params_ = new double[params.length];
-
-    // UGH.
-    model.params.updateFromVector( params );
-    {
-      int[] perm = new int[C.getTagDimension()];
-      for(int i = 0; i < C.getTagDimension(); i++) perm[i] = i;
-//      printTopK(model, params, C, perm);
-    }
-
-    double lhood = Double.NEGATIVE_INFINITY;
-    for( int iter = 0; iter < iterations; iter++ ) {
-      double lhood_ = model.compute(C.C, params_);
-      double diff = lhood_ - lhood;
-      LogInfo.logs( "%f - %f = %f", lhood_, lhood, diff);
-      //assert( diff >= -1 );
-      
-      // Update with parameters.
-      lhood = lhood_;
-      // Copy params_ -> params
-      System.arraycopy( params_, 0, params, 0, params_.length );
-      model.params.updateFromVector( params );
-
-      // Report
-      List<String> items = new ArrayList<>();
-      items.add(logStat("iter", iter+1));
-      items.add(logStat("lhood", lhood));
-//      items.add(logStat("accuracy", reportAccuracy( model, C ) ) );
-//      items.add(logStat("all-accuracy", reportVsAllAccuracy( model, C ) ) );
-      eventsOut.println(StrUtils.join(items, "\t"));
-      eventsOut.flush();
-
-      //if( Math.abs(diff) < eps ) break;
-    }
-
-    LogInfo.end_track();
-
-    return lhood;
-  }
-
-  public ComputableMoments corpusToMoments(final Corpus C) {
-    return new ComputableMoments() {
-      @Override
-      public MatrixOps.Matrixable computeP13() {
-        return MomentComputationWorkers.matrixable(C, 0, 2, nThreads);
-      }
-
-      @Override
-      public MatrixOps.Matrixable computeP12() {
-        return MomentComputationWorkers.matrixable(C, 0, 1, nThreads);
-      }
-
-      @Override
-      public MatrixOps.Matrixable computeP32() {
-        return MomentComputationWorkers.matrixable(C, 2, 1, nThreads);
-      }
-
-      @Override
-      public MatrixOps.Tensorable computeP123() {
-        return MomentComputationWorkers.tensorable(C, 0, 1, 2, nThreads);
-      }
-    };
-  }
-
-  /**
-   * Use tensor method to recover the parameters of the HMM.
-   * @param C - Corpus
-   * @return - Initial parameters
-   */
-//  public Params spectralRecovery(Corpus C, int K) {
-//    // Compute moments
-//    HiddenMarkovModel model = ParameterRecovery.recoverHMM(K, corpusToMoments(C), smoothMeasurements);
-//    return model.getParams();
-//  }
-//  public Params spectralRecovery(ParsedCorpus C) {
-//    return spectralRecovery(C, C.getTagDimension());
-//  }
 
   /**
    * Reads a data file in the format word_TAG,
@@ -353,8 +386,6 @@ public class POSInduction implements Runnable {
     wordIndex.add(Corpus.DIGIT_CLASS);
     wordIndex.add(Corpus.MISC_CLASS);
     // Anything that appears less than THRESHOLD times is set to rare
-    int THRESHOLD = 5;
-
     try(BufferedReader stream = UtilsJ.openReader(input)) {
       // Compute the words and statistics
       int lineCount = 0;
@@ -441,14 +472,38 @@ public class POSInduction implements Runnable {
       UndirectedHiddenMarkovModel hmm = new UndirectedHiddenMarkovModel(K, D, L);
       Params params = hmm.newParams();
       params.initRandom(initRandom, initParamsNoise);
+
+
       switch(mode) {
         case EM: {
           ExpectationMaximization solver = new ExpectationMaximization();
-//          solver.backtrack.tolerance = 1e-4;
+          solver.backtrack.tolerance = eps;
           solver.mIters = 2;
-          solver.iters = 100;
+          solver.iters = 300;
           solver.thetaRegularization = 1e-3;
-          solver.solveEM(hmm, data, params);
+
+          ExpectationMaximization.EMState state = solver.newState(hmm, data, params);
+
+          for(int i = 0; i < iters; i++) {
+            // Report likelihood.
+            Pair<Double, Double> acc = reportAccuracies(hmm, params, C, VERBOSE);
+            LogInfo.log(outputList(
+                    "iter", i,
+                    "objective", state.objective.value(),
+                    "accuracy", acc.getFirst(),
+                    "vs-all-accuracy", acc.getSecond())
+                    );
+            // Print information.
+            solver.takeStep(state);
+          }
+
+          // Report likelihood.
+          Pair<Double, Double> acc = reportAccuracies(hmm, params, C, VERBOSE);
+          LogInfo.log(outputList(
+                  "objective", state.objective.value(),
+                  "accuracy", acc.getFirst(),
+                  "vs-all-accuracy", acc.getSecond())
+          );
         } break;
         default:
           throw new RuntimeException("Method not supported.");
@@ -481,14 +536,16 @@ public class POSInduction implements Runnable {
       int K = C.getTagDimension();
       int D = C.getDimension();
       int L = 3;
-      // TODO: Label the damn data.
       UndirectedHiddenMarkovModel hmm = new UndirectedHiddenMarkovModel(K, D, L);
       Parameters params = (Parameters) IOUtils.readObjFile(modelPath);
 
-      logStat("accuracy", reportAccuracy(hmm, params, C));
-      logStat("all-accuracy", reportVsAllAccuracy(hmm, params, C));
+      // Report likelihood.
+      Pair<Double, Double> acc = reportAccuracies(hmm, params, C, VERBOSE);
+      LogInfo.log(outputList(
+              "accuracy", acc.getFirst(),
+              "vs-all-accuracy", acc.getSecond())
+      );
 
-      // TODO: evaluate
     } catch (IOException | ClassNotFoundException e) {
       throw new RuntimeException(e);
     }
