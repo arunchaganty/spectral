@@ -167,6 +167,7 @@ public class ExpectationMaximization implements Runnable {
   }
 
   public boolean takeStep(EMState state) {
+    LogInfo.begin_track("E-step");
     state.objective.invalidate();
     state.theta.cache();
 
@@ -174,9 +175,12 @@ public class ExpectationMaximization implements Runnable {
     // Get marginals
     state.marginals.clear();
     state.model.updateMarginals(state.theta, state.data, 1.0, state.marginals);
+    LogInfo.end_track("E-step");
 
+    LogInfo.begin_track("M-step");
     boolean done = optimize(state.maximizer, state.objective, "M", mIters, diagnosticMode);
     state.objective.invalidate();
+    LogInfo.end_track("M-step");
     return done;
   }
 
