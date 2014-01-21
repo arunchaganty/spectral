@@ -11,11 +11,12 @@ import numpy as np
 import pandas as pd
 import scabby
 
-EXPT_NAME = "spectral_measurements_vs_n"
 
-KD_VALUES = [(2,2), (3,3),] # (2,3), (3,5),]# (3,10), (5,10)]
+EXPT_NAME = "SpectralMeasurements"
+
+KD_VALUES = [(2,2), (2,3),(3,3), (3,5), (3,10), (5,10)]
 N_VALUES = [1000, 2000, 5000, 7000, 10000, 20000, 50000, 70000, 1000000, 200000, 500000, 700000]
-PRECONDITIONG_VALUES = [0.0, ] #1e-2, 1e-3]
+PRECONDITIONG_VALUES = [0.0, 1e-3] #1e-2, 1e-3]
 
 def get_settings(args):
     for k,d in KD_VALUES:
@@ -54,7 +55,7 @@ def do_run(args):
     settings = get_settings(args)
 
     if args.parallel:
-        scabby.parallel_spawn( args.exptdir, "qstart-short", cmd, args.njobs, settings )
+        scabby.parallel_spawn( args.exptdir, "qstart", cmd, args.njobs, settings )
     else:
         for setting in settings:
             scabby.safe_run(cmd.format(**setting))
@@ -73,9 +74,9 @@ def do_process(args):
 
         agg_path = os.path.join( args.exptdir, '{args.model}-{k}-{d}.agg.tab'.format(**locals()) )
         if args.best:
-            cmd = 'tab.py agg --mode min genNumExamples preconditioning'.format(**locals())
+            cmd = 'tab.py agg --mode min genNumExamples trueParamsRandom preconditioning'.format(**locals())
         else:
-            cmd = 'tab.py agg genNumExamples preconditioning'.format(**locals())
+            cmd = 'tab.py agg genNumExamples trueParamsRandom preconditioning'.format(**locals())
         cmd_ = 'tab.py sort genNumExamples'.format(**locals())
         (pb.local['cat'][raw_path] | pb.local['python2.7'][cmd.split()] | pb.local['python2.7'][cmd_.split()] > agg_path)()
 
@@ -83,6 +84,8 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser( description='Study the effect of partial measurements on the recovery accuracy.' )
     parser.add_argument( '--seed', type=int, default=23, help="A seed to generate seeds!" )
+
+
     parser.add_argument( '--execdir', type=str, default='state/execs/%s/'%(EXPT_NAME,), help="Location of the exec directories" )
     parser.add_argument( '--exptdir', type=str, default='state/expts/%s/'%(EXPT_NAME,), help="Location of the exec directories" )
     subparsers = parser.add_subparsers()
@@ -97,7 +100,7 @@ if __name__ == "__main__":
     run_parser.set_defaults(func=do_run)
 
     plot_parser = subparsers.add_parser('process', help='Plot results from the experiment' )
-    plot_parser.add_argument( '--model', type=str, default="mixture", choices=["mixture","hmm"], help="Model to use" )
+    plot_parser.add_argument( '--model', type=str, default="mixture", choices=["mixture","hmm","grid"], help="Model to use" )
     plot_parser.add_argument( '--best', action="store_true", help="When plotting, choose the best over the different runs." )
     plot_parser.set_defaults(func=do_process)
 

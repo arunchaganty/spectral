@@ -5,6 +5,7 @@ import sys, os
 import itertools as it
 from subprocess import Popen
 import shlex
+import random
 
 from collections import *
 
@@ -16,9 +17,12 @@ def safe_run( cmd, block = True ):
         proc.wait()
     return proc
 
-def parallel_spawn( exptdir, spawn_cmd, cmd, n_jobs, settings ):
+def parallel_spawn( exptdir, spawn_cmd, cmd, n_jobs, settings, randomize = True ):
     """Spawn command interpreted with **kwargs"""
     settings = list(settings)
+    # Randomize settings to keep load balanced
+    random.shuffle(settings)
+
     batch_size = len(settings) / n_jobs
     for i in xrange(n_jobs):
         start, end = batch_size * i, min( batch_size * (i+1), len(settings))
@@ -192,7 +196,10 @@ def filter_tab(tab, **kwargs):
             for key, val in kwargs.iteritems())
     return filter( do_filter, tab )
 
-import matplotlib.markers as markers
-MARKERS = markers.MarkerStyle.filled_markers
-COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+try:
+    import matplotlib.markers as markers
+    MARKERS = markers.MarkerStyle.filled_markers
+    COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+except ImportError as e:
+    print "Warning", e
 

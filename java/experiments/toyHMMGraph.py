@@ -2,23 +2,32 @@
 """
 This experiment seeks to produce a plot of likelihood and error in
 expected moments (countsErr) as a function of samples (n), comparing
-different partial measurements percentages.
+different partial measurements percentages and spectral.
 """
 
 import os
 import random
 import numpy as np
-import pandas as pd
 import scabby
+import itertools as it
 
-EXPT_NAME = "TrueMeasurements"
+EXPT_NAME = "ToyHMMGraph"
 
-KD_VALUES = [(2,2), (2,3), (3,3), (3,5),(3,10), (5,10)]
+KD_VALUES = [(2,2), (2,3), (3,3), (3,5),]# (3,10), (5,10)]
+N_VALUES = [1e3, 2e3, 5e3, 7e3,
+            1e4, 2e4, 5e4, 7e4,
+            1e5, 2e5, 5e5, 7e5,
+            5e7 # equivalent to infinity
+            ]
+
 MEASUREMENT_PROB_VALUES = [1.0, 0.7, 0.3, 0.0]
-N_VALUES = [1000, 2000, 5000, 7000, 10000, 20000, 50000, 70000, 1000000, 200000, 500000, 700000]
-NOISE_VALUES = [0.,] # 1e-1, 1e-2]
+NOISE_VALUES = [0.,] # 1e-1,] #1e-2]
 
-def get_settings(args):
+PRECONDITIONG_VALUES = [0.0,]# 1e-3] #1e-2, 1e-3]
+
+def get_true_settings(args):
+    preconditioning = 0.0
+    mode = "TrueMeasurements"
     for k,d in KD_VALUES:
         assert k <= d
         for measured_fraction in MEASUREMENT_PROB_VALUES:
@@ -27,6 +36,18 @@ def get_settings(args):
                     for model_seed in xrange( args.instantiations ):
                         for initialization_seed in xrange( args.initializations ):
                             yield dict(locals())
+
+def get_spectral_settings(args):
+    measured_fraction = 1.0
+    measurement_noise = 0.0
+    mode = "SpectralMeasurements"
+    for k,d in KD_VALUES:
+        assert k <= d
+        for n in N_VALUES:
+            for preconditioning in PRECONDITIONG_VALUES:
+                for model_seed in xrange( args.instantiations ):
+                    for initialization_seed in xrange( args.initializations ):
+                        yield dict(locals())
 
 def do_run(args):
     #random.seed(args.seed)
@@ -39,22 +60,25 @@ def do_run(args):
         os.mkdir(args.execdir)
 
     cmd = '\
-./run.sh learning.models.loglinear.SpectralMeasurements\
+./run.sh learning.experiments.SpectralMeasurements\
  -execPoolDir {args.execdir}\
- -modelType {args.model}\
- -K {k} -D {d} -L 4\
+ -modelType hmm\
+ -K {k} -D {d} -L 3\
  -initRandom {initialization_seed}\
  -initParamsNoise 1.0\
+ -mode {mode}\
  -trueParamsRandom {model_seed}\
- -mode TrueMeasurements\
  -measuredFraction {measured_fraction}\
  -trueMeasurementNoise {measurement_noise}\
+ -preconditioning {preconditioning}\
  -genNumExamples {n}\
  -SpectralMeasurements.MeasurementsEM.iters 200 -eIters 10000'
 
-    settings = get_settings(args)
-
-    if args.parallel:
+    settings = it.chain(get_true_settings(args),get_spectral_settings(args))
+    if args.pretend:
+        count = len(list(settings))
+        print "%d settings split over %d runs (%d each)" %(count, args.njobs, count/args.njobs+1)
+    elif args.parallel:
         scabby.parallel_spawn( args.exptdir, "qstart", cmd, args.njobs, settings )
     else:
         for setting in settings:
@@ -90,16 +114,17 @@ if __name__ == "__main__":
     subparsers = parser.add_subparsers()
 
     run_parser = subparsers.add_parser('run', help='Run the experiment' )
+    run_parser.add_argument( '--pretend', action='store_true', help="Report how many settings you'd have" )
     run_parser.add_argument( '--parallel', action='store_true', help="Spawn parallel jobs?" )
     run_parser.add_argument( '--njobs', type=int, default=10, help="How many parallel jobs?" )
-    run_parser.add_argument( '--initializations', type=int, default=3, help="Number of different initial seeds to run with" )
-    run_parser.add_argument( '--instantiations', type=int, default=3, help="Number of different initial seeds to run with" )
-    run_parser.add_argument( '--model', type=str, default="mixture", choices=["mixture","hmm", "grid"], help="Model to use" )
+    run_parser.add_argument( '--initializations', type=int, default=5, help="Number of different initial seeds to run with" )
+    run_parser.add_argument( '--instantiations', type=int, default=5, help="Number of different initial seeds to run with" )
+    #run_parser.add_argument( '--model', type=str, default="mixture", choices=["mixture","hmm", "grid"], help="Model to use" )
     #run_parser.add_argument( 'extra-args', type=str, nargs='+', help="Additional arguments for the actual program" )
     run_parser.set_defaults(func=do_run)
 
     plot_parser = subparsers.add_parser('process', help='Plot results from the experiment' )
-    plot_parser.add_argument( '--model', type=str, default="mixture", choices=["mixture","hmm","grid"], help="Model to use" )
+    #plot_parser.add_argument( '--model', type=str, default="mixture", choices=["mixture","hmm","grid"], help="Model to use" )
     plot_parser.add_argument( '--best', action="store_true", help="When plotting, choose the best over the different runs." )
     plot_parser.set_defaults(func=do_process)
 
