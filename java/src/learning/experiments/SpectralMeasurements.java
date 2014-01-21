@@ -1,27 +1,35 @@
 package learning.experiments;
 
-import java.util.*;
-
 import fig.basic.*;
-import fig.exec.*;
-
+import fig.exec.Execution;
+import learning.common.Counter;
 import learning.data.ComputableMoments;
 import learning.data.HasSampleMoments;
+import learning.linalg.FullTensor;
+import learning.linalg.MatrixFactory;
+import learning.linalg.MatrixOps;
+import learning.linalg.RandomFactory;
 import learning.models.BasicParams;
 import learning.models.ExponentialFamilyModel;
+import learning.models.MixtureOfGaussians;
 import learning.models.Params;
 import learning.models.loglinear.Example;
-import learning.models.loglinear.UndirectedHiddenMarkovModel;
+import learning.models.loglinear.Models;
+import learning.models.loglinear.Models.GridModel;
+import learning.models.loglinear.Models.MixtureModel;
+import learning.spectral.TensorMethod;
+import learning.spectral.applications.ParameterRecovery;
 import learning.unsupervised.ExpectationMaximization;
 import learning.unsupervised.MeasurementsEM;
 import org.ejml.simple.SimpleMatrix;
 import org.javatuples.Quartet;
-import learning.linalg.*;
-import learning.spectral.TensorMethod;
-import learning.common.Counter;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
+
+import static learning.experiments.SpectralMeasurements.Mode.TrueMeasurements;
 import static learning.models.loglinear.Models.*;
-import static learning.experiments.SpectralMeasurements.Mode.*;
 
 /**
  * ICML 2014
@@ -229,156 +237,137 @@ public class SpectralMeasurements implements Runnable {
     return measurements;
   }
 
-//  /**
-//   * Unrolls data along bottleneck nodes and uses method of moments
-//   * to return expected potentials
-//   */
-//  Params computeSpectralMeasurements( final Counter<Example> data ) {
-//    LogInfo.begin_track("solveBottleneck");
-//    Params measurements;
-//    // Construct triples of three observed variables around the hidden
-//    // node.
-//    int K = modelA.getK(); int D = modelA.getD();
-//
-//    if( modelA instanceof  MixtureModel ) {
-//      MixtureModel model = (MixtureModel) modelA;
-//      // \phi_1, \phi_2, \phi_3
-//
-//      MixtureOfGaussians gmm = ParameterRecovery.recoverGMM(K, 0, new ExampleMoments(model, data), smoothMeasurements);
-//      // TODO: Create a mixture of Bernoullis and move this stuff there.
-//      SimpleMatrix pi = gmm.getWeights();
-//      SimpleMatrix[] M = gmm.getMeans();
-//      for(int i = 0; i < model.L; i++ )
-//        M[i] = MatrixOps.projectOntoSimplex( M[i], smoothMeasurements );
-//      // Average the three Ms
-//      SimpleMatrix M3 = (M[0].plus(M[1]).plus(M[2])).scale(1.0/3.0);
-//      //SimpleMatrix M3 = M[2]; // M3 is most accurate.
-//      M3 = MatrixOps.projectOntoSimplex( M3, smoothMeasurements );
-//
-//      // measurements.weights[ measurements.featureIndexer.getIndex(Feature("h=0,x=0"))] = 0.0;
-//      Indexer<Feature> measuredFeatureIndexer = new Indexer<>();
-//      for( int h = 0; h < K; h++ ) {
-//        for( int d = 0; d < D; d++ ) {
-//          // Assuming identical distribution.
-//          measuredFeatureIndexer.add( new UnaryFeature(h, "x="+d) );
-//        }
-//      }
-//
-//      measurements = new Params(model.K, measuredFeatureIndexer);
-//
-//      for( int h = 0; h < K; h++ ) {
-//        for( int d = 0; d < D; d++ ) {
-//          // Assuming identical distribution.
-//          int f = measurements.featureIndexer.getIndex(new UnaryFeature(h, "x="+d));
-//          // multiplying by pi to go from E[x|h] -> E[x,h]
-//          // multiplying by L because true.counts aggregates
-//          // over x1, x2 and x3.
-//          measurements.weights[f] = model.L * M3.get( d, h ) * pi.get(h);
-//        }
-//      }
-//      Execution.putOutput("moments.params", MatrixFactory.fromVector(measurements.weights));
-//    } else if( modelA instanceof  HiddenMarkovModel || modelA instanceof UndirectedHiddenMarkovModel ) {
-////      HiddenMarkovModel model = (HiddenMarkovModel) modelA;
-//      UndirectedHiddenMarkovModel model = (UndirectedHiddenMarkovModel) modelA;
-//      // \phi_1, \phi_2, \phi_3
-//
-//      MixtureOfGaussians gmm = ParameterRecovery.recoverGMM(K, 0, new ExampleMoments(model, data), smoothMeasurements);
-//      // TODO: Create a mixture of Bernoullis and move this stuff there.
-//      SimpleMatrix pi = gmm.getWeights();
-//      // The pi are always really bad. Ignore?
-//      SimpleMatrix[] M = gmm.getMeans();
-//      SimpleMatrix O = M[2];
-//
-//      Execution.putOutput("pi", pi);
-//      Execution.putOutput("O", O);
-//
-////        pi = MatrixFactory.ones(K).scale(1./K);
-//
-//      // Project onto simplices
-//      O = MatrixOps.projectOntoSimplex( O, smoothMeasurements );
-//
-//      Indexer<Feature> measuredFeatureIndexer = new Indexer<>();
-//      for( int h = 0; h < K; h++ ) {
-//        for( int d = 0; d < D; d++ ) {
-//          // O
-//          measuredFeatureIndexer.add( new UnaryFeature(h, "x="+d) );
-//        }
-//      }
-//
-//      measurements = new Params(model.K, measuredFeatureIndexer);
-//
-//      for( int h = 0; h < K; h++ ) {
-//        for( int d = 0; d < D; d++ ) {
-//          // Assuming identical distribution.
-//          int f = measurements.featureIndexer.getIndex(new UnaryFeature(h, "x="+d));
-//          // multiplying by pi to go from E[x|h] -> E[x,h]
-//          // multiplying by L because true.counts aggregates
-//          // over x1, x2 and x3.
-//          measurements.weights[f] = model.L * O.get( d, h ) * pi.get(h);
-//        }
-////        if( useTransitions ) {
-////          for( int h_ = 0; h_ < K; h_++ ) {
-////            // Assuming identical distribution.
-////            int f = measurements.featureIndexer.getIndex(new BinaryFeature(h, h_));
-////            // multiplying by pi to go from E[x|h] -> E[x,h]
-////            // multiplying by L because true.counts aggregates
-////            // over x1, x2 and x3.
-////            measurements.weights[f] = (model.L-1) * T.get( h_, h ) * pi.get(h);
-////          }
-////        }
-//      }
-//      Execution.putOutput("moments.params", MatrixFactory.fromVector(measurements.weights));
-//    } else if( modelA instanceof  GridModel ) {
-//      GridModel model = (GridModel) modelA;
-//      // \phi_1, \phi_2, \phi_3
-//
-//      MixtureOfGaussians gmm = ParameterRecovery.recoverGMM(K, 0, new ExampleMoments(model, data), smoothMeasurements);
-//      SimpleMatrix pi = gmm.getWeights();
-//      // The pi are always really bad. Ignore?
-//      SimpleMatrix[] M = gmm.getMeans();
-//      SimpleMatrix O = M[2];
-//      SimpleMatrix O_ = M[1];
-//
-//      Execution.putOutput("pi", pi);
-//      Execution.putOutput("O", O);
-//
-//      // Average the two
-//      O = O.plus(O_).scale(0.5);
-//
-//      // Project onto simplices
-//      O = MatrixOps.projectOntoSimplex( O, smoothMeasurements );
-//      Execution.putOutput("O", O);
-//
-//      // measurements.weights[ measurements.featureIndexer.getIndex(Feature("h=0,x=0"))] = 0.0;
-//      Indexer<Feature> measuredFeatureIndexer = new Indexer<>();
-//      for( int h = 0; h < K; h++ ) {
-//        for( int d = 0; d < D; d++ ) {
-//          // O
-//          measuredFeatureIndexer.add( new UnaryFeature(h, "x="+d) );
-//        }
-//      }
-//
-//      measurements = new Params(model.K, measuredFeatureIndexer);
-//
-//      for( int h = 0; h < K; h++ ) {
-//        for( int d = 0; d < D; d++ ) {
-//          // Assuming identical distribution.
-//          int f = measurements.featureIndexer.getIndex(new UnaryFeature(h, "x="+d));
-//          // multiplying by pi to go from E[x|h] -> E[x,h]
-//          // multiplying by L because true.counts aggregates
-//          // over x1, x2 and x3.
-//          measurements.weights[f] = model.L * O.get( d, h ) * pi.get(h);
-//        }
-//      }
-//      Execution.putOutput("moments.params", MatrixFactory.fromVector(measurements.weights));
-//
-//    } else {
-//      throw new RuntimeException("Not implemented yet");
-//    }
-//    LogInfo.end_track("solveBottleneck");
-//
-//    return measurements;
-//  }
+  /**
+   * Unrolls data along bottleneck nodes and uses method of moments
+   * to return expected potentials
+   */
+  Params computeSpectralMeasurements( final Counter<Example> data ) {
+    LogInfo.begin_track("solveBottleneck");
+    Params measurements;
+    // Construct triples of three observed variables around the hidden
+    // node.
+    int K = modelA.getK(); int D = modelA.getD();
+
+    if( modelA instanceof  MixtureModel ) {
+      MixtureModel model = (MixtureModel) modelA;
+      // \phi_1, \phi_2, \phi_3
+
+      MixtureOfGaussians gmm = ParameterRecovery.recoverGMM(K, 0, new ExampleMoments(model, data), smoothMeasurements);
+      // TODO: Create a mixture of Bernoullis and move this stuff there.
+      SimpleMatrix pi = gmm.getWeights();
+      SimpleMatrix[] M = gmm.getMeans();
+      for(int i = 0; i < model.L; i++ )
+        M[i] = MatrixOps.projectOntoSimplex( M[i], smoothMeasurements );
+      // Average the three Ms
+      SimpleMatrix M3 = (M[0].plus(M[1]).plus(M[2])).scale(1.0/3.0);
+      //SimpleMatrix M3 = M[2]; // M3 is most accurate.
+      M3 = MatrixOps.projectOntoSimplex( M3, smoothMeasurements );
+
+      // measurements.weights[ measurements.featureIndexer.getIndex(Feature("h=0,x=0"))] = 0.0;
+      Indexer<String> measuredFeatureIndexer = new Indexer<>();
+      for( int h = 0; h < K; h++ ) {
+        for( int x = 0; x < D; x++ ) {
+          // Assuming identical distribution.
+          measuredFeatureIndexer.add( String.format("h=%d:x=%d", h, x));
+        }
+      }
+      measurements = new BasicParams(measuredFeatureIndexer);
+
+      for( int h = 0; h < K; h++ ) {
+        for( int x = 0; x < D; x++ ) {
+          // Assuming identical distribution.
+          // multiplying by pi to go from E[x|h] -> E[x,h]
+          // multiplying by L because true.counts aggregates
+          // over x1, x2 and x3.
+          measurements.set(String.format("h=%d:x=%d", h, x), model.L * M3.get( x, h ) * pi.get(h));
+        }
+      }
+    } else if( modelA instanceof HiddenMarkovModel) {
+      HiddenMarkovModel model = (HiddenMarkovModel) modelA;
+      // \phi_1, \phi_2, \phi_3
+
+      MixtureOfGaussians gmm = ParameterRecovery.recoverGMM(K, 0, new ExampleMoments(model, data), smoothMeasurements);
+      // TODO: Create a mixture of Bernoullis and move this stuff there.
+      SimpleMatrix pi = gmm.getWeights();
+      // The pi are always really bad. Ignore?
+      SimpleMatrix[] M = gmm.getMeans();
+      SimpleMatrix O = M[2];
+
+      Execution.putOutput("pi", pi);
+      Execution.putOutput("O", O);
+
+//        pi = MatrixFactory.ones(K).scale(1./K);
+
+      // Project onto simplices
+      O = MatrixOps.projectOntoSimplex( O, smoothMeasurements );
+
+      Indexer<String> measuredFeatureIndexer = new Indexer<>();
+      for( int h = 0; h < K; h++ ) {
+        for( int x = 0; x < D; x++ ) {
+          // O
+          measuredFeatureIndexer.add( String.format("h=%d:x=%d", h, x));
+        }
+      }
+
+      measurements = new BasicParams(measuredFeatureIndexer);
+
+      for( int h = 0; h < K; h++ ) {
+        for( int x = 0; x < D; x++ ) {
+          // Assuming identical distribution.
+          // multiplying by pi to go from E[x|h] -> E[x,h]
+          // multiplying by L because true.counts aggregates
+          // over x1, x2 and x3.
+          measurements.set(String.format("h=%d:x=%d", h, x), model.L * O.get( x, h ) * pi.get(h));
+        }
+      }
+    } else if( modelA instanceof  GridModel ) {
+      GridModel model = (GridModel) modelA;
+      // \phi_1, \phi_2, \phi_3
+
+      MixtureOfGaussians gmm = ParameterRecovery.recoverGMM(K, 0, new ExampleMoments(model, data), smoothMeasurements);
+      SimpleMatrix pi = gmm.getWeights();
+      // The pi are always really bad. Ignore?
+      SimpleMatrix[] M = gmm.getMeans();
+      SimpleMatrix O = M[2];
+      SimpleMatrix O_ = M[1];
+
+      Execution.putOutput("pi", pi);
+      Execution.putOutput("O", O);
+
+      // Average the two
+      O = O.plus(O_).scale(0.5);
+
+      // Project onto simplices
+      O = MatrixOps.projectOntoSimplex( O, smoothMeasurements );
+      Execution.putOutput("O", O);
+
+      Indexer<String> measuredFeatureIndexer = new Indexer<>();
+      for( int h = 0; h < K; h++ ) {
+        for( int x = 0; x < D; x++ ) {
+          // O
+          measuredFeatureIndexer.add( String.format("h=%d:x=%d", h, x));
+        }
+      }
+
+      measurements = new BasicParams(measuredFeatureIndexer);
+
+      for( int h = 0; h < K; h++ ) {
+        for( int x = 0; x < D; x++ ) {
+          // Assuming identical distribution.
+          // multiplying by pi to go from E[x|h] -> E[x,h]
+          // multiplying by L because true.counts aggregates
+          // over x1, x2 and x3.
+          measurements.set(String.format("h=%d:x=%d", h, x), model.L * O.get( x, h ) * pi.get(h));
+        }
+      }
+    } else {
+      throw new RuntimeException("Not implemented yet");
+    }
+    Execution.putOutput("moments.params", Fmt.D(measurements.toArray()));
+    LogInfo.end_track("solveBottleneck");
+
+    return measurements;
+  }
 
 //  /**
 //   * Uses the params and modelA to label the hidden labels for each
@@ -502,13 +491,13 @@ public class SpectralMeasurements implements Runnable {
                 modelA, modelB, data, bottleneckMeasurements, params, beta).getFirst();
         } break;
       case SpectralMeasurements: {
-//        Params bottleneckMeasurements = computeSpectralMeasurements( data );
-//        bottleneckMeasurements.write(Execution.getFile("measurements.counts"));
-//        Params beta = new ParamsVec(bottleneckMeasurements);
-//        beta.clear();
-//        Use these measurements to solve for parameters
-//        params = measurementsEMSolver.solveMeasurements(
-//                modelA, modelB, data, bottleneckMeasurements, params, beta).getFirst();
+        Params bottleneckMeasurements = computeSpectralMeasurements( data );
+        bottleneckMeasurements.write(Execution.getFile("measurements.counts"));
+        Params beta = bottleneckMeasurements.copy();
+        beta.clear();
+        // Use these measurements to solve for parameters
+        params = measurementsEMSolver.solveMeasurements(
+                modelA, modelB, data, bottleneckMeasurements, params, beta).getFirst();
         } break;
     }
 
