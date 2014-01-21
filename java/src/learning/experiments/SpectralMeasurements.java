@@ -55,6 +55,8 @@ public class SpectralMeasurements implements Runnable {
   @Option(gloss="Include each (true) measurement with this prob") public double measuredFraction = 1.;
   @Option(gloss="Include gaussian noise with this variance to true measurements") public double trueMeasurementNoise = 0.0;
 
+  @Option(gloss="Initialize with exact") public boolean infiniteSamples = false;
+
   @Option(gloss="Initialize with exact") public boolean initializeWithExact = false;
   @Option(gloss="Preconditioning") public double preconditioning = 0.0;
   @Option(gloss="Smooth measurements") public double smoothMeasurements = 0.0;
@@ -419,7 +421,7 @@ public class SpectralMeasurements implements Runnable {
   public static class GenerationOptions {
     @Option(gloss="Random seed for generating artificial data") public Random genRandom = new Random(42);
     @Option(gloss="Random seed for the true modelA") public Random trueParamsRandom = new Random(43);
-    @Option(gloss="Number of examples to generate") public int genNumExamples = 100;
+    @Option(gloss="Number of examples to generate") public double genNumExamples = 100;
     @Option(gloss="How much variation in true parameters") public double trueParamsNoise = 1.0;
   }
   @OptionSet(name="gen") public GenerationOptions genOpts = new GenerationOptions();;
@@ -462,7 +464,11 @@ public class SpectralMeasurements implements Runnable {
     trueParams.initRandom(genOpts.trueParamsRandom, genOpts.trueParamsNoise);
 
     // Get true parameters
-    Counter<Example> data = modelA.drawSamples(trueParams, genOpts.genRandom, genOpts.genNumExamples);
+    Counter<Example> data;
+    if(genOpts.genNumExamples > 1e7)
+      data = modelA.getDistribution(trueParams);
+    else
+      data = modelA.drawSamples(trueParams, genOpts.genRandom, (int)genOpts.genNumExamples);
 
     // Setup analysis
     analysis = new Analysis( modelA, trueParams, data );
