@@ -62,32 +62,6 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     }
 
     @Override
-    public Params merge(Params other_) {
-      Indexer<String> jointIndexer = new Indexer<>();
-      for(String feature : featureIndexer.getObjects()) {
-        jointIndexer.getIndex(feature);
-      }
-      for(String feature : other_.getFeatureIndexer().getObjects()) {
-        jointIndexer.getIndex(feature);
-      }
-
-      double[] weights_ = other_.toArray();
-
-      // Now merge
-      Params joint = new BasicParams(jointIndexer);
-      //noinspection MismatchedReadAndWriteOfArray
-      double [] weights = joint.toArray();
-      for(String feature : featureIndexer.getObjects()) {
-        weights[jointIndexer.indexOf(feature)] = this.weights[jointIndexer.indexOf(feature)];
-      }
-      for(String feature : other_.getFeatureIndexer().getObjects()) {
-        weights[jointIndexer.indexOf(feature)] = weights_[jointIndexer.indexOf(feature)];
-      }
-
-      return joint;
-    }
-
-    @Override
     public double[] toArray() {
       return weights;
     }
@@ -180,7 +154,7 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
   }
 
   public static String oString(int h, int x) {
-    return String.format("o[h_=%d,x=%d", h, x);
+    return String.format("oString[h_=%d,x=%d", h, x);
   }
   public static String tString(int h_, int h) {
     return String.format("t[h_=%d,h=%d", h_, h);
@@ -197,14 +171,14 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     this.featureIndexer = new Indexer<>();
     for(int h = 0; h < K; h++) {
       for(int x = 0; x < D; x++) {
-        featureIndexer.add(oString(h,x));
-        assert featureIndexer.indexOf(oString(h,x)) == o(h, x);
+        featureIndexer.add(oString(h, x));
+        assert featureIndexer.indexOf(oString(h, x)) == o(h, x);
       }
     }
     for(int h_ = 0; h_ < K; h_++) {
       for(int h = 0; h < K; h++) {
-        featureIndexer.add(tString(h_,h));
-        assert featureIndexer.indexOf( tString( h_, h) )  == t(h_,h);
+        featureIndexer.add(tString(h_, h));
+        assert featureIndexer.indexOf( tString(h_, h) )  == t(h_,h);
       }
     }
   }
@@ -405,7 +379,7 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
   }
 
   /**
-   * Use the Viterbi dynamic programming algorithm to find the hidden states for o.
+   * Use the Viterbi dynamic programming algorithm to find the hidden states for oString.
    * @return
    */
   public int[] viterbi( final Parameters params, final Example ex ) {
@@ -485,7 +459,6 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     if(!(params instanceof Parameters))
       throw new IllegalArgumentException();
     Parameters parameters = (Parameters) params;
-
 
     assert( ex.h != null );
     double lhood = 0.0;

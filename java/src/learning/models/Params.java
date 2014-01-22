@@ -28,7 +28,31 @@ public abstract class Params implements Serializable {
   /**
    * Replace with other
    */
-  public abstract Params merge(Params other);
+  public Params merge(Params other_) {
+    Indexer<String> jointIndexer = new Indexer<>();
+    for(String feature : getFeatureIndexer().getObjects()) {
+      jointIndexer.getIndex(feature);
+    }
+    for(String feature : other_.getFeatureIndexer().getObjects()) {
+      jointIndexer.getIndex(feature);
+    }
+
+    double[] weights_ = other_.toArray();
+
+    // Now merge
+    Params joint = new BasicParams(jointIndexer);
+    //noinspection MismatchedReadAndWriteOfArray
+    double [] weights = joint.toArray();
+    for(String feature : getFeatureIndexer().getObjects()) {
+      weights[jointIndexer.indexOf(feature)] = toArray()[jointIndexer.indexOf(feature)];
+    }
+    for(String feature : other_.getFeatureIndexer().getObjects()) {
+      weights[jointIndexer.indexOf(feature)] = weights_[jointIndexer.indexOf(feature)];
+    }
+
+    return joint;
+  }
+
 
   public void initRandom(Random random, double noise) {
     double[] weights = toArray();
@@ -178,4 +202,12 @@ public abstract class Params implements Serializable {
     return false;
   }
 
+  public String toString() {
+    StringBuilder builder = new StringBuilder();
+    Indexer<String> indexer = getFeatureIndexer();
+    double[] weights = toArray();
+    for (int f = 0; f < size(); f++)
+      builder.append(indexer.getObject(f)).append("\t").append(weights[f]).append(" ");
+    return builder.toString();
+  }
 }

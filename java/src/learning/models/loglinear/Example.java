@@ -22,6 +22,15 @@ public class Example {
     System.arraycopy(h, 0, this.h, 0, h.length);
   }
 
+  public Example clone() {
+    if(h != null)
+      return new Example(x,h);
+    else if(x!=null)
+      return new Example(x);
+    else
+      return new Example();
+  }
+
   public String toString() {
     return "x=" + Fmt.D( x ) + ",h=" + Fmt.D(h);
   }

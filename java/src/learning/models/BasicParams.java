@@ -36,9 +36,4 @@ public class BasicParams extends Params {
   public int size() {
     return weights.length;
   }
-
-  @Override
-  public Params merge(Params other) {
-    return null;
-  }
 }

@@ -43,20 +43,20 @@ public class MarginalCounts implements  Runnable {
 //    model = new UndirectedHiddenMarkovModel(K, D, L);
 //
 //    ParamsVec params1 = model.newParams();
-//    params1.set(UndirectedHiddenMarkovModel.o(0, 0), Math.log(1.));
-//    params1.set(UndirectedHiddenMarkovModel.o(0, 1), Math.log(1.));
-//    params1.set(UndirectedHiddenMarkovModel.o(1, 0), Math.log(1.));
-//    params1.set(UndirectedHiddenMarkovModel.o(1, 1), Math.log(1.));
+//    params1.set(UndirectedHiddenMarkovModel.oString(0, 0), Math.log(1.));
+//    params1.set(UndirectedHiddenMarkovModel.oString(0, 1), Math.log(1.));
+//    params1.set(UndirectedHiddenMarkovModel.oString(1, 0), Math.log(1.));
+//    params1.set(UndirectedHiddenMarkovModel.oString(1, 1), Math.log(1.));
 //
 //    params1.set(UndirectedHiddenMarkovModel.t(0, 0), Math.log(1));
 //    params1.set(UndirectedHiddenMarkovModel.t(0, 1), Math.log(4.));
 //    params1.set(UndirectedHiddenMarkovModel.t(1, 0), Math.log(4.));
 //    params1.set(UndirectedHiddenMarkovModel.t(1, 1), Math.log(1.));
 //
-////    params1.set(UndirectedHiddenMarkovModel.o(0, 0), 0.4549482263236486);
-////    params1.set(UndirectedHiddenMarkovModel.o(0, 1), 0.7055357649634446);
-////    params1.set(UndirectedHiddenMarkovModel.o(1, 0), -0.9284808331570149);
-////    params1.set(UndirectedHiddenMarkovModel.o(1, 1), 0.15254212472490214);
+////    params1.set(UndirectedHiddenMarkovModel.oString(0, 0), 0.4549482263236486);
+////    params1.set(UndirectedHiddenMarkovModel.oString(0, 1), 0.7055357649634446);
+////    params1.set(UndirectedHiddenMarkovModel.oString(1, 0), -0.9284808331570149);
+////    params1.set(UndirectedHiddenMarkovModel.oString(1, 1), 0.15254212472490214);
 ////
 ////    params1.set(UndirectedHiddenMarkovModel.t(0, 0), 0.7580337425845372);
 ////    params1.set(UndirectedHiddenMarkovModel.t(0, 1), 0.894597081189912);
@@ -81,20 +81,20 @@ public class MarginalCounts implements  Runnable {
 //    }
 //
 //    ParamsVec params2 = model.newParams();
-//    params2.set(UndirectedHiddenMarkovModel.o(0, 0), Math.log(4.));
-//    params2.set(UndirectedHiddenMarkovModel.o(0, 1), Math.log(1.));
-//    params2.set(UndirectedHiddenMarkovModel.o(1, 0), Math.log(1.));
-//    params2.set(UndirectedHiddenMarkovModel.o(1, 1), Math.log(4.));
+//    params2.set(UndirectedHiddenMarkovModel.oString(0, 0), Math.log(4.));
+//    params2.set(UndirectedHiddenMarkovModel.oString(0, 1), Math.log(1.));
+//    params2.set(UndirectedHiddenMarkovModel.oString(1, 0), Math.log(1.));
+//    params2.set(UndirectedHiddenMarkovModel.oString(1, 1), Math.log(4.));
 //
 //    params2.set(UndirectedHiddenMarkovModel.t(0, 0), Math.log(1));
 //    params2.set(UndirectedHiddenMarkovModel.t(0, 1), Math.log(1.));
 //    params2.set(UndirectedHiddenMarkovModel.t(1, 0), Math.log(1.));
 //    params2.set(UndirectedHiddenMarkovModel.t(1, 1), Math.log(1.));
 ////
-////    params2.set(UndirectedHiddenMarkovModel.o(0, 0), 0.6939332743963367);
-////    params2.set(UndirectedHiddenMarkovModel.o(0, 1), 0.6391140014026073);
-////    params2.set(UndirectedHiddenMarkovModel.o(1, 0), -0.665006807009526);
-////    params2.set(UndirectedHiddenMarkovModel.o(1, 1), 0.7482242232940524);
+////    params2.set(UndirectedHiddenMarkovModel.oString(0, 0), 0.6939332743963367);
+////    params2.set(UndirectedHiddenMarkovModel.oString(0, 1), 0.6391140014026073);
+////    params2.set(UndirectedHiddenMarkovModel.oString(1, 0), -0.665006807009526);
+////    params2.set(UndirectedHiddenMarkovModel.oString(1, 1), 0.7482242232940524);
 ////
 ////    params2.set(UndirectedHiddenMarkovModel.t(0, 0),  0.0736020599531431);
 ////    params2.set(UndirectedHiddenMarkovModel.t(0, 1),  0.2341375127766598);

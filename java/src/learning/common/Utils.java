@@ -166,4 +166,21 @@ public class Utils {
     return sb.toString().trim();
   }
 
+  static void enumerateHelper(final int K, final int L, final List<int[]> acc, final int[] buf, final int idx) {
+    if(idx == buf.length) {
+      acc.add(buf.clone());
+    } else {
+      for(int i = 0; i < K; i++) {
+        buf[idx] = i;
+        enumerateHelper(K, L, acc, buf, idx+1);
+      }
+    }
+  }
+  public static int[][] enumerate(final int K, final int L) {
+    int count = (int)Math.pow(K,L);
+    List<int[]> stateVectors = new ArrayList<>(count);
+    // Fill in recursively.
+    enumerateHelper(K, L, stateVectors, new int[L], 0);
+    return stateVectors.toArray(new int[count][L]);
+  }
 }

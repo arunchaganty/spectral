@@ -14,6 +14,7 @@ import learning.models.ExponentialFamilyModel;
 import learning.models.MixtureOfGaussians;
 import learning.models.Params;
 import learning.models.loglinear.Example;
+import learning.models.loglinear.LatentGridModel;
 import learning.models.loglinear.Models;
 import learning.models.loglinear.Models.GridModel;
 import learning.models.loglinear.Models.MixtureModel;
@@ -442,14 +443,16 @@ public class SpectralMeasurements implements Runnable {
         modelB = new HiddenMarkovModel(opts.K, opts.D, opts.L);
         break;
       }
+      case grid: {
+//        modelA = new GridModel(opts.K, opts.D, opts.L);
+//        modelB = new GridModel(opts.K, opts.D, opts.L);
+        modelA = new LatentGridModel(opts.K, opts.D, opts.L);
+        modelB = new LatentGridModel(opts.K, opts.D, opts.L);
+        break;
+      }
       case tallMixture: {
         throw new RuntimeException("Tall mixture not implemented");
         //break;
-      }
-      case grid: {
-        modelA = new GridModel(opts.K, opts.D, opts.L);
-        modelB = new GridModel(opts.K, opts.D, opts.L);
-        break;
       }
       default:
         throw new RuntimeException("Unhandled modelA type: " + opts.modelType);
@@ -466,7 +469,7 @@ public class SpectralMeasurements implements Runnable {
 
     // Get true parameters
     Counter<Example> data;
-    if(genOpts.genNumExamples > 1e7)
+    if(genOpts.genNumExamples > 1e7 || infiniteSamples)
       data = modelA.getDistribution(trueParams);
     else
       data = modelA.drawSamples(trueParams, genOpts.genRandom, (int)genOpts.genNumExamples);
