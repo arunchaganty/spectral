@@ -4,10 +4,13 @@ import fig.basic.LogInfo;
 import fig.basic.Option;
 import fig.basic.OptionSet;
 import fig.exec.Execution;
+import learning.models.BasicParams;
 import learning.models.HiddenMarkovModel;
-import learning.models.MixtureOfGaussians;
 import learning.spectral.applications.ParameterRecovery;
-import org.ejml.simple.SimpleMatrix;
+
+import java.util.Random;
+
+import static learning.common.Utils.outputList;
 
 /**
  * Recover a HMM from pairwise factors
@@ -20,38 +23,108 @@ public class PairwiseHMMRecovery implements  Runnable {
   @Option(gloss="Sequence length")
   public int L = 5;
 
-  @Option(gloss="Guess K")
-  public int guessK = 2;
+  @OptionSet(name = "genOpts")
+  public HiddenMarkovModel.GenerationOptions options = new HiddenMarkovModel.GenerationOptions();
 
-  @OptionSet(name = "genOpts") public HiddenMarkovModel.GenerationOptions options = new HiddenMarkovModel.GenerationOptions();
+  @Option(gloss="generation")
+  public Random genRand = new Random(42);
 
-  public double computeLikelihood(HiddenMarkovModel model, int[][] data) {
-    double lhood = 0.;
-    for(int i = 0; i < data.length; i++) {
-      lhood += (model.likelihood(data[i]) - lhood)/(++i);
-    }
+  @Option(gloss="init")
+  public Random initRandom = new Random(42);
+  @Option(gloss="init")
+  public double initRandomNoise = 1.0;
 
-    return lhood;
+  @Option(gloss="iterations to run EM")
+  public int iters = 100;
+
+  @Option(gloss="Run EM?")
+  public boolean runEM = true;
+
+  @Option(gloss="How much to smooth")
+  public double smoothMeasurements = 1e-2;
+
+  enum RunMode {
+    EM,
+    EMGoodStart,
+    SpectralInitialization,
+    SpectralConvex
   }
-
-  public int[][] sample(HiddenMarkovModel model, int N) {
-    int[][] samples = new int[N][L];
-    for(int i = 0; i < N; i++)
-      samples[i] = model.sample(L);
-    return samples;
-  }
+  @Option
+  public RunMode mode = RunMode.EM;
 
   @Override
   public void run() {
-    HiddenMarkovModel model = HiddenMarkovModel.generate(options);
-    HiddenMarkovModel model_ = ParameterRecovery.recoverHMM(guessK, (int) N, model, 0.0);
-    LogInfo.log(model.getO());
-    LogInfo.log(model_.getO());
+    int D = options.emissionCount;
+    int K = options.stateCount;
 
-    // Generate a bunch of data and report the likelihood.
-    int[][] data = sample(model, (int) N);
-    LogInfo.logs("True likelihood %f", computeLikelihood(model, data));
-    LogInfo.logs("Fit likelihood %f", computeLikelihood(model_, data));
+    HiddenMarkovModel model = HiddenMarkovModel.generate(options);
+    // Get data
+    int[][] X = model.sample(genRand, (int)N, L);
+
+    BasicParams params = model.toParams();
+
+    Execution.putOutput("true-likelihood", model.likelihood(X));
+    Execution.putOutput("true-paramsError", model.toParams().computeDiff(params, null));
+    Execution.putOutput("true-pi", model.getPi());
+    Execution.putOutput("true-T", model.getT());
+    Execution.putOutput("true-O", model.getO());
+
+    LogInfo.log(outputList(
+            "true-likelihood", model.likelihood(X),
+            "true-paramsError", model.toParams().computeDiff(params, null)
+    ));
+
+    // Process via EM or Spectral
+    HiddenMarkovModel model_;
+    switch(mode) {
+      case EM: {
+        model_ = new HiddenMarkovModel(
+                HiddenMarkovModel.Params.uniformWithNoise(initRandom, K, D, initRandomNoise));
+        runEM = true; // Regardless of what you said before.
+      } break;
+      case EMGoodStart: {
+        model_ = new HiddenMarkovModel( model.getParams().clone() );
+        runEM = true; // Regardless of what you said before.
+      } break;
+      case SpectralInitialization: {
+        model_ = ParameterRecovery.recoverHMM(K, (int)N, model, smoothMeasurements);
+      } break;
+      default:
+        throw new RuntimeException("Not implemented");
+    }
+
+    Execution.putOutput("initial-likelihood", model_.likelihood(X));
+    Execution.putOutput("initial-paramsError", model_.toParams().computeDiff(params, null));
+    Execution.putOutput("initial-pi", model_.getPi());
+    Execution.putOutput("initial-T", model_.getT());
+    Execution.putOutput("initial-O", model_.getO());
+
+    if(runEM) {
+      double lhood_ = Double.NEGATIVE_INFINITY;
+      for(int i = 0; i < iters; i++) {
+        // Print error per iteration.
+        double lhood = model_.likelihood(X);
+        LogInfo.log(outputList(
+                "iter", i,
+                "likelihood", lhood,
+                "paramsError", params.computeDiff(model_.toParams(), null)
+        ));
+
+        assert lhood > lhood_;
+        lhood_ = lhood;
+        model_.baumWelchStep(X);
+      }
+      LogInfo.log(outputList(
+              "likelihood", model_.likelihood(X),
+              "paramsError", params.computeDiff(model_.toParams(), null)
+      ));
+    }
+
+    Execution.putOutput("final-likelihood", model_.likelihood(X));
+    Execution.putOutput("final-paramsError", params.computeDiff(model_.toParams(), null));
+    Execution.putOutput("final-pi", model_.getPi());
+    Execution.putOutput("final-T", model_.getT());
+    Execution.putOutput("final-O", model_.getO());
   }
 
   public static void main(String[] args) {

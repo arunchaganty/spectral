@@ -231,7 +231,7 @@ public abstract class Params implements Serializable {
 
     Indexer<Feature> indexer = this.getFeatureIndexer();
     Indexer<Feature> indexer_ = that.getFeatureIndexer();
-    assert(indexer == indexer_);
+//    assert(indexer == indexer_);
 
     double[][] costs = new double[K][K];  // Cost if assign latent state h1 of this to state h2 of that
     for (int j = 0; j < size(); j++) {
@@ -247,6 +247,7 @@ public abstract class Params implements Serializable {
       }
     }
 
+    if(perm == null) perm = new int[K];
     // Find the permutation that minimizes cost.
     BipartiteMatcher matcher = new BipartiteMatcher();
     ListUtils.set(perm, matcher.findMinWeightAssignment(costs));

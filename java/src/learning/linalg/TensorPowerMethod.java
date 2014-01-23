@@ -13,7 +13,7 @@ import java.util.Random;
 public class TensorPowerMethod extends DeflatingTensorFactorizationAlgorithm {
   static final double EPS_CLOSE = 1e-10;
   @Option(gloss="Number of iterations to run the power method")
-  public int iters = 50;
+  public int iters = 100;
   @Option(gloss="Number of attempts in order to find the real maxima")
   public int attempts = 100;
   @Option(gloss="Random number generator for tensor method and random projections")
