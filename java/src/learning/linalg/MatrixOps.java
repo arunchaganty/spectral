@@ -1472,6 +1472,15 @@ public class MatrixOps {
     return triples_;
   }
 
+  public static double sum(double[][][] x ) {
+    double sum = 0.0;
+    for( int i = 0; i < x.length; i++ )
+      for( int j = 0; j < x[i].length; j++ )
+        for( int k = 0; k < x[i][j].length; k++ )
+          sum += x[i][j][k];
+    return sum;
+  }
+
   public static interface Matrixable {
     public int numRows();
     public int numCols();

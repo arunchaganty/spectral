@@ -334,7 +334,7 @@ public class HiddenMarkovModel implements EMOptimizable, Serializable, HasExactM
 			for(int i = 0; i < stateCount; i++) {
 				p.pi[i] = 1.0/stateCount;
 				// Dividing the noise by the sqrt(size) so that the sum noise is as given
-				p.pi[i] += rand.nextGaussian() * Math.sqrt(noise/stateCount);
+				p.pi[i] += 0.5 + rand.nextGaussian() * Math.sqrt(noise/stateCount);
 				// Ensure positive
 				p.pi[i] = Math.abs( p.pi[i] );
 			}
