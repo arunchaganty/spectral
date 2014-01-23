@@ -348,16 +348,19 @@ public class HiddenMarkovModel implements EMOptimizable, Serializable, HasExactM
 	}
   public static class GenerationOptions {
     @Option( gloss = "Number of hidden states" )
-    int stateCount = 2;
+    public int stateCount = 2;
     @Option( gloss = "Dimension of observed variables" )
-    int emissionCount = 3;
+    public int emissionCount = 3;
     @Option( gloss = "Generator for parameters" )
-    Random paramRandom = new Random(1);
+    public Random paramRandom = new Random(1);
     @Option( gloss = "Generator for data" )
-    Random genRandom = new Random(1);
+    public Random genRandom = new Random(1);
 
     @Option( gloss = "Noise parameter" )
-    double noise = 1.0;
+    public double noise = 1.0;
+
+    public GenerationOptions() {
+    }
 
     public GenerationOptions(int stateCount, int emissionCount) {
       this.stateCount = stateCount;
@@ -601,6 +604,9 @@ public class HiddenMarkovModel implements EMOptimizable, Serializable, HasExactM
       lhood += Math.log( params.O[z[i]][o[i]] );
     }
 		return lhood;
+  }
+  public double likelihood( final int[] o ) {
+    return forward(o).getValue1();
   }
 
 	public static HiddenMarkovModel learnFullyObserved( int stateCount, int emissionCount, int[][] X, int[][] Z,
