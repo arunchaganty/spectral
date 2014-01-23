@@ -10,9 +10,10 @@ import fig.record.*;
 import static fig.basic.LogInfo.*;
 
 // Conjunction of two latent states (for edge potentials in HMM).
-class BinaryFeature implements Feature {
-  final int h1, h2;
-  BinaryFeature(int h1, int h2) { this.h1 = h1; this.h2 = h2; }
+public class BinaryFeature implements Feature {
+  public final int h1;
+  public final int h2;
+  public BinaryFeature(int h1, int h2) { this.h1 = h1; this.h2 = h2; }
   @Override public String toString() { return "h1="+h1+",h2="+h2; }
   @Override public boolean equals(Object _that) {
     if (!(_that instanceof BinaryFeature)) return false;

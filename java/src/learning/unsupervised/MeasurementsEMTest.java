@@ -6,6 +6,7 @@ import learning.models.BasicParams;
 import learning.models.ExponentialFamilyModel;
 import learning.models.Params;
 import learning.models.loglinear.Example;
+import learning.models.loglinear.Feature;
 import learning.models.loglinear.Models;
 import learning.models.loglinear.UndirectedHiddenMarkovModel;
 import learning.common.Counter;
@@ -83,11 +84,12 @@ public class MeasurementsEMTest {
 
     Params measurements_ = model.getMarginals(trueParams, data);
     // Project and get a subset of these measurements.
-    Indexer<String> measuredFeatures = new Indexer<>();
+    Indexer<Feature> measuredFeatures = new Indexer<>();
     for(int i = 0; i < measurements_.size(); i++)
       if(i%2 == 0)
         measuredFeatures.getIndex(measurements_.getFeatureIndexer().getObject(i)); // Add one per
-    Params measurements = new BasicParams(measuredFeatures);
+    int K = measurements_.numGroups();
+    Params measurements = new BasicParams(K, measuredFeatures);
     measurements.copyOver(measurements_);
     Params beta = measurements.newParams();
 

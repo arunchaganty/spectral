@@ -6,16 +6,13 @@ import learning.common.Counter;
 import learning.data.ComputableMoments;
 import learning.data.HasSampleMoments;
 import learning.linalg.FullTensor;
-import learning.linalg.MatrixFactory;
 import learning.linalg.MatrixOps;
 import learning.linalg.RandomFactory;
 import learning.models.BasicParams;
 import learning.models.ExponentialFamilyModel;
 import learning.models.MixtureOfGaussians;
 import learning.models.Params;
-import learning.models.loglinear.Example;
-import learning.models.loglinear.LatentGridModel;
-import learning.models.loglinear.Models;
+import learning.models.loglinear.*;
 import learning.models.loglinear.Models.GridModel;
 import learning.models.loglinear.Models.MixtureModel;
 import learning.spectral.TensorMethod;
@@ -127,13 +124,15 @@ public class SpectralMeasurements implements Runnable {
       IOUtils.writeLinesHard(Execution.getFile("fit.marginal"), Collections.<String>singletonList(fitMarginal.toString()));
 
       double err;
-//      err = estimatedCounts.computeDiff( trueCounts, new int[trueParams.K] );
-//      Execution.putOutput("countsError", err);
-//      LogInfo.logsForce("countsError="+err);
+      int K = estimatedCounts.numGroups();
+      int[] perm = new int[K];
+      err = estimatedCounts.computeDiff( trueCounts, perm);
+      Execution.putOutput("countsError", err);
+      LogInfo.logsForce("countsError="+err);
 
-//      err = estimatedParams.computeDiff( trueParams, new int[trueParams.K] );
-//      Execution.putOutput("paramsError", err);
-//      LogInfo.logsForce("paramsError="+err);
+      err = estimatedParams.computeDiff( trueParams, perm );
+      Execution.putOutput("paramsError", err);
+      LogInfo.logsForce("paramsError="+err);
 
       err = Counter.diff(trueMarginal, fitMarginal);
       Execution.putOutput("marginalError", err);
@@ -214,20 +213,21 @@ public class SpectralMeasurements implements Runnable {
 
   Params computeTrueMeasurements( final Counter<Example> data ) {
     assert( analysis != null );
+    int K = modelOpts.K;
 
     // Choose the measured features.
-    Indexer<String> measuredFeatureIndexer = new Indexer<>();
+    Indexer<Feature> measuredFeatureIndexer = new Indexer<>();
     // This is an initialization of sorts
-    Indexer<String> features = modelA.newParams().getFeatureIndexer();
+    Indexer<Feature> features = modelA.newParams().getFeatureIndexer();
     int numFeatures = modelA.numFeatures();
     List<Integer> perm = RandomFactory.permutation(numFeatures, initRandom);
 
     for(int i = 0; i < Math.round(measuredFraction * numFeatures); i++) {
-      String feature = features.getObject(perm.get(i));
+      Feature feature = features.getObject(perm.get(i));
       measuredFeatureIndexer.add(feature);
     }
     // Now set the measurements to be the true counts
-    Params measurements = new BasicParams(measuredFeatureIndexer);
+    Params measurements = new BasicParams(K, measuredFeatureIndexer);
     measurements.copyOver(analysis.trueCounts);
 
     // Add noise
@@ -268,14 +268,14 @@ public class SpectralMeasurements implements Runnable {
       M3 = MatrixOps.projectOntoSimplex( M3, smoothMeasurements );
 
       // measurements.weights[ measurements.featureIndexer.getIndex(Feature("h=0,x=0"))] = 0.0;
-      Indexer<String> measuredFeatureIndexer = new Indexer<>();
+      Indexer<Feature> measuredFeatureIndexer = new Indexer<>();
       for( int h = 0; h < K; h++ ) {
         for( int x = 0; x < D; x++ ) {
           // Assuming identical distribution.
-          measuredFeatureIndexer.add( String.format("h=%d:x=%d", h, x));
+          measuredFeatureIndexer.add(new UnaryFeature(h, "x="+x));
         }
       }
-      measurements = new BasicParams(measuredFeatureIndexer);
+      measurements = new BasicParams(K, measuredFeatureIndexer);
 
       for( int h = 0; h < K; h++ ) {
         for( int x = 0; x < D; x++ ) {
@@ -283,7 +283,7 @@ public class SpectralMeasurements implements Runnable {
           // multiplying by pi to go from E[x|h] -> E[x,h]
           // multiplying by L because true.counts aggregates
           // over x1, x2 and x3.
-          measurements.set(String.format("h=%d:x=%d", h, x), model.L * M3.get( x, h ) * pi.get(h));
+          measurements.set(new UnaryFeature(h, "x="+x), model.L * M3.get( x, h ) * pi.get(h));
         }
       }
     } else if( modelA instanceof HiddenMarkovModel) {
@@ -305,15 +305,15 @@ public class SpectralMeasurements implements Runnable {
       // Project onto simplices
       O = MatrixOps.projectOntoSimplex( O, smoothMeasurements );
 
-      Indexer<String> measuredFeatureIndexer = new Indexer<>();
+      Indexer<Feature> measuredFeatureIndexer = new Indexer<>();
       for( int h = 0; h < K; h++ ) {
         for( int x = 0; x < D; x++ ) {
           // O
-          measuredFeatureIndexer.add( String.format("h=%d:x=%d", h, x));
+          measuredFeatureIndexer.add(new UnaryFeature(h, "x="+x));
         }
       }
 
-      measurements = new BasicParams(measuredFeatureIndexer);
+      measurements = new BasicParams(K, measuredFeatureIndexer);
 
       for( int h = 0; h < K; h++ ) {
         for( int x = 0; x < D; x++ ) {
@@ -321,7 +321,7 @@ public class SpectralMeasurements implements Runnable {
           // multiplying by pi to go from E[x|h] -> E[x,h]
           // multiplying by L because true.counts aggregates
           // over x1, x2 and x3.
-          measurements.set(String.format("h=%d:x=%d", h, x), model.L * O.get( x, h ) * pi.get(h));
+          measurements.set(new UnaryFeature(h, "x="+x), model.L * O.get( x, h ) * pi.get(h));
         }
       }
     } else if( modelA instanceof  GridModel ) {
@@ -345,15 +345,15 @@ public class SpectralMeasurements implements Runnable {
       O = MatrixOps.projectOntoSimplex( O, smoothMeasurements );
       Execution.putOutput("O", O);
 
-      Indexer<String> measuredFeatureIndexer = new Indexer<>();
+      Indexer<Feature> measuredFeatureIndexer = new Indexer<>();
       for( int h = 0; h < K; h++ ) {
         for( int x = 0; x < D; x++ ) {
           // O
-          measuredFeatureIndexer.add( String.format("h=%d:x=%d", h, x));
+          measuredFeatureIndexer.add(new UnaryFeature(h, "x="+x));
         }
       }
 
-      measurements = new BasicParams(measuredFeatureIndexer);
+      measurements = new BasicParams(K, measuredFeatureIndexer);
 
       for( int h = 0; h < K; h++ ) {
         for( int x = 0; x < D; x++ ) {
@@ -361,7 +361,7 @@ public class SpectralMeasurements implements Runnable {
           // multiplying by pi to go from E[x|h] -> E[x,h]
           // multiplying by L because true.counts aggregates
           // over x1, x2 and x3.
-          measurements.set(String.format("h=%d:x=%d", h, x), model.L * O.get( x, h ) * pi.get(h));
+          measurements.set(new UnaryFeature(h, "x="+x), 2 * model.L * O.get( x, h ) * pi.get(h));
         }
       }
     } else {
@@ -411,7 +411,8 @@ public class SpectralMeasurements implements Runnable {
   ///////////////////////////////////
   // Instantiation stuff
 
-  public enum ModelType { mixture, hmm, tallMixture, grid, factMixture };
+  public enum ModelType { mixture, hmm, tallMixture, grid, factMixture }
+
   public static class ModelOptions {
     @Option(gloss="Type of modelA") public ModelType modelType = ModelType.mixture;
     @Option(gloss="Number of values of the hidden variable") public int K = 3;
@@ -426,7 +427,7 @@ public class SpectralMeasurements implements Runnable {
     @Option(gloss="Number of examples to generate") public double genNumExamples = 100;
     @Option(gloss="How much variation in true parameters") public double trueParamsNoise = 1.0;
   }
-  @OptionSet(name="gen") public GenerationOptions genOpts = new GenerationOptions();;
+  @OptionSet(name="gen") public GenerationOptions genOpts = new GenerationOptions();
 
   /**
    * Generates a modelA of a particular type

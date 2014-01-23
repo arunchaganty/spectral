@@ -1,29 +1,29 @@
 package learning.models;
 
 import fig.basic.Indexer;
-
-import java.util.Random;
+import learning.models.loglinear.Feature;
 
 /**
  * Basic set of parameters
  */
 public class BasicParams extends Params {
+  final Indexer<Feature> featureIndexer;
+  final double[] weights;
+  final int K;
 
-  Indexer<String> featureIndexer;
-  double[] weights;
-
-  public BasicParams(Indexer<String> featureIndexer) {
+  public BasicParams(final int K, final Indexer<Feature> featureIndexer) {
+    this.K = K;
     this.featureIndexer = featureIndexer;
     weights = new double[featureIndexer.size()];
   }
 
   @Override
   public Params newParams() {
-    return new BasicParams(featureIndexer);
+    return new BasicParams(K, featureIndexer);
   }
 
   @Override
-  public Indexer<String> getFeatureIndexer() {
+  public Indexer<Feature> getFeatureIndexer() {
     return featureIndexer;
   }
 
@@ -36,4 +36,10 @@ public class BasicParams extends Params {
   public int size() {
     return weights.length;
   }
+
+  @Override
+  public int numGroups() {
+    return K;
+  }
+
 }

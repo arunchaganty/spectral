@@ -21,7 +21,7 @@ import java.util.Random;
 public class LatentGridModel extends ExponentialFamilyModel<Example> {
   final int K; final int D; final int L;
   final int rows; final int cols;
-  final Indexer<String> indexer;
+  final Indexer<Feature> indexer;
   final int[][] hiddenConfigurations;
   final int[][] observedConfigurations;
 
@@ -32,11 +32,11 @@ public class LatentGridModel extends ExponentialFamilyModel<Example> {
     return h_ * K + h + K * D;
   }
 
-  public String oString(int h, int x) {
-    return String.format("o[h=%d,x=%d]", h,x);
+  public Feature oFeature(int h, int x) {
+    return new UnaryFeature(h, "x="+x);
   }
-  public String tString(int h_, int h) {
-    return String.format("t[h_=%d,h=%d]", h_, h);
+  public Feature tFeature(int h_, int h) {
+    return new BinaryFeature(h_, h);
   }
 
   protected class IntermediateState {
@@ -61,8 +61,6 @@ public class LatentGridModel extends ExponentialFamilyModel<Example> {
   }
   IntermediateState intermediateState = new IntermediateState();
 
-  Counter<Example> fullDistribution;
-
   public LatentGridModel(int K, int D, int L) {
     assert L == 4;
     this.K = K;
@@ -75,10 +73,10 @@ public class LatentGridModel extends ExponentialFamilyModel<Example> {
     indexer = new Indexer<>();
     for(int h = 0; h < K; h++)
       for(int x = 0; x < D; x++)
-        indexer.getIndex(oString(h, x));
+        indexer.getIndex(oFeature(h, x));
     for(int h_ = 0; h_ < K; h_++)
       for(int h = 0; h < K; h++)
-        indexer.getIndex(tString(h_, h));
+        indexer.getIndex(tFeature(h_, h));
     indexer.lock();
 
     // Oh look, I'm going to enumerate the whole damn thing and save a few hours. Aren't I clever.
@@ -104,7 +102,7 @@ public class LatentGridModel extends ExponentialFamilyModel<Example> {
 
   @Override
   public Params newParams() {
-    return new BasicParams(indexer);
+    return new BasicParams(K, indexer);
   }
 
   int hIdx(int r, int c) {

@@ -3,7 +3,6 @@ package learning.models.loglinear;
 import fig.basic.Fmt;
 import fig.basic.LogInfo;
 import learning.common.Counter;
-import learning.linalg.MatrixOps;
 import learning.models.Params;
 import org.junit.Assert;
 import org.junit.Test;
@@ -24,15 +23,15 @@ public class LatentGridModelTest {
     final Params params0 = model.newParams();
     final Params params1 = model.newParams();
     {
-      params1.set(model.oString(0, 0), Math.log(1.) );
-      params1.set(model.oString(0, 1), Math.log(2.) );
-      params1.set(model.oString(1, 0), Math.log(1.) );
-      params1.set(model.oString(1, 1), Math.log(1.) );
+      params1.set(model.oFeature(0, 0), Math.log(1.) );
+      params1.set(model.oFeature(0, 1), Math.log(2.) );
+      params1.set(model.oFeature(1, 0), Math.log(1.) );
+      params1.set(model.oFeature(1, 1), Math.log(1.) );
 
-      params1.set(model.tString(0,0), Math.log(1.) );
-      params1.set(model.tString(0,1), Math.log(2.) );
-      params1.set(model.tString(1,0), Math.log(3.) );
-      params1.set(model.tString(1,1), Math.log(4.) );
+      params1.set(model.tFeature(0, 0), Math.log(1.) );
+      params1.set(model.tFeature(0, 1), Math.log(2.) );
+      params1.set(model.tFeature(1, 0), Math.log(3.) );
+      params1.set(model.tFeature(1, 1), Math.log(4.) );
     }
 
     // At this point, counts should be 1/4 each.
@@ -65,7 +64,7 @@ public class LatentGridModelTest {
       double emissions = 0.;
       for(int h = 0; h < K; h++) {
         for(int x = 0; x < D; x++) {
-          emissions += counts.get(model.oString(h,x));
+          emissions += counts.get(model.oFeature(h, x));
         }
       }
       Assert.assertEquals(2 * L, emissions, 1e-4);
@@ -73,20 +72,20 @@ public class LatentGridModelTest {
       double transitions = 0.;
       for(int h_ = 0; h_ < K; h_++) {
         for(int h = 0; h < K; h++) {
-          transitions += counts.get(model.tString(h_, h));
+          transitions += counts.get(model.tFeature(h_, h));
         }
       }
       Assert.assertEquals(L, transitions, 1e-4);
 
-      Assert.assertEquals(counts.get(model.oString(0,0)), 0.25 * 8, 1e-3);
-      Assert.assertEquals(counts.get(model.oString(0,1)), 0.25 * 8, 1e-3);
-      Assert.assertEquals(counts.get(model.oString(1,0)), 0.25 * 8, 1e-3);
-      Assert.assertEquals(counts.get(model.oString(1,1)), 0.25 * 8, 1e-3);
+      Assert.assertEquals(counts.get(model.oFeature(0, 0)), 0.25 * 8, 1e-3);
+      Assert.assertEquals(counts.get(model.oFeature(0, 1)), 0.25 * 8, 1e-3);
+      Assert.assertEquals(counts.get(model.oFeature(1, 0)), 0.25 * 8, 1e-3);
+      Assert.assertEquals(counts.get(model.oFeature(1, 1)), 0.25 * 8, 1e-3);
 
-      Assert.assertEquals(counts.get(model.tString(0,0)), 0.25 * 4, 1e-3);
-      Assert.assertEquals(counts.get(model.tString(0,1)), 0.25 * 4, 1e-3);
-      Assert.assertEquals(counts.get(model.tString(1,0)), 0.25 * 4, 1e-3);
-      Assert.assertEquals(counts.get(model.tString(1,1)), 0.25 * 4, 1e-3);
+      Assert.assertEquals(counts.get(model.tFeature(0, 0)), 0.25 * 4, 1e-3);
+      Assert.assertEquals(counts.get(model.tFeature(0, 1)), 0.25 * 4, 1e-3);
+      Assert.assertEquals(counts.get(model.tFeature(1, 0)), 0.25 * 4, 1e-3);
+      Assert.assertEquals(counts.get(model.tFeature(1, 1)), 0.25 * 4, 1e-3);
     }
     {
       double logZ = model.getLogLikelihood(params1, L);
@@ -98,7 +97,7 @@ public class LatentGridModelTest {
       double emissions = 0.;
       for(int h = 0; h < K; h++) {
         for(int x = 0; x < D; x++) {
-          emissions += counts.get(model.oString(h,x));
+          emissions += counts.get(model.oFeature(h, x));
         }
       }
       Assert.assertEquals(2 * L, emissions, 1e-4);
@@ -106,7 +105,7 @@ public class LatentGridModelTest {
       double transitions = 0.;
       for(int h_ = 0; h_ < K; h_++) {
         for(int h = 0; h < K; h++) {
-          transitions += counts.get(model.tString(h_,h));
+          transitions += counts.get(model.tFeature(h_, h));
         }
       }
       Assert.assertEquals(L, transitions, 1e-4);
@@ -131,7 +130,7 @@ public class LatentGridModelTest {
       double emissions = 0.;
       for(int h = 0; h < K; h++) {
         for(int x = 0; x < D; x++) {
-          emissions += counts.get(model.oString(h,x));
+          emissions += counts.get(model.oFeature(h, x));
         }
       }
       Assert.assertEquals(2 * L, emissions, 1e-4);
@@ -139,16 +138,16 @@ public class LatentGridModelTest {
       double transitions = 0.;
       for(int h_ = 0; h_ < K; h_++) {
         for(int h = 0; h < K; h++) {
-          transitions += counts.get(model.tString(h_,h));
+          transitions += counts.get(model.tFeature(h_, h));
         }
       }
       Assert.assertEquals(L, transitions, 1e-4);
 
 
-//      Assert.assertEquals(counts.get(model.oString(0,0)), 0.7 * 8, 1e-3);
-//      Assert.assertEquals(counts.get(model.oString(0,1)), 0.0 * 8, 1e-3);
-//      Assert.assertEquals(counts.get(model.oString(1,0)), 1.3 * 8, 1e-3);
-//      Assert.assertEquals(counts.get(model.oString(1,1)), 0.0 * 8, 1e-3);
+//      Assert.assertEquals(counts.get(model.oFeature(0,0)), 0.7 * 8, 1e-3);
+//      Assert.assertEquals(counts.get(model.oFeature(0,1)), 0.0 * 8, 1e-3);
+//      Assert.assertEquals(counts.get(model.oFeature(1,0)), 1.3 * 8, 1e-3);
+//      Assert.assertEquals(counts.get(model.oFeature(1,1)), 0.0 * 8, 1e-3);
 //
 //      Assert.assertEquals(counts.get("h1=0,h2=0"), 0.1, 1e-3);
 //      Assert.assertEquals(counts.get("h1=0,h2=1"), 0.2, 1e-3);

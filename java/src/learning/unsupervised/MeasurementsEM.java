@@ -1,6 +1,5 @@
 package learning.unsupervised;
 
-import java.io.*;
 import java.util.*;
 
 import fig.basic.*;
@@ -10,13 +9,12 @@ import learning.models.BasicParams;
 import learning.models.ExponentialFamilyModel;
 import learning.models.Params;
 import learning.models.loglinear.Example;
+import learning.models.loglinear.Feature;
 import learning.models.loglinear.Models;
 import learning.common.Counter;
 
 import static fig.basic.LogInfo.*;
 import static learning.common.Utils.*;
-
-import java.util.List;
 
 /**
  * Implementation of EM for the measurements Bayesian model in the measurements framework (ref below).
@@ -437,11 +435,12 @@ public class MeasurementsEM implements Runnable {
     measurements = modelA.getMarginals(trueParams, data);
     // Restrict to half the features
     {
-      Indexer<String> measuredFeatures = new Indexer<>();
+      Indexer<Feature> measuredFeatures = new Indexer<>();
       for(int i = 0; i < measurements.size(); i++)
         if(i%2 == 0)
           measuredFeatures.getIndex(measurements.getFeatureIndexer().getObject(i)); // Add one per
-      Params measurements_ = new BasicParams(measuredFeatures);
+      int K = modelA.getK();
+      Params measurements_ = new BasicParams(K, measuredFeatures);
       measurements_.copyOver(measurements);
       measurements = measurements_;
     }
@@ -456,14 +455,15 @@ public class MeasurementsEM implements Runnable {
     log(Fmt.D(trueMeasurements.toArray()));
     log(Fmt.D(measurements.toArray()));
 
-//    int[] perm = new int[trueMeasurements.K];
-//    double error = theta.computeDiff(trueParams, perm);
-//    Execution.putOutput("params-error", error);
-//    LogInfo.logs("params error: " + error + " " + Fmt.D(perm));
-//
-//    error = measurements.computeDiff(trueMeasurements, perm);
-//    Execution.putOutput("counts-error", error);
-//    LogInfo.logs("counts error: " + error + " " + Fmt.D(perm));
+    int K = trueMeasurements.numGroups();
+    int[] perm = new int[K];
+    double error = theta.computeDiff(trueParams, perm);
+    Execution.putOutput("params-error", error);
+    LogInfo.log("params error: " + error + " " + Fmt.D(perm));
+
+    error = measurements.computeDiff(trueMeasurements, perm);
+    Execution.putOutput("counts-error", error);
+    LogInfo.log("counts error: " + error + " " + Fmt.D(perm));
     LogInfo.log("likelihood(true): " + computeLogZ(modelA, trueParams, data));
     LogInfo.log("likelihood(est.): " + computeLogZ(modelA, theta, data));
 

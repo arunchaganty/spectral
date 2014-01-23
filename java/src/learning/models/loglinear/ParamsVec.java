@@ -9,21 +9,12 @@ import learning.models.Params;
 public class ParamsVec extends Params {
   public final int K;  // Number of hidden states
   public final Indexer<Feature> featureIndexer;
-  public final Indexer<String> stringFeatureIndexer;
   public final int numFeatures;
   public final double[] weights;
 
-  static Indexer<String> constructStringFeatureIndexer(Indexer<Feature> other) {
-    Indexer<String> indexer = new Indexer<>();
-    for(Feature f : other.getObjects()) // getObjects is guaranteed to have a consistent order.
-      indexer.add(f.toString());
-    return indexer;
-  }
-
-  ParamsVec(int K, Indexer<Feature> featureIndexer, Indexer<String> stringFeatureIndexer) {
+  ParamsVec(int K, Indexer<Feature> featureIndexer) {
     this.K = K;
     this.featureIndexer = featureIndexer;
-    this.stringFeatureIndexer = stringFeatureIndexer;
     this.numFeatures = featureIndexer.size();
     this.weights = new double[numFeatures];
   }
@@ -31,7 +22,7 @@ public class ParamsVec extends Params {
   // -- Params implementation
   @Override
   public Params newParams() {
-    return new ParamsVec(K, featureIndexer, stringFeatureIndexer);
+    return new ParamsVec(K, featureIndexer);
   }
   @Override
   public Params merge(Params that_) {
@@ -41,7 +32,7 @@ public class ParamsVec extends Params {
       Indexer<Feature> joinedIndex = new Indexer<>();
       joinedIndex.addAll(featureIndexer);
       joinedIndex.addAll(that.featureIndexer);
-      ParamsVec ret = new ParamsVec(K, joinedIndex, constructStringFeatureIndexer(joinedIndex));
+      ParamsVec ret = new ParamsVec(K, joinedIndex);
       for( Feature f : featureIndexer )
         ret.weights[ret.featureIndexer.indexOf(f)] += weights[featureIndexer.indexOf(f)];
       for( Feature f : that.featureIndexer )
@@ -58,8 +49,8 @@ public class ParamsVec extends Params {
   @Override
   public void clear() { Arrays.fill(weights,0.); }
 
-  public Indexer<String> getFeatureIndexer() {
-    return stringFeatureIndexer;
+  public Indexer<Feature> getFeatureIndexer() {
+    return featureIndexer;
   }
 
   // -- ParamsVec specific
@@ -171,7 +162,7 @@ public class ParamsVec extends Params {
    * parameters, ignoring error on unmeasured measured features (of
    * this).
    */
-  double computeDiff(ParamsVec that, boolean[] measuredFeatures, int[] perm) {
+  public double computeDiff(ParamsVec that, boolean[] measuredFeatures, int[] perm) {
     // Assume features have the form h=3,..., where the label '3' can be interchanged with another digit.
     // Use bipartite matching.
 
@@ -232,4 +223,10 @@ public class ParamsVec extends Params {
       builder.append(featureIndexer.getObject(f)).append("\t").append(weights[f]).append(" ");
     return builder.toString();
   }
+
+  @Override
+  public int numGroups() {
+    return K;
+  }
+
 }

@@ -7,7 +7,6 @@ import fig.basic.Pair;
 import learning.linalg.FullTensor;
 import learning.linalg.MatrixOps;
 import learning.linalg.RandomFactory;
-import learning.models.BasicParams;
 import learning.models.ExponentialFamilyModel;
 import learning.models.Params;
 import learning.common.Counter;
@@ -40,9 +39,9 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     final public int D;
     final public double[] weights;
     final double[] expWeight;
-    final Indexer<String> featureIndexer;
+    final Indexer<Feature> featureIndexer;
 
-    public Parameters(int K, int D, Indexer<String> featureIndexer) {
+    public Parameters(int K, int D, Indexer<Feature> featureIndexer) {
       this.K = K;
       this.D = D;
       this.weights = new double[K*D + K*K];
@@ -57,7 +56,7 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     }
 
     @Override
-    public Indexer<String> getFeatureIndexer() {
+    public Indexer<Feature> getFeatureIndexer() {
       return featureIndexer;
     }
 
@@ -151,16 +150,21 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     public int t(int h_, int h) {
       return K * D + h_ * K + h;
     }
+
+    @Override
+    public int numGroups() {
+      return K;
+    }
   }
 
-  public static String oString(int h, int x) {
-    return String.format("oString[h_=%d,x=%d", h, x);
+  public static Feature oFeature(int h, int x) {
+    return new UnaryFeature(h, "x="+x);
   }
-  public static String tString(int h_, int h) {
-    return String.format("t[h_=%d,h=%d", h_, h);
+  public static Feature tFeature(int h_, int h) {
+    return new BinaryFeature(h_, h);
   }
 
-  final Indexer<String> featureIndexer;
+  final Indexer<Feature> featureIndexer;
   public UndirectedHiddenMarkovModel(int K, int D, int L) {
     this.K = K;
     this.D = D;
@@ -171,14 +175,14 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
     this.featureIndexer = new Indexer<>();
     for(int h = 0; h < K; h++) {
       for(int x = 0; x < D; x++) {
-        featureIndexer.add(oString(h, x));
-        assert featureIndexer.indexOf(oString(h, x)) == o(h, x);
+        featureIndexer.add(oFeature(h, x));
+        assert featureIndexer.indexOf(oFeature(h, x)) == o(h, x);
       }
     }
     for(int h_ = 0; h_ < K; h_++) {
       for(int h = 0; h < K; h++) {
-        featureIndexer.add(tString(h_, h));
-        assert featureIndexer.indexOf( tString(h_, h) )  == t(h_,h);
+        featureIndexer.add(tFeature(h_, h));
+        assert featureIndexer.indexOf( tFeature(h_, h) )  == t(h_,h);
       }
     }
   }
@@ -379,7 +383,7 @@ public class UndirectedHiddenMarkovModel extends ExponentialFamilyModel<Example>
   }
 
   /**
-   * Use the Viterbi dynamic programming algorithm to find the hidden states for oString.
+   * Use the Viterbi dynamic programming algorithm to find the hidden states for oFeature.
    * @return
    */
   public int[] viterbi( final Parameters params, final Example ex ) {

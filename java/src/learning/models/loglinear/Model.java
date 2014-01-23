@@ -15,14 +15,9 @@ public abstract class Model extends ExponentialFamilyModel<Example> {
   public int L; // Number of 'views' or length.
   public int getL() { return L; }
   public final Indexer<Feature> featureIndexer = new Indexer<>();
-  public Indexer<String> stringFeatureIndexer = new Indexer<>();
   public int numFeatures() { return featureIndexer.size(); }
   public ParamsVec newParams() {
-    if(featureIndexer.size() != stringFeatureIndexer.size())
-      // Eeks
-      stringFeatureIndexer = ParamsVec.constructStringFeatureIndexer(featureIndexer);
-
-    return new ParamsVec(K, featureIndexer, stringFeatureIndexer);
+    return new ParamsVec(K, featureIndexer);
   }
 
   abstract Example newExample();

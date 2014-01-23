@@ -10,10 +10,10 @@ import fig.record.*;
 import static fig.basic.LogInfo.*;
 
 // Conjunction of latent state and some description (for node potentials in HMM).
-class UnaryFeature implements Feature {
-  final int h;  // Latent state associated with this feature
-  final String description;
-  UnaryFeature(int h, String description) {
+public class UnaryFeature implements Feature {
+  public final int h;  // Latent state associated with this feature
+  public final String description;
+  public UnaryFeature(int h, String description) {
     this.h = h;
     this.description = description;
   }

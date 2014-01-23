@@ -16,6 +16,7 @@ import learning.linalg.MatrixOps;
 import learning.models.BasicParams;
 import learning.models.Params;
 import learning.models.loglinear.Example;
+import learning.models.loglinear.Feature;
 import learning.unsupervised.ExpectationMaximization;
 import learning.models.loglinear.UndirectedHiddenMarkovModel;
 import learning.spectral.TensorMethod;
@@ -308,15 +309,15 @@ public class POSInduction implements Runnable {
     LogInfo.end_track("Spectral recovery");
 
     LogInfo.begin_track("Converting to measurements");
-    Indexer<String> measuredFeatureIndexer = new Indexer<>();
+    Indexer<Feature> measuredFeatureIndexer = new Indexer<>();
     for( int h = 0; h < K; h++ ) {
       for( int x = 0; x < D; x++ ) {
         // O
-        measuredFeatureIndexer.add( UndirectedHiddenMarkovModel.oString(h, x) );
+        measuredFeatureIndexer.add( UndirectedHiddenMarkovModel.oFeature(h, x) );
       }
     }
 
-    Params measurements = new BasicParams(measuredFeatureIndexer);
+    Params measurements = new BasicParams(K, measuredFeatureIndexer);
     double L = getAverageLength(C);
     for( int h = 0; h < K; h++ ) {
       for( int x = 0; x < D; x++ ) {
@@ -325,7 +326,7 @@ public class POSInduction implements Runnable {
         // multiplying by L because true.counts aggregates
         // over x1, x2 and x3.
         measurements.set(
-                UndirectedHiddenMarkovModel.oString(h, x),
+                UndirectedHiddenMarkovModel.oFeature(h, x),
                 L * O.get( x, h ) * pi.get(h));
       }
     }
