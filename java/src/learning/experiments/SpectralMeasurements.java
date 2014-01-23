@@ -364,6 +364,46 @@ public class SpectralMeasurements implements Runnable {
           measurements.set(new UnaryFeature(h, "x="+x), 2 * model.L * O.get( x, h ) * pi.get(h));
         }
       }
+    } else if( modelA instanceof  LatentGridModel ) {
+      LatentGridModel model = (LatentGridModel) modelA;
+      // \phi_1, \phi_2, \phi_3
+
+      MixtureOfGaussians gmm = ParameterRecovery.recoverGMM(K, 0, new ExampleMoments(model, data), smoothMeasurements);
+      SimpleMatrix pi = gmm.getWeights();
+      // The pi are always really bad. Ignore?
+      SimpleMatrix[] M = gmm.getMeans();
+      SimpleMatrix O = M[2];
+      SimpleMatrix O_ = M[1];
+
+      Execution.putOutput("pi", pi);
+      Execution.putOutput("O", O);
+
+      // Average the two
+      O = O.plus(O_).scale(0.5);
+
+      // Project onto simplices
+      O = MatrixOps.projectOntoSimplex( O, smoothMeasurements );
+      Execution.putOutput("O", O);
+
+      Indexer<Feature> measuredFeatureIndexer = new Indexer<>();
+      for( int h = 0; h < K; h++ ) {
+        for( int x = 0; x < D; x++ ) {
+          // O
+          measuredFeatureIndexer.add(model.oFeature(h,x));
+        }
+      }
+
+      measurements = new BasicParams(K, measuredFeatureIndexer);
+
+      for( int h = 0; h < K; h++ ) {
+        for( int x = 0; x < D; x++ ) {
+          // Assuming identical distribution.
+          // multiplying by pi to go from E[x|h] -> E[x,h]
+          // multiplying by L because true.counts aggregates
+          // over x1, x2 and x3.
+          measurements.set(model.oFeature(h,x), 2 * model.getL() * O.get( x, h ) * pi.get(h));
+        }
+      }
     } else {
       throw new RuntimeException("Not implemented yet");
     }

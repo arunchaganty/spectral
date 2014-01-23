@@ -32,6 +32,8 @@ public class LatentGridModel extends ExponentialFamilyModel<Example> {
     return h_ * K + h + K * D;
   }
 
+  public int getL() { return L; }
+
   public Feature oFeature(int h, int x) {
     return new UnaryFeature(h, "x="+x);
   }
@@ -274,7 +276,21 @@ public class LatentGridModel extends ExponentialFamilyModel<Example> {
 
   @Override
   public double updateMoments(Example ex, double count, SimpleMatrix P12, SimpleMatrix P13, SimpleMatrix P32, FullTensor P123) {
-    return 0;
+    double updates = 0;
+    for( int r = 0; r < rows; r++ ) {
+      for( int c = 0; c < cols; c++ ) {
+        int x2 = ex.x[oIdx(r,c,0)];
+        int x3 = ex.x[oIdx(r,c,1)]; // Just because we extract M3 - so lets pivot around this.
+        // TODO: Average over all the other possibilities
+        int x1 = ex.x[oIdx( (r+1) % rows,c,0)];
+        P13.set( x1, x3, P13.get( x1, x3 ) + count);
+        P12.set( x1, x2, P12.get( x1, x2 ) + count);
+        P32.set( x3, x2, P32.get( x3, x2 ) + count);
+        P123.set( x1, x2, x3, P123.get(x1, x2, x3) + count );
+        updates += count;
+      }
+    }
+    return updates;
   }
 
   @Override
