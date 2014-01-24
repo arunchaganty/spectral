@@ -111,5 +111,46 @@ public abstract class ExponentialFamilyModel<T> {
     throw new RuntimeException("not supported");
   }
 
+  /**
+   * Get Hessian of the likelihood.
+   * @param params
+   * @return
+   */
+  public SimpleMatrix getHessian(Params params) {
+    final double eps = 1e-6;
+    double[] weights = params.toArray();
+    double[] original = weights.clone();
+    double[][] H = new double[weights.length][weights.length];
+
+    for(int i = 0; i < weights.length; i++) {
+      for(int j = 0; j < weights.length; j++) {
+        weights[i] += eps;
+        weights[j] += eps;
+        double lhoodPlusPlus = getLogLikelihood(params);
+
+        weights[j] -= 2*eps;
+        double lhoodPlusMinus = getLogLikelihood(params);
+
+        weights[i] -= 2*eps;
+        double lhoodMinusMinus = getLogLikelihood(params);
+
+        weights[j] += 2*eps;
+        double lhoodMinusPlus =  getLogLikelihood(params);
+
+        weights[i] += eps;
+        weights[j] -= eps;
+
+        H[i][j] = ((lhoodPlusPlus - lhoodMinusPlus)/(2*eps) + (lhoodMinusMinus  - lhoodPlusMinus)/(2*eps))/(2*eps);
+      }
+    }
+    for(int i = 0; i < weights.length; i++) {
+      assert MatrixOps.equal(original[i], weights[i]);
+      weights[i] = original[i];
+    }
+
+    return new SimpleMatrix(H);
+  }
+
+
 }
 

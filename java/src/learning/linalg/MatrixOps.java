@@ -1487,6 +1487,11 @@ public class MatrixOps {
     return sum;
   }
 
+  public static void abs(double[] x) {
+    for(int i = 0; i < x.length; i++)
+      x[i] = Math.abs(x[i]);
+  }
+
   public static interface Matrixable {
     public int numRows();
     public int numCols();

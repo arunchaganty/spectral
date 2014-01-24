@@ -23,9 +23,12 @@ public abstract class Model extends ExponentialFamilyModel<Example> {
   abstract Example newExample();
   abstract Example newExample(int[] x);
   // L gives the length of the observation sequence.
+  // Use the ExponentialFamilyModel interface
+  @Deprecated
   public Hypergraph<Example> createHypergraph(double[] params, double[] counts, double increment) {
     return createHypergraph( null, params, counts, increment );
   }
+  @Deprecated
   abstract Hypergraph<Example> createHypergraph(Example ex, double[] params, double[] counts, double increment);
   @Deprecated
   public Hypergraph<Example> createHypergraph(int L, Example ex, double[] params, double[] counts, double increment) {

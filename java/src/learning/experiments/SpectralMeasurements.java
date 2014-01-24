@@ -20,12 +20,15 @@ import learning.spectral.applications.ParameterRecovery;
 import learning.unsupervised.ExpectationMaximization;
 import learning.unsupervised.MeasurementsEM;
 import org.ejml.simple.SimpleMatrix;
+import org.ejml.simple.SimpleSVD;
 import org.javatuples.Quartet;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import static fig.basic.LogInfo.log;
+import static fig.basic.LogInfo.logs;
 import static learning.experiments.SpectralMeasurements.Mode.TrueMeasurements;
 import static learning.models.loglinear.Models.*;
 
@@ -500,6 +503,22 @@ public class SpectralMeasurements implements Runnable {
     }
   }
 
+  public <T> boolean fullIdentifiabilityReport(ExponentialFamilyModel<T> model, Params params) {
+    SimpleMatrix H = model.getHessian(params);
+    int p = H.numRows();
+
+    SimpleSVD svd = H.svd();
+
+    int rank = svd.rank();
+    double K = svd.getSingleValue(0) / svd.getSingleValue(p-1);
+
+    logs("Problem has rank %d vs %d (%f).", svd.rank(), p, K);
+    log(svd.getW());
+    Execution.putOutput("full-sigmak", svd.getSingleValue(p-1));
+    Execution.putOutput("full-sigmak", K);
+    return svd.rank() == p;
+  }
+
   public void run() {
     // Setup modelA, modelB
     initializeModels( modelOpts );
@@ -526,6 +545,8 @@ public class SpectralMeasurements implements Runnable {
       noise.initRandom(initRandom, 0.1);
       params.plusEquals(1.0, noise);
     }
+
+    fullIdentifiabilityReport(modelA, analysis.trueParams);
 
     // Run the bottleneck spectral algorithm
     switch( mode ) {
