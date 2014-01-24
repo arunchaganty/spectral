@@ -16,9 +16,7 @@ import org.javatuples.Quartet;
 import java.util.Arrays;
 import java.util.Random;
 
-import static fig.basic.LogInfo.begin_track;
-import static fig.basic.LogInfo.end_track;
-import static fig.basic.LogInfo.log;
+import static fig.basic.LogInfo.*;
 import static learning.common.Utils.doGradientCheck;
 import static learning.common.Utils.outputList;
 
@@ -221,7 +219,74 @@ public class PairwiseHMMRecovery implements  Runnable {
     }
   }
 
+  double lhoodT(int K, int D, int[][] X, double[][] O, double[][] P) {
+    double count = 0.;
+    double lhood = 0.;
+    for(int[] x : X) {
+      for(int i = 0; i < x.length-1;i++) {
+        count++;
+        int x1 = x[i+0];
+        int x2 = x[i+1];
+
+        double z = 0.;
+        for(int h1 = 0; h1 < K; h1++)
+          for(int h2 = 0; h2 < K; h2++)
+            z += P[h1][h2] * O[h1][x1] * O[h2][x2];
+        // Update
+        lhood += (Math.log(z) - lhood)/count;
+      }
+    }
+
+    return lhood;
+  }
+
+  public double[][] getHessian(HiddenMarkovModel model, int[][] X, double[][] O, double[][] P) {
+    int K = model.getStateCount();
+    int D = model.getEmissionCount();
+
+    double[][] H = new double[K*K][K*K];
+
+    int count = 0;
+    for(int[] x : X) {
+      for(int offset = 0; offset < x.length-1; offset++) {
+        count++;
+        int x1 = x[offset];
+        int x2 = x[offset+1];
+
+        double z = 0.;
+        for(int h1 = 0; h1 < K; h1++) {
+          for(int h2 = 0; h2 < K; h2++) {
+            z += P[h1][h2] * O[h1][x1] * O[h2][x2];
+          }
+        }
+
+        for(int i = 0; i < K * K; i++) {
+          int h1 = i / K;
+          int h2 = i % K;
+          for(int j = 0; j < K * K; j++) {
+            int h1_ = j / K;
+            int h2_ = j % K;
+
+            // Add O_z
+            H[i][j] += (-(O[h1][x1] * O[h2][x2]/z) * (O[h1_][x1] * O[h2_][x2]/z) - H[i][j])/count;
+          }
+        }
+      }
+    }
+
+    return H;
+  }
+  public boolean checkIdentifiability(double[][] hessian) {
+    assert(hessian.length == hessian[0].length);
+    log(MatrixOps.svd(new SimpleMatrix(hessian)).getValue1());
+    int rank = MatrixOps.rank(new SimpleMatrix(hessian));
+    logs("Problem has rank %d vs %d.", rank, hessian.length);
+    return rank == hessian.length;
+  }
+
+
   public double[][] recoverTviaEM(HiddenMarkovModel model, int[][] X, double[][] O) {
+
     LogInfo.begin_track("recover-T-em");
     int K = model.getStateCount();
     int D = model.getEmissionCount();
@@ -230,11 +295,18 @@ public class PairwiseHMMRecovery implements  Runnable {
     double[][] P = RandomFactory.rand_(initRandom, K,K);
     MatrixOps.abs(P);
     MatrixOps.scale(P, 1./MatrixOps.sum(P));
-    if(initExact) {
+    {
       double[][] T = model.params.T;
+      double[][] P_ = new double[K][K];
       for(int h1 = 0; h1 < K; h1++) {
         for(int h2 = 0; h2 < K; h2++) {
-          P[h1][h2] = model.params.pi[h1] * T[h1][h2];
+          P_[h1][h2] = model.params.pi[h1] * T[h1][h2];
+        }
+      }
+      LogInfo.log("Is identifable?: " + checkIdentifiability(getHessian(model, X, O, P_)));
+      if(initExact) {
+        for(int h1 = 0; h1 < K; h1++) {
+          System.arraycopy(P_[h1], 0, P[h1], 0, K);
         }
       }
     }
@@ -291,7 +363,7 @@ public class PairwiseHMMRecovery implements  Runnable {
       done = diff < 1e-3;
     }
 
-    LogInfo.log(Fmt.D(P));
+    logs("Likelihood-T: %.3f", lhood_old);
 
     // -- Now compute T.
     double[][] T = new double[K][K];
@@ -304,7 +376,6 @@ public class PairwiseHMMRecovery implements  Runnable {
         T[h1][h2] = P[h1][h2] / Z;
       }
     }
-    LogInfo.log(Fmt.D(T));
 
     end_track("recover-T-em");
     return T;
@@ -453,7 +524,7 @@ public class PairwiseHMMRecovery implements  Runnable {
     begin_track("recover-O");
     double[][] O;
     SimpleMatrix O_;
-    if(initExact) {
+    if(true || initExact) {
       O = model.params.O.clone();
       O_ = new SimpleMatrix(O).transpose();
     } else {
@@ -473,8 +544,8 @@ public class PairwiseHMMRecovery implements  Runnable {
     O_ = MatrixOps.alignMatrix( O_, model.getO(), true );
     log(outputList(
             "O-error", MatrixOps.diff(O_, model.getO()),
-            "O^\n", O_,
-            "O*\n", model.getO()
+            "\nO^", O_,
+            "\nO*", model.getO()
     ));
 
     end_track("recover-O");
@@ -485,8 +556,8 @@ public class PairwiseHMMRecovery implements  Runnable {
     pi_ = MatrixOps.alignMatrix( pi_, model.getPi().transpose(), false );
     log(outputList(
             "pi-error", MatrixOps.diff(pi_, model.getPi().transpose()),
-            "pi^\n", pi_,
-            "pi*\n", model.getPi().transpose()
+            "\npi^", pi_,
+            "\npi*", model.getPi().transpose()
     ));
 
     double[][] T = recoverTviaEM(model, X, O);
@@ -494,8 +565,8 @@ public class PairwiseHMMRecovery implements  Runnable {
     T_ = MatrixOps.alignMatrix( T_, model.getT(), true );
     log(outputList(
             "T-error", MatrixOps.diff(T_, model.getT()),
-            "T^\n", T_,
-            "T*\n", model.getT()
+            "\nT^", T_,
+            "\nT*", model.getT()
     ));
 
     return new HiddenMarkovModel(new HiddenMarkovModel.Params(pi, T, O));
