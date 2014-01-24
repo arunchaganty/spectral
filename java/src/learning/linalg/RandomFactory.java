@@ -165,6 +165,7 @@ public class RandomFactory {
     // The remaining probability is assigned to the last element in the sequence.
     return pi.length-1;
   }
+  @Deprecated
   public static int multinomial(double[] pi) {
     return multinomial(rand, pi);
   }

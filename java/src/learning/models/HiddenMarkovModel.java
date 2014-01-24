@@ -5,21 +5,23 @@
  */
 package learning.models;
 
+import fig.basic.*;
 import fig.prob.Multinomial;
 import learning.Misc;
+import learning.common.Counter;
 import learning.data.HasExactMoments;
 import learning.data.HasSampleMoments;
 import learning.linalg.*;
 import learning.em.EMOptimizable;
 
+import learning.models.loglinear.BinaryFeature;
+import learning.models.loglinear.Example;
+import learning.models.loglinear.Feature;
+import learning.models.loglinear.UnaryFeature;
 import org.javatuples.*;
 import org.ejml.simple.SimpleMatrix;
 import org.ejml.data.DenseMatrix64F;
-
-import fig.basic.Option;
-import fig.basic.OptionsParser;
-import fig.basic.LogInfo;
-import fig.basic.Fmt;
+import org.javatuples.Pair;
 
 import java.io.FileOutputStream;
 import java.io.ObjectOutputStream;
@@ -107,6 +109,58 @@ public class HiddenMarkovModel implements EMOptimizable, Serializable, HasExactM
 
     return Quartet.with(P13, P12, P32, P123);
   }
+
+  /**
+   * Create a ParamsVec out of this.
+   * @return
+   */
+  public Feature piFeature(int h) {
+    return new UnaryFeature(h, "pi");
+  }
+  public Feature oFeature(int h, int x) {
+    return new UnaryFeature(h, "x="+x);
+  }
+  public Feature tFeature(int h_, int h) {
+    return new BinaryFeature(h_, h);
+  }
+
+  Indexer<Feature> getFeatureIndexer() {
+    Indexer<Feature> featureIndexer = new Indexer<>();
+    int K = getStateCount();
+    int D = getEmissionCount();
+
+    int idx = 0;
+    for( int h = 0; h < K; h++ ) {
+      assert( idx == params.index_pi(h) );
+      featureIndexer.getIndex(piFeature(h));
+      idx++;
+    }
+    for( int h_ = 0; h_ < K; h_++ ) {
+      for( int h = 0; h < K; h++ ) {
+        assert( idx == params.index_T(h_, h) );
+        featureIndexer.getIndex(tFeature(h_,h));
+        idx++;
+      }
+    }
+    for( int h = 0; h < K; h++ ) {
+      for( int x = 0; x < D; x++ ) {
+        assert( idx == params.index_O(h, x) );
+        featureIndexer.getIndex(oFeature(h,x));
+        idx++;
+      }
+    }
+    featureIndexer.lock();
+    return featureIndexer;
+  }
+
+
+  public BasicParams toParams() {
+    int K = getStateCount();
+    BasicParams out = new BasicParams(K, getFeatureIndexer());
+    params.toVector(out.toArray());
+    return out;
+  }
+
 //  public Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> computeSampleMoments(int N) {
 //    // Generate this much data and compute moments
 //    SimpleMatrix P12 = new SimpleMatrix(getEmissionCount(), getEmissionCount());
@@ -229,8 +283,7 @@ public class HiddenMarkovModel implements EMOptimizable, Serializable, HasExactM
 
       return params;
     }
-		public double[] toVector() {
-      double[] weights = new double[ numFeatures() ];
+    public void toVector(double[] weights) {
       int idx = 0;
       for( int i = 0; i < stateCount; i++ ) {
         //assert( idx == index_pi(i) );
@@ -238,7 +291,7 @@ public class HiddenMarkovModel implements EMOptimizable, Serializable, HasExactM
       }
       for( int i = 0; i < stateCount; i++ ) {
         for( int j = 0; j < stateCount; j++ ) {
-         // assert( idx == index_T(i,j) );
+          // assert( idx == index_T(i,j) );
           weights[idx++] = T[i][j];
         }
       }
@@ -249,6 +302,10 @@ public class HiddenMarkovModel implements EMOptimizable, Serializable, HasExactM
         }
       }
       assert( idx == numFeatures() );
+    }
+		public double[] toVector() {
+      double[] weights = new double[ numFeatures() ];
+      toVector(weights);
       return weights;
 		}
     public int numFeatures() {
@@ -277,7 +334,7 @@ public class HiddenMarkovModel implements EMOptimizable, Serializable, HasExactM
 			for(int i = 0; i < stateCount; i++) {
 				p.pi[i] = 1.0/stateCount;
 				// Dividing the noise by the sqrt(size) so that the sum noise is as given
-				p.pi[i] += rand.nextGaussian() * Math.sqrt(noise/stateCount);
+				p.pi[i] += 0.5 + rand.nextGaussian() * Math.sqrt(noise/stateCount);
 				// Ensure positive
 				p.pi[i] = Math.abs( p.pi[i] );
 			}
@@ -412,41 +469,65 @@ public class HiddenMarkovModel implements EMOptimizable, Serializable, HasExactM
 	 * @param n
 	 * @return
 	 */
-	public int[] sample(int n) {
+	public int[] sample(Random rnd, int n) {
 		int[] output = new int[n];
 
 		// Pick a start state
-		int state = RandomFactory.multinomial(params.pi);
+		int state = RandomFactory.multinomial(rnd, params.pi);
 
 		for( int i = 0; i < n; i++)
 		{
 			// Generate a word
-			int o = RandomFactory.multinomial( params.O[state] );
+			int o = RandomFactory.multinomial(rnd, params.O[state] );
 			if( params.map != null )
 				output[i] = params.map[state][o];
 			else
 				output[i] = o;
 			// Transit to a new state
-			state = RandomFactory.multinomial( params.T[state] );
+			state = RandomFactory.multinomial(rnd, params.T[state] );
 		}
 
 		return output;
 	}
+  @Deprecated
+  public int[] sample(int n) {
+    return sample(RandomFactory.rand, n);
+  }
+
+  public Counter<Example> drawSamples(int N, int L, Random rnd) {
+    Counter<Example> examples = new Counter<>();
+    for(int i = 0; i < N; i++) {
+      Pair<int[],int[]> pair = sampleWithHiddenVariables(rnd, L);
+      Example ex = new Example(pair.getValue0(), pair.getValue1());
+      examples.add(ex);
+    }
+
+    return examples;
+  }
+
+  public int[][] sample(Random rnd, int N, int L) {
+    int[][] X = new int[N][L];
+    for(int i = 0; i < N; i++) {
+      X[i] = sample(rnd,L);
+    }
+
+    return X;
+  }
 
   /**
    * Sample both the observed and hidden variables.
    */
-	public Pair<int[], int[]> sampleWithHiddenVariables(int n) {
+	public Pair<int[], int[]> sampleWithHiddenVariables(Random rnd, int n) {
 		int[] observed = new int[n];
 		int[] hidden = new int[n];
 
 		// Pick a start state
-		int state = RandomFactory.multinomial(params.pi);
+		int state = RandomFactory.multinomial(rnd, params.pi);
 
 		for( int i = 0; i < n; i++)
 		{
 			// Generate a word
-			int o = RandomFactory.multinomial( params.O[state] );
+			int o = RandomFactory.multinomial(rnd , params.O[state] );
       hidden[i] = state;
 
 			if( params.map != null )
@@ -454,11 +535,15 @@ public class HiddenMarkovModel implements EMOptimizable, Serializable, HasExactM
       observed[i] = o;
 
 			// Transit to a new state
-			state = RandomFactory.multinomial( params.T[state] );
+			state = RandomFactory.multinomial(rnd , params.T[state] );
 		}
 
 		return Pair.with( observed, hidden );
 	}
+  @Deprecated
+  public Pair<int[], int[]> sampleWithHiddenVariables(int n) {
+    return sampleWithHiddenVariables(RandomFactory.rand, n);
+  }
 
   /**
    * Generate from the model
@@ -607,6 +692,14 @@ public class HiddenMarkovModel implements EMOptimizable, Serializable, HasExactM
   }
   public double likelihood( final int[] o ) {
     return forward(o).getValue1();
+  }
+  public double likelihood(int[][] data) {
+    double lhood = 0.;
+    for(int i = 0; i < data.length; i++) {
+      lhood += (likelihood(data[i]) - lhood)/(++i);
+    }
+
+    return lhood;
   }
 
 	public static HiddenMarkovModel learnFullyObserved( int stateCount, int emissionCount, int[][] X, int[][] Z,

@@ -83,7 +83,7 @@ public class HiddenMarkovModelsTest {
     testModel( 10, options );
   }
 
-  //@Test
+  @Test
   public void testDefault() {
     int K = 2;
     int D = 3;
@@ -92,7 +92,7 @@ public class HiddenMarkovModelsTest {
     testModel( options );
   }
 
-  //@Test
+  @Test
   public void testLarge() {
     int K = 10;
     int D = 100;
@@ -112,7 +112,7 @@ public class HiddenMarkovModelsTest {
     Assert.assertTrue( actual_lhood <= map_lhood );
   }
 
-  //@Test
+  @Test
   public void testViterbi() {
     int K = 5;
     int D = 10;
@@ -127,7 +127,7 @@ public class HiddenMarkovModelsTest {
     }
   }
 
-  //@Test
+  @Test
   public void testForward() {
     HiddenMarkovModel model = new HiddenMarkovModel(hmm1);
 
@@ -155,7 +155,7 @@ public class HiddenMarkovModelsTest {
     Assert.assertTrue( MatrixOps.allclose( f2_, f2 ) );
   }
   
-  //@Test
+  @Test
   public void testBackward() {
     HiddenMarkovModel model = new HiddenMarkovModel(hmm1);
       // alpha
@@ -261,13 +261,9 @@ public class HiddenMarkovModelsTest {
     MatrixOps.printArray( model1.params.O );
     LogInfo.logs( "lhood: " + model1.compute(X,null));
 
-
-    // Assert.assertTrue( 
-    //     MatrixOps.allclose( model2.params.pi, hmm1.pi ) );
-    // Assert.assertTrue( 
-    //     MatrixOps.allclose( model2.params.T, hmm1.T ) );
-    // Assert.assertTrue( 
-    //     MatrixOps.allclose( model2.params.O, hmm1.O ) );
+    double diff = model1.toParams().computeDiff(model2.toParams(),null);
+    LogInfo.log( "diff: " + diff);
+    Assert.assertTrue( diff < 1e-2);
   }
 }
 

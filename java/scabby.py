@@ -50,7 +50,7 @@ def tab_to_dict(tab, sep='\t'):
 def align(data, key):
     arr = []
     for datum in data:
-        arr.append( datum[key], datum )
+        arr.append( (datum[key], datum) )
     return arr
 
 def to_matrix(data, keys):
@@ -174,8 +174,12 @@ def start_plot(**kwargs):
     return fig, ax
 
 def plot(ax, data, x_key, y_key, **kwargs):
-    xs, ys = zip(*[ (datum[x_key], datum[y_key]) for datum in data ] )
-    ax.plot( xs, ys, **kwargs )
+    if len(data) == 0:
+        print "Warning: no data" 
+    else:
+        data = sort(data, x_key)
+        xs, ys = zip(*[ (datum[x_key], datum[y_key]) for datum in data ] )
+        ax.plot( xs, ys, **kwargs )
     return ax
 
 def scatter(ax, data, x_key, y_key, **kwargs):
