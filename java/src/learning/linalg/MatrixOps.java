@@ -309,6 +309,12 @@ public class MatrixOps {
     return err;
   }
 
+
+  public static void abs( double[][] X ) {
+    for(int i = 0; i < X.length; i++)
+      for(int j = 0; j < X[i].length; j++)
+        X[i][j] = Math.abs(X[i][j]);
+  }
   /**
    * Return the absolute value of each entry in X
    */
