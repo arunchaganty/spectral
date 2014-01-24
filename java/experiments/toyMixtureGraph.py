@@ -12,6 +12,7 @@ import scabby
 import itertools as it
 
 EXPT_NAME = "ToyMixtureGraph"
+MODEL = "mixture"
 
 KD_VALUES = [(2,2), (2,3), (3,3), (3,5),]# (3,10), (5,10)]
 N_VALUES = [1e3, 2e3, 5e3, 7e3,
@@ -26,6 +27,7 @@ NOISE_VALUES = [0.,] # 1e-1,] #1e-2]
 PRECONDITIONG_VALUES = [0.0,]# 1e-3] #1e-2, 1e-3]
 
 def get_true_settings(args):
+    model = MODEL
     preconditioning = 0.0
     mode = "TrueMeasurements"
     for k,d in KD_VALUES:
@@ -38,6 +40,7 @@ def get_true_settings(args):
                             yield dict(locals())
 
 def get_spectral_settings(args):
+    model = MODEL
     measured_fraction = 1.0
     measurement_noise = 0.0
     mode = "SpectralMeasurements"
@@ -62,7 +65,7 @@ def do_run(args):
     cmd = '\
 ./run.sh learning.experiments.SpectralMeasurements\
  -execPoolDir {args.execdir}\
- -modelType mixture\
+ -modelType {model}\
  -K {k} -D {d} -L 3\
  -initRandom {initialization_seed}\
  -initParamsNoise 1.0\
@@ -86,23 +89,42 @@ def do_run(args):
 
 def do_process(args):
     import plumbum as pb
+    model = MODEL
 
     for k, d in KD_VALUES:
-        print k, d
-        cmd = 'tab.py extract\
- --execdir {args.execdir}\
- --filters K={k} D={d} modelType={args.model}\
- --keys trueParamsRandom genNumExamples measuredFraction trueMeasurementNoise marginalError paramsError countsError fit-perp'.format(**locals())
-        raw_path = os.path.join( args.exptdir, '{args.model}-{k}-{d}.raw.tab'.format(**locals()) )
-        (pb.local['python2.7'][cmd.split()] > raw_path)()
+        for mode in ["TrueMeasurements", "SpectralMeasurements"]:
+            print k, d, mode
+            cmd = 'tab.py extract\
+     --execdir {args.execdir}\
+     --filters K={k} D={d} modelType={model} mode={mode}\
+     --keys trueParamsRandom genNumExamples measuredFraction trueMeasurementNoise paramsError countsError marginalError fit-perp'.format(**locals())
+            raw_path = os.path.join( args.exptdir, '{model}-{k}-{d}-{mode}.raw.tab'.format(**locals()) )
 
-        agg_path = os.path.join( args.exptdir, '{args.model}-{k}-{d}.agg.tab'.format(**locals()) )
-        if args.best:
-            cmd = 'tab.py agg --mode min genNumExamples trueParamsRandom measuredFraction trueMeasurementNoise'.format(**locals())
-        else:
-            cmd = 'tab.py agg genNumExamples trueParamsRandom measuredFraction trueMeasurementNoise'.format(**locals())
-        cmd_ = 'tab.py sort genNumExamples'.format(**locals())
-        (pb.local['cat'][raw_path] | pb.local['python2.7'][cmd.split()] | pb.local['python2.7'][cmd_.split()] > agg_path)()
+            print (pb.local['python2.7'][cmd.split()] > raw_path)
+            (pb.local['python2.7'][cmd.split()] > raw_path)()
+
+            agg1_path = os.path.join( args.exptdir, '{model}-{k}-{d}-{mode}.agg1.tab'.format(**locals()) )
+            if args.best:
+                cmd = 'tab.py agg --mode min genNumExamples trueParamsRandom measuredFraction trueMeasurementNoise'.format(**locals())
+            else:
+                cmd = 'tab.py agg genNumExamples trueParamsRandom measuredFraction trueMeasurementNoise'.format(**locals())
+
+            print (pb.local['cat'][raw_path] | pb.local['python2.7'][cmd.split()] > agg1_path)
+            (pb.local['cat'][raw_path] | pb.local['python2.7'][cmd.split()] > agg1_path)()
+
+            # Micro-average
+            if args.best:
+                agg_path = os.path.join( args.exptdir, '{model}-{k}-{d}-{mode}.best.tab'.format(**locals()) )
+            else:
+                agg_path = os.path.join( args.exptdir, '{model}-{k}-{d}-{mode}.agg.tab'.format(**locals()) )
+            cmd_agg = 'tab.py agg genNumExamples measuredFraction trueMeasurementNoise'.format(**locals()) 
+            cmd_sort = 'tab.py sort trueMeasurementNoise measuredFraction genNumExamples'.format(**locals())
+
+            print (pb.local['cat'][agg1_path] | pb.local['python2.7'][cmd_agg.split()] | pb.local['python2.7'][cmd_sort.split()] > agg_path)
+            (pb.local['cat'][agg1_path] | pb.local['python2.7'][cmd_agg.split()] | pb.local['python2.7'][cmd_sort.split()] > agg_path)()
+
+
+
 
 
 if __name__ == "__main__":

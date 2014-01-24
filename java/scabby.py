@@ -41,7 +41,10 @@ def tab_to_dict(tab, sep='\t'):
     out = {}
     for item in tab.split(sep):
         key, value = item.split('=',1)
-        out[key.strip()] = float(value.strip())
+        try : 
+            out[key.strip()] = float(value.strip())
+        except ValueError:
+            out[key.strip()] = value.strip()
     return out
 
 def align(data, key):
