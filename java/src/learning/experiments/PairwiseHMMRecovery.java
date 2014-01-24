@@ -40,13 +40,15 @@ public class PairwiseHMMRecovery implements  Runnable {
   public double initRandomNoise = 1.0;
   @Option(gloss="Start at the exact solution?")
   public boolean initExact = false;
+  @Option(gloss="Start at the exact solution?")
+  public boolean initExactO = false;
 
 
   @Option(gloss="iterations to run EM")
   public int iters = 100;
 
   @Option(gloss="Run EM?")
-  public boolean runEM = true;
+  public boolean runEM = false;
 
   @Option(gloss="How much to smooth")
   public double smoothMeasurements = 1e-2;
@@ -278,9 +280,12 @@ public class PairwiseHMMRecovery implements  Runnable {
   }
   public boolean checkIdentifiability(double[][] hessian) {
     assert(hessian.length == hessian[0].length);
-    log(MatrixOps.svd(new SimpleMatrix(hessian)).getValue1());
+    SimpleMatrix sigma = MatrixOps.svd(new SimpleMatrix(hessian)).getValue1();
+    log(sigma);
     int rank = MatrixOps.rank(new SimpleMatrix(hessian));
     logs("Problem has rank %d vs %d.", rank, hessian.length);
+    Execution.putOutput("hessian-sigmak", sigma.get(hessian.length-1, hessian.length-1));
+    Execution.putOutput("hessian-K", sigma.get(0,0) / sigma.get(hessian.length-1, hessian.length-1));
     return rank == hessian.length;
   }
 
@@ -298,9 +303,24 @@ public class PairwiseHMMRecovery implements  Runnable {
     {
       double[][] T = model.params.T;
       double[][] P_ = new double[K][K];
+      // Preprocess pi.
+      SimpleMatrix rollingT = SimpleMatrix.identity(K);
+      SimpleMatrix effectivePi = new SimpleMatrix(K,K);
+      for(int i = 0; i < L-1; i++) {
+        effectivePi = effectivePi.plus(rollingT.scale(1./(L-1)));
+        rollingT = rollingT.mult(model.getT().transpose());
+        log(rollingT);
+      }
+      log(effectivePi);
+      SimpleMatrix pi = model.getPi().transpose();
+      effectivePi = pi.mult(effectivePi);
+      log(effectivePi);
+      assert(MatrixOps.equal( effectivePi.elementSum(), 1.0 ) );
+
       for(int h1 = 0; h1 < K; h1++) {
         for(int h2 = 0; h2 < K; h2++) {
-          P_[h1][h2] = model.params.pi[h1] * T[h1][h2];
+          // pi (I + T + T^2...) * pi
+          P_[h1][h2] = effectivePi.get(h1) * T[h1][h2];
         }
       }
       LogInfo.log("Is identifable?: " + checkIdentifiability(getHessian(model, X, O, P_)));
@@ -524,7 +544,7 @@ public class PairwiseHMMRecovery implements  Runnable {
     begin_track("recover-O");
     double[][] O;
     SimpleMatrix O_;
-    if(true || initExact) {
+    if(initExactO) {
       O = model.params.O.clone();
       O_ = new SimpleMatrix(O).transpose();
     } else {
@@ -542,6 +562,7 @@ public class PairwiseHMMRecovery implements  Runnable {
     }
     // Compare O with model?
     O_ = MatrixOps.alignMatrix( O_, model.getO(), true );
+    Execution.putOutput("O-error", MatrixOps.diff(O_, model.getO()));
     log(outputList(
             "O-error", MatrixOps.diff(O_, model.getO()),
             "\nO^", O_,
@@ -554,6 +575,7 @@ public class PairwiseHMMRecovery implements  Runnable {
     double[] pi = recoverPi(model, X, O);
     SimpleMatrix pi_ = MatrixFactory.fromVector(pi);
     pi_ = MatrixOps.alignMatrix( pi_, model.getPi().transpose(), false );
+    Execution.putOutput("pi-error", MatrixOps.diff(pi_, model.getPi().transpose()));
     log(outputList(
             "pi-error", MatrixOps.diff(pi_, model.getPi().transpose()),
             "\npi^", pi_,
@@ -563,6 +585,8 @@ public class PairwiseHMMRecovery implements  Runnable {
     double[][] T = recoverTviaEM(model, X, O);
     SimpleMatrix T_ = new SimpleMatrix(T).transpose();
     T_ = MatrixOps.alignMatrix( T_, model.getT(), true );
+
+    Execution.putOutput("T-error", MatrixOps.diff(T_, model.getT()));
     log(outputList(
             "T-error", MatrixOps.diff(T_, model.getT()),
             "\nT^", T_,
@@ -587,10 +611,17 @@ public class PairwiseHMMRecovery implements  Runnable {
     BasicParams params = model.toParams();
 
     Execution.putOutput("true-likelihood", model.likelihood(X));
-    Execution.putOutput("true-paramsError", model.toParams().computeDiff(params, null));
     Execution.putOutput("true-pi", model.getPi());
     Execution.putOutput("true-T", model.getT());
     Execution.putOutput("true-O", model.getO());
+
+    {
+      SimpleMatrix O = model.getO();
+      SimpleMatrix sigma = MatrixOps.svd(O).getValue1();
+      log(sigma);
+      Execution.putOutput("O-sigmak", sigma.get(K - 1, K - 1));
+      Execution.putOutput("O-K", sigma.get(0, 0) / sigma.get(K - 1, K - 1));
+    }
 
     log(outputList(
             "true-likelihood", model.likelihood(X),
