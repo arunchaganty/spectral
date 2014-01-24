@@ -614,14 +614,15 @@ public class PairwiseHMMRecovery implements  Runnable {
       // Align with true parameters.
       SimpleMatrix O = model_.getO();
       SimpleMatrix O_ = MatrixOps.alignMatrix(O, model.getO(), true);
-      SimpleMatrix T = model_.getO();
+      SimpleMatrix T = model_.getT();
       SimpleMatrix T_ = MatrixOps.alignMatrix(T, model.getT(), true);
       SimpleMatrix pi = model_.getPi();
       SimpleMatrix pi_ = MatrixOps.alignMatrix(pi, model.getPi(), false);
       log(outputList(
               "pi-error", MatrixOps.diff(pi_, model.getPi()),
               "T-error", MatrixOps.diff(T_, model.getT()),
-              "O-error", MatrixOps.diff(O_, model.getO())
+              "O-error", MatrixOps.diff(O_, model.getO()),
+              "params-error", model_.toParams().computeDiff(params, null)
       ));
 
       Execution.putOutput("pi-error", MatrixOps.diff(pi_, model.getPi()));
