@@ -230,14 +230,14 @@ public class HiddenMarkovModel implements EMOptimizable, Serializable, HasExactM
       boolean valid = true;
       double sum;
       sum = MatrixOps.sum(pi);
-      valid &= MatrixOps.equal(sum, 1.0);
+      valid &= MatrixOps.equal(sum, 1.0, 1e-2);
       assert valid;
       for( int s = 0; s < stateCount; s++ ) {
         sum = MatrixOps.sum(T[s]);
-        valid &=  MatrixOps.equal(sum, 1.0);
+        valid &=  MatrixOps.equal(sum, 1.0, 1e-2);
         assert valid;
         sum = MatrixOps.sum(O[s]);
-        valid &=  MatrixOps.equal(sum, 1.0);
+        valid &=  MatrixOps.equal(sum, 1.0, 1e-2);
         assert valid;
       }
 
