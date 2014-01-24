@@ -645,7 +645,22 @@ public class PairwiseHMMRecovery implements  Runnable {
         // Align with true parameters.
         SimpleMatrix O = model_.getO();
         SimpleMatrix O_ = MatrixOps.alignMatrix(O, model.getO(), true);
-        log(outputList("O-error", MatrixOps.diff(O_, model.getO())));
+        SimpleMatrix T = model_.getO();
+        SimpleMatrix T_ = MatrixOps.alignMatrix(T, model.getT(), true);
+        SimpleMatrix pi = model_.getPi();
+        SimpleMatrix pi_ = MatrixOps.alignMatrix(pi, model.getPi(), false);
+
+        log(outputList(
+                    "pi-error", MatrixOps.diff(pi_, model.getPi()),
+                    "T-error", MatrixOps.diff(T_, model.getT()),
+                    "O-error", MatrixOps.diff(O_, model.getO())
+                    ));
+
+        Execution.putOutput("pi-error", MatrixOps.diff(pi_, model.getPi()));
+        Execution.putOutput("T-error", MatrixOps.diff(T_, model.getT()));
+        Execution.putOutput("O-error", MatrixOps.diff(O_, model.getO()));
+
+
       } break;
       case SpectralConvex: {
         model_ = spectralConvexRecovery(model, X);
