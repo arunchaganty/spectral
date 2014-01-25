@@ -15,9 +15,11 @@ public abstract class Model extends ExponentialFamilyModel<Example> {
   public int L; // Number of 'views' or length.
   public int getL() { return L; }
   public final Indexer<Feature> featureIndexer = new Indexer<>();
-  public int numFeatures() { return featureIndexer.size(); }
+  public ParamsVec fullParams;
+  public final Indexer<Feature> restrictedFeatureIndexer = new Indexer<>();
+  public int numFeatures() { return restrictedFeatureIndexer.size(); }
   public ParamsVec newParams() {
-    return new ParamsVec(K, featureIndexer);
+    return new ParamsVec(K, restrictedFeatureIndexer);
   }
 
   abstract Example newExample();
@@ -82,7 +84,6 @@ public abstract class Model extends ExponentialFamilyModel<Example> {
     }
   }
 
-
   Hypergraph.LogHyperedgeInfo<Example> hiddenEdgeInfo(final int j, final int v) {
     return new UpdatingEdgeInfo(j, v, true);
   }
@@ -107,8 +108,9 @@ public abstract class Model extends ExponentialFamilyModel<Example> {
   }
   @Override
   public double getLogLikelihood(Params params, Example example) {
-    ParamsVec parameters = (ParamsVec) params;
-    Hypergraph<Example> Hp = createHypergraph(example, parameters.weights, null, 0.);
+//    ParamsVec parameters = (ParamsVec) params;
+    fullParams.copyOver(params);
+    Hypergraph<Example> Hp = createHypergraph(example, fullParams.weights, null, 0.);
     Hp.computePosteriors(false);
     return Hp.getLogZ();
   }
@@ -122,17 +124,21 @@ public abstract class Model extends ExponentialFamilyModel<Example> {
   }
   @Override
   public void updateMarginals(Params params, Example example, double scale, Params marginals_) {
-    ParamsVec parameters = (ParamsVec) params;
-    ParamsVec marginals = (ParamsVec) marginals_;
-    Hypergraph<Example> Hp = createHypergraph(example, parameters.weights, marginals.weights, scale);
+    fullParams.copyOver(params);
+//    ParamsVec parameters = (ParamsVec) params;
+//    ParamsVec marginals = (ParamsVec) marginals_;
+    ParamsVec marginals = (ParamsVec) fullParams.newParams();
+    Hypergraph<Example> Hp = createHypergraph(example, fullParams.weights, marginals.weights, scale);
     Hp.computePosteriors(false);
     Hp.fetchPosteriors(false);
+    marginals_.plusEquals(marginals);
   }
   @Override
   public Counter<Example> drawSamples(Params params, Random rnd, int n) {
-    ParamsVec parameters = (ParamsVec) params;
-    ParamsVec counts = newParams();
-    Hypergraph<Example> Hp = createHypergraph(parameters.weights, counts.weights, 1);
+    fullParams.copyOver(params);
+//    ParamsVec parameters = (ParamsVec) params;
+    ParamsVec counts = (ParamsVec) fullParams.newParams();
+    Hypergraph<Example> Hp = createHypergraph(fullParams.weights, counts.weights, 1);
     // Necessary preprocessing before you can generate hyperpaths
     Hp.computePosteriors(false);
     Hp.fetchPosteriors(false);

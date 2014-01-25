@@ -13,8 +13,11 @@ public class Models {
       this.K = K;
       this.D = D;
       this.L = L;
-
       createHypergraph(null,null,0);
+      fullParams = new ParamsVec(K, featureIndexer);
+      restrictedFeatureIndexer.clear();
+      for(Feature f : featureIndexer.getObjects().subList(0,K))
+        restrictedFeatureIndexer.add(f);
     }
     @Deprecated
     public MixtureModel() {
@@ -66,14 +69,16 @@ public class Models {
     }
 
     public ParamsVec getSampleMarginals(Counter<Example> examples) {
-      ParamsVec marginals = newParams();
+      ParamsVec marginals = (ParamsVec) fullParams.newParams();
       for(Example ex : examples) {
         int y = ex.h[0];
         for( int x : ex.x ) {
           marginals.incr(new UnaryFeature(y, "x="+x), examples.getFraction(ex));
         }
       }
-      return marginals;
+      ParamsVec marginals_ = newParams();
+      marginals_.copyOver(marginals);
+      return marginals_;
     }
 
     @Override
@@ -210,7 +215,7 @@ public class Models {
     }
 
     public ParamsVec getSampleMarginals(Counter<Example> examples) {
-      ParamsVec marginals = newParams();
+      ParamsVec marginals = (ParamsVec) fullParams.newParams();
       for(Example ex : examples) {
         for(int t = 0; t < ex.x.length; t++) {
           int y = ex.h[t]; int x = ex.x[t];
@@ -221,7 +226,9 @@ public class Models {
           }
         }
       }
-      return marginals;
+      ParamsVec marginals_ = newParams();
+      marginals_.copyOver(marginals);
+      return marginals_;
     }
 
     @Override
@@ -476,7 +483,7 @@ public class Models {
     }
 
     public ParamsVec getSampleMarginals(Counter<Example> examples) {
-      ParamsVec marginals = newParams();
+      ParamsVec marginals = (ParamsVec) fullParams.newParams();
       for(Example ex : examples) {
         for(int r = 0; r < height; r++) {
           for(int c = 0; c < width; c++) {
@@ -498,7 +505,9 @@ public class Models {
           }
         }
       }
-      return marginals;
+      ParamsVec marginals_ = newParams();
+      marginals_.copyOver(marginals);
+      return marginals_;
     }
 
     @Override

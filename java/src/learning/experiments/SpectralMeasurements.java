@@ -129,11 +129,15 @@ public class SpectralMeasurements implements Runnable {
       double err;
       int K = estimatedCounts.numGroups();
       int[] perm = new int[K];
-      err = estimatedCounts.computeDiff( trueCounts, perm);
+      Params projectedCounts = trueCounts.copy();
+      projectedCounts.copyOver(estimatedCounts);
+      err = projectedCounts.computeDiff( trueCounts, perm);
       Execution.putOutput("countsError", err);
       LogInfo.logsForce("countsError="+err);
 
-      err = estimatedParams.computeDiff( trueParams, perm );
+      Params projectedParams = trueParams.newParams();
+      projectedParams.copyOver(trueParams);
+      err = estimatedParams.computeDiff( projectedParams, perm );
       Execution.putOutput("paramsError", err);
       LogInfo.logsForce("paramsError="+err);
 

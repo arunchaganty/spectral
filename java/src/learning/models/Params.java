@@ -242,8 +242,10 @@ public abstract class Params implements Serializable {
       int h1 = feature.h;
       double v1 = get(feature);
       for (int h2 = 0; h2 < K; h2++) {
+        try {
         double v2 = that.get(new UnaryFeature(h2, feature.description));
         costs[h1][h2] += Math.abs(v1-v2);
+        } catch(ArrayIndexOutOfBoundsException ignored) {}
       }
     }
 
@@ -258,14 +260,18 @@ public abstract class Params implements Serializable {
       Feature rawFeature = indexer.getObject(j);
       if (rawFeature instanceof BinaryFeature) {
         BinaryFeature feature = (BinaryFeature)rawFeature;
+        try {
         double v1 = this.get(feature);
         double v2 = that.get(new BinaryFeature(perm[feature.h1], perm[feature.h2]));
         cost += Math.abs(v1 - v2);
+        } catch(ArrayIndexOutOfBoundsException ignored) {}
       } else {
         UnaryFeature feature = (UnaryFeature)rawFeature;
+        try {
         double v1 = this.get(feature);
         double v2 = that.get(new UnaryFeature(perm[feature.h], feature.description));
         cost += Math.abs(v1-v2);
+        } catch(ArrayIndexOutOfBoundsException ignored) {}
       }
     }
     return cost;
