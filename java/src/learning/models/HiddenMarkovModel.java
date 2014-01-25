@@ -4,6 +4,7 @@ import fig.basic.Fmt;
 import fig.basic.Indexer;
 import fig.basic.LogInfo;
 import fig.basic.Pair;
+import learning.common.Utils;
 import learning.linalg.FullTensor;
 import learning.linalg.MatrixOps;
 import learning.linalg.RandomFactory;
@@ -111,6 +112,28 @@ public class HiddenMarkovModel extends ExponentialFamilyModel<Example> {
         return value;
       }
     }
+
+    public double[] getPi() {
+      double[] pi = new double[K];
+      for(int h = 0; h < K; h++)
+        pi[h] = weights[pi(h)];
+      return pi;
+    }
+    public double[][] getT() {
+      double[][] T = new double[K][K];
+      for(int h1 = 0; h1 < K; h1++)
+        for(int h2 = 0; h2 < K; h2++)
+          T[h1][h2] = weights[t(h1,h2)];
+      return T;
+    }
+    public double[][] getO() {
+      double[][] O = new double[K][D];
+      for(int h1 = 0; h1 < K; h1++)
+        for(int x = 0; x < D; x++)
+          O[h1][x] = weights[o(h1, x)];
+      return O;
+    }
+
   }
 
   public static Feature piFeature(int h) {
@@ -269,22 +292,10 @@ public class HiddenMarkovModel extends ExponentialFamilyModel<Example> {
 
     double[][][] marginals = new double[T][K][K];
 
-    // T_0
-    {
-      int t = 0;
-      for( int y = 0; y < K; y++ ) {
-        for( int y_ = 0; y_ < K; y_++ ) {
-          marginals[t][y_][y] = params.G(t, y_, y, ex) * backwards[t][y];
-        }
-      }
-      // Normalize
-      double z = MatrixOps.sum(marginals[t]);
-      MatrixOps.scale(marginals[t], 1./z);
-    }
-    for( int t = 1; t < T; t++ ) {
+    for( int t = 0; t < T-1; t++ ) {
       for(int y_ = 0; y_ < K; y_++){
         for(int y = 0; y < K; y++){
-          marginals[t][y_][y] = forwards[t-1][y_] * params.G(t, y_, y, ex) * backwards[t][y];
+          marginals[t][y_][y] = forwards[t][y_] * params.G(t+1, y_, y, ex) * backwards[t+1][y];
         }
       }
       double z = MatrixOps.sum(marginals[t]);
@@ -404,17 +415,17 @@ public class HiddenMarkovModel extends ExponentialFamilyModel<Example> {
     return 0; // Don't you love directed models?
   }
 
-  public double getFullProbability(Params params, Example ex) {
-    if(!(params instanceof Parameters))
+  public double getFullProbability(Params params_, Example ex) {
+    if(!(params_ instanceof Parameters))
       throw new IllegalArgumentException();
-    Parameters parameters = (Parameters) params;
+    Parameters params = (Parameters) params_;
 
     assert( ex.h != null );
     double prob = 1.0;
     int y_ = -1;
     for(int t = 0; t < ex.x.length; t++ ) {
       int y = ex.h[t]; int x = ex.x[t];
-      prob *= parameters.G(t, y_, y, ex);
+      prob *= params.G(t, y_, y, ex);
       y_ = y;
     }
 
@@ -445,28 +456,26 @@ public class HiddenMarkovModel extends ExponentialFamilyModel<Example> {
     double[][][] emissionMarginals = computeEmissionMarginals(parameters, ex);
     double[][][] edgeMarginals = computeEdgeMarginals(parameters, ex);
 
-    double[] nodeTotals = new double[K];
-    for(int t = 0; t < T; t++) {
-      for(int y = 0; y < K; y++) {
-        if(t < T-1)
-          assert MatrixOps.equal(nodeMarginals[t][y], MatrixOps.sum(edgeMarginals[t+1][y])); // only true for a directed model
-        nodeTotals[y] += nodeMarginals[t][y];
-      }
-    }
-
     // This will be a sparse update.
       // Add the emission marginal
-    for(int t = 0; t < T; t++) {
-      for( int y = 0; y < K; y++ ) {
+    for( int y = 0; y < K; y++ ) {
+      double z = 0;
+      double updates = 0.;
+      for(int t = 0; t < T; t++)
+        z += nodeMarginals[t][y];
+      for(int t = 0; t < T; t++) {
         if( ex != null ) {
           int x = ex.x[t];
-          marginals.weights[o(y, x)] += scale * emissionMarginals[t][y][0] / nodeTotals[y];
+          updates += nodeMarginals[t][y] / z;
+          marginals.weights[o(y, x)] += scale * nodeMarginals[t][y] / z;
         } else {
           for( int x = 0; x < D; x++ ) {
-            marginals.weights[o(y, x)] += scale * emissionMarginals[t][y][x] /  nodeTotals[y];
+            updates += emissionMarginals[t][y][x] / z;
+            marginals.weights[o(y, x)] += scale * emissionMarginals[t][y][x] / z;
           }
         }
       }
+      assert MatrixOps.equal(updates, 1.0);
     }
     {
       int t = 0;
@@ -477,10 +486,14 @@ public class HiddenMarkovModel extends ExponentialFamilyModel<Example> {
       }
     }
 
-    for(int t = 0; t < T-1; t++) {
-      for( int y1 = 0; y1 < K; y1++ ) {
-        for( int y2 = 0; y2 < K; y2++ ) {
-          marginals.weights[t(y1, y2)] +=  scale * edgeMarginals[t+1][y1][y2] / nodeTotals[y1];
+    for( int y1 = 0; y1 < K; y1++ ) {
+      for( int y2 = 0; y2 < K; y2++ ) {
+        double z = 0.;
+        for(int t = 0; t < T-1; t++) {
+          z += nodeMarginals[t][y1];
+        }
+        for(int t = 0; t < T-1; t++) {
+          marginals.weights[t(y1, y2)] +=  scale * edgeMarginals[t][y1][y2] / z;
         }
       }
     }
@@ -492,59 +505,41 @@ public class HiddenMarkovModel extends ExponentialFamilyModel<Example> {
    *      - Compute p(h_0) and draw
    *      - drawing from p(h_0) is easy.
    *      - drawing from p(h_1 | h_2) is easy too.
-   * @param params
+   * @param params_
    * @param genRandom
    * @param N
    * @return
    */
   @Override
-  public Counter<Example> drawSamples(Params params, Random genRandom, int N) {
-    if(!(params instanceof Parameters))
+  public Counter<Example> drawSamples(Params params_, Random genRandom, int N) {
+    if(!(params_ instanceof Parameters))
       throw new IllegalArgumentException();
-    Parameters parameters = (Parameters) params;
-    int T = L;
+    Parameters params = (Parameters) params_;
 
-    // Pre-processing for edge and emission marginals.
-    // Compute the edge marginals. This will let you draw the hs.
-    double[][][] edgeMarginals = computeEdgeMarginals(parameters, null);
-    for( int t = 0; t < T; t++ ) {
-      for( int y_= 0; y_ < K; y_++ ) {
-        MatrixOps.normalize(edgeMarginals[t][y_]);
-      }
-    }
-
-    double[][] emissions = new double[K][D];
-    for( int y = 0; y < K; y++ ) {
-      for( int x = 0; x < D; x++ ) {
-        emissions[y][x] = parameters.weights[o(y,x)];
-      }
-      MatrixOps.normalize(emissions[y]);
-    }
+    double[] pi = params.getPi();
+    double[][] T = params.getT();
+    double[][] O = params.getO();
 
     Counter<Example> examples = new Counter<>();
     for( int i = 0; i < N; i++) {
-      examples.add( drawSample(parameters, genRandom, edgeMarginals, emissions ) );
+      examples.add( drawSample(params, genRandom, pi, T, O ) );
     }
 
     return examples;
   }
 
-  public Example drawSample(Parameters parameters, Random genRandom, double[][][] edgeMarginals, double[][] emissions) {
-    int T = L;
-    Example ex = new Example(T);
+  public Example drawSample(Params params, Random genRandom, double[] pi, double[][] T, double[][] O) {
+    Example ex = new Example(L);
     // Draw each $h_t$
-    {
-      int t = 0; int y_ = 0;
-      ex.h[t] = RandomFactory.multinomial(genRandom, edgeMarginals[t][y_]);
-    }
-    for(int t = 1; t < T; t++) {
-      int y_ = ex.h[t-1];
-      ex.h[t] = RandomFactory.multinomial(genRandom, edgeMarginals[t][y_]);
+    ex.h[0] = RandomFactory.multinomial(genRandom, pi);
+    for(int i = 1; i < L; i++) {
+      int y_ = ex.h[i-1];
+      ex.h[i] = RandomFactory.multinomial(genRandom, T[y_]);
     }
     // Draw each x_t
-    for(int t = 0; t < T; t++) {
-      int y = ex.h[t];
-      ex.x[t] = RandomFactory.multinomial(genRandom, emissions[y]);
+    for(int i = 0; i < L; i++) {
+      int y = ex.h[i];
+      ex.x[i] = RandomFactory.multinomial(genRandom, O[y]);
     }
 
     return ex;
@@ -556,43 +551,45 @@ public class HiddenMarkovModel extends ExponentialFamilyModel<Example> {
       for(int t = 0; t < ex.x.length; t++) {
         int y = ex.h[t]; int x = ex.x[t];
         marginals.weights[o(y, x)] += examples.getFraction(ex);
-        if( t > 0 ) {
+        if( t == 0 ) {
+          marginals.weights[pi(y)] += examples.getFraction(ex);
+        } else {
           int y_ = ex.h[t-1];
           marginals.weights[t(y_, y)] += examples.getFraction(ex);
         }
       }
     }
-    return marginals;
-  }
 
-
-  /**
-   * Choose idx
-   */
-  void generateExamples(Example current, int idx, List<Example> examples) {
-    if( idx == current.x.length ) {
-      examples.add(new Example(current.x));
-    } else {
-      // Make a choice for this index
-      current.x[idx] = 0;
-      generateExamples(current, idx+1, examples);
-      current.x[idx] = 1;
-      generateExamples(current, idx+1, examples);
+    // Now normalize...
+    {
+      double z = 0.;
+      for(int y = 0; y < K; y++) z += marginals.weights[pi(y)];
+      for(int y = 0; y < K; y++) marginals.weights[pi(y)] /= z;
     }
-  }
-  List<Example> generateExamples(int L) {
-    List<Example> examples = new ArrayList<>((int)Math.pow(2,L));
-    Example ex = new Example(new int[L]);
-    generateExamples(ex, 0, examples);
-    return examples;
+    for(int y1 = 0; y1 < K; y1++) {
+      {
+        double z = 0.;
+        for(int x = 0; x < D; x++) z += marginals.weights[o(y1,x)];
+        for(int x = 0; x < D; x++) marginals.weights[o(y1,x)] /= z;
+      }
+      {
+        double z = 0.;
+        for(int y2 = 0; y2 < D; y2++) z += marginals.weights[t(y1,y2)];
+        for(int y2 = 0; y2 < D; y2++) marginals.weights[t(y1,y2)] /= z;
+      }
+    }
+
+    return marginals;
   }
 
   @Override
   public Counter<Example> getDistribution(Params params) {
     Counter<Example> examples = new Counter<>();
-    examples.addAll(generateExamples(L));
+    for(int[] h : Utils.enumerate(K, L) )
+      for(int[] x : Utils.enumerate(D, L) )
+        examples.add(new Example(x,h));
     for(Example ex: examples) {
-      examples.set( ex, getProbability(params, ex));
+      examples.set( ex, getFullProbability(params, ex));
     }
     return examples;
   }
