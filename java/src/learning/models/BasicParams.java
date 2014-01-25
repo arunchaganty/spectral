@@ -7,9 +7,9 @@ import learning.models.loglinear.Feature;
  * Basic set of parameters
  */
 public class BasicParams extends Params {
-  final Indexer<Feature> featureIndexer;
-  final double[] weights;
-  final int K;
+  final protected Indexer<Feature> featureIndexer;
+  public final double[] weights;
+  final protected int K;
 
   public BasicParams(final int K, final Indexer<Feature> featureIndexer) {
     this.K = K;

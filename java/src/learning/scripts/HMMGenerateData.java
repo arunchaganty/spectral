@@ -5,7 +5,7 @@ import fig.basic.Option;
 import fig.basic.OptionSet;
 import fig.exec.Execution;
 import learning.data.ParsedCorpus;
-import learning.models.HiddenMarkovModel;
+import learning.models.HiddenMarkovModelOld;
 import org.apache.commons.lang3.StringUtils;
 import org.javatuples.Pair;
 
@@ -43,7 +43,7 @@ public class HMMGenerateData implements Runnable {
 
       // Write out to a file.
       ObjectInputStream in = new ObjectInputStream(new FileInputStream(inputPath));
-      HiddenMarkovModel model = (HiddenMarkovModel) in.readObject();
+      HiddenMarkovModelOld model = (HiddenMarkovModelOld) in.readObject();
       LogInfo.end_track("file-input");
       LogInfo.begin_track("generation");
 

@@ -7,7 +7,7 @@ import learning.linalg.MatrixFactory;
 import learning.linalg.MatrixOps;
 import learning.linalg.RandomFactory;
 import learning.models.BasicParams;
-import learning.models.HiddenMarkovModel;
+import learning.models.HiddenMarkovModelOld;
 import learning.spectral.TensorMethod;
 import learning.spectral.applications.ParameterRecovery;
 import org.ejml.simple.SimpleMatrix;
@@ -32,7 +32,7 @@ public class PairwiseHMMRecovery implements  Runnable {
   public int L = 5;
 
   @OptionSet(name = "genOpts")
-  public HiddenMarkovModel.GenerationOptions options = new HiddenMarkovModel.GenerationOptions();
+  public HiddenMarkovModelOld.GenerationOptions options = new HiddenMarkovModelOld.GenerationOptions();
 
   @Option(gloss="init")
   public Random initRandom = new Random(42);
@@ -64,9 +64,9 @@ public class PairwiseHMMRecovery implements  Runnable {
 
   enum RunMode {
     EM,
-    EMGoodStart,
-    SpectralInitialization,
-    SpectralConvex
+    NaiveSpectral,
+    Spectral,
+    Piecewise
   }
   @Option
   public RunMode mode = RunMode.EM;
@@ -211,7 +211,7 @@ public class PairwiseHMMRecovery implements  Runnable {
     return lhood;
   }
 
-  public double[][] computeLikelihoodHessian(HiddenMarkovModel model, int[][] X) {
+  public double[][] computeLikelihoodHessian(HiddenMarkovModelOld model, int[][] X) {
     final double eps = 1e-6;
     double[] weights = model.params.toVector();
     double[] original = weights.clone();
@@ -248,7 +248,7 @@ public class PairwiseHMMRecovery implements  Runnable {
     return H;
   }
 
-  public boolean fullIdentifiabilityReport(HiddenMarkovModel model, int[][] X) {
+  public boolean fullIdentifiabilityReport(HiddenMarkovModelOld model, int[][] X) {
     int K = model.getStateCount();
     int D = model.getEmissionCount();
 
@@ -264,7 +264,7 @@ public class PairwiseHMMRecovery implements  Runnable {
     return rank == H.length;
   }
 
-  public double[][] getPiecewiseParameters(HiddenMarkovModel model) {
+  public double[][] getPiecewiseParameters(HiddenMarkovModelOld model) {
     int K = model.getStateCount();
     double[][] T = model.params.T;
     double[][] P = new double[K][K];
@@ -290,7 +290,7 @@ public class PairwiseHMMRecovery implements  Runnable {
     return P;
   }
 
-  public SimpleMatrix getPiecewiseHessian(HiddenMarkovModel model, double[][] P, int[][] X)  {
+  public SimpleMatrix getPiecewiseHessian(HiddenMarkovModelOld model, double[][] P, int[][] X)  {
     int K = model.getStateCount();
     int D = model.getEmissionCount();
 
@@ -331,7 +331,7 @@ public class PairwiseHMMRecovery implements  Runnable {
     return new SimpleMatrix(H);
   }
 
-  public boolean piecewiseIdentifiabilityReport(HiddenMarkovModel model, int[][] X) {
+  public boolean piecewiseIdentifiabilityReport(HiddenMarkovModelOld model, int[][] X) {
     begin_track("piecewise-identifiability");
     int K = model.getStateCount();
     int D = model.getEmissionCount();
@@ -381,7 +381,7 @@ public class PairwiseHMMRecovery implements  Runnable {
     return identifiable;
   }
 
-  public double piecewiseLikelihood(HiddenMarkovModel model, double[][] P, double[][] O, int[][] X) {
+  public double piecewiseLikelihood(HiddenMarkovModelOld model, double[][] P, double[][] O, int[][] X) {
     int K = model.getStateCount();
     double lhood = 0.;
     int count = 0;
@@ -405,7 +405,7 @@ public class PairwiseHMMRecovery implements  Runnable {
     return lhood;
   }
 
-  public SimpleMatrix piecewiseLikelihoodGradient(HiddenMarkovModel model, double[][] P, double[][] O, int[][] X) {
+  public SimpleMatrix piecewiseLikelihoodGradient(HiddenMarkovModelOld model, double[][] P, double[][] O, int[][] X) {
     int K = model.getStateCount();
     int count = 0;
     double[][] gradient = new double[P.length][P.length];
@@ -431,7 +431,7 @@ public class PairwiseHMMRecovery implements  Runnable {
     return new SimpleMatrix(gradient);
   }
 
-  public double[][] recoverP(HiddenMarkovModel model, int[][]X, double[][] O) {
+  public double[][] recoverP(HiddenMarkovModelOld model, int[][]X, double[][] O) {
     LogInfo.begin_track("recover-P");
     int K = model.getStateCount();
     int D = model.getEmissionCount();
@@ -503,7 +503,7 @@ public class PairwiseHMMRecovery implements  Runnable {
     return P;
   }
 
-  public double[][] recoverT(HiddenMarkovModel model, int[][] X, double[][] O) {
+  public double[][] recoverT(HiddenMarkovModelOld model, int[][] X, double[][] O) {
     LogInfo.begin_track("recover-T");
     int K = model.getStateCount();
     int D = model.getEmissionCount();
@@ -541,7 +541,7 @@ public class PairwiseHMMRecovery implements  Runnable {
     return T;
   }
 
-  public double[] recoverPi(HiddenMarkovModel model, int[][] X, double[][] O) {
+  public double[] recoverPi(HiddenMarkovModelOld model, int[][] X, double[][] O) {
     LogInfo.begin_track("recover-pi");
     int K = model.getStateCount();
     int D = model.getEmissionCount();
@@ -551,51 +551,22 @@ public class PairwiseHMMRecovery implements  Runnable {
     if(initExact) {
       System.arraycopy(model.params.pi, 0, pi, 0, K);
     } else {
-      pi = RandomFactory.rand_(initRandom, K);
-      MatrixOps.abs(pi);
-      MatrixOps.scale(pi, 1./MatrixOps.sum(pi));
+      // Compute via ML
+      SimpleMatrix P0 = new SimpleMatrix(1,D);
+      for(int[] x : X) {
+        P0.set(x[0], P0.get(x[0]) + 1);
+      }
+      P0 = P0.scale(1./X.length);
+      assert(MatrixOps.equal(P0.elementSum(), 1.0));
+
+      SimpleMatrix O_ = new SimpleMatrix(O);
+
+      SimpleMatrix pi_ = P0.mult(O_.pseudoInverse());
+      pi_ = MatrixOps.projectOntoSimplex( pi_.transpose(), smoothMeasurements );
+
+      pi = MatrixFactory.toVector(pi_);
     }
     assert( MatrixOps.equal(MatrixOps.sum(pi), 1.0) );
-
-    double[] pi_ = new double[K];
-    boolean done = false;
-    double lhood_old = Double.NEGATIVE_INFINITY;
-    for(int iter = 0; iter < 100 && !done; iter++){
-      // Compute marginals
-      double count = 0;
-      double lhood = 0.;
-      for(int[] x : X) {
-        int x1 = x[0];
-        double Z = 0.;
-        for(int h1 = 0; h1 < K; h1++)
-          Z += pi[h1] * O[h1][x1];
-
-        count++;
-
-        lhood += (Math.log(Z) - lhood)/count;
-        for(int h1 = 0; h1 < K; h1++)
-          pi_[h1] += ((pi[h1] * O[h1][x1] / Z) - pi_[h1]) / count;
-      }
-
-      // Update
-      double diff = 0.;
-      for(int h1 = 0; h1 < K; h1++) {
-        diff += Math.abs(pi[h1] - pi_[h1]);
-        pi[h1] = pi_[h1];
-      }
-      assert( MatrixOps.equal(MatrixOps.sum(pi), 1.0 ));
-
-      assert(lhood > lhood_old);
-      lhood_old = lhood;
-
-//      LogInfo.dbg(outputList(
-//              "iter", iter,
-//              "lhood", lhood,
-//              "diff", diff
-//      ));
-
-      done = diff < 1e-3;
-    }
 
     {
       SimpleMatrix piHat = MatrixFactory.fromVector(pi);
@@ -611,7 +582,7 @@ public class PairwiseHMMRecovery implements  Runnable {
     return pi;
   }
 
-  public double[][] recoverO(HiddenMarkovModel model, int[][] X) {
+  public Pair<double[][],double[][]> recoverOT(HiddenMarkovModelOld model, int[][] X) {
     // -- Compose moments
     int K = model.getStateCount();
     int D = model.getEmissionCount();
@@ -619,20 +590,35 @@ public class PairwiseHMMRecovery implements  Runnable {
     // Now factorize!
     begin_track("recover-O");
     double[][] O;
-    SimpleMatrix O_;
+    double[][] T;
+    SimpleMatrix O_, T_;
     if(initExactO) {
       O = model.params.O.clone();
       O_ = new SimpleMatrix(O).transpose();
+      T = model.params.T.clone();
+      T_ = new SimpleMatrix(T).transpose();
     } else {
       FullTensor momentsO = computeMomentsO(D, X);
       TensorMethod tensorMethod = new TensorMethod();
       Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, SimpleMatrix> params = tensorMethod.recoverParametersAsymmetric(K, momentsO);
 
+      // Aligned by K
       O_ = params.getValue3();
-      // Project onto simplex
-      //    SimpleMatrix OT = params.getValue2();
+      SimpleMatrix OT = params.getValue2();
+
       O_ = MatrixOps.projectOntoSimplex(O_, smoothMeasurements);
-      O = MatrixFactory.toArray(O_.transpose());
+      T_ = O_.pseudoInverse().mult(OT);
+      O_ = O_.transpose();
+
+      T_ = MatrixOps.projectOntoSimplex(T_, smoothMeasurements).transpose();
+
+      O = MatrixFactory.toArray(O_);
+      T = MatrixFactory.toArray(T_);
+
+      // Transpose these because of stupid convention.
+      O_ = O_.transpose();
+      T_ = T_.transpose();
+
       assert O.length == K;
       assert O[0].length == D;
     }
@@ -643,28 +629,48 @@ public class PairwiseHMMRecovery implements  Runnable {
             "\nO^", O_,
             "\nO*", model.getO()
     ));
+    log(outputList(
+            "T-error", MatrixOps.diff(T_, model.getT()),
+            "\nT^", T_,
+            "\nT*", model.getT()
+    ));
 
     end_track("recover-O");
 
-    return O;
+    return Pair.newPair(O,T);
   }
 
-  public HiddenMarkovModel spectralConvexRecovery(HiddenMarkovModel model, int[][] X) {
+  public HiddenMarkovModelOld piecewiseRecovery(HiddenMarkovModelOld model, int[][] X) {
     // -- Compose moments
     int K = model.getStateCount();
     int D = model.getEmissionCount();
 
-    double[][] O = recoverO(model, X);
+    double[][] O = recoverOT(model, X).getFirst();
 
     // Compute pi with maximum likelihood.
     double[] pi = recoverPi(model, X, O);
 
     double[][] T = recoverT(model, X, O);
 
-    return new HiddenMarkovModel(new HiddenMarkovModel.Params(pi, T, O));
+    return new HiddenMarkovModelOld(new HiddenMarkovModelOld.Params(pi, T, O));
   }
 
-  public void sanityCheck(HiddenMarkovModel model, int[][] X) {
+  public HiddenMarkovModelOld spectralRecovery(HiddenMarkovModelOld model, int[][] X) {
+    // -- Compose moments
+    int K = model.getStateCount();
+    int D = model.getEmissionCount();
+
+    Pair<double[][],double[][]> OT = recoverOT(model, X);
+    double[][] O = OT.getFirst();
+    double[][] T = OT.getSecond();
+
+    // Compute pi with maximum likelihood.
+    double[] pi = recoverPi(model, X, O);
+
+    return new HiddenMarkovModelOld(new HiddenMarkovModelOld.Params(pi, T, O));
+  }
+
+  public void sanityCheck(HiddenMarkovModelOld model, int[][] X) {
     int K = model.getStateCount();
     double[][] O = model.params.O;
     double[][] P1 = recoverP(model, X, O);
@@ -732,7 +738,7 @@ public class PairwiseHMMRecovery implements  Runnable {
     int D = options.emissionCount;
     int K = options.stateCount;
 
-    HiddenMarkovModel model = HiddenMarkovModel.generate(options);
+    HiddenMarkovModelOld model = HiddenMarkovModelOld.generate(options);
     log(model.getPi());
     log(model.getT());
     log(model.getO());
@@ -752,8 +758,9 @@ public class PairwiseHMMRecovery implements  Runnable {
       Execution.putOutput("O-sigmak", sigma.get(K - 1, K - 1));
       Execution.putOutput("O-K", sigma.get(0, 0) / sigma.get(K - 1, K - 1));
     }
+    // TODO: Make this less sucky
 //    fullIdentifiabilityReport(model, X);
-    piecewiseIdentifiabilityReport(model, X);
+//    piecewiseIdentifiabilityReport(model, X);
 
     log(outputList(
             "true-likelihood", model.likelihood(X),
@@ -761,25 +768,21 @@ public class PairwiseHMMRecovery implements  Runnable {
     ));
 
     // Process via EM or Spectral
-    HiddenMarkovModel model_;
+    HiddenMarkovModelOld model_;
     switch(mode) {
       case EM: {
-        model_ = new HiddenMarkovModel(
-                HiddenMarkovModel.Params.uniformWithNoise(initRandom, K, D, initRandomNoise));
+        model_ = new HiddenMarkovModelOld(
+                HiddenMarkovModelOld.Params.uniformWithNoise(initRandom, K, D, initRandomNoise));
         runEM = true; // Regardless of what you said before.
       } break;
-      case EMGoodStart: {
-        model_ = new HiddenMarkovModel( model.getParams().clone() );
-        runEM = true; // Regardless of what you said before.
-      } break;
-      case SpectralInitialization: {
+      case NaiveSpectral: {
         model_ = ParameterRecovery.recoverHMM(K, (int)N, model, smoothMeasurements);
       } break;
-      case SpectralConvex: {
-//        sanityCheck(model, X);
-        model_ = spectralConvexRecovery(model, X);
-//        if(true)
-//          return;
+      case Spectral: {
+        model_ = spectralRecovery(model, X);
+      } break;
+      case Piecewise: {
+        model_ = piecewiseRecovery(model, X);
       } break;
       default:
         throw new RuntimeException("Not implemented");

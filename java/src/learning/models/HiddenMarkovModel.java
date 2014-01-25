@@ -1,891 +1,618 @@
-/**
- * learning.model
- * Arun Chaganty <chaganty@stanford.edu
- *
- */
 package learning.models;
 
-import fig.basic.*;
-import fig.prob.Multinomial;
-import learning.Misc;
+import fig.basic.Fmt;
+import fig.basic.Indexer;
+import fig.basic.LogInfo;
+import fig.basic.Pair;
+import learning.linalg.FullTensor;
+import learning.linalg.MatrixOps;
+import learning.linalg.RandomFactory;
+import learning.models.BasicParams;
+import learning.models.ExponentialFamilyModel;
+import learning.models.Params;
 import learning.common.Counter;
-import learning.data.HasExactMoments;
-import learning.data.HasSampleMoments;
-import learning.linalg.*;
-import learning.em.EMOptimizable;
-
 import learning.models.loglinear.BinaryFeature;
 import learning.models.loglinear.Example;
 import learning.models.loglinear.Feature;
 import learning.models.loglinear.UnaryFeature;
-import org.javatuples.*;
 import org.ejml.simple.SimpleMatrix;
-import org.ejml.data.DenseMatrix64F;
-import org.javatuples.Pair;
 
-import java.io.FileOutputStream;
-import java.io.ObjectOutputStream;
-import java.io.IOException;
-import java.io.Serializable;
-
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
-import java.util.Arrays;
 
 /**
- * A hidden markov model.
+ * Undirected hidden Markov model
  */
-public class HiddenMarkovModel implements EMOptimizable, Serializable, HasExactMoments, HasSampleMoments {
-  /**
-   * Compute exact moments from your parameters.
-   * @return - exact moments
-   */
-  @Override
-  public Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> computeExactMoments() {
-    SimpleMatrix pi = getPi();
-    SimpleMatrix dpi = MatrixFactory.diag(pi);
-    SimpleMatrix O = getO();
-    SimpleMatrix T = getT();
+public class HiddenMarkovModel extends ExponentialFamilyModel<Example> {
+  public int K;
+  public int D;
+  public int L;
 
-    SimpleMatrix w = T.mult(pi);
-    SimpleMatrix dw = MatrixFactory.diag(w);
-
-    // M_1 = O \diag( \pi ) T^T \diag(T\pi)^{-1}
-    SimpleMatrix M1 =
-            O.mult(dpi).mult(T.transpose())
-                    .mult(dw.invert());
-    SimpleMatrix M2 = O;
-    SimpleMatrix M3 = O.mult(T);
-
-    return MixtureOfGaussians.computeExactMoments(w, M1, M2, M3);
+  // TODO: Support initial state
+  public int pi(int h) {
+    return h;
+  }
+  // Middle K*K features are transitions
+  public int t(int h1, int h2) {
+    return K + h1 * K + h2;
+  }
+  // Last K*D features are observations
+  public int o(int h, int x) {
+    return K + K * K + h * D + x;
   }
 
-  public Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, SimpleMatrix> computeMixtureViews() {
-    SimpleMatrix pi = getPi();
-    SimpleMatrix dpi = MatrixFactory.diag(pi);
-    SimpleMatrix O = getO();
-    SimpleMatrix T = getT();
-
-    SimpleMatrix w = T.mult(pi);
-    SimpleMatrix dw = MatrixFactory.diag(w);
-
-    // M_1 = O \diag( \pi ) T^T \diag(T\pi)^{-1}
-    SimpleMatrix M1 =
-        O.mult(dpi).mult(T.transpose())
-            .mult(dw.invert());
-    SimpleMatrix M2 = O;
-    SimpleMatrix M3 = O.mult(T);
-
-    return Quartet.with(w, M1, M2, M3);
-  }
-
-
-  @Override
-  public Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> computeSampleMoments(int N) {
-    // Generate this much data and compute moments
-    SimpleMatrix P13 = new SimpleMatrix(getEmissionCount(), getEmissionCount());
-    SimpleMatrix P12 = new SimpleMatrix(getEmissionCount(), getEmissionCount());
-    SimpleMatrix P32 = new SimpleMatrix(getEmissionCount(), getEmissionCount());
-    FullTensor P123 = new FullTensor(getEmissionCount(), getEmissionCount(), getEmissionCount());
-
-    for(int i = 0; i < N; i++) {
-      int[] words = sample(3);
-      // Update counts in P.
-      P13.set(words[0], words[2], P13.get(words[0], words[2]) + 1);
-      P12.set(words[0], words[1], P12.get(words[0], words[1]) + 1);
-      P32.set(words[2], words[1], P32.get(words[2], words[1]) + 1);
-      P123.X[words[0]][words[1]][words[2]] += 1;
+  public class Parameters extends BasicParams {
+    public Parameters(int K, Indexer<Feature> featureIndexer) {
+      super(K, featureIndexer);
     }
 
-    // Normalize
-    P13 = P13.scale(1.0/P13.elementSum());
-    P12 = P12.scale(1.0/P12.elementSum());
-    P32 = P32.scale(1.0/P32.elementSum());
-    P123 = P123.scale(1.0/P123.elementSum());
+    @Override
+    public void initRandom(Random random, double noise) {
+      super.initRandom(random, noise);
+      // Now normalize appropriately
 
-    assert( MatrixOps.equal( P13.elementSum(), 1.0 ) );
-    assert( MatrixOps.equal( P12.elementSum(), 1.0 ) );
-    assert( MatrixOps.equal( P32.elementSum(), 1.0 ) );
-    assert( MatrixOps.equal( P123.elementSum(), 1.0 ) );
+      // - pi
+      {
+        double z = 0.;
+        for(int h = 0; h < K; h++) z += Math.abs(weights[pi(h)]);
+        for(int h = 0; h < K; h++) weights[pi(h)] = Math.abs(weights[pi(h)])/z;
+      }
 
-    return Quartet.with(P13, P12, P32, P123);
+      // - T
+      for(int h1 = 0; h1 < K; h1++) {
+        double z = 0.;
+        for(int h2 = 0; h2 < K; h2++) z += Math.abs(weights[t(h1,h2)]);
+        for(int h2 = 0; h2 < K; h2++) weights[t(h1,h2)] = Math.abs(weights[t(h1,h2)])/z;
+      }
+
+      // - O
+      for(int h1 = 0; h1 < K; h1++) {
+        double z = 0.;
+        for(int x = 0; x < D; x++) z += Math.abs(weights[o(h1,x)]);
+        for(int x = 0; x < D; x++) weights[o(h1, x)] = Math.abs(weights[o(h1, x)])/z;
+      }
+    }
+
+    public boolean isValid() {
+      // - pi
+      {
+        double z = 0.;
+        for(int h = 0; h < K; h++) z += Math.abs(weights[pi(h)]);
+        if(!MatrixOps.equal(z,1.0)) return false;
+      }
+
+      // - T
+      for(int h1 = 0; h1 < K; h1++) {
+        double z = 0.;
+        for(int h2 = 0; h2 < K; h2++) z += Math.abs(weights[t(h1,h2)]);
+        if(!MatrixOps.equal(z,1.0)) return false;
+      }
+
+      // - O
+      for(int h1 = 0; h1 < K; h1++) {
+        double z = 0.;
+        for(int x = 0; x < D; x++) z += Math.abs(weights[o(h1,x)]);
+        if(!MatrixOps.equal(z,1.0)) return false;
+      }
+
+      return true;
+    }
+
+    public double G(int t, int y_, int y, Example ex) {
+      double value = 0.;
+      if( ex != null ) {
+        value = weights[o(y, ex.x[t])];
+        value *=  (t > 0) ? weights[t(y_, y)] : weights[pi(y)];
+        return value;
+      } else {
+        // No contribution from O.
+        value = (t > 0) ? weights[t(y_, y)] : weights[pi(y)];
+        return value;
+      }
+    }
   }
 
-  /**
-   * Create a ParamsVec out of this.
-   * @return
-   */
-  public Feature piFeature(int h) {
+  public static Feature piFeature(int h) {
     return new UnaryFeature(h, "pi");
   }
-  public Feature oFeature(int h, int x) {
+  public static Feature oFeature(int h, int x) {
     return new UnaryFeature(h, "x="+x);
   }
-  public Feature tFeature(int h_, int h) {
+  public static Feature tFeature(int h_, int h) {
     return new BinaryFeature(h_, h);
   }
 
-  Indexer<Feature> getFeatureIndexer() {
-    Indexer<Feature> featureIndexer = new Indexer<>();
-    int K = getStateCount();
-    int D = getEmissionCount();
+  final Indexer<Feature> featureIndexer;
+  public HiddenMarkovModel(int K, int D, int L) {
+    this.K = K;
+    this.D = D;
+    this.L = L;
 
-    int idx = 0;
-    for( int h = 0; h < K; h++ ) {
-      assert( idx == params.index_pi(h) );
-      featureIndexer.getIndex(piFeature(h));
-      idx++;
+
+    // Careful - this must follow the same ordering as the index numbers
+    this.featureIndexer = new Indexer<>();
+    for(int h = 0; h < K; h++) {
+      featureIndexer.add(piFeature(h));
+      assert featureIndexer.indexOf( piFeature(h) )  == pi(h);
     }
-    for( int h_ = 0; h_ < K; h_++ ) {
-      for( int h = 0; h < K; h++ ) {
-        assert( idx == params.index_T(h_, h) );
-        featureIndexer.getIndex(tFeature(h_,h));
-        idx++;
+    for(int h1 = 0; h1 < K; h1++) {
+      for(int h2 = 0; h2 < K; h2++) {
+        featureIndexer.add(tFeature(h1, h2));
+        assert featureIndexer.indexOf( tFeature(h1, h2) )  == t(h1,h2);
       }
     }
-    for( int h = 0; h < K; h++ ) {
-      for( int x = 0; x < D; x++ ) {
-        assert( idx == params.index_O(h, x) );
-        featureIndexer.getIndex(oFeature(h,x));
-        idx++;
+    for(int h = 0; h < K; h++) {
+      for(int x = 0; x < D; x++) {
+        featureIndexer.add(oFeature(h, x));
+        assert featureIndexer.indexOf(oFeature(h, x)) == o(h, x);
       }
     }
-    featureIndexer.lock();
-    return featureIndexer;
   }
 
-
-  public BasicParams toParams() {
-    int K = getStateCount();
-    BasicParams out = new BasicParams(K, getFeatureIndexer());
-    params.toVector(out.toArray());
-    return out;
+  @Override
+  public int getK() {
+    return K;
   }
 
-//  public Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> computeSampleMoments(int N) {
-//    // Generate this much data and compute moments
-//    SimpleMatrix P12 = new SimpleMatrix(getEmissionCount(), getEmissionCount());
-//    SimpleMatrix P13 = new SimpleMatrix(getEmissionCount(), getEmissionCount());
-//    SimpleMatrix P23 = new SimpleMatrix(getEmissionCount(), getEmissionCount());
-//    FullTensor P132 = new FullTensor(getEmissionCount(), getEmissionCount(), getEmissionCount());
-//
-//    for(int i = 0; i < N; i++) {
-//      int[] words = sample(3);
-//      // Update counts in P.
-//      P12.set(words[0], words[1], P12.get(words[0], words[1]) + 1);
-//      P13.set(words[0], words[2], P13.get(words[0], words[2]) + 1);
-//      P23.set(words[1], words[2], P23.get(words[1], words[2]) + 1);
-//      P132.X[words[0]][words[2]][words[1]] += 1;
-//    }
-//
-//    // Normalize
-//    P13 = P13.scale(1.0/P13.elementSum());
-//    P12 = P12.scale(1.0/P12.elementSum());
-//    P23 = P23.scale(1.0/P23.elementSum());
-//    P132 = P132.scale(1.0/P132.elementSum());
-//
-//    return Quartet.with(P12, P13, P23, P132);
-//  }
+  @Override
+  public int getD() {
+    return D;
+  }
+
+  @Override
+  public int numFeatures() {
+    return K + K*K + K*D;
+  }
+
+  @Override
+  public Parameters newParams() {
+    return new Parameters(K, featureIndexer);
+  }
 
   /**
-   * Params stores the parameters for the HMM model.
+   * Forward_t(y_{t}) = \sum_{y_{t-1}} G_t(y_{t-1}, y_t; x, \theta) Forward{t-1}(y_{t-1}).
+   * TODO: No matter of threadsafe.
    */
-	public static class Params implements Serializable {
-		private static final long serialVersionUID = 2704243416017266665L;
+  protected class IntermediateState {
+    boolean use = false;
+    Pair<Double, double[][]> forward;
+    double[][] backward;
 
-    public double[] pi;
-    public double[][] T;
-    public double[][] O;
-    public int[][] map = null;
-    
-    public int stateCount;
-    public int emissionCount;
-
-		public Params(int stateCount, int emissionCount) {
-			this.stateCount = stateCount;
-			this.emissionCount = emissionCount;
-			pi = new double[stateCount];
-			T = new double[stateCount][stateCount];
-			O = new double[stateCount][emissionCount];
-		}
-
-		public Params(double[] pi, double[][] T, double[][] O) {
-      assert( T.length == T[0].length );
-			this.stateCount = T.length;
-      assert( pi.length == stateCount );
-      assert( O.length == stateCount );
-			this.emissionCount = O[0].length;
-      // Check if the parameters are valid!
-      assert( MatrixOps.equal( MatrixOps.sum( pi ),1.0 ) );
-      for( int s = 0; s < stateCount; s++ ) {
-        assert( MatrixOps.equal( MatrixOps.sum( T[s] ),1.0 ) );
-        assert( MatrixOps.equal( MatrixOps.sum( O[s] ),1.0 ) );
-      }
-
-			this.pi = pi;
-			this.T = T;
-			this.O = O;
-		}
-
-    public boolean isValid() {
-      boolean valid = true;
-      double sum;
-      sum = MatrixOps.sum(pi);
-      valid &= MatrixOps.equal(sum, 1.0, 1e-2);
-      assert valid;
-      for( int s = 0; s < stateCount; s++ ) {
-        sum = MatrixOps.sum(T[s]);
-        valid &=  MatrixOps.equal(sum, 1.0, 1e-2);
-        assert valid;
-        sum = MatrixOps.sum(O[s]);
-        valid &=  MatrixOps.equal(sum, 1.0, 1e-2);
-        assert valid;
-      }
-
-      return valid;
+    void start() {
+      use = true;
+      forward = null;
+      backward = null;
     }
-		
-		@Override
-		public Params clone() {
-			Params p = new Params(stateCount, emissionCount);
-			p.pi = pi.clone();
-			p.T = T.clone();
-			p.O = O.clone();
-			
-			return p;
-		}
+    void stop() {
+      use = false;
+      forward = null;
+      backward = null;
+    }
+  }
+  protected final IntermediateState intermediateState = new IntermediateState();
 
-    public void updateFromVector(double[] weights) {
-      assert( weights.length == numFeatures() );
-      int idx = 0;
-      for( int i = 0; i < stateCount; i++ ) {
-        assert( idx == index_pi(i) );
-        pi[i] = weights[idx++];
-      }
-      for( int i = 0; i < stateCount; i++ ) {
-        for( int j = 0; j < stateCount; j++ ) {
-          assert( idx == index_T(i,j) );
-          T[i][j] = weights[idx++];
+  public Pair<Double, double[][]> forward(Parameters params, Example ex) {
+    if(intermediateState.use && intermediateState.forward != null) return intermediateState.forward;
+    int T = (ex != null) ? ex.x.length : L;
+    double[][] forwards = new double[T][K];
+    double A = 0; // Collected constants
+
+    // Forward_0[k] = theta[BinaryFeature(-1, 0)];
+    {
+      // TODO: Support arbitrary initial features`
+      int t = 0;
+      for( int y = 0; y < K; y++ )
+        forwards[t][y] = params.G(t, -1, y, ex);
+      // Normalize
+      double z = MatrixOps.sum(forwards[t]);
+      MatrixOps.scale(forwards[t],1./z);
+      A += Math.log(z);
+    }
+
+    // Forward_t[k] = \sum y_{t-1} Forward_[t-1][y_t-1] G(y_{t-1},y_t)
+    for(int t = 1; t < T; t++) {
+      for(int y = 0; y < K; y++){
+        for(int y_ = 0; y_ < K; y_++) {
+          forwards[t][y] += forwards[t-1][y_] * params.G(t, y_, y, ex);
         }
       }
-      for( int i = 0; i < stateCount; i++ ) {
-        for( int j = 0; j < emissionCount; j++ ) {
-           assert( idx == index_O(i,j) );
-           O[i][j] = weights[idx++];
+      // Normalize
+      double z = MatrixOps.sum(forwards[t]);
+      MatrixOps.scale(forwards[t],1./z);
+      A += Math.log(z);
+    }
+    return intermediateState.forward = Pair.newPair(A, forwards);
+  }
+
+  public double[][] backward(Parameters params, Example ex) {
+    if(intermediateState.use && intermediateState.backward != null) return intermediateState.backward;
+
+    int T = (ex != null) ? ex.x.length : L;
+    double[][] backwards = new double[T][K];
+
+    // Backward_{T-1}[k] = 1.
+    {
+      // TODO: Support arbitrary initial features`
+      int t = T-1;
+      for( int y = 0; y < K; y++ )
+        backwards[t][y] = 1.;
+      // Normalize
+      double z = MatrixOps.sum(backwards[t]);
+      MatrixOps.scale(backwards[t],1./z);
+    }
+
+    // Backward_{T-1}[k] = \sum y_{t} Backward_[t][y_t] G(y_{t-1},y_t)
+    for(int t = T-2; t >= 0; t--) {
+      for(int y_ = 0; y_ < K; y_++) {
+          for(int y = 0; y < K; y++){
+          backwards[t][y_] += backwards[t+1][y] * params.G(t+1, y_, y, ex);
         }
       }
-      assert( idx == numFeatures() );
-      assert( isValid() );
+      // Normalize
+      double z = MatrixOps.sum(backwards[t]);
+      MatrixOps.scale(backwards[t],1./z);
     }
-    public static Params fromVector(int stateCount, int emissionCount, double[] weights) {
-      Params params = new Params( stateCount, emissionCount );
-      int numFeatures = params.numFeatures();
-      params.updateFromVector( weights );
 
-      return params;
-    }
-    public void toVector(double[] weights) {
-      int idx = 0;
-      for( int i = 0; i < stateCount; i++ ) {
-        //assert( idx == index_pi(i) );
-        weights[idx++] = pi[i];
-      }
-      for( int i = 0; i < stateCount; i++ ) {
-        for( int j = 0; j < stateCount; j++ ) {
-          // assert( idx == index_T(i,j) );
-          weights[idx++] = T[i][j];
+    return intermediateState.backward = backwards;
+  }
+
+  /**
+   * Return p(y_{t-1}, y_t) 0 \le t \le T-1. The base case of p(y_{-1}, y_0) is when
+   * y_{-1} is the -BEGIN- tag; in other words the initial probability of y_{-1}.
+   */
+  public double[][][] computeEdgeMarginals(Parameters params, Example ex) {
+    int T = (ex != null) ? ex.x.length : L;
+
+    double[][] forwards = forward(params,ex).getSecond();
+    double[][] backwards = backward(params,ex);
+
+    double[][][] marginals = new double[T][K][K];
+
+    // T_0
+    {
+      int t = 0;
+      for( int y = 0; y < K; y++ ) {
+        for( int y_ = 0; y_ < K; y_++ ) {
+          marginals[t][y_][y] = params.G(t, y_, y, ex) * backwards[t][y];
         }
       }
-      for( int i = 0; i < stateCount; i++ ) {
-        for( int j = 0; j < emissionCount; j++ ) {
-          //assert( idx == index_O(i,j) );
-          weights[idx++] = O[i][j];
+      // Normalize
+      double z = MatrixOps.sum(marginals[t]);
+      MatrixOps.scale(marginals[t], 1./z);
+    }
+    for( int t = 1; t < T; t++ ) {
+      for(int y_ = 0; y_ < K; y_++){
+        for(int y = 0; y < K; y++){
+          marginals[t][y_][y] = forwards[t-1][y_] * params.G(t, y_, y, ex) * backwards[t][y];
         }
       }
-      assert( idx == numFeatures() );
-    }
-		public double[] toVector() {
-      double[] weights = new double[ numFeatures() ];
-      toVector(weights);
-      return weights;
-		}
-    public int numFeatures() {
-      return stateCount +
-             stateCount * stateCount +
-             stateCount * emissionCount;
-    }
-    public int index_pi(int h){ 
-      return h; 
-    }
-    public int index_T(int h, int h_){ 
-      return stateCount + 
-        stateCount * h + h_; 
-    }
-    public int index_O(int h, int d){ 
-      return stateCount + 
-        stateCount * stateCount + 
-        emissionCount * h + d; 
-    }
-		
-		public static Params uniformWithNoise(Random rand, int stateCount, int emissionCount, double noise) {
-			Params p = new Params(stateCount, emissionCount);
-			
-			// Initialize each as uniform plus noise 
-			// Pi
-			for(int i = 0; i < stateCount; i++) {
-				p.pi[i] = 1.0/stateCount;
-				// Dividing the noise by the sqrt(size) so that the sum noise is as given
-				p.pi[i] += 0.5 + rand.nextGaussian() * Math.sqrt(noise/stateCount);
-				// Ensure positive
-				p.pi[i] = Math.abs( p.pi[i] );
-			}
-			MatrixOps.normalize( p.pi );
-			
-			// T
-			for(int i = 0; i < stateCount; i++) {
-				for(int j = 0; j < stateCount; j++) {
-					p.T[i][j] = 1.0/stateCount;
-					// Dividing the noise by the sqrt(size) so that the sum noise is as given
-					p.T[i][j] += rand.nextGaussian() * Math.sqrt(noise/stateCount);
-					// Ensure positive
-					p.T[i][j] = Math.abs( p.T[i][j] );
-				}
-				MatrixOps.normalize( p.T[i] );
-			}
-			
-			// O
-			for(int i = 0; i < stateCount; i++) {
-				for(int j = 0; j < emissionCount; j++) {
-					p.O[i][j] = 1.0/emissionCount;
-					// Dividing the noise by the sqrt(size) so that the sum noise is as given
-					p.O[i][j] += rand.nextGaussian() * Math.sqrt(noise/emissionCount);
-					// Ensure positive
-					p.O[i][j] = Math.abs( p.O[i][j] );
-				}
-				MatrixOps.normalize( p.O[i] );
-			}
-			return p;
-		}
-		public static Params fromCounts(int stateCount, int emissionCount, int[][] X, int[][] Z, boolean shouldSmooth ) {
-			// Normalize each pi, X and Z
-			int N = X.length;
-			
-			Params p = new Params(stateCount, emissionCount);
-			
-			// For each sequence in X and Z, increment those counts
-			for( int i = 0; i < N; i++ ) {
-				for( int j = 0; j < Z[i].length; j++ )
-				{
-					p.pi[Z[i][j]] += 1;
-					if( j < Z[i].length - 1)
-					{
-						p.T[Z[i][j]][Z[i][j+1]] += 1;
-					}
-					p.O[Z[i][j]][X[i][j]] += 1;
-				}
-			}
-			
-			// Add a unit count to everything
-			if( shouldSmooth ) {
-				for(int i = 0; i < stateCount; i++ ) {
-					p.pi[i] += 1;
-					for( int j = 0; j < stateCount; j++ ) p.T[i][j] += 1;
-					for( int j = 0; j < emissionCount; j++ ) p.O[i][j] += 1;
-				}
-			}
-			
-			// normalize
-			MatrixOps.normalize( p.pi );
-			for( int i = 0; i < stateCount; i++ ) {
-				MatrixOps.normalize( p.O[i] );
-				MatrixOps.normalize( p.T[i] );
-			}
-			
-			return p;
-		}
-	}
-  public static class GenerationOptions {
-    @Option( gloss = "Number of hidden states" )
-    public int stateCount = 2;
-    @Option( gloss = "Dimension of observed variables" )
-    public int emissionCount = 3;
-    @Option( gloss = "Generator for parameters" )
-    public Random paramRandom = new Random(1);
-    @Option( gloss = "Generator for data" )
-    public Random genRandom = new Random(1);
-
-    @Option( gloss = "Noise parameter" )
-    public double noise = 1.0;
-
-    public GenerationOptions() {
+      double z = MatrixOps.sum(marginals[t]);
+      MatrixOps.scale(marginals[t], 1./z);
     }
 
-    public GenerationOptions(int stateCount, int emissionCount) {
-      this.stateCount = stateCount;
-      this.emissionCount = emissionCount;
+    return marginals;
+  }
+  public double[][] computeHiddenNodeMarginals(Parameters params, Example ex) {
+    int T = (ex != null) ? ex.x.length : L;
+
+    double[][] forwards = forward(params,ex).getSecond();
+    double[][] backwards = backward(params,ex);
+
+    double[][] marginals = new double[T][K];
+
+    for( int t = 0; t < T; t++) {
+      for( int y = 0; y < K; y++) {
+        marginals[t][y] += forwards[t][y] * backwards[t][y];
+      }
+      // Normalize
+      double z = MatrixOps.sum(marginals[t]);
+      MatrixOps.scale(marginals[t], 1./z);
     }
 
-    public GenerationOptions(int stateCount, int emissionCount, double noise) {
-      this.stateCount = stateCount;
-      this.emissionCount = emissionCount;
-      this.noise = noise;
+    return marginals;
+  }
+  public double[][][] computeEmissionMarginals(Parameters params, Example ex) {
+    int T = (ex != null) ? ex.x.length : L;
+
+    double[][] nodes = computeHiddenNodeMarginals(params, ex);
+
+    double[][][] marginals;
+    if(ex != null) {
+      marginals = new double[T][K][1];
+    } else {
+      marginals = new double[T][K][D];
     }
+
+    for( int t = 0; t < T; t++) {
+      for( int y = 0; y < K; y++) {
+        // Compute p(x|y)
+        if(ex != null) {
+          // Default update here
+          marginals[t][y][0] = nodes[t][y]; // p(h)
+        } else {
+          for( int x = 0; x < D; x++)
+            marginals[t][y][x] = params.weights[o(y, x)] * nodes[t][y]; // p(x|h) * p(h)
+        }
+      }
+    }
+    return marginals;
   }
 
-  public final Params params;
+  /**
+   * Use the Viterbi dynamic programming algorithm to find the hidden states for oFeature.
+   * @return
+   */
+  public int[] viterbi( final Parameters params, final Example ex ) {
+    assert ex != null;
+    int T = ex.x.length;
+    // Store the dynamic programming array and back pointers
+    double [][] V = new double[T][K];
+    int [][] Ptr = new int[T][K];
 
-  public HiddenMarkovModel( Params p ) {
-    this.params = p;
-  }
-  public HiddenMarkovModel( int stateCount, int emissionCount ) {
-		params = new Params( stateCount, emissionCount );
-  }
+    // Initialize with 0 and path length
+    {
+      int  t = 0; int y_ = -1;
+      for( int y = 0; y < K; y++ ) {
+        // P( o_0 , s_k )
+        V[t][y] = params.G(t, y_, y, ex);
+        Ptr[t][y] = -1; // Doesn't need to be defined.
+      }
+      MatrixOps.normalize( V[0] );
+    }
 
-  public static HiddenMarkovModel generate( GenerationOptions options ) {
-		Params params = Params.uniformWithNoise( options.paramRandom, options.stateCount, options.emissionCount, options.noise );
-    return new HiddenMarkovModel( params );
-  }
+    // The dynamic program to find the optimal path
+    for( int t = 1; t < T; t++ ) {
+      for( int y = 0; y < K; y++ ) {
+        int bestY = 0; double bestV = Double.NEGATIVE_INFINITY;
+        for( int y_ = 0; y_ < K; y_++ ) {
+          double v = V[t-1][y_] * params.G(t, y_, y, ex);
+          if(v > bestV) {
+            bestV = v; bestY = y_;
+          }
+        }
+        V[t][y] = bestV; Ptr[t][y] = bestY;
+      }
+      assert !Double.isNaN(MatrixOps.sum(V[t])) && !Double.isInfinite(MatrixOps.sum(V[t]));
+      MatrixOps.normalize( V[t] );
+    }
 
-  public Params getParams() {
-    return params;
-  }
-  public int getStateCount() {
-    return params.stateCount;
-  }
-  public int getEmissionCount() {
-    return params.emissionCount;
-  }
-  public SimpleMatrix getPi() {
-    return MatrixFactory.fromVector( params.pi ).transpose();
-  }
-  public SimpleMatrix getT() {
-    return (new SimpleMatrix( params.T )).transpose();
-  }
-  public SimpleMatrix getO() {
-    return (new SimpleMatrix( params.O )).transpose();
-  }
+    int[] z = new int[T];
+    // Choose the best last state and back track from there
+    z[T-1] = MatrixOps.argmax(V[T-1]);
+    if( z[T-1] == -1 ) {
+      LogInfo.log(Fmt.D(V));
+      LogInfo.log(Fmt.D(T));
+    }
+    assert( z[T-1] != -1 );
+    for(int i = T-1; i >= 1; i-- )  {
+      assert( z[i] != -1 );
+      z[i-1] = Ptr[i][z[i]];
+    }
 
-	/**
-	 * Generate a single observation sequence of length n
-	 * @param n
-	 * @return
-	 */
-	public int[] sample(Random rnd, int n) {
-		int[] output = new int[n];
-
-		// Pick a start state
-		int state = RandomFactory.multinomial(rnd, params.pi);
-
-		for( int i = 0; i < n; i++)
-		{
-			// Generate a word
-			int o = RandomFactory.multinomial(rnd, params.O[state] );
-			if( params.map != null )
-				output[i] = params.map[state][o];
-			else
-				output[i] = o;
-			// Transit to a new state
-			state = RandomFactory.multinomial(rnd, params.T[state] );
-		}
-
-		return output;
-	}
-  @Deprecated
-  public int[] sample(int n) {
-    return sample(RandomFactory.rand, n);
+    return z;
   }
 
-  public Counter<Example> drawSamples(int N, int L, Random rnd) {
+  @Override
+  public double getLogLikelihood(Params params, Example example) {
+    if(params instanceof Parameters)
+      return forward((Parameters) params, example).getFirst();
+    else
+      throw new IllegalArgumentException();
+  }
+  public double getLogLikelihood(Params params, int L) {
+    return 0; // Don't you love directed models?
+  }
+
+  public double getFullProbability(Params params, Example ex) {
+    if(!(params instanceof Parameters))
+      throw new IllegalArgumentException();
+    Parameters parameters = (Parameters) params;
+
+    assert( ex.h != null );
+    double prob = 1.0;
+    int y_ = -1;
+    for(int t = 0; t < ex.x.length; t++ ) {
+      int y = ex.h[t]; int x = ex.x[t];
+      prob *= parameters.G(t, y_, y, ex);
+      y_ = y;
+    }
+
+    return prob;
+  }
+
+  @Override
+  public void updateMarginals(Params params, int L, double scale, Params marginals_) {
+    int temp = this.L;
+    this.L = L;
+    updateMarginals(params, (Example)null, scale, marginals_);
+    this.L = temp;
+  }
+
+  @Override
+  public void updateMarginals(Params params, Example ex, double scale, Params marginals_) {
+    if(!(params instanceof Parameters))
+      throw new IllegalArgumentException();
+    if(!(marginals_ instanceof Parameters))
+      throw new IllegalArgumentException();
+    intermediateState.start();
+    Parameters parameters = (Parameters) params;
+    Parameters marginals = (Parameters) marginals_;
+
+    int T = (ex != null) ? ex.x.length : L;
+
+    double[][] nodeMarginals = computeHiddenNodeMarginals(parameters, ex);
+    double[][][] emissionMarginals = computeEmissionMarginals(parameters, ex);
+    double[][][] edgeMarginals = computeEdgeMarginals(parameters, ex);
+
+    double[] nodeTotals = new double[K];
+    for(int t = 0; t < T; t++) {
+      for(int y = 0; y < K; y++) {
+        if(t < T-1)
+          assert MatrixOps.equal(nodeMarginals[t][y], MatrixOps.sum(edgeMarginals[t+1][y])); // only true for a directed model
+        nodeTotals[y] += nodeMarginals[t][y];
+      }
+    }
+
+    // This will be a sparse update.
+      // Add the emission marginal
+    for(int t = 0; t < T; t++) {
+      for( int y = 0; y < K; y++ ) {
+        if( ex != null ) {
+          int x = ex.x[t];
+          marginals.weights[o(y, x)] += scale * emissionMarginals[t][y][0] / nodeTotals[y];
+        } else {
+          for( int x = 0; x < D; x++ ) {
+            marginals.weights[o(y, x)] += scale * emissionMarginals[t][y][x] /  nodeTotals[y];
+          }
+        }
+      }
+    }
+    {
+      int t = 0;
+      // Add the pi
+      for( int y = 0; y < K; y++ ) {
+        // Add the transition marginal
+        marginals.weights[pi(y)] +=  scale * nodeMarginals[t][y];
+      }
+    }
+
+    for(int t = 0; t < T-1; t++) {
+      for( int y1 = 0; y1 < K; y1++ ) {
+        for( int y2 = 0; y2 < K; y2++ ) {
+          marginals.weights[t(y1, y2)] +=  scale * edgeMarginals[t+1][y1][y2] / nodeTotals[y1];
+        }
+      }
+    }
+    intermediateState.stop();
+  }
+  /**
+   * Draw samples in this procedure;
+   *    draw h_0, x_0, h_1, x_1, ...;
+   *      - Compute p(h_0) and draw
+   *      - drawing from p(h_0) is easy.
+   *      - drawing from p(h_1 | h_2) is easy too.
+   * @param params
+   * @param genRandom
+   * @param N
+   * @return
+   */
+  @Override
+  public Counter<Example> drawSamples(Params params, Random genRandom, int N) {
+    if(!(params instanceof Parameters))
+      throw new IllegalArgumentException();
+    Parameters parameters = (Parameters) params;
+    int T = L;
+
+    // Pre-processing for edge and emission marginals.
+    // Compute the edge marginals. This will let you draw the hs.
+    double[][][] edgeMarginals = computeEdgeMarginals(parameters, null);
+    for( int t = 0; t < T; t++ ) {
+      for( int y_= 0; y_ < K; y_++ ) {
+        MatrixOps.normalize(edgeMarginals[t][y_]);
+      }
+    }
+
+    double[][] emissions = new double[K][D];
+    for( int y = 0; y < K; y++ ) {
+      for( int x = 0; x < D; x++ ) {
+        emissions[y][x] = parameters.weights[o(y,x)];
+      }
+      MatrixOps.normalize(emissions[y]);
+    }
+
     Counter<Example> examples = new Counter<>();
-    for(int i = 0; i < N; i++) {
-      Pair<int[],int[]> pair = sampleWithHiddenVariables(rnd, L);
-      Example ex = new Example(pair.getValue0(), pair.getValue1());
-      examples.add(ex);
+    for( int i = 0; i < N; i++) {
+      examples.add( drawSample(parameters, genRandom, edgeMarginals, emissions ) );
     }
 
     return examples;
   }
 
-  public int[][] sample(Random rnd, int N, int L) {
-    int[][] X = new int[N][L];
-    for(int i = 0; i < N; i++) {
-      X[i] = sample(rnd,L);
+  public Example drawSample(Parameters parameters, Random genRandom, double[][][] edgeMarginals, double[][] emissions) {
+    int T = L;
+    Example ex = new Example(T);
+    // Draw each $h_t$
+    {
+      int t = 0; int y_ = 0;
+      ex.h[t] = RandomFactory.multinomial(genRandom, edgeMarginals[t][y_]);
+    }
+    for(int t = 1; t < T; t++) {
+      int y_ = ex.h[t-1];
+      ex.h[t] = RandomFactory.multinomial(genRandom, edgeMarginals[t][y_]);
+    }
+    // Draw each x_t
+    for(int t = 0; t < T; t++) {
+      int y = ex.h[t];
+      ex.x[t] = RandomFactory.multinomial(genRandom, emissions[y]);
     }
 
-    return X;
+    return ex;
   }
+
+  public Parameters getSampleMarginals(Counter<Example> examples) {
+    Parameters marginals = newParams();
+    for(Example ex : examples) {
+      for(int t = 0; t < ex.x.length; t++) {
+        int y = ex.h[t]; int x = ex.x[t];
+        marginals.weights[o(y, x)] += examples.getFraction(ex);
+        if( t > 0 ) {
+          int y_ = ex.h[t-1];
+          marginals.weights[t(y_, y)] += examples.getFraction(ex);
+        }
+      }
+    }
+    return marginals;
+  }
+
 
   /**
-   * Sample both the observed and hidden variables.
+   * Choose idx
    */
-	public Pair<int[], int[]> sampleWithHiddenVariables(Random rnd, int n) {
-		int[] observed = new int[n];
-		int[] hidden = new int[n];
-
-		// Pick a start state
-		int state = RandomFactory.multinomial(rnd, params.pi);
-
-		for( int i = 0; i < n; i++)
-		{
-			// Generate a word
-			int o = RandomFactory.multinomial(rnd , params.O[state] );
-      hidden[i] = state;
-
-			if( params.map != null )
-				o = params.map[state][o];
-      observed[i] = o;
-
-			// Transit to a new state
-			state = RandomFactory.multinomial(rnd , params.T[state] );
-		}
-
-		return Pair.with( observed, hidden );
-	}
-  @Deprecated
-  public Pair<int[], int[]> sampleWithHiddenVariables(int n) {
-    return sampleWithHiddenVariables(RandomFactory.rand, n);
+  void generateExamples(Example current, int idx, List<Example> examples) {
+    if( idx == current.x.length ) {
+      examples.add(new Example(current.x));
+    } else {
+      // Make a choice for this index
+      current.x[idx] = 0;
+      generateExamples(current, idx+1, examples);
+      current.x[idx] = 1;
+      generateExamples(current, idx+1, examples);
+    }
+  }
+  List<Example> generateExamples(int L) {
+    List<Example> examples = new ArrayList<>((int)Math.pow(2,L));
+    Example ex = new Example(new int[L]);
+    generateExamples(ex, 0, examples);
+    return examples;
   }
 
-  /**
-   * Generate from the model
-   */
-  @Deprecated
-  public Pair<int[],int[]> generate(Random rnd, int length) {
-    int[] observed = new int[length];
-    int[] hidden = new int[length];
+  @Override
+  public Counter<Example> getDistribution(Params params) {
+    Counter<Example> examples = new Counter<>();
+    examples.addAll(generateExamples(L));
+    for(Example ex: examples) {
+      examples.set( ex, getProbability(params, ex));
+    }
+    return examples;
+  }
 
-    int state = Multinomial.sample(rnd, params.pi);
-    for(int i = 0; i < length; i++) {
-      observed[i] = Multinomial.sample(rnd, params.O[state]);
-      hidden[i] = state;
-      state = Multinomial.sample(rnd, params.T[state]);
+  @Override
+  public double updateMoments(Example ex, double count, SimpleMatrix P12, SimpleMatrix P13, SimpleMatrix P32, FullTensor P123) {
+    double updates = 0.0;
+    for(int start = 0; start < ex.x.length - 2; start++ ) {
+      int x1 = ex.x[(start)];
+      int x3 = ex.x[(start+1)]; // The most stable one we want to actually recover
+      int x2 = ex.x[(start+2)];
+      P13.set( x1, x3, P13.get( x1, x3 ) + count);
+      P12.set( x1, x2, P12.get( x1, x2 ) + count);
+      P32.set( x3, x2, P32.get( x3, x2 ) + count);
+      P123.set( x1, x2, x3, P123.get(x1, x2, x3) + count );
+      updates += count;
     }
 
-    return Pair.with(observed, hidden);
+    return updates;
   }
 
-	/**
-	 * Use the Viterbi dynamic programming algorithm to find the hidden states for o.
-	 * @param o
-	 * @return
-	 */
-  public int[] viterbi( final int[] o ) {
-      // Store the dynamic programming array and back pointers
-      double [][] V = new double[o.length][params.stateCount];
-      int [][] Ptr = new int[o.length][params.stateCount];
-
-      // Initialize with 0 and path length
-      for( int s = 0; s < params.stateCount; s++ ) {
-          // P( o_0 | s_k ) \pi(s_k)
-          V[0][s] = params.O[s][o[0]] * params.pi[s];
-          Ptr[0][s] = -1; // Doesn't need to be defined.
-      }
-      MatrixOps.normalize( V[0] );
-
-      // The dynamic program to find the optimal path
-      for( int i = 1; i < o.length; i++ ) {
-          for( int s = 0; s < params.stateCount; s++ ) {
-              // Find the max of T(s | s') V_(i-1)(s')
-              double T_max = 0.0;
-              int S_max = -1;
-              for( int s_ = 0; s_ < params.stateCount; s_++ ) {
-                  double t = params.T[s_][s] * V[i-1][s_];
-                  if( t > T_max ) {
-                      T_max = t;
-                      S_max = s_;
-                  }
-              }
-
-              // P( o_i | s_k ) = P(o_i | s) *  max_j T(s | s') V_(i-1)(s')
-              V[i][s] = params.O[s][o[i]] * T_max;
-              Ptr[i][s] = S_max;
-          }
-          MatrixOps.normalize( V[i] );
-      }
-
-      int[] z = new int[o.length];
-      // Choose the best last state and back track from there
-      z[o.length-1] = MatrixOps.argmax(V[o.length-1]);
-      if( z[o.length-1] == -1 ) {
-          LogInfo.logs( Fmt.D( V ) );
-          LogInfo.logs( Fmt.D( params.T ) );
-      }
-      assert( z[o.length-1] != -1 );
-      for(int i = o.length-1; i >= 1; i-- )  {
-          assert( z[i] != -1 );
-          z[i-1] = Ptr[i][z[i]];
-      }
-
-      return z;
-  }
-
-	/**
-	 * Use the forward-backward algorithm to find the posterior probability over states
-	 * @param o
-	 * @return
-	 */
-	public Pair<double[][],Double> forward( final int[] o ) {
-		// Store the forward probabilities
-		double [][] f = new double[o.length][params.stateCount];
-
-    double c = 0;
-    double c_ = 0;
-		// Initialise with the initial probability
-		for( int s = 0; s < params.stateCount; s++ ) {
-			f[0][s] = params.pi[s] * params.O[s][o[0]];
-		}
-    c += Math.log( MatrixOps.sum( f[0] ) );
-    MatrixOps.scale( f[0], 1/MatrixOps.sum(f[0]) );
-
-		// Compute the forward values as f_t(s) = sum_{s_} f_{t-1}(s_) * T( s_ | s ) * O( y | s )
-		for( int i = 1; i < o.length; i++ ) {
-			for( int s = 0; s < params.stateCount; s++ ) {
-				f[i][s] = 0.0;
-				for( int s_ = 0; s_ < params.stateCount; s_++ ) {
-					f[i][s] += params.T[s_][s] * f[i-1][s_];
-				}
-				f[i][s] *= params.O[s][o[i]];
-			}
-      double sum = MatrixOps.sum( f[i] );
-      assert( sum < 1 );
-      c_ = Math.log( sum );
-      c += Math.log( sum );
-      MatrixOps.scale( f[i], 1.0/sum );
-    }
-    assert( c < 0 );
-
-    return new Pair<>(f,c);
-	}
-	public double[][] backward( final int[] o ) {
-    // Backward probabilities
-		double [][] b = new double[o.length][params.stateCount];
-		for( int s = 0; s < params.stateCount; s++ ) {
-			b[o.length-1][s] = 1.0;
-		}
-    MatrixOps.scale( b[o.length-1], 1/MatrixOps.sum(b[o.length-1]) );
-		for( int i = o.length-2; i >= 0; i-- ) {
-			for( int s = 0; s < params.stateCount; s++ ) {
-				for( int s_ = 0; s_ < params.stateCount; s_++ ) {
-					b[i][s] += b[i+1][s_] * params.T[s][s_] * params.O[s_][o[i+1]];
-				}
-			}
-      MatrixOps.scale( b[i], 1/MatrixOps.sum(b[i]) );
-		}
-
-    return b;
-	}
-
-  /**
-   * Print the likelihood of a sequence.
-   */
-	public double likelihood( final int[] o, final int[] z ) {
-    assert( o.length == z.length );
-    double lhood = 0.0;
-		for(int i = 0; i < o.length; i++ ) {
-
-      if( i == 0 )
-        lhood += Math.log( params.pi[z[i]] );
-      else
-        lhood += Math.log( params.T[z[i-1]][z[i]] );
-      lhood += Math.log( params.O[z[i]][o[i]] );
-    }
-		return lhood;
-  }
-  public double likelihood( final int[] o ) {
-    return forward(o).getValue1();
-  }
-  public double likelihood(int[][] data) {
-    double lhood = 0.;
-    for(int i = 0; i < data.length; i++) {
-      lhood += (likelihood(data[i]) - lhood)/(++i);
-    }
-
-    return lhood;
-  }
-
-	public static HiddenMarkovModel learnFullyObserved( int stateCount, int emissionCount, int[][] X, int[][] Z,
-			boolean shouldSmooth) {
-		Params p = Params.fromCounts( stateCount, emissionCount, X, Z, shouldSmooth);
-
-		return new HiddenMarkovModel(p);
-	}
-
-	public static HiddenMarkovModel learnFullyObserved( int stateCount, int emissionCount, int[][] X, int[][] Z,
-			boolean shouldSmooth, int compressedEmissionCount) {
-
-		Params p = Params.fromCounts( stateCount, emissionCount, X, Z, shouldSmooth);
-
-		// If compressing, then sort the emissions for each state and keep only the top compressedEmissionCount
-		double[][] O_ = new double[stateCount][compressedEmissionCount];
-		// Sparse map for compressed emissions
-		int[][] map = new int[stateCount][compressedEmissionCount];
-
-		for( int i = 0; i < stateCount; i++ ) {
-			Integer[] words_ = new Integer[emissionCount];
-			for(int j = 0; j <emissionCount; j++) words_[j] = j;
-
-			// Choose top k words
-			Arrays.sort(words_, new Misc.IndexedComparator(p.O[i]) );
-			for( int j = 0; j < compressedEmissionCount; j++ ) {
-				O_[i][j] = p.O[i][words_[j]];
-				map[i][j] = words_[j];
-			}
-			MatrixOps.normalize( O_[i] );
-		}
-
-		Params p_ = new Params(stateCount, compressedEmissionCount);
-		p_.pi = p.pi; p_.T = p.T; p_.O = O_; p_.map = map;
-
-		return new HiddenMarkovModel(p_);
-	}
-
-  public void setParams(double[] params) {
-    this.params.updateFromVector(params);
-  }
-
-  /**
-   * Compute the expected log-likelihood.
-   *
-   */
-  public double compute(int[][] X, double[] gradient) {
-    double value = 0.0;
-    int N = X.length;
-
-    /** For each example, compute expected counts and update weights **/
-    for( int n = 0; n < X.length; n++ ) {
-      int[] o = X[n];
-      assert(o.length > 0);
-
-      Pair<double [][],Double> fc = forward( o );
-      double f[][] = fc.getValue0();
-      double c = fc.getValue1(); // the excess normalization constant.
-      double b[][] = backward( o );
-
-      double lhood_incr = Math.log(MatrixOps.sum(f[o.length-1])) + c;
-      assert( lhood_incr < 0 );
-      value += (lhood_incr - value)/(n+1);
-
-      if( gradient != null ) {
-        // Construct the transition probability
-        double xi[][][] = new double[o.length][params.stateCount][params.stateCount];
-
-        for( int t = 0; t < o.length-1; t++ ) {
-          // Compute xi = P(h_t = i, h_{t+1} = j | O, \theta)
-          //            = P(h_t = i | O, \theta) * P( h_{t+1} = j | h_t = i, O, \theta )
-          //            = P(h_t = i | O, \theta) * P( h_{t+1} = j | h_t = i, O_{t+1}) * P( O | h_{t+1} ) / P(O)
-          for( int i = 0; i < params.stateCount; i++ ) {
-            for( int j = 0; j < params.stateCount; j++ ) {
-              xi[t][i][j] = f[t][i] * params.T[i][j] * params.O[j][o[t+1]] * b[t+1][j]; // / norm;
-            }
-          }
-          double norm_ = MatrixOps.sum(xi[t]);
-          assert norm_ > 0;
-          // Normalize
-          MatrixOps.scale(xi[t], 1.0/norm_); //MatrixOps.sum(xi[t]));
-        } {
-          int t = o.length-1;
-          for( int i = 0; i < params.stateCount; i++ ) {
-            for( int j = 0; j < params.stateCount; j++ ) {
-              xi[t][i][j] = f[t][i]; // / norm;
-            }
-          }
-          double norm_ = MatrixOps.sum(xi[t]);
-          assert norm_ > 0;
-          // Normalize
-          MatrixOps.scale(xi[t], 1.0/norm_);
-        }
-
-        {
-          double norm = MatrixOps.sum(xi[0]);
-          assert norm > 0;
-          for( int h = 0; h < params.stateCount; h++ ) {
-            gradient[params.index_pi(h)] += MatrixOps.sum(xi[0][h])/norm;
-          }
-//          double sum;
-//          for( int h = 0; h < params.stateCount; h++ ) sum +=  gradient[params.index_pi(h)];
-//          assert( MatrixOps.equal( sum, 1 ) );
-        }
-
-        //LogInfo.logs( "pi " + Fmt.D(gradient) );
-        // update counts for T
-        if( o.length > 1 ) {
-          for( int h = 0; h < params.stateCount; h++ ) {
-            double countH = 0.0;
-            for( int t = 0; t < o.length-1; t++ )  countH += MatrixOps.sum( xi[t][h] ); // Number of times we're in state h.
-            assert countH > 0;
-
-            for( int h_ = 0; h_ < params.stateCount; h_++ ) {
-              double countHH_ = 0; // Number of times we are going from h to h_
-              for( int t = 0; t < o.length-1; t++ )  countHH_ += xi[t][h][h_];
-              gradient[params.index_T(h,h_)] +=  countHH_/countH; // - gradient[params.index_T(h,h_)])/(n+1);
-            }
-//            double sum;
-//            for( int h_ = 0; h_ < params.stateCount; h_++ ) sum +=  gradient[params.index_T(h,h_)];
-//            assert( MatrixOps.equal( sum, 1 ) );
-          }
-        }
-        //LogInfo.logs( "T " + Fmt.D(gradient) );
-        // update counts for O
-        for( int t = 0; t < o.length-1; t++ ) {
-          double norm = MatrixOps.sum(xi[t]);
-          assert norm > 0;
-          for( int h = 0; h < params.stateCount; h++ ) {
-            // Adding expected count that state $h$ produced observation $o$
-            gradient[params.index_O(h,o[t])] += MatrixOps.sum(xi[t][h])/norm; // - gradient[params.index_O(h,o[t])]) / (n+1);
-          }
-        }
-      }
-    }
-    // Normalize the gradient
-    if( gradient != null ) {
-      // Normalize pi
-      double smoothing = 1e-6;
-      {
-        double norm = 0.0;
-        for( int h = 0; h < params.stateCount; h++) {
-          gradient[params.index_pi(h)] += smoothing;
-          norm += gradient[params.index_pi(h)];
-        }
-        for( int h = 0; h < params.stateCount; h++) gradient[params.index_pi(h)] /= norm;
-      }
-      // Normalize T
-      {
-        for( int h = 0; h < params.stateCount; h++) {
-          double norm = 0.0;
-          for( int h_ = 0; h_ < params.stateCount; h_++) {
-            gradient[params.index_T(h,h_)] += smoothing;
-            norm += gradient[params.index_T(h,h_)];
-          }
-          for( int h_ = 0; h_ < params.stateCount; h_++) gradient[params.index_T(h,h_)] /= norm;
-        }
-      }
-      // Normalize O
-      {
-        for( int h = 0; h < params.stateCount; h++) {
-          double norm = 0.0;
-          for( int o_ = 0; o_ < params.emissionCount; o_++) {
-            gradient[params.index_O(h, o_)] += smoothing;
-            norm += gradient[params.index_O(h, o_)];
-          }
-          for( int o_ = 0; o_ < params.emissionCount; o_++) gradient[params.index_O(h, o_)] /= norm;
-        }
-      }
-    }
-    //MatrixOps.scale( gradient, 1.0/N );
-    //LogInfo.logs( "grad " + Fmt.D(gradient) );
-
-    return value;
-  }
-  public double baumWelchStep(int[][] X) {
-    double[] gradient = new double[ params.numFeatures() ];
-    double llhood = compute(X, gradient);
-    setParams(gradient);
-    LogInfo.logs( Fmt.D( gradient ) );
-    return llhood;
-  }
-
-  public int numFeatures() {
-    return params.numFeatures();
-  }
 
 }
-

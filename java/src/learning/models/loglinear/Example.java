@@ -22,6 +22,10 @@ public class Example {
     System.arraycopy(h, 0, this.h, 0, h.length);
   }
 
+  public Example withH(int[] h) {
+    return new Example(this.x,h);
+  }
+
   public Example clone() {
     if(h != null)
       return new Example(x,h);

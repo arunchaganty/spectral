@@ -5,7 +5,7 @@ import fig.basic.Option;
 import fig.basic.OptionSet;
 import fig.exec.Execution;
 import learning.data.ParsedCorpus;
-import learning.models.HiddenMarkovModel;
+import learning.models.HiddenMarkovModelOld;
 
 import java.io.*;
 
@@ -30,7 +30,7 @@ public class LearnHMM implements Runnable {
               corpusOptions.labelledDataPath, corpusOptions.labelledMapPath);
       LogInfo.end_track("file-input");
       LogInfo.begin_track("learn-model");
-      HiddenMarkovModel model = HiddenMarkovModel.learnFullyObserved(
+      HiddenMarkovModelOld model = HiddenMarkovModelOld.learnFullyObserved(
               C.getTagDimension(),
               C.getDimension(),
               C.C,

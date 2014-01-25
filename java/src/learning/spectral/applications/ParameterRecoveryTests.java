@@ -7,7 +7,7 @@ import learning.data.HasExactMoments;
 import learning.data.HasSampleMoments;
 import learning.linalg.FullTensor;
 import learning.linalg.MatrixOps;
-import learning.models.HiddenMarkovModel;
+import learning.models.HiddenMarkovModelOld;
 import learning.models.MixtureOfGaussians;
 import learning.spectral.TensorMethod;
 import org.ejml.simple.SimpleMatrix;
@@ -27,7 +27,7 @@ public class ParameterRecoveryTests {
     return tensorMethod.recoverParameters(K, obj.computeSampleMoments(N));
   }
 
-  public void compareHMMs(HiddenMarkovModel model, HiddenMarkovModel model_, double eps, boolean makeAssertions) {
+  public void compareHMMs(HiddenMarkovModelOld model, HiddenMarkovModelOld model_, double eps, boolean makeAssertions) {
     SimpleMatrix O = model.getO();
     SimpleMatrix O_ = model_.getO();
     int[] perm = MatrixOps.alignColumns(O_, O);
@@ -87,10 +87,10 @@ public class ParameterRecoveryTests {
   @Test
   public void testExactHMMRecovery() {
     // Small
-    HiddenMarkovModel model, model_;
+    HiddenMarkovModelOld model, model_;
     {
       int K = 2; int D = 2;
-      model = new HiddenMarkovModel(new HiddenMarkovModel.Params(
+      model = new HiddenMarkovModelOld(new HiddenMarkovModelOld.Params(
           new double[]{0.6,0.4},
           new double[][]{{0.4, 0.6}, {0.6,0.4}},
           new double[][]{{1.0, 0.0}, {0.0,1.0}}));
@@ -99,21 +99,21 @@ public class ParameterRecoveryTests {
     }
     {
       int K = 2; int D = 2;
-      model = HiddenMarkovModel.generate(new HiddenMarkovModel.GenerationOptions(K, D));
+      model = HiddenMarkovModelOld.generate(new HiddenMarkovModelOld.GenerationOptions(K, D));
       ParameterRecovery.hmmAnalysis = new ParameterRecovery.HMMAnalysis(model);
       model_ = ParameterRecovery.recoverHMM(K, model, 0.0);
       compareHMMs(model, model_, 1e-5, true);
     }
     {
       int K = 2; int D = 3;
-      model = HiddenMarkovModel.generate(new HiddenMarkovModel.GenerationOptions(K, D));
+      model = HiddenMarkovModelOld.generate(new HiddenMarkovModelOld.GenerationOptions(K, D));
       ParameterRecovery.hmmAnalysis = new ParameterRecovery.HMMAnalysis(model);
       model_ = ParameterRecovery.recoverHMM(K, model, 0.0);
       compareHMMs(model, model_, 1e-5, true);
     }
     {
       int K = 3; int D = 3;
-      model = HiddenMarkovModel.generate(new HiddenMarkovModel.GenerationOptions(K, D));
+      model = HiddenMarkovModelOld.generate(new HiddenMarkovModelOld.GenerationOptions(K, D));
       ParameterRecovery.hmmAnalysis = new ParameterRecovery.HMMAnalysis(model);
       model_ = ParameterRecovery.recoverHMM(K, model, 0.0);
       compareHMMs(model, model_, 1e-5, true);
@@ -123,24 +123,24 @@ public class ParameterRecoveryTests {
   @Test
   public void testSampleHMMRecovery() {
     // Small
-    HiddenMarkovModel model, model_;
+    HiddenMarkovModelOld model, model_;
     {
       int K = 2; int D = 2; int N = (int) 1e6;
-      model = HiddenMarkovModel.generate(new HiddenMarkovModel.GenerationOptions(K, D));
+      model = HiddenMarkovModelOld.generate(new HiddenMarkovModelOld.GenerationOptions(K, D));
       ParameterRecovery.hmmAnalysis = new ParameterRecovery.HMMAnalysis(model);
       model_ = ParameterRecovery.recoverHMM(K, N, model, 0.0);
       compareHMMs(model, model_, 1e-1, false);
     }
     {
       int K = 2; int D = 3; int N = (int) 1e6;
-      model = HiddenMarkovModel.generate(new HiddenMarkovModel.GenerationOptions(K, D));
+      model = HiddenMarkovModelOld.generate(new HiddenMarkovModelOld.GenerationOptions(K, D));
       ParameterRecovery.hmmAnalysis = new ParameterRecovery.HMMAnalysis(model);
       model_ = ParameterRecovery.recoverHMM(K, N, model, 0.0);
       compareHMMs(model, model_, 1e-1, false);
     }
     {
       int K = 3; int D = 3; int N = (int) 1e7;
-      model = HiddenMarkovModel.generate(new HiddenMarkovModel.GenerationOptions(K, D));
+      model = HiddenMarkovModelOld.generate(new HiddenMarkovModelOld.GenerationOptions(K, D));
       ParameterRecovery.hmmAnalysis = new ParameterRecovery.HMMAnalysis(model);
       model_ = ParameterRecovery.recoverHMM(K, N, model, 0.0);
       compareHMMs(model, model_, 1e-1, false);
@@ -150,22 +150,22 @@ public class ParameterRecoveryTests {
   @Test
   public void testComputableHMMRecovery() {
     // Small
-    HiddenMarkovModel model, model_;
+    HiddenMarkovModelOld model, model_;
     {
       int K = 2; int D = 2; int N = (int) 1e6;
-      model = HiddenMarkovModel.generate(new HiddenMarkovModel.GenerationOptions(K, D));
+      model = HiddenMarkovModelOld.generate(new HiddenMarkovModelOld.GenerationOptions(K, D));
       model_ = ParameterRecovery.recoverHMM(K, wrap(model.computeSampleMoments(N)), 0.0);
       compareHMMs(model, model_, 1e-1, false);
     }
     {
       int K = 2; int D = 3; int N = (int) 1e6;
-      model = HiddenMarkovModel.generate(new HiddenMarkovModel.GenerationOptions(K, D));
+      model = HiddenMarkovModelOld.generate(new HiddenMarkovModelOld.GenerationOptions(K, D));
       model_ = ParameterRecovery.recoverHMM(K, wrap(model.computeSampleMoments(N)), 0.0);
       compareHMMs(model, model_, 1e-1, false);
     }
     {
       int K = 3; int D = 3; int N = (int) 1e6;
-      model = HiddenMarkovModel.generate(new HiddenMarkovModel.GenerationOptions(K, D));
+      model = HiddenMarkovModelOld.generate(new HiddenMarkovModelOld.GenerationOptions(K, D));
       model_ = ParameterRecovery.recoverHMM(K, wrap(model.computeSampleMoments(N)), 0.0);
       compareHMMs(model, model_, 1e-1, false);
     }

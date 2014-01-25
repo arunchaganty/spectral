@@ -10,7 +10,7 @@ import learning.linalg.MatrixFactory;
 
 import learning.models.RealHiddenMarkovModel;
 import learning.models.RealHiddenMarkovModel.FeatureOptions;
-import learning.models.HiddenMarkovModel.GenerationOptions;
+import learning.models.HiddenMarkovModelOld.GenerationOptions;
 
 import java.util.Arrays;
 

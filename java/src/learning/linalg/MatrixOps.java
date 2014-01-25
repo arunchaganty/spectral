@@ -340,6 +340,13 @@ public class MatrixOps {
 
     return min;
   }
+  public static int min( int[] x ) {
+    int min = Integer.MAX_VALUE;
+    for( int i = 0; i < x.length; i++ )
+      if( x[i] < min ) min = x[i];
+
+    return min;
+  }
   public static double min( DenseMatrix64F X ) {
     return min( X.data );
   }
@@ -359,6 +366,13 @@ public class MatrixOps {
   public static double max( double[] x ) {
     double max = Double.NEGATIVE_INFINITY;
     for( int i = 0; i < x.length; i++ ) 
+      if( x[i] > max ) max = x[i];
+
+    return max;
+  }
+  public static int max( int[] x ) {
+    int max = Integer.MIN_VALUE;
+    for( int i = 0; i < x.length; i++ )
       if( x[i] > max ) max = x[i];
 
     return max;

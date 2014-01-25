@@ -27,7 +27,7 @@ import java.util.Arrays;
 /**
  * A real-valued hidden markov model.
  */
-public class RealHiddenMarkovModel extends HiddenMarkovModel {
+public class RealHiddenMarkovModel extends HiddenMarkovModelOld {
   // Maps discrete feature indicies into a feature map
 	public static class Features implements Serializable {
     private static final long serialVersionUID = 2L;

@@ -8,7 +8,7 @@ import learning.data.HasSampleMoments;
 import learning.linalg.FullTensor;
 import learning.linalg.MatrixFactory;
 import learning.linalg.MatrixOps;
-import learning.models.HiddenMarkovModel;
+import learning.models.HiddenMarkovModelOld;
 import learning.models.MixtureOfGaussians;
 import learning.spectral.TensorMethod;
 import org.ejml.simple.SimpleMatrix;
@@ -21,8 +21,8 @@ public class ParameterRecovery {
   static TensorMethod tensorMethod = new TensorMethod();
 
   static class HMMAnalysis {
-    public HiddenMarkovModel trueModel;
-    public HMMAnalysis(HiddenMarkovModel model) {
+    public HiddenMarkovModelOld trueModel;
+    public HMMAnalysis(HiddenMarkovModelOld model) {
       trueModel = model;
     }
 
@@ -53,7 +53,7 @@ public class ParameterRecovery {
   public static HMMAnalysis hmmAnalysis;
 
 
-  static HiddenMarkovModel recoverHMM(int K, Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> measurements, double smoothMeasurements) {
+  static HiddenMarkovModelOld recoverHMM(int K, Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> measurements, double smoothMeasurements) {
     LogInfo.begin_track("cast-conditional-means-to-hmm");
 
     if( hmmAnalysis != null ) {
@@ -77,7 +77,7 @@ public class ParameterRecovery {
     T = MatrixOps.projectOntoSimplex( T, smoothMeasurements ).transpose();
     O = MatrixOps.projectOntoSimplex( O, smoothMeasurements ).transpose();
 
-    HiddenMarkovModel model = new HiddenMarkovModel( new HiddenMarkovModel.Params(
+    HiddenMarkovModelOld model = new HiddenMarkovModelOld( new HiddenMarkovModelOld.Params(
             MatrixFactory.toVector(pi),
             MatrixFactory.toArray(T),
             MatrixFactory.toArray(O)) );
@@ -86,15 +86,15 @@ public class ParameterRecovery {
     return model;
   }
 
-  public static HiddenMarkovModel recoverHMM(int K, ComputableMoments moments, double smoothMeasurements) {
+  public static HiddenMarkovModelOld recoverHMM(int K, ComputableMoments moments, double smoothMeasurements) {
     return recoverHMM(K, tensorMethod.randomizedRecoverParameters(K, moments), smoothMeasurements);
   }
 
-  public static HiddenMarkovModel recoverHMM(int K, HasExactMoments moments, double smoothMeasurements) {
+  public static HiddenMarkovModelOld recoverHMM(int K, HasExactMoments moments, double smoothMeasurements) {
     return recoverHMM(K, tensorMethod.recoverParameters(K, moments.computeExactMoments()), smoothMeasurements);
   }
 
-  public static HiddenMarkovModel recoverHMM(int K, int N, HasSampleMoments moments, double smoothMeasurements) {
+  public static HiddenMarkovModelOld recoverHMM(int K, int N, HasSampleMoments moments, double smoothMeasurements) {
     Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> moments_ = moments.computeSampleMoments(N);
     if( moments instanceof HasExactMoments) {
       Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> momentsExact = ((HasExactMoments) moments).computeExactMoments();
