@@ -160,6 +160,7 @@ public class Utils {
     assert items.length % 2 == 0;
     StringBuilder sb = new StringBuilder();
     for(int item = 0; item < items.length; item += 2) {
+      if(Execution.getActualExecDir() != null) Execution.putOutput(items[item].toString(), items[item+1]);
       sb.append(items[item]).append(" = ").append(items[item+1]).append("\t");
     }
 

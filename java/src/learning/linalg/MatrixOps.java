@@ -282,6 +282,21 @@ public class MatrixOps {
           norm += (T.X[d1][d2][d3]) * (T.X[d1][d2][d3]);
     return Math.sqrt(norm);
   }
+
+  public static double diffL1(double[] X, double[] Y) {
+    double diff = 0.0;
+    for(int d1 = 0; d1 < X.length; d1++ )
+        diff += Math.abs(X[d1] - Y[d1]);
+    return diff;
+  }
+  public static double diffL1(double[][] X, double[][] Y) {
+    double diff = 0.0;
+    for(int d1 = 0; d1 < X.length; d1++ )
+      for(int d2 = 0; d2 < X[d1].length; d2++ )
+        diff += Math.abs(X[d1][d2] - Y[d1][d2]);
+    return diff;
+  }
+
   public static double diff(DenseMatrix64F X, DenseMatrix64F Y) {
     return SpecializedOps.diffNormF(X, Y);
   }
@@ -853,6 +868,46 @@ public class MatrixOps {
       X_[ X.getIndex( row, col )] /= sum;
   }
 
+  public static double[][] cdist(double[] X, double[] Y) {
+    int n = X.length;
+    int m = Y.length;
+
+    double[][] Z = new double[n][m];
+
+    for( int i = 0; i < n; i++ ) {
+      for( int j = 0; j < m; j++ ) {
+        // Find the distance between X and Y
+        Z[i][j] = Math.abs(X[i] - Y[j]);
+      }
+    }
+
+    return Z;
+  }
+
+  public static double[][] cdist(double[][] X, double[][] Y) {
+    assert( X[0].length == Y[0].length );
+
+    int n = X.length;
+    int m = Y.length;
+
+    double[][] Z = new double[n][m];
+
+    for( int i = 0; i < n; i++ ) {
+      for( int j = 0; j < m; j++ ) {
+        // Find the distance between X and Y
+        double d = 0;
+        for( int k = 0; k < X[i].length; k++ ) {
+          double d_ = X[i][k] - Y[j][k];
+          d += d_ * d_;
+        }
+        Z[i][j] = Math.sqrt(d);
+      }
+    }
+
+    return Z;
+  }
+
+
   /**
    * Find the pairwise distance of the i-th row in X and j-th row in Y
    * @param X
@@ -1134,6 +1189,44 @@ public class MatrixOps {
     SimpleMatrix U = UDV.getValue0();
     SimpleMatrix D = UDV.getValue1();
     return U.mult(sqrt(D));
+  }
+
+  // Align the rows of X to match as closely to Y as possible.
+  public static double[] alignRows( double[] X, double[] Y ) {
+    assert( X.length == Y.length );
+    int nCols = X.length;
+
+    double[][] W = cdist( Y, X );
+    int[][] matching = HungarianAlgorithm.findWeightedMatching(W, false);
+
+    // Populate the weight matrix
+    // Compute min-weight matching
+    // Shuffle rows
+    double[] Z = new double[nCols];
+    for( int[] match : matching )
+      Z[match[0]] = X[match[1]];
+
+    return Z;
+  }
+
+  // Align the rows of X to match as closely to Y as possible.
+  public static double[][] alignRows( double[][] X, double[][] Y ) {
+    assert( X.length == Y.length );
+    assert( X[0].length == Y[0].length );
+    int nRows = X.length;
+    int nCols = X[0].length;
+
+    double[][] W = cdist( Y, X );
+    int[][] matching = HungarianAlgorithm.findWeightedMatching(W, false);
+
+    // Populate the weight matrix
+    // Compute min-weight matching
+    // Shuffle rows
+    double[][] Z = new double[nRows][nCols];
+    for( int[] match : matching )
+      System.arraycopy(X[match[1]], 0, Z[match[0]], 0, nCols);
+
+    return Z;
   }
 
   /**
@@ -1504,6 +1597,13 @@ public class MatrixOps {
   public static void abs(double[] x) {
     for(int i = 0; i < x.length; i++)
       x[i] = Math.abs(x[i]);
+  }
+
+  public static void scale(double[][][] x, double factor) {
+    for( int i = 0; i < x.length; i++ )
+      for( int j = 0; j < x[i].length; j++ )
+        for( int k = 0; k < x[i][j].length; k++ )
+          x[i][j][k] *= factor;
   }
 
   public static interface Matrixable {

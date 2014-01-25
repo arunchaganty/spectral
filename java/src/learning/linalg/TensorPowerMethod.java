@@ -45,7 +45,7 @@ public class TensorPowerMethod extends DeflatingTensorFactorizationAlgorithm {
       SimpleMatrix theta = RandomFactory.rand(rnd, 1, D);
       theta.scale(1.0/MatrixOps.norm(theta));
       if( attempt % 10 == 0 )
-        LogInfo.logs("Attempt %d/%d", attempt, attempts);
+        LogInfo.dbgs("Attempt %d/%d", attempt, attempts);
 
       // 2. Compute power iteration update
       for(int n = 0; n < N; n++ ) {

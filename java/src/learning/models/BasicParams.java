@@ -18,7 +18,7 @@ public class BasicParams extends Params {
   }
 
   @Override
-  public Params newParams() {
+  public BasicParams newParams() {
     return new BasicParams(K, featureIndexer);
   }
 

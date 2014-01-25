@@ -65,7 +65,7 @@ public class TensorMethod {
   protected Pair<SimpleMatrix, FullTensor> whiten(int K, SimpleMatrix Pairs, FullTensor Triples) {
     // Whiten
     LogInfo.begin_track("whitening");
-    LogInfo.logs( "k(P): " + MatrixOps.conditionNumber(Pairs,K) );
+    LogInfo.log( "k(P): " + MatrixOps.conditionNumber(Pairs,K) );
     SimpleMatrix W = MatrixOps.whitener(Pairs, K);
     SimpleMatrix Winv = MatrixOps.colorer(Pairs, K);
     FullTensor Tw = Triples.rotate(W,W,W);
@@ -155,9 +155,9 @@ public class TensorMethod {
           SimpleMatrix M12, SimpleMatrix M32,
           FullTensor M123 ) {
     LogInfo.begin_track("recovery-asymmetric");
-    LogInfo.logs(M13);
-    LogInfo.logs(M12);
-    LogInfo.logs(M32);
+    LogInfo.dbg(M13);
+    LogInfo.dbg(M12);
+    LogInfo.dbg(M32);
     // Symmetrize views to get M33, M333
     Pair<SimpleMatrix,FullTensor> symmetricMoments = symmetrizeViews( K, M13, M12, M32, M123 );
     SimpleMatrix Pairs = symmetricMoments.getValue0();
@@ -223,9 +223,9 @@ public class TensorMethod {
 
     int D = M12.numRows();
 
-    LogInfo.logs("M13 condition:" + MatrixOps.conditionNumber(M13, K)) ;
-    LogInfo.logs("M12 condition:" + MatrixOps.conditionNumber(M12, K)) ;
-    LogInfo.logs("M32 condition:" + MatrixOps.conditionNumber(M32, K)) ;
+    LogInfo.log("M13 condition:" + MatrixOps.conditionNumber(M13, K)) ;
+    LogInfo.log("M12 condition:" + MatrixOps.conditionNumber(M12, K)) ;
+    LogInfo.log("M32 condition:" + MatrixOps.conditionNumber(M32, K)) ;
 
     Triplet<SimpleMatrix,SimpleMatrix,SimpleMatrix> U1WU2 = MatrixOps.svdk( M12, K );
     SimpleMatrix U1 = U1WU2.getValue0(); // d x k
@@ -245,7 +245,7 @@ public class TensorMethod {
     // P = M_{32} U_1^T (\tilde M_{12})^{-1} U_2 M_{13}
     SimpleMatrix Pairs =  M32.mult(M12_i).mult(M13);
     double skew = MatrixOps.symmetricSkewMeasure(Pairs);
-    LogInfo.logs( "Pairs Skew: " + skew );
+    LogInfo.log( "Pairs Skew: " + skew );
     Pairs = MatrixOps.symmetrize(Pairs);
     assert( MatrixOps.isSymmetric(Pairs) );
 
@@ -258,7 +258,7 @@ public class TensorMethod {
           MatrixFactory.eye(D)
       );
     skew = MatrixOps.symmetricSkewMeasure(Triples);
-    LogInfo.logs( "Triples Skew: " + skew );
+    LogInfo.log( "Triples Skew: " + skew );
     Triples = MatrixOps.symmetrize(Triples);
     assert( MatrixOps.isSymmetric(Triples) );
 

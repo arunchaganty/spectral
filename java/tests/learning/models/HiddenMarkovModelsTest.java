@@ -326,7 +326,9 @@ public class HiddenMarkovModelsTest {
               "likelihood", lhood,
               "diff", diff
       ));
-      Assert.assertTrue(lhood >= oldLhood);
+      Assert.assertTrue( lhood - oldLhood > -1e-2); // Numerical error.
+      oldLhood = lhood;
+
       if( diff < 1e-3 ) break;
     }
 

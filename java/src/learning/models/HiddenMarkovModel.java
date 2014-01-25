@@ -49,6 +49,11 @@ public class HiddenMarkovModel extends ExponentialFamilyModel<Example> {
     }
 
     @Override
+    public Parameters newParams() {
+      return new Parameters(K, featureIndexer);
+    }
+
+    @Override
     public void initRandom(Random random, double noise) {
       super.initRandom(random, noise);
       // Now normalize appropriately
@@ -134,6 +139,23 @@ public class HiddenMarkovModel extends ExponentialFamilyModel<Example> {
       return O;
     }
 
+    public Parameters with(double[] pi, double[][] T, double[][] O) {
+      Parameters params = newParams();
+      for(int h = 0; h < K; h++)
+        params.weights[pi(h)] = pi[h];
+
+      for(int h1 = 0; h1 < K; h1++)
+        for(int h2 = 0; h2 < K; h2++)
+          params.weights[t(h1,h2)] = T[h1][h2];
+
+      for(int h = 0; h < K; h++)
+        for(int x = 0; x < D; x++)
+          params.weights[o(h,x)] = O[h][x];
+
+      assert params.isValid();
+
+      return params;
+    }
   }
 
   public static Feature piFeature(int h) {
@@ -574,8 +596,8 @@ public class HiddenMarkovModel extends ExponentialFamilyModel<Example> {
       }
       {
         double z = 0.;
-        for(int y2 = 0; y2 < D; y2++) z += marginals.weights[t(y1,y2)];
-        for(int y2 = 0; y2 < D; y2++) marginals.weights[t(y1,y2)] /= z;
+        for(int y2 = 0; y2 < D; y2++) z += marginals.weights[t(y1, y2)];
+        for(int y2 = 0; y2 < D; y2++) marginals.weights[t(y1, y2)] /= z;
       }
     }
 
