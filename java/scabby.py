@@ -116,12 +116,15 @@ def aggregate( dicts, keys, mode = 'avg' ):
         if key not in values:
             values[key], updates[key] = val, 1.
         else:
-            if mode == 'avg':
-                values[key], updates[key] = running_average( values[key], updates[key], val )
-            elif mode == 'max':
-                values[key], updates[key] = running_max( values[key], updates[key], val )
-            elif mode == 'min':
-                values[key], updates[key] = running_min( values[key], updates[key], val )
+            try:
+                if mode == 'avg':
+                    values[key], updates[key] = running_average( values[key], updates[key], val )
+                elif mode == 'max':
+                    values[key], updates[key] = running_max( values[key], updates[key], val )
+                elif mode == 'min':
+                    values[key], updates[key] = running_min( values[key], updates[key], val )
+            except TypeError:
+                pass
     return values.values()
 
 def running_aggregate( agg, count, x, agg_fn  ):
