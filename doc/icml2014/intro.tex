@@ -1,0 +1,67 @@
+\section{Introduction}
+\label{sec:introduction}
+
+% 1. Latent variable models are good.
+Latent variable models offer a succinct representation of a rich model
+family. 
+% 2. Learning them is hard.
+Despite their success across many fields
+\cite{quattoni04crf,haghighi06prototype,liang06discrimative,kirkpatrick10painless},
+learning these models remains a difficult problem due to the
+non-convexity of the likelihood. Local optimization (e.g.
+expectation-maximization) is the standard approach, but is susceptible
+to local optima.
+
+% 3. People have approached unsupervised learning with the MoM magic sauce, but the sauce is limited.
+Recently, unsupervised learning techniques based on the method of moments and
+spectral decomposition have offered a refreshing and promising perspective on
+this learning problem \citep{hsu09spectral,anandkumar11tree,anandkumar12moments,anandkumar12lda,hsu12identifiability,balle11transducer,balle12automata}.
+These methods exploit the linear algebraic properties of the model and
+factorize the moments into parameters, providing strong theoretical guarantees.
+However, these methods are not as universally applicable as EM.
+
+% 4. State what we do: exploit moment constraints to make the problem easier.
+In this work, we exploit the spectral method to learn moment constraints
+on the observed variables and show how these constraints can greatly
+simplify the learning problem.
+% 5. We get moments from third-order tensors from bottlenecks and factorize them into marginals.
+The key idea in
+\citet{anandkumar12moments,anandkumar13tensor} is to study the conditional
+independence factorization structure implied by the model in the form of 
+three-view bottlenecks. These bottlenecks which can be factorized into
+moments involving the latent variables\vague.
+
+% 6. Provide some intuitive examples - Can I haz HMMs?
+Consider a hidden Markov model, with initial probabilities $\pi$,
+  transitions $T$ and emissions $O$. 
+While \citet{hsu09spectral,anandkumar12moments} provide a consistent estimator
+  for the parameters of this model that inverts $O$ to recover $T$ and
+  $\pi$. We would like to avoid this potentially sensitive procedure via optimization.
+The log-likelihood of this model, 
+  \begin{align}
+    \sL(\pi, T, O) &= \sum_{x\in\sD} \log( \sum_{h} \pi(h_1) O(x_1 | h_1) T(h_2 | h_1) O(x_2 | h_2) \cdots ),
+  \end{align}
+  is not convex, even if we knew any one of the parameters.
+However, intuitively, if we knew $O$ and found that each symbol was
+  produced by exactly one state, learning $T$ and $\pi$ could be trivial
+  accomplished via counting. 
+In general, $O$ still informs us about the states in the observation
+  sequence. If we considered instead the piecewise likelihood, 
+  \begin{align}
+    \sL_{\textrm{p}}(\pi, T, O) &= \sum_{x\in\sD} \log( \sum_{h_1, h_2} \underbrace{\pi(h_1) T(h_2 | h_1)}_{P(h_1,h_2)} O(x_1 | h_1) O(x_2 | h_2) ),
+  \end{align}
+  then we observe that the likelihood is convex in the marginal
+  distribution $P(h_1,h_2)$. This allows us to recover $P$, from which $T$
+  can be easily reconstructed.
+
+% 7. Now outline the rest of our results.
+In \sectionref{piecewise} we generalize this observation to a directed grid
+  model and a directed tree model and show that the {\em piecewise
+  likelihood} is strictly convex, providing consistent parameter
+  estimators for these models (which is new)\reword.
+The approach can be extended to log-linear
+  models (\sectionref{log-linear}), where the problem remains non-convex,
+  however, we expect a reduction in the number of local optima. 
+In this regime, we show empirically that constraining the moments of the
+  model via posterior-regularization allows us to learn better models.
+
