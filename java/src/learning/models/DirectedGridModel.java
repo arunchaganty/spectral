@@ -215,8 +215,10 @@ public class DirectedGridModel extends ExponentialFamilyModel<Example> {
     indexer.lock();
 
     // Oh look, I'm going to enumerate the whole damn thing and save a few hours. Aren't I clever.
-    hiddenConfigurations = Utils.enumerate(K,L);
-    observedConfigurations = Utils.enumerate(D,2*L);
+    hiddenConfigurations = null;
+    observedConfigurations = null;
+//    hiddenConfigurations = Utils.enumerate(K,L);
+//    observedConfigurations = Utils.enumerate(D,2*L);
   }
 
   @Override
@@ -393,26 +395,20 @@ public class DirectedGridModel extends ExponentialFamilyModel<Example> {
   }
 
   @Override
-  public Counter<Example> drawSamples(Params parameters, Random genRandom, int n) {
-    double[] multinomial = new double[hiddenConfigurations.length * observedConfigurations.length];
-    Example ex = new Example();
-    double logZ = getLogLikelihood(parameters, L);
-    for(int i = 0; i < hiddenConfigurations.length; i++) {
-      ex.h = hiddenConfigurations[i];
-      for(int j = 0; j < observedConfigurations.length; j++) {
-        ex.x = observedConfigurations[j];
-        multinomial[i*observedConfigurations.length + j] = Math.exp(getFullLikelihood(parameters, ex) - logZ);
-      }
-    }
-    // There is some times some numerical error...
-    MatrixOps.scale(multinomial, 1. / MatrixOps.sum(multinomial));
-
+  public Counter<Example> drawSamples(Params params_, Random genRandom, int n) {
+    if(!(params_ instanceof Parameters))
+      throw new IllegalArgumentException();
+    Parameters params = (Parameters) params_;
     Counter<Example> examples = new Counter<>();
+
+    double[] pi = params.getPi();
+    double[][] T = params.getT();
+    double[][][] TC = params.getTC();
+    double[][] O = params.getO();
+
+
     for(int i = 0; i < n; i++) {
-      int choice = Multinomial.sample(genRandom, multinomial);
-      int[] x = observedConfigurations[choice % observedConfigurations.length];
-      int[] h = hiddenConfigurations[choice / observedConfigurations.length];
-      examples.add(new Example(x,h));
+      examples.add(drawSample(params, genRandom, pi, T, TC, O));
     }
     return examples;
   }
@@ -422,25 +418,25 @@ public class DirectedGridModel extends ExponentialFamilyModel<Example> {
     // Sample h first.
     {
       ex.h[hIdx(0,0)] = RandomFactory.multinomial(genRandom, pi);
-      for(int h1 = 0; h1 < K; h1++) { // row
-        for(int h2 = 0; h2 < K; h2++) { // col
-          if(h1 == 0 && h2 == 0) {
+      for(int row = 0; row < rows; row++) { // row
+        for(int col = 0; col < cols; col++) { // col
+          if(row == 0 && col == 0) {
           }
-          else if(h1 == 0)
-            ex.h[hIdx(h1,h2)] = RandomFactory.multinomial(genRandom, T[h2-1]);
-          else if(h2 == 0)
-            ex.h[hIdx(h1,h2)] = RandomFactory.multinomial(genRandom, T[h1-1]);
+          else if(row == 0)
+            ex.h[hIdx(row,col)] = RandomFactory.multinomial(genRandom, T[col-1]);
+          else if(col == 0)
+            ex.h[hIdx(row,col)] = RandomFactory.multinomial(genRandom, T[row-1]);
           else
-            ex.h[hIdx(h1,h2)] = RandomFactory.multinomial(genRandom, TC[h1-1][h2-1]);
+            ex.h[hIdx(row,col)] = RandomFactory.multinomial(genRandom, TC[row-1][col-1]);
         }
       }
     }
 
     {
-      for(int h1 = 0; h1 < K; h1++) { // row
-        for(int h2 = 0; h2 < K; h2++) { // col
-          ex.x[oIdx(h1,h2,0)] = RandomFactory.multinomial(genRandom, O[hIdx(h1,h2)]);
-          ex.x[oIdx(h1,h2,1)] = RandomFactory.multinomial(genRandom, O[hIdx(h1,h2)]);
+      for(int row = 0; row < rows; row++) { // row
+        for(int col = 0; col < cols; col++) { // col
+          ex.x[oIdx(row,col,0)] = RandomFactory.multinomial(genRandom, O[ex.h[hIdx(row,col)]]);
+          ex.x[oIdx(row,col,1)] = RandomFactory.multinomial(genRandom, O[ex.h[hIdx(row,col)]]);
         }
       }
     }

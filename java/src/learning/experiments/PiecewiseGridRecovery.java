@@ -150,11 +150,11 @@ public class PiecewiseGridRecovery implements Runnable {
       int p = H.numRows();
 
       SimpleSVD svd = H.svd();
-      int rank = svd.rank();
+      int rank = MatrixOps.rank(H, 1e-3);
       double sigmak = svd.getSingleValue(p-1);
       double condition = svd.getSingleValue(0) / sigmak;
-      logs("Problem has rank %d vs %d (%f).", svd.rank(), p, condition);
-      log(svd.getW());
+      logs("Problem has rank %d vs %d (%f).", rank, p, condition);
+      log(svd.getW().extractDiag());
 
       log(outputList(
          "piecewise-sigmak", sigmak

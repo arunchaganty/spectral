@@ -7,10 +7,12 @@ import learning.linalg.FullTensor;
 import learning.linalg.MatrixFactory;
 import learning.linalg.MatrixOps;
 import learning.linalg.RandomFactory;
+import learning.models.DirectedGridModel;
 import learning.models.HiddenMarkovModel;
 import learning.models.loglinear.Example;
 import learning.spectral.TensorMethod;
 import org.ejml.simple.SimpleMatrix;
+import org.ejml.simple.SimpleSVD;
 import org.javatuples.Quartet;
 
 import javax.xml.ws.soap.MTOM;
@@ -312,74 +314,74 @@ public class PairwiseHMMRecovery implements  Runnable {
 //    Execution.putOutput("full-K", sigma.get(0,0) / sigma.get(H.length-1));
 //    return rank == H.length;
 //  }
-//
-//  public SimpleMatrix getPiecewiseHessian(HiddenMarkovModelOld model, double[][] P, int[][] X)  {
-//    int K = model.getStateCount();
-//    int D = model.getEmissionCount();
-//
-//    // Piecewise likelihood.
-//    double[][] O = model.params.O;
-//
-//    // Compute hessian of likelihood
-//    double[][] H = new double[K*K][K*K];
-//
-//    int count = 0;
-//    for(int[] x : X) {
-//      for(int offset = 0; offset < x.length-1; offset++) {
-//        count++;
-//        int x1 = x[offset];
-//        int x2 = x[offset+1];
-//
-//        double z = 0.;
-//        for(int h1 = 0; h1 < K; h1++) {
-//          for(int h2 = 0; h2 < K; h2++) {
-//            z += P[h1][h2] * O[h1][x1] * O[h2][x2];
-//          }
-//        }
-//
-//        for(int i = 0; i < K * K; i++) {
-//          int h1 = i / K;
-//          int h2 = i % K;
-//          for(int j = 0; j < K * K; j++) {
-//            int h1_ = j / K;
-//            int h2_ = j % K;
-//
-//            // Add O_z
-//            H[i][j] += (-(O[h1][x1] * O[h2][x2]/z) * (O[h1_][x1] * O[h2_][x2]/z) - H[i][j])/count;
-//          }
-//        }
-//      }
-//    }
-//
-//    return new SimpleMatrix(H);
-//  }
-//
-//  public boolean piecewiseIdentifiabilityReport(HiddenMarkovModelOld model, int[][] X) {
-//    begin_track("piecewise-identifiability");
-//    int K = model.getStateCount();
-//    int D = model.getEmissionCount();
-//
-//    // Piecewise likelihood.
-//    double[][] O = model.params.O;
-//
-//    double Sigmak = Double.POSITIVE_INFINITY;
-//
-//    boolean identifiable = true;
-//    {
-//      double[][] P = getPiecewiseParameters(model);
-//      SimpleMatrix H = getPiecewiseHessian(model, P, X);
-//      int p = H.numRows();
-//
-//      SimpleSVD svd = H.svd();
-//      int rank = svd.rank();
-//      double sigmak = svd.getSingleValue(p-1);
-//      double condition = svd.getSingleValue(0) / sigmak;
-//      logs("Problem has rank %d vs %d (%f).", svd.rank(), p, condition);
-//      log(svd.getW());
-//
-//      if(sigmak < Sigmak) Sigmak = sigmak;
-//      identifiable = identifiable && K < 1e3;
-//    }
+
+  public SimpleMatrix getPiecewiseHessian(HiddenMarkovModel model, HiddenMarkovModel.Parameters params, double[][] P, Counter<Example> data)  {
+    int K = model.getK();
+    int D = model.getD();
+
+    // Piecewise likelihood.
+    double[][] O = params.getO();
+
+    // Compute hessian of likelihood
+    double[][] H = new double[K*K][K*K];
+
+    int count = 0;
+    for(Example ex : data) {
+      double weight = data.getFraction(ex);
+      int[] x = ex.x;
+
+      for(int offset = 0; offset < x.length-1; offset++) {
+        count++;
+        int x1 = x[offset];
+        int x2 = x[offset+1];
+
+        double z = 0.;
+        for(int h1 = 0; h1 < K; h1++) {
+          for(int h2 = 0; h2 < K; h2++) {
+            z += P[h1][h2] * O[h1][x1] * O[h2][x2];
+          }
+        }
+
+        for(int i = 0; i < K * K; i++) {
+          int h1 = i / K;
+          int h2 = i % K;
+          for(int j = 0; j < K * K; j++) {
+            int h1_ = j / K;
+            int h2_ = j % K;
+
+            // Add O_z
+            H[i][j] += (-(O[h1][x1] * O[h2][x2]/z) * (O[h1_][x1] * O[h2_][x2]/z) - H[i][j])/count;
+          }
+        }
+      }
+    }
+
+    return new SimpleMatrix(H);
+  }
+
+  public boolean piecewiseIdentifiabilityReport(HiddenMarkovModel model, HiddenMarkovModel.Parameters params, Counter<Example> data) {
+    begin_track("piecewise-identifiability");
+    int K = model.getK();
+    int D = model.getD();
+
+    double Sigmak = Double.POSITIVE_INFINITY;
+
+    boolean identifiable = true;
+    {
+      double[][] P = analysis.getPiecewiseParameters();
+      SimpleMatrix H = getPiecewiseHessian(model, params, P, data);
+      int p = H.numRows();
+
+      SimpleSVD svd = H.svd();
+      int rank = MatrixOps.rank(H);
+      double sigmak = svd.getSingleValue(p-1);
+      double condition = svd.getSingleValue(0) / sigmak;
+      logs("Problem has rank %d vs %d (%f).", rank, p, condition);
+      log(svd.getW());
+
+      if(sigmak < Sigmak) Sigmak = sigmak;
+      identifiable = identifiable && K < 1e3;
+    }
 //    for(int guess = 0; guess < 5; guess++) {
 //      double[][] P = RandomFactory.rand_(initRandom, K, K);
 //      MatrixOps.abs(P);
@@ -397,12 +399,12 @@ public class PairwiseHMMRecovery implements  Runnable {
 //      if(sigmak < Sigmak) Sigmak = sigmak;
 //      identifiable = identifiable && K < 1e3;
 //    }
-//    end_track("piecewise-identifiability");
-//
-//    Execution.putOutput("piecewise-sigmak", Sigmak);
-//
-//    return identifiable;
-//  }
+    end_track("piecewise-identifiability");
+
+    Execution.putOutput("piecewise-sigmak", Sigmak);
+
+    return identifiable;
+  }
 //
 //  public double piecewiseLikelihood(HiddenMarkovModelOld model, double[][] P, double[][] O, int[][] X) {
 //    int K = model.getStateCount();
@@ -697,7 +699,7 @@ public class PairwiseHMMRecovery implements  Runnable {
 
     // TODO: Make this less sucky
 //    fullIdentifiabilityReport(model, X);
-//    piecewiseIdentifiabilityReport(model, X);
+    piecewiseIdentifiabilityReport(model, trueParams, data);
 
     begin_track("Get initial estimate");
 
