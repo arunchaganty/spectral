@@ -24,8 +24,6 @@ public class DirectedGridModel extends ExponentialFamilyModel<Example> {
   final int K; final int D; final int L;
   final int rows; final int cols;
   final Indexer<Feature> indexer;
-  final int[][] hiddenConfigurations;
-  final int[][] observedConfigurations;
 
   public int pi(int h) {
     return h;
@@ -69,36 +67,8 @@ public class DirectedGridModel extends ExponentialFamilyModel<Example> {
     public void initRandom(Random random, double noise) {
       super.initRandom(random, noise);
       // Normalize
+      normalize();
 
-      // - pi
-      {
-        double z = 0.;
-        for(int h = 0; h < K; h++) z += Math.abs(weights[pi(h)]);
-        for(int h = 0; h < K; h++) weights[pi(h)] = Math.abs(weights[pi(h)])/z;
-      }
-
-      // - T
-      for(int h1 = 0; h1 < K; h1++) {
-        double z = 0.;
-        for(int h2 = 0; h2 < K; h2++) z += Math.abs(weights[t(h1,h2)]);
-        for(int h2 = 0; h2 < K; h2++) weights[t(h1,h2)] = Math.abs(weights[t(h1,h2)])/z;
-      }
-
-      // - TC
-      for(int h1 = 0; h1 < K; h1++) {
-        for(int h2 = 0; h2 < K; h2++) {
-          double z = 0.;
-          for(int h3 = 0; h3 < K; h3++) z += Math.abs(weights[tC(h1,h2,h3)]);
-          for(int h3 = 0; h3 < K; h3++) weights[tC(h1,h2,h3)] = Math.abs(weights[tC(h1,h2,h3)])/z;
-        }
-      }
-
-      // - O
-      for(int h1 = 0; h1 < K; h1++) {
-        double z = 0.;
-        for(int x = 0; x < D; x++) z += Math.abs(weights[o(h1,x)]);
-        for(int x = 0; x < D; x++) weights[o(h1, x)] = Math.abs(weights[o(h1, x)])/z;
-      }
     }
 
     public boolean isValid() {
@@ -165,6 +135,38 @@ public class DirectedGridModel extends ExponentialFamilyModel<Example> {
           O[h1][x] = weights[o(h1, x)];
       return O;
     }
+
+    public void normalize() {
+      {
+        double z = 0.;
+        for(int h = 0; h < K; h++) z += Math.abs(weights[pi(h)]);
+        for(int h = 0; h < K; h++) weights[pi(h)] = Math.abs(weights[pi(h)])/z;
+      }
+
+      // - T
+      for(int h1 = 0; h1 < K; h1++) {
+        double z = 0.;
+        for(int h2 = 0; h2 < K; h2++) z += Math.abs(weights[t(h1,h2)]);
+        for(int h2 = 0; h2 < K; h2++) weights[t(h1,h2)] = Math.abs(weights[t(h1,h2)])/z;
+      }
+
+      // - TC
+      for(int h1 = 0; h1 < K; h1++) {
+        for(int h2 = 0; h2 < K; h2++) {
+          double z = 0.;
+          for(int h3 = 0; h3 < K; h3++) z += Math.abs(weights[tC(h1,h2,h3)]);
+          for(int h3 = 0; h3 < K; h3++) weights[tC(h1,h2,h3)] = Math.abs(weights[tC(h1,h2,h3)])/z;
+        }
+      }
+
+      // - O
+      for(int h1 = 0; h1 < K; h1++) {
+        double z = 0.;
+        for(int x = 0; x < D; x++) z += Math.abs(weights[o(h1,x)]);
+        for(int x = 0; x < D; x++) weights[o(h1, x)] = Math.abs(weights[o(h1, x)])/z;
+      }
+      assert isValid();
+    }
   }
 
   protected class IntermediateState {
@@ -215,10 +217,6 @@ public class DirectedGridModel extends ExponentialFamilyModel<Example> {
     indexer.lock();
 
     // Oh look, I'm going to enumerate the whole damn thing and save a few hours. Aren't I clever.
-    hiddenConfigurations = null;
-    observedConfigurations = null;
-//    hiddenConfigurations = Utils.enumerate(K,L);
-//    observedConfigurations = Utils.enumerate(D,2*L);
   }
 
   @Override
@@ -251,33 +249,26 @@ public class DirectedGridModel extends ExponentialFamilyModel<Example> {
 
   @Override
   public double getLogLikelihood(Params parameters, int L) {
-    if(intermediateState.use && intermediateState.logZ != null) return intermediateState.logZ;
-    double lhood = Double.NEGATIVE_INFINITY;
-    Example ex = new Example();
-    for(int[] x : observedConfigurations)  {
-      ex.x = x;
-      lhood = MatrixOps.logsumexp(lhood,getLogLikelihood(parameters, ex));
-    }
-    if(intermediateState.use) intermediateState.logZ = lhood;
-    return lhood;
+    return 0.0;
   }
 
   @Override
   public double getLogLikelihood(Params parameters, Example example) {
-    if(example == null) return getLogLikelihood(parameters,L);
-    assert example.x.length == 2 * this.L;
-    double lhood = Double.NEGATIVE_INFINITY;
-    double[] weights = parameters.toArray();
-    int[] h = example.h;
+    throw new RuntimeException("Not yet implemented.");
+//    if(example == null) return getLogLikelihood(parameters,L);
+//    assert example.x.length == 2 * this.L;
+//    double lhood = Double.NEGATIVE_INFINITY;
+//    double[] weights = parameters.toArray();
+//    int[] h = example.h;
     // Iterate through and add the cost of everything.
-    for(int[] hidden : hiddenConfigurations) {
-      example.h = hidden;
-      double lhood_ = getFullLikelihood(parameters, example);
-      lhood = MatrixOps.logsumexp(lhood, lhood_);
-    }
-    example.h = h;
-
-    return lhood;
+//    for(int[] hidden : hiddenConfigurations) {
+//      example.h = hidden;
+//      double lhood_ = getFullLikelihood(parameters, example);
+//      lhood = MatrixOps.logsumexp(lhood, lhood_);
+//    }
+//    example.h = h;
+//
+//    return lhood;
   }
 
   public double getFullLikelihood(Params parameters, Example example) {
@@ -330,59 +321,70 @@ public class DirectedGridModel extends ExponentialFamilyModel<Example> {
     return lhood;
   }
   public double getFullProbability(Params parameters, Example example) {
-    return Math.exp(getFullLikelihood(parameters,example) - getLogLikelihood(parameters,L));
+    return Math.exp(getFullLikelihood(parameters,example));
   }
 
 
   @Override
   public void updateMarginals(Params parameters, Example example, double scale, Params marginals) {
-    assert example == null || example.x.length == 2 * this.L;
-
-    intermediateState.start();
-    // Because we mutate example
-    double logZ = (example == null)
-            ? getLogLikelihood(parameters, L)
-            : getLogLikelihood(parameters, example);
-    Example example_ = new Example();
-    for(int[] observed : (example == null)
-            ? Arrays.asList(observedConfigurations)
-            : Collections.singleton(example.x)) {
-      // Iterate through and add the cost of everything.
-      example_.x = observed;
-      for(int[] hidden : hiddenConfigurations) {
-        example_.h = hidden;
-        double pr = Math.exp(getFullLikelihood(parameters, example_) - logZ);
-        updateFullMarginals(example_, scale * pr, marginals);
-      }
-    }
-    intermediateState.stop();
+    throw new RuntimeException("not yet implemented.");
+//    assert example == null || example.x.length == 2 * this.L;
+//
+//    intermediateState.start();
+//    // Because we mutate example
+//    double logZ = (example == null)
+//            ? getLogLikelihood(parameters, L)
+//            : getLogLikelihood(parameters, example);
+//    Example example_ = new Example();
+//    for(int[] observed : (example == null)
+//            ? Arrays.asList(observedConfigurations)
+//            : Collections.singleton(example.x)) {
+//      // Iterate through and add the cost of everything.
+//      example_.x = observed;
+//      for(int[] hidden : hiddenConfigurations) {
+//        example_.h = hidden;
+//        double pr = Math.exp(getFullLikelihood(parameters, example_) - logZ);
+//        updateFullMarginals(example_, scale * pr, marginals);
+//      }
+//    }
+//    intermediateState.stop();
   }
 
-  public void updateFullMarginals(Example example, double scale, Params marginals) {
+  public void updateFullMarginals(Example ex, double scale, Params marginals) {
     // Because we mutate example
     double[] marginals_ = marginals.toArray();
     // Iterate through and add the cost of everything.
+    {
+      int h = ex.h[hIdx(0,0)];
+      marginals_[pi(h)] += scale;
+    }
     for(int row = 0; row < rows; row++) {
       for(int col = 0; col < cols; col++) {
         // Add observations.
-        int h = example.h[hIdx(row,col)];
-        int x1 = example.x[oIdx(row, col, 0)];
-        int x2 = example.x[oIdx(row,col,1)];
+        int h = ex.h[hIdx(row,col)];
+        int x1 = ex.x[oIdx(row, col, 0)];
+        int x2 = ex.x[oIdx(row,col,1)];
         marginals_[o(h,x1)] += scale;
         marginals_[o(h,x2)] += scale;
       }
     }
     for(int row = 0; row < rows; row++) {
       for(int col = 0; col < cols; col++) {
-        // Add observations.
-        int h_ = example.h[hIdx(row,col)];
-        if(row < rows-1) {
-          int h = example.h[hIdx(row+1,col)];
-          marginals_[t(h_,h)] += scale;
+        int h = ex.h[hIdx(row,col)];
+        // Add transitions.
+        if(row == 0 && col == 0) {
+        } else if(row == 0) {
+          int h_l = ex.h[hIdx(row,col-1)];
+          marginals_[t(h_l,h)] += scale;
         }
-        if(col < cols-1) {
-          int h = example.h[hIdx(row,col+1)];
-          marginals_[t(h_,h)] += scale;
+        else if(col == 0) {
+          int h_u = ex.h[hIdx(row-1,col)];
+          marginals_[t(h_u,h)] += scale;
+        }
+        else {
+          int h_u = ex.h[hIdx(row-1,col)];
+          int h_l = ex.h[hIdx(row,col-1)];
+          marginals_[tC(h_u,h_l,h)] += scale;
         }
       }
     }
@@ -422,12 +424,19 @@ public class DirectedGridModel extends ExponentialFamilyModel<Example> {
         for(int col = 0; col < cols; col++) { // col
           if(row == 0 && col == 0) {
           }
-          else if(row == 0)
-            ex.h[hIdx(row,col)] = RandomFactory.multinomial(genRandom, T[col-1]);
-          else if(col == 0)
-            ex.h[hIdx(row,col)] = RandomFactory.multinomial(genRandom, T[row-1]);
-          else
-            ex.h[hIdx(row,col)] = RandomFactory.multinomial(genRandom, TC[row-1][col-1]);
+          else if(row == 0) {
+            int h_l = ex.h[hIdx(row,col-1)];
+            ex.h[hIdx(row,col)] = RandomFactory.multinomial(genRandom, T[h_l]);
+          }
+          else if(col == 0) {
+            int h_u = ex.h[hIdx(row-1,col)];
+            ex.h[hIdx(row,col)] = RandomFactory.multinomial(genRandom, T[h_u]);
+          }
+          else {
+            int h_u = ex.h[hIdx(row-1,col)];
+            int h_l = ex.h[hIdx(row,col-1)];
+            ex.h[hIdx(row,col)] = RandomFactory.multinomial(genRandom, TC[h_u][h_l]);
+          }
         }
       }
     }
@@ -435,8 +444,9 @@ public class DirectedGridModel extends ExponentialFamilyModel<Example> {
     {
       for(int row = 0; row < rows; row++) { // row
         for(int col = 0; col < cols; col++) { // col
-          ex.x[oIdx(row,col,0)] = RandomFactory.multinomial(genRandom, O[ex.h[hIdx(row,col)]]);
-          ex.x[oIdx(row,col,1)] = RandomFactory.multinomial(genRandom, O[ex.h[hIdx(row,col)]]);
+          int h = ex.h[hIdx(row,col)];
+          ex.x[oIdx(row,col,0)] = RandomFactory.multinomial(genRandom, O[h]);
+          ex.x[oIdx(row,col,1)] = RandomFactory.multinomial(genRandom, O[h]);
         }
       }
     }
@@ -465,20 +475,23 @@ public class DirectedGridModel extends ExponentialFamilyModel<Example> {
 
   @Override
   public Params getSampleMarginals(Counter<Example> examples) {
-    Params marginals = newParams();
+    Parameters marginals = newParams();
     for(Example ex : examples) {
       updateFullMarginals(ex, examples.getFraction(ex), marginals);
     }
+    // Normalize marginals
+    marginals.normalize();
+
+
     return marginals;
   }
 
   public Counter<Example> getDistribution(Params params) {
     Counter<Example> examples = new Counter<>();
-    intermediateState.start();
-    for(int[] hidden : hiddenConfigurations) {
-      for(int[] observed : observedConfigurations) {
+    for(int[] hidden : Utils.enumerate(K, L)) {
+      for(int[] observed : Utils.enumerate(D, 2*L)) {
         Example ex = new Example(observed, hidden);
-        examples.set(ex, getProbability(params, ex));
+        examples.set(ex, getFullProbability(params, ex));
       }
     }
     intermediateState.stop();

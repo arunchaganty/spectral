@@ -178,7 +178,7 @@ public class PiecewiseGridRecovery implements Runnable {
 
     // Get data
     Counter<Example> data;
-    if(N >= 1e7) // Seriously too much data
+    if(N >= 1e9) // Seriously too much data
       data =  model.getDistribution(trueParams);
     else
       data =  model.drawSamples(trueParams, genRandom, (int) N);
