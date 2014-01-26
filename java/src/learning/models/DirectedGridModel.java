@@ -1,4 +1,4 @@
-package learning.models.loglinear;
+package learning.models;
 
 import fig.basic.Indexer;
 import fig.prob.Multinomial;
@@ -6,9 +6,11 @@ import learning.common.Counter;
 import learning.common.Utils;
 import learning.linalg.FullTensor;
 import learning.linalg.MatrixOps;
+import learning.linalg.RandomFactory;
 import learning.models.BasicParams;
 import learning.models.ExponentialFamilyModel;
 import learning.models.Params;
+import learning.models.loglinear.*;
 import org.ejml.simple.SimpleMatrix;
 
 import java.util.Arrays;
@@ -16,29 +18,153 @@ import java.util.Collections;
 import java.util.Random;
 
 /**
- * A stupid implementation of the Grid model
+ * Directed
  */
-public class LatentGridModel extends ExponentialFamilyModel<Example> {
+public class DirectedGridModel extends ExponentialFamilyModel<Example> {
   final int K; final int D; final int L;
   final int rows; final int cols;
   final Indexer<Feature> indexer;
   final int[][] hiddenConfigurations;
   final int[][] observedConfigurations;
 
-  public int o(int h, int x) {
-    return h * D + x;
+  public int pi(int h) {
+    return h;
   }
   public int t(int h_, int h) {
-    return h_ * K + h + K * D;
+    return h_ * K + h + K;
+  }
+  public int tC(int h_u, int h_l, int h) {
+    return h_u * K * K + h_l * K + h + K * K + K;
+  }
+  public int o(int h, int x) {
+    return h * D + x + K*K*K + K*K + K;
   }
 
   public int getL() { return L; }
 
-  public Feature oFeature(int h, int x) {
-    return new UnaryFeature(h, "x="+x);
+  public Feature piFeature(int h) {
+    return new UnaryFeature(h, "pi");
   }
   public Feature tFeature(int h_, int h) {
     return new BinaryFeature(h_, h);
+  }
+  public Feature tCFeature(int h_u, int h_l, int h) {
+    return new TernaryFeature(h_u, h_l, h);
+  }
+  public Feature oFeature(int h, int x) {
+    return new UnaryFeature(h, "x="+x);
+  }
+
+  public class Parameters extends BasicParams {
+    public Parameters(int K, Indexer<Feature> featureIndexer) {
+      super(K, featureIndexer);
+    }
+
+    @Override
+    public Parameters newParams() {
+      return new Parameters(K, featureIndexer);
+    }
+
+    @Override
+    public void initRandom(Random random, double noise) {
+      super.initRandom(random, noise);
+      // Normalize
+
+      // - pi
+      {
+        double z = 0.;
+        for(int h = 0; h < K; h++) z += Math.abs(weights[pi(h)]);
+        for(int h = 0; h < K; h++) weights[pi(h)] = Math.abs(weights[pi(h)])/z;
+      }
+
+      // - T
+      for(int h1 = 0; h1 < K; h1++) {
+        double z = 0.;
+        for(int h2 = 0; h2 < K; h2++) z += Math.abs(weights[t(h1,h2)]);
+        for(int h2 = 0; h2 < K; h2++) weights[t(h1,h2)] = Math.abs(weights[t(h1,h2)])/z;
+      }
+
+      // - TC
+      for(int h1 = 0; h1 < K; h1++) {
+        for(int h2 = 0; h2 < K; h2++) {
+          double z = 0.;
+          for(int h3 = 0; h3 < K; h3++) z += Math.abs(weights[tC(h1,h2,h3)]);
+          for(int h3 = 0; h3 < K; h3++) weights[tC(h1,h2,h3)] = Math.abs(weights[tC(h1,h2,h3)])/z;
+        }
+      }
+
+      // - O
+      for(int h1 = 0; h1 < K; h1++) {
+        double z = 0.;
+        for(int x = 0; x < D; x++) z += Math.abs(weights[o(h1,x)]);
+        for(int x = 0; x < D; x++) weights[o(h1, x)] = Math.abs(weights[o(h1, x)])/z;
+      }
+    }
+
+    public boolean isValid() {
+      // - pi
+      {
+        double z = 0.;
+        for(int h = 0; h < K; h++) z += Math.abs(weights[pi(h)]);
+        if(!MatrixOps.equal(z, 1.0)) return false;
+      }
+
+      // - T
+      for(int h1 = 0; h1 < K; h1++) {
+        double z = 0.;
+        for(int h2 = 0; h2 < K; h2++) z += Math.abs(weights[t(h1,h2)]);
+        if(!MatrixOps.equal(z, 1.0)) return false;
+      }
+
+      // - TC
+      for(int h1 = 0; h1 < K; h1++) {
+        for(int h2 = 0; h2 < K; h2++) {
+          double z = 0.;
+          for(int h3 = 0; h3 < K; h3++) z += Math.abs(weights[tC(h1,h2,h3)]);
+          if(!MatrixOps.equal(z, 1.0)) return false;
+        }
+      }
+
+      // - O
+      for(int h1 = 0; h1 < K; h1++) {
+        double z = 0.;
+        for(int x = 0; x < D; x++) z += Math.abs(weights[o(h1,x)]);
+        if(!MatrixOps.equal(z, 1.0)) return false;
+      }
+      return true;
+    }
+
+    public double[] getPi() {
+      double[] pi = new double[K];
+      for(int h = 0; h < K; h++)
+        pi[h] = weights[pi(h)];
+      return pi;
+    }
+
+    public double[][] getT() {
+      double[][] T = new double[K][K];
+      for(int h1 = 0; h1 < K; h1++)
+        for(int h2 = 0; h2 < K; h2++)
+          T[h1][h2] = weights[t(h1,h2)];
+      return T;
+    }
+
+    public double[][][] getTC() {
+      double[][][] T = new double[K][K][K];
+      for(int h1 = 0; h1 < K; h1++)
+        for(int h2 = 0; h2 < K; h2++)
+          for(int h3 = 0; h3 < K; h3++)
+            T[h1][h2][h3] = weights[tC(h1, h2, h3)];
+      return T;
+    }
+
+    public double[][] getO() {
+      double[][] O = new double[K][D];
+      for(int h1 = 0; h1 < K; h1++)
+        for(int x = 0; x < D; x++)
+          O[h1][x] = weights[o(h1, x)];
+      return O;
+    }
   }
 
   protected class IntermediateState {
@@ -63,7 +189,7 @@ public class LatentGridModel extends ExponentialFamilyModel<Example> {
   }
   IntermediateState intermediateState = new IntermediateState();
 
-  public LatentGridModel(int K, int D, int L) {
+  public DirectedGridModel(int K, int D, int L) {
     assert L == 4;
     this.K = K;
     this.D = D;
@@ -73,12 +199,19 @@ public class LatentGridModel extends ExponentialFamilyModel<Example> {
 
     // Populate indexer
     indexer = new Indexer<>();
-    for(int h = 0; h < K; h++)
-      for(int x = 0; x < D; x++)
-        indexer.getIndex(oFeature(h, x));
+    for(int h = 0; h < K; h++) {
+      assert indexer.getIndex(piFeature(h)) == pi(h);
+    }
     for(int h_ = 0; h_ < K; h_++)
       for(int h = 0; h < K; h++)
-        indexer.getIndex(tFeature(h_, h));
+        assert indexer.getIndex(tFeature(h_, h)) == t(h_, h);
+    for(int h_u = 0; h_u < K; h_u++)
+      for(int h_l = 0; h_l < K; h_l++)
+          for(int h = 0; h < K; h++)
+            assert indexer.getIndex(tCFeature(h_u, h_l, h)) == tC(h_u, h_l, h);
+    for(int h = 0; h < K; h++)
+      for(int x = 0; x < D; x++)
+        assert indexer.getIndex(oFeature(h, x)) == o(h,x);
     indexer.lock();
 
     // Oh look, I'm going to enumerate the whole damn thing and save a few hours. Aren't I clever.
@@ -99,18 +232,18 @@ public class LatentGridModel extends ExponentialFamilyModel<Example> {
   @Override
   public int numFeatures() {
     // K*K for transitions and K*D for emissions.
-    return K * K + K * D;
+    return K * D + K * K * K + K * K + K;
   }
 
   @Override
-  public Params newParams() {
-    return new BasicParams(K, indexer);
+  public Parameters newParams() {
+    return new Parameters(K, indexer);
   }
 
-  int hIdx(int r, int c) {
+  public int hIdx(int r, int c) {
     return r * (cols) + c;
   }
-  int oIdx(int r, int c, int d) {
+  public int oIdx(int r, int c, int d) {
     return r * (cols * 2) + c * (2) + d;
   }
 
@@ -153,6 +286,7 @@ public class LatentGridModel extends ExponentialFamilyModel<Example> {
     // Iterate through and add the cost of everything.
     int[] hidden = example.h;
     double lhood = 0.;
+     // - O
     for(int row = 0; row < rows; row++) {
       for(int col = 0; col < cols; col++) {
         // Add observations.
@@ -163,17 +297,30 @@ public class LatentGridModel extends ExponentialFamilyModel<Example> {
         lhood += weights[o(h, x2)]; // For d = 1, d = 2
       }
     }
+
+    // - pi
+    {
+      int h = hidden[hIdx(0,0)];
+      lhood += weights[pi(h)];
+    }
+
+    // - T
     for(int row = 0; row < rows; row++) {
       for(int col = 0; col < cols; col++) {
-        // Add observations.
-        int h_ = hidden[hIdx(row,col)];
-        if(row < rows-1) {
-          int h = hidden[hIdx(row+1,col)];
-          lhood += weights[t(h_,h)];
+        // Add contribution from parents
+        int h = hidden[hIdx(row,col)];
+        if( row > 0 && col > 0) {
+          int h_u = hidden[hIdx(row-1,col)];
+          int h_l = hidden[hIdx(row,col-1)];
+          lhood += weights[tC(h_u,h_l,h)];
         }
-        if(col < cols-1) {
-          int h = hidden[hIdx(row,col+1)];
-          lhood += weights[t(h_,h)];
+        else if(row > 0) {
+          int h_u = hidden[hIdx(row-1,col)];
+          lhood += weights[t(h_u,h)];
+        }
+        if(col > 0) {
+          int h_l = hidden[hIdx(row,col-1)];
+          lhood += weights[t(h_l,h)];
         }
       }
     }
@@ -247,8 +394,6 @@ public class LatentGridModel extends ExponentialFamilyModel<Example> {
 
   @Override
   public Counter<Example> drawSamples(Params parameters, Random genRandom, int n) {
-    intermediateState.start();
-
     double[] multinomial = new double[hiddenConfigurations.length * observedConfigurations.length];
     Example ex = new Example();
     double logZ = getLogLikelihood(parameters, L);
@@ -269,9 +414,38 @@ public class LatentGridModel extends ExponentialFamilyModel<Example> {
       int[] h = hiddenConfigurations[choice / observedConfigurations.length];
       examples.add(new Example(x,h));
     }
-
-    intermediateState.stop();
     return examples;
+  }
+  public Example drawSample(Params parameters, Random genRandom, double[] pi, double[][] T, double[][][] TC, double[][] O) {
+    Example ex = new Example( new int[L*2], new int[L] );
+
+    // Sample h first.
+    {
+      ex.h[hIdx(0,0)] = RandomFactory.multinomial(genRandom, pi);
+      for(int h1 = 0; h1 < K; h1++) { // row
+        for(int h2 = 0; h2 < K; h2++) { // col
+          if(h1 == 0 && h2 == 0) {
+          }
+          else if(h1 == 0)
+            ex.h[hIdx(h1,h2)] = RandomFactory.multinomial(genRandom, T[h2-1]);
+          else if(h2 == 0)
+            ex.h[hIdx(h1,h2)] = RandomFactory.multinomial(genRandom, T[h1-1]);
+          else
+            ex.h[hIdx(h1,h2)] = RandomFactory.multinomial(genRandom, TC[h1-1][h2-1]);
+        }
+      }
+    }
+
+    {
+      for(int h1 = 0; h1 < K; h1++) { // row
+        for(int h2 = 0; h2 < K; h2++) { // col
+          ex.x[oIdx(h1,h2,0)] = RandomFactory.multinomial(genRandom, O[hIdx(h1,h2)]);
+          ex.x[oIdx(h1,h2,1)] = RandomFactory.multinomial(genRandom, O[hIdx(h1,h2)]);
+        }
+      }
+    }
+
+    return ex;
   }
 
   @Override

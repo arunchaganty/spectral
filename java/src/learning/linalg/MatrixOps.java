@@ -1606,6 +1606,17 @@ public class MatrixOps {
           x[i][j][k] *= factor;
   }
 
+  public static double sum(double[][][][] P) {
+    double z = 0;
+    for(int h1 = 0; h1 < P.length; h1++)
+      for(int h2 = 0; h2 < P[h1].length; h2++)
+        for(int h3 = 0; h3 < P[h1][h2].length; h3++)
+          for(int h4 = 0; h4 < P[h1][h2][h3].length; h4++)
+            z += P[h1][h2][h3][h4];
+
+    return z;
+  }
+
   public static interface Matrixable {
     public int numRows();
     public int numCols();
