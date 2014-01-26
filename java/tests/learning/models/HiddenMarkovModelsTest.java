@@ -336,14 +336,62 @@ public class HiddenMarkovModelsTest {
     log("Fit likelihood: " + model.getLogLikelihood(params, data));
 
     log(marginals);
-
-//    Assert.assertTrue(
-//        MatrixOps.allclose( model.params.pi, hmm3.pi ) );
-//    Assert.assertTrue(
-//        MatrixOps.allclose( model.params.T, hmm3.T ) );
-//    Assert.assertTrue(
-//        MatrixOps.allclose( model.params.O, hmm3.O ) );
   }
+
+  @Test
+  public void testEMTrueFixpoint() {
+    Params hmm3 = model.newParams();
+
+    hmm3.set(piFeature(0), 0.846 );
+    hmm3.set(piFeature(1), 0.154 );
+
+    hmm3.set(tFeature(0, 0), 0.298);
+    hmm3.set(tFeature(0, 1), 0.702);
+    hmm3.set(tFeature(1, 0), 0.106);
+    hmm3.set(tFeature(1, 1), 0.894);
+
+    hmm3.set(oFeature(0,0), 0.357 );
+    hmm3.set(oFeature(0,1), 0.643 );
+    hmm3.set(oFeature(1,0), 0.4292);
+    hmm3.set(oFeature(1,1), 0.5708);
+
+//    Counter<Example> data = model.drawSamples(hmm1, testRandom, (int) 1e6);
+    Counter<Example> data = model.getDistribution(hmm3);
+    Params marginals = model.newParams();
+
+    Params params = model.newParams();
+    params.copyOver(hmm3);
+    double oldLhood = Double.NEGATIVE_INFINITY;
+    for(int i = 0; i < 1000; i++) {
+      // Simple EM
+      marginals.clear();
+      model.updateMarginals(params, data, 1.0, marginals);
+      double diff = params.computeDiff(marginals, null);
+      params.copyOver(marginals);
+
+      double lhood = model.getLogLikelihood(params,data);
+
+      log(outputList(
+              "iter", i,
+              "likelihood", lhood,
+              "diff", diff
+      ));
+      Assert.assertTrue( lhood - oldLhood > -1e-3); // Numerical error.
+      oldLhood = lhood;
+
+      if( diff < 1e-3 ) break;
+    }
+
+    double lhood_true = model.getLogLikelihood(hmm1, data);
+    double lhood_fit = model.getLogLikelihood(params, data);
+
+    Assert.assertTrue(lhood_fit > lhood_true);
+
+    Assert.assertTrue(params.computeDiff(hmm3,null) < 1e-2);
+
+    log(marginals);
+  }
+
 
 //  @Test
 //  public void testBaumWelch2() {
