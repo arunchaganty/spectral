@@ -18,6 +18,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.Before;
 
+import static fig.basic.LogInfo.log;
+import static learning.common.Utils.outputList;
 import static learning.models.HiddenMarkovModel.*;
 
 /**
@@ -124,6 +126,15 @@ public class HiddenMarkovModelsTest {
 
   @Test
   public void testForward() {
+    double[][] f0 = {
+            { 0.85, 0.15 },
+            { 0.27, 0.73 },
+            { 0.154, 0.846 } };
+    Pair<Double, double[][]> f0c_ = model.forward(hmm1, null);
+    double[][] f0_ = f0c_.getSecond();
+
+    Assert.assertTrue( MatrixOps.allclose( f0_, f0 ) );
+
     // alpha
     int[] o1 = {0,1,1,0};
     Example ex1 = new Example(o1);
@@ -152,6 +163,14 @@ public class HiddenMarkovModelsTest {
   
   @Test
   public void testBackward() {
+    double[][] b0 = {
+            { 0.5, 0.5 },
+            { 0.5, 0.5 },
+            { 0.5, 0.5 },
+    };
+    double[][] b0_ = model.backward(hmm1, null);
+    Assert.assertTrue( MatrixOps.allclose( b0_, b0 ) );
+
       // alpha
     int[] o1 = {0,1,1,0};
     Example ex1 = new Example(o1);
@@ -168,40 +187,67 @@ public class HiddenMarkovModelsTest {
     int[] o2 = {1,0,1};
     Example ex2 = new Example(o2);
     double[][] b2 = {
+      { 0.49127, 0.50873 },
+      { 0.50962, 0.49038 },
       { 0.50000, 0.50000 },
-      { 0.50000, 0.50000 },
-      { 0.50000, 0.50000 },
-//      { 0.49127, 0.50873 },
-//      { 0.50962, 0.49038 },
-//      { 0.50000, 0.50000 },
     };
 
-    double[][] b2_ = model.backward(hmm2, ex2);
+    double[][] b2_ = model.backward(hmm1, ex2);
     Assert.assertTrue( MatrixOps.allclose( b2_, b2 ) );
+
+    // - hmm2 is stupid in that all the observations are 0.
+    double[][] b3 = {
+            { 0.50000, 0.50000 },
+            { 0.50000, 0.50000 },
+            { 0.50000, 0.50000 },
+    };
+    double[][] b3_ = model.backward(hmm2, ex2);
+    Assert.assertTrue( MatrixOps.allclose( b3_, b3 ) );
+
   }
 
   @Test
-  // The posteriors don't seem to be quite correct.
-  public void testEM() {
-    Params hmm3 = model.newParams();
-    hmm3.initRandom(testRandom, 1.0);
+  public void testMarginals() {
+    HiddenMarkovModel.Parameters marginals;
 
-    Counter<Example> data = model.drawSamples(hmm3, testRandom, 1000);
-
-    // Simple EM
-    HiddenMarkovModel.Parameters marginals = model.newParams();
-    model.updateMarginals(hmm3, data, 1.0, marginals);
-
-    LogInfo.log(hmm3);
-    LogInfo.log(marginals);
+    Example ex1 = new Example(new int[] {1,0,1}) ;
+    marginals = (HiddenMarkovModel.Parameters) model.getMarginals(hmm1, ex1);
     Assert.assertTrue(marginals.isValid());
 
-//    Assert.assertTrue(
-//        MatrixOps.allclose( model.params.pi, hmm3.pi ) );
-//    Assert.assertTrue(
-//        MatrixOps.allclose( model.params.T, hmm3.T ) );
-//    Assert.assertTrue(
-//        MatrixOps.allclose( model.params.O, hmm3.O ) );
+    marginals = (HiddenMarkovModel.Parameters) model.getMarginals(hmm1);
+    Assert.assertTrue(marginals.isValid());
+    // By definition
+    for(int i = 0; i < marginals.weights.length; i++) {
+      Assert.assertTrue(Math.abs(marginals.weights[i] - hmm1.weights[i]) < 1e-1);
+    }
+
+    Counter<Example> data = model.getDistribution(hmm1);
+    marginals = (HiddenMarkovModel.Parameters) model.getMarginals(hmm1, data);
+    Assert.assertTrue(marginals.isValid());
+    // By definition
+    for(int i = 0; i < marginals.weights.length; i++) {
+      Assert.assertTrue(Math.abs(marginals.weights[i] - hmm1.weights[i]) < 1e-1);
+    }
+
+  }
+
+  @Test
+  public void testSampleMarginalsExact() {
+    Counter<Example> data = model.getDistribution(hmm1);
+    HiddenMarkovModel.Parameters marginal = model.getSampleMarginals(data);
+    for(int i = 0; i < marginal.weights.length; i++) {
+      Assert.assertTrue(Math.abs(marginal.weights[i] - hmm1.weights[i]) < 1e-1);
+    }
+  }
+
+
+  @Test
+  public void testSampleMarginals() {
+    Counter<Example> data = model.drawSamples(hmm1, new Random(1), 1000000);
+    HiddenMarkovModel.Parameters marginal = model.getSampleMarginals(data);
+    for(int i = 0; i < marginal.weights.length; i++) {
+      Assert.assertTrue(Math.abs(marginal.weights[i] - hmm1.weights[i]) < 1e-1);
+    }
   }
 
   @Test
@@ -232,7 +278,62 @@ public class HiddenMarkovModelsTest {
     model.updateMarginals(hmm3, data, 1.0, marginals);
 //    model.baumWelchStep(X);
 
-    LogInfo.log(marginals);
+    log(marginals);
+
+//    Assert.assertTrue(
+//        MatrixOps.allclose( model.params.pi, hmm3.pi ) );
+//    Assert.assertTrue(
+//        MatrixOps.allclose( model.params.T, hmm3.T ) );
+//    Assert.assertTrue(
+//        MatrixOps.allclose( model.params.O, hmm3.O ) );
+  }
+
+  @Test
+  public void testEM() {
+    Params hmm3 = model.newParams();
+
+    hmm3.set(piFeature(0), 0.846 );
+    hmm3.set(piFeature(1), 0.154 );
+
+    hmm3.set(tFeature(0, 0), 0.298);
+    hmm3.set(tFeature(0, 1), 0.702);
+    hmm3.set(tFeature(1, 0), 0.106);
+    hmm3.set(tFeature(1, 1), 0.894);
+
+    hmm3.set(oFeature(0,0), 0.357 );
+    hmm3.set(oFeature(0,1), 0.643 );
+    hmm3.set(oFeature(1,0), 0.4292);
+    hmm3.set(oFeature(1,1), 0.5708);
+
+//    Counter<Example> data = model.drawSamples(hmm1, testRandom, (int) 1e6);
+    Counter<Example> data = model.getDistribution(hmm1);
+    Params marginals = model.newParams();
+
+    Params params = model.newParams();
+    params.initRandom(testRandom, 1.0);
+    double oldLhood = Double.NEGATIVE_INFINITY;
+    for(int i = 0; i < 1000; i++) {
+      // Simple EM
+      marginals.clear();
+      model.updateMarginals(params, data, 1.0, marginals);
+      double diff = params.computeDiff(marginals, null);
+      params.copyOver(marginals);
+
+      double lhood = model.getLogLikelihood(params,data);
+
+      log(outputList(
+              "iter", i,
+              "likelihood", lhood,
+              "diff", diff
+      ));
+      Assert.assertTrue(lhood >= oldLhood);
+      if( diff < 1e-3 ) break;
+    }
+
+    log("True likelihood: " + model.getLogLikelihood(hmm1, data));
+    log("Fit likelihood: " + model.getLogLikelihood(params, data));
+
+    log(marginals);
 
 //    Assert.assertTrue(
 //        MatrixOps.allclose( model.params.pi, hmm3.pi ) );
