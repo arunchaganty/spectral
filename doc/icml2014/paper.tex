@@ -10,6 +10,9 @@
 % For citations
 \usepackage{natbib}
 
+\usepackage{scabby-diag}
+\usepackage{standalone}
+
 % For algorithms
 \usepackage{algorithm}
 \usepackage{algorithmic}
@@ -38,6 +41,7 @@
 % Therefore, a short form for the running title is supplied here:
 %\icmltitlerunning{Submission and Formatting Instructions for ICML 2014}
 
+\input{std-macros}
 \input{macros}
 
 \begin{document} 
@@ -62,13 +66,11 @@ Stanford, CA, USA}
 \vskip 0.3in
 ]
 
-\begin{abstract} 
-\end{abstract} 
-
+\input{abstract}
 \input{intro}
 \input{background}
 \input{piecewise}
-\input{measurements}
+\input{undirected}
 \input{experiments}
 \input{discussion}
 

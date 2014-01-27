@@ -1,7 +1,41 @@
-\section{Background}
-\label{sec:background}
+\section{Setup}
+\label{sec:setup}
 
-\paragraph{Bottlenecks: Three-view mixture models}
+Let $\sG$ be a discrete graphical model with variables $V$, of which
+  $O \subseteq V$ be observed and $H = V \setminus O$ be hidden.
+Let $\Pa(x) \subset V$ be the parents of a variable $x$ in a directed
+  model, and $\sN(x) \subset V$ be the neighbours of $x$ in an undirected
+  model.
+We will use $o_1, o_2, \cdots \in O$ to denote observed variables and
+  $h_1, h_2, \cdots \in H$ to denote hidden variables.
+For ease of exposition, we assume that the domain of all the observed
+  variables is $[D]$ and the domain of all the hidden variables is
+  $[K]$.
+
+Define $\otimes$ to be the tensor product. In matrix representation, it
+  is the Kronecker product.\expand
+
+\paragraph{Problem statement}
+
+% Statement
+This paper focuses on the problem of parameter estimation:
+We are given $n$ i.i.d.~examples of the observed variables $D = (x^{(1)}, \dots, x^{(n)})$
+where each $x^{(i)} \sim p_{\theta^*}$ for some true parameters $\theta^*$.
+Our goal is to produce a parameter estimate $\hat\theta$ that approximates $\theta^*$.
+
+% Maximum likelihood
+The standard estimation procedure is maximum (marginal) likelihood,
+  \begin{align*}
+    \sL &\eqdef \max_{\theta \in \Re^d} \E_{x} \log p_\theta(x) \\
+        &=      \max_{\theta \in \Re^d} \E_{x} \log \sum_z p_\theta(z),
+  \end{align*}
+  which is statistically efficient but computationally intractable
+  because we must marginalize over latent variables $z$.
+In practice, one uses gradient-based optimization procedures (e.g., EM
+  or L-BFGS) on the marginal likelihood, which can get stuck in local
+  optima.
+
+\paragraph{Estimating three-view mixture models}
 
 \citet{anandkumar12moments} present an algorithm to solve three-view mixture models.
 
@@ -11,13 +45,17 @@ Applying a whitening transformation and get a orthogonal tensor decomposition.
 
 Solved using the robust tensor power method \citet{anandkumar13tensor}.
 
-\todo{Related work on spectral methods and measurements.}
+In general, we call hidden variables with this property ``bottlenecks'',
+  and define them as follows.
+\begin{definition}(Bottleneck)
+  A hidden variable $h$ is said to be a bottleneck if there exists at
+  least three conditionally independent observed variables $o_1, o_2,
+  o_3$. Let $\sB(h)$ be the set of conditionally independent observed
+  variables for $h$.
+\end{definition}
 
-\paragraph{Constrained EM}
-
-Posterior regularization
-Measurements
-Generalized expectation criterion
-
-Kuzman Ganchev.*
+\begin{assumption}
+  We assume that $M_1, M_2, M_3$ are each full rank, and that $\pi \succ
+  0$\reword.
+\end{assumption}
 

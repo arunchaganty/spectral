@@ -46,26 +46,3 @@ Show that the constrained optimization problem is convex.
 
 Statement: consistency.
 
-\paragraph{General latent-variable models with bottlenecks}
-
-Our learning algorithm for three-view mixture models relies on the fact that
-the sufficient statistics of the exponential family
-can be expressed as a function of the latent moments.
-Of course, these conditions do not hold for general log-linear models.
-Rather than falling back on plain local optimization of the likelihood in these
-cases, we would still like
-to somehow use the \emph{partial information} offered by the latent moments.
-
-Partial information is available when the following holds:
-%\begin{property}
-%  There exists some latent variable $h_{j_0} \in [\nh]$ (the bottleneck)
-%  and three conditionally independent observed variables $x_{j_1},x_{j_2},x_{j_3}$ (views) such that
-%  each conditional mean matrix $\E[\phix(x_{j}) \mid h_{j_0}] \in \R^{\nphix \times \nh}$ ($j \in \{ j_1, j_2, j_3 \}$) has full column rank $\nh$
-%  for some transformation $\phix$.
-%\end{property}
-
-Optimization.
-
-
-
-

@@ -1,0 +1,18 @@
+% vim:ft=tex
+\documentclass[tikz,convert={outfile=figure\approach.pdf}]{standalone}
+%\usetikzlibrary{...}% tikz package already loaded by 'tikz' option
+\begin{document}
+
+\begin{tikzpicture}
+
+% Import grid.
+\node[scale=0.7] (step0) at (0,0) {\input{figures/grid.tikz}};
+\node[scale=0.7] (step1) at (4cm,0cm) {\input{figures/grid-outline.tikz}};
+\node[scale=0.7] (step2) at (8cm,0cm) {\input{figures/factors.tikz}};
+
+\draw[-latex] (step0) -- (step1);
+\draw[-latex] (step1) -- (step2);
+
+\end{tikzpicture}
+
+\end{document}

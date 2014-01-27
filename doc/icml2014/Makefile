@@ -3,10 +3,11 @@ LATEX = pdflatex
 #LATEX = pdflatex -interaction=nonstopmode
 OUTPUT=$(shell basename `pwd`)
 SECTIONS = $(wildcard *.tex)
+FIGURES = $(wildcard figures/*.tikz)
 
 all: $(OUTPUT).pdf
 
-$(OUTPUT).pdf: paper.tex $(SECTIONS)
+$(OUTPUT).pdf: paper.tex $(SECTIONS) $(FIGURES)
 	$(LATEX) $<
 	mv $(subst .tex,.pdf,$<) $@
 
@@ -22,7 +23,7 @@ bib: paper.tex $(SECTIONS)
 	$(LATEX) $< 
 
 run:
-	go icml2013.pdf
+	go icml2014.pdf
 
 clean:
 	rm -rf *.{aux,bbl,blg,log,out}

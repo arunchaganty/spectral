@@ -1,105 +1,259 @@
-\section{Parameter Estimation with Convex Piecewise Likelihoods}
+\section{Consistent Parameter Estimation for Bayesian Networks}
 \label{sec:piecewise}
 
-Key idea: don't ride the MoM train all the way, rather let it do some pre-processing to make your job easier.
+% What spectral is doing is solve the ``hard'' non-convex problem of
+% identifying a bottleneck.
+% We show how this represents the knot of the problem - once solved, the
+% rest of learning is easy.
 
-\paragraph{Example 1: Improving statistical efficiency by averaging over trigrams}
+First, we will restrict our attention to directed graphical models; in
+\sectionref{undirected}, we will extend the approach to undirected
+log-linear models.
 
-The algorithm described in \citet{anandkumar12moments} looks only at the
-  first three symbols (words) in a sequence (sentence). 
-The algorithm can trivially be made to use the data more efficiently
-  by using every trigram in a sentence, i.e. $\hat M_{123}
-  = \sum_{x\in\sD} \sum_{i = 1}^{|x| - 2} x_{i} \otimes x_{i+1} \otimes
-  x_{i+2}$. However, in this case, $\hat M_{123} \to M_{123}$, where 
+\subsection{Example: Directed grid model}
+
+Let us illustrate our approach with an example. 
+Consider the directed grid model shown in \figureref{grid} which
+  captures the different dependency structures ($o \gets o \to o$, $o \to
+  o \gets o$) possible in a Bayesian network.
+The model has eight observed variables $x^a_1, x^b_1 \cdots, x^a_4, x^b_4$ and four
+  hidden variables $h_1, \cdots, h_4$.
+The parameters of this model are the conditional probability tables
+  $\pi, T, T_c$ and $O$; for the sake of simplicity, we assume that all
+  the observed variables have the emission probabilities $O \eqdef P(x^a_i
+  | h_i)$, and that $P(h_2 | h_1) = P(h_3 | h_1) = T$.
+
+\paragraph{Estimating $O$}
+
+Firstly, note that the observed variables $x^a_1, x^b_1, x^a_2$ are
+  conditionally independent given $h_1$, i.e. $h_1$ is a bottleneck,
+  allowing us to use the tensor factorization algorithm
+  \cite{anandkumar13tensor}, reviewed in \sectionref{background}, to
+  recover the moments $P(x^a_1|h_1), P(x^b_1|h_1), P(x^l_2|h_1)$. 
+
+The first step of our algorithm is to use the tensor factorization
+  algorithm to recover the potentials $O$ from the bottlenecks $h_1,
+  h_2, h_3, h_4$. 
+Intuitively, we expect the observations to tell us about the underlying
+  hidden state, which should make learning each factor easier. 
+For example, suppose each symbol occurs in exactly one state, then we
+  could estimate the remaining parameters by just counting the
+  co-occurrence of the hidden states.
+Let us try to exploit this information to recover the parameters of the
+  remaining cliques in the model.
+
+\paragraph{Estimating $\pi$}
+
+Given the observations $O$, the start state probabilities $\pi$ can
+  easily be computed using a maximum likelihood approach; $\pi =
+  \E_{x_1}[P(h_1|x^a_1) P(h_1|x^b_1)] = \E_{x_1}[O^T_{x_1}]$. This only
+  requires that $O$ be full-rank.
+
+\paragraph{Estimating $T$}
+
+Estimating $T$ is a bit trickier, as the observations do not directly
+  give us the pairwise marginals. 
+Our next key observation is that the pairwise likelihood between $x_1$
+  and $x_2$ (equivalently $x_1$ and $x_3$) is convex in the pairwise
+  marginal distribution $P(h_1, h_2)$, given the observations $O$,
 \begin{align}
-  M_{123} &= \sum_{h} \E[(\pi + T \pi + T^2 \pi \cdots T^{|x|-2} \pi)]_h M_1 \otimes O \otimes OT.
+  \sL_p(x_1, x_2) &= \E_{x}[ \log \sum_{h_1,h_2} P(h_1, h_2) O(x_1|h_1) O(x_2|h_2)].
 \end{align}
+This leads to the simple algorithm - expectation maximization is
+  guaranteed to converge to a global optima. $T(h_2 | h_1)$ can be
+  recovered by appropriately normalizing $P(h_1, h_2)$.
 
-Using the tensor factorization algorithm, we recover $O$ and $OT$,
-  ignoring $M_1$. From $O$, it is easy to estimate $\pi$ using maximum
-  likelihood:
+The final step is to show that the global optimum is in fact unique,
+  and thus that the algorithm can indeed identify the model. 
+To do so, we will study the Hessian of likelihood function (also known
+  as the Fisher information matrix) and show that the problem strictly
+  convex if the Kronecker product, $O^T \otimes O^T \in K^2 \times D^2$ is
+  full rank, which is implied when $O$ has rank $K$\verify.
+
+\paragraph{Estimating $T_C$}
+
+We can estimate $T_C$ with a similar approach; this time, consider the
+  piecewise likelihood of $x_2, x_3$ and $x_4$, 
 \begin{align}
-  \hat \pi &= \frac{1}{|\sD|} \sum_{x\in\sD} O^T_{x_1}.
+  \sL_p(x_2, x_3, x_4) &= \E_{x}[\log \sum_{h_2,h_3,h_4} P(h_2,h_3,h_4) O(x_2|h_2) O(x_3|h_3) O(x_4|h_4)].
 \end{align}
+Again, we note that the objective is convex in $P(h_2, h_3, h_4)$, and
+  EM will recover a global maximum. 
+In this case, the global maximum is unique when $O^T \otimes O^T \otimes
+  O^T \in K^3 \times D^3$ is full rank, which holds in the same case.
 
-\paragraph{Example 2: Recovering $T$ from piecewise likelihood}
+\subsection{General algorithm}
 
-Inverting $O$ to get $T$ in the above procedure can be dangerous when $O$ is poorly conditioned. 
-Alternative: solving the piecewise likelihood,
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+\begin{algorithm}
+  \caption{Consistent Parameter Estimation: Directed Graphical Model}
+  \label{algo:directed}
+  \begin{algorithmic}
+    \REQUIRE A graphical model $\sG$ satisfying (P1), (P2), data $\sD$
+    \ENSURE Parameters $\theta$ for $\sG$
+
+    \STATE \textbf{Step 1:} Recover moments for observed variables using
+    bottlenecks
+      \FOR{$h \in H$} 
+        \STATE Apply tensor method to bottleneck $h$ and learn parameters $P(x \mid h) ~ \forall x \in \sB(h)$.
+      \ENDFOR
+    \STATE \textbf{Step 2:} Recover clique potentials from the piecewise likelihood.
+      \FOR{every clique $\sC \in \sG$} 
+      \STATE Run expectation-maximization to convergence on the piecewise likelihood \eqref{eqn:piecewise},
+        over data $\{\vec x_\sC : x \in \sD\}$
+      \ENDFOR
+  \end{algorithmic}
+\end{algorithm}
+
+Let us now define some general properties for which the algorithm
+defined in \algorithmref{directed} should work.
+We will now describe our algorithm in the general case, and define the
+conditions in which it is guaranteed to consistently estimate the
+parameters of a Bayesian network $\sG$.
+
+For the first step of the algorithm, we wish to identify conditional
+moments between every hidden variable and atleast one observed variable.
+Using the tensor factorization algorithm, we further require that each
+observed variable have a single parent. This leads to the following two
+properties.
+
+\begin{property}
+  \label{prop:unique-parent}
+  Every observed variable $o$ has exactly one parent, $|\Pa(o)| = 1$.
+\end{property}
+\begin{property}
+  \label{prop:bottleneck}
+  Every hidden variable is a bottleneck.
+\end{property}
+
+We note that \propertyref{unique-parent} can be relaxed if another
+  algorithm is used to recover the conditional moments. For example,
+  \citet{halpern13noisyor} propose an algorithm that can recover the
+  conditional moments for a broad, but not general, class of noisy-or
+  networks.
+\propertyref{bottleneck} can also be relaxed if factors share the same
+  parameters. 
+For example, in a hidden Markov network \figureref{hmm}, the very hidden
+  variable, $h_1$ is not a bottleneck. However, the conditional
+  distribution $O \eqdef P(x_1|h_1)$ is shared for every hidden variable,
+  and can thus be learned using the bottleneck $h_2$. 
+The properties described above capture the most general class of models.
+
+Let us define $\sB(h)$ to be the set of observed variables that
+  are conditionally independent given $h$. 
+%Analogously, we define $\sB^{-1}(x)$ to be the set of hidden variables
+%  $\{ h : x \in \sB(h) \}$. 
+Given \propertyref{unique-parent} and \propertyref{bottleneck}, step
+  1 of \algorithmref{directed} is guaranteed to recover potentials
+  $P(x|h)$ for every hidden variable $h$ and observed variable $x \in
+  \sB(h)$.
+Suppose $\sB(h) = \{x_1, x_2, \cdots, x_l\}$, let $O_h \in
+  \Re^{\underbrace{D \times \ldots \times D}_{l} \times K}$ be an
+  aggregated observation potential, such that $O_h(x_1, x_2, \cdots,
+  x_l) = P(x_1|h) P(x_2|h) \cdots P(x_l|h)$.
+Note that after step 1, $O_h$ is a known quantity.
+
+For part two of our algorithm, we must identify the clique potentials between the
+  hidden variables. 
+Consider a clique $\sC = \{h_1, \cdots, h_m\}$. 
+Define $\vec x_\sC = \Union_{h \in \sC} \sB(h)$ to be the collection of
+  participating observed variables for this clique.
+The piecewise log-likelihood of $\vec x_{\sC} =\sB(\sC)$ can then be
+  written down as,
 \begin{align}
-  \sL_{p}(\pi, T, O) &= \sum_{x\in\sD} \log( \sum_{h_1, h_2} \underbrace{\pi(h_1) T(h_2 | h_1)}_{P(h_1,h_2)} O(x_1 | h_1) O(x_2 | h_2) ),
+  \sL_p(\vec x_\sC) 
+    &= \E_{\vec x_\sC}[ \sum_{h_1, h_2, \ldots, h_m} P(h_1, h_2, \cdots, h_m) 
+    \prod_{i=1}^{m} O_{h_i}(\vec x_{\sB(h_i)}) ]. \label{eqn:piecewise}
 \end{align}
-Because we know $O$, the likelihood is convex in $P$. Once we have recovered $P^*$ from the above optimization problem, we can recover $T$ as follows:
-$T(h_1, h_2) = \frac{P(h_1, h_2}{\sum_{h_2} P(h_1, h_2)}$
+As we saw earlier, this objective is convex in the marginal distribution
+  $P(h_1, h_2, \cdots, h_m)$, which implies that
+  expectation-maximization in step 2 converges to a global optimum.
+The following lemma describes conditions under which the piecewise
+  likelihood objective is strongly convex, guaranteeing that the global
+  optimum is unique.
 
-It is necessary that $\sL_p$ be {\em strictly convex} to for $P^*$ to be unique \findcite{IBM-1 problem}, as we will prove below,
+  \begin{lemma} (Strict convexity of \equationref{piecewise})
+  \label{lem:hessian}
 
-\begin{theorem}
-  $\sL_p$ is strictly convex. The hessian $\grad^2 \sL_p$ is full rank. 
-\end{theorem}
+  Let $\vec x_{\sC} \eqdef\{x_1, x_2, \cdots, x_L\}$. The Fisher information
+  matrix $J_\sC$ for the piecewise objective in \equationref{piecewise} at the
+  true parameters is 
+  \begin{align}
+    \grad^2 \sL_p(\vec x_\sC) 
+    &= \sum_{x_1, x_2, \ldots, x_L} \tilde O_{\vec x_\sC} \tilde O_{\vec x_\sC}^T,
+  \end{align}
+  where $\tilde O \in \Re^{K^m \times D^L}$ is the matrix constructed as follows,
+  \begin{align}
+    \tilde O_{\sC, \vec x_\sC} &= O_{h_1}(\vec x_{\sB(h_1)} O_{h_2}(\vec x_{\sB(h_2)} \cdots O_{h_m}(\vec x_{\sB(h_m)}).
+  \end{align}
+
+  Consequently, the Fisher matrix is non-singular iff the span of $D^L$ vectors $\{ O_{\vec x_\sC} \}$ is rank-deficient.
+  Furthermore, the smallest singular value of $J_\sC$ is bounded below
+    by \todo{condition}.
+\end{lemma}
 \begin{proof}
+  Rewrite $\sL_p$ as inner product.
 
-  We can write out the Hessian as,
-\begin{align}
-  \grad^2 \sL_p &= \E[ \sum_{x_1, x_2} \frac{ (O_{x_1} \otimes O_{x_2}) (O_{x_1} \otimes O_{x_2})^T }{(O_{x_1}^T P O_{x_2})^2} ].
-\end{align}
+  Differentiate twice.
 
-  Incorporating expectations (complicated expression),
-\begin{align}
-  \grad^2 \sL_p &= \E[ \sum_{h_1, h_2} \frac{ (O_{x_1} \otimes O_{x_2}) (O_{x_1} \otimes O_{x_2})^T }{(O_{x_1}^T P O_{x_2})^2} ].
-\end{align}
+  Observed denominators cancel at the true parameters.
 
-Firstly, this is full-rank. Secondly, we can show a lower bound on the singular value as follows.
+  Finally, the Fisher information matrix $J_\sC$ for the piecewise
+  objective in \equationref{piecewise} at the true parameters is 
+  \begin{align}
+    \grad^2 \sL_p(\vec x_\sC) 
+    &= \sum_{x_1, x_2, \ldots, x_L} \tilde O_{\vec x_\sC} \tilde O_{\vec x_\sC}^T,
+  \end{align}
+  where $\tilde O \in \Re^{K^m \times D^L}$ is the matrix constructed as follows,
+  \begin{align}
+    \tilde O_{\sC, \vec x_\sC} &= O_{h_1}(\vec x_{\sB(h_1)} O_{h_2}(\vec x_{\sB(h_2)} \cdots O_{h_m}(\vec x_{\sB(h_m)}).
+  \end{align}
+
+  Consequently, the Fisher matrix is non-singular iff the span of $D^L$
+    vectors $\{ O_{\vec x_\sC} \}$ is rank-deficient.
+
 \end{proof}
 
-\begin{corollary}(Asymptotic efficiency)
-  The estimator has so and so efficiency.
+Intuitively, the condition \todo{(C1)} says that the observations give
+  us sufficient information about the latent variables to identify the
+  model. 
+For example, when each observed symbol corresponds to exactly one value
+  of the hidden variable, i.e. $P(x \mid h )$ is binary, the above
+  condition trivially holds\verify.
+\todo{Is this condition the weakest possible? Can we hope to identify a model for which this is not true?}.
+
+Next, we appeal to the delta method\findcite{van de vaart} to give us
+  consistency and asymptotic rates on sample complexity.
+\begin{corollary}(Consistency and Asymptotic Complexity)
+  \label{cor:asymptotics}
+  Step 2 of \algorithmref{directed} is a consistent estimator for
+  the clique potential for every clique $\sC$.
+
+  Furthermore, the asymptotic variance of $\theta_{\sC}$ is
+  \todo{condition}.
 \end{corollary}
-\begin{proof}
-  From the delta method: depends on $\Sigma^-1$, which is basically $\det \Sigma$.
-\end{proof}
 
-\paragraph{Example 3: Grid model}
-
-Next, consider the grid model shown in \figureref{grid}. Let us
-assume every emission has same parameters $O$ and every transition has
-$T$.
-
-Each hidden
-node has two observations; conditioning on the hidden node, the two
-observations and any third observation are independent, and thus we can
-get a consistent estimate for $O$.
-
-Once again, we can write down a piecewise likelihood,
-\begin{align}
-  \sL_{p}(\pi, T, O) &= \sum_{x\in\sD} \log( \sum_{h_1, h_2, h_3, h_4} P(h_1, h_2, h_3, h_4).
-\end{align}
-
-The same approach as above holds; all that remains to be shown is that the model is indeed identifiable,
-
-\begin{theorem}(Identifiability of Grid Model)
-  $\sL_p$ is strictly convex. The hessian $\grad^2 \sL_p$ is full rank. 
+Finally, coupled with \theoremref{three-view}, we can guarantee that
+  \algorithmref{directed} is a consistent estimator for $\theta$ and 
+  that has polynomial computational and sample complexity.
+\begin{theorem}
+  \algorithmref{directed} is a consistent estimator for $\theta$.
+  Furthermore, it has a computational complexity of \todo{$O(?)$} and an
+    asymptotic sample complexity of \todo{$O(?)$}.
 \end{theorem}
 \begin{proof}
-  We can write out the Hessian as,
-\begin{align}
-  \grad^2 \sL_p &= \E[ \sum_{x_1, x_2} \frac{ (O_{x_1} \otimes O_{x_2}) (O_{x_1} \otimes O_{x_2})^T }{(O_{x_1}^T P O_{x_2})^2} ].
-\end{align}
-
-  Incorporating expectations (complicated expression),
-\begin{align}
-  \grad^2 \sL_p &= \E[ \sum_{h_1, h_2} \frac{ (O_{x_1} \otimes O_{x_2}) (O_{x_1} \otimes O_{x_2})^T }{(O_{x_1}^T P O_{x_2})^2} ].
-\end{align}
-
-  Firstly, this is full-rank. Secondly, we can show a lower bound on the singular value as follows.
+  \todo{Staple together \theoremref{three-view} and \corollaryref{cor:asymptotics}}.
 \end{proof}
 
-\paragraph{Example 5: Tree model}
+\subsection{More examples}
 
-Finally, we consider a tree model as shown in \figureref{tree}. Let us
-assume every emission has same parameters $O$ and every transition has
-$T$.
+We will now instantiate our algorithm to several cases and interpret
+\todo{Assumption X} in terms of the parameters.
 
-\todo{Showing identifiability is a bit trickier in this model. Also, the
-algorithm is unlikely to scale.}
+\paragraph{Hidden Markov Model}
+
+\paragraph{Latent Tree Structure}
+
+\paragraph{Directed Grid Model}
 
