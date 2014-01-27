@@ -149,10 +149,15 @@ Given \propertyref{unique-parent} and \propertyref{bottleneck}, step
   $P(x|h)$ for every hidden variable $h$ and observed variable $x \in
   \sB(h)$.
 Suppose $\sB(h) = \{x_1, x_2, \cdots, x_l\}$, let $O_h \in
-  \Re^{\underbrace{D \times \ldots \times D}_{l} \times K}$ be an
+  \Re^{D^l \times K}$ be an
   aggregated observation potential, such that $O_h(x_1, x_2, \cdots,
   x_l) = P(x_1|h) P(x_2|h) \cdots P(x_l|h)$.
-Note that after step 1, $O_h$ is a known quantity.
+Note that $O_h$ will have rank atleast that of $O$; this encodes the
+  intuitive fact that we might be able to identify $h$ from multiple
+  observed variables even if we can not identify it from a single
+  observed variable. 
+Given \assumptionref{full-rank}, $O_h$ have rank $K$.
+After step 1, $O_h$ is a known quantity.
 
 For part two of our algorithm, we must identify the clique potentials between the
   hidden variables. 
@@ -212,7 +217,6 @@ The following lemma describes conditions under which the piecewise
 
   Consequently, the Fisher matrix is non-singular iff the span of $D^L$
     vectors $\{ O_{\vec x_\sC} \}$ is rank-deficient.
-
 \end{proof}
 
 Intuitively, the condition \todo{(C1)} says that the observations give
@@ -222,6 +226,21 @@ For example, when each observed symbol corresponds to exactly one value
   of the hidden variable, i.e. $P(x \mid h )$ is binary, the above
   condition trivially holds\verify.
 \todo{Is this condition the weakest possible? Can we hope to identify a model for which this is not true?}.
+
+As a special case, suppose each hidden variable $h \in \sC$ had
+  a distinct observed variable $x \in \sB(h)$. 
+Then $\tilde O = O_{h_1} \otimes O_{h_2} \cdots \otimes O_{h_m}$, which
+  has singular values $\sigma_1(O_{h_1}) \sigma_1(O_{h_2}) \cdots
+  \sigma_1(O_{h_m}), \cdots, \sigma_k(O_{h_1}) \sigma_k(O_{h_2}) \cdots
+  \sigma_k(O_{h_m})$. 
+Thus, the smallest singular value is of the order $\sigma_k(O)^m$; as
+  expected, the more variables in a clique, the more sensitive the
+  estimation problem is to noise.
+If two hidden variables $h_1, h_2$ share the same bottleneck
+  variables, i.e. $\sB(h_1) = \sB(h_2)$, then we must have more
+  observations in order to tease apart the effect of the two
+  variables\verify\reword.
+
 
 Next, we appeal to the delta method\findcite{van de vaart} to give us
   consistency and asymptotic rates on sample complexity.
