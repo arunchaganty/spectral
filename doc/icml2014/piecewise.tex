@@ -1,5 +1,17 @@
-\section{Consistent Parameter Estimation for Bayesian Networks}
+\section{Consistent Parameter Estimation in Directed Models}
 \label{sec:piecewise}
+
+The tensor factorization method attacks the heart of the non-convexity
+  in latent variable models.
+The technique is central in solving several other problems with more
+  complex correlation structure, for example latent Dirichlet allocation
+  \citep{anandkumar12lda}, mixture of Gaussians \citep{hsu13spherical},
+  etc.\findcite{more things}.
+
+In this section, we show that once we recover the observation
+  potentials, identifying most other clique potentials in a directed graphical
+  model can be solved efficiently and in a consistent manner.
+In section \sectionref{undirected} we generalize our results to undirected log-linear models.
 
 % What spectral is doing is solve the ``hard'' non-convex problem of
 % identifying a bottleneck.
@@ -75,7 +87,8 @@ To do so, we will study the Hessian of likelihood function (also known
 We can estimate $T_C$ with a similar approach; this time, consider the
   piecewise likelihood of $x_2, x_3$ and $x_4$, 
 \begin{align}
-  \sL_p(x_2, x_3, x_4) &= \E_{x}[\log \sum_{h_2,h_3,h_4} P(h_2,h_3,h_4) O(x_2|h_2) O(x_3|h_3) O(x_4|h_4)].
+  \sL_p(x_2, x_3, x_4) &= \E_{x}[\log \sum_{h_2,h_3,h_4} P(h_2,h_3,h_4)  \\
+   &\quad   O(x_2|h_2) O(x_3|h_3) O(x_4|h_4)].
 \end{align}
 Again, we note that the objective is convex in $P(h_2, h_3, h_4)$, and
   EM will recover a global maximum. 
@@ -114,6 +127,16 @@ parameters of a Bayesian network $\sG$.
 
 For the first step of the algorithm, we wish to identify conditional
 moments between every hidden variable and atleast one observed variable.
+  
+In general, we call hidden variables with this property ``bottlenecks'',
+  and define them as follows.
+\begin{definition}(Bottleneck)
+  A hidden variable $h$ is said to be a bottleneck if there exists at
+  least three conditionally independent observed variables $o_1, o_2,
+  o_3$. Let $\sB(h)$ be the set of conditionally independent observed
+  variables for $h$.
+\end{definition}
+
 Using the tensor factorization algorithm, we further require that each
 observed variable have a single parent. This leads to the following two
 properties.
@@ -264,6 +287,20 @@ Finally, coupled with \theoremref{three-view}, we can guarantee that
 \begin{proof}
   \todo{Staple together \theoremref{three-view} and \corollaryref{cor:asymptotics}}.
 \end{proof}
+
+\subsection{Relation to the method of moments}
+
+An alternative view of solving the piecewise likelihood is actually just
+  solving of moments of piecewise component. 
+For a clique $\sC \eqdef \{h_1, \cdots, h_m\}$, the moment tensor
+  constructed on the bottleneck observables, $\vec x_\sC \eqdef \{x_1,
+  \cdots, x_L\}$, is,
+\begin{align}
+  \E[ x_1 \otimes x_2 \cdots \otimes x_L ] &= \sP_\sC \cdot O_{h_1} \otimes O_{h_2} \otimes \cdots \otimes O_{h_m},
+\end{align}
+where $\sP_\sC$ represents the joint distribution $P(h_1, \cdots, h_m)$
+  in tensor form and $O_{h_1} \otimes O_{h_2}$ handles common
+  observables between $\vec x_{\sB(h_1)}$ and $\vec x_{\sB(h_2)}$.
 
 \subsection{More examples}
 

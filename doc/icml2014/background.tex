@@ -9,17 +9,32 @@ Let $\Pa(x) \subset V$ be the parents of a variable $x$ in a directed
 We will use $o_1, o_2, \cdots \in O$ to denote observed variables and
   $h_1, h_2, \cdots \in H$ to denote hidden variables.
 For ease of exposition, we assume that the domain of all the observed
-  variables is $[D]$ and the domain of all the hidden variables is
-  $[K]$.
+  variables is $[d]$ and the domain of all the hidden variables is
+  $[k]$.
 
-Define $\otimes$ to be the tensor product. In matrix representation, it
-  is the Kronecker product.\expand
+Define $\otimes$ to be the tensor product.
+To denote the moments of observed variables, we will use the notation
+\begin{align*}
+  M_i &\eqdef \Pr(x_i), &
+  M_{ij} &\eqdef \Pr(x_i, x_j), &
+  M_{ijk} &\eqdef \Pr(x_i, x_j, x_k),
+\end{align*}
+and so on.
+We will view $M_i, M_{ij}, M_{ijk}, \cdots$ as tensors of
+  order 1, 2, 3, \ldots in $\Re^D, \Re^{D\times D}, \Re^{D \times
+  D \times D}$.
+For the moments of hidden variables, we will use analogous notation
+\begin{align*}
+  P_i &\eqdef \Pr(h_i), &
+  P_{ij} &\eqdef \Pr(h_i, h_j), &
+  P_{ijk} &\eqdef \Pr(h_i, h_j, h_k).
+\end{align*}
 
 \paragraph{Problem statement}
 
 % Statement
 This paper focuses on the problem of parameter estimation:
-We are given $n$ i.i.d.~examples of the observed variables $D = (x^{(1)}, \dots, x^{(n)})$
+We are given $n$ i.i.d.~examples of the observed variables $\sD = (x^{(1)}, \dots, x^{(n)})$
 where each $x^{(i)} \sim p_{\theta^*}$ for some true parameters $\theta^*$.
 Our goal is to produce a parameter estimate $\hat\theta$ that approximates $\theta^*$.
 
@@ -37,25 +52,46 @@ In practice, one uses gradient-based optimization procedures (e.g., EM
 
 \paragraph{Estimating three-view mixture models}
 
-\citet{anandkumar12moments} present an algorithm to solve three-view mixture models.
+\begin{figure}[t]
+  \label{fig:three-view}
+  \centering
+  \input{figures/three-view.tikz}
+  \caption{A three-view mixture model}
+\end{figure}
 
-Assume means $M_1, M_2, M_3$. Observe that the moments of the model are $M_{123}$.
+Recently, \citet{anandkumar12moments} presented a consistent algorithm
+  to learn the parameters of a three-view mixture model
+  (\figureref{three-view}) that sidesteps the local optima problem
+  altogether. 
+In the model, we have three observed variables $x_1, x_2, x_3 \in [d]$
+  that are independent conditioned on the latent variable $h \in [k]$. 
+  The parameters of this model are the conditional means $O^{(i)} \eqdef
+  \E[x_i | h] \in \Re^{D \times K}$ for $i \in \{1,2,3\}$ and the mixture probabilities $\pi
+  \in \Delta_{k-1}$.
+  The key idea is that the observed moments $M_{12}, M_{23}, M_{13}$ and
+  $M_{123}$ admit a factorization in terms of parameters;
+\begin{align*}
+  M_{ij} &= \sum_h \pi_h O^{(i)}_h \otimes O^{(j)}_h & \forall i,j \in \{1,2,3\} \\
+  M_{123} &= \sum_h \pi_h O^{(1)}_h \otimes O^{(2)}_h \otimes O^{(3)}_h.
+\end{align*}
 
-Applying a whitening transformation and get a orthogonal tensor decomposition.
-
-Solved using the robust tensor power method \citet{anandkumar13tensor}.
-
-In general, we call hidden variables with this property ``bottlenecks'',
-  and define them as follows.
-\begin{definition}(Bottleneck)
-  A hidden variable $h$ is said to be a bottleneck if there exists at
-  least three conditionally independent observed variables $o_1, o_2,
-  o_3$. Let $\sB(h)$ be the set of conditionally independent observed
-  variables for $h$.
-\end{definition}
+\citet{anandkumar13tensor} presented a robust tensor power method, which
+  we call $\TensorFactorize$, which converts consistent estimates of the observed moments 
+  into consistent estimates of the parameters,
+  $\pi, M_1, M_2, M_3$ (up to permutation of the columns), provided
+  the following assumption holds;
 
 \begin{assumption}
-  We assume that $M_1, M_2, M_3$ are each full rank, and that $\pi \succ
-  0$\reword.
+Assume the conditional moments $M_1, M_2, M_3$ have full column rank
+  $k$, and that $\pi \succ 0$.
 \end{assumption}
+
+In brief, the algorithm first computes a whitening matrix $W \in
+  \Re^{d \times k}$ such that $W^T M_{12} W = I_{k \times k}$,
+  and uses it to transform $M_{123}$ into a symmetric orthogonal tensor.  
+Then a robust tensor power method is applied to extract the eigenvectors
+  of the whitened $M_{123}$; unwhitening yields the columns of $M_{3}$.
+$M_1$ and $M_2$ can then be recovered with some algebra.
+
+\todo{Mention {\em method of moments} somewhere?}
 

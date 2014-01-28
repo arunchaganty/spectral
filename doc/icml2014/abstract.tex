@@ -1,4 +1,22 @@
 \begin{abstract} 
+
+Parameter estimation for latent variable models is typically
+  performed by optimizing the log-likelihood, which is prone to local
+  optima due to its non-convexity. 
+In this paper, we extend recent advances in the method of moments 
+  to provide consistent parameter estimates for a general family of
+  directed and undirected graphical models, including grid models
+  (\figureref{approach}) and latent tree models.
+The key idea in our approach is that, given the observation potentials
+  between observed and latent variables, the marginal distribution of
+  every clique is recoverable from the corresponding partial moments.
+We characterize the polynomial sample complexity for models in this
+  family.
+For models outside our family, we show how our approach can constrain
+  parameter search by providing partial information via posterior
+  regularization. 
+Finally, we provide empirical intuition via experiments.
+
 \end{abstract} 
 
 \paragraph{Errata}
