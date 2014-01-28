@@ -47,7 +47,7 @@ public class Utils {
     };
   }
 
-  public static void doGradientCheck(Maximizer.FunctionState state) {
+  public static boolean doGradientCheck(Maximizer.FunctionState state) {
     double epsilon = 1e-4;
     // Save point
     state.invalidate();
@@ -72,7 +72,10 @@ public class Utils {
       double expectedValue = (valuePlus - valueMinus)/(2*epsilon);
       double actualValue = currentGradient[i];
       assert MatrixOps.equal(expectedValue, actualValue, 1e-4);
+      if( !MatrixOps.equal(expectedValue, actualValue, 1e-4) ) return false;
     }
+
+    return true;
   }
 
   public static String readFully(BufferedReader reader) throws IOException {
@@ -165,6 +168,16 @@ public class Utils {
     }
 
     return sb.toString().trim();
+  }
+
+  public static String outputListF(OutputStreamWriter out, Object... items) {
+    String str = outputList(items);
+    try {
+      out.write(str + "\n");
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    return str;
   }
 
   static void enumerateHelper(final int K, final int L, final List<int[]> acc, final int[] buf, final int idx) {

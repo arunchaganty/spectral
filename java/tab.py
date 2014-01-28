@@ -57,6 +57,7 @@ def do_plot(args):
         parser.add_argument( '--group-by', nargs='*', help="Create a new plot for each of these groups" )
         parser.add_argument( '--sort', nargs='*', help="Filters to plot on (X, Y)" )
         parser.add_argument( '--keys', nargs='+', help="Keys to plot on (X, Y)" )
+        parser.add_argument( '--options', nargs='*', help="Options" )
         parser.add_argument( 'tab', type=file, help="tab file to use" )
         args.plots = [ parser.parse_args( shlex.split(plot) ) for plot in args.plots ]
         for plot in args.plots: plot.filters = scabby.list_to_dict( plot.filters ) or {}
@@ -72,10 +73,12 @@ def do_plot(args):
         datum = scabby.filter_tab( scabby.read_tab_file(plot.tab), **plot.filters )
         label = plot.label or str(i)
         x_key, y_key = plot.keys
+        options = {'label':label, 'marker':marker, 'color':color}
+        options.update(scabby.list_to_dict(plot.options))
         if args.points:
-            scabby.scatter( ax, datum, x_key, y_key, label=label, marker=marker, color=color)
+            scabby.scatter( ax, datum, x_key, y_key, **options)
         else:
-            scabby.plot( ax, datum, x_key, y_key, label=label, marker=marker, color=color)
+            scabby.plot( ax, datum, x_key, y_key, **options)
 
     ax.legend()
     if args.output is not None:

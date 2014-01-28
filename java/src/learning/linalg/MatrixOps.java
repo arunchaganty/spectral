@@ -297,6 +297,21 @@ public class MatrixOps {
     return diff;
   }
 
+
+  public static double diff(double[] X, double[] Y) {
+    double diff = 0.0;
+    for(int d1 = 0; d1 < X.length; d1++ )
+      diff += Math.pow(X[d1] - Y[d1], 2);
+    return Math.sqrt(diff);
+  }
+  public static double diff(double[][] X, double[][] Y) {
+    double diff = 0.0;
+    for(int d1 = 0; d1 < X.length; d1++ )
+      for(int d2 = 0; d2 < X[d1].length; d2++ )
+        diff += Math.pow(X[d1][d2] - Y[d1][d2], 2);
+    return Math.sqrt(diff);
+  }
+
   public static double diff(DenseMatrix64F X, DenseMatrix64F Y) {
     return SpecializedOps.diffNormF(X, Y);
   }

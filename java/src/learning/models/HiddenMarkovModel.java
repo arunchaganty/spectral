@@ -58,6 +58,10 @@ public class HiddenMarkovModel extends ExponentialFamilyModel<Example> {
       super.initRandom(random, noise);
       // Now normalize appropriately
 
+      normalize();
+    }
+
+    public void normalize() {
       // - pi
       {
         double z = 0.;
@@ -152,6 +156,9 @@ public class HiddenMarkovModel extends ExponentialFamilyModel<Example> {
         for(int x = 0; x < D; x++)
           params.weights[o(h,x)] = O[h][x];
 
+//      if(! params.isValid() )
+//        LogInfo.warning("Invalid params; normalizing");
+//      params.normalize();
       assert params.isValid();
 
       return params;

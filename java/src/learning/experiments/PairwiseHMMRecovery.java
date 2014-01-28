@@ -105,38 +105,12 @@ public class PairwiseHMMRecovery implements  Runnable {
       ));
     }
 
-    public double[][] getPiecewiseParameters() {
-      int K = model.getK();
-      SimpleMatrix T = new SimpleMatrix(trueParams.getT());
-      SimpleMatrix pi = MatrixFactory.fromVector(trueParams.getPi());
-
-      // Preprocess pi.
-      SimpleMatrix rollingT = SimpleMatrix.identity(K);
-      SimpleMatrix effectivePi = new SimpleMatrix(K,K);
-      for(int i = 0; i < L-1; i++) {
-        effectivePi = effectivePi.plus(rollingT.scale(1. / (L - 1)));
-        rollingT = rollingT.mult(T);
-      }
-      effectivePi = pi.mult(effectivePi);
-      assert(MatrixOps.equal( effectivePi.elementSum(), 1.0 ) );
-
-      double[][] P = new double[K][K];
-      for(int h1 = 0; h1 < K; h1++) {
-        for(int h2 = 0; h2 < K; h2++) {
-          // pi (I + T + T^2...) * pi
-          P[h1][h2] = effectivePi.get(h1) * T.get(h1,h2);
-        }
-      }
-
-      return P;
-    }
-
     public void reportO(double[][] O_) {
       double[][] O = trueParams.getO();
 
       // Compute the difference.
       O = MatrixOps.alignRows(O, O_);
-      double diff = MatrixOps.diffL1(O, O_);
+      double diff = MatrixOps.diff(O, O_);
 
       log(outputList(
               "O*", Fmt.D(O, "\n"),
@@ -150,7 +124,7 @@ public class PairwiseHMMRecovery implements  Runnable {
 
       // Compute the difference.
       T = MatrixOps.alignRows(T, T_);
-      double diff = MatrixOps.diffL1(T, T_);
+      double diff = MatrixOps.diff(T, T_);
 
       log(outputList(
               "T*", Fmt.D(T, "\n"),
@@ -164,7 +138,7 @@ public class PairwiseHMMRecovery implements  Runnable {
 
       // Compute the difference.
       pi = MatrixOps.alignRows(pi, pi_);
-      double diff = MatrixOps.diffL1(pi, pi_);
+      double diff = MatrixOps.diff(pi, pi_);
 
       log(outputList(
               "Pi*", Fmt.D(pi),
@@ -181,6 +155,10 @@ public class PairwiseHMMRecovery implements  Runnable {
       ));
 
       log(outputList(
+              "pi-lhood*", piLikelihood(model, trueParams, data),
+              "pi-lhood^",  piLikelihood(model, params, data),
+              "T-lhood*", piecewiseLikelihood(model, trueParams, data),
+              "T-lhood^", piecewiseLikelihood(model, params, data),
               "lhood*", model.getLogLikelihood(trueParams, data),
               "\nlhood^", model.getLogLikelihood(params, data)
       ));
@@ -194,7 +172,12 @@ public class PairwiseHMMRecovery implements  Runnable {
               "\ndtheta0", params.computeDiff(trueParams,null)
       ));
 
+
       log(outputList(
+              "pi-lhood*", piLikelihood(model, trueParams, data),
+              "pi-lhood0 ",  piLikelihood(model, params, data),
+              "T-lhood*", piecewiseLikelihood(model, trueParams, data),
+              "T-lhood0 ", piecewiseLikelihood(model, params, data),
               "lhood*", model.getLogLikelihood(trueParams, data),
               "\nlhood0", model.getLogLikelihood(params, data)
       ));
@@ -261,6 +244,34 @@ public class PairwiseHMMRecovery implements  Runnable {
 
     return Pair.newPair(O,T);
   }
+
+  public double[][] getPiecewiseParameters(HiddenMarkovModel model, HiddenMarkovModel.Parameters params) {
+    int K = model.getK();
+    SimpleMatrix T = new SimpleMatrix(params.getT());
+    SimpleMatrix pi = MatrixFactory.fromVector(params.getPi());
+
+    // Preprocess pi.
+    SimpleMatrix rollingT = SimpleMatrix.identity(K);
+    SimpleMatrix effectivePi = new SimpleMatrix(K,K);
+    for(int i = 0; i < L-1; i++) {
+      effectivePi = effectivePi.plus(rollingT.scale(1. / (L - 1)));
+      rollingT = rollingT.mult(T);
+    }
+    effectivePi = pi.mult(effectivePi);
+    assert(MatrixOps.equal( effectivePi.elementSum(), 1.0 ) );
+
+    double[][] P = new double[K][K];
+    for(int h1 = 0; h1 < K; h1++) {
+      for(int h2 = 0; h2 < K; h2++) {
+        // pi (I + T + T^2...) * pi
+        P[h1][h2] = effectivePi.get(h1) * T.get(h1,h2);
+      }
+    }
+
+    return P;
+  }
+
+
 //
 //  public double[][] computeLikelihoodHessian(HiddenMarkovModelOld model, int[][] X) {
 //    final double eps = 1e-6;
@@ -368,7 +379,7 @@ public class PairwiseHMMRecovery implements  Runnable {
 
     boolean identifiable = true;
     {
-      double[][] P = analysis.getPiecewiseParameters();
+      double[][] P = getPiecewiseParameters(model, analysis.trueParams);
       SimpleMatrix H = getPiecewiseHessian(model, params, P, data);
       int p = H.numRows();
 
@@ -406,30 +417,6 @@ public class PairwiseHMMRecovery implements  Runnable {
     return identifiable;
   }
 //
-//  public double piecewiseLikelihood(HiddenMarkovModelOld model, double[][] P, double[][] O, int[][] X) {
-//    int K = model.getStateCount();
-//    double lhood = 0.;
-//    int count = 0;
-//    for(int[] x : X) {
-//      for(int i = 0; i < x.length-1;i++) {
-//        count++;
-//
-//        int x1 = x[i+0];
-//        int x2 = x[i+1];
-//
-//        double z = 0.;
-//        for(int h1 = 0; h1 < K; h1++)
-//          for(int h2 = 0; h2 < K; h2++)
-//            z += P[h1][h2] * O[h1][x1] * O[h2][x2];
-//
-//        // Update
-//        lhood += (Math.log(z) - lhood)/count;
-//      }
-//    }
-//
-//    return lhood;
-//  }
-//
 //  public SimpleMatrix piecewiseLikelihoodGradient(HiddenMarkovModelOld model, double[][] P, double[][] O, int[][] X) {
 //    int K = model.getStateCount();
 //    int count = 0;
@@ -455,6 +442,62 @@ public class PairwiseHMMRecovery implements  Runnable {
 //
 //    return new SimpleMatrix(gradient);
 //  }
+
+  public double piLikelihood(HiddenMarkovModel model, HiddenMarkovModel.Parameters params, Counter<Example> data) {
+    int K = model.getK();
+    int D = model.getD();
+
+    double[][] O = params.getO();
+    double[] pi = params.getPi();
+
+    double lhood = 0;
+    for(Example ex : data) {
+      double weight = data.getFraction(ex);
+      int[] x = ex.x;
+      int x1 = x[0];
+
+      double z = 0.;
+      for(int h1 = 0; h1 < K; h1++)
+        z += pi[h1] * O[h1][x1];
+
+      // Update
+      assert z > 0;
+      lhood += weight * Math.log(z);
+    }
+
+    return lhood;
+  }
+
+
+  public double piecewiseLikelihood(HiddenMarkovModel model, HiddenMarkovModel.Parameters params, Counter<Example> data) {
+    int K = model.getK();
+    int D = model.getD();
+
+
+    double[][] O = params.getO();
+    double[][] P = getPiecewiseParameters(model, params);
+
+    double lhood = 0;
+    for(Example ex : data) {
+      double weight = data.getFraction(ex);
+      int[] x = ex.x;
+      for(int i = 0; i < x.length-1;i++) {
+        int x1 = x[i+0];
+        int x2 = x[i+1];
+
+        double z = 0.;
+        for(int h1 = 0; h1 < K; h1++)
+          for(int h2 = 0; h2 < K; h2++)
+            z += P[h1][h2] * O[h1][x1] * O[h2][x2];
+
+        // Update
+        assert z > 0;
+        lhood += weight * Math.log(z);
+      }
+    }
+
+    return lhood;
+  }
 
   public double[][] recoverP(HiddenMarkovModel model, double[][] O, Counter<Example> data) {
     LogInfo.begin_track("recover-P");
@@ -525,7 +568,7 @@ public class PairwiseHMMRecovery implements  Runnable {
               "diff", diff
       ));
 
-      done = diff < 1e-3;
+      done = diff < 1e-4;
     }
     LogInfo.log(outputList(
             "lhood", lhood_old
@@ -559,30 +602,101 @@ public class PairwiseHMMRecovery implements  Runnable {
     return T;
   }
 
-  public double[] recoverPi(HiddenMarkovModel model, double[][] O_, Counter<Example> data) {
+  public double[] recoverPi(HiddenMarkovModel model, double[][] O, Counter<Example> data) {
     LogInfo.begin_track("recover-pi");
     int K = model.getK();
     int D = model.getD();
 
+    // Initialization
+    HiddenMarkovModel.Parameters params = model.newParams();
+    params.initRandom(initRandom, 1.0);
+    double[] pi = params.getPi();
 
-    SimpleMatrix O = new SimpleMatrix(O_);
+    // Temporary buffer
+    boolean done = false;
 
-    // Compute via ML
-    SimpleMatrix P0 = new SimpleMatrix(1,D);
-    for(Example ex : data) {
-      double weight = data.getFraction(ex);
-      int[] x = ex.x;
-      P0.set(x[0], P0.get(x[0]) + weight);
+    double lhood_old = Double.NEGATIVE_INFINITY;
+
+    LogInfo.log(Fmt.D(pi));
+    for(int iter = 0; iter < 1000 && !done; iter++){
+      // Compute marginals
+      double lhood = 0.;
+      // Marginals
+      double[] pi_ = new double[K];
+      for(Example ex : data) {
+        double weight = data.getFraction(ex);
+        int[] x = ex.x;
+        int x1 = x[0];
+
+        double z = 0.;
+        for(int h1 = 0; h1 < K; h1++)
+            z += pi[h1] * O[h1][x1];
+
+        // Update
+        assert z > 0;
+        lhood += weight * Math.log(z);
+        for(int h1 = 0; h1 < K; h1++)
+          pi_[h1] += weight * (pi[h1] * O[h1][x1] / z);
+      }
+      double z = MatrixOps.sum(pi);
+      assert (MatrixOps.equal(z, 1)); // but maybe not exactly because of numerical error
+
+      LogInfo.log(Fmt.D(pi_));
+      // Update
+      double diff = 0.;
+      for(int h1 = 0; h1 < K; h1++) {
+        diff += Math.abs(pi[h1] - pi_[h1]);
+        pi[h1] = pi_[h1];
+      }
+      log(MatrixOps.sum(pi));
+      assert( MatrixOps.equal(MatrixOps.sum(pi), 1.0 ));
+
+      assert(lhood > lhood_old);
+      lhood_old = lhood;
+
+      LogInfo.dbg(outputList(
+              "iter", iter,
+              "lhood", lhood,
+              "diff", diff
+      ));
+
+      done = diff < 1e-4;
     }
-    P0 = P0.scale(1./P0.elementSum());
-
-    SimpleMatrix pi = P0.mult(O.pseudoInverse());
-    pi = MatrixOps.projectOntoSimplex( pi.transpose(), smoothMeasurements );
-    assert( pi.getNumElements() == K );
-    assert( MatrixOps.equal(pi.elementSum(), 1.0) );
+    LogInfo.log(outputList(
+            "lhood", lhood_old
+    ));
 
     end_track("recover-pi");
-    return MatrixFactory.toVector(pi);
+
+    return pi;
+  }
+
+  public double[] recoverPiSpectral(HiddenMarkovModel model, double[][] O, Counter<Example> data) {
+    LogInfo.begin_track("recover-pi");
+    // Collect second order moments
+
+    double[] M1 = new double[D];
+    for(Example ex: data) {
+      M1[ex.x[0]] += data.getFraction(ex);
+    }
+    assert MatrixOps.equal(MatrixOps.sum(M1), 1.0);
+
+
+    // Now invert O to get pi.
+    double[] pi;
+    {
+      SimpleMatrix O_ = new SimpleMatrix(O);
+      SimpleMatrix M1_ = MatrixFactory.fromVector(M1);
+      SimpleMatrix pi_ = M1_.mult(O_.pseudoInverse());
+      pi = MatrixFactory.toVector(pi_);
+    }
+
+    // Normalize pi
+    MatrixOps.scale(pi, 1./MatrixOps.sum(pi));
+
+    LogInfo.end_track("recover-pi");
+
+    return pi;
   }
 
   public HiddenMarkovModel.Parameters piecewiseRecovery(HiddenMarkovModel model, Counter<Example> data) {
@@ -611,7 +725,7 @@ public class PairwiseHMMRecovery implements  Runnable {
     analysis.reportT(T);
 
     // Compute pi with maximum likelihood.
-    double[] pi = recoverPi(model, O, data);
+    double[] pi = recoverPiSpectral(model, O, data);
     analysis.reportPi(pi);
 
     return model.newParams().with(pi, T, O);
