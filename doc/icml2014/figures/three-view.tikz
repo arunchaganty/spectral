@@ -1,0 +1,19 @@
+% vim:ft=tex
+\documentclass[tikz,convert={outfile=figure\three-view.pdf}]{standalone}
+%\usetikzlibrary{...}% tikz package already loaded by 'tikz' option
+\begin{document}
+
+\begin{tikzpicture}
+
+% Hidden nodes
+   \node[style=node, scale=0.8] (h) at (0,0) {$h$};
+   \node[style=obsnode, scale=0.8] (x1) at (-1.0, -1.0) {$x_1$};
+   \node[style=obsnode, scale=0.8] (x2) at (0.0, -1.0) {$x_3$};
+   \node[style=obsnode, scale=0.8] (x3) at (1.0, -1.0) {$x_3$};
+
+   \draw[-latex] (h1) -- (x1);
+   \draw[-latex] (h1) -- (x2);
+   \draw[-latex] (h1) -- (x3);
+\end{tikzpicture}
+
+\end{document}

@@ -1,0 +1,203 @@
+\section{Consistent Parameter Estimation in Directed Models}
+\label{sec:directed}
+
+The tensor factorization method attacks the heart of the non-convexity
+  in latent variable models.
+The technique is central in solving several other problems with more
+  complex correlation structure, for example latent Dirichlet allocation
+  \citep{anandkumar12lda}, mixture of Gaussians \citep{hsu13spherical},
+  etc.\findcite{more things}.
+
+We now show that once we recover the observation
+  potentials, identifying other clique potentials in a directed graphical
+  model can be consistently estimated in a systematic manner.
+In section \sectionref{undirected} we generalize our results to
+  undirected log-linear models.
+
+\subsection{Example: Directed grid model}
+
+\begin{figure}
+  \centering
+  \input{figures/grid.tikz}
+  \caption{A directed grid model.}
+  \label{fig:grid}
+\end{figure}
+
+Let us illustrate our approach with an example. 
+Consider the directed grid model shown in \figureref{grid} which
+  captures the different dependency structures possible in a Bayesian network.
+The model has eight observed variables $x^a_1, x^b_1 \cdots, x^a_4, x^b_4$ and four
+  hidden variables $h_1, \cdots, h_4$.
+The parameters of this model are the conditional probability tables
+  $\pi, T, V$ and $O$; for the sake of simplicity, we assume that all
+  the observation potentials are the same, i.e. $O \eqdef \Pr(x^\cdot_i
+  | h_i)$ for all $i$, and that $\Pr(h_2 | h_1) = \Pr(h_3 | h_1) = T$.
+Finally, we assume $O$ and $T$ have full column rank.
+
+\paragraph{Estimating $O$}
+
+Note that the observed variables $x^a_1, x^b_1, x^a_2$ are
+  conditionally independent given $h_1$, allowing us to use
+  \TensorFactorize as reviewed in \sectionref{setup}, to recover
+  the moments $O$.
+We can aggregate statistics from additional sets of independent observed
+  variables, e.g. $\{x^a_2, x^b_2, x^a_3\}$, to arrive at a better
+  estimate of $O$.
+
+%Intuitively, we expect the observations to tell us about the underlying
+%  hidden state, which should make learning each factor easier. 
+%For example, when $O = I$ the observed variables
+%  tell us exactly which hidden state we are in; the optimal procedure to
+%  estimate factors is simply counting the co-occurrences of the hidden
+%  states.
+
+\paragraph{Estimating $\pi$}
+
+We can relate the state of $h_1$ to the moments of $x^a_1$; $M_1
+  \eqdef \Pr(x^a_1) = O \pi$. From \assumptionref{full-rank}, $O$ has full
+  column rank and thus can be inverted to recover $\pi$; $\pi = \pinv O
+  M_1$.
+
+\paragraph{Estimating $T$}
+
+Similarly, the we can write down the moments of $x^a_1, x^a_2$ in terms
+of the pairwise marginals $P_{12} \eqdef \Pr(h_1, h_2)$ and solve for
+$P_{12}$;
+\begin{align*}
+  M_{12} &= O P_{12} O^T \\
+  P_{12} &= \pinv O M_{12} (\pinv O)^T.
+\end{align*}
+
+$T$ can be recovered from the $P_{12}$ by suitable normalization.
+
+\paragraph{Estimating $V$}
+
+Finally, we can estimate $V$ from the third-order moments $M_{234}$ as
+follows,
+\begin{align*}
+  M_{234} &= P_{234}(O, O, O) \\
+  P_{234} &= M_{234}(\pinv O, \pinv O, \pinv O).
+\end{align*}
+
+\subsection{General algorithm}
+
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+\begin{algorithm}
+  \caption{\LearnFactors}
+  \label{algo:directed}
+  \begin{algorithmic}
+    \REQUIRE A graphical model $\sG$ satisfying \textbf{(P1)}, \textbf{(P2)}, data $\sD$
+    \ENSURE Parameters $\theta$ for $\sG$
+
+      \FOR{$h \in H$} 
+        \STATE Apply \TensorFactorize for each bottleneck $h$ and learn parameters $\Pr(x \mid h) ~ \forall x \in \sB(h)$.
+
+%    \COMMENT{Recover observation potentials $O$ using bottlenecks}
+      \ENDFOR
+%      \COMMENT{\textbf{Step 2:} Recover clique potentials from the piecewise likelihood.}
+      \FOR{every clique $\sC = \{h_1, \cdots, h_m\} \in \sG$} 
+      \STATE Let $x_\sC = \{x_1, \cdots, x_m\}$.
+      \STATE $P_\sC = M_{x_\sC}( \pinv O_{x_1}, \cdots, \pinv O_{x_m} )$.
+%      Run expectation-maximization to convergence on the piecewise likelihood \eqref{eqn:piecewise}, over data $\{\vec x_\sC : x \in \sD\}$
+      \ENDFOR
+  \end{algorithmic}
+\end{algorithm}
+
+\algorithmref{directed} presents the natural extension of this approach.
+Let us now describe the general properties for which the algorithm,
+  $\LearnFactors$ works.
+
+For the first step of the algorithm, we wish to identify conditional
+  moments between every hidden variable and atleast one observed
+  variable.
+We call hidden variables with this property ``bottlenecks'',
+  and define them as follows.
+\begin{definition}(Bottleneck)
+  A hidden variable $h$ is said to be a bottleneck if there exists at
+    least three conditionally independent observed variables $o_1, o_2,
+    o_3$. 
+  Let $\vec x_\sB(h)$ be the set of conditionally independent observed
+    variables for $h$.
+\end{definition}
+
+We will further assume that each observed variable has a single parent. 
+This leads to the following two properties.
+\begin{property}
+  \label{prop:unique-parent}
+  Every observed variable $o$ has exactly one parent, $|\Pa(o)| = 1$.
+\end{property}
+\begin{property}
+  \label{prop:bottleneck}
+  Every hidden variable is a bottleneck.
+\end{property}
+
+We note that \propertyref{unique-parent} can be relaxed if another
+  algorithm is used to recover the conditional moments. For example,
+  \citet{halpern13noisyor} propose an algorithm that can recover the
+  conditional moments for a broad, but less general class of noisy-or
+  networks.
+\propertyref{bottleneck} can also be relaxed if factors share the same
+  parameters. 
+For example, because we can identify the observation potential from just
+  $x^a_1, x^b_1$ and $x^a_2$, we do not require that $h_2, h_3$ or $h_4$
+  be bottlenecks, and can correspondingly omit the observations $x^b_2,
+  x^b_3$ and $x^b_4$.
+
+Given \propertyref{unique-parent} and \propertyref{bottleneck}, step
+  1 of \algorithmref{directed} is guaranteed to recover potentials
+  $O^{(h)}_{x}$ for every hidden variable $h$ and observed variable $x \in
+  \vec x_\sB(h)$.
+\propertyref{bottleneck} guarantees that for every clique $\sC
+  = \{h_1, \cdots, h_m\}$ in the graphical model $\sG$, there exists at
+  least one bottleneck observable that depends on exactly one $h_i \in
+  \sC$; let $x_{h_i}$ be that observed variable\verify. 
+Finally, define $\vec x_\sC = \{x_{h_1}, \cdots x_{h_m}\}$ to be the
+  participating observed variables in the clique $\sC$.
+
+Finally, we have the following moment condition,
+\begin{align*}
+  M_{x_\sC} &= P_{\sC}(O_{x_{h_1}}, \cdots, O_{x_{h_m}}) \\
+  P_{\sC} &= M_{x_\sC}(\pinv O_{x_{h_1}}, \cdots, \pinv O_{x_{h_m}}).
+\end{align*}
+
+This algorithm is simple and intuitive. Next, we characterize its sample complexity.
+
+\begin{lemma}(Sample complexity for $\sC$)
+We require some number of samples to learn the factor for $\sC$.
+\end{lemma}
+
+This gives us our final result for a graphical model in our model
+family.
+\begin{theorem}(Learnability of Bottleneck Graphs)
+The parameters for a directed graphical $\sG$ with tree-width $k$
+satisfying \propertyref{unique-parent}, \propertyref{bottleneck} and
+\assumptionref{full-rank} can be learned with $O(\cdot)$ samples.
+\end{theorem}
+
+
+\paragraph{Aggregating observations}
+
+When we have multiple observed variables for a hidden variable, it is
+  always beneficial to aggregate over them.
+Note that $O_h$ will have rank atleast that of $O$; this encodes the
+  intuitive fact that we might be able to identify $h$ from multiple
+  observed variables even if we can not identify it from a single
+  observed variable. 
+Suppose $x_\sB(h) = \{x_1, x_2, \cdots, x_l\}$, let $O_h \in
+  \Re^{D^l \times K}$ be an
+  aggregated observation potential, such that $O_h(x_1, x_2, \cdots,
+  x_l) = P(x_1|h) P(x_2|h) \cdots P(x_l|h)$.
+Given \assumptionref{full-rank}, $O_h$ have rank $K$.
+After step 1, $O_h$ is a known quantity.
+
+\subsection{More examples}
+
+We will now instantiate our algorithm for several examples.
+
+\paragraph{Hidden Markov Model}
+
+\paragraph{Latent Tree Structure}
+
+\paragraph{Directed Grid Model}
+
