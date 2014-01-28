@@ -1,6 +1,7 @@
 % vim:ft=tex
-\documentclass[tikz,convert={outfile=figure\grid.pdf}]{standalone}
+\documentclass[tikz,convert={outfile=grid.pdf}]{standalone}
 %\usetikzlibrary{...}% tikz package already loaded by 'tikz' option
+\usepackage{scabby-diag}
 \begin{document}
 
 \begin{tikzpicture}

@@ -1,6 +1,8 @@
 % vim:ft=tex
-\documentclass[tikz,convert={outfile=figure\factors.pdf}]{standalone}
+\documentclass[tikz,convert={outfile=factors.pdf}]{standalone}
 %\usetikzlibrary{...}% tikz package already loaded by 'tikz' option
+\usepackage{scabby-diag}
+
 \begin{document}
 
 \begin{tikzpicture}

@@ -1,7 +1,7 @@
 % vim:ft=tex
-\documentclass[tikz,convert={outfile=figure\grid-outline.pdf}]{standalone}
+\documentclass[tikz,convert={outfile=gridoutline.pdf}]{standalone}
 %\usetikzlibrary{...}% tikz package already loaded by 'tikz' option
-\usetikzlibrary{decorations.markings}
+\usepackage{scabby-diag}
 
 \begin{document}
 

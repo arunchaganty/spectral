@@ -2,15 +2,50 @@
 \label{sec:piecewise}
 
 The linear algebraic solution to recover parameters presented in the
-  previous section is efficient and easy to understand. 
-However, it is sensitive to noise. 
+  previous section is easy to understand and analyze, however it is
+  sensitive to noise. 
 In this section we propose an alternate solution; optimize the piecewise
   likelihoods.
-We show that, under the conditions presented earlier\reword, the
-  piecewise likelihoods are in fact strictly convex, guaranteeing that
-  gradient-based optimization will converge to a global solution.
+We show that under the same conditions for \algorithmref{directed}, the
+  piecewise likelihoods are strictly convex, guaranteeing that
+  gradient-based optimization will converge to the unique global
+  optimum.
 
-\paragraph{Motivation}
+\begin{algorithm}
+  \caption{\LearnPiecewise}
+  \label{algo:piecewise}
+  \begin{algorithmic}
+    \REQUIRE A graphical model $\sG$ satisfying \textbf{(P1)}, \textbf{(P2)}, data $\sD$
+    \ENSURE Parameters $\theta$ for $\sG$
+
+      \FOR{$h \in H$} 
+        \STATE Apply \TensorFactorize for each bottleneck $h$ and learn parameters $\Pr(x \mid h) ~ \forall x \in \sB(h)$.
+
+%    \COMMENT{Recover observation potentials $O$ using bottlenecks}
+      \ENDFOR
+%      \COMMENT{\textbf{Step 2:} Recover clique potentials from the piecewise likelihood.}
+      \FOR{every clique $\sC = \{h_1, \cdots, h_m\} \in \sG$} 
+      \STATE Let $x_\sC = \{x_1, \cdots, x_m\}$.
+      \STATE $\hat P_\sC = \arg\max_{P_\sC \in \Delta_{k^m-1}} \E_{\vec x_\sC}[ \log P_\sC( \pinv O_{x_1}, \cdots, \pinv O_{x_m} ) ]$.
+%      Run expectation-maximization to convergence on the piecewise likelihood \eqref{eqn:piecewise}, over data $\{\vec x_\sC : x \in \sD\}$
+      \ENDFOR
+  \end{algorithmic}
+\end{algorithm}
+
+
+\paragraph{Intuition}
+
+Consider a hidden Markov model \figureref{fig:examples-hmm} with
+  2 states ($k=2$), but an arbitrary number of emissions, $d$. 
+After learning the observation potentials $O$ in step 1 of
+  \algorithmref{piecewise}, the log-likelihood objective for $\pi$ is,
+\begin{align}
+  \sL_p(x_1) &= \sum_{x_1} \log( \pi_1 O_{1,x_1} + (1-\pi_1) O_{2,x_1} )
+
+\end{align}
+
+Empirically, we observe that optimizing the piecewise objective gives
+  better solutions with finite samples.
 
 \begin{figure}
   \centering
@@ -132,3 +167,31 @@ Finally, coupled with \theoremref{three-view}, we can guarantee that
 \begin{proof}
   \todo{Staple together \theoremref{three-view} and \corollaryref{cor:asymptotics}}.
 \end{proof}
+
+\subsection{More examples}
+
+We will now instantiate our algorithm for several examples, illustrated in \figureref{examples}.
+
+\begin{figure}
+  \label{fig:examples}
+  \subfigure[Hidden Markov Model] {
+    \label{fig:examples-hmm}
+    \includegraphics{figures/hmm.pdf}
+  }
+%  \subfigure[Directed grid model] {
+%    \label{fig:examples-grid}
+%    \includegraphics{figures/grid.pdf}
+%  }
+  \subfigure[Tree model] {
+    \label{fig:examples-tree}
+    \includegraphics{figures/tree.pdf}
+  }
+\end{figure}
+
+
+\paragraph{Hidden Markov Model}
+
+\paragraph{Latent Tree Structure}
+
+\paragraph{Directed Grid Model}
+
