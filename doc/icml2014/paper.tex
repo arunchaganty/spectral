@@ -14,6 +14,7 @@
 
 \usepackage{scabby-diag}
 \usepackage{standalone}
+\usepackage{import}
 
 % For algorithms
 \usepackage{algorithm}
@@ -68,14 +69,14 @@ Stanford, CA, USA}
 \vskip 0.3in
 ]
 
-\input{abstract}
-\input{intro}
-\input{background}
-\input{directed}
-\input{piecewise}
-\input{undirected}
-\input{experiments}
-\input{discussion}
+\subimport{}{abstract}
+\subimport{}{intro}
+\subimport{}{background}
+\subimport{}{directed}
+\subimport{}{piecewise}
+\subimport{}{undirected}
+\subimport{}{experiments}
+\subimport{}{discussion}
 
 \bibliography{pliang,ref}
 \bibliographystyle{icml2014}

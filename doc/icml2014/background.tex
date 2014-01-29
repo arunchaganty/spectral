@@ -1,18 +1,64 @@
 \section{Setup}
 \label{sec:setup}
 
-Let $\sG$ be a discrete graphical model with variables $V$, of which
-  $O \subseteq V$ be observed and $H = V \setminus O$ be hidden.
-Let $\Pa(x) \subset V$ be the parents of a variable $x$ in a directed
-  model, and $\sN(x) \subset V$ be the neighbours of $x$ in an undirected
+Let $\sG$ be a discrete graphical model with variables $V$, 
+  let the subset $X \subseteq V$ be observed and 
+  let $H = V \setminus O$ be hidden.
+Let $\Pa(v) \subset V$ be the parents of a variable $v$ in a directed
+  model, and $\sN(v) \subset V$ be the neighbours of $v$ in an undirected
   model.
-We will use $o_1, o_2, \cdots \in O$ to denote observed variables and
-  $h_1, h_2, \cdots \in H$ to denote hidden variables.
-For ease of exposition, we assume that the domain of all the observed
-  variables is $[d]$ and the domain of all the hidden variables is
-  $[k]$.
+We will use $x_1, x_2, \cdots, x_N \in X$ to denote observed variables and
+  $h_1, h_2, \cdots, h_M \in H$ to denote hidden variables.
+For ease of exposition, we assume that $x_i \in \{1, \cdots, d\}$ for
+  all $i$, and that $h_i \in \{1, \cdots, k\}$ for all i.
 
-Define $\otimes$ to be the tensor product.
+We assume that the model $\sG$ is parameterized at every clique $\sC$.
+If $\sG$ is directed, the parameters correspond to
+  the conditional probability tables for each clique.
+If $\sG$ is undirected, the parameters correspond to the clique
+  potentials.
+
+\paragraph{Problem statement}
+
+% Statement
+This paper focuses on the problem of parameter estimation:
+We are given $n$ i.i.d.~examples of the observed variables $\sD
+  = (\vx^{(1)}, \dots, \vx^{(n)})$ where each $\vx^{(i)} \sim p_{\theta^*}$ for
+  some true parameters $\theta^*$.
+Our goal is to produce a parameter estimate $\hat\theta$ that
+  approximates $\theta^*$.
+
+% Maximum likelihood
+The standard estimation procedure is maximum (marginal) likelihood,
+  \begin{align*}
+    \sL &\eqdef \max_{\theta} \sum_{\vx \in \sD} \log p_\theta(\vx) \\
+        &=      \max_{\theta} \sum_{\vx \in \sD} \log \sum_{\vh} p_\theta(\vx,\vh)
+  \end{align*}
+  which is statistically efficient but computationally intractable
+  because we must marginalize over latent variables $z$.
+In practice, one uses gradient-based optimization procedures (e.g., EM
+  or L-BFGS) on the marginal likelihood, which can get stuck in local
+  optima.
+
+\paragraph{Notation}
+
+We use $\otimes$ to denote the tensor product, e.g if $u \in \Re^k,
+  v \in \Re^d$, then $u \otimes v \in \Re^{k \times d}$.
+For a $\ell$-th order tensor $T \in \Re^{d \times \ldots \times
+  d}$ and vectors $x_1, \cdots, x_\ell \in \Re^{d},$, we define 
+\begin{align*}
+  T(x_1, \cdots, x_\ell) 
+      &= \sum_{i_1 = 1}^{d} \cdots \sum_{i_\ell = 1}^{d} 
+            T_{i_1 i_2 \ldots i_l} ({x_1})_{i_1} \cdots ({x_\ell})_{i_\ell}.
+\end{align*}
+Analogously, for a matrices $M_1 \in \Re^{d \times k}, \cdots,
+  M_\ell \in \Re^{d \times k}$, we define
+\begin{align*}
+  T(M_1, \cdots, M_\ell)_{j_1, \ldots, j_l} 
+      &= \sum_{i_1 = 1}^{d} \cdots \sum_{i_\ell = 1}^{d} 
+            T_{i_1 i_2 \ldots i_l} ({M_1})_{i_1j_1} \cdots ({M_\ell})_{i_\ell j_\ell}.
+\end{align*}
+
 To denote the moments of observed variables, we will use the notation
 \begin{align*}
   \mO_i &\eqdef \Pr(x_i), &
@@ -21,34 +67,15 @@ To denote the moments of observed variables, we will use the notation
 \end{align*}
 and so on.
 We will view $\mO_i, \mO_{ij}, \mO_{ijk}, \cdots$ as tensors of
-  order 1, 2, 3, \ldots in $\Re^D, \Re^{D\times D}, \Re^{D \times
-  D \times D}$.
-For the moments of hidden variables, we will use analogous notation
+  order 1, 2, 3, \ldots in $\Re^d, \Re^{d\times d}, \Re^{d \times
+  d \times d},\ldots$.
+For the moments of hidden variables, we will use 
 \begin{align*}
   \mH_i &\eqdef \Pr(h_i), &
   \mH_{ij} &\eqdef \Pr(h_i, h_j), &
   \mH_{ijk} &\eqdef \Pr(h_i, h_j, h_k).
 \end{align*}
 
-\paragraph{Problem statement}
-
-% Statement
-This paper focuses on the problem of parameter estimation:
-We are given $n$ i.i.d.~examples of the observed variables $\sD = (x^{(1)}, \dots, x^{(n)})$
-where each $x^{(i)} \sim p_{\theta^*}$ for some true parameters $\theta^*$.
-Our goal is to produce a parameter estimate $\hat\theta$ that approximates $\theta^*$.
-
-% Maximum likelihood
-The standard estimation procedure is maximum (marginal) likelihood,
-  \begin{align*}
-    \sL &\eqdef \max_{\theta \in \Re^d} \E_{x} \log p_\theta(x) \\
-        &=      \max_{\theta \in \Re^d} \E_{x} \log \sum_z p_\theta(z),
-  \end{align*}
-  which is statistically efficient but computationally intractable
-  because we must marginalize over latent variables $z$.
-In practice, one uses gradient-based optimization procedures (e.g., EM
-  or L-BFGS) on the marginal likelihood, which can get stuck in local
-  optima.
 
 \paragraph{Estimating three-view mixture models}
 
@@ -60,30 +87,31 @@ In practice, one uses gradient-based optimization procedures (e.g., EM
 \end{figure}
 
 Recently, \citet{anandkumar12moments} presented a consistent algorithm
-  to learn the parameters of a three-view mixture model
-  (\figureref{three-view}) that sidesteps the local optima problem
-  altogether. 
-In the model, we have three observed variables $x_1, x_2, x_3 \in [d]$
-  that are independent conditioned on the latent variable $h \in [k]$. 
-  The parameters of this model are the conditional means $O^{(i)} \eqdef
-  \E[x_i | h] \in \Re^{D \times K}$ for $i \in \{1,2,3\}$ and the mixture probabilities $\pi
-  \in \Delta_{k-1}$.
+  using the method of moments to learn the parameters of a three-view
+  mixture model (\figureref{three-view}), an important case of directed
+  graphical models, that sidesteps the local optima problem altogether. 
+In the model, we have three observed variables $x_1, x_2, x_3$
+  that are independent conditioned on a latent variable $h$.  
+The parameters of this model are the mixture probabilities $\pi \eqdef
+  \Pr(h) \in \Delta_{k-1}$ and the conditional moments $O^{(i)} \eqdef
+  \Pr(x_i \given h) \in \Re^{d \times k}$ for $i \in \{1,2,3\}$.
+
   The key idea is that the observed moments $\mO_{12}, \mO_{23}, \mO_{13}$ and
   $\mO_{123}$ admit a factorization in terms of parameters;
 \begin{align*}
-  \mO_{ij} &= \sum_h \pi_h O^{(i)}_h \otimes O^{(j)}_h & \forall i,j \in \{1,2,3\} \\
-  \mO_{123} &= \sum_h \pi_h O^{(1)}_h \otimes O^{(2)}_h \otimes O^{(3)}_h.
+  \mO_{ij} &= \sum_h \pi_h {O\oft i}^T_h \otimes {O\oft j}^T_h & \forall i,j \in \{1,2,3\} \\
+  \mO_{123} &= \sum_h \pi_h {O\oft 1}^T_h \otimes {O\oft 2}^T_h \otimes  {O\oft 3}^T_h.
 \end{align*}
 
 \citet{anandkumar13tensor} presented a robust tensor power method, which
   we call $\TensorFactorize$, which converts consistent estimates of the observed moments 
-  into consistent estimates of the parameters,
-  $\pi, \mO_1, \mO_2, \mO_3$ (up to permutation of the columns), provided
-  the following assumption holds;
+  into consistent estimates of the parameters, $\pi, O\oft{1},
+  O\oft{2}, O\oft{3}$ (up to permutation of the columns), provided
+  the following assumption holds:
 
 \begin{assumption}
 \label{asm:full-rank}
-Assume the conditional moments $\mO_1, \mO_2, \mO_3$ have full column rank
+Assume the conditional moments $O\oft{1}, O\oft{2}, O\oft{3}$ have full column rank
   $k$, and that $\pi \succ 0$.
 \end{assumption}
 
@@ -93,6 +121,4 @@ In brief, the algorithm first computes a whitening matrix $W \in
 Then a robust tensor power method is applied to extract the eigenvectors
   of the whitened $\mO_{123}$; unwhitening yields the columns of $\mO_{3}$.
 $\mO_1$ and $\mO_2$ can then be recovered with some algebra.
-
-\todo{Mention {\em method of moments} somewhere?}
 

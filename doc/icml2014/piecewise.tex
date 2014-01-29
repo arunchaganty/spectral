@@ -254,3 +254,17 @@ We will now instantiate our algorithm for several examples, illustrated in \figu
 
 \paragraph{Directed Grid Model}
 
+\paragraph{Aggregating observations}
+
+When we have multiple observed variables for a hidden variable, it is
+  always beneficial to aggregate over them.
+Note that $O_h$ will have rank atleast that of $O$; this encodes the
+  intuitive fact that we might be able to identify $h$ from multiple
+  observed variables even if we can not identify it from a single
+  observed variable. 
+Suppose $x_\sB(h) = \{x_1, x_2, \cdots, x_l\}$, let $O_h \in
+  \Re^{D^l \times K}$ be an
+  aggregated observation potential, such that $O_h(x_1, x_2, \cdots,
+  x_l) = \mH(x_1|h) \mH(x_2|h) \cdots \mH(x_l|h)$.
+Given \assumptionref{full-rank}, $O_h$ have rank $K$.
+After step 1, $O_h$ is a known quantity.
