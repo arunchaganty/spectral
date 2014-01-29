@@ -53,30 +53,30 @@ We can aggregate statistics from additional sets of independent observed
 
 \paragraph{Estimating $\pi$}
 
-We can relate the state of $h_1$ to the moments of $x^a_1$; $M_1
+We can relate the state of $h_1$ to the moments of $x^a_1$; $\mO_1
   \eqdef \Pr(x^a_1) = O \pi$. From \assumptionref{full-rank}, $O$ has full
   column rank and thus can be inverted to recover $\pi$; $\pi = \pinv O
-  M_1$.
+  \mO_1$.
 
 \paragraph{Estimating $T$}
 
 Similarly, the we can write down the moments of $x^a_1, x^a_2$ in terms
-of the pairwise marginals $P_{12} \eqdef \Pr(h_1, h_2)$ and solve for
-$P_{12}$;
+of the pairwise marginals $\mH_{12} \eqdef \Pr(h_1, h_2)$ and solve for
+$\mH_{12}$;
 \begin{align*}
-  M_{12} &= O P_{12} O^T \\
-  P_{12} &= \pinv O M_{12} (\pinv O)^T.
+  \mO_{12} &= O \mH_{12} O^T \\
+  \mH_{12} &= \pinv O \mO_{12} (\pinv O)^T.
 \end{align*}
 
-$T$ can be recovered from the $P_{12}$ by suitable normalization.
+$T$ can be recovered from the $\mH_{12}$ by suitable normalization.
 
 \paragraph{Estimating $V$}
 
-Finally, we can estimate $V$ from the third-order moments $M_{234}$ as
+Finally, we can estimate $V$ from the third-order moments $\mO_{234}$ as
 follows,
 \begin{align*}
-  M_{234} &= P_{234}(O, O, O) \\
-  P_{234} &= M_{234}(\pinv O, \pinv O, \pinv O).
+  \mO_{234} &= \mH_{234}(O, O, O) \\
+  \mH_{234} &= \mO_{234}(\pinv O, \pinv O, \pinv O).
 \end{align*}
 
 \subsection{General algorithm}
@@ -98,7 +98,7 @@ follows,
 %      \COMMENT{\textbf{Step 2:} Recover clique potentials from the piecewise likelihood.}
       \FOR{every clique $\sC = \{h_1, \cdots, h_m\} \in \sG$} 
       \STATE Let $x_\sC = \{x_1, \cdots, x_m\}$.
-      \STATE $P_\sC = M_{x_\sC}( \pinv O_{x_1}, \cdots, \pinv O_{x_m} )$.
+      \STATE $\mH_\sC = \mO_{x_\sC}( \pinv O_{x_1}, \cdots, \pinv O_{x_m} )$.
 %      Run expectation-maximization to convergence on the piecewise likelihood \eqref{eqn:piecewise}, over data $\{\vec x_\sC : x \in \sD\}$
       \ENDFOR
   \end{algorithmic}
@@ -157,8 +157,8 @@ Finally, define $\vec x_\sC = \{x_{h_1}, \cdots x_{h_m}\}$ to be the
 
 Finally, we have the following moment condition,
 \begin{align*}
-  M_{x_\sC} &= P_{\sC}(O_{x_{h_1}}, \cdots, O_{x_{h_m}}) \\
-  P_{\sC} &= M_{x_\sC}(\pinv O_{x_{h_1}}, \cdots, \pinv O_{x_{h_m}}).
+  \mO_{x_\sC} &= \mH_{\sC}(O_{x_{h_1}}, \cdots, O_{x_{h_m}}) \\
+  \mH_{\sC} &= \mO_{x_\sC}(\pinv O_{x_{h_1}}, \cdots, \pinv O_{x_{h_m}}).
 \end{align*}
 
 This algorithm is simple and intuitive. Next, we characterize its sample complexity.
@@ -187,6 +187,6 @@ Note that $O_h$ will have rank atleast that of $O$; this encodes the
 Suppose $x_\sB(h) = \{x_1, x_2, \cdots, x_l\}$, let $O_h \in
   \Re^{D^l \times K}$ be an
   aggregated observation potential, such that $O_h(x_1, x_2, \cdots,
-  x_l) = P(x_1|h) P(x_2|h) \cdots P(x_l|h)$.
+  x_l) = \mH(x_1|h) \mH(x_2|h) \cdots \mH(x_l|h)$.
 Given \assumptionref{full-rank}, $O_h$ have rank $K$.
 After step 1, $O_h$ is a known quantity.

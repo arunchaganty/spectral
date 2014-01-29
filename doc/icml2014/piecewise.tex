@@ -26,7 +26,7 @@ We show that under the same conditions for \algorithmref{directed}, the
 %      \COMMENT{\textbf{Step 2:} Recover clique potentials from the piecewise likelihood.}
       \FOR{every clique $\sC = \{h_1, \cdots, h_m\} \in \sG$} 
       \STATE Let $x_\sC = \{x_1, \cdots, x_m\}$.
-      \STATE $\hat P_\sC = \arg\max_{P_\sC \in \Delta_{k^m-1}} \E_{\vec x_\sC}[ \log P_\sC( \pinv O_{x_1}, \cdots, \pinv O_{x_m} ) ]$.
+      \STATE $\hat \mH_\sC = \arg\max_{\mH_\sC \in \Delta_{k^m-1}} \E_{\vec x_\sC}[ \log \mH_\sC( \pinv O_{x_1}, \cdots, \pinv O_{x_m} ) ]$.
 %      Run expectation-maximization to convergence on the piecewise likelihood \eqref{eqn:piecewise}, over data $\{\vec x_\sC : x \in \sD\}$
       \ENDFOR
   \end{algorithmic}
@@ -40,8 +40,7 @@ Consider a hidden Markov model \figureref{fig:examples-hmm} with
 After learning the observation potentials $O$ in step 1 of
   \algorithmref{piecewise}, the log-likelihood objective for $\pi$ is,
 \begin{align}
-  \sL_p(x_1) &= \sum_{x_1} \log( \pi_1 O_{1,x_1} + (1-\pi_1) O_{2,x_1} )
-
+  \sL_p(x_1) &= \sum_{x_1} \log( \pi_1 O_{1,x_1} + (1-\pi_1) O_{2,x_1} ).
 \end{align}
 
 Empirically, we observe that optimizing the piecewise objective gives
@@ -71,11 +70,11 @@ The piecewise log-likelihood of $\vec x_{\sC} =\sB(\sC)$ can then be
   written down as,
 \begin{align}
   \sL_p(\vec x_\sC) 
-    &= \E_{\vec x_\sC}[ \sum_{h_1, h_2, \ldots, h_m} P(h_1, h_2, \cdots, h_m) 
+    &= \E_{\vec x_\sC}[ \sum_{h_1, h_2, \ldots, h_m} \mH(h_1, h_2, \cdots, h_m) 
     \prod_{i=1}^{m} O_{h_i}(\vec x_{\sB(h_i)}) ]. \label{eqn:piecewise}
 \end{align}
 As we saw earlier, this objective is convex in the marginal distribution
-  $P(h_1, h_2, \cdots, h_m)$, which implies that
+  $\mH(h_1, h_2, \cdots, h_m)$, which implies that
   expectation-maximization in step 2 converges to a global optimum.
 The following lemma describes conditions under which the piecewise
   likelihood objective is strongly convex, guaranteeing that the global
@@ -89,12 +88,9 @@ The following lemma describes conditions under which the piecewise
   true parameters is 
   \begin{align}
     \grad^2 \sL_p(\vec x_\sC) 
-    &= \sum_{x_1, x_2, \ldots, x_L} \tilde O_{\vec x_\sC} \tilde O_{\vec x_\sC}^T,
+    &= O_\sC \diag(M_{\sC})^{-1} O_\sC^T,
   \end{align}
-  where $\tilde O \in \Re^{K^m \times D^L}$ is the matrix constructed as follows,
-  \begin{align}
-    \tilde O_{\sC, \vec x_\sC} &= O_{h_1}(\vec x_{\sB(h_1)} O_{h_2}(\vec x_{\sB(h_2)} \cdots O_{h_m}(\vec x_{\sB(h_m)}).
-  \end{align}
+  \todo{Define $O_\sC$}
 
   Consequently, the Fisher matrix is non-singular iff the span of $D^L$ vectors $\{ O_{\vec x_\sC} \}$ is rank-deficient.
   Furthermore, the smallest singular value of $J_\sC$ is bounded below
@@ -126,7 +122,7 @@ Intuitively, the condition \todo{(C1)} says that the observations give
   us sufficient information about the latent variables to identify the
   model. 
 For example, when each observed symbol corresponds to exactly one value
-  of the hidden variable, i.e. $P(x \mid h )$ is binary, the above
+  of the hidden variable, i.e. $\mH(x \mid h )$ is binary, the above
   condition trivially holds\verify.
 \todo{Is this condition the weakest possible? Can we hope to identify a model for which this is not true?}.
 
@@ -167,6 +163,69 @@ Finally, coupled with \theoremref{three-view}, we can guarantee that
 \begin{proof}
   \todo{Staple together \theoremref{three-view} and \corollaryref{cor:asymptotics}}.
 \end{proof}
+
+\subsection{Comparison with Method of Moments}
+
+By Cramer-Rao, we know that the asymptotic variance of the
+  maximum-likelihood estimator is the upper-bound for parameter
+  recovery; in other words, one can't do any better. 
+  We'll now show that the asymptotic variance of the method of moments \todo{is worse by X}. 
+This is expected because MoM is known to be less statistically efficient.
+
+\begin{lemma}(Asymptotic variance for the likelihood)
+  \label{lem:pw-variance}
+
+  \todo{What is $n$?}
+  Let $\sC = \{h_{i_1}, \cdots, h_{i_m}\}$ be a clique in the graphical
+    model with hidden marginals $Z_{\sC}$ and
+  let $x_\sC$ be the set of views used to identify $Z_{\sC}$.
+  The asymptotic variance in the recovered parameters $Z_{\sC}$ is,
+  \begin{align*}
+    \sqrt{n}(\hat Z_{\sC} - Z_{\sC}^*) \convind \sN( 0, {\pinv O_{\sC}}^T \diag(M_\sC) \pinv O_{\sC} ).
+  \end{align*}
+\end{lemma}
+\begin{proof}
+  From Cramer-Rao,
+  \begin{align*}
+    \sqrt{n}(\hat M_{\sC} - M_{\sC}) \convind \sN( 0, \grad^2 \sL_p(\vec x_\sC)^{-1} ).
+  \end{align*}
+
+  From previous lemma,
+  \begin{align*}
+    \sqrt{n}(\hat Z_{\sC} - Z_{\sC}^*) \convind \sN( 0, {\pinv O_{\sC}}^T \diag(M_\sC) \pinv O_{\sC} ).
+  \end{align*}
+\end{proof}
+
+\begin{lemma}(Asymptotic variance for the method of moments)
+  \label{lem:mom-variance}
+
+  \todo{What is $n$?}
+  Let $\sC = \{h_{i_1}, \cdots, h_{i_m}\}$ be a clique in the graphical
+    model with hidden marginals $Z_{\sC}$ and
+  let $x_\sC$ be the set of views used to identify $Z_{\sC}$.
+  The asymptotic variance in the recovered parameters $Z_{\sC}$ is,
+  \begin{align*}
+    \sqrt{n}(\hat Z_{\sC} - Z_{\sC}^*) \convind \sN( 0, {\pinv O_{\sC}}^T (\diag(M_\sC) - M_\sC {M_\sC}^T) \pinv O_{\sC} ).
+  \end{align*}
+\end{lemma}
+\begin{proof}
+  \begin{align*}
+    \sqrt{n}(\hat M_{\sC} - M_{\sC}) \convind \sN( 0, \Sigma_{\sC} ).
+  \end{align*}
+
+  The transformation from $M_\sC$ to $Z_\sC$ is $O_\sC^\dagger M_\sC$, giving
+
+  \begin{align*}
+    \sqrt{n}(\hat Z_{\sC} - Z_{\sC}^*) \convind \sN( 0, {\pinv O_{\sC}}^T \Sigma_\sC \pinv O_{\sC} ).
+  \end{align*}
+
+  We know that $M_\sC$ is multinomial, so $\Sigma_\sC = \diag(M_\sC) - M_\sC {M_\sC}^T$. In other words,
+  \begin{align*}
+    \sqrt{n}(\hat Z_{\sC} - Z_{\sC}^*) \convind \sN( 0, {\pinv O_{\sC}}^T (\diag(M_\sC) - M_\sC {M_\sC}^T) \pinv O_{\sC} ).
+  \end{align*}
+\end{proof}
+
+
 
 \subsection{More examples}
 

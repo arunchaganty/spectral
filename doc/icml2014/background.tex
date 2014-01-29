@@ -15,19 +15,19 @@ For ease of exposition, we assume that the domain of all the observed
 Define $\otimes$ to be the tensor product.
 To denote the moments of observed variables, we will use the notation
 \begin{align*}
-  M_i &\eqdef \Pr(x_i), &
-  M_{ij} &\eqdef \Pr(x_i, x_j), &
-  M_{ijk} &\eqdef \Pr(x_i, x_j, x_k),
+  \mO_i &\eqdef \Pr(x_i), &
+  \mO_{ij} &\eqdef \Pr(x_i, x_j), &
+  \mO_{ijk} &\eqdef \Pr(x_i, x_j, x_k),
 \end{align*}
 and so on.
-We will view $M_i, M_{ij}, M_{ijk}, \cdots$ as tensors of
+We will view $\mO_i, \mO_{ij}, \mO_{ijk}, \cdots$ as tensors of
   order 1, 2, 3, \ldots in $\Re^D, \Re^{D\times D}, \Re^{D \times
   D \times D}$.
 For the moments of hidden variables, we will use analogous notation
 \begin{align*}
-  P_i &\eqdef \Pr(h_i), &
-  P_{ij} &\eqdef \Pr(h_i, h_j), &
-  P_{ijk} &\eqdef \Pr(h_i, h_j, h_k).
+  \mH_i &\eqdef \Pr(h_i), &
+  \mH_{ij} &\eqdef \Pr(h_i, h_j), &
+  \mH_{ijk} &\eqdef \Pr(h_i, h_j, h_k).
 \end{align*}
 
 \paragraph{Problem statement}
@@ -68,31 +68,31 @@ In the model, we have three observed variables $x_1, x_2, x_3 \in [d]$
   The parameters of this model are the conditional means $O^{(i)} \eqdef
   \E[x_i | h] \in \Re^{D \times K}$ for $i \in \{1,2,3\}$ and the mixture probabilities $\pi
   \in \Delta_{k-1}$.
-  The key idea is that the observed moments $M_{12}, M_{23}, M_{13}$ and
-  $M_{123}$ admit a factorization in terms of parameters;
+  The key idea is that the observed moments $\mO_{12}, \mO_{23}, \mO_{13}$ and
+  $\mO_{123}$ admit a factorization in terms of parameters;
 \begin{align*}
-  M_{ij} &= \sum_h \pi_h O^{(i)}_h \otimes O^{(j)}_h & \forall i,j \in \{1,2,3\} \\
-  M_{123} &= \sum_h \pi_h O^{(1)}_h \otimes O^{(2)}_h \otimes O^{(3)}_h.
+  \mO_{ij} &= \sum_h \pi_h O^{(i)}_h \otimes O^{(j)}_h & \forall i,j \in \{1,2,3\} \\
+  \mO_{123} &= \sum_h \pi_h O^{(1)}_h \otimes O^{(2)}_h \otimes O^{(3)}_h.
 \end{align*}
 
 \citet{anandkumar13tensor} presented a robust tensor power method, which
   we call $\TensorFactorize$, which converts consistent estimates of the observed moments 
   into consistent estimates of the parameters,
-  $\pi, M_1, M_2, M_3$ (up to permutation of the columns), provided
+  $\pi, \mO_1, \mO_2, \mO_3$ (up to permutation of the columns), provided
   the following assumption holds;
 
 \begin{assumption}
 \label{asm:full-rank}
-Assume the conditional moments $M_1, M_2, M_3$ have full column rank
+Assume the conditional moments $\mO_1, \mO_2, \mO_3$ have full column rank
   $k$, and that $\pi \succ 0$.
 \end{assumption}
 
 In brief, the algorithm first computes a whitening matrix $W \in
-  \Re^{d \times k}$ such that $W^T M_{12} W = I_{k \times k}$,
-  and uses it to transform $M_{123}$ into a symmetric orthogonal tensor.  
+  \Re^{d \times k}$ such that $W^T \mO_{12} W = I_{k \times k}$,
+  and uses it to transform $\mO_{123}$ into a symmetric orthogonal tensor.  
 Then a robust tensor power method is applied to extract the eigenvectors
-  of the whitened $M_{123}$; unwhitening yields the columns of $M_{3}$.
-$M_1$ and $M_2$ can then be recovered with some algebra.
+  of the whitened $\mO_{123}$; unwhitening yields the columns of $\mO_{3}$.
+$\mO_1$ and $\mO_2$ can then be recovered with some algebra.
 
 \todo{Mention {\em method of moments} somewhere?}
 
