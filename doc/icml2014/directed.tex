@@ -146,6 +146,8 @@ Intuitively, this assumption says that the marginal probability of every state f
   By variable elimination.
 \end{proof}
 
+\todo{Talk about aligning views}
+
 \paragraph{Required structural properties}
 
 We will now provide a sufficient condition for
@@ -275,7 +277,7 @@ We describe its asymptotic complexity to see what the dependence on the
   parameters of the problem are.
 
 \begin{lemma}(Sample complexity for $\sC$)
-  
+  \label{lem:mom-complexity}  
 We require some number of samples to learn the factor for $\sC$.
 \end{lemma}
 \begin{proof}
@@ -314,7 +316,7 @@ where $\Sigma_\sV$ is the variance. Because $M_\sV$ describes the discrete margi
 
 Thus, $Z_\sC$ goes as
 \begin{align*}
-  \sqrt{n}(\hat Z_\sV - Z_\sV) \convind \sN(0, \pinvt{\mOpp{\sV}{\sC}} \Sigma_\sV \pinv{\mOpp{\sV}{\sC}}).
+  \sqrt{n}(\hat Z_\sC - Z_\sC) \convind \sN(0, \pinvt{\mOpp{\sV}{\sC}} \Sigma_\sV \pinv{\mOpp{\sV}{\sC}}).
 \end{align*}
 
 \todo{Convert from $Z_\sC$ to the actual CPTs}.

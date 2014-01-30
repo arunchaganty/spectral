@@ -1,50 +1,102 @@
 \section{Consistent Parameter Estimation for Undirected Latent Variable Log-linear Models}
 \label{sec:undirected}
 
-In this section, we will show that we can extend the results to undirected graphical models.
+In this section, we will show that we can extend the results to
+  undirected graphical models parameterized as log-linear latent variable
+  models.
+We exploit a connection between the moments of the clique potentials and
+  the log-partition function to show that learning parameters is convex
+  given the clique marginals $Z_\sC$. 
+The end result is a consistent estimator for log-linear
+  latent-variable models which satisfy \propertyref{exclusive-views}.
+Finally, we generalize the result to classes when only a subset of the
+  clique marginals can be learned.
 
-Let $z$ be a collection of variables indexed by $V$ (that is, $z = \{z_j\}_{j \in V}$).
-Suppose that some of the variables are observed ($x = \{ z_j \}_{j \in O}$, where $O \subset V$) 
-and the rest are latent ($h = \{ z_j \}_{j \in H}$, where $H = V \backslash O$).
-Let $C \subset 2^V$ be a collection of subsets of variables,
-and let $\phi_c(z_c) \in \Re^d$ be the feature map for each $c \in C$.
-In this paper, we will consider both directed and undirected models over $z$.
-In the undirected case, we define the standard globally-normalized exponential family model:
+As before, let $\sG$ be a graphical model with variables $V$, with $X
+  \subseteq V$ being observed and $H = V \setminus X$ hidden.
+We assume that the undirected graphical model is a log-linear latent
+  variable model with parameters $\theta$,
+\begin{align*}
+  p_\theta(\vx, \vh) &= \exp( \theta^T\phi(x,z) - A(\theta) ),
+\end{align*}
+where $\phi(x,z)$ is a feature vector with components $\phi_\sC(x,z)$
+  for every clique and $A(\theta) = \sum_{\vx, \vh}  \exp(
+  \theta^T\phi(x,z) )$ is the log-partition function.
+While $\phi_\sC(x,z)$ can be an arbitrary featurization, we assume
+  without loss of generality that $\phi_\sC(x,z)$ are the indicator
+  features $\BI[x,z]$\footnote{Note that $\BI[x,z]$ are sufficient
+  statistics for the model, and hence we do not lose any statistical
+  efficiency in using them}.
+
+As before, our objective is to find a set of parameters $\hat \theta$
+  that maximize the likelihood of data $\sD$.
 \begin{align}
-  \label{eqn:undirectedSetup}
-  p_\theta(z) = \exp\{ \phi(z)^\top\theta - A(\theta) \},
+  \hat \theta 
+      &= \arg\max_{\theta} \sum_{\vx \in \sD} \log p_\theta(\vx) \nonumber \\
+      &= \arg\max_{\theta} \sum_{\vx \in \sD} \log \sum_{\vh} p_\theta(\vx,\vh) \nonumber \\
+      &= \arg\max_{\theta} \sum_{\vx \in \sD} \log \sum_{\vh} \exp( \theta^T\phi(\vx,\vh) - A(\theta) ). \label{eqn:obj-ml}
 \end{align}
-where $\phi(z) \eqdef \sum_{c \in C} \phi_c(z_c) \in \Re^d$ is the global feature vector, $\theta \in \Re^d$ is the parameter vector,
-and $A(\theta) = \log \int \exp\{\phi(z)^\top\theta\} dz$ is the global log-partition function.
-To some extent, our methods only depend on the conditional independence
-structure of the models.
+Note that this problem is not concave in $\theta$. 
 
-\paragraph{Moment Constraints}
+An alternate objective is to optimize the following lower-bound on the log-likelihood, 
+\begin{align}
+  \sL_p(q,\theta) &= \sum_{\vx \in \sD} \sum_{\vh} q(\vh \given \vx) \log\frac{p_\theta(\vx,\vh)}{q(\vh \given \vx)} \\
+    &= \KL( q(\vh \given \vx) || p_{\theta}(\vh \given \vx)) \label{eqn:obj-kl}
+\end{align}
 
-In the previous section, we saw that we could learn moments $P(x1,x2)$ given conditions. This makes the problem convex, boom.
+Importantly, given $q$, the above objective is convex in $\theta$ and vice versa.
+It can be shown\cite{} that the local-optima of \equationref{obj-kl}
+are also local-optima of \equationref{obj-ml}. Usually, one
+iteratively optimizes $q$ and $p_\theta$ from some initial parameters
+$\theta_0$ to arrive at a local optimum.
 
-\paragraph{Examples}
+This reduces to,
+\begin{align}
+  \sL_p(\theta) &= \theta^T Z - A(\theta),
+\end{align}
+which is a convex problem.
 
-\paragraph{General latent-variable models with bottlenecks}
+However, from the previous section, for any model satisfying
+  \property{exclusive-views}, we have a consistent estimator for the
+  marginals $q \equiv Z$. 
+Therefore, we can optimize for $\theta$ given this estimate of $q$,
+  $\hat q$.
 
-Our learning algorithm for three-view mixture models relies on the fact that
-the sufficient statistics of the exponential family
-can be expressed as a function of the latent moments.
-Of course, these conditions do not hold for general log-linear models.
-Rather than falling back on plain local optimization of the likelihood in these
-cases, we would still like
-to somehow use the \emph{partial information} offered by the latent moments.
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+\begin{algorithm}
+  \caption{\LearnLogLinear}
+  \label{algo:undirected}
+  \begin{algorithmic}
+    \REQUIRE A graphical model $\sG$ satisfying \textbf{(P1)}, \textbf{(P2)}, data $\sD$
+    \ENSURE A consistent estimate $\hat \theta$ of the parameters of the model.
+      \STATE Apply \LearnMarginals to $\sG$ to learn clique marginals $Z_\sC$.
+      \STATE Optimize \equationref{obj-kl} with respect to $\theta$.
+  \end{algorithmic}
+\end{algorithm}
 
-Partial information is available when the following holds:
-%\begin{property}
-%  There exists some latent variable $h_{j_0} \in [\nh]$ (the bottleneck)
-%  and three conditionally independent observed variables $x_{j_1},x_{j_2},x_{j_3}$ (views) such that
-%  each conditional mean matrix $\E[\phix(x_{j}) \mid h_{j_0}] \in \R^{\nphix \times \nh}$ ($j \in \{ j_1, j_2, j_3 \}$) has full column rank $\nh$
-%  for some transformation $\phix$.
-%\end{property}
+This approach is outlined in \algorithmref{undirected}.
 
-Optimization.
+\todo{Do we have to worry about the fact that this is constrained?}
+\todo{What about model un-identifiability?}
 
+\paragraph{Learning with partial moment constraints}
 
+In more general models, \propertyref{exclusive-views} may not hold for
+  every clique in the graph, however we can still estimate the marginals
+  $Z_\sC$ for cliques in which it does.
+In this section, we will describe a natural method to use these
+  constraints to simplify the parameter search problem.
 
+Constrain the KL to be in $Q$. 
+
+\subsection{Examples}
+
+\paragraph{Latent MRFs}
+
+Image segmentation
+
+Separate features into views
+
+\todo{Some challenge example requiring measurements em}
 

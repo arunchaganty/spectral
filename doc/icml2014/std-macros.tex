@@ -165,9 +165,9 @@
 \providecommand{\sectionref}[1] {\itemref{Section}{sec}{#1}}
 \providecommand{\appendixref}[1] {\itemref{Appendeix}{app}{#1}}
 \providecommand{\algorithmref}[1] {\itemref{Algorithm}{algo}{#1}}
-\providecommand{\equationref}[1] {\itemref{Equation}{eqn}{#1}}
 \providecommand{\figureref}[1] {\itemref{Figure}{fig}{#1}}
 \providecommand{\tableref}[1] {\itemref{Table}{tbl}{#1}}
+\providecommand{\equationref}[1] {\hyperref[eqn:#1]{Equation \eqref{eqn:#1}}}
 
 \newtheorem{theorem}{Theorem}
 \providecommand{\theoremref}[1] {\itemref{Theorem}{thm}{#1}}
@@ -196,6 +196,7 @@
 \newcommand{\vague}{\editupnote{vague}}
 \newcommand{\verify}{\editupnote{verify}}
 \newcommand{\reword}{\editupnote{reword}}
+\newcommand{\define}{\editupnote{define}}
 \newcommand{\expand}{\editupnote{expand}}
 \newcommand{\findcite}[1]{\editupnote{find: #1}}
 
