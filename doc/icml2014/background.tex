@@ -38,7 +38,7 @@ The standard estimation procedure is maximum (marginal) likelihood,
   \end{align*}
   Maximum likelihood is statistically efficient,
   but in general computationally intractable
-  because marginalizing over latent variables $\vh$ yields a non-convex objective.
+  because marginalizing over hidden variables $\vh$ yields a non-convex objective.
 In practice, one uses local optimization procedures (e.g., EM
   or L-BFGS) on the marginal likelihood, which can get stuck in local
   optima.
@@ -85,7 +85,7 @@ and so on.
 We will view $\mO_i, \mO_{ij}, \mO_{ijk}, \cdots$ as tensors of
   order 1, 2, 3, \ldots in $\Re^d, \Re^{d\times d}, \Re^{d \times
   d \times d},\ldots$.
-For the latent marginals, we will use 
+For the hidden marginals, we will use 
 \begin{align*}
   \mH_i &\eqdef \Pr(h_i), &
   \mH_{ij} &\eqdef \Pr(h_i, h_j), &
@@ -107,7 +107,7 @@ For the latent marginals, we will use
   mixture model (\figureref{three-view}), an important case of directed
   graphical models. %, that sidesteps the local optima problem altogether. 
 In that model, we have three observed variables $x_1, x_2, x_3$
-  that are independent conditioned on a latent variable $h_1$.  
+  that are independent conditioned on a hidden variable $h_1$.  
 The parameters of this model are the mixture probabilities $\pi\oft 1 \eqdef
   \Pr(h) \in \Delta_{k-1}$ and the conditional moments $\mOpp{i}{1} \eqdef
   \Pr(x_i \given h) \in \Re^{d \times k}$ for $i \in \{1,2,3\}$.

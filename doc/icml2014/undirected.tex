@@ -2,7 +2,7 @@
 \label{sec:undirected}
 
 In this section, we will show that we can extend the results to
-  undirected graphical models parameterized as log-linear latent variable
+  undirected graphical models parameterized as log-linear latent-variable
   models.
 We exploit a connection between the moments of the clique potentials and
   the log-partition function to show that learning parameters is convex
@@ -13,8 +13,7 @@ Finally, we generalize the result to classes when only a subset of the
   clique marginals can be learned.
 
 As before, let $\sG$ be a graphical model with observed variables $X$ and hidden variables $H$.
-We assume that the undirected graphical model is a log-linear latent
-  variable model with parameters $\theta$,
+We assume that the undirected graphical model is a log-linear latent-variable model with parameters $\theta$,
 \begin{align*}
   p_\theta(\vx, \vh) &= \exp( \sum_\sC \theta_\sC^\top \phi_\sC(\vx,\vh) - A(\theta) ),
 \end{align*}

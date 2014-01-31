@@ -5,11 +5,6 @@
 
 \todo{we are using clique to refer to only hidden cliques; be explicit about using "hidden"}
 
-\todo{need to say we're going to do this for the infinite data case,
-and then study bounds}
-
-\todo{try to be consistent: either use latent or hidden}
-
 % DONE: need more setup of what the goal is
 %The tensor factorization method attacks the heart of the non-convexity
   %in latent variable models.
@@ -22,10 +17,12 @@ and then study bounds}
   %graphical models.
   Let us see how we can estimate the remaining parameters with an example (Section~\ref{sec:directedExample}).
   Section~\ref{sec:directedGeneral} will describe the algorithm in full generality.
-For ease of exposition, we will describe our algorithm entirely in the
-  context of directed graphical models, though it generalizes to factor
-  graphs.
-We also present the algorithm solely in terms of the method of moments; in
+For ease of exposition we make the following simplifications to our presentation:
+(i) we describe our algorithm entirely in the context of directed
+  graphical models, though it generalizes to factor graphs.
+(ii) we derive our algorithm assuming infinite data; in \sectionref{sampleComplexity} we 
+  describe error bounds for the finite sample regime.
+(iii) we present the algorithm solely in terms of the method of moments; in
   \sectionref{piecewise}, we show how we can get a statistically more
   efficient estimator using convex optimization.
 
@@ -65,7 +62,7 @@ By \assumptionref{full-rank}, $O$ has full column rank and thus can be
 
 \paragraph{Estimating $T$}
 Similarly, we can write down the moments of $x^a_1, x^a_2$, $\mO_{12}
-  \eqdef \Pr(x^a_1, x^a_2)$, in terms of the latent marginals $\mH_{12}
+  \eqdef \Pr(x^a_1, x^a_2)$, in terms of the hidden marginals $\mH_{12}
   \eqdef \Pr(h_1, h_2)$ and solve for $\mH_{12}$:
 \begin{align*}
 \mO_{12} = O \mH_{12} O^\top \quad\Rightarrow\quad
@@ -303,7 +300,7 @@ In the directed grid model, we can identify the conditional moments $O$ from jus
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Sample complexity}
-
+\label{sec:sampleComplexity}
 % PL: "combine" is too vague to be useful
 %\LearnMarginals combines two consistent algorithms, \TensorFactorize and
 %\LearnCliqueNs, and is thus consistent itself.

@@ -35,7 +35,7 @@ not as broadly applicable as EM.
 % 4. State what we do: exploit moment constraints to make the problem easier.
 In this paper,
 we show that a much broader class of directed and undirected graphical models can be consistently estimated,
-specifically those in which each latent variable has three conditionally
+specifically those in which each hidden variable has three conditionally
 independent observed variables (``views'')---see \propertyref{bottleneck}.
 The key idea is to leverage the spectral method of moments,
 not to directly provide a consistent parameter estimate as in previous work,
@@ -58,11 +58,11 @@ the tensor factorization algorithm of
 \citet{anandkumar12moments,anandkumar13tensor} to identify the \emph{conditional
 moments} $\E[x_i^a \mid h_i]$ and $\E[x_i^b \mid h_i]$ for each $i$.
 Second, we optimize a \emph{composite marginal likelihood} to recover the marginals over
-each latent clique (e.g., $\mathbb P(h_2, h_3, h_4)$).
+each hidden clique (e.g., $\mathbb P(h_2, h_3, h_4)$).
 Normally, such a marginal likelihood objective would be non-convex,
 but given the conditional moments, we obtain a convex objective,
 which can be globally optimized using EM.
-Finally, the latent marginals yield the model parameters
+Finally, the hidden marginals yield the model parameters
 via simple post-processing in the directed case and convex optimization in the undirected case.
 %Given these factors, we show that there exists a set of observed
   %variables for every clique such that the likelihood is convex in the
@@ -88,5 +88,5 @@ Finally, our approach gracefully extends to more general model families
   in which we are unable to recover the marginal distributions for all
   hidden cliques; in such scenarios, we use posterior regularization to constrain
   EM.  
-\todo{Is this possible?:  We show that empirically, using such constraints alleviates local
-optima issues.}
+%\todo{Is this possible?:  We show that empirically, using such constraints alleviates local
+%optima issues.}
