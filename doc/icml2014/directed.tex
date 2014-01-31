@@ -37,23 +37,22 @@ For ease of exposition we make the following simplifications to our presentation
 %\end{figure}
 
 %Consider the directed grid model shown in \figureref{grid} which
-Consider the directed grid model shown in \figureref{approach}(a) which
+Consider the directed grid model shown in \figureref{approach}(a).
   % DONE: all the different dependency => too strong
-  captures the local dependency structures possible in
-  a Bayesian network.
+  %captures the local dependency structures possible in
+  %a Bayesian network.
 The model has eight observed variables $x^a_1, x^b_1 \cdots, x^a_4, x^b_4$ and four
   hidden variables $h_1, \cdots, h_4$.
 The parameters of this model are the conditional probability tables
 $\pi \eqdef \Pr(h_1) \in \Re^k, T \eqdef \Pr(h_2 | h_1) = \Pr(h_3 | h_1) \in \Re^{k \times k},
 V \eqdef \Pr(h_4 | h_2, h_3) \in \Re^{k \times k \times k}$ and $O \eqdef \Pr(x^a_i | h_i)
 =  \Pr(x^b_i | h_i) \in \Re^{d \times k}$. 
-Finally, we assume $O$ and $T$ have full column rank.
+Assume $O$ and $T$ have full column rank.
 
 \paragraph{Estimating $O$}
 Note that the observed variables $x^a_1, x^b_1, x^a_2$ are
-  conditionally independent given $h_1$, allowing us to use
-  $\TensorFactorize$, as reviewed in \sectionref{setup}, to recover
-  $O$.
+  conditionally independent given $h_1$; we can use
+  $\TensorFactorize$ (\sectionref{setup}) to recover $O$.
 
 \paragraph{Estimating $\pi$}
 The moments of $x^a_1$, $\mO_1 \eqdef \Pr(x^a_1)$ are directly related to
@@ -92,9 +91,10 @@ Note that in each of the above cases,
 We capture this general property as follows:
 \begin{property}(Exclusive views)
   \label{prop:exclusive-views}
-  A hidden clique $\sC$ of $\sG$ is said to possess \textbf{exclusive views property} if for every hidden variable $h_i \in \sC$,
+  A hidden clique $\sC$ of $\sG$ is said to possess the \textbf{exclusive views
+  property} if for every hidden variable $h_i \in \sC$,
   there is some observed variable, $x_{v}$, which is conditionally
-  independent of the rest of the clique given $h_i$.
+  independent of the rest of the clique given $h_i$,
   and whose conditional
   moment $\mOpp{v}{i} \eqdef \Pr(x_{v} \mid h_i)$ can be estimated consistently.
 We call $x_v$ the exclusive view of $h_i$ in $\sC$.
@@ -112,8 +112,8 @@ We can write down the moments $\mO_\sV$ as follows:
 \begin{align*}
   \mO_\sV 
   &\eqdef \Pr(\Sx{\sV}) \\
-  &= \sum_{\vh \in \sH}
-      \Pr(\Sh{\sC}) \Pr(\Sx{\sV} \given \Sh{\sC}) \\
+  %&= \sum_{\vh \in \sH}
+      %\Pr(\Sh{\sC}) \Pr(\Sx{\sV} \given \Sh{\sC}) \\
       &= \sum_{\vh \in \sH} \Pr(\Sh{\sC}) 
           \Pr(x_{i_1} | h_{v_1}) \cdots \Pr(x_{i_m} | h_{v_m}) \\
     &= Z_{\sC}(\mOpp{v_1}{i_1},\cdots,\mOpp{v_m}{i_m}).
@@ -134,7 +134,7 @@ Finally, the conditional probability tables for $\sC$ can easily be gotten from
   \caption{\LearnClique~(pseudoinverse)}
   \label{algo:learnclique}
   \begin{algorithmic}
-    \REQUIRE A hidden clique $\sC$ with exclusive views (\propertyref{exclusive-views}).
+    \REQUIRE Hidden clique $\sC$ with exclusive views (\propertyref{exclusive-views}).
     \ENSURE Marginal distribution of the clique $Z_\sC$.
       \STATE Identify exclusive views $\Sx{\sV} = \{x_{v_1}, \cdots, x_{v_m}\}$.
       \STATE Return $\mH_\sC \gets \mO_{\Sx{\sV}}( \pinv{\mOpp{v_1}{i_i}}, \cdots, \pinv{\mOpp{v_m}{i_m}} )$.
@@ -149,12 +149,11 @@ which will be established in \sectionref{sampleComplexity}.
 % DONE: transition the content more gradually (checkpoint: what have we done so far, what next)
 % DONE: refer to properties by name in addition to by number
 We have shown how to estimate the parameters of any clique that possesses the exclusive
-  views property (\propertyref{exclusive-views}). But which cliques have this property?
+  views property (\propertyref{exclusive-views}). But in a general graph, which cliques have this property?
 In the example above, we were able to guarantee \propertyref{exclusive-views}
-  by identifying a hidden variable, $h^1$ along with three conditionally
+  by identifying a hidden variable, $h_1$ along with three conditionally
   independent observed variables, $x^a_1, x^b_1, x^a_2$.
   %followed by using \TensorFactorize to learn the conditional moments.
-
 We define such a hidden variable to be a bottleneck:
 \begin{definition}[Bottleneck]
   A hidden variable $h$ is said to be a \textbf{bottleneck} if there exists at
@@ -299,7 +298,7 @@ In the directed grid model, we can identify the conditional moments $O$ from jus
 
 \begin{figure}
   \centering
-  \subfigure[Hidden Markov Model] {
+  \subfigure[Hidden Markov model] {
     \includegraphics[width=0.45\columnwidth]{figures/hmm.pdf}
     \label{fig:examples-hmm}
   }
@@ -311,11 +310,11 @@ In the directed grid model, we can identify the conditional moments $O$ from jus
     \includegraphics[width=0.45\columnwidth]{figures/tree.pdf}
     \label{fig:examples-tree}
   }
-  \subfigure[Non-example: a noisy-or network] {
+  \subfigure[Noisy-or model] {
     \includegraphics[height=5em]{figures/non-example.pdf}
     \label{fig:examples-noisy-or}
   }
-  \caption{}
+  \caption{(a) and (b): graphs that satisfy the exclusive views property; (c) does not.}
   \label{fig:examples}
 \end{figure}
 
@@ -324,8 +323,8 @@ In the directed grid model, we can identify the conditional moments $O$ from jus
 
 In the HMM (\figureref{examples-hmm}), the parameters
 are $O \eqdef \Pr(x_i|h_i)$  and that $T \eqdef \Pr(h_{i+1} | h_i)$
-for all $i$ (i.e. we have parameter sharing).
-While the first (and last) hidden variables $h_1, h_T$ in the
+for all $i$. % (i.e. we have parameter sharing).
+While the first and last hidden variables $h_1, h_T$ in the
   sequence are not bottlenecks, they still have exclusive views ($x_1$ and
   $x_T$ respectively) whose parameters we know because they share
   parameters, $O$.
@@ -358,16 +357,17 @@ We can recover $T$ from the clique $\{h_1, h_2\}$ by using views $x^a_2$
 \paragraph{Non-examples}
 \label{sec:non-example}
 
-The simplest example of a model not identifiable by our algorithm is
+The simplest example of a model that cannot be recovered by our algorithm is
   a mixture model with a single view, i.e. \figureref{three-view} with
   just the variables $h_1$ and $x_1$.
 However, without further assumptions the model itself is not
   identifiable\footnote{To see this, observe that the probability-mass
   can be arbitrarily exchanged between $\Pr(h_1)$ and $\Pr(x_1 | h_1)$}.
-A class of binary-valued noisy-or networks which do not possess the
-  bottleneck property are be shown to be identifiable by
-  \citet{halpern13noisyor}; 
-\figureref{examples-noisy-or} presents one example in this class.
+A class of binary-valued noisy-or networks
+(see \figureref{examples-noisy-or} for an example)
+which do not possess the
+  bottleneck property are nonetheless identifiable;
+  see \citet{halpern13noisyor} for an algorithm.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Sample complexity}
@@ -396,11 +396,11 @@ To make this property more interpretable, let us assume the following property:%
 \begin{assumption} 
 \label{asm:full-rank-plus}
 For every clique $\sC \in \sG$ (including ones involving observed variables),
-every slice of the marginals $Z_\sC$ has full column rank $k$.
+every $R^{k \times k}$ slice of the marginals $Z_\sC$ has full column rank $k$.
 \end{assumption}
 In our directed grid example (\sectionref{directedExample}), for the clique $\sC = \{ h_1, h_2 \}$ this
-  condition implies $\pi = \bP(h_1) \succ 0$ and $T = \bP(h_2 \mid h_1)$ has column rank $k$; 
-for the clique $\sC = \{ h_1, x_1 \}$, it implies $O = \bP(x_1 \mid h_1)$ has column rank $k$ 
+  condition implies $\pi = \Pr(h_1) \succ 0$ and $T = \Pr(h_2 \mid h_1)$ has column rank $k$; 
+for the clique $\sC = \{ h_1, x_1 \}$, it implies $O = \Pr(x_1 \mid h_1)$ has column rank $k$ 
 
 %\todo{did they prove this; if so just say "they show", not "we can show"}
 %Using results from
@@ -413,15 +413,14 @@ for the clique $\sC = \{ h_1, x_1 \}$, it implies $O = \bP(x_1 \mid h_1)$ has co
 %  \|\mOpphat{v_1}{i} - \mOpp{v_1}{i}\|^2_F &= \frac{1}{\sqrt{n}} O\left( \frac{k {\pi\oft{i}}_{\max}^2}{\sigma_k(M_{v_1,v_2})^5} \right). 
 %\end{align*}
 
-From \cite{anandkumar13tensor} given \assumptionref{full-rank-plus},
+From \citet{anandkumar13tensor} given \assumptionref{full-rank-plus},
 we have that $\mOpphat{v}{i}$ converges to $\mOpp{v}{i}$ at a rate of $n^{-\frac12}$ with a constant that
 depends polynomially on the $k$-th singular value of $\mOpp{v}{i}$.
-Of course, the singular value of $\mOpp{v}{i}$ become exponentially worse as $x_v$ and $h_i$ become farther.
-So while we can obtain consistent estimates, the sample complexity
-is exponential in the mimimum distance from $h_i$ to any three views, as to be expected.
+%Of course, the singular value of $\mOpp{v}{i}$ become exponentially worse as $x_v$ and $h_i$ become farther.
+%So while we can obtain consistent estimates, the sample complexity
+%is exponential in the mimimum distance from $h_i$ to any three views, as to be expected.
 %(\todo{say something
 %quantitative?  annoying part is that we would have to bring in the bounds, so leave it out probably}).
-
 % DONE: need to setup the asymptotic - it's not fresh in everyone's mind.
 % Easy case
 Next, we need to show that the hidden marginals $\hat Z_\sC$ converge to $Z_\sC$.
@@ -429,8 +428,8 @@ First, $\hat M_\sV$ is just an empirical average of multinomials over the data p
 Abusing notation slightly, we let $M_\sV$ also denote its $d^{|\sV|}$-dimensional vectorized version.
 We also represent $\mH_\sC$ as
   a vector in $\Re^{k^m}$, and represent $\mOppAll \eqdef
-  \mOpp{v_1}{i_1} [x_{v_1}] \otimes \cdots \otimes
-  \mOpp{v_m}{i_m} [x_{v_m}]$ as a matrix in $\Re^{d^m \times
+  \mOpp{v_1}{i_1} \otimes \cdots \otimes
+  \mOpp{v_m}{i_m}$ as a matrix in $\Re^{d^m \times
   k^m}$.
 By the central limit theorem, we have:
 $\sqrt{n} (\hat M_\sV - M_\sV) \convind \sN(0, \Sigma_\sV)$,
@@ -459,10 +458,10 @@ the asymptotic variance for the pseudoinverse version of $\LearnClique$:
   Assume $\hat M_{\sV}$ has asymptotic variance $\Sigma_\sV$ defined above.
   Then the asymptotic variance of $\hat Z_\sC$ is:
   \begin{align*}
-    \Sigma^{\mom} &= \mOppAlli \Sigma_\sV \mOppAllit,
+    \Sigma^{\mom} &= \mOppAlli \Sigma_\sV \mOppAllit.
   \end{align*}
-  where $\pinv{\mOppAll} \eqdef \pinv{\mOpp{v_1}{i_1}} \otimes
-  \cdots \otimes \pinv{\mOpp{v_m}{i_m}}$, a $d^m \times k^m$ matrix.
+  %where $\pinv{\mOppAll} \eqdef \pinv{\mOpp{v_1}{i_1}} \otimes
+  %\cdots \otimes \pinv{\mOpp{v_m}{i_m}}$, a $d^m \times k^m$ matrix.
 \end{lemma}
 \begin{proof}
 For clique $\sC$, recall we have

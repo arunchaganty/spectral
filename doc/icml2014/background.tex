@@ -33,8 +33,8 @@ Our goal is to produce a parameter estimate $\hat\theta$ that
 % Maximum likelihood
 The standard estimation procedure is maximum (marginal) likelihood,
   \begin{align*}
-    L_\text{unsup}(\theta) &\eqdef \max_{\theta} \sum_{\vx \in \sD} \log p_\theta(\vx) \\
-        &=      \max_{\theta} \sum_{\vx \in \sD} \log \sum_{\vh \in \sH} p_\theta(\vx,\vh).
+    L_\text{unsup}(\theta) &\eqdef \sum_{\vx \in \sD} \log p_\theta(\vx)
+        =  \sum_{\vx \in \sD} \log \sum_{\vh \in \sH} p_\theta(\vx,\vh).
   \end{align*}
   Maximum likelihood is statistically efficient,
   but in general computationally intractable
@@ -112,7 +112,7 @@ These are tensors of
 In that model, we have three observed variables $x_1, x_2, x_3$
   that are independent conditioned on a hidden variable $h_1$.  
 The parameters of this model are the mixture probabilities $\pi\oft 1 \eqdef
-  \Pr(h_1) \in \Delta_{k-1}$ and the conditional moments $\mOpp{i}{1} \eqdef
+  \Pr(h_1) \in \Re^k$ and the conditional moments $\mOpp{i}{1} \eqdef
   \Pr(x_i \given h_1) \in \Re^{d \times k}$ for $i \in \{1,2,3\}$.
 
   The key idea is that the observed moments $\mO_{12}, \mO_{23}, \mO_{13}$ and
