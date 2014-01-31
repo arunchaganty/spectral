@@ -3,8 +3,8 @@
 
 % 1. Latent variable models are good.
 Latent-variable graphical models provide compact representations of data
-and have been employed across many fields \todo{find a much better/broader set of citations}
-\cite{quattoni04crf,beaumont2004bayesian,haghighi06prototype}.
+and have been employed across many fields % \todo{find a much better/broader set of citations}
+\cite{ghahramani1999variational,jaakkola2011variational,blei03lda,quattoni04crf,beaumont2004bayesian,haghighi06prototype}.
 % 2. Learning them is hard.
 However, learning these models remains a difficult problem due to the
 non-convexity of the negative log-likelihood.  Local methods such as Expectation Maximization (EM)
@@ -14,8 +14,14 @@ are the norm, but are susceptible to local optima.
 Recently, unsupervised learning techniques based on the spectral method of moments
 have offered a refreshing and promising perspective on
 this learning problem
-\citep{hsu09spectral,anandkumar11tree,anandkumar12moments,anandkumar12lda,hsu12identifiability,balle11transducer,balle12automata}.
-\todo{make sure we are citing the right people}
+\citep{mossel2005learning,
+hsu09spectral,
+bailly2010spectral,
+song2011spectral,
+anandkumar11tree,anandkumar12moments,anandkumar12lda,
+hsu12identifiability,
+balle12automata}.
+%\todo{make sure we are citing the right people}
 These methods exploit the linear algebraic properties of the model to
 factorize the moments into parameters, providing strong theoretical guarantees.
 However, these methods apply to a limited set of models, and are thus
