@@ -3,6 +3,8 @@
 \section{Directed models}
 \label{sec:directed}
 
+\todo{we are using clique to refer to only hidden cliques; be explicit about using "hidden"}
+
 \todo{need to say we're going to do this for the infinite data case,
 and then study bounds}
 
@@ -52,7 +54,7 @@ Finally, we assume $O$ and $T$ have full column rank.
 \paragraph{Estimating $O$}
 Note that the observed variables $x^a_1, x^b_1, x^a_2$ are
   conditionally independent given $h_1$, allowing us to use
-  \TensorFactorize, as reviewed in \sectionref{setup}, to recover
+  $\TensorFactorize$, as reviewed in \sectionref{setup}, to recover
   $O$.
 
 \paragraph{Estimating $\pi$}
@@ -79,11 +81,12 @@ which can be obtained analogously:
   \mH_{234} = \mO_{234}(\pinv O, \pinv O, \pinv O).
 \end{align*}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{General algorithm}
 \label{sec:directedGeneral}
 
 Note that in each of the above cases,
-each hidden variable $h_i$ of a clique has its own view which is conditionally independent
+each hidden variable $h_i$ of the clique has its own view which is conditionally independent
 given the other variables in the clique.
 %Fundamentally, algorithm takes advantage of having a view for every
   %hidden variable in a clique to help identify its hidden state.
@@ -98,7 +101,8 @@ We capture this general property as follows:
 We call $x_v$ the exclusive view of $h_i$ in $\sC$.
 \end{property}
 
-\paragraph{Learning cliques}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph{Estimating hidden clique marginals}
 
 We now show this condition is sufficient to learn the marginal
   distribution of the clique.
@@ -128,16 +132,19 @@ Finally, the conditional probability tables for $\sC$ can easily be gotten from
 \renewcommand{\algorithmicrequire}{\textbf{Input:}}
 \renewcommand{\algorithmicensure}{\textbf{Output:}}
 \begin{algorithm}
-  \caption{\LearnClique}
+  \caption{\LearnClique~(pseudoinverse)}
   \label{algo:learnclique}
   \begin{algorithmic}
     \REQUIRE Clique $\sC$ with exclusive views (\propertyref{exclusive-views}).
     \ENSURE Marginal distribution of the clique $Z_\sC$.
-      \STATE Identify unique views $\Sx{\sV} = \{x_{v_1}, \cdots, x_{v_m}\}$.
-      \STATE $\mH_\sC \gets \mO_{\Sx{\sV}}( \pinv{\mOpp{v_1}{i_i}}, \cdots, \pinv{\mOpp{v_m}{i_m}} )$.
+      \STATE Identify exclusive views $\Sx{\sV} = \{x_{v_1}, \cdots, x_{v_m}\}$.
+      \STATE Return $\mH_\sC \gets \mO_{\Sx{\sV}}( \pinv{\mOpp{v_1}{i_i}}, \cdots, \pinv{\mOpp{v_m}{i_m}} )$.
   \end{algorithmic}
 \end{algorithm}
+Of course, for $Z_{\sC}$ to be identifiable, we need various rank conditions,
+which will be established in \todo{section}.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \paragraph{Structural properties}
 
 % DONE: transition the content more gradually (checkpoint: what have we done so far, what next)
@@ -174,18 +181,6 @@ have the exclusive views property:
 %  %\assumptionref{full-rank} holds for each bottleneck, and (ii)
 %  that the candidate views actually imply that \propertyref{exclusive-views}
 %  holds for every clique in the graph.
-
-% PL: this is not obviously correct
-%To address the first, we will need that the following assumption on the
-%  parameters of the model:
-%\begin{assumption} 
-%  \label{asm:full-rank-plus}
-%  For every clique $\sC = \{h_{i_1}, \cdots, h_{i_m}\} \in \sG$, let
-%    $Z_\sC$ be the marginal distribution for that clique. 
-%  Then every mode-$i$ unfolding of $Z_\sC$ has full column rank.\verify
-%\end{assumption}
-%Intuitively, the assumption guarantees that the marginal probability of
-%  any hidden state is non-zero.
 
 Before we establish this relationship,
 we describe a reduction of any graphical model to
@@ -267,7 +262,7 @@ There is a one-to-one correspondence between the parameters of this
     \in \sC} \sV_{h'}$
 \end{proof}
 
-\todo{somewhere give examples that are not in our class, preferably the simplest one, cite Sontag}
+\todo{somewhere give examples that are not in our class, preferably the simplest one - noisy-or, cite Sontag}
 
 With this lemma in place, we present the full algorithm, \LearnMarginals~
 in \algorithmref{directed}.
@@ -282,14 +277,14 @@ in \algorithmref{directed}.
     \ENSURE Marginals $Z_\sC$ for every clique $\sC \in \sG$
 
       \FOR{each hidden variable $h_i \in H$} 
-        \STATE Apply \TensorFactorize to learn conditional moments
+        \STATE Apply $\TensorFactorize$ to learn conditional moments
         $\mOpp{v}{i}$ for every $\sV_{h_i}$.
 
 %    \COMMENT{Recover observation potentials $O$ using bottlenecks}
       \ENDFOR
 %      \COMMENT{\textbf{Step 2:} Recover clique potentials from the piecewise likelihood.}
 \FOR{every clique $\sC = \{h_{i_1}, \cdots, h_{i_m}\} \in \sG$} 
-  \STATE Apply \LearnClique to learn the marginals $\mH_\sC$.
+\STATE Apply $\LearnClique$ to learn the marginals $\mH_\sC$.
 \ENDFOR
   \end{algorithmic}
 \end{algorithm}
@@ -306,10 +301,40 @@ In the directed grid model, we can identify the conditional moments $O$ from jus
 %In this case, we only require that the hidden variables in distinct
   %cliques share parameters.
 
-\paragraph{Consistency and Sample Complexity}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Sample complexity}
 
-\LearnMarginals combines two consistent algorithms, \TensorFactorize and
-\LearnCliqueNs, and is thus consistent itself.
+% PL: "combine" is too vague to be useful
+%\LearnMarginals combines two consistent algorithms, \TensorFactorize and
+%\LearnCliqueNs, and is thus consistent itself.
+
+In this section, we provide formal conditions under which $\LearnMarginals$
+will produce consistent estimates.
+We let
+$\mOpphat{v}{i}$,
+$\hat Z_\sC$,
+and $\hat M_\sV$,
+denote estimators for
+$\mOpp{v}{i}$,
+$Z_\sC$,
+and $M_\sV$,
+respectively.
+
+To apply $\TensorFactorize$, we need that each $\mOpp{v}{i}$ has full column rank and that $\pi^{(i)} \succ 0$ \todo{define $\pi$}.
+But $\mOpp{v}{i}$ is a product of
+tensors on the path from $h_i$ to $x_v$, marginalizing out the rest of the graph.
+To make this property more interpretable, let us assume the following property:\verify
+\begin{assumption} 
+\label{asm:full-rank-plus}
+For every clique $\sC \in \sG$ (including ones involving observed variables),
+every order-1 slice of the marginals $Z_\sC$ has full column rank $k$.
+\end{assumption}
+According to our directed grid example \todo{ref}, with $\sC = \{ h_1, h_2 \}$, then this condition implies
+$\pi = \bP(h_1) \succ 0$ and 
+$T = \bP(h_2 \mid h_1) \succ 0$;
+with $\sC = \{ h_1, x_1 \}$, we get
+$O = \bP(x_1 \mid h_1) \succ 0$.
+
 %\todo{did they prove this; if so just say "they show", not "we can show"}
 %Using results from
 %  \citet{anandkumar12moments,anandkumar13tensor} we can show that
@@ -321,46 +346,72 @@ In the directed grid model, we can identify the conditional moments $O$ from jus
 %  \|\mOpphat{v_1}{i} - \mOpp{v_1}{i}\|^2_F &= \frac{1}{\sqrt{n}} O\left( \frac{k {\pi\oft{i}}_{\max}^2}{\sigma_k(M_{v_1,v_2})^5} \right). 
 %\end{align*}
 
-\todo{call MOM squared}
-We next describe the asymptotic variance for \LearnClique when using the
-  method of moments.
-\begin{lemma}(Asymptotic variance of $Z_\sC$)
+From \cite{anandkumar13tensor} given \assumptionref{full-rank-plus},
+we have that $\mOpphat{v}{i}$ converges to $\mOpp{v}{i}$ at a rate of $n^{-\frac12}$ with a constant that
+depends polynomially on the $k$-th singular value of $\mOpp{v}{i}$.
+Of course, the singular value of $\mOpp{v}{i}$ become exponentially worse as $x_v$ and $h_i$ become farther.
+So while we can obtain consistent estimates, the sample complexity
+is exponential in the mimimum distance from $h_i$ to any three views, as to be expected.
+%(\todo{say something
+%quantitative?  annoying part is that we would have to bring in the bounds, so leave it out probably}).
+
+% DONE: need to setup the asymptotic - it's not fresh in everyone's mind.
+% Easy case
+Next, we need to show that the hidden marginals $\hat Z_\sC$ converge to $Z_\sC$.
+First, $\hat M_\sV$ is just an empirical average of multinomials over the data points.
+Abusing notation slightly, we let $M_\sV$ also denote its $d^{|\sV|}$-dimensional vectorized version.
+We also represent $\mH_\sC$ as
+  a vector in $\Re^{k^m}$, and represent $\mOppAll \eqdef
+  \mOpp{v_1}{i_1} [x_{v_1}] \otimes \cdots \otimes
+  \mOpp{v_m}{i_m} [x_{v_m}]$ as a matrix in $\Re^{d^m \times
+  k^m}$.
+By the central limit theorem, we have:
+$\sqrt{n} (\hat M_\sV - M_\sV) \convind \sN(0, \Sigma_\sV)$,
+where $\Sigma_\sV$ is the \emph{asymptotic variance} of $\hat M_\sV$ \todo{doesn't this need to be multiplied by something?}:
+\begin{align*}
+\Sigma_\sV \eqdef \dM_\sV - M_\sV M_\sV^\top, \quad \dM_\sV \eqdef \text{diag}(M_\sV).
+\end{align*}
+
+% PL: this is not obviously correct
+%To address the first, we will need that the following assumption on the
+%  parameters of the model:
+%\begin{assumption} 
+%  \label{asm:full-rank-plus}
+%  For every clique $\sC = \{h_{i_1}, \cdots, h_{i_m}\} \in \sG$, let
+%    $Z_\sC$ be the marginal distribution for that clique. 
+%  Then every mode-$i$ unfolding of $Z_\sC$ has full column rank.\verify
+%\end{assumption}
+%Intuitively, the assumption guarantees that the marginal probability of
+%  any hidden state is non-zero.
+
+We can now use the delta-method to convert the above result into 
+the asymptotic variance for the pseudoinverse version of $\LearnClique$:
+\begin{lemma}[Asymptotic variance of pseudoinverse estimator for $Z_\sC$]
   \label{lem:mom-variance}  
-  The asymptotic variance of $Z_\sC$ is:
+  Assume $\hat M_{\sV}$ has asymptotic variance $\Sigma_\sV$ defined above.
+  Then the asymptotic variance of $Z_\sC$ is:
   \begin{align*}
     \Sigma^{\mom} &= \mOppAlli \Sigma_\sV \mOppAllit,
   \end{align*}
   where $\pinv{\mOppAll} \eqdef \pinv{\mOpp{v_1}{i_1}} \otimes
-  \cdots \otimes \pinv{\mOpp{v_m}{i_m}}$, a $d^m \times k^m$ matrix, and 
-\begin{align*}
-  \Sigma_\sV &= \text{\rm diag}(M_\sV) - M_\sV M_\sV^\top,
-\end{align*}
-  is the asymptotic variance of the observations $M_\sV$.
+  \cdots \otimes \pinv{\mOpp{v_m}{i_m}}$, a $d^m \times k^m$ matrix.
 \end{lemma}
 \begin{proof}
-We have for each clique,
-\begin{align*}
-  Z_{\sC} &= \mO_\sV(\mOppi{v_1}{i_1},\cdots,\mOppi{v_m}{i_m}) \\
-\end{align*}
-
+For clique $\sC$, recall we have
+  $Z_{\sC} = \mO_\sV(\mOppi{v_1}{i_1},\cdots,\mOppi{v_m}{i_m})$.
 %Choosing to represent $Z_\sC$ and $M_\sV$ as vectors and
 %$\mOppi{v_1}{i_1} \otimes \cdots \otimes \mOppi{v_m}{i_m}$ as the
 %matrix,
-We can rewrite this representation as:
-\begin{align*}
-  Z_{\sC} &= \pinv{\mOppAll} \mO_\sV.
-\end{align*}
-
-From classical asymptotics \cite{vaart98asymptotic},
-we have that the asymptotic variance of $M_\sV$ is:
-\begin{align*}
-  \sqrt{n}(\hat M_\sV - M_\sV) \convind \sN(0, \Sigma_\sV),
-\end{align*}
-where $\Sigma_\sV$ is the variance of the observations. 
-Finally, we have that $Z_\sC$ goes as
-\begin{align*}
-  \sqrt{n}(\hat Z_\sC - Z_\sC) \convind \sN(0, \pinvt{\mOppAll} \Sigma_\sV \pinv{\mOppAll}).
-\end{align*}
+We can rewrite this representation more compactly as: $Z_{\sC} = \pinv{\mOppAll} \mO_\sV$.
+By the delta-method \cite{vaart98asymptotic},
+% DONE: need to shorten
+%we have that the asymptotic variance of $M_\sV$ is:
+%\begin{align*}
+%  \sqrt{n}(\hat M_\sV - M_\sV) \convind \sN(0, \Sigma_\sV),
+%\end{align*}
+%where $\Sigma_\sV$ is the variance of the observations. 
+we immediately get:
+$\sqrt{n}(\hat Z_\sC - Z_\sC) \convind \sN(0, \mOppAlli \Sigma_\sV \mOppAllit)$.
 \end{proof}
 
 % DONE: too brazen to say

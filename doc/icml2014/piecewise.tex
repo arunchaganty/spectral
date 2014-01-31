@@ -1,4 +1,4 @@
-\section{Composite Marginal Likelihoods}
+\section{Composite marginal likelihoods}
 \label{sec:piecewise}
 
 The previous section provided a method of moments estimator
@@ -29,45 +29,38 @@ We show that under the same conditions as \algorithmref{directed}, the
 
 Consider a clique $\sC = \{h_{i_1}, \cdots h_{i_m}\} \in \sG$, with
   exclusive views $\sV = \{x_{v_1}, \cdots, x_{v_m}\}$. 
-The composite likelihood of $\Sx{\sV}$ given parameters $\mH_\sC$ is
+The expected composite likelihood over $\Sx{\sV}$ given parameters $\mH_\sC$
+with respect to the true distribution $\sM_\sV$ can be written in tensor form:
   [DONE: likelihood is a function of parameters, not of data]
 \begin{align*}
   \sL_\ml %(\Sx{\sV}) 
-   &= \sum_{\vx \in \sD} \log \Pr( \Sx \sV ) \\
-   &= \sum_{\vx \in \sD} \log \sum_{\Sh \sC} \Pr( \Sx \sV \given \Sh \sC ) \\
-   &= \sum_{\vx \in \sD} \log \mH_\sC(\mOpp{v_1}{i_1} [x_{v_1}], \cdots, \mOpp{v_m}{i_m} [x_{v_m}])
+  &= \E[\log \Pr( \Sx \sV )] \\
+  &= \E[\log \sum_{\Sh \sC} \Pr( \Sx \sV \given \Sh \sC )] \\
+  &= \E[\log \mH_\sC(\mOpp{v_1}{i_1} [x_{v_1}], \cdots, \mOpp{v_m}{i_m} [x_{v_m}])] \\
+  &= \E[\log \mH_\sC(\mOppAll[\Sx\sV])].
 \end{align*}
-
-For this section, it will be convenient to represent $\mH_\sC$ as
-  a vector in $\Re^{k^m}$, and represent $\mOppAll \eqdef
-  \mOpp{v_1}{i_1} [x_{v_1}] \otimes \cdots \otimes
-  \mOpp{v_m}{i_m} [x_{v_m}]$ as a matrix in $\Re^{d^m \times
-  k^m}$.
-Then the likelihood objective is
-\begin{align*}
-  \sL_\ml %(\Sx{\sV}) 
-   &= \sum_{\vx \in \sD} \log \mH_\sC(\mOppAll[\Sx\sV]).
-\end{align*}
-
-This is a sum of a log of linear function of $\mH_\sC$, which is concave in
-$\mH_\sC$.  Unlike maximum likelihood in fully-observed settings,
-we do not have a closed form solution, so we can use EM.
-Since the function is convex, EM will converge to the global optimum.
+The final form is an expectation over a log of linear function of $\mH_\sC$, which is concave in
+$\mH_\sC$.  But unlike maximum likelihood in fully-observed settings,
+we do not have a closed form solution, so we use EM to optimize.
+Since the function is convex, EM converges to a global optimum.
 \algorithmref{piecewise} summarizes our algorithm.
 
 \begin{algorithm}
-  \caption{\LearnPiecewise}
+  \caption{\LearnClique (composite likelihood)}
   \label{algo:piecewise}
   \begin{algorithmic}
-    \REQUIRE A graphical model $\sG$ satisfying \propertyref{bottleneck}, data $\sD$
-    \ENSURE Marginals $Z_\sC$ for every clique $\sC \in \sG$
+    % DONE: interface should match LearnClique from directed.tex  
+    %\REQUIRE A graphical model $\sG$ satisfying \propertyref{bottleneck}, data $\sD$
+    %\ENSURE Marginals $Z_\sC$ for every clique $\sC \in \sG$
+    \REQUIRE Clique $\sC$ with exclusive views (\propertyref{exclusive-views}).
+    \ENSURE Marginal distribution of the clique $Z_\sC$.
 \STATE Identify exclusive views $x_\sV = \{x_{v_1}, \cdots, x_{v_m}\}$.
-\STATE $\hat \mH_\sC = \arg\max_{\mH_\sC \in \Delta_{k^m-1}} \sum_{\vx \in \sD} \log \mH_\sC(\mOppAll[\Sx \sV])$.
+\STATE Return $\hat \mH_\sC = \arg\max_{\mH_\sC \in \Delta_{k^m-1}} \sum_{\vx \in \sD} \log \mH_\sC(\mOppAll[\Sx \sV])$.
 %      Run expectation-maximization to convergence on the piecewise likelihood \eqref{eqn:piecewise}, over data $\{\vec x_\sC : x \in \sD\}$
   \end{algorithmic}
 \end{algorithm}
 
-\subsection{Statistical Efficiency}
+\subsection{Statistical efficiency}
 
 We have proposed two methods for estimating the hidden marginals $Z_\sC$ given
 the conditional moments $\mOppAll$: one based on computing a simple pseudoinverse,
@@ -79,19 +72,13 @@ given access to only samples of $\Sx\sV$.\footnote{Of course, we could improve s
 by maximizing the likelihood of all of $\vx$, but that would again lead to non-convex optimization problems.}
 But can we quantify the \emph{relative efficiency} of the pseudoinverse estimator
 compared to the composite likelihood estimator?
-The following lemma shows that the gap can be quite substantial and scales with the dimension $d$ [TODO:
-make sure this is true]:
+Let us first compute the asymptotic variance of the latter.
 
-\begin{lemma}[Asymptotic variance for the likelihood]
+\begin{lemma}[Asymptotic variance of the composite likelihood estimator for $Z_\sC$]
   \label{lem:pw-variance}
-  The asymptotic variance in the recovered parameters $Z_{\sC}$ by optimizing the likelihood is
+  The asymptotic variance of $\hat Z_{\sC}$ based on composite likelihood is
   \begin{align*}
-    \Sigma^{\ml} &= \mOppAlli \dM_\sV \Sigma_\sV \dM_\sV \mOppAllit,
-  \end{align*}
-  $\dM_\sV = \text{diag}(M_\sV)$ and
-  $\Sigma_\sV$ is the variance of the moment estimates:
-  \begin{align*}
-    \Sigma_\sV &= \dM_\sV - M_\sV M_\sV^\top.
+    \Sigma^{\ml} &= \mOppAlli \dM_\sV \Sigma_\sV \dM_\sV \mOppAllit.
   \end{align*}
 \end{lemma}
 \begin{proof}
@@ -101,51 +88,58 @@ make sure this is true]:
     \sqrt{n}(\hat Z_{\sC} - Z_{\sC}) &\convind \sN( 0, \grad^2 \sL_\ml^{-1} \Var[\grad \sL_\ml] \grad^2 \sL_\ml^{-1}).
   \end{align*}
 
-next, we show that it is
-strictly concave, which guarantees that it has a unique maximizer.
-  
 Taking the first derivative,
 \begin{align}
   \grad_{\mH_\sC} \sL_\ml(\sX_\sV) 
-  &= \sum_{x \in \sD} \frac{\mOpp{\sV}{\sC}[\vx]}{\mH_\sC \cdot \mOpp{\sV}{\sC}[\vx]} \nonumber \\ 
-  &= \mOpp{\sV}{\sC}[\vx] \diag(\tilde \mO_{\sV})^{-1} \mO_{\sV}, \label{eqn:lhood-grad}
+  &= \sum_{x \in \sD} \frac{\mOppAll[\vx]}{\mH_\sC \cdot \mOppAll[\vx]} \nonumber \\ 
+  &= \mOppAll[\vx] \diag(\tilde \mO_{\sV})^{-1} \mO_{\sV}, \label{eqn:lhood-grad}
 \end{align}
 where $\tilde \mO_\sV$ is marginal distribution with parameters $\mH_\sC$, also represented as a vector in $\Re^{d^m}$.
 
 Taking the second derivative.
 \begin{align}
   \grad^2_{\mH_\sC} \sL_\ml(\Sx \sV) 
-  &= \sum_{x \in \sD} \frac{\mOpp{\sV}{\sC}[\vx] \mOppt{\sV}{\sC}[\vx]}{(\mH_\sC \cdot \mOpp{\sV}{\sC}[\vx])^2} \nonumber \\
-  &= \sum_{x \in \sD}\mOpp{\sV}{\sC}[\vx] \mOppt{\sV}{\sC}[\vx] \frac{\mO_{\sV}[\vx]}{\tilde \mO_{\sV}^2[\vx]} \nonumber \\
-  &= \mOpp{\sV}{\sC} \diag(\mO_{\sV}) \diag(\tilde \mO_{\sV})^{-2} \mOppt{\sV}{\sC}. \label{eqn:lhood-hess}%
+  &= \sum_{x \in \sD} \frac{\mOppAll[\vx] \mOppAllt[\vx]}{(\mH_\sC \cdot \mOppAll[\vx])^2} \nonumber \\
+  &= \sum_{x \in \sD}\mOppAll[\vx] \mOppAllt[\vx] \frac{\mO_{\sV}[\vx]}{\tilde \mO_{\sV}^2[\vx]} \nonumber \\
+  &= \mOppAll \diag(\mO_{\sV}) \diag(\tilde \mO_{\sV})^{-2} \mOppAllt. \label{eqn:lhood-hess}%
 \end{align}
 
-It follows that $\grad^2_{\mH_\sC} \sL_\ml(\Sx \sV) \succ 0$ because
-$\tilde \mO_\sV, \tilde \mO_\sV \succ 0$ and $\mOpp{\sV}{\sC}$ is
-full rank and stochastic.
+% DONE: don't need this
+%It follows that $\grad^2_{\mH_\sC} \sL_\ml(\Sx \sV) \succ 0$ because
+%$\tilde \mO_\sV, \tilde \mO_\sV \succ 0$ and $\mOppAll$ is
+%full rank and stochastic.
 
+% PL: this should just be a consequence
+%Next, we show that it is
+%strictly concave, which guarantees that it has a unique maximizer.
 
   From \equationref{lhood-grad}, we get
   \begin{align*}
-    \Var [\grad \sL_\ml(\vec x_\sC)] &= \mOpp{\sV}{\sC} \diag(\tilde M_\sV) \Sigma_\sV \diag(\tilde M_\sV) \mOpp{\sV}{\sC}^T .
+    \Var [\grad \sL_\ml(\vec x_\sC)] &= \mOppAll \diag(\tilde M_\sV) \Sigma_\sV \diag(\tilde M_\sV) \mOppAll^T .
   \end{align*}
 
   Finally, using \equationref{lhood-hess}, we have
   \begin{align*}
     \Sigma_{Z_\sC} 
       &= \grad^2 \sL_\ml(\vec x_\sC)^{-1} \Var [\grad \sL_\ml(\vec x_\sC)] \grad^2 \sL_\ml(\vec x_\sC)^{-1}) \\
-      &= \pinvt{\mOpp{\sV}{\sC}} \diag(\tilde M_\sV) \Sigma_\sV \diag(\tilde M_\sV) \pinv{\mOpp{\sV}{\sC}}.
+      &= \pinvt{\mOppAll} \diag(\tilde M_\sV) \Sigma_\sV \diag(\tilde M_\sV) \pinv{\mOppAll}.
   \end{align*}
 
   At the true parameters, $\tilde M_\sV = M_\sV$, completing the proof.
+  \todo{argue that asymptotic variance is finite, so the estimator is consistent (this is technically good form,
+but it's fine given space constraints}
 \end{proof}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The following lemma shows that the gap can \todo{reference the two lemmas} can be quite substantial,
+and and scales with the dimension $d$ [TODO: make sure this is true]:
 \begin{corollary}
-  The asymptotic variance of optimizing the log-likelihood, $\Sigma_p$
-  is strictly less than that of the moment-matching objective
-  $\Sigma_m$; $\Sigma_p \succ \Sigma_m \succ 0$.
+The asymptotic variance of pseudoinverse estimator is strictly larger
+than that of the composite likelihood estimator: $\Sigma^\mom \succ \Sigma^\ml$.
 \end{corollary}
 \begin{proof}
+  \todo{fix notation in proof; use pseudoinverse estimator}
   From \lemmaref{mom-variance}, we have the asymptotic variance of the method of moments estimator, $\hat Z_\sC^{(\mom)}$ is,
   \begin{align*}
     \Sigma^{(\mom)} &= \mOppit{\sV}{\sC} \Sigma_\sV \mOppi{\sV}{\sC},
@@ -180,7 +174,7 @@ In other words, the gap in variance between the method of moments
 For another view of this phenomenon, consider the objective function
   associated with the method of moments, 
 \begin{align*}
-  \sL_\mom(\Sx \sV) &= \half \|Z_\sC \mOpp{\sV}{\sC} - M_\sV \|_F^2.
+  \sL_\mom(\Sx \sV) &= \half \|Z_\sC \mOppAll - M_\sV \|_F^2.
 \end{align*}
 In comparison, the negative log-likelihood objective is much more
 concave, so we expect it to be more efficient. 
