@@ -1,4 +1,31 @@
 \section{Proofs}
 \label{app:proofs}
 
+\paragraph{Sample complexity for $Z_\sC$}
+
+Consider the estimation of the conditional moments for a bottleneck $h_i$ with views $x_{v_1},
+x_{v_2}, x_{v_3}$. Let the error in estimation of the moments (i.e.
+  $\|M_{v_1 v_2} - \hat M_{v_1 v_2} \|_F$, etc.)
+$\epsilon$. 
+Results from \citet{anandkumar12moments,anandkumar13tensor} show that 
+\begin{align*}
+  \|\mOpphat{v_1}{i} - \mOppit{v_1}{i}\|^2_F 
+    &= O( 
+    \frac{k {\pi\oft{i}}_{\max}^2}
+    {\sigma_k(M_{v_1,v_2})^5 } \epsilon ). 
+\end{align*}
+
+Similarly, we can apply standard perturbation analysis techniques to get
+an error bound on $Z_\sC$;
+\begin{align*}
+  \|Z_\sC - \hat Z_\sC\|_F 
+  &\le \|M_\sV(\mOppit{v_1}{i_1}, \cdots, \mOppit{v_m}{i_m})  - \hat M_\sV(\hat{\mOppit{v_1}{i_1}}, \cdots, \hat{\mOppit{v_m}{i_m}})\|^2_F.
+\end{align*}
+Let $\|\mOppit{v_1}{i_1}\|_F < O$ and $\|\hat{\mOppit{v_1}{i_1}}\|_F < O$; then, we get
+\begin{align*}
+  \|Z_\sC - \hat Z_\sC\|_F 
+  &\le \|M_\sV - \hat M_\sV\|_F O^m + \|\hat M_\sV\|_F O^{m-1} \max\{\|\hat {\mOppit{v_1}{i_1}} - \mOppit{v_1}{i_1}\|_F\}.
+\end{align*}
+
+
 

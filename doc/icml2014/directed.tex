@@ -308,18 +308,18 @@ In the directed grid model, we can identify the conditional moments $O$ from jus
 
 \paragraph{Consistency and Sample Complexity}
 
-\LearnMarginals~ combines two consistent algorithms, \TensorFactorize and
-\LearnClique, \todo{too much space after LearnClique} and is thus consistent itself.
-\todo{did they prove this; if so just say "they show", not "we can show"}
-Using results from
-  \citet{anandkumar12moments,anandkumar13tensor} we can show that
-  learning $\mOpp{v_1}{i}$ for the bottleneck $h_i$ with views $x_{v_1},
-  x_{v_2}, x_{v_3}$ has the following sample complexity,
-  \todo{define hat O}
-  \todo{max subscript is misaligned}
-\begin{align*}
-  \|\mOpphat{v_1}{i} - \mOpp{v_1}{i}\|^2_F &= \frac{1}{\sqrt{n}} O\left( \frac{k {\pi\oft{i}}_{\max}^2}{\sigma_k(M_{v_1,v_2})^5} \right). 
-\end{align*}
+\LearnMarginals combines two consistent algorithms, \TensorFactorize and
+\LearnCliqueNs, and is thus consistent itself.
+%\todo{did they prove this; if so just say "they show", not "we can show"}
+%Using results from
+%  \citet{anandkumar12moments,anandkumar13tensor} we can show that
+%  learning $\mOpp{v_1}{i}$ for the bottleneck $h_i$ with views $x_{v_1},
+%  x_{v_2}, x_{v_3}$ has the following sample complexity,
+%  \todo{define hat O}
+%  \todo{max subscript is misaligned}
+%\begin{align*}
+%  \|\mOpphat{v_1}{i} - \mOpp{v_1}{i}\|^2_F &= \frac{1}{\sqrt{n}} O\left( \frac{k {\pi\oft{i}}_{\max}^2}{\sigma_k(M_{v_1,v_2})^5} \right). 
+%\end{align*}
 
 \todo{call MOM squared}
 We next describe the asymptotic variance for \LearnClique when using the
