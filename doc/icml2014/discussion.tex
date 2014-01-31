@@ -5,7 +5,7 @@
 For latent-variable models,
 there exists a tension between
 local optimization of likelihood,
-which is broadly applicable but has no theoretical guarantees,
+which is broadly applicable but has no global theoretical guarantees,
 and the method of moments, which provides consistent estimators
 but are limited to models with special structure.
 The purpose of this work is to show that the two methods
@@ -28,12 +28,12 @@ high treewidth.
 % Bottleneck is key
 Our approach provides consistent estimates for
 models in which each hidden variable is a ``bottleneck''---that is,
-it has three conditionally independent observations,
+it has three conditionally independent observations
 (although the dependence on the observations could be quite complex as a function of the parameters).
-This bottleneck property of \citep{anandkumar13tensor}
+This bottleneck property of \citet{anandkumar13tensor}
 has been exploited in many other contexts,
 including Latent Dirichlet Allocation \cite{anandkumar12lda},
-parsing \cite{hsu12identifiability},
+parsing models \cite{hsu12identifiability},
 noisy-or Bayesian networks \cite{halpern13noisyor},
 mixture of linear regressions \cite{chaganty13regression},
 and others.
@@ -128,7 +128,7 @@ For example, an $n\times n$ grid model has a treewidth of $n$, but each
 An interesting direction of study is to examine the necessity of the bottleneck
 property.  Certainly, to some extent, three views are necessary to ensure
 identifiability \cite{kruskal77three}, but requiring \emph{each} hidden variable to be
-a bottleneck is still stronger than we would like.  However, we hope that judiciously
-leveraging likelihood based methods in conjunction with the method of moments,
-as we have done in this paper, can generate new hybrid techniques for estimating
+a bottleneck is still stronger than we would like.  We hope that by judiciously
+leveraging likelihood-based methods in conjunction with the method of moments
+we can generate new hybrid techniques for estimating
 an even richer class of latent-variable models.

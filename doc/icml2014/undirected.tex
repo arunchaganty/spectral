@@ -124,7 +124,7 @@ In \sectionref{directed}, we showed that $\LearnMarginals$ is a consistent
 estimator for $Z_\sC$ for any graphical model satisfying the exclusive views property (\propertyref{exclusive-views}). 
 Consequently, the result is that the output of \algorithmref{undirected},
 $\hat\theta$, is a consistent estimator.\footnote{Of course, the log-linear model must be identifiable
-(violated, for example, if two components of $\phi(\vx_\sC, \vh_\sC)$ were identical).
+(it is violated, for example, if two components of $\phi(\vx_\sC, \vh_\sC)$ were identical).
 In general, we can identify the parameters up to kernel of $\nabla^2 A(\theta)$.}
 
 \renewcommand{\algorithmicrequire}{\textbf{Input:}}
@@ -142,19 +142,23 @@ In general, we can identify the parameters up to kernel of $\nabla^2 A(\theta)$.
 
 \paragraph{Pseudolikelihood.}
 Unlike for directed models, in the undirected case,
-graphs with high tree-width present a challenge
-for even fully-supervised maximum likelihood.
-This motivates looking at pseudolikelihood objective of \citep{besag75pseudo},
-which optimizes the likelihood of each variable $a$ given its neighbors $\sN(a)$:
-$\sum_{a \in X \cup H} \log p_\theta(a \mid x_{\sN(a)})$.
+graphs with high treewidth present a challenge
+for even fully-supervised maximum likelihood due to the intractability of the log-partition function.
+This motivates looking at pseudolikelihood objective of \citep{besag75pseudo} for a computationally more
+efficient solution.
+The pseudolikelihood objective sums over the log-probability of each variable $a$ given its neighbors $\sN(a)$:
+$$L_\text{pseudo}(\theta) \eqdef \E_{x \sim \sD}\left[\sum_{a \in X \cup H} \log p_\theta(a \mid x_{\sN(a)})\right].$$
 In the fully-supervised setting, pseudolikelihood provides computationally efficient consistent estimates,
-albeit at the cost of statistical efficiency
-(coincidentally, the same high-level motivation for using method of moments in the first place).
-However, if we write the objective, we will see that the log-partition function $A(\theta)$
-is replaced with a sum over $A_a(\theta; x_{\sN(a)}) = \sum_a \exp(\theta^\top\phi(a))$,
-which cannot be computed from $Z_\sC$, since the neighbors $\sN(a)$ in general do not form a clique.
-However, we adapt our earlier algorithm to estimate the marginals over all neighborhoods $Z_{\sN(a)}$.
-Of course, this method is only viable for graphs of low degree ($|\sN(a)|$ is small).
+albeit at the cost of statistical efficiency.
+Coincidentally, the same high-level motivation for using method of moments in the first place.
+
+However, pseudolikelihood also replaces the log-partition function $A(\theta)$
+with a sum over the variables: $A_a(\theta; x_{\sN(a)}) = \sum_a \exp(\theta^\top\phi(a))$,
+which cannot be computed from just the hidden clique marginals $Z_\sC$,
+since the neighbors $\sN(a)$ in general do not form a clique.
+However, we adapt our earlier algorithm ($\LearnClique$) to estimate the marginals over all neighborhoods $Z_{\sN(a)}$.
+While this method is only viable for graphs of low degree ($|\sN(a)|$ is small),
+it can handle graphs with high treewidth.
 For example, in the grid model, the degree is only 4.
 Note that neither sample nor computational complexity depends on the treewidth.
 
