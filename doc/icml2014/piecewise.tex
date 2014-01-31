@@ -171,17 +171,25 @@ Then the efficiency of the $e^\mom \approxeq \Tr(\frac{1}{d^2} I)
 In other words, the gap in variance between the method of moments
   estimator and maximum likelihood grows linearly with the number of observations $d$.
 
+% (ARUN): Possibly can this whol part.
+In \sectionref{examples}, we describe how the parameters of a hidden Markov
+  model can be estimated using our algorithm. 
+\figureref{cl-hmm} compares the parameter recovery error of the
+  pseudoinverse estimator and the composite likelihood estimator.
+Empirically, we observe that using the composite likelihood estimator
+  was more stable and leads to better results.
+
 % Visualize
-To visualize this phenomenon, note that the pseudoinverse estimator can be written
-as $\hat Z_\sC = \argmin_{Z_\sC} \|Z_\sC \mOppAll - M_\sV \|_F^2$.
-\figureref{piecewise-objective} plots the compares the objective values for
-different choices of the $\pi$ parameter in a hidden Markov model
-(\figureref{examples-hmm}) with 2 states ($k=2$) and $d=10$ dimensions.
-Note that the negative log-likelihood objective is more
-strongly convex than the pseudoinverse objective.
-\todo{this is perhaps misleading, you could get the plot with the same with $100000000000 x^2$ and $x^2$.
-Let's talk about this.  If can't fix, remove.
-}
+% To visualize this phenomenon, note that the pseudoinverse estimator can be written
+% as $\hat Z_\sC = \argmin_{Z_\sC} \|Z_\sC \mOppAll - M_\sV \|_F^2$.
+% \figureref{piecewise-objective} plots the compares the objective values for
+% different choices of the $\pi$ parameter in a hidden Markov model
+% (\figureref{examples-hmm}) with 2 states ($k=2$) and $d=10$ dimensions.
+% Note that the negative log-likelihood objective is more
+% strongly convex than the pseudoinverse objective.
+% \todo{this is perhaps misleading, you could get the plot with the same with $100000000000 x^2$ and $x^2$.
+% Let's talk about this.  If can't fix, remove.
+% }
 
 \begin{figure}
   \centering
