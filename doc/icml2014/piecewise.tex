@@ -98,24 +98,15 @@ The pseudoinverse estimator is strictly less efficient
 than the composite likelihood estimator in that $e^\mom \eqdef \Tr(\Sigmamli \Sigmamom) < 1$.
 \end{corollary}
 \begin{proof}
-  From \lemmaref{mom-variance}, we have the asymptotic variance of the method of moments estimator, $\hat Z_\sC^{\mom}$ is,
+  From \lemmaref{mom-variance} and \lemmaref{pw-variance}, the asymptotic variances of the method of moments estimator, $\hat Z_\sC^{\mom}$, and the piecewise likelihood estimator, $\hat Z_\sC^{\ml}$, are,
   \begin{align*}
-    \Sigma^{\mom} &= \mOppAlli \Sigma_\sV \mOppAllit,
-  \end{align*}
-
-  By \lemmaref{pw-variance}, we have the asymptotic variance of the piecewise likelihood estimator, $\hat Z_\sC^{\ml}$ is,
-  \begin{align*}
-    \Sigma^{\ml} &= \mOppAlli \dM_\sV \Sigma_\sV \dM_\sV \mOppAllit.
+    \Sigma^{\mom} &= \mOppAlli \Sigma_\sV \mOppAllit & \Sigma^{\ml} &= \mOppAlli \dM_\sV \Sigma_\sV \dM_\sV \mOppAllit,
   \end{align*}
 
   Note that $\Tr(\dM_\sV) = 1$ as it represents the marginal
   distribution of $\sV$; thus, $\Sigma^{(\mom)} \succ \Sigma^{(\ml)}
   \succ 0$.  Finally the asymptotic efficiency of the method of moments
-  estimator is, 
-  \begin{align*}
-    e^\mom &= \Tr( \Sigma^{\ml}\Sigma^{\mom -1} )  \\
-           &= \Tr( \dM_\sV \Sigma_\sV \dM_\sV \Sigma_\sV^{-1} ) .
-  \end{align*}
+  estimator is, $e^\mom = \Tr( \Sigma^{\ml}\Sigma^{\mom -1} ) = \Tr( \dM_\sV \Sigma_\sV \dM_\sV \Sigma_\sV^{-1} )$.
 \end{proof}
 
 \paragraph{Intuitions}
