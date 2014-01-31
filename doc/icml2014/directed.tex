@@ -152,27 +152,18 @@ In this case, we only require that the hidden variables in distinct
   cliques share parameters.
 
 Applying \TensorFactorize to every bottleneck gives us candidate views
-  for every hidden variable. 
-To proceed, we need to show two things; (i) under what assumptions
-  does \assumptionref{full-rank} hold for each bottleneck and (ii)
-  that the candidate views actually imply that \propertyref{exclusive-views}
-  holds for every clique in the graph.
-
-To address the first, we will need that the following assumption on the
-  parameters of the model:
+  for every hidden variable, provided \assumptionref{full-rank} holds for each bottleneck;
 \begin{assumption} 
   \label{asm:full-rank-plus}
-  For every clique $\sC = \{h_{i_1}, \cdots, h_{i_m}\} \in \sG$, let
-    $Z_\sC$ be the marginal distribution for that clique. 
-  Then every mode-$i$ unfolding of $Z_\sC$ has full column rank.\verify
+  For every hidden variable $h_i$, $\pi\oft{i} \succ 0$ and
+    $\mOpp{v}{i}$ has full column rank.
 \end{assumption}
-Intuitively, the assumption guarantees that the marginal probability of
-  any hidden state is non-zero.
-
-Before we establish the second condition, we describe a reduction to
+  
+Next, we must show that these candidate views actually imply that
+  \propertyref{exclusive-views} holds for every clique in the graph.
+Before we establish this condition, we describe a reduction to
   a canonical form that will allow us to handle the case where an observed
   variable has multiple parents.
-
 
 \begin{lemma}(Canonical form) 
   \label{lem:reduction}
@@ -272,14 +263,7 @@ in \algorithmref{directed}.
 \paragraph{Consistency and Sample Complexity}
 
 \LearnMarginals~ combines two consistent algorithms, \TensorFactorize and
-  \LearnClique, and is thus consistent itself. Using results from
-  \citet{anandkumar12moments,anandkumar13tensor} we can show that that
-  learning $\mOpp{v_1}{i}$ for the bottleneck $h_i$ with views $x_{v_1},
-  x_{v_2}, x_{v_3}$ has the following sample complexity,
-\begin{align*}
-  \|\mOpphat{v_1}{i} - \mOpp{v_1}{i}\|^2_F &= \frac{1}{\sqrt{n}} O( \frac{k {\pi\oft{i}}_{\max}^2}{\sigma_k(M_{v_1,v_2})^5} ). 
-\end{align*}
-
+  \LearnClique, and is thus consistent itself. 
 We next describe the asymptotic variance for \LearnClique when using the
   method of moments.
 \begin{lemma}(Asymptotic variance of $Z_\sC$)
