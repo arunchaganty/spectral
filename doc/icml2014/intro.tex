@@ -2,64 +2,90 @@
 \label{sec:introduction}
 
 % 1. Latent variable models are good.
-Latent variable graphical models offer a succinct representation of
-a rich model family. 
+Latent-variable graphical models provide compact representations of data
+and have been employed across many fields [TODO: find a much better/broader set of citations]
+\cite{quattoni04crf,beaumont2004bayesian,haghighi06prototype}.
 % 2. Learning them is hard.
-Despite their success across many fields
-\cite{quattoni04crf,beaumont2004bayesian,haghighi06prototype,liang06discrimative,kirkpatrick10painless},
-learning these models remains a difficult problem due to the
-non-convexity of the likelihood. Local optimization (e.g.
-expectation-maximization) is the standard approach, but is susceptible
-to local optima.
+However, learning these models remains a difficult problem due to the
+non-convexity of the negative log-likelihood.  Local methods such as Expectation Maximization (EM)
+are the norm, but are susceptible to local optima.
 
 % 3. People have approached unsupervised learning with the MoM magic sauce, but the sauce is limited.
-Recently, unsupervised learning techniques based on the method of moments and
-spectral decomposition have offered a refreshing and promising perspective on
-this learning problem \citep{hsu09spectral,anandkumar11tree,anandkumar12moments,anandkumar12lda,hsu12identifiability,balle11transducer,balle12automata}.
-These methods exploit the linear algebraic properties of the model and
+Recently, unsupervised learning techniques based on the spectral method of moments
+have offered a refreshing and promising perspective on
+this learning problem
+\citep{hsu09spectral,anandkumar11tree,anandkumar12moments,anandkumar12lda,hsu12identifiability,balle11transducer,balle12automata}.
+[TODO: make sure we are citing the right people]
+These methods exploit the linear algebraic properties of the model to
 factorize the moments into parameters, providing strong theoretical guarantees.
 However, these methods apply to a limited set of models, and are thus
-not as universally applicable as EM. 
+not as broadly applicable as EM.
 
 \begin{figure}[t]
   \label{fig:approach}
   \centering
   \subimport{figures/}{approach.tikz}
-  \caption{Overview of approach}
+  \caption{[TODO: need three steps: tensor factorization, optimize composite likelihood, recover model parameters; Overview of approach}
 \end{figure}
 
+% DONE: need to say from the beginning that we have a hybrid approach, not just using method of moments;
+% there are really two contributions: one is the consistent estimate result for class of models,
+% and the other is the general idea of using partial constraints]
+
 % 4. State what we do: exploit moment constraints to make the problem easier.
-In this work, we exploit the spectral method to learn moment constraints
-  on the observed variables and show how these constraints lead to consistent parameter estimates 
-  for any graphical model with the property that there exist at least
-  three ``views'' or conditionally independent observed variables for
-  every hidden variable (\propertyref{bottleneck}).
+In this paper,
+we show that a much broader class of directed and undirected graphical models can be consistently estimated,
+specifically those in which each latent variable has three conditionally
+independent observed variables (``views'')---see \propertyref{bottleneck}.
+The key idea is to leverage the spectral method of moments,
+not to directly provide a consistent parameter estimate as in previous work,
+but as partial constraints on a likelihood-based objective.
+%For a broad class of directed and undirected graphical models
 
-% 5. We get moments from third-order tensors from bottlenecks and factorize them into marginals.
+%In this work, we exploit the spectral method to learn moment constraints
+  %on the observed variables and show how these constraints lead to consistent parameter estimates 
+  %for any graphical model with the property that there exist at least
+  %three ``views'' or conditionally independent observed variables for
+  %every hidden variable (\propertyref{bottleneck}).
+
+% 5. We get moments from third-order tensors from bottlenecks and factorize them into marginals,
+% then get parameters.
+% DONE: try to talk about the approach in terms of three steps
 Our approach is illustrated in \figureref{approach}. 
-First, we identify the views $x_1, x_2, x_3$ for each hidden variable $h$. 
-We then use the tensor factorization algorithm of
-  \citet{anandkumar12moments,anandkumar13tensor} to identify the
-  conditional moments.
-Given these factors, we show that there exists a set of observed
-  variables for every clique such that the likelihood is convex in the
-  parameters of that clique. 
-This guarantees that we can recover the true marginal distributions
-  using EM; finally, with some post-processing, we are able to
-  consistently recover the true parameters of the model.
-In \sectionref{directed}, we detail our algorithm and describe the
-  settings and technical assumptions in which this approach is guaranteed
-  to work.
-As a particular example, we are able to recover parameters for the
-  grid model depicted in \figureref{approach} under the condition that
-  $O$ and $T$ is full-rank.
+First, we identify the views for each hidden variable $h_i$ (for example,
+$x_1^a$, $x_1^b$ and $x_3^a$ are conditionally independent given $h_1$) and use
+the tensor factorization algorithm of
+\citet{anandkumar12moments,anandkumar13tensor} to identify the \emph{conditional
+moments} $\E[x_i^a \mid h_i]$ and $\E[x_i^b \mid h_i]$ for each $i$.
+Second, we optimize a \emph{composite marginal likelihood} to recover the marginals over
+each latent clique (e.g., $\mathbb P(h_2, h_3, h_4)$).
+Normally, such a marginal likelihood objective would be non-convex,
+but given the conditional moments, we obtain a convex objective,
+which can be globally optimized using EM.
+Finally, the latent marginals yield the model parameters
+via simple post-processing in the directed case and convex optimization in the undirected case.
+%Given these factors, we show that there exists a set of observed
+  %variables for every clique such that the likelihood is convex in the
+  %parameters of that clique. 
+%This guarantees that we can recover the true marginal distributions
+  %using EM.
+  %finally, with some post-processing, we are able to
+  %consistently recover the true parameters of the model.
+In \sectionref{directed}, we detail our algorithm and
+show that our algorithm yields consistent parameter estimates
+under non-degenerate rank assumptions on the conditional moments.
+%describe the
+  %settings and technical assumptions in which this approach is guaranteed
+  %to work.
+% PL: hard to talk about $O$ and $T$ at this stage.
+%As a particular example, we are able to recover parameters for the
+  %model depicted in \figureref{approach} if $O$ and $T$ are full-rank.
 
-Our approach also applies to undirected log-linear latent variable
-  models, where we use the recovered marginals to make the learning
-  problem convex (\sectionref{undirected}).
+%Our approach also applies to undirected log-linear latent variable
+  %models, where we use the recovered marginals to make the learning
+  %problem convex (\sectionref{undirected}).
 Finally, our approach gracefully extends to more general model families
   in which we are unable to recover the marginal distributions for all
-  cliques; in such scenarios, we use posterior regularization to constrain
-  EM. 
-
-
+  hidden cliques; in such scenarios, we use posterior regularization to constrain
+  EM.  We show that empirically, using such constraints alleviates local
+  optima issues.

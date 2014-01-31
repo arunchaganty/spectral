@@ -1,38 +1,107 @@
-\section{Concave Clique Likelihoods}
+\section{Composite Marginal Likelihoods}
 \label{sec:piecewise}
 
-The method of moments approach to recover parameters for each clique
-  $\sC$ presented in the previous section is easy to understand and
-  analyze, but sensitive to noise. 
-In this section we propose an alternate solution, optimizing the 
-  likelihood for each clique, that is more robust to noise.
+The previous section provided a method of moments estimator
+which used (i) tensor decomposition to recover conditional moments,
+and (ii) matrix inversion to recover the hidden marginals.
+Now we aim to improve statistical efficiency by replacing (ii) with a likelihood-based objective.
+
+% DONE: set the stage a bit more
+Of course, optimizing the original marginal likelihood is subject to local optima.
+We make two observations to arrive at a convex optimization problem.
+The first insight is that we have used tensor decomposition to recover the conditional moments,
+so effectively a subset of the parameters have been fixed.
+However, this alone is not enough, for the full likelihood is still non-convex.
+The second insight is that we can optimize a \emph{composite likelihood objective} \cite{lindsay88composite}
+rather than the full objective.
+
+%The method of moments approach to recover parameters for each clique
+  %$\sC$ presented in the previous section is easy to understand and
+  %analyze, but sensitive to noise. 
+%In this section we propose an alternate solution, optimizing the 
+  %likelihood for each clique, that is more robust to noise.
 We show that under the same conditions as \algorithmref{directed}, the
-  clique likelihoods are strictly concave, guaranteeing that
-  gradient-based optimization will converge to the unique global
-  optimum.
+  negative composite likelihood function is strictly convex and thus
+  tractable to estimate exactly.
+  %guaranteeing that
+  %gradient-based optimization will converge to the unique global
+  %optimum.
 
 Consider a clique $\sC = \{h_{i_1}, \cdots h_{i_m}\} \in \sG$, with
   exclusive views $\sV = \{x_{v_1}, \cdots, x_{v_m}\}$. 
-The piecewise likelihood of $\Sx{\sV}$ is,
+The composite likelihood of $\Sx{\sV}$ given parameters $\mH_\sC$ is
+  [DONE: likelihood is a function of parameters, not of data]
 \begin{align*}
-  \sL_\ml(\Sx{\sV}) 
+  \sL_\ml %(\Sx{\sV}) 
    &= \sum_{\vx \in \sD} \log \Pr( \Sx \sV ) \\
    &= \sum_{\vx \in \sD} \log \sum_{\Sh \sC} \Pr( \Sx \sV \given \Sh \sC ) \\
    &= \sum_{\vx \in \sD} \log \mH_\sC(\mOpp{v_1}{i_1} [x_{v_1}], \cdots, \mOpp{v_m}{i_m} [x_{v_m}])
 \end{align*}
 
 For this section, it will be convenient to represent $\mH_\sC$ as
-  a vector in $\Re^{k^m}$, and represent $\mOpp{\sV}{\sC} \eqdef
+  a vector in $\Re^{k^m}$, and represent $\mOppAll \eqdef
   \mOpp{v_1}{i_1} [x_{v_1}] \otimes \cdots \otimes
-  \mOpp{v_m}{i_m} [x_{v_m}]$ as a matrix in $\Re^{k^m \times
-  d^m}$.
-Then the likelihood objective is,
+  \mOpp{v_m}{i_m} [x_{v_m}]$ as a matrix in $\Re^{d^m \times
+  k^m}$.
+Then the likelihood objective is
 \begin{align*}
-  \sL_\ml(\Sx{\sV}) 
-   &= \sum_{x \in \sD} \log \mOppt{\sV}{\sC}[\vx] \mH_\sC,
+  \sL_\ml %(\Sx{\sV}) 
+   &= \sum_{\vx \in \sD} \log \mH_\sC(\mOppAll[\Sx\sV]).
 \end{align*}
 
-The likelihood is concave in $\mH_\sC$; next, we show that it is
+This is a sum of a log of linear function of $\mH_\sC$, which is concave in
+$\mH_\sC$.  Unlike maximum likelihood in fully-observed settings,
+we do not have a closed form solution, so we can use EM.
+Since the function is convex, EM will converge to the global optimum.
+\algorithmref{piecewise} summarizes our algorithm.
+
+\begin{algorithm}
+  \caption{\LearnPiecewise}
+  \label{algo:piecewise}
+  \begin{algorithmic}
+    \REQUIRE A graphical model $\sG$ satisfying \propertyref{bottleneck}, data $\sD$
+    \ENSURE Marginals $Z_\sC$ for every clique $\sC \in \sG$
+\STATE Identify exclusive views $x_\sV = \{x_{v_1}, \cdots, x_{v_m}\}$.
+\STATE $\hat \mH_\sC = \arg\max_{\mH_\sC \in \Delta_{k^m-1}} \sum_{\vx \in \sD} \log \mH_\sC(\mOppAll[\Sx \sV])$.
+%      Run expectation-maximization to convergence on the piecewise likelihood \eqref{eqn:piecewise}, over data $\{\vec x_\sC : x \in \sD\}$
+  \end{algorithmic}
+\end{algorithm}
+
+\subsection{Statistical Efficiency}
+
+We have proposed two methods for estimating the hidden marginals $Z_\sC$ given
+the conditional moments $\mOppAll$: one based on computing a simple pseudoinverse,
+and the other based on composite likelihood.
+
+The Cramer-Rao lower bound tells us that maximum likelihood yields
+the statistically the most efficient composite estimator for $Z_\sC$
+given access to only samples of $\Sx\sV$.\footnote{Of course, we could improve statistical efficiency
+by maximizing the likelihood of all of $\vx$, but that would again lead to non-convex optimization problems.}
+But can we quantify the \emph{relative efficiency} of the pseudoinverse estimator
+compared to the composite likelihood estimator?
+The following lemma shows that the gap can be quite substantial and scales with the dimension $d$ [TODO:
+make sure this is true]:
+
+\begin{lemma}[Asymptotic variance for the likelihood]
+  \label{lem:pw-variance}
+  The asymptotic variance in the recovered parameters $Z_{\sC}$ by optimizing the likelihood is
+  \begin{align*}
+    \Sigma^{\ml} &= \mOppAlli \dM_\sV \Sigma_\sV \dM_\sV \mOppAllit,
+  \end{align*}
+  $\dM_\sV = \text{diag}(M_\sV)$ and
+  $\Sigma_\sV$ is the variance of the moment estimates:
+  \begin{align*}
+    \Sigma_\sV &= \dM_\sV - M_\sV M_\sV^\top.
+  \end{align*}
+\end{lemma}
+\begin{proof}
+  Using the delta-method \cite{vaart98asymptotic}, we have that the
+  asymptotic distribution of $Z_\sC$ is,
+  \begin{align*}
+    \sqrt{n}(\hat Z_{\sC} - Z_{\sC}) &\convind \sN( 0, \grad^2 \sL_\ml^{-1} \Var[\grad \sL_\ml] \grad^2 \sL_\ml^{-1}).
+  \end{align*}
+
+next, we show that it is
 strictly concave, which guarantees that it has a unique maximizer.
   
 Taking the first derivative,
@@ -55,44 +124,6 @@ It follows that $\grad^2_{\mH_\sC} \sL_\ml(\Sx \sV) \succ 0$ because
 $\tilde \mO_\sV, \tilde \mO_\sV \succ 0$ and $\mOpp{\sV}{\sC}$ is
 full rank and stochastic.
 
-\algorithmref{piecewise} reviews our algorithm.
-
-\begin{algorithm}
-  \caption{\LearnPiecewise}
-  \label{algo:piecewise}
-  \begin{algorithmic}
-    \REQUIRE A graphical model $\sG$ satisfying \propertyref{bottleneck}, data $\sD$
-    \ENSURE Marginals $Z_\sC$ for every clique $\sC \in \sG$
-\STATE Identify exclusive views $x_\sV = \{x_{v_1}, \cdots, x_{v_m}\}$.
-\STATE $\hat \mH_\sC = \arg\max_{\mH_\sC \in \Delta_{k^m-1}} \sum_{\Sx \sV} \log  \mOppit{\sV}{\sC}[\Sx \sV] \mH_\sC$.
-%      Run expectation-maximization to convergence on the piecewise likelihood \eqref{eqn:piecewise}, over data $\{\vec x_\sC : x \in \sD\}$
-  \end{algorithmic}
-\end{algorithm}
-
-\subsection{Comparison with Method of Moments}
-
-The Cramer-Rao bound tells us that this is statistically the most
-  efficient estimator we can get for $Z_\sC$. 
-We also study the efficiency of the method of moments estimator.
-
-\begin{lemma}(Asymptotic variance for the likelihood)
-  \label{lem:pw-variance}
-  The asymptotic variance in the recovered parameters $Z_{\sC}$ by optimizing the likelihood is,
-  \begin{align*}
-    \Sigma^{(\ml)} &= \mOppit{\sV}{\sC} \diag(M_\sV) \Sigma_\sV \diag(M_\sV) \mOppi{\sV}{\sC},
-  \end{align*}
-  where $\Sigma_\sV$ is the variance of the moment estimates, 
-  \begin{align*}
-    \Sigma_\sV &= \diag(M_\sV) - M_\sV M_\sV^\top.
-  \end{align*}
-\end{lemma}
-\begin{proof}
-  Using the delta-method \cite{vaart98asymptotic}, we have that the
-  asymptotic distribution of $Z_\sC$ is,
-  \begin{align*}
-    \sqrt{n}(\hat Z_{\sC} - Z_{\sC}) &\convind \sN( 0, \\
-      &\quad \grad^2 \sL_\ml(\vec x_\sC)^{-1} \Var[\grad \sL_\ml(\vec x_\sC)] \grad^2 \sL_\ml(\vec x_\sC)^{-1}).
-  \end{align*}
 
   From \equationref{lhood-grad}, we get
   \begin{align*}

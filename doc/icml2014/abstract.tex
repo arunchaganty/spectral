@@ -1,20 +1,37 @@
 \begin{abstract} 
 
-Parameter estimation in latent variable models is prone to local
-  optima due to the non-convexity of the likelihood. 
-In this paper, we extend recent advances in the method of moments 
-  to provide consistent parameter estimates for a general class of
-  directed and undirected graphical models, thus avoiding the issue of
-  local optima.
-In particular, our algorithm applies to any graphical model wherein each
-  hidden variable has at least three conditionally independent observed
-  variables.
-This family includes loopy graphs with high treewidth.
-We use the method of moments to tie each hidden to some observed
-  variables, and show that the rest of the problem can be cast as convex
-  optimization of the likelihood.
-This approach gracefully extends to models outside this family by
-  providing partial information via posterior regulraization.
+Recent work in method of moments provide consistent estimates
+  for latent-variable models, avoiding local optima issues,
+  but these methods can only be applied to certain types of graphical models.
+In this work, we show that the method of moments in conjunction
+  with a composite marginal likelihood objective
+  yields consistent parameter estimates for a much broader
+  class of directed and undirected graphical models,
+  including loopy graphs with high treewidth.
+%In particular, our algorithm applies to any graphical model wherein each
+  %hidden variable has at least three conditionally independent observed
+  %variables.
+  %that sidestep local optima issues for a general class of
+  %directed and undirected graphical models.
+%Parameter estimation in latent-variable models based on EM
+  %is prone to local optima.
+  %due to the non-convexity of the marginal log-likelihood. 
+%In this paper, we extend recent advances in the method of moments 
+  %to provide consistent parameter estimates
+  %that sidestep local optima issues for a general class of
+  %directed and undirected graphical models.
+%In particular, our algorithm applies to any graphical model wherein each
+  %hidden variable has at least three conditionally independent observed
+  %variables.
+%This family includes loopy graphs with high treewidth.
+Specifically, we use tensor factorization to reveal partial information
+about the latent variables, rendering the otherwise non-convex negative
+log-likelihood convex.
+%We use the method of moments to tie each hidden to some observed
+  %variables, and show that the rest of the problem can be cast as convex
+  %optimization of the likelihood.
+Our approach gracefully extends to models outside our class by
+  incorporating the partial information via posterior regulraization.
 \end{abstract} 
 
 \paragraph{Last updated:} \today, \currenttime

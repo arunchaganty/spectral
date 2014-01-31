@@ -16,10 +16,10 @@ As before, let $\sG$ be a graphical model with observed variables $X$ and hidden
 We assume that the undirected graphical model is a log-linear latent
   variable model with parameters $\theta$,
 \begin{align*}
-  p_\theta(\vx, \vh) &= \exp( \sum_\sC \theta_\sC^T \phi_\sC(\vx,\vh) - A(\theta) ),
+  p_\theta(\vx, \vh) &= \exp( \sum_\sC \theta_\sC^\top \phi_\sC(\vx,\vh) - A(\theta) ),
 \end{align*}
 where $\phi_\sC(\vx,\vh)$ is a feature vector for the clique $\sC$ and
-  $A(\theta) = \sum_{\vx, \vh}  \exp( \sum_\sC \theta_\sC^T \phi_\sC(\vx,\vh) )$ is the
+  $A(\theta) = \sum_{\vx, \vh}  \exp( \sum_\sC \theta_\sC^\top \phi_\sC(\vx,\vh) )$ is the
   log-partition function.
 While $\phi_\sC(x,h)$ can be an arbitrary featurization, we assume
   without loss of generality that $\phi_\sC(x,h)$ are the indicator
@@ -33,7 +33,7 @@ As before, our objective is to find a set of parameters $\hat \theta$
   \hat \theta 
       &= \arg\max_{\theta} \sum_{\vx \in \sD} \log p_\theta(\vx) \nonumber \\
       &= \arg\max_{\theta} \sum_{\vx \in \sD} \log \sum_{\vh \in \sH} p_\theta(\vx,\vh) \nonumber \\
-      &= \arg\max_{\theta} \sum_{\vx \in \sD} \log \sum_{\vh \in \sH} \exp( \theta^T\phi(\vx,\vh) - A(\theta) ). \label{eqn:obj-ml}
+      &= \arg\max_{\theta} \sum_{\vx \in \sD} \log \sum_{\vh \in \sH} \exp( \theta^\top\phi(\vx,\vh) - A(\theta) ). \label{eqn:obj-ml}
 \end{align}
 Note that this problem is not concave in $\theta$. 
 
@@ -47,7 +47,7 @@ However, given the moments $\E[ \phi_\sC(\vx,\vh) ] = Z_\sC$, the
   problem simplifies to,
 \begin{align}
   \hat \theta 
-  &= \arg\max_{\theta} \sum_{\sC \in \sG} \theta_\sC^T Z_\sC - A(\theta), \label{eqn:obj}
+  &= \arg\max_{\theta} \sum_{\sC \in \sG} \theta_\sC^\top Z_\sC - A(\theta), \label{eqn:obj}
 \end{align}
 which is concave in $\theta$.
 In \sectionref{directed}, we showed that \LearnMarginals is a consistent
