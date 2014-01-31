@@ -196,7 +196,7 @@ def scatter(ax, data, x_key, y_key, **kwargs):
     return ax
 
 def read_tab_file(fhandle):
-    return (tab_to_dict(line) for line in fhandle)
+    return (tab_to_dict(line) for line in fhandle if not line.startswith('#'))
 
 def write_tab_file(dicts, out=sys.stdout):
     out.writelines(dict_to_tab(val) + "\n" for val in dicts)
