@@ -71,8 +71,9 @@ Similarly, we can write down the moments of $x^a_1, x^a_2$, $\mO_{12}
 $T$ can be recovered from the $\mH_{12}$ by suitable renormalization.
 
 \paragraph{Estimating $V$}
-Finally, we can estimate $V$ by renormalizing the third-order moments $\mO_{234} \eqdef \Pr(x^a_2, x^a_3, x^a_4)$,
-which can be obtained analogously:
+Finally, we can estimate $V$ by renormalizing the hidden marginals
+$\mH_{234} \eqdef \Pr(h_2, h_3, h_4)$ from the third-order moments
+$\mO_{234} \eqdef \Pr(x^a_2, x^a_3, x^a_4)$:
 \begin{align*}
   \mO_{234} = \mH_{234}(O, O, O) \quad\Rightarrow\quad
   \mH_{234} = \mO_{234}(\pinv O, \pinv O, \pinv O).
@@ -285,16 +286,16 @@ in \algorithmref{directed}.
 \end{algorithm}
 
 % DONE: move here because not central to story
-%\paragraph{Remark.} We note that \propertyref{bottleneck} can be relaxed if some cliques
-%  share parameters.
-%In the directed grid model, we can identify the conditional moments $O$ from just
-%  $x^a_1, x^b_1$ and $x^a_2$.
-%  Therefore, we do not require that $h_2, h_3$ or $h_4$
-%  be bottlenecks, and can omit the observations $x^b_2, x^b_3$ and $x^b_4$.
-%%  \todo{make this a footnote if running out of space}
-%% PL: don't understand this comment
-%%In this case, we only require that the hidden variables in distinct
-%  %cliques share parameters.
+\paragraph{Remark.} We note that \propertyref{bottleneck} can be relaxed if some cliques
+  share parameters.
+In the directed grid model, we can identify the conditional moments $O$ from just
+  $x^a_1, x^b_1$ and $x^a_2$.
+  Therefore, we do not require that $h_2, h_3$ or $h_4$
+  be bottlenecks, and can omit the observations $x^b_2, x^b_3$ and $x^b_4$.
+%  \todo{make this a footnote if running out of space}
+% PL: don't understand this comment
+%In this case, we only require that the hidden variables in distinct
+  %cliques share parameters.
 
 \begin{figure}
   \centering
