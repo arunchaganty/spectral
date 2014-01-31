@@ -277,6 +277,60 @@ public abstract class Params implements Serializable {
     return cost;
   }
 
+  public double computeDiff2(Params that, int[] perm) {
+    // Compute differences in ParamsVec with optimal permutation of parameters.
+    // Assume features have the form h=3,..., where the label '3' can be interchanged with another digit.
+    // Use bipartite matching.
+    int K = numGroups();
+
+    Indexer<Feature> indexer = this.getFeatureIndexer();
+    Indexer<Feature> indexer_ = that.getFeatureIndexer();
+//    assert(indexer == indexer_);
+
+    double[][] costs = new double[K][K];  // Cost if assign latent state h1 of this to state h2 of that
+    for (int j = 0; j < size(); j++) {
+      Feature rawFeature = indexer.getObject(j);
+      if (!(rawFeature instanceof UnaryFeature)) continue;
+      UnaryFeature feature = (UnaryFeature)rawFeature;
+
+      int h1 = feature.h;
+      double v1 = get(feature);
+      for (int h2 = 0; h2 < K; h2++) {
+        try {
+          double v2 = that.get(new UnaryFeature(h2, feature.description));
+          costs[h1][h2] += (v1-v2) * (v1-v2);
+        } catch(ArrayIndexOutOfBoundsException ignored) {}
+      }
+    }
+
+    if(perm == null) perm = new int[K];
+    // Find the permutation that minimizes cost.
+    BipartiteMatcher matcher = new BipartiteMatcher();
+    ListUtils.set(perm, matcher.findMinWeightAssignment(costs));
+
+    // Compute the actual cost (L1 error).
+    double cost = 0;
+    for (int j = 0; j < size(); j++) {
+      Feature rawFeature = indexer.getObject(j);
+      if (rawFeature instanceof BinaryFeature) {
+        BinaryFeature feature = (BinaryFeature)rawFeature;
+        try {
+          double v1 = this.get(feature);
+          double v2 = that.get(new BinaryFeature(perm[feature.h1], perm[feature.h2]));
+          cost += (v1 - v2) * (v1 - v2);
+        } catch(ArrayIndexOutOfBoundsException ignored) {}
+      } else {
+        UnaryFeature feature = (UnaryFeature)rawFeature;
+        try {
+          double v1 = this.get(feature);
+          double v2 = that.get(new UnaryFeature(perm[feature.h], feature.description));
+          cost += (v1-v2) * (v1-v2);
+        } catch(ArrayIndexOutOfBoundsException ignored) {}
+      }
+    }
+    return Math.sqrt(cost);
+  }
+
   /**
    * @return the number of groups
    */

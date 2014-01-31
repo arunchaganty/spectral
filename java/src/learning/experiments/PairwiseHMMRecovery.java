@@ -151,7 +151,7 @@ public class PairwiseHMMRecovery implements  Runnable {
       log(outputList(
               "theta*", trueParams,
               "\ntheta^", params,
-              "\ndtheta", params.computeDiff(trueParams,null)
+              "\ndtheta", params.computeDiff2(trueParams,null)
       ));
 
       log(outputList(
@@ -160,7 +160,7 @@ public class PairwiseHMMRecovery implements  Runnable {
               "T-lhood*", piecewiseLikelihood(model, trueParams, data),
               "T-lhood^", piecewiseLikelihood(model, params, data),
               "lhood*", model.getLogLikelihood(trueParams, data),
-              "\nlhood^", model.getLogLikelihood(params, data)
+              "lhood^", model.getLogLikelihood(params, data)
       ));
 
     }
@@ -169,7 +169,7 @@ public class PairwiseHMMRecovery implements  Runnable {
       log(outputList(
               "theta*", trueParams,
               "\ntheta0", params,
-              "\ndtheta0", params.computeDiff(trueParams,null)
+              "\ndtheta0", params.computeDiff2(trueParams,null)
       ));
 
 
@@ -688,8 +688,12 @@ public class PairwiseHMMRecovery implements  Runnable {
       SimpleMatrix O_ = new SimpleMatrix(O);
       SimpleMatrix M1_ = MatrixFactory.fromVector(M1);
       SimpleMatrix pi_ = M1_.mult(O_.pseudoInverse());
+      // Project on to simplex
+      pi_ = MatrixOps.projectOntoSimplex( pi_.transpose(), smoothMeasurements );
+
       pi = MatrixFactory.toVector(pi_);
     }
+
 
     // Normalize pi
     MatrixOps.scale(pi, 1./MatrixOps.sum(pi));
@@ -846,23 +850,23 @@ public class PairwiseHMMRecovery implements  Runnable {
       HiddenMarkovModel.Parameters marginals = model.newParams();
       double lhood_ = Double.NEGATIVE_INFINITY;
       for(int i = 0; i < 1000; i++) {
+        double lhood = model.getLogLikelihood(params,data);
+
         // Simple EM
         marginals.clear();
         model.updateMarginals(params, data, 1.0, marginals);
-        double diff = params.computeDiff(marginals, null);
-        params.copyOver(marginals);
-
-        double lhood = model.getLogLikelihood(params,data);
+        double diff = params.computeDiff2(marginals, null);
 
         dbg(outputList(
                 "iter", i,
                 "likelihood", lhood,
                 "diff", diff
         ));
-        assert( lhood - lhood_ > -1e-3); // Numerical error.
+        //assert( lhood - lhood_ > -1e-3); // Numerical error.
         if( diff < 1e-3 ) break;
 
         lhood_ = lhood;
+        params.copyOver(marginals);
       }
 
       log(outputList(

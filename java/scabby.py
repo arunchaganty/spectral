@@ -172,7 +172,7 @@ def plot_many(lines, xlabel='x', ylabels=['y']):
 def start_plot(**kwargs):
     import matplotlib.pyplot as plt 
     fig = plt.figure()
-    plt.rc('text', usetex = True)
+#    plt.rc('text', usetex = True)
     plt.rc('font', family = "Serif")
     plt.rc('axes', labelsize = 24)
     ax = fig.gca()

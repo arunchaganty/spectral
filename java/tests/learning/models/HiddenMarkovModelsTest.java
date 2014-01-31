@@ -276,16 +276,9 @@ public class HiddenMarkovModelsTest {
     // Simple EM
     Params marginals = model.newParams();
     model.updateMarginals(hmm3, data, 1.0, marginals);
-//    model.baumWelchStep(X);
 
     log(marginals);
 
-//    Assert.assertTrue(
-//        MatrixOps.allclose( model.params.pi, hmm3.pi ) );
-//    Assert.assertTrue(
-//        MatrixOps.allclose( model.params.T, hmm3.T ) );
-//    Assert.assertTrue(
-//        MatrixOps.allclose( model.params.O, hmm3.O ) );
   }
 
   @Test
