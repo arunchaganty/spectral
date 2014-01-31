@@ -38,7 +38,7 @@ strictly concave, which guarantees that it has a unique maximizer.
 Taking the first derivative,
 \begin{align}
   \grad_{\mH_\sC} \sL_\ml(\sX_\sV) 
-  &= \sum_{x \in \sD} \frac{\mOpp{\sV}{\sC}_x}{\mH_\sC \cdot \mOpp{\sV}{\sC}[\vx]} \nonumber \\ 
+  &= \sum_{x \in \sD} \frac{\mOpp{\sV}{\sC}[\vx]}{\mH_\sC \cdot \mOpp{\sV}{\sC}[\vx]} \nonumber \\ 
   &= \mOpp{\sV}{\sC}[\vx] \diag(\tilde \mO_{\sV})^{-1} \mO_{\sV}, \label{eqn:lhood-grad}
 \end{align}
 where $\tilde \mO_\sV$ is marginal distribution with parameters $\mH_\sC$, also represented as a vector in $\Re^{d^m}$.
@@ -228,12 +228,12 @@ With the method of moments perspective, to learn the marginal
   distribution over $h_1$, one must solve the following reconstruction
   problem, 
 \begin{align*}
-  \hat Z_{h_1} &= \arg\min_{Z_{h_1}} \half \|Z_{h_1} \mOpp{1}{1} - M_1 \|^2 + \half \|Z_{h_1} \mOpp{2}{1} - M_2 \|^2,
+  \hat Z_{h_1} &= \arg\min_{Z_{h_1}} \half \|Z_{h_1}(\mOpp{1}{1}) - M_1 \|^2 + \half \|Z_{h_1}(\mOpp{2}{1}) - M_2 \|^2,
 \end{align*}
 which does not have a closed form solution. 
 In contrast, this naturally fits into the convex optimization framework, where $\hat Z_{h_1}$ will now be,
 \begin{align*}
-  \hat Z_{h_1} &= \arg\min_{Z_{h_1}} \sum_{\vx \in \sD} \log Z_{h_1}( \mOpp{1}{1}[x_1] \cdot \mOpp{1}{1}[x_1] ),
+  \hat Z_{h_1} &= \arg\min_{Z_{h_1}} \sum_{\vx \in \sD} \log Z_{h_1}( \mOpp{1}{1}[x_1] \odot \mOpp{1}{1}[x_1] ),
 \end{align*}
 where $\cdot$ denotes element-wise multiplication.
 An important note to make is that \TensorFactorize only returns

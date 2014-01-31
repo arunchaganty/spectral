@@ -36,6 +36,13 @@ As before, our objective is to find a set of parameters $\hat \theta$
       &= \arg\max_{\theta} \sum_{\vx \in \sD} \log \sum_{\vh \in \sH} \exp( \theta^T\phi(\vx,\vh) - A(\theta) ). \label{eqn:obj-ml}
 \end{align}
 Note that this problem is not concave in $\theta$. 
+
+\note{Consider the supervised setting.
+As we get infinite amounts of data, we get this simple form.
+As MoM is a consistent estimator for marginals, we can optimize this
+  likelihood and it is consistent.
+}
+
 However, given the moments $\E[ \phi_\sC(\vx,\vh) ] = Z_\sC$, the
   problem simplifies to,
 \begin{align}

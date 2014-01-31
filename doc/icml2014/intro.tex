@@ -24,18 +24,7 @@ not as universally applicable as EM.
 \begin{figure}[t]
   \label{fig:approach}
   \centering
-\begin{tikzpicture}
-
-% Import grid.
-%\node[scale=0.9] (step0) at (0,0) {\input{figures/grid.tikz}};
-\node[scale=0.9] (step1) at (0cm,0cm) {\input{figures/grid-outline.tikz}};
-\node[scale=0.75, below=0.5 cm of step1.south] { \textbf{Step 1:} Identify bottlenecks};
-\node[scale=0.9] (step2) at (5cm,0cm) {\input{figures/factors.tikz}};
-\node[scale=0.75, below=0.5 cm of step2.south] { \textbf{Step 2:} Optimize piecewise likelihoods};
-
-\draw[-latex] (step1) -- (step2);
-
-\end{tikzpicture}
+  \subimport{figures/}{approach.tikz}
   \caption{Overview of approach}
 \end{figure}
 

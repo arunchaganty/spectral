@@ -164,7 +164,7 @@ To address the first, we will need that the following assumption on the
   \label{asm:full-rank-plus}
   For every clique $\sC = \{h_{i_1}, \cdots, h_{i_m}\} \in \sG$, let
     $Z_\sC$ be the marginal distribution for that clique. 
-  Then every mode-$i$ unfolding of $Z_\sC$ has full column rank.
+  Then every mode-$i$ unfolding of $Z_\sC$ has full column rank.\verify
 \end{assumption}
 Intuitively, the assumption guarantees that the marginal probability of
   any hidden state is non-zero.
@@ -173,10 +173,13 @@ Before we establish the second condition, we describe a reduction to
   a canonical form that will allow us to handle the case where an observed
   variable has multiple parents.
 
+
 \begin{lemma}(Canonical form) 
   \label{lem:reduction}
-  Every directed graphical model can be transformed into one in which
-  the observed variables are leaves with exactly one parent.
+Every directed graphical model can be transformed into one in which
+  the observed variables are leaves with exactly one parent. 
+There is a one-to-one correspondence between the parameters of this
+  transformed model and the original one.
 \end{lemma}
 \begin{proof}
   \begin{figure}
@@ -186,12 +189,24 @@ Before we establish the second condition, we describe a reduction to
     \caption{Reduction to canonical form.}
   \end{figure}
 
-  Let $x$ be an observed variable with parents $h_1, \cdots, h_p$ and
-  children $h_{p+1}, \cdots, h_c$. Replace $x$ with a phantom hidden
-  variable $h_x$, and make $x$ the child of $h_x$ (\figureref{reduction}). The domain of $h_x$
-  has the same as $x$, and $\mOpp{x}{h_x} = I$.
+  \providecommand{\hp}{\ensuremath{h_{\textrm phantom}}}
 
-  The parameters for $h_x$ are the same as $x$.
+  Let $x_v$ be an observed variable with parents $P$ and children $C$.
+  Consider the following transformation.
+  Replace $x_v$ with a phantom hidden variable \hp with the same
+  parents $P$ and children $C \union \{x_{v_1}, x_{v_2}, x_{v_3}\}$,
+  where $x_{v_1},x_{v_2},x_{v_3}$ are three copies of $x$
+  (\figureref{reduction}). 
+  
+  The domain of $\hp$ is the same as $x$
+    \footnote{Though we have assumed that all hidden variables share the
+      same domain, $[k]$, our work generalizes to hidden domains of
+      arbitrary sizes, provided \assumptionref{full-rank-plus} holds.}
+    and $\mOpp{v}{\textrm{phantom}} = I$.
+
+  Then, for any clique $\sC \contains \hp$, the parameters in the
+    original graphical model can be obtained by substituting $\hp$ with
+    $x_v$.
 \end{proof}
 
 \begin{lemma}(Bottlenecks guarantee exclusive views)
