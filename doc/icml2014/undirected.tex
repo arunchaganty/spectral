@@ -146,8 +146,9 @@ for even fully-supervised maximum likelihood.
 This motivates looking at pseudolikelihood objective of \citep{besag75pseudo},
 which optimizes the likelihood of each variable $a$ given its neighbors $\sN(a)$:
 $\sum_{a \in X \cup H} \log p_\theta(a \mid x_{\sN(a)})$.
-In the fully-supervised setting, pseudolikelihood provides consistent estimates,
-albeit at the cost of statistical efficiency.
+In the fully-supervised setting, pseudolikelihood provides computationally efficient consistent estimates,
+albeit at the cost of statistical efficiency
+(coincidentally, the same high-level motivation for using method of moments in the first place).
 However, if we write the objective, we will see that the log-partition function $A(\theta)$
 is replaced with a sum over $A_a(\theta; x_{\sN(a)}) = \sum_a \exp(\theta^\top\phi(a))$,
 which cannot be computed from $Z_\sC$, since the neighbors $\sN(a)$ in general do not form a clique.

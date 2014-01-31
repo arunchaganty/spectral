@@ -1,16 +1,88 @@
 \section{Discussion}
 \label{sec:discussion}
 
-Parameter estimation for latent-variable models using the method of
-  moments has received much attention in last few years.
+% Summarize paper
+For latent-variable models,
+there exists a tension between
+local optimization of likelihood,
+which is broadly applicable but has no theoretical guarantees,
+and the method of moments, which provides consistent estimators
+but are limited to models with special structure.
+The purpose of this work is to show that the two methods
+can be used synergistically to produce consistent estimates
+for a broader class of models.
+The key idea is to (i) perform tensor factorization \citep{anandkumar13tensor} to
+obtain information about each hidden variable in the form of conditional moments;
+(ii) use composite likelihood to estimate the marginal distributions of latent variables;
+and (iii) in the case of undirected models,
+use the marginal distributions to formulate a convex optimization to
+recover the model parameters.
+
+% Bottleneck is key
+Our approach allows us to handle a broad class of directed and undirected
+models in which each hidden variable is a ``bottleneck''---that is,
+it has three conditionally independent observations,
+(although the dependence on the observations could be quite complex as a function of the parameters).
+This bottleneck property of \citep{anandkumar13tensor}
+has been exploited in many other contexts,
+including Latent Dirichlet Allocation \cite{anandkumar12lda},
+parsing \cite{hsu12identifiability},
+noisy-or Bayesian networks \cite{halpern13noisyor},
+mixture of linear regressions \cite{chaganty13regression},
+and others.
+
+%Much recent work on method of moments for estimating latent-variable models
+%has focused on increasing applicability to broader range of models,
+
+%In this paper, we we've described an algorithm that can consistently
+%  estimate parameters for the class of directed and undirected graphical
+%  models for which each hidden variable has at least three conditionally
+%  independent observed variables (\propertyref{bottleneck}).
+
+%This condition is sufficiently general to capture a variety of popular
+  %models like latent trees and grids (like a pairwise latent Markov random field).
+%The undirected model setting applies to log-linear models, allowing
+%  for discriminative featurization; furthermore, in practice, the
+%  bottleneck condition can be enforced on a model if the observed
+%  features can be split into two uncorrelated sets.
+
+% Classes of models
+Notably, the bottleneck property allows us to perform consistent parameter
+estimation in undirected log-linear models with hidden variables with high
+treewidth, which 
+
+The key property we exploited was the presence of exclusive views
+  (\propertyref{exclusive-views}) with learnable parameters.
+In some sense, the presence of these views helps tie down the hidden
+  variables to the data. 
+While other authors, e.g \citet{anandkumar12lda, anandkumar2013linear,
+  halpern13noisyor} are able to learn parameters for models outside this
+  family, they do so with some knowledge of the correlation structure
+  between variables. 
+In a pre-processing step, they ``subtract'' out the correlations and
+  recover a graph that satisfies the bottleneck property
+  \propertyref{bottleneck}.
+% TOO BOLD
+%Thus, while \propertyref{bottleneck} is much stronger than
+%  \propertyref{exclusive-views}, we expect that without any knowledge of
+%  the correlation between variables, \propertyref{bottleneck} is
+%  necessary for identifiability.
+
+% Broad interest in learning more models
+The use of method of moments for learning latent-variable models
+%\cite{balle11transducer}
+including 
+Much of the Parameter estimation for latent-variable models using the method of
+  moments has received much attention in recent years,
+aimed at increasing their applicability to broader classes of models.
+
 Our work uses the \TensorFactorize algorithm presented by
-  \citet{anandkumar13tensor}, though \citet{anandkumar12moments} first
+  \citet{anandkumar13tensor}, first
   studied the consistent parameter estimation algorithm for the
   three-view mixture model.
+
 %\todo{What about Mossel and Roch?}
-Several authors have extended this work to settings that do not meet the
-  criterion \propertyref{bottleneck}, but rely on knowing more about
-  the underlying correlation structure of the problem.
+
 \citet{anandkumar12lda} are able to recover parameters for correlated
   discrete mixtures, e.g. latent Dirichlet allocation; their approach
   follows that of the three-view mixture model, with a pre-processing step
@@ -24,6 +96,11 @@ Several authors have extended this work to settings that do not meet the
   bottlenecks to learn parameters, but exploit properties of the model
   to negate correlations from learned edges, allowing for more
   bottlenecks to be discovered. 
+
+work to settings that do not meet the
+  criterion \propertyref{bottleneck}, but rely on knowing more about
+  the underlying correlation structure of the problem.
+
 In comparison, our work applies to a general family of models, including
   latent tree models, directed and undirected grids, with no assumptions
   on the correlation structure aside from independences encoded in the
@@ -51,32 +128,6 @@ For example, an $n\times n$ grid model has a treewidth of $n$, but each
 In some sense, an observable operator re-formulation of our algorithm
   subsumes this work.
 
-In this paper, we've described an algorithm that can consistently
-  estimate parameters for the class of directed and undirected graphical
-  models for which each hidden variable has at least three conditionally
-  independent observed variables (\propertyref{bottleneck}).
-This condition is sufficiently general to capture a variety of popular
-  models like latent trees and grids (like a pairwise latent Markov
-  random field).
-The undirected model setting applies to log-linear models, allowing
-  for discriminative featurization; furthermore, in practice, the
-  bottleneck condition can be enforced on a model if the observed
-  features can be split into two uncorrelated sets.
-
-The key property we exploited was the presence of exclusive views
-  (\propertyref{exclusive-views}) with learnable parameters.
-In some sense, the presence of these views helps tie down the hidden
-  variables to the data. 
-While other authors, e.g \citet{anandkumar12lda, anandkumar2013linear,
-  halpern13noisyor} are able to learn parameters for models outside this
-  family, they do so with some knowledge of the correlation structure
-  between variables. 
-In a pre-processing step, they ``subtract'' out the correlations and
-  recover a graph that satisfies the bottleneck property
-  \propertyref{bottleneck}.
-Thus, while \propertyref{bottleneck} is much stronger than
-  \propertyref{exclusive-views}, we expect that without any knowledge of
-  the correlation between variables, \propertyref{bottleneck} is
-  necessary for identifiability.
-
-
+% Identifiability
+Of course, there are models which 
+\cite{kruskal77three}

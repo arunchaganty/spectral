@@ -1,34 +1,34 @@
 
 %We will now instantiate our algorithm for a couple more examples, illustrated in \figureref{examples}.
 
-\paragraph{Aggregating observations}
-We describe two practical considerations to use samples more efficiently.
-Firstly, if we have multiple exclusive views for a hidden variable,
-  intuitively, it is better to aggregate over them. 
-For example, consider a hidden variable $h_1$ with multiple exclusive
-  views $x_1$ and $x_2$.
-With the method of moments perspective, to learn the marginal
-  distribution over $h_1$, one must solve the following reconstruction
-  problem, 
-\begin{align*}
-  \hat Z_{h_1} &= \arg\min_{Z_{h_1}} \half \|Z_{h_1}(\mOpp{1}{1}) - M_1 \|^2 + \half \|Z_{h_1}(\mOpp{2}{1}) - M_2 \|^2,
-\end{align*}
-which does not have a closed form solution. 
-In contrast, this naturally fits into the convex optimization framework, where $\hat Z_{h_1}$ will now be,
-\begin{align*}
-  \hat Z_{h_1} &= \arg\min_{Z_{h_1}} \sum_{\vx \in \sD} \log Z_{h_1}( \mOpp{1}{1}[x_1] \odot \mOpp{1}{1}[x_1] ),
-\end{align*}
-where $\cdot$ denotes element-wise multiplication.
-An important note to make is that \TensorFactorize only returns
-  a solution up to permutation; if $\mOpp{1}{1}$ and
-  $\mOpp{1}{2}$ do not belong to the same bottleneck (e.g. $x^a_2$ and
-  $x^b_2$ in \figureref{examples-tree}), then some
-  care must be taken to ensure they have the same labelling.
-
-Secondly, we can exploit parameter sharing by aggregating over
-  disjoint sets of observed variables. 
-For example, in \figureref{examples-hmm}, we can aggregate the statistics for
-  bottlenecks $h_i$ with views $\{x_{i-1}, x_{i}, x_{i+1}\}$ before
-  running \TensorFactorize; this will give us a consistent estimate for
-  $O$ (as well as $T$).
+%\paragraph{Aggregating observations}
+%We describe two practical considerations to use samples more efficiently.
+%Firstly, if we have multiple exclusive views for a hidden variable,
+%  intuitively, it is better to aggregate over them. 
+%For example, consider a hidden variable $h_1$ with multiple exclusive
+%  views $x_1$ and $x_2$.
+%With the method of moments perspective, to learn the marginal
+%  distribution over $h_1$, one must solve the following reconstruction
+%  problem, 
+%\begin{align*}
+%  \hat Z_{h_1} &= \arg\min_{Z_{h_1}} \half \|Z_{h_1}(\mOpp{1}{1}) - M_1 \|^2 + \half \|Z_{h_1}(\mOpp{2}{1}) - M_2 \|^2,
+%\end{align*}
+%which does not have a closed form solution. 
+%In contrast, this naturally fits into the convex optimization framework, where $\hat Z_{h_1}$ will now be,
+%\begin{align*}
+%  \hat Z_{h_1} &= \arg\min_{Z_{h_1}} \sum_{\vx \in \sD} \log Z_{h_1}( \mOpp{1}{1}[x_1] \odot \mOpp{1}{1}[x_1] ),
+%\end{align*}
+%where $\cdot$ denotes element-wise multiplication.
+%An important note to make is that \TensorFactorize only returns
+%  a solution up to permutation; if $\mOpp{1}{1}$ and
+%  $\mOpp{1}{2}$ do not belong to the same bottleneck (e.g. $x^a_2$ and
+%  $x^b_2$ in \figureref{examples-tree}), then some
+%  care must be taken to ensure they have the same labelling.
+%
+%Secondly, we can exploit parameter sharing by aggregating over
+%  disjoint sets of observed variables. 
+%For example, in \figureref{examples-hmm}, we can aggregate the statistics for
+%  bottlenecks $h_i$ with views $\{x_{i-1}, x_{i}, x_{i+1}\}$ before
+%  running \TensorFactorize; this will give us a consistent estimate for
+%  $O$ (as well as $T$).
 
