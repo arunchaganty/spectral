@@ -259,8 +259,6 @@ There is a one-to-one correspondence between the parameters of this
     \in \sC} \sV_{h'}$
 \end{proof}
 
-\todo{somewhere give examples that are not in our class, preferably the simplest one - noisy-or, cite Sontag}
-
 With this lemma in place, we present the full algorithm, \LearnMarginals~
 in \algorithmref{directed}.
 
@@ -298,6 +296,29 @@ In the directed grid model, we can identify the conditional moments $O$ from jus
 %In this case, we only require that the hidden variables in distinct
   %cliques share parameters.
 
+\begin{figure}
+  \centering
+  \subfigure[Hidden Markov Model] {
+    \includegraphics[width=0.45\columnwidth]{figures/hmm.pdf}
+    \label{fig:examples-hmm}
+  }
+%  \subfigure[Directed grid model] {
+%    \label{fig:examples-grid}
+%    \includegraphics{figures/grid.pdf}
+%  }
+  \subfigure[Tree model] {
+    \includegraphics[width=0.45\columnwidth]{figures/tree.pdf}
+    \label{fig:examples-tree}
+  }
+  \subfigure[Non-example: a noisy-or network] {
+    \includegraphics[height=5em]{figures/non-example.pdf}
+    \label{fig:examples-noisy-or}
+  }
+  \caption{}
+  \label{fig:examples}
+\end{figure}
+
+
 \paragraph{Example: hidden Markov model.}
 
 In the HMM (\figureref{examples-hmm}), the parameters
@@ -332,6 +353,20 @@ We can recover $T$ from the clique $\{h_1, h_2\}$ by using views $x^a_2$
 %  (exclusive to $h_2$) and $x^a_3$ (exclusive to $h_3$). Note that while
 %  $x^a_3$ is also a view for $h_2$, $x^a_3$ is independent of $h_2$ given
 %  $h_1$.
+
+\paragraph{Non-examples}
+\label{sec:non-example}
+
+The simplest example of a model not identifiable by our algorithm is
+  a mixture model with a single view, i.e. \figureref{three-view} with
+  just the variables $h_1$ and $x_1$.
+However, without further assumptions the model itself is not
+  identifiable\footnote{To see this, observe that the probability-mass
+  can be arbitrarily exchanged between $\Pr(h_1)$ and $\Pr(x_1 | h_1)$}.
+A class of binary-valued noisy-or networks which do not possess the
+  bottleneck property are be shown to be identifiable by
+  \citet{halpern13noisyor}; 
+\figureref{examples-noisy-or} presents one example in this class.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Sample complexity}
@@ -449,22 +484,3 @@ $\sqrt{n}(\hat Z_\sC - Z_\sC) \convind \sN(0, \mOppAlli \Sigma_\sV \mOppAllit)$.
 % DONE: too brazen to say
 %Note that extending these results to finite sample bounds can be done
   %via a straightforward application of perturbation bounds.
-
-\begin{figure}
-  \centering
-  \subfigure[Hidden Markov Model] {
-    \includegraphics[width=0.45\columnwidth]{figures/hmm.pdf}
-    \label{fig:examples-hmm}
-  }
-%  \subfigure[Directed grid model] {
-%    \label{fig:examples-grid}
-%    \includegraphics{figures/grid.pdf}
-%  }
-  \subfigure[Tree model] {
-    \includegraphics[width=0.45\columnwidth]{figures/tree.pdf}
-    \label{fig:examples-tree}
-  }
-  \caption{Examples of directed models satisfying the exclusive views property.}
-  \label{fig:examples}
-\end{figure}
-
