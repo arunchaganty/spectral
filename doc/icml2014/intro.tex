@@ -12,7 +12,7 @@ are the norm, but are susceptible to local optima.
 
 % 3. People have approached unsupervised learning with the MoM magic sauce, but the sauce is limited.
 Recently, unsupervised learning techniques based on the spectral method of moments
-have offered a refreshing and promising perspective on
+have offered a refreshing perspective on
 this learning problem
 \citep{mossel2005learning,
 hsu09spectral,
@@ -33,7 +33,10 @@ not as broadly applicable as EM.
   \subimport{figures/}{approach.tikz}
   \caption{
  % \todo{need three steps: tensor factorization, optimize composite likelihood, recover model parameters;}
-  Overview of approach}
+  Overview of our approach: we first use tensor factorization to learn the conditional moments for each hidden variable.
+  Then we optimize a composite likelihood to recover the hidden clique marginals,
+  given which we can extract the model parameters.
+  }
 \end{figure}
 
 % DONE: need to say from the beginning that we have a hybrid approach, not just using method of moments;
@@ -42,7 +45,7 @@ not as broadly applicable as EM.
 
 % 4. State what we do: exploit moment constraints to make the problem easier.
 In this paper,
-we show that a much broader class of directed and undirected graphical models can be consistently estimated,
+we show that a much broader class of discrete directed and undirected graphical models can be consistently estimated,
 specifically those in which each hidden variable has three conditionally
 independent observed variables (``views'')---see \propertyref{bottleneck}.
 The key idea is to leverage the spectral method of moments,
@@ -92,9 +95,9 @@ under non-degenerate rank assumptions on the conditional moments.
 %Our approach also applies to undirected log-linear latent variable
   %models, where we use the recovered marginals to make the learning
   %problem convex (\sectionref{undirected}).
-Finally, our approach gracefully extends to more general model families
-  in which we are unable to recover the marginal distributions for all
-  hidden cliques; in such scenarios, we use posterior regularization to constrain
-  EM.  
+%Finally, our approach gracefully extends to more general model families
+%  in which we are unable to recover the marginal distributions for all
+%  hidden cliques; in such scenarios, we use posterior regularization to constrain
+%  EM.  
 %\todo{Is this possible?:  We show that empirically, using such constraints alleviates local
 %optima issues.}
