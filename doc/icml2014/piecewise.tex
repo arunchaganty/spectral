@@ -9,7 +9,7 @@ Now we aim to improve statistical efficiency by replacing (ii) with a likelihood
 % DONE: set the stage a bit more
 Of course, optimizing the original marginal likelihood is subject to local optima.
 We make two observations to arrive at a convex optimization problem.
-The first insight is that we have used tensor decomposition to recover the conditional moments,
+The first is that we have used tensor decomposition to recover the conditional moments,
 so effectively a subset of the parameters have been fixed.
 However, this alone is not enough, for the full likelihood is still non-convex.
 The second insight is that we can optimize a \emph{composite likelihood objective} \cite{lindsay88composite}
@@ -31,7 +31,6 @@ Consider a clique $\sC = \{h_{i_1}, \cdots h_{i_m}\} \in \sG$, with
   exclusive views $\sV = \{x_{v_1}, \cdots, x_{v_m}\}$. 
 The expected composite likelihood over $\Sx{\sV}$ given parameters $\mH_\sC$
 with respect to the true distribution $\sM_\sV$ can be written in tensor form:
-  [DONE: likelihood is a function of parameters, not of data]
 \begin{align*}
   \sL_\ml %(\Sx{\sV}) 
   &= \E[\log \Pr( \Sx \sV )] \\
