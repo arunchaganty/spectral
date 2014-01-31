@@ -1,12 +1,13 @@
 \begin{abstract} 
 
-Recent work in method of moments provide consistent estimates
+Recent work on the method of moments provide consistent estimates
   for latent-variable models, avoiding local optima issues,
-  but these methods can only be applied to certain types of graphical models.
-In this work, we show that the method of moments in conjunction
-  with a composite marginal likelihood objective
+  but these methods are applicable only to certain types of graphical models.
+  On the other hand, pure likelihood objectives are difficult to optimize.
+In this work, we show that using the method of moments in conjunction
+  with composite marginal likelihood
   yields consistent parameter estimates for a much broader
-  class of directed and undirected graphical models,
+  class of discrete directed and undirected graphical models,
   including loopy graphs with high treewidth.
 %In particular, our algorithm applies to any graphical model wherein each
   %hidden variable has at least three conditionally independent observed
@@ -25,13 +26,13 @@ In this work, we show that the method of moments in conjunction
   %variables.
 %This family includes loopy graphs with high treewidth.
 Specifically, we use tensor factorization to reveal partial information
-about the hidden variables, rendering the otherwise non-convex negative
-log-likelihood convex.
+about the hidden variables.  This renders the otherwise non-convex
+likelihood objective convex, and EM can then be used to attain the global optimum.
 %We use the method of moments to tie each hidden to some observed
   %variables, and show that the rest of the problem can be cast as convex
   %optimization of the likelihood.
-Our approach gracefully extends to models outside our class by
-  incorporating the partial information via posterior regulraization.
+%Our approach gracefully extends to models outside our class by
+  %incorporating the partial information via posterior regulraization.
 \end{abstract} 
 
 %\paragraph{Last updated:} \today, \currenttime
