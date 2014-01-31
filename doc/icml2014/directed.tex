@@ -9,22 +9,22 @@
 %The tensor factorization method attacks the heart of the non-convexity
   %in latent variable models.
   In this section, we will develop a consistent parameter estimate for a class of directed graphical models.
-  In directed models, the conditional moments $\mOpp{v}{i} \eqdef \Pr(x_v \mid h_i)$
-  are only a subset of the parameters.
+  In general directed models, the conditional moments $\mOpp{v}{i} \eqdef \Pr(x_v \mid h_i)$
+  do not correspond directly to the underlying parameters.
   %Once we recover the conditional moments $\mOpp{v}{j} \eqdef \Pr(x_v
   %| h_j)$ for some $v, j$, we present a systematic approach to learn the
   %conditional probability tables for every clique for a class of directed
   %graphical models.
-  Let us see how we can estimate the remaining parameters with an example (Section~\ref{sec:directedExample}).
+  Let us see how we can estimate the parameters with an example (Section~\ref{sec:directedExample}).
   Section~\ref{sec:directedGeneral} will describe the algorithm in full generality.
 For ease of exposition we make the following simplifications to our presentation:
 (i) we describe our algorithm entirely in the context of directed
-  graphical models, though it generalizes to factor graphs.
+  graphical models, though it generalizes to factor graphs;
 (ii) we derive our algorithm assuming infinite data; in \sectionref{sampleComplexity} we 
-  describe error bounds for the finite sample regime.
-(iii) we present the algorithm solely in terms of the method of moments; in
-  \sectionref{piecewise}, we show how we can get a statistically more
-  efficient estimator using convex optimization.
+  describe error bounds for the finite sample regime; and
+(iii) we present the algorithm solely in terms of linear algebra operations; in
+  \sectionref{piecewise}, we show how we can get a more statistically
+  efficient estimator using composite likelihood.
 
 \subsection{Example: Directed grid model}
 \label{sec:directedExample}
