@@ -13,8 +13,11 @@ $(OUTPUT).pdf: paper.tex $(SECTIONS) $(FIGURES)
 	mv $(subst .tex,.pdf,$<) $@
 
 final: paper.tex $(SECTIONS)
-	./texify < $< > $(subst .tex,.tmp.tex,$<)
+	texify < $< > $(subst .tex,.tmp.tex,$<)
 	$(LATEX) $(subst .tex,.tmp.tex,$<)
+	bibtex $(subst .tex,,$<)
+	$(LATEX)  $(subst .tex,.tmp.tex,$<)
+	$(LATEX)  $(subst .tex,.tmp.tex,$<)
 	mv $(subst .tex,.tmp.pdf,$<) $(OUTPUT).pdf
 
 bib: paper.tex $(SECTIONS)
