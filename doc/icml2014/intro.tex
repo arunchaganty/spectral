@@ -3,7 +3,7 @@
 
 % 1. Latent variable models are good.
 Latent-variable graphical models provide compact representations of data
-and have been employed across many fields [TODO: find a much better/broader set of citations]
+and have been employed across many fields \todo{find a much better/broader set of citations}
 \cite{quattoni04crf,beaumont2004bayesian,haghighi06prototype}.
 % 2. Learning them is hard.
 However, learning these models remains a difficult problem due to the
@@ -15,7 +15,7 @@ Recently, unsupervised learning techniques based on the spectral method of momen
 have offered a refreshing and promising perspective on
 this learning problem
 \citep{hsu09spectral,anandkumar11tree,anandkumar12moments,anandkumar12lda,hsu12identifiability,balle11transducer,balle12automata}.
-[TODO: make sure we are citing the right people]
+\todo{make sure we are citing the right people}
 These methods exploit the linear algebraic properties of the model to
 factorize the moments into parameters, providing strong theoretical guarantees.
 However, these methods apply to a limited set of models, and are thus
@@ -25,7 +25,7 @@ not as broadly applicable as EM.
   \label{fig:approach}
   \centering
   \subimport{figures/}{approach.tikz}
-  \caption{[TODO: need three steps: tensor factorization, optimize composite likelihood, recover model parameters; Overview of approach}
+  \caption{\todo{need three steps: tensor factorization, optimize composite likelihood, recover model parameters;} Overview of approach}
 \end{figure}
 
 % DONE: need to say from the beginning that we have a hybrid approach, not just using method of moments;
@@ -87,5 +87,6 @@ under non-degenerate rank assumptions on the conditional moments.
 Finally, our approach gracefully extends to more general model families
   in which we are unable to recover the marginal distributions for all
   hidden cliques; in such scenarios, we use posterior regularization to constrain
-  EM.  We show that empirically, using such constraints alleviates local
-  optima issues.
+  EM.  
+\todo{Is this possible?:  We show that empirically, using such constraints alleviates local
+optima issues.}

@@ -3,10 +3,10 @@
 \section{Directed models}
 \label{sec:directed}
 
-[TODO: need to say we're going to do this for the infinite data case,
-and then study bounds]
+\todo{need to say we're going to do this for the infinite data case,
+and then study bounds}
 
-[TODO: try to be consistent: either use latent or hidden]
+\todo{try to be consistent: either use latent or hidden}
 
 % DONE: need more setup of what the goal is
 %The tensor factorization method attacks the heart of the non-convexity
@@ -221,7 +221,7 @@ There is a one-to-one correspondence between the parameters of this
     and $\mOpp{v}{\textrm{new}} = I$.\footnote{Though we have assumed that all hidden variables share the
       same domain, $[k]$, our work generalizes to hidden domains of
       arbitrary sizes.
-      [TODO: add qualifier]
+      \todo{add qualifier}
       %provided \assumptionref{full-rank-plus} holds.
       }
 
@@ -267,7 +267,7 @@ There is a one-to-one correspondence between the parameters of this
     \in \sC} \sV_{h'}$
 \end{proof}
 
-[TODO: somewhere give examples that are not in our class, preferably the simplest one, cite Sontag]
+\todo{somewhere give examples that are not in our class, preferably the simplest one, cite Sontag}
 
 With this lemma in place, we present the full algorithm, \LearnMarginals~
 in \algorithmref{directed}.
@@ -301,7 +301,7 @@ In the directed grid model, we can identify the conditional moments $O$ from jus
   $x^a_1, x^b_1$ and $x^a_2$.
   Therefore, we do not require that $h_2, h_3$ or $h_4$
   be bottlenecks, and can omit the observations $x^b_2, x^b_3$ and $x^b_4$.
-  [TODO: make this a footnote if running out of space]
+  \todo{make this a footnote if running out of space}
 % PL: don't understand this comment
 %In this case, we only require that the hidden variables in distinct
   %cliques share parameters.
@@ -309,19 +309,19 @@ In the directed grid model, we can identify the conditional moments $O$ from jus
 \paragraph{Consistency and Sample Complexity}
 
 \LearnMarginals~ combines two consistent algorithms, \TensorFactorize and
-\LearnClique, [TODO: too much space after LearnClique] and is thus consistent itself.
-[TODO: did they prove this; if so just say "they show", not "we can show"]
+\LearnClique, \todo{too much space after LearnClique} and is thus consistent itself.
+\todo{did they prove this; if so just say "they show", not "we can show"}
 Using results from
   \citet{anandkumar12moments,anandkumar13tensor} we can show that
   learning $\mOpp{v_1}{i}$ for the bottleneck $h_i$ with views $x_{v_1},
   x_{v_2}, x_{v_3}$ has the following sample complexity,
-  [TODO: define hat O]
-  [TODO: max subscript is misaligned]
+  \todo{define hat O}
+  \todo{max subscript is misaligned}
 \begin{align*}
   \|\mOpphat{v_1}{i} - \mOpp{v_1}{i}\|^2_F &= \frac{1}{\sqrt{n}} O\left( \frac{k {\pi\oft{i}}_{\max}^2}{\sigma_k(M_{v_1,v_2})^5} \right). 
 \end{align*}
 
-[TODO: call MOM squared]
+\todo{call MOM squared}
 We next describe the asymptotic variance for \LearnClique when using the
   method of moments.
 \begin{lemma}(Asymptotic variance of $Z_\sC$)
