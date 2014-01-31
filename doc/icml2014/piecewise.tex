@@ -65,6 +65,9 @@ Since the function is convex, EM converges to a global optimum.
 We have proposed two methods for estimating the hidden marginals $Z_\sC$ given
 the conditional moments $\mOppAll$: one based on computing a simple pseudoinverse,
 and the other based on composite likelihood.
+We use the notation $\hat Z^\mom_\sC$ to denote the pseudoinverse
+  estimator and $\hat Z^\ml_\sC$ to denote the composite likelihood
+  estimator.
 
 The Cramer-Rao lower bound tells us that maximum likelihood yields
 the statistically the most efficient composite estimator for $Z_\sC$
@@ -73,13 +76,10 @@ by maximizing the likelihood of all of $\vx$, but that would again lead to non-c
 But can we quantify the \emph{relative efficiency} of the pseudoinverse estimator
 compared to the composite likelihood estimator?
 Let us first compute the asymptotic variance of the latter.
-We use the notation $\hat Z^\mom_\sC$ to denote the pseudoinverse
-  estimator and $\hat Z^\ml_\sC$ to denote the composite likelihood
-  estimator.
 
 \begin{lemma}[Asymptotic variance of the composite likelihood estimator for $Z_\sC$]
   \label{lem:pw-variance}
-  The asymptotic variance of $\hat Z_{\sC}$ based on composite likelihood is
+  The asymptotic variance of $\hat Z^\ml_{\sC}$ based on composite likelihood is
   \begin{align*}
     \Sigma^{\ml} &= \mOppAlli \dM_\sV \Sigma_\sV \dM_\sV \mOppAllit.
   \end{align*}
