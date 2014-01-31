@@ -45,7 +45,7 @@ Since the function is convex, EM converges to a global optimum.
 \algorithmref{piecewise} summarizes our algorithm.
 
 \begin{algorithm}
-  \caption{\LearnClique (composite likelihood)}
+  \caption{$\LearnClique$ (composite likelihood)}
   \label{algo:piecewise}
   \begin{algorithmic}
     % DONE: interface should match LearnClique from directed.tex  
@@ -85,7 +85,7 @@ Let us first compute the asymptotic variance of the latter.
 \end{lemma}
 \begin{proof}
   The result follows by direct application of the delta-method
-  \cite{vaart98asymptotic} to the negative-likelihood objective. Refer
+  \cite{vaart98asymptotic} to the negative-likelihood objective. Refer to
   \appendixref{pw-variance-proof} for a complete derivation.
 \end{proof}
 
@@ -116,16 +116,15 @@ To get a sense for how large the gap is, consider an example in which
 $M_\sV$ is close to the uniform distribution, i.e. $\dM_\sV
   \approxeq \frac{1}{d} I$. 
 Then the efficiency of the $e^\mom \approxeq \Tr(\frac{1}{d^2} I) = \frac{1}{d}$.
-In other words, the gap in variance between the method of moments
-  estimator and maximum likelihood grows linearly with the number of observations $d$.
-
+In other words, the gap in variance between the two estimators
+grows linearly with the number of observations $d$.
 % (ARUN): Possibly cut this whole part.
 \figureref{cl-hmm} compares the parameter recovery error of the
-  pseudoinverse estimator and the composite likelihood estimator for
-  a hidden Markov model with 2 hidden states ($k=2$) and 3 emissions
-  ($d=3$).
-Empirically, we observe that using the composite likelihood estimator
-  was more stable and leads to better results.
+  pseudoinverse estimator and the composite likelihood estimator.
+  %for
+  %a hidden Markov model with 2 hidden states ($k=2$) and 3 emissions
+  %($d=3$).
+Empirically, we observe that using the composite likelihood estimator indeed leads to more accurate estimates.
 
 % Visualize
 % To visualize this phenomenon, note that the pseudoinverse estimator can be written
@@ -153,5 +152,6 @@ Empirically, we observe that using the composite likelihood estimator
   \includegraphics[width=0.8\columnwidth]{figures/hmm-2-3.pdf}
     \label{fig:cl-hmm}
 %  }
-  \caption{Empirical performance when recovering parameters for a Hidden Markov Model with $k=2$ states and $d=3$ emissions}
+  \caption{Parameter estimation error when recovering parameters for a Hidden
+  Markov Model with $k=2$ states and $d=3$ emissions using two types of estimators.}
 \end{figure}
