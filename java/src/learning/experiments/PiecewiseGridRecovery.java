@@ -271,7 +271,6 @@ public class PiecewiseGridRecovery implements Runnable {
     return new SimpleMatrix(H);
   }
 
-
   public boolean piecewiseIdentifiabilityReport(DirectedGridModel model, DirectedGridModel.Parameters params, Counter<Example> data) {
     begin_track("piecewise-identifiability");
     int K = model.getK();

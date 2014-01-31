@@ -29,6 +29,7 @@ import java.util.Random;
 
 import static fig.basic.LogInfo.log;
 import static fig.basic.LogInfo.logs;
+import static learning.common.Utils.outputList;
 import static learning.experiments.SpectralMeasurements.Mode.TrueMeasurements;
 import static learning.models.loglinear.Models.*;
 
@@ -131,13 +132,13 @@ public class SpectralMeasurements implements Runnable {
       int[] perm = new int[K];
       Params projectedCounts = trueCounts.copy();
       projectedCounts.copyOver(estimatedCounts);
-      err = projectedCounts.computeDiff( trueCounts, perm);
+      err = projectedCounts.computeDiff2( trueCounts, perm);
       Execution.putOutput("countsError", err);
       LogInfo.logsForce("countsError="+err);
 
       Params projectedParams = trueParams.newParams();
       projectedParams.copyOver(trueParams);
-      err = estimatedParams.computeDiff( projectedParams, perm );
+      err = estimatedParams.computeDiff2( projectedParams, perm );
       Execution.putOutput("paramsError", err);
       LogInfo.logsForce("paramsError="+err);
 
@@ -147,7 +148,6 @@ public class SpectralMeasurements implements Runnable {
 
       return err;
     }
-
   }
   public Analysis analysis;
 
@@ -246,6 +246,107 @@ public class SpectralMeasurements implements Runnable {
     }
 
     return measurements;
+  }
+
+  SimpleMatrix getGridEdgeMarginals(LatentGridModel model, SimpleMatrix O, Counter<Example> data) {
+    int K = modelA.getK();
+    double[][] T = new double[K][K];
+    T = RandomFactory.rand_(initRandom, K,K);
+    MatrixOps.abs(T);
+    MatrixOps.scale(T, 1./MatrixOps.sum(T));
+    assert( MatrixOps.equal(MatrixOps.sum(T), 1.0) );
+
+    // Temporary buffer
+    boolean done = false;
+
+    double lhood_old = Double.NEGATIVE_INFINITY;
+    for(int iter = 0; iter < 1000 && !done; iter++){
+      // Compute marginals
+      double lhood = 0.;
+      double[][] P_ = new double[K][K];
+      double cu = 0;
+      for(Example ex : data) {
+        double weight = data.getFraction(ex);
+        cu += weight;
+        for(int r = 0; r < 1; r++ ) {
+          for(int c = 0; c < 1; c++) {
+            int x1a = ex.x[model.oIdx(r,c,0)];
+            int x1b = ex.x[model.oIdx(r,c,1)];
+
+            // Neighbours
+            if(r == 0) {
+              // then r+1 is a neighbour
+              int x2a = ex.x[model.oIdx(r+1,c,0)];
+              int x2b = ex.x[model.oIdx(r+1,c,1)];
+
+              // Add edge marginal
+              double z = 0.;
+              for(int h1 = 0; h1 < K; h1++)
+                for(int h2 = 0; h2 < K; h2++)
+                  z += T[h1][h2] * O.get(x1a,h1) * O.get(x2a,h2);
+
+              // Update
+              assert z > 0;
+              lhood += weight * Math.log(z);
+              for(int h1 = 0; h1 < K; h1++)
+                for(int h2 = 0; h2 < K; h2++)
+                  P_[h1][h2] += (weight * T[h1][h2] * O.get(x1a,h1) * O.get(x2a,h2)) / z;
+            }
+            if(false && c == 0) {
+              // then r+1 is a neighbour
+              int x2a = ex.x[model.oIdx(r,c+1,0)];
+              int x2b = ex.x[model.oIdx(r,c+1,1)];
+
+              // Add edge marginal
+              double z = 0.;
+              for(int h1 = 0; h1 < K; h1++)
+                for(int h2 = 0; h2 < K; h2++)
+                  z += T[h1][h2] * O.get(x1a,h1) * O.get(x2a,h2);
+
+              // Update
+              assert z > 0;
+              lhood += weight * Math.log(z);
+              for(int h1 = 0; h1 < K; h1++)
+                for(int h2 = 0; h2 < K; h2++)
+                  P_[h1][h2] += (weight * T[h1][h2] * O.get(x1a,h1) * O.get(x2a,h2)) / z;
+            }
+          }
+        }
+      }
+      double z = MatrixOps.sum(P_);
+      // Normalize
+      for(int h1 = 0; h1 < K; h1++) {
+        for(int h2 = 0; h2 < K; h2++) {
+          P_[h1][h2] /= z;
+        }
+      }
+
+      // Update
+      double diff = 0.;
+      for(int h1 = 0; h1 < K; h1++) {
+        for(int h2 = 0; h2 < K; h2++) {
+          diff += Math.abs(T[h1][h2] - P_[h1][h2]);
+          T[h1][h2] = P_[h1][h2];
+        }
+      }
+      assert( MatrixOps.equal(MatrixOps.sum(T), 1.0 ));
+
+      assert(lhood > lhood_old);
+      lhood_old = lhood;
+
+      LogInfo.dbg(outputList(
+              "iter", iter,
+              "lhood", lhood,
+              "diff", diff
+      ));
+
+      done = diff < 1e-4;
+    }
+    LogInfo.log(outputList(
+            "lhood", lhood_old
+    ));
+
+    return new SimpleMatrix(T);
   }
 
   /**
@@ -382,7 +483,6 @@ public class SpectralMeasurements implements Runnable {
       SimpleMatrix O = M[2];
       SimpleMatrix O_ = M[1];
 
-      Execution.putOutput("pi", pi);
       Execution.putOutput("O", O);
 
       // Average the two
@@ -392,11 +492,26 @@ public class SpectralMeasurements implements Runnable {
       O = MatrixOps.projectOntoSimplex( O, smoothMeasurements );
       Execution.putOutput("O", O);
 
+      // Recover other features for this grid.
+      SimpleMatrix T = null;
+      if(useTransitions) {
+        T = getGridEdgeMarginals(model, O, data);
+      }
+
       Indexer<Feature> measuredFeatureIndexer = new Indexer<>();
       for( int h = 0; h < K; h++ ) {
         for( int x = 0; x < D; x++ ) {
           // O
           measuredFeatureIndexer.add(model.oFeature(h,x));
+        }
+      }
+
+      if(useTransitions) {
+        for( int h1 = 0; h1 < K; h1++ ) {
+          for( int h2 = 0; h2 < D; h2++ ) {
+            // O
+            measuredFeatureIndexer.add(model.tFeature(h1,h2));
+          }
         }
       }
 
@@ -411,6 +526,21 @@ public class SpectralMeasurements implements Runnable {
           measurements.set(model.oFeature(h,x), 2 * model.getL() * O.get( x, h ) * pi.get(h));
         }
       }
+
+      if(useTransitions) {
+        for( int h1 = 0; h1 < K; h1++ ) {
+          for( int h2 = 0; h2 < K; h2++ ) {
+            // Assuming identical distribution.
+            // multiplying by pi to go from E[x|h] -> E[x,h]
+            // multiplying by L because true.counts aggregates
+            // over x1, x2 and x3.
+            assert T != null;
+            measurements.set(model.tFeature(h1,h2), model.getL() * T.get( h1, h2 )); // TODO: Only wokrs for 2x2
+          }
+        }
+      }
+
+
     } else {
       throw new RuntimeException("Not implemented yet");
     }
@@ -550,7 +680,7 @@ public class SpectralMeasurements implements Runnable {
       params.plusEquals(1.0, noise);
     }
 
-    fullIdentifiabilityReport(modelA, analysis.trueParams);
+//    fullIdentifiabilityReport(modelA, analysis.trueParams);
 
     // Run the bottleneck spectral algorithm
     switch( mode ) {

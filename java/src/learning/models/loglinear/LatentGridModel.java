@@ -107,10 +107,10 @@ public class LatentGridModel extends ExponentialFamilyModel<Example> {
     return new BasicParams(K, indexer);
   }
 
-  int hIdx(int r, int c) {
+  public int hIdx(int r, int c) {
     return r * (cols) + c;
   }
-  int oIdx(int r, int c, int d) {
+  public int oIdx(int r, int c, int d) {
     return r * (cols * 2) + c * (2) + d;
   }
 

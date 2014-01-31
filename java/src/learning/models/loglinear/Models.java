@@ -15,9 +15,9 @@ public class Models {
       this.L = L;
       createHypergraph(null,null,0);
       fullParams = new ParamsVec(K, featureIndexer);
-      restrictedFeatureIndexer.clear();
-      for(Feature f : featureIndexer.getObjects().subList(0,K))
-        restrictedFeatureIndexer.add(f);
+//      restrictedFeatureIndexer.clear();
+//      for(Feature f : featureIndexer.getObjects().subList(0,K))
+//        restrictedFeatureIndexer.add(f);
     }
     @Deprecated
     public MixtureModel() {
@@ -112,6 +112,7 @@ public class Models {
       this.D = D;
       this.L = L;
       createHypergraph(null,null,0);
+      fullParams = new ParamsVec(K, featureIndexer);
     }
     HiddenMarkovModel(){}
 
@@ -387,6 +388,7 @@ public class Models {
       this.width = L / height;
       assert L % height == 0 : L;
       createHypergraph(null,null,0);
+      fullParams = new ParamsVec(K, featureIndexer);
     }
 
     public Example newExample() {

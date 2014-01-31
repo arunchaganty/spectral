@@ -16,10 +16,11 @@ public abstract class Model extends ExponentialFamilyModel<Example> {
   public int getL() { return L; }
   public final Indexer<Feature> featureIndexer = new Indexer<>();
   public ParamsVec fullParams;
-  public final Indexer<Feature> restrictedFeatureIndexer = new Indexer<>();
-  public int numFeatures() { return restrictedFeatureIndexer.size(); }
+//  public final Indexer<Feature> restrictedFeatureIndexer = new Indexer<>();
+  public int numFeatures() { return featureIndexer.size(); }
   public ParamsVec newParams() {
-    return new ParamsVec(K, restrictedFeatureIndexer);
+//    return new ParamsVec(K, restrictedFeatureIndexer);
+    return new ParamsVec(K, featureIndexer);
   }
 
   abstract Example newExample();
