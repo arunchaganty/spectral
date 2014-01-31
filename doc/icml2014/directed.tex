@@ -183,30 +183,29 @@ There is a one-to-one correspondence between the parameters of this
 \end{lemma}
 \begin{proof}
   \begin{figure}
-    \label{fig:reduction}
     \centering
     \subimport{figures/}{reduction.tikz}
     \caption{Reduction to canonical form.}
+    \label{fig:reduction}
   \end{figure}
 
-  \providecommand{\hp}{\ensuremath{h_{\textrm phantom}}}
+  %\providecommand{\hp}{\ensuremath{h_{\textrm{phantom}}}}
+  \providecommand{\hp}{\ensuremath{h_p}}
 
   Let $x_v$ be an observed variable with parents $P$ and children $C$.
   Consider the following transformation.
-  Replace $x_v$ with a phantom hidden variable \hp with the same
+  Replace $x_v$ with a phantom hidden variable \hp with the same 
+  domain\footnote{Though we have assumed that all hidden variables share the
+      same domain, $[k]$, our work generalizes to hidden domains of
+      arbitrary sizes, provided \assumptionref{full-rank-plus} holds.},
   parents $P$ and children $C \union \{x_{v_1}, x_{v_2}, x_{v_3}\}$,
   where $x_{v_1},x_{v_2},x_{v_3}$ are three copies of $x$
-  (\figureref{reduction}). 
-  
-  The domain of $\hp$ is the same as $x$
-    \footnote{Though we have assumed that all hidden variables share the
-      same domain, $[k]$, our work generalizes to hidden domains of
-      arbitrary sizes, provided \assumptionref{full-rank-plus} holds.}
-    and $\mOpp{v}{\textrm{phantom}} = I$.
+  (\figureref{reduction}). Also, set $\mOpp{v}{p} = I$.
 
-  Then, for any clique $\sC \contains \hp$, the parameters in the
-    original graphical model can be obtained by substituting $\hp$ with
-    $x_v$.
+  Then, there is a one-to-one correspondence between every value of
+  $\hp$ and $x_v$. Consequently, for any clique $\sC \contains \hp$, the
+  parameters in the original graphical model can be obtained by
+  substituting $\hp$ with $x_v$.
 \end{proof}
 
 \begin{lemma}(Bottlenecks guarantee exclusive views)

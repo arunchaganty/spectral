@@ -22,15 +22,27 @@
   \draw[-latex] (h2) -- (x2a);
   \draw[-latex] (h2) -- (x2b);
 
-  \node[style=obsnode, scale=0.7] (x3a) at (0.3cm, -2.0cm) {$x^a_3$};
-  \node[style=obsnode, scale=0.7] (x3b) at (-0.3cm, -2.0cm) {$x^b_3$};
+  \node[style=obsnode, scale=0.7] (x3a) at (-0.3cm, -2.0cm) {$x^a_3$};
+  \node[style=obsnode, scale=0.7] (x3b) at (0.3cm, -2.0cm) {$x^b_3$};
   \draw[-latex] (h3) -- (x3a);
   \draw[-latex] (h3) -- (x3b);
 
-  \node[style=obsnode, scale=0.7] (x4a) at (1.6cm, -2.0cm) {$x^a_4$};
-  \node[style=obsnode, scale=0.7] (x4b) at (1.0cm, -2.0cm) {$x^b_4$};
+  \node[style=obsnode, scale=0.7] (x4a) at (1.0cm, -2.0cm) {$x^a_4$};
+  \node[style=obsnode, scale=0.7] (x4b) at (1.6cm, -2.0cm) {$x^b_4$};
   \draw[-latex] (h4) -- (x4a);
   \draw[-latex] (h4) -- (x4b);
+
+\begin{pgfonlayer}{background}
+\draw[rounded corners,line width=1pt, dotted, black] 
+                ($(h4.north east) + (45:0.2cm)$) -- 
+                ($(x4b.north east) + (45:0.2cm)$) -- 
+                ($(x4b.south east) + (-45:0.2cm)$) -- 
+                ($(x3b.south west) + (-135:0.2cm)$) -- 
+                ($(x3b.north west) + (135:0.2cm)$) -- 
+                ($(h4.north west) + (135:0.2cm)$) -- 
+                cycle;
+\end{pgfonlayer}
+
  
 \end{tikzpicture}
 

@@ -27,6 +27,17 @@
    \node[style=obsnode, scale=0.7, below=0.3cm of h3] (x3) {$x_3$};
    \draw[-latex] (h3) -- (x3);
 
+\begin{pgfonlayer}{background}
+\draw[rounded corners,line width=1pt, dotted, black] 
+                ($(h2.north east) + (45:0.2cm)$) -- 
+                ($(x3.north east) + (45:0.2cm)$) -- 
+                ($(x3.south east) + (-45:0.2cm)$) -- 
+                ($(x1.south west) + (-135:0.2cm)$) -- 
+                ($(x1.north west) + (135:0.2cm)$) -- 
+                ($(h2.north west) + (135:0.2cm)$) -- 
+                cycle;
+\end{pgfonlayer}
+
 \end{tikzpicture}
 
 \end{document}
