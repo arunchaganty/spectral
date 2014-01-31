@@ -3,7 +3,7 @@
 \section{Directed models and exclusive views}
 \label{sec:directed}
 
-\todo{we are using clique to refer to only hidden cliques; be explicit about using "hidden"}
+%\todo{we are using clique to refer to only hidden cliques; be explicit about using "hidden"}
 
 % DONE: need more setup of what the goal is
 %The tensor factorization method attacks the heart of the non-convexity
@@ -84,14 +84,15 @@ which can be obtained analogously:
 \label{sec:directedGeneral}
 
 Note that in each of the above cases,
-each hidden variable $h_i$ of the clique has its own view which is conditionally independent
-given the other variables in the clique.
+  for any clique $\sC$, each hidden variable $h_i \in \sC$ has its own
+  view which is conditionally independent given the other hidden variables in
+  the clique.
 %Fundamentally, algorithm takes advantage of having a view for every
   %hidden variable in a clique to help identify its hidden state.
 We capture this general property as follows:
 \begin{property}(Exclusive views)
   \label{prop:exclusive-views}
-  A clique $\sC$ of $\sG$ is said to possess \textbf{exclusive views property} if for every hidden variable $h_i \in \sC$,
+  A hidden clique $\sC$ of $\sG$ is said to possess \textbf{exclusive views property} if for every hidden variable $h_i \in \sC$,
   there is some observed variable, $x_{v}$, which is conditionally
   independent of the rest of the clique given $h_i$.
   and whose conditional
@@ -104,7 +105,7 @@ We call $x_v$ the exclusive view of $h_i$ in $\sC$.
 
 We now show this condition is sufficient to learn the marginal
   distribution of the clique.
-Consider any clique $\sC = \{h_{i_1}, \cdots, h_{i_m}\} \in \sG$ for which this property holds. Let
+Consider any hidden clique $\sC = \{h_{i_1}, \cdots, h_{i_m}\} \in \sG$ for which this property holds. Let
   $x_{v_j}$ be an exclusive view for $h_{i_j}$ in $\sC$ (not necessarily unique) and $\sV
   = \{x_{v_1}, \cdots, x_{v_m}\}$ be a set of views for the clique $\sC$.
 We can write down the moments $\mO_\sV$ as follows:
@@ -133,14 +134,14 @@ Finally, the conditional probability tables for $\sC$ can easily be gotten from
   \caption{\LearnClique~(pseudoinverse)}
   \label{algo:learnclique}
   \begin{algorithmic}
-    \REQUIRE Clique $\sC$ with exclusive views (\propertyref{exclusive-views}).
+    \REQUIRE A hidden clique $\sC$ with exclusive views (\propertyref{exclusive-views}).
     \ENSURE Marginal distribution of the clique $Z_\sC$.
       \STATE Identify exclusive views $\Sx{\sV} = \{x_{v_1}, \cdots, x_{v_m}\}$.
       \STATE Return $\mH_\sC \gets \mO_{\Sx{\sV}}( \pinv{\mOpp{v_1}{i_i}}, \cdots, \pinv{\mOpp{v_m}{i_m}} )$.
   \end{algorithmic}
 \end{algorithm}
 Of course, for $Z_{\sC}$ to be identifiable, we need various rank conditions,
-which will be established in \todo{section}.
+which will be established in \sectionref{sampleComplexity}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \paragraph{Structural properties}
@@ -148,7 +149,7 @@ which will be established in \todo{section}.
 % DONE: transition the content more gradually (checkpoint: what have we done so far, what next)
 % DONE: refer to properties by name in addition to by number
 We have shown how to estimate the parameters of any clique that possesses the exclusive
-  views property (\propertyref{exclusive-views}).  But which cliques have this property?
+  views property (\propertyref{exclusive-views}). But which cliques have this property?
 In the example above, we were able to guarantee \propertyref{exclusive-views}
   by identifying a hidden variable, $h^1$ along with three conditionally
   independent observed variables, $x^a_1, x^b_1, x^a_2$.
@@ -213,9 +214,7 @@ There is a one-to-one correspondence between the parameters of this
   The domain of $\hp$ is the same as $x$,
     and $\mOpp{v}{\textrm{new}} = I$.\footnote{Though we have assumed that all hidden variables share the
       same domain, $[k]$, our work generalizes to hidden domains of
-      arbitrary sizes.
-      \todo{add qualifier}
-      %provided \assumptionref{full-rank-plus} holds.
+      different sizes, provided \assumptionref{full-rank-plus} is satisfied.
       }
 
   Then, there is a one-to-one correspondence between every value of
@@ -353,20 +352,19 @@ $Z_\sC$,
 and $M_\sV$,
 respectively.
 
-To apply $\TensorFactorize$, we need that each $\mOpp{v}{i}$ has full column rank and that $\pi^{(i)} \succ 0$ \todo{define $\pi$}.
+To apply $\TensorFactorize$, we need that each $\mOpp{v}{i}$ has full
+  column rank and that $\pi^{(i)} \eqdef \Pr(h_i) \succ 0$.
 But $\mOpp{v}{i}$ is a product of
 tensors on the path from $h_i$ to $x_v$, marginalizing out the rest of the graph.
 To make this property more interpretable, let us assume the following property:\verify
 \begin{assumption} 
 \label{asm:full-rank-plus}
 For every clique $\sC \in \sG$ (including ones involving observed variables),
-every order-1 slice of the marginals $Z_\sC$ has full column rank $k$.
+every slice of the marginals $Z_\sC$ has full column rank $k$.
 \end{assumption}
-According to our directed grid example \todo{ref}, with $\sC = \{ h_1, h_2 \}$, then this condition implies
-$\pi = \bP(h_1) \succ 0$ and 
-$T = \bP(h_2 \mid h_1) \succ 0$;
-with $\sC = \{ h_1, x_1 \}$, we get
-$O = \bP(x_1 \mid h_1) \succ 0$.
+In our directed grid example (\sectionref{directedExample}), for the clique $\sC = \{ h_1, h_2 \}$ this
+  condition implies $\pi = \bP(h_1) \succ 0$ and $T = \bP(h_2 \mid h_1)$ has column rank $k$; 
+for the clique $\sC = \{ h_1, x_1 \}$, it implies $O = \bP(x_1 \mid h_1)$ has column rank $k$ 
 
 %\todo{did they prove this; if so just say "they show", not "we can show"}
 %Using results from
@@ -400,7 +398,8 @@ We also represent $\mH_\sC$ as
   k^m}$.
 By the central limit theorem, we have:
 $\sqrt{n} (\hat M_\sV - M_\sV) \convind \sN(0, \Sigma_\sV)$,
-where $\Sigma_\sV$ is the \emph{asymptotic variance} of $\hat M_\sV$ \todo{doesn't this need to be multiplied by something?}:
+where $\Sigma_\sV$ is the \emph{asymptotic variance} of $\hat M_\sV$: 
+% ARUN: I don't think so - \todo{doesn't this need to be multiplied by something?}
 \begin{align*}
 \Sigma_\sV \eqdef \dM_\sV - M_\sV M_\sV^\top, \quad \dM_\sV \eqdef \text{diag}(M_\sV).
 \end{align*}
