@@ -73,6 +73,9 @@ by maximizing the likelihood of all of $\vx$, but that would again lead to non-c
 But can we quantify the \emph{relative efficiency} of the pseudoinverse estimator
 compared to the composite likelihood estimator?
 Let us first compute the asymptotic variance of the latter.
+We use the notation $\hat Z^\mom_\sC$ to denote the pseudoinverse
+  estimator and $\hat Z^\ml_\sC$ to denote the composite likelihood
+  estimator.
 
 \begin{lemma}[Asymptotic variance of the composite likelihood estimator for $Z_\sC$]
   \label{lem:pw-variance}
@@ -96,24 +99,23 @@ The pseudoinverse estimator is strictly less efficient
 than the composite likelihood estimator in that $e^\mom \eqdef \Tr(\Sigmamli \Sigmamom) < 1$.
 \end{corollary}
 \begin{proof}
-  \todo{fix notation in proof; use pseudoinverse estimator}
-  From \lemmaref{mom-variance}, we have the asymptotic variance of the method of moments estimator, $\hat Z_\sC^{(\mom)}$ is,
+  From \lemmaref{mom-variance}, we have the asymptotic variance of the method of moments estimator, $\hat Z_\sC^{\mom}$ is,
   \begin{align*}
     \Sigma^{\mom} &= \mOppAlli \Sigma_\sV \mOppAllit,
   \end{align*}
 
-  By \lemmaref{pw-variance}, we have the asymptotic variance of the piecewise likelihood estimator, $\hat Z_\sC^{(\ml)}$ is,
+  By \lemmaref{pw-variance}, we have the asymptotic variance of the piecewise likelihood estimator, $\hat Z_\sC^{\ml}$ is,
   \begin{align*}
     \Sigma^{\ml} &= \mOppAlli \dM_\sV \Sigma_\sV \dM_\sV \mOppAllit.
   \end{align*}
 
-  Note that $\Tr(\diag M_\sV) = 1$ as it represents the marginal
+  Note that $\Tr(\dM_\sV) = 1$ as it represents the marginal
   distribution of $\sV$; thus, $\Sigma^{(\mom)} \succ \Sigma^{(\ml)}
   \succ 0$.  Finally the asymptotic efficiency of the method of moments
   estimator is, 
   \begin{align*}
-    e^\mom &= \Tr( \Sigma^{(\ml)}\Sigma^{(\mom) -1} )  \\
-           &= \Tr( \diag(M_\sV) \Sigma_\sV \diag(M_\sV) \Sigma_\sV^{-1} ).
+    e^\mom &= \Tr( \Sigma^{\ml}\Sigma^{\mom -1} )  \\
+           &= \Tr( \dM_\sV \Sigma_\sV \dM_\sV \Sigma_\sV^{-1} ) .
   \end{align*}
 \end{proof}
 
@@ -121,10 +123,9 @@ than the composite likelihood estimator in that $e^\mom \eqdef \Tr(\Sigmamli \Si
 %It is well known that the method of moments estimator is less
   %statistically efficient than the maximum likelihood estimator. 
 To get a sense for how large the gap is, consider an example in which
-$M_\sV$ is close to the uniform distribution, i.e. $\diag(M_\sV)
+$M_\sV$ is close to the uniform distribution, i.e. $\dM_\sV
   \approxeq \frac{1}{d} I$. 
-Then the efficiency of the $e^\mom \approxeq \Tr(\frac{1}{d^2} I)
-  \approxeq \frac{1}{d}$.
+Then the efficiency of the $e^\mom \approxeq \Tr(\frac{1}{d^2} I) = \frac{1}{d}$.
 In other words, the gap in variance between the method of moments
   estimator and maximum likelihood grows linearly with the number of observations $d$.
 
