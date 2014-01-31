@@ -41,12 +41,17 @@
    \draw[-latex] (h4) -- (x4b);
 
 % Draw outline   
+\begin{pgfonlayer}{background}
+\draw[line width=1pt, dotted, black] 
+                ($(x1b.north east) + (45:0.3cm)$) -- 
+                ($(x1a.north west) + (135:0.3cm)$) -- 
+                ($(x2a.north west) + (135:0.3cm)$) -- 
+                ($(x2a.south west) + (-135:0.3cm)$) -- 
+                ($(h1.south) + (-90:0.3cm)$) -- 
+                ($(x1b.east) + (0:0.3cm)$) -- 
+                cycle;
+\end{pgfonlayer}
 
-%\draw[line width=1pt, dotted, gray] (-1.2cm,1.2cm) -- (1.2cm, 1.2cm) -- (2.5cm,-0.5cm) 
-%                -- (1.0cm, -1.0cm)
-%                -- (0.5cm, -0.5cm);
-%                ;
-%
 \end{tikzpicture}
 
 \end{document}

@@ -26,7 +26,7 @@
 
 % Include the right tikz libraries.
 %\usetikzlibrary{calc,patterns,positioning,shapes,shadows,arrows,tikzmark,decorations,decorations.pathreplacing}
-\usetikzlibrary{calc,patterns,positioning,shapes,shadows,arrows,decorations,decorations.pathreplacing}
+\usetikzlibrary{calc,fit,patterns,positioning,shapes,shadows,arrows,decorations,decorations.pathreplacing}
 
 % Basic macros
 %%%%%%%%%%%%%%%
@@ -36,10 +36,6 @@
 
 \iftoggle{debug}{\newcommand{\@dbgmark}{x}}
 {\newcommand{\@dbgmark}{}}
-
-
-\iftoggle{debug}{\setbeamertemplate{background}[grid][step=0.5cm]}{}
-%\setbeamerfont{alerted text}{fg=black,series=\bfseries}
 
 % Settings
 %%%%%%%%%%%%%%55
