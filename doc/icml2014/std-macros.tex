@@ -183,8 +183,8 @@
 \providecommand{\assumptionref}[1] {\itemref{Assumption}{asm}{#1}}
 
 % Text
-\newcommand{\todo}[1]{\textbf{TODO: #1}}
-\newcommand{\citationneeded} {\ensuremath{^{[\textrm{citation needed}]}}}
+\newcommand{\todo}[1]{{\tiny \hl{\textsc{TODO:} #1}}}
+\newcommand{\note}[1]{{\tiny \hl{\textsc{Note:} #1}}}
 \providecommand{\comment}[1]{%
   \text{\phantom{(#1)}} \tag{#1}
   %\tag{#1}
@@ -198,6 +198,7 @@
 \newcommand{\reword}{\editupnote{reword}}
 \newcommand{\define}{\editupnote{define}}
 \newcommand{\expand}{\editupnote{expand}}
+\newcommand{\needcite}{\editupnote{citation needed}}
 \newcommand{\findcite}[1]{\editupnote{find: #1}}
 
 % Operators
@@ -211,7 +212,7 @@
 \providecommand{\E} {\mathbb{E}}
 \providecommand{\I} {\mathbb{I}}
 \renewcommand{\Pr} {\mathbb{P}}
-\providecommand{\Var} {Var}
+\providecommand{\Var} {\textrm{Var}}
 
 % Constants/etc.
 \renewcommand{\Re} {\mathbb{R}}

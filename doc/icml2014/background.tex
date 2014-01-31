@@ -1,16 +1,19 @@
 \section{Setup}
 \label{sec:setup}
 
-Let $\sG$ be a discrete graphical model with variables $V$, 
-  let the subset $X \subseteq V$ be observed and 
-  let $H = V \setminus O$ be hidden.
-Let $\Pa(v) \subset V$ be the parents of a variable $v$ in a directed
-  model, and $\sN(v) \subset V$ be the neighbours of $v$ in an undirected
-  model.
-We will use $x_1, x_2, \cdots, x_N \in X$ to denote observed variables and
+Let $\sG$ be a discrete graphical model with observed variables $X$ and
+  hidden variables $H$.
+Let $\Pa(a) \subset X \union H$ be the parents of a variable $a$ in a directed
+  model, and $\sN(a) \subset X \union H$ be the neighbours of $a$ in an
+  undirected model.
+We will use $x_1, x_2, \cdots, x_L \in X$ to denote observed variables and
   $h_1, h_2, \cdots, h_M \in H$ to denote hidden variables.
 For ease of exposition, we assume that $x_i \in \{1, \cdots, d\}$ for
-  all $i$, and that $h_i \in \{1, \cdots, k\}$ for all i.
+  all $i$, and that $h_i \in \{1, \cdots, k\}$ for all $i$.
+Let $\sX$ be the joint domain of the observed variables, i.e. $\sX \eqdef
+  \underbrace{d \times d \cdots \times d}_{L ~\textrm{times}}$ and
+let $\sH$ be the joint domain of the hidden variables, i.e. $\sH \eqdef
+  \underbrace{k \times k \cdots \times k}_{M ~\textrm{times}}$.
 
 We assume that the model $\sG$ is parameterized at every clique $\sC$.
 If $\sG$ is directed, the parameters correspond to
@@ -32,15 +35,24 @@ Our goal is to produce a parameter estimate $\hat\theta$ that
 The standard estimation procedure is maximum (marginal) likelihood,
   \begin{align*}
     \sL &\eqdef \max_{\theta} \sum_{\vx \in \sD} \log p_\theta(\vx) \\
-        &=      \max_{\theta} \sum_{\vx \in \sD} \log \sum_{\vh} p_\theta(\vx,\vh)
+        &=      \max_{\theta} \sum_{\vx \in \sD} \log \sum_{\vh \in \sH} p_\theta(\vx,\vh)
   \end{align*}
   which is statistically efficient but computationally intractable
-  because we must marginalize over latent variables $z$.
+  because we must marginalize over latent variables $\vh$.
 In practice, one uses gradient-based optimization procedures (e.g., EM
   or L-BFGS) on the marginal likelihood, which can get stuck in local
   optima.
 
 \paragraph{Notation}
+
+We use the notation $[\cdot]$ to indicate indexing; for example $M[i]$
+  is the $i$-th row of a matrix $M$ and $M[i,j]$ is the $i,j$-th element
+  of $M$.
+For a tensor $T \in \Re^{d \times \ldots \times d}$ and a vector $\vec
+  i = (i_1, \cdots, i_l)$, $T[\vec i] = T_{i_1 \ldots i_l}$.
+Similarly, for a set $\sC$ of size $k$ and vector $\vec x \in \Re^d$, we
+  will use the notation $\vec x_\sC$ to get a vector $\Re^k$ which selects
+  the appropriate elements of $\vec x$
 
 We use $\otimes$ to denote the tensor product, e.g if $u \in \Re^k,
   v \in \Re^d$, then $u \otimes v \in \Re^{k \times d}$.
@@ -49,15 +61,16 @@ For a $\ell$-th order tensor $T \in \Re^{d \times \ldots \times
 \begin{align*}
   T(x_1, \cdots, x_\ell) 
       &= \sum_{i_1 = 1}^{d} \cdots \sum_{i_\ell = 1}^{d} 
-            T_{i_1 i_2 \ldots i_l} ({x_1})_{i_1} \cdots ({x_\ell})_{i_\ell}.
+            T[i_1, i_2, \ldots, i_l] x_1[i_1] \cdots x_\ell[i_\ell].
 \end{align*}
 Analogously, for a matrices $M_1 \in \Re^{d \times k}, \cdots,
   M_\ell \in \Re^{d \times k}$, we define
 \begin{align*}
-  T(M_1, \cdots, M_\ell)_{j_1, \ldots, j_l} 
+  T(M_1, \cdots, M_\ell)[\vec j]
       &= \sum_{i_1 = 1}^{d} \cdots \sum_{i_\ell = 1}^{d} 
-            T_{i_1 i_2 \ldots i_l} ({M_1})_{i_1j_1} \cdots ({M_\ell})_{i_\ell j_\ell}.
+            T[\vec i] {M_1}[i_1,j_1] \cdots M_\ell[i_\ell, j_\ell],
 \end{align*}
+where $\vec i = (i_1, \cdots, i_\ell)$ and $\vec j = (i_1, \cdots, j_\ell)$
 
 To denote the moments of observed variables, we will use the notation
 \begin{align*}
@@ -92,33 +105,33 @@ Recently, \citet{anandkumar12moments} presented a consistent algorithm
   graphical models, that sidesteps the local optima problem altogether. 
 In the model, we have three observed variables $x_1, x_2, x_3$
   that are independent conditioned on a latent variable $h$.  
-The parameters of this model are the mixture probabilities $\pi \eqdef
-  \Pr(h) \in \Delta_{k-1}$ and the conditional moments $O^{(i)} \eqdef
+The parameters of this model are the mixture probabilities $\pi\oft 1 \eqdef
+  \Pr(h) \in \Delta_{k-1}$ and the conditional moments $\mOpp{i}{1} \eqdef
   \Pr(x_i \given h) \in \Re^{d \times k}$ for $i \in \{1,2,3\}$.
 
   The key idea is that the observed moments $\mO_{12}, \mO_{23}, \mO_{13}$ and
   $\mO_{123}$ admit a factorization in terms of parameters;
 \begin{align*}
-  \mO_{ij} &= \sum_h \pi_h {O\oft i}^T_h \otimes {O\oft j}^T_h & \forall i,j \in \{1,2,3\} \\
-  \mO_{123} &= \sum_h \pi_h {O\oft 1}^T_h \otimes {O\oft 2}^T_h \otimes  {O\oft 3}^T_h.
+  \mO_{ij} &= \sum_h {\pi \oft 1}[h] {\mOppt{i}{1}}[h] \otimes {\mOppt{j}{1}}[h] \quad \forall i,j \in \{1,2,3\} \\
+  \mO_{123} &= \sum_h {\pi \oft 1}[h] {\mOppt{i}{1}}[h] \otimes {\mOppt{2}{1}}[h] \otimes  {\mOppt{2}{1}}[h].
 \end{align*}
 
 \citet{anandkumar13tensor} presented a robust tensor power method, which
   we call $\TensorFactorize$, which converts consistent estimates of the observed moments 
-  into consistent estimates of the parameters, $\pi, O\oft{1},
-  O\oft{2}, O\oft{3}$ (up to permutation of the columns), provided
+  into consistent estimates of the parameters, $\pi\oft 1, \mOpp{1}{1},
+  \mOpp{2}{1},\mOpp{3}{1}$ (up to permutation of the columns), provided
   the following assumption holds:
 
 \begin{assumption}
 \label{asm:full-rank}
-Assume the conditional moments $O\oft{1}, O\oft{2}, O\oft{3}$ have full column rank
-  $k$, and that $\pi \succ 0$.
+Assume the conditional moments $\mOpp{1}{1}, \mOpp{2}{1}, \mOpp{3}{1}$ have full column rank
+  $k$, and that $\pi\oft 1 \succ 0$.
 \end{assumption}
 
 In brief, the algorithm first computes a whitening matrix $W \in
   \Re^{d \times k}$ such that $W^T \mO_{12} W = I_{k \times k}$,
   and uses it to transform $\mO_{123}$ into a symmetric orthogonal tensor.  
 Then a robust tensor power method is applied to extract the eigenvectors
-  of the whitened $\mO_{123}$; unwhitening yields the columns of $\mO_{3}$.
-$\mO_1$ and $\mO_2$ can then be recovered with some algebra.
+of the whitened $\mO_{123}$; unwhitening yields the columns of $\mOpp{3}{1}$.
+  $\mOpp{1}{1}$ and $\mOpp{2}{1}$ can then be recovered with some algebra.
 

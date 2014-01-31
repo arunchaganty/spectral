@@ -1,13 +1,13 @@
-\section{Concave Piecewise Likelihoods}
+\section{Concave Clique Likelihoods}
 \label{sec:piecewise}
 
-The linear algebraic solution to recover parameters for each clique
+The method of moments approach to recover parameters for each clique
   $\sC$ presented in the previous section is easy to understand and
   analyze, but sensitive to noise. 
-In this section we propose an alternate solution, optimizing the piecewise
-  likelihoods, that is more robust to noise.
-We show that under the same conditions for \algorithmref{directed}, the
-  piecewise likelihoods are strictly concave, guaranteeing that
+In this section we propose an alternate solution, optimizing the 
+  likelihood for each clique, that is more robust to noise.
+We show that under the same conditions as \algorithmref{directed}, the
+  clique likelihoods are strictly concave, guaranteeing that
   gradient-based optimization will converge to the unique global
   optimum.
 
@@ -15,34 +15,45 @@ Consider a clique $\sC = \{h_{i_1}, \cdots h_{i_m}\} \in \sG$, with
   exclusive views $\sV = \{x_{v_1}, \cdots, x_{v_m}\}$. 
 The piecewise likelihood of $\Sx{\sV}$ is,
 \begin{align*}
-  \sL_p(\Sx{\sV}) 
-   &= \sum_{x \in \sD} \log \Pr( \Sx \sV ) \\
-   &= \sum_{x \in \sD} \log \sum_{\Sh \sC} \Pr( \Sx \sV \given \Sh \sC ) \\
-   &= \sum_{x \in \sD} \log \mH_\sC(\mOpp{v_{v_1}}{h_{i_1}}_{x_{v_1}}, \cdots, \mOpp{v_{v_m}}{h_{i_m}}_{x_{v_m}}) \\
-   &= \sum_{x \in \sD} \log \mH_\sC \cdot \mOpp{\sV}{\sC}_x.
+  \sL_\ml(\Sx{\sV}) 
+   &= \sum_{\vx \in \sD} \log \Pr( \Sx \sV ) \\
+   &= \sum_{\vx \in \sD} \log \sum_{\Sh \sC} \Pr( \Sx \sV \given \Sh \sC ) \\
+   &= \sum_{\vx \in \sD} \log \mH_\sC(\mOpp{v_1}{i_1} [x_{v_1}], \cdots, \mOpp{v_m}{i_m} [x_{v_m}])
+\end{align*}
+
+For this section, it will be convenient to represent $\mH_\sC$ as
+  a vector in $\Re^{k^m}$, and represent $\mOpp{\sV}{\sC} \eqdef
+  \mOpp{v_1}{i_1} [x_{v_1}] \otimes \cdots \otimes
+  \mOpp{v_m}{i_m} [x_{v_m}]$ as a matrix in $\Re^{k^m \times
+  d^m}$.
+Then the likelihood objective is,
+\begin{align*}
+  \sL_\ml(\Sx{\sV}) 
+   &= \sum_{x \in \sD} \log \mOppt{\sV}{\sC}[\vx] \mH_\sC,
 \end{align*}
 
 The likelihood is concave in $\mH_\sC$; next, we show that it is
-strictly concave, which guarantees a unique maximizer.
+strictly concave, which guarantees that it has a unique maximizer.
   
 Taking the first derivative,
 \begin{align}
-  \grad_{\mH_\sC} \sL_p(\sX_\sV) 
-  &= \sum_{x \in \sD} \frac{\mOpp{\sV}{\sC}_x}{\mH_\sC \cdot \mOpp{\sV}{\sC}_x} \nonumber \\ 
-  &= \mOpp{\sV}{\sC}_x \diag(\tilde \mO_{\sV})^{-1} \mO_{\sV}, \label{eqn:lhood-grad}
+  \grad_{\mH_\sC} \sL_\ml(\sX_\sV) 
+  &= \sum_{x \in \sD} \frac{\mOpp{\sV}{\sC}_x}{\mH_\sC \cdot \mOpp{\sV}{\sC}[\vx]} \nonumber \\ 
+  &= \mOpp{\sV}{\sC}[\vx] \diag(\tilde \mO_{\sV})^{-1} \mO_{\sV}, \label{eqn:lhood-grad}
 \end{align}
-  where $\tilde \mO_\sV$ is marginal distribution with parameters $\mH_\sC$.
+where $\tilde \mO_\sV$ is marginal distribution with parameters $\mH_\sC$, also represented as a vector in $\Re^{d^m}$.
 
 Taking the second derivative.
 \begin{align}
-  \grad^2_{\mH_\sC} \sL_p(\Sx \sV) 
-  &= \sum_{x \in \sD} \frac{\mOpp{\sV}{\sC}_x \mOpp{\sV}{\sC}_x^T}{(\mH_\sC \cdot \mOpp{\sV}{\sC}_x)^2} \nonumber \\
-  &= \sum_{x \in \sD}\mOpp{\sV}{\sC}_x \mOpp{\sV}{\sC}_x^T \frac{(\mO_{\sV})_x}{(\tilde \mO_{\sV})^2_x} \nonumber \\
-  &= \mOpp{\sV}{\sC} \diag(\mO_{\sV}) \diag(\tilde \mO_{\sV})^{-2} \mOpp{\sV}{\sC}^T. \label{eqn:lhood-hess}%
+  \grad^2_{\mH_\sC} \sL_\ml(\Sx \sV) 
+  &= \sum_{x \in \sD} \frac{\mOpp{\sV}{\sC}[\vx] \mOppt{\sV}{\sC}[\vx]}{(\mH_\sC \cdot \mOpp{\sV}{\sC}[\vx])^2} \nonumber \\
+  &= \sum_{x \in \sD}\mOpp{\sV}{\sC}[\vx] \mOppt{\sV}{\sC}[\vx] \frac{\mO_{\sV}[\vx]}{\tilde \mO_{\sV}^2[\vx]} \nonumber \\
+  &= \mOpp{\sV}{\sC} \diag(\mO_{\sV}) \diag(\tilde \mO_{\sV})^{-2} \mOppt{\sV}{\sC}. \label{eqn:lhood-hess}%
 \end{align}
 
-As $\tilde \mO_\sV, \tilde \mO_\sV \succ 0$ and $\mOpp{\sV}{\sC}$ are
-full rank and stochastic, $\grad^2_{\mH_\sC} \sL_p(\Sx \sV) \succ 0$.
+It follows that $\grad^2_{\mH_\sC} \sL_\ml(\Sx \sV) \succ 0$ because
+$\tilde \mO_\sV, \tilde \mO_\sV \succ 0$ and $\mOpp{\sV}{\sC}$ is
+full rank and stochastic.
 
 \algorithmref{piecewise} reviews our algorithm.
 
@@ -50,57 +61,52 @@ full rank and stochastic, $\grad^2_{\mH_\sC} \sL_p(\Sx \sV) \succ 0$.
   \caption{\LearnPiecewise}
   \label{algo:piecewise}
   \begin{algorithmic}
-    \REQUIRE A graphical model $\sG$ satisfying \textbf{(P1)}, \textbf{(P2)}, data $\sD$
-    \ENSURE Parameters $\theta$ for $\sG$
-
-      \FOR{$h \in H$} 
-        \STATE Apply \TensorFactorize for each bottleneck $h$ and learn parameters $\Pr(x \mid h) ~ \forall x \in \sB(h)$.
-
-%    \COMMENT{Recover observation potentials $O$ using bottlenecks}
-      \ENDFOR
-%      \COMMENT{\textbf{Step 2:} Recover clique potentials from the piecewise likelihood.}
-      \FOR{every clique $\sC = \{h_1, \cdots, h_m\} \in \sG$} 
-      \STATE Let $x_\sC = \{x_1, \cdots, x_m\}$.
-      \STATE $\hat \mH_\sC = \arg\max_{\mH_\sC \in \Delta_{k^m-1}} \E_{\vec x_\sC}[ \log \mH_\sC( \pinv O_{x_1}, \cdots, \pinv O_{x_m} ) ]$.
+    \REQUIRE A graphical model $\sG$ satisfying \propertyref{bottleneck}, data $\sD$
+    \ENSURE Marginals $Z_\sC$ for every clique $\sC \in \sG$
+\STATE Identify exclusive views $x_\sV = \{x_{v_1}, \cdots, x_{v_m}\}$.
+\STATE $\hat \mH_\sC = \arg\max_{\mH_\sC \in \Delta_{k^m-1}} \sum_{\Sx \sV} \log  \mOppit{\sV}{\sC}[\Sx \sV] \mH_\sC$.
 %      Run expectation-maximization to convergence on the piecewise likelihood \eqref{eqn:piecewise}, over data $\{\vec x_\sC : x \in \sD\}$
-      \ENDFOR
   \end{algorithmic}
 \end{algorithm}
 
 \subsection{Comparison with Method of Moments}
 
-By Cramer-Rao, we know that the asymptotic variance of the
-  maximum-likelihood estimator is the best we can do.
-We'll now show that the asymptotic variance of the method of moments is strictly worse.
+The Cramer-Rao bound tells us that this is statistically the most
+  efficient estimator we can get for $Z_\sC$. 
+We also study the efficiency of the method of moments estimator.
 
 \begin{lemma}(Asymptotic variance for the likelihood)
   \label{lem:pw-variance}
   The asymptotic variance in the recovered parameters $Z_{\sC}$ by optimizing the likelihood is,
   \begin{align*}
-    \sqrt{n}(\hat Z_{\sC} - Z_{\sC}^*) \convind \sN( 0, \pinvt{\mOpp{\sV}{\sC}} \Sigma_\sV \pinv{\mOpp{\sV}{\sC}} ),
+    \Sigma^{(\ml)} &= \mOppit{\sV}{\sC} \diag(M_\sV) \Sigma_\sV \diag(M_\sV) \mOppi{\sV}{\sC},
   \end{align*}
   where $\Sigma_\sV$ is the variance of the moment estimates, 
   \begin{align*}
-    \Sigma_\sV &= \diag(M_\sV) - M_\sV M_\sV^T.
+    \Sigma_\sV &= \diag(M_\sV) - M_\sV M_\sV^\top.
   \end{align*}
 \end{lemma}
 \begin{proof}
-  By the delta-method, 
+  Using the delta-method \cite{vaart98asymptotic}, we have that the
+  asymptotic distribution of $Z_\sC$ is,
   \begin{align*}
-    \sqrt{n}(\hat Z_{\sC} - Z_{\sC}) \convind \sN( 0, \grad^2 \sL_p(\vec x_\sC)^{-1} \Var \grad \sL_p(\vec x_\sC)\grad^2 \sL_p(\vec x_\sC)^{-1}).
+    \sqrt{n}(\hat Z_{\sC} - Z_{\sC}) &\convind \sN( 0, \\
+      &\quad \grad^2 \sL_\ml(\vec x_\sC)^{-1} \Var[\grad \sL_\ml(\vec x_\sC)] \grad^2 \sL_\ml(\vec x_\sC)^{-1}).
   \end{align*}
 
   From \equationref{lhood-grad}, we get
   \begin{align*}
-    \Var \grad \sL_p(\vec x_\sC) &= \mOpp{\sV}{\sC} \diag(\tilde M_\sV) \Sigma_\sV \diag(\tilde M_\sV) \mOpp{\sV}{\sC}^T .
+    \Var [\grad \sL_\ml(\vec x_\sC)] &= \mOpp{\sV}{\sC} \diag(\tilde M_\sV) \Sigma_\sV \diag(\tilde M_\sV) \mOpp{\sV}{\sC}^T .
   \end{align*}
 
   Finally, using \equationref{lhood-hess}, we have
   \begin{align*}
     \Sigma_{Z_\sC} 
-      &= \grad^2 \sL_p(\vec x_\sC)^{-1} \Var \grad \sL_p(\vec x_\sC)\grad^2 \sL_p(\vec x_\sC)^{-1}) \\
+      &= \grad^2 \sL_\ml(\vec x_\sC)^{-1} \Var [\grad \sL_\ml(\vec x_\sC)] \grad^2 \sL_\ml(\vec x_\sC)^{-1}) \\
       &= \pinvt{\mOpp{\sV}{\sC}} \diag(\tilde M_\sV) \Sigma_\sV \diag(\tilde M_\sV) \pinv{\mOpp{\sV}{\sC}}.
   \end{align*}
+
+  At the true parameters, $\tilde M_\sV = M_\sV$, completing the proof.
 \end{proof}
 
 \begin{corollary}
@@ -109,36 +115,47 @@ We'll now show that the asymptotic variance of the method of moments is strictly
   $\Sigma_m$; $\Sigma_p \succ \Sigma_m \succ 0$.
 \end{corollary}
 \begin{proof}
-  From \lemmaref{mom-complexity}, we have the asymptotic variance of the method of moments estimator, $\hat Z_\sC^(m)$ is,
+  From \lemmaref{mom-variance}, we have the asymptotic variance of the method of moments estimator, $\hat Z_\sC^{(\mom)}$ is,
   \begin{align*}
-    \sqrt{n}(\hat Z_\sC - Z_\sC) \convind \sN(0, \pinvt{\mOpp{\sV}{\sC}} \Sigma_\sV \pinv{\mOpp{\sV}{\sC}}).
+    \Sigma^{(\mom)} &= \mOppit{\sV}{\sC} \Sigma_\sV \mOppi{\sV}{\sC},
   \end{align*}
 
-  From the previous lemma, we have the asymptotic variance of the piecewise likelihood estimator, $\hat Z_\sC^(p)$ is,
+  By \lemmaref{pw-variance}, we have the asymptotic variance of the piecewise likelihood estimator, $\hat Z_\sC^{(\ml)}$ is,
   \begin{align*}
-    \sqrt{n}(\hat Z_{\sC} - Z_{\sC}) \convind \sN( 0, \pinvt{\mOpp{\sV}{\sC}} \diag(\tilde M_\sV) \Sigma_\sV \diag(\tilde M_\sV) \pinv{\mOpp{\sV}{\sC}} ).
+    \Sigma^{(\ml)} &= \mOppit{\sV}{\sC} \diag(M_\sV) \Sigma_\sV \diag(M_\sV) \mOppi{\sV}{\sC},
   \end{align*}
 
-  Note that $\Sigma_p = \diag(\tilde M_\sV) \Sigma_m \diag(\tilde M_\sV)$; as $M_\sV$ is stochastic, $\Sigma_m \succ \Sigma_p \succ 0$. 
+  Note that $\Tr(\diag M_\sV) = 1$ as it represents the marginal
+  distribution of $\sV$; thus, $\Sigma^{(\mom)} \succ \Sigma^{(\ml)}
+  \succ 0$.  Finally the asymptotic efficiency of the method of moments
+  estimator is, 
+  \begin{align*}
+    e^\mom &= \Tr( \Sigma^{(\ml)}\Sigma^{(\mom) -1} )  \\
+           &= \Tr( \diag(M_\sV) \Sigma_\sV \diag(M_\sV) \Sigma_\sV^{-1} ).
+  \end{align*}
 \end{proof}
 
-We know that $\|\hat Z_c - Z_c\|^2_2 = O(\Tr(\Sigma))$; with this
-analysis, the piecewise estimator requires $\Tr(\diag(M_\sV) \Sigma_m
-\diag(M_\sV))$ samples, which is $\approx \frac{1}{d} \Tr(\Sigma_m)$;
-i.e. you require a factor of $d$ less.
-
 \paragraph{Intuition}
+It is well known that the method of moments estimator is less
+  statistically efficient than the maximum likelihood estimator. 
+To get a sense for how large the gap is, consider an example where in
+  $M_\sV$ is close to the uniform distribution, i.e. $\diag(M_\sV)
+  = \frac{1}{d} I$. 
+Then the efficiency of the $e^\mom = \Tr(\frac{1}{d^2} I)
+  = \frac{1}{d}$.
+In other words, the gap in variance between the method of moments
+  estimator and maximum likelihood grows as an order of $d$.
 
-Consider a hidden Markov model \figureref{fig:examples-hmm} with
-  2 states ($k=2$), but an arbitrary number of emissions, $d$. 
-After learning the observation potentials $O$ in step 1 of
-  \algorithmref{piecewise}, the log-likelihood objective for $\pi$ is,
-\begin{align}
-  \sL_p(x_1) &= \sum_{x_1} \log( \pi_1 O_{1,x_1} + (1-\pi_1) O_{2,x_1} ).
-\end{align}
-
-Empirically, we observe that optimizing the piecewise objective gives
-  better solutions with finite samples.
+For another view of this phenomenon, consider the objective function
+  associated with the method of moments, 
+\begin{align*}
+  \sL_\mom(\Sx \sV) &= \half \|Z_\sC \mOpp{\sV}{\sC} - M_\sV \|_F^2.
+\end{align*}
+In comparison, the negative log-likelihood objective is much more
+concave, so we expect it to be more efficient. 
+\figureref{piecewise-objective} compares the objective values for
+different choices of the $\pi$ parameter in a hidden Markov model
+\figureref{examples-hmm} with 2 states ($k=2$) and $d=10$ dimensions.
 
 \begin{figure}
   \centering
@@ -147,11 +164,9 @@ Empirically, we observe that optimizing the piecewise objective gives
   \label{fig:piecewise-objective}
 \end{figure}
 
-The negative log-likelihood is more concave than the moment-reconstruction loss (\figureref{piecewise-objective})
-
 \subsection{More examples}
 
-We will now instantiate our algorithm for several examples, illustrated in \figureref{examples}.
+We will now instantiate our algorithm for a couple more examples, illustrated in \figureref{examples}.
 
 \begin{figure}
   \subfigure[Hidden Markov Model] {
@@ -166,13 +181,13 @@ We will now instantiate our algorithm for several examples, illustrated in \figu
     \includegraphics{figures/tree.pdf}
     \label{fig:examples-tree}
   }
-  \caption{Examples of models in the bottleneck family\define.}
+  \caption{Additional examples of models learnable using \LearnMarginals \todo{Label parameters}}
   \label{fig:examples}
 \end{figure}
 
 \paragraph{Hidden Markov Model}
 
-In this example (\figureref{fig:examples-hmm}), we assume that
+In this example (\figureref{examples-hmm}), we assume that
   $\Pr(x_i|h_i) = O  ~\forall i$  and that $\Pr(h_{i+1} | h_i)
   = T ~\forall i$ (i.e. we have parameter sharing).
 Note that while the first (and last) hidden variables $h_1, h_T$ in the
@@ -185,13 +200,9 @@ In step 2 of our algorithm, we can recover $\pi$ by solving for the
   unary clique $\{h_1\}$ and recover $T$ from the clique $\{h_{1},
   h_{2}\}$.
 
-As a further point, because we have so much parameter sharing, we can
-  aggregate over all triples when estimating $O$ and over pairs when
-  estimating $T$.
-
 \paragraph{Latent Tree Structure}
 
-In the latent tree structure (\figureref{fig:examples-tree}), let the
+In the latent tree structure (\figureref{examples-tree}), let the
   parameters be $\Pr(h_i) = \pi$, $\Pr(h_i | h_1) = T ~i \in \{2,3,4\}$
   and $\Pr(x^a_i | h_i) = \Pr(x^b_i | h_i) = O ~i \in \{2,3,4\}$.
 Note that while $h_1$ is not directly connected to an observed variable,
@@ -207,19 +218,34 @@ To recover $T$ from the clique $\{h_1, h_2\}$, we use the views $x^a_2$
   $x^a_3$ is also a view for $h_2$, $x^a_3$ is independent of $h_2$ given
   $h_1$.
 
-
 \paragraph{Aggregating observations}
-\todo{This section}
-When we have multiple observed variables for a hidden variable, it is
-  always beneficial to aggregate over them.
-Note that $O_h$ will have rank atleast that of $O$; this encodes the
-  intuitive fact that we might be able to identify $h$ from multiple
-  observed variables even if we can not identify it from a single
-  observed variable. 
-Suppose $x_\sB(h) = \{x_1, x_2, \cdots, x_l\}$, let $O_h \in
-  \Re^{D^l \times K}$ be an
-  aggregated observation potential, such that $O_h(x_1, x_2, \cdots,
-  x_l) = \mH(x_1|h) \mH(x_2|h) \cdots \mH(x_l|h)$.
-Given \assumptionref{full-rank}, $O_h$ have rank $K$.
-After step 1, $O_h$ is a known quantity.
+We describe two practical considerations to use samples more efficiently.
+Firstly, if we have multiple exclusive views for a hidden variable,
+  intuitively, it is better to aggregate over them. 
+For example, consider a hidden variable $h_1$ with multiple exclusive
+  views $x_1$ and $x_2$.
+With the method of moments perspective, to learn the marginal
+  distribution over $h_1$, one must solve the following reconstruction
+  problem, 
+\begin{align*}
+  \hat Z_{h_1} &= \arg\min_{Z_{h_1}} \half \|Z_{h_1} \mOpp{1}{1} - M_1 \|^2 + \half \|Z_{h_1} \mOpp{2}{1} - M_2 \|^2,
+\end{align*}
+which does not have a closed form solution. 
+In contrast, this naturally fits into the convex optimization framework, where $\hat Z_{h_1}$ will now be,
+\begin{align*}
+  \hat Z_{h_1} &= \arg\min_{Z_{h_1}} \sum_{\vx \in \sD} \log Z_{h_1}( \mOpp{1}{1}[x_1] \cdot \mOpp{1}{1}[x_1] ),
+\end{align*}
+where $\cdot$ denotes element-wise multiplication.
+An important note to make is that \TensorFactorize only returns
+  a solution up to permutation; if $\mOpp{1}{1}$ and
+  $\mOpp{1}{2}$ do not belong to the same bottleneck (e.g. $x^a_2$ and
+  $x^b_2$ in \figureref{examples-tree}), then some
+  care must be taken to ensure they have the same labelling.
+
+Secondly, we can exploit parameter sharing by aggregating over
+  disjoint sets of observed variables. 
+For example, in \figureref{examples-hmm}, we can aggregate the statistics for
+  bottlenecks $h_i$ with views $\{x_{i-1}, x_{i}, x_{i+1}\}$ before
+  running \TensorFactorize; this will give us a consistent estimate for
+  $O$ (as well as $T$).
 

@@ -1,30 +1,27 @@
 \begin{abstract} 
 
-Parameter estimation for latent variable models is typically
-  performed by optimizing the log-likelihood, which is prone to local
-  optima due to its non-convexity. 
+Parameter estimation in latent variable models is prone to local
+  optima due to the non-convexity of the likelihood. 
 In this paper, we extend recent advances in the method of moments 
-  to provide consistent parameter estimates for a general family of
-  directed and undirected graphical models, including grid models
-  (\figureref{approach}) and latent tree models.
-The key idea in our approach is that, given the observation potentials
-  between observed and latent variables, the marginal distribution of
-  every clique is recoverable from the corresponding partial moments.
-We characterize the polynomial sample complexity for models in this
-  family.
-For models outside our family, we show how our approach can constrain
-  parameter search by providing partial information via posterior
-  regularization. 
-Finally, we provide empirical intuition via experiments.
-
+  to provide consistent parameter estimates for a general class of
+  directed and undirected graphical models, thus avoiding the issue of
+  local optima.
+In particular, our algorithm applies to any graphical model wherein each
+  hidden variable has at least three conditionally independent observed
+  variables.
+This family includes loopy graphs with high treewidth.
+We use the method of moments to tie each hidden to some observed
+  variables, and show that the rest of the problem can be cast as convex
+  optimization of the likelihood.
+This approach gracefully extends to models outside this family by
+  providing partial information via posterior regulraization.
 \end{abstract} 
 
 \paragraph{Last updated:} \today, \currenttime
 
-
-\paragraph{Errata}
+\paragraph{Errata / Incomplete}
 \begin{enumerate}
-  \item The likelihoods as defined are concave, not convex.
+  \item Use \texttt{\textbackslash left(}.
 \end{enumerate}
 
 

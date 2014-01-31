@@ -12,55 +12,41 @@ The end result is a consistent estimator for log-linear
 Finally, we generalize the result to classes when only a subset of the
   clique marginals can be learned.
 
-As before, let $\sG$ be a graphical model with variables $V$, with $X
-  \subseteq V$ being observed and $H = V \setminus X$ hidden.
+As before, let $\sG$ be a graphical model with observed variables $X$ and hidden variables $H$.
 We assume that the undirected graphical model is a log-linear latent
   variable model with parameters $\theta$,
 \begin{align*}
-  p_\theta(\vx, \vh) &= \exp( \theta^T\phi(x,z) - A(\theta) ),
+  p_\theta(\vx, \vh) &= \exp( \sum_\sC \theta_\sC^T \phi_\sC(\vx,\vh) - A(\theta) ),
 \end{align*}
-where $\phi(x,z)$ is a feature vector with components $\phi_\sC(x,z)$
-  for every clique and $A(\theta) = \sum_{\vx, \vh}  \exp(
-  \theta^T\phi(x,z) )$ is the log-partition function.
-While $\phi_\sC(x,z)$ can be an arbitrary featurization, we assume
-  without loss of generality that $\phi_\sC(x,z)$ are the indicator
-  features $\BI[x,z]$\footnote{Note that $\BI[x,z]$ are sufficient
+where $\phi_\sC(\vx,\vh)$ is a feature vector for the clique $\sC$ and
+  $A(\theta) = \sum_{\vx, \vh}  \exp( \sum_\sC \theta_\sC^T \phi_\sC(\vx,\vh) )$ is the
+  log-partition function.
+While $\phi_\sC(x,h)$ can be an arbitrary featurization, we assume
+  without loss of generality that $\phi_\sC(x,h)$ are the indicator
+  features $\BI[x,h]$\footnote{Note that $\BI[x,h]$ are sufficient
   statistics for the model, and hence we do not lose any statistical
-  efficiency in using them}.
+  efficiency in using them.}.
 
 As before, our objective is to find a set of parameters $\hat \theta$
   that maximize the likelihood of data $\sD$.
 \begin{align}
   \hat \theta 
       &= \arg\max_{\theta} \sum_{\vx \in \sD} \log p_\theta(\vx) \nonumber \\
-      &= \arg\max_{\theta} \sum_{\vx \in \sD} \log \sum_{\vh} p_\theta(\vx,\vh) \nonumber \\
-      &= \arg\max_{\theta} \sum_{\vx \in \sD} \log \sum_{\vh} \exp( \theta^T\phi(\vx,\vh) - A(\theta) ). \label{eqn:obj-ml}
+      &= \arg\max_{\theta} \sum_{\vx \in \sD} \log \sum_{\vh \in \sH} p_\theta(\vx,\vh) \nonumber \\
+      &= \arg\max_{\theta} \sum_{\vx \in \sD} \log \sum_{\vh \in \sH} \exp( \theta^T\phi(\vx,\vh) - A(\theta) ). \label{eqn:obj-ml}
 \end{align}
 Note that this problem is not concave in $\theta$. 
-
-An alternate objective is to optimize the following lower-bound on the log-likelihood, 
+However, given the moments $\E[ \phi_\sC(\vx,\vh) ] = Z_\sC$, the
+  problem simplifies to,
 \begin{align}
-  \sL_p(q,\theta) &= \sum_{\vx \in \sD} \sum_{\vh} q(\vh \given \vx) \log\frac{p_\theta(\vx,\vh)}{q(\vh \given \vx)} \\
-    &= \KL( q(\vh \given \vx) || p_{\theta}(\vh \given \vx)) \label{eqn:obj-kl}
+  \hat \theta 
+  &= \arg\max_{\theta} \sum_{\sC \in \sG} \theta_\sC^T Z_\sC - A(\theta), \label{eqn:obj}
 \end{align}
-
-Importantly, given $q$, the above objective is convex in $\theta$ and vice versa.
-It can be shown\cite{} that the local-optima of \equationref{obj-kl}
-are also local-optima of \equationref{obj-ml}. Usually, one
-iteratively optimizes $q$ and $p_\theta$ from some initial parameters
-$\theta_0$ to arrive at a local optimum.
-
-This reduces to,
-\begin{align}
-  \sL_p(\theta) &= \theta^T Z - A(\theta),
-\end{align}
-which is a convex problem.
-
-However, from the previous section, for any model satisfying
-  \property{exclusive-views}, we have a consistent estimator for the
-  marginals $q \equiv Z$. 
-Therefore, we can optimize for $\theta$ given this estimate of $q$,
-  $\hat q$.
+which is concave in $\theta$.
+In \sectionref{directed}, we showed that \LearnMarginals is a consistent
+  estimator for $Z_\sC$ for any model satisfying \propertyref{exclusive-views}. 
+The result is that the output of \algorithmref{undirected}, $\hat\theta$, is a consistent estimator for $\theta^*$
+  when the model $p_\theta(\theta)$ is identifiable.
 
 \renewcommand{\algorithmicrequire}{\textbf{Input:}}
 \renewcommand{\algorithmicensure}{\textbf{Output:}}
@@ -68,35 +54,79 @@ Therefore, we can optimize for $\theta$ given this estimate of $q$,
   \caption{\LearnLogLinear}
   \label{algo:undirected}
   \begin{algorithmic}
-    \REQUIRE A graphical model $\sG$ satisfying \textbf{(P1)}, \textbf{(P2)}, data $\sD$
-    \ENSURE A consistent estimate $\hat \theta$ of the parameters of the model.
+    \REQUIRE A graphical model $\sG$ satisfying \propertyref{bottleneck}, data $\sD$
+    \ENSURE A consistent estimate of parameters $\hat \theta$
       \STATE Apply \LearnMarginals to $\sG$ to learn clique marginals $Z_\sC$.
-      \STATE Optimize \equationref{obj-kl} with respect to $\theta$.
+      \STATE Optimize \equationref{obj} with respect to $\theta$.
   \end{algorithmic}
 \end{algorithm}
 
-This approach is outlined in \algorithmref{undirected}.
-
-\todo{Do we have to worry about the fact that this is constrained?}
-\todo{What about model un-identifiability?}
-
 \paragraph{Learning with partial moment constraints}
 
-In more general models, \propertyref{exclusive-views} may not hold for
-  every clique in the graph, however we can still estimate the marginals
-  $Z_\sC$ for cliques in which it does.
-In this section, we will describe a natural method to use these
-  constraints to simplify the parameter search problem.
+In more general models, \propertyref{exclusive-views} may only hold for
+  some subset of the cliques $\sP$ in the graph.
+To utilize these partial moment constraints, we propose using posterior
+  regularization \citep{graca08em} to constrain expectation-maximization.
+While the optimization problem \eqref{eqn:obj-ml} is non-convex, we
+  expect that the measurements aid recover of parameters, and indeed see
+  this is true for experiments on simulated data.
+\todo{Include figure}
 
-Constrain the KL to be in $Q$. 
+Posterior regularization optimizes the following objective,
+\begin{align*}
+  \hat \theta &= \arg\min_{\theta} \arg\min_{q \in \sQ} \KL( q(\vx,\vh) \| p_{\theta}(\vx, \vh) ),
+\end{align*}
+where $q$ is a marginal distribution that belongs in constrained set
+$\sQ$. In our case, $\sQ$ is constrained to agree with the partial
+moments we recovered using \LearnMarginals, i.e. 
+\begin{align*}
+  \sQ &= \{ q(\vx,\vh) \given \forall \sC \in \sP ~ \E_{q(\vx,\vh)}[\phi_\sC(\vx, \vh)] = Z_\sC \}.
+\end{align*}
+
+In practice, we would like to regularize for error in our
+  estimates of $Z_\sC$; to do so, we use the measurements model of
+  \citet{liang09measurements} which defines a Bayesian model for the noise
+  in the marginals $Z_\sC$. The resultant optimization problem is,
+\begin{align*}
+  \hat\theta 
+  &= \arg\min_\theta - \sum_{x \in \sD} \log p_\theta(x) + \half \eta_\theta \| \theta \|^2 \\
+  &\quad + \half \eta_\beta \| Z_\sC - \sum_{\vx \in \sD} \E_{\theta}[\phi_\sC(\vx,\vh)] \|^2,
+\end{align*}
+where $\eta_\theta$ and $\eta_\beta$ are regularization parameters. 
 
 \subsection{Examples}
 
 \paragraph{Latent MRFs}
 
-Image segmentation
+\begin{figure}
+  \label{fig:examples-mrf}
+  \centering
+  \subimport{figures/}{mrf.tikz}
+  \caption{Markov Random Field with 2 views}
+\end{figure}
 
-Separate features into views
+Consider the example in \figureref{examples-mrf}, which is a pairwise Markov
+  random field with two observed variables for every hidden variable. 
+In practice, if two features are known to be independent, then they can
+  be separated into independent observed variables.
+Let the parameters of the model be $O \eqdef \Phi(x^a_{i,j}, h_{i,j})
+  = \Phi(x^b_{i,j}, h_{i,j})$ and $T \eqdef \Phi(h_{i,j}, h_{i \pm 1,j \pm 1})$. 
+Note that as this is an undirected model, the clique marginals do not
+  correspond to the parameters of the model.
 
-\todo{Some challenge example requiring measurements em}
+To recover the parameters of this model, note that every hidden
+  variable, $h_{ij} \in \sH$ is a bottleneck, with views
+  $x^{a}_{ij},x^{b}_{ij}$ and any other observed variable in the graph. 
+Thus, \LearnMarginals will be able to learn the marginals of each clique
+  and \LearnLogLinear will give us a consistent estimate of the
+  parameters. 
+
+However, the objective \equationref{obj} requires us to compute the
+  partition function, $A(\theta)$ and its gradient. 
+This scales with the treewidth of the model, which is the number
+  of rows/columns of the grid in this example, and hence can be
+  intractable.
+A more computationally efficient, but still consistent, alternative is
+to optimize the pseudo-likelihood \todo{how do I write this out}.
+
 

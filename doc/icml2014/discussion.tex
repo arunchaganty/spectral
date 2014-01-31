@@ -1,4 +1,32 @@
 \section{Discussion}
 \label{sec:discussion}
 
+In this paper, we've described an algorithm that can consistently
+  estimate parameters for the class of directed and undirected graphical
+  models for which each hidden variable has at least three conditionally
+  independent observed variables (\propertyref{bottleneck}).
+This condition is sufficiently general to capture a variety of popular
+  models like latent trees and grids (like a pairwise latent Markov
+  random field).
+The undirected model setting applies to log-linear models, allowing
+  for discriminative featurization; furthermore, in practice, the
+  bottleneck condition can be enforced on a model if the observed
+  features can be split into two uncorrelated sets.
+
+The key property we exploited was the presence of exclusive views
+  (\propertyref{exclusive-views}) with learnable parameters.
+In some sense, the presence of these views helps tie down the hidden
+  variables to the data. 
+While other authors, e.g \citet{anandkumar12lda, anandkumar12linear,
+  halpern13noisyor} are able to learn parameters for models outside this
+  family, they do so with some knowledge of the correlation structure
+  between variables. 
+In a pre-processing step, they ``subtract'' out the correlations and
+  recover a graph that satisfies the bottleneck property
+  \propertyref{bottleneck}.
+Thus, while \propertyref{bottleneck} is much stronger than
+  \propertyref{exclusive-views}, we expect that without any knowledge of
+  the correlation between variables, \propertyref{bottleneck} is
+  necessary for identifiability.
+
 
