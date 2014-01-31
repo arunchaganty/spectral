@@ -27,5 +27,54 @@ Let $\|\mOppit{v_1}{i_1}\|_F < O$ and $\|\hat{\mOppit{v_1}{i_1}}\|_F < O$; then,
   &\le \|M_\sV - \hat M_\sV\|_F O^m + \|\hat M_\sV\|_F O^{m-1} \max\{\|\hat {\mOppit{v_1}{i_1}} - \mOppit{v_1}{i_1}\|_F\}.
 \end{align*}
 
+\subsection{\lemmaref{pw-variance}}
+\label{app:pw-variance-proof}
 
+\begin{proof}
+  Using the delta-method \cite{vaart98asymptotic}, we have that the
+  asymptotic distribution of $Z_\sC$ is,
+  \begin{align*}
+    \sqrt{n}(\hat Z_{\sC} - Z_{\sC}) &\convind \sN( 0, \grad^2 \sL_\ml^{-1} \Var[\grad \sL_\ml] \grad^2 \sL_\ml^{-1}).
+  \end{align*}
 
+Taking the first derivative,
+\begin{align}
+  \grad_{\mH_\sC} \sL_\ml(\sX_\sV) 
+  &= \sum_{x \in \sD} \frac{\mOppAll[\vx]}{\mH_\sC \cdot \mOppAll[\vx]} \nonumber \\ 
+  &= \mOppAll[\vx] \diag(\tilde \mO_{\sV})^{-1} \mO_{\sV}, \label{eqn:lhood-grad}
+\end{align}
+where $\tilde \mO_\sV$ is marginal distribution with parameters $\mH_\sC$, also represented as a vector in $\Re^{d^m}$.
+
+Taking the second derivative.
+\begin{align}
+  \grad^2_{\mH_\sC} \sL_\ml(\Sx \sV) 
+  &= \sum_{x \in \sD} \frac{\mOppAll[\vx] \mOppAllt[\vx]}{(\mH_\sC \cdot \mOppAll[\vx])^2} \nonumber \\
+  &= \sum_{x \in \sD}\mOppAll[\vx] \mOppAllt[\vx] \frac{\mO_{\sV}[\vx]}{\tilde \mO_{\sV}^2[\vx]} \nonumber \\
+  &= \mOppAll \diag(\mO_{\sV}) \diag(\tilde \mO_{\sV})^{-2} \mOppAllt. \label{eqn:lhood-hess}%
+\end{align}
+
+% DONE: don't need this
+%It follows that $\grad^2_{\mH_\sC} \sL_\ml(\Sx \sV) \succ 0$ because
+%$\tilde \mO_\sV, \tilde \mO_\sV \succ 0$ and $\mOppAll$ is
+%full rank and stochastic.
+
+% PL: this should just be a consequence
+%Next, we show that it is
+%strictly concave, which guarantees that it has a unique maximizer.
+
+  From \equationref{lhood-grad}, we get
+  \begin{align*}
+    \Var [\grad \sL_\ml(\vec x_\sC)] &= \mOppAll \diag(\tilde M_\sV) \Sigma_\sV \diag(\tilde M_\sV) \mOppAll^T .
+  \end{align*}
+
+  Finally, using \equationref{lhood-hess}, we have
+  \begin{align*}
+    \Sigma_{Z_\sC} 
+      &= \grad^2 \sL_\ml(\vec x_\sC)^{-1} \Var [\grad \sL_\ml(\vec x_\sC)] \grad^2 \sL_\ml(\vec x_\sC)^{-1}) \\
+      &= \pinvt{\mOppAll} \diag(\tilde M_\sV) \Sigma_\sV \diag(\tilde M_\sV) \pinv{\mOppAll}.
+  \end{align*}
+
+  At the true parameters, $\tilde M_\sV = M_\sV$, completing the proof.
+  \todo{argue that asymptotic variance is finite, so the estimator is consistent (this is technically good form,
+but it's fine given space constraints}
+\end{proof}
