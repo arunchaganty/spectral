@@ -12,9 +12,9 @@
 % Import grid.
 %\node[scale=0.9] (step0) at (0,0) {\input{figures/grid.tikz}};
 \node[scale=0.9] (step1) at (0cm,0cm) {\input{grid-outline.tikz}};
-\node[scale=0.70] at (0,-2.5cm) {\objw{5cm}{\textbf{Step 1:} Identify bottlenecks and learn condtional moments}};
+\node[scale=0.70] at (0,-2.5cm) {\objw{5cm}{\textbf{Step 1:} Learn condtional moments for each bottlenck}};
 \node[scale=0.6] (step2) at (4cm,0cm) {\input{factors.tikz}};
-\node[scale=0.70] at (4cm,-2.5cm) {\objw{5cm}{\textbf{Step 2:} Optimize composite likelihoods}};
+\node[scale=0.70] at (4cm,-2.5cm) {\objw{5cm}{\textbf{Step 2:} Optimize the composite likelihood of each clique}};
 
 \draw[-latex] (step1) -- (step2);
 
