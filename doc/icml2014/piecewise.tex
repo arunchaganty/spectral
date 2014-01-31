@@ -135,8 +135,8 @@ but it's fine given space constraints}
 The following lemma shows that the gap can \todo{reference the two lemmas} can be quite substantial,
 and and scales with the dimension $d$ [TODO: make sure this is true]:
 \begin{corollary}
-The asymptotic variance of pseudoinverse estimator is strictly larger
-than that of the composite likelihood estimator: $\Sigma^\mom \succ \Sigma^\ml$.
+The pseudoinverse estimator is strictly less efficient
+than the composite likelihood estimator in that $e^\mom \eqdef \Tr(\Sigmamli \Sigmamom) > 0$.
 \end{corollary}
 \begin{proof}
   \todo{fix notation in proof; use pseudoinverse estimator}
@@ -160,12 +160,12 @@ than that of the composite likelihood estimator: $\Sigma^\mom \succ \Sigma^\ml$.
   \end{align*}
 \end{proof}
 
-\paragraph{Intuition}
-It is well known that the method of moments estimator is less
-  statistically efficient than the maximum likelihood estimator. 
-To get a sense for how large the gap is, consider an example where in
-  $M_\sV$ is close to the uniform distribution, i.e. $\diag(M_\sV)
-  = \frac{1}{d} I$. 
+\paragraph{Intuitions}
+%It is well known that the method of moments estimator is less
+  %statistically efficient than the maximum likelihood estimator. 
+To get a sense for how large the gap is, consider an example in which
+$M_\sV$ is close to the uniform distribution, i.e. $\diag(M_\sV)
+  \approxeq \frac{1}{d} I$. 
 Then the efficiency of the $e^\mom = \Tr(\frac{1}{d^2} I)
   = \frac{1}{d}$.
 In other words, the gap in variance between the method of moments
