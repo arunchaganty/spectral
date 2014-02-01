@@ -26,13 +26,13 @@ where $A(\theta) = \sum_{\vx, \vh}  \exp( \sum_\sC \theta^\top \phi(\vx,\vh) )$ 
 
 % FIGURE: example
 \begin{figure}
-  \label{fig:examples-mrf}
   \centering
   \includegraphics[width=0.6\columnwidth]{figures/mrf.pdf}
 %  \subimport{figures/}{mrf.tikz}
   \caption{Example: undirected grid model where each hidden variable has two
   conditionally independent observations.
   We derive a consistent estimate.}
+  \label{fig:examples-mrf}
 \end{figure}
 
 %As an example, consider an undirected grid model in \figureref{examples-mrf},
@@ -72,7 +72,7 @@ L_\text{sup}(\theta) &\eqdef \E_{(\vx,\vh) \sim \sD_\text{sup}}[\log p_\theta(\v
                      &= \theta^\top \left(\sum_{\sC \in \sG} \E[\phi(\vx_\sC,\vh_\sC)]\right) - A(\theta).
 \end{align}
 While we don't have supervised data,
-note that the method of moments gives us latent marginals $Z_\sC = \BP(\vh_\sC)$.
+note that the method of moments gives us hidden marginals $Z_\sC = \BP(\vh_\sC)$.
 Furthermore, given $\mOpp{v}{i}$ and $Z_\sC$ of any $\sC \ni v$, we can recover
 all marginals $Z_\sC = \BP(\vx_\sC, \vh_\sC)$ (with a slight augmentation of notation).
 Finally, the key step is that we can compute all the expected feature vectors from the marginals:
@@ -150,7 +150,7 @@ The pseudolikelihood objective sums over the log-probability of each variable $a
 $$L_\text{pseudo}(\theta) \eqdef \E_{x \sim \sD}\left[\sum_{a \in X \cup H} \log p_\theta(a \mid x_{\sN(a)})\right].$$
 In the fully-supervised setting, pseudolikelihood provides computationally efficient consistent estimates,
 albeit at the cost of statistical efficiency.
-Coincidentally, the same high-level motivation for using method of moments in the first place.
+Coincidentally, this is the same high-level motivation for using method of moments in the first place.
 
 However, pseudolikelihood also replaces the log-partition function $A(\theta)$
 with a sum over the variables: $A_a(\theta; x_{\sN(a)}) = \sum_a \exp(\theta^\top\phi(a))$,
@@ -166,10 +166,12 @@ Note that neither sample nor computational complexity depends on the treewidth.
 
 In general, we might only have exclusive views (\propertyref{exclusive-views}) for a subset of the cliques.
 In this case, we can estimate the expected features $\mu_\sC$ for those cliques
-and use posterior regularization \citep{graca08em} or generalized expectation criteria \citep{mann08ge}
-to encourage $\E_{p_\theta}[\phi(\vx_\sC,\vh_\sC)]$ to match $\mu_\sC$.
-The resulting objective functions are still non-convex, but in practice we observed
-that the extra information $\mu_\sC$ helps alleviate local optima.
+  and use posterior regularization \citep{graca08em} or generalized expectation criteria \citep{mann08ge}
+  to encourage $\E_{p_\theta}[\phi(\vx_\sC,\vh_\sC)]$ to match $\mu_\sC$.
+The resulting objective functions are still non-convex, but we expect
+  local optima to be alleviated. 
+
+%but in practice we observed that the extra information $\mu_\sC$ helps alleviate local optima.
 %We can then integrate these constraints using posterior regularization \citep{graca08em}:
 %\begin{align}
 %L_\text{pr}(\theta) \eqdef L_\text{unsup}(\theta) + C\min_{q \in \sQ} \text{KL}(q(\vx,\vh) \| p_\theta(\vx,\vh)).

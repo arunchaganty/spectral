@@ -107,7 +107,7 @@ We call $x_v$ the exclusive view of $h_i$ in $\sC$.
 We now show this condition is sufficient to learn the marginal
   distribution of the clique.
 Consider any hidden clique $\sC = \{h_{i_1}, \cdots, h_{i_m}\} \in \sG$ for which this property holds. Let
-  $x_{v_j}$ be an exclusive view for $h_{i_j}$ in $\sC$ (not necessarily unique) and $\sV
+  $x_{v_j}$ be any exclusive view for $h_{i_j}$ in $\sC$ and $\sV
   = \{x_{v_1}, \cdots, x_{v_m}\}$ be a set of views for the clique $\sC$.
 We can write down the moments $\mO_\sV$ as follows:
 \begin{align*}
@@ -205,7 +205,7 @@ There is a one-to-one correspondence between the parameters of this
 
   \providecommand{\hp}{\ensuremath{h_\text{\rm new}}}
 
-  Let $x_v$ be an observed variable with parents $P$ and children $C$.
+  Let $x_v$ be an observed variable with parents $\Pa(x_v)$ and children $\text{Ch}(x_v)$.
   Consider the following transformation.
   Replace $x_v$ with a new hidden variable \hp\ with the same
   parents $\Pa(x_v)$ and children $\text{Ch}(x_v) \union \{x_{v_1}, x_{v_2}, x_{v_3}\}$,
@@ -250,17 +250,17 @@ There is a one-to-one correspondence between the parameters of this
   By participation in the clique, either $h_1 = h_2$ or $h_1$ is
     connected to $h_2$, implying that $x_1$ and $x_2$ are connected
     via a path that does not pass through $h$, contradicting the
-    statement that $x_1, x_2 \in \sV$. 
+    statement that $x_1, x_2 \in \sV_h$. 
     
-  Thus it must be the case that $\sV_{h} \subsetneq \Union_{h' \neq
+  Thus, it must be the case that $\sV_{h} \subsetneq \Union_{h' \neq
     h \in \sC} \sV_{h'}$ and hence there exists a unique view for $h$.
 
-  Algorithmically, finding the unique views can be done by subtracting
-    out the remaining set, i.e. $x_{v_h} \in \sV_h \setminus \Union_{h'
-    \in \sC} \sV_{h'}$
+  Algorithmically, finding the unique view for $h$ can be done by
+  subtracting the views of all other variables in the clique from
+  $\sV_h$,i.e. $x_{v_h} \in \sV_h \setminus \Union_{h' \in \sC} \sV_{h'}$
 \end{proof}
 
-With this lemma in place, we present the full algorithm, \LearnMarginals~
+With this lemma in place, we present the full algorithm, $\LearnMarginals$,
 in \algorithmref{directed}.
 
 \renewcommand{\algorithmicrequire}{\textbf{Input:}}
@@ -269,7 +269,7 @@ in \algorithmref{directed}.
   \caption{\LearnMarginals}
   \label{algo:directed}
   \begin{algorithmic}
-    \REQUIRE A graphical model $\sG$ satisfying \propertyref{bottleneck}, data $\sD$
+    \REQUIRE Graphical model $\sG$ satisfying \propertyref{bottleneck}, data $\sD$
     \ENSURE Marginals $Z_\sC$ for every clique $\sC \in \sG$
 
       \FOR{each hidden variable $h_i \in H$} 
@@ -325,9 +325,9 @@ In the directed grid model, we can identify the conditional moments $O$ from jus
 In the HMM (\figureref{examples-hmm}), the parameters
 are $O \eqdef \Pr(x_i|h_i)$  and that $T \eqdef \Pr(h_{i+1} | h_i)$
 for all $i$. % (i.e. we have parameter sharing).
-While the first and last hidden variables $h_1, h_T$ in the
+While the first and last hidden variables $h_1, h_M$ in the
   sequence are not bottlenecks, they still have exclusive views ($x_1$ and
-  $x_T$ respectively) whose parameters we know because they share
+  $x_M$ respectively) whose parameters we know because they share
   parameters, $O$.
 %We first use the bottleneck $h_2$ with views $x_1, x_2, x_3$ to estimate $O$,
 %and then recover $\pi$ from $\{h_1\}$ and recover $T$ from the clique $\{h_{1}, h_{2}\}$.
@@ -362,8 +362,8 @@ The simplest example of a model that cannot be recovered by our algorithm is
   a mixture model with a single view, i.e. \figureref{three-view} with
   just the variables $h_1$ and $x_1$.
 However, without further assumptions the model itself is not
-  identifiable\footnote{To see this, observe that the probability-mass
-  can be arbitrarily exchanged between $\Pr(h_1)$ and $\Pr(x_1 | h_1)$}.
+  identifiable\footnote{To see this, observe that probability-mass
+  can be arbitrarily exchanged between $\Pr(h_1)$ and $\Pr(x_1 | h_1)$ while preserving the marginals $\Pr(x_1)$}.
 A class of binary-valued noisy-or networks
 (see \figureref{examples-noisy-or} for an example)
 which do not possess the
@@ -426,7 +426,7 @@ depends polynomially on the $k$-th singular value of $\mOpp{v}{i}$.
 % Easy case
 Next, we need to show that the hidden marginals $\hat Z_\sC$ converge to $Z_\sC$.
 First, $\hat M_\sV$ is just an empirical average of multinomials over the data points.
-Abusing notation slightly, we let $M_\sV$ also denote its $d^{|\sV|}$-dimensional vectorized version.
+Abusing notation slightly, we let $M_\sV$ also denote its $d^{m}$-dimensional vectorized version.
 We also represent $\mH_\sC$ as
   a vector in $\Re^{k^m}$, and represent $\mOppAll \eqdef
   \mOpp{v_1}{i_1} \otimes \cdots \otimes

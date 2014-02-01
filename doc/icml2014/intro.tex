@@ -18,7 +18,9 @@ this learning problem
 hsu09spectral,
 bailly2010spectral,
 song2011spectral,
-anandkumar11tree,anandkumar12moments,anandkumar12lda,
+anandkumar11tree,
+anandkumar12lda,
+anandkumar12moments,
 hsu12identifiability,
 balle12automata}.
 %\todo{make sure we are citing the right people}
@@ -66,8 +68,8 @@ Our approach is illustrated in \figureref{approach}.
 First, we identify the views for each hidden variable $h_i$ (for example,
 $x_1^a$, $x_1^b$ and $x_3^a$ are conditionally independent given $h_1$) and use
 the tensor factorization algorithm of
-\citet{anandkumar12moments,anandkumar13tensor} to identify the \emph{conditional
-moments} $\E[x_i^a \mid h_i]$ and $\E[x_i^b \mid h_i]$ for each $i$.
+\citet{anandkumar13tensor} to identify the \emph{conditional
+moments} $\Pr[x_i^a \mid h_i]$ and $\Pr[x_i^b \mid h_i]$ for each $i$.
 Second, we optimize a \emph{composite marginal likelihood} to recover the marginals over
 each hidden clique (e.g., $\mathbb P(h_2, h_3, h_4)$).
 Normally, such a marginal likelihood objective would be non-convex,

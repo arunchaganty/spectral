@@ -29,6 +29,10 @@ bib: paper.tex $(SECTIONS)
 run:
 	go icml2014.pdf
 
+split: $(OUTPUT).pdf
+	pdfjam --outfile main.pdf $(OUTPUT).pdf 1-9
+	pdfjam --outfile appendix.pdf $(OUTPUT).pdf 10
+
 clean:
 	rm -rf *.{aux,bbl,blg,log,out}
 	rm -rf $(OUTPUT).pdf
