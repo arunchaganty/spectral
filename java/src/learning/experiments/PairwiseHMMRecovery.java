@@ -803,7 +803,13 @@ public class PairwiseHMMRecovery implements  Runnable {
     // Initialize model
     begin_track("Generating model");
     HiddenMarkovModel.Parameters trueParams = model.newParams();
-    trueParams.initRandom(paramsRandom, paramsNoise);
+    
+    double sigmak = 0.;
+    while(sigmak < 0.05) {
+        trueParams.initRandom(paramsRandom, paramsNoise);
+        SimpleMatrix sigma = MatrixOps.svd(new SimpleMatrix(trueParams.getO())).getValue1();
+        sigmak = sigma.get(K-1,K-1);
+    }
 
     // Get data
     Counter<Example> data;

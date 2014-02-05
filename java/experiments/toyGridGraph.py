@@ -14,20 +14,22 @@ import itertools as it
 EXPT_NAME = "ToyGridGraph"
 MODEL = "grid"
 
-KD_VALUES = [(2,2), (2,3), (3,3), (3,5),]# (3,10), (5,10)]
-N_VALUES = [1e3, 2e3, 5e3, 7e3,
-            1e4, 2e4, 5e4, 7e4,
-            1e5, 2e5, 5e5, 7e5,
+KD_VALUES = [(2,2)] #, (2,3), (3,3), (3,5),]# (3,10), (5,10)]
+N_VALUES = [1e3, 5e3, 
+            1e4, 5e4, 
+            1e5, 5e5, 
             5e7 # equivalent to infinity
             ]
 
-MEASUREMENT_PROB_VALUES = [1.0, 0.7, 0.3, 0.0]
+MEASUREMENT_PROB_VALUES = [1.0, 0.0]
 NOISE_VALUES = [0.,] # 1e-1,] #1e-2]
 
 PRECONDITIONG_VALUES = [0.0,]# 1e-3] #1e-2, 1e-3]
+USE_TRANSITIONS = ["true","false"]
 
 def get_true_settings(args):
     model = MODEL
+    useT = "false"
     preconditioning = 0.0
     mode = "TrueMeasurements"
     for k,d in KD_VALUES:
@@ -48,9 +50,10 @@ def get_spectral_settings(args):
         assert k <= d
         for n in N_VALUES:
             for preconditioning in PRECONDITIONG_VALUES:
-                for model_seed in xrange( args.instantiations ):
-                    for initialization_seed in xrange( args.initializations ):
-                        yield dict(locals())
+                for useT in USE_TRANSITIONS:
+                    for model_seed in xrange( args.instantiations ):
+                        for initialization_seed in xrange( args.initializations ):
+                            yield dict(locals())
 
 def do_run(args):
     #random.seed(args.seed)
@@ -74,6 +77,7 @@ def do_run(args):
  -measuredFraction {measured_fraction}\
  -trueMeasurementNoise {measurement_noise}\
  -preconditioning {preconditioning}\
+ -useTransitions {useT}\
  -genNumExamples {n}\
  -SpectralMeasurements.MeasurementsEM.iters 200 -eIters 10000'
 
@@ -82,7 +86,7 @@ def do_run(args):
         count = len(list(settings))
         print "%d settings split over %d runs (%d each)" %(count, args.njobs, count/args.njobs+1)
     elif args.parallel:
-        scabby.parallel_spawn( args.exptdir, "qstart", cmd, args.njobs, settings )
+        scabby.parallel_spawn( args.exptdir, "echo", cmd, args.njobs, settings )
     else:
         for setting in settings:
             scabby.safe_run(cmd.format(**setting))
@@ -97,7 +101,7 @@ def do_process(args):
             cmd = 'tab.py extract\
      --execdir {args.execdir}\
      --filters K={k} D={d} modelType={model} mode={mode}\
-     --keys trueParamsRandom genNumExamples measuredFraction trueMeasurementNoise paramsError countsError marginalError fit-perp'.format(**locals())
+     --keys trueParamsRandom useTransitions genNumExamples measuredFraction trueMeasurementNoise paramsError countsError marginalError fit-perp'.format(**locals())
             raw_path = os.path.join( args.exptdir, '{model}-{k}-{d}-{mode}.raw.tab'.format(**locals()) )
 
             print (pb.local['python2.7'][cmd.split()] > raw_path)
@@ -105,9 +109,9 @@ def do_process(args):
 
             agg1_path = os.path.join( args.exptdir, '{model}-{k}-{d}-{mode}.agg1.tab'.format(**locals()) )
             if args.best:
-                cmd = 'tab.py agg --mode min genNumExamples trueParamsRandom measuredFraction trueMeasurementNoise'.format(**locals())
+                cmd = 'tab.py agg --mode min genNumExamples trueParamsRandom measuredFraction trueMeasurementNoise useTransitions'.format(**locals())
             else:
-                cmd = 'tab.py agg genNumExamples trueParamsRandom measuredFraction trueMeasurementNoise'.format(**locals())
+                cmd = 'tab.py agg genNumExamples trueParamsRandom measuredFraction trueMeasurementNoise useTransitions'.format(**locals())
 
             print (pb.local['cat'][raw_path] | pb.local['python2.7'][cmd.split()] > agg1_path)
             (pb.local['cat'][raw_path] | pb.local['python2.7'][cmd.split()] > agg1_path)()
@@ -117,8 +121,8 @@ def do_process(args):
                 agg_path = os.path.join( args.exptdir, '{model}-{k}-{d}-{mode}.best.tab'.format(**locals()) )
             else:
                 agg_path = os.path.join( args.exptdir, '{model}-{k}-{d}-{mode}.agg.tab'.format(**locals()) )
-            cmd_agg = 'tab.py agg genNumExamples measuredFraction trueMeasurementNoise'.format(**locals()) 
-            cmd_sort = 'tab.py sort trueMeasurementNoise measuredFraction genNumExamples'.format(**locals())
+            cmd_agg = 'tab.py agg genNumExamples measuredFraction trueMeasurementNoise useTransitions'.format(**locals()) 
+            cmd_sort = 'tab.py sort trueMeasurementNoise measuredFraction useTransitions genNumExamples'.format(**locals())
 
             print (pb.local['cat'][agg1_path] | pb.local['python2.7'][cmd_agg.split()] | pb.local['python2.7'][cmd_sort.split()] > agg_path)
             (pb.local['cat'][agg1_path] | pb.local['python2.7'][cmd_agg.split()] | pb.local['python2.7'][cmd_sort.split()] > agg_path)()

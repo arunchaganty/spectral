@@ -13,14 +13,15 @@ import itertools as it
 
 EXPT_NAME = "ToyHMMGraph"
 
-KD_VALUES = [(2,2), (2,3), (3,3), (3,5),]# (3,10), (5,10)]
-N_VALUES = [1e3, 2e3, 5e3, 7e3,
-            1e4, 2e4, 5e4, 7e4,
-            1e5, 2e5, 5e5, 7e5,
+KD_VALUES = [(2,3),]# (3,3), (3,5),]# (3,10), (5,10)]
+N_VALUES = [1e3, 5e3,
+            1e4, 5e4,
+            1e5, 5e5,
+            1e6
             5e7 # equivalent to infinity
             ]
 
-MEASUREMENT_PROB_VALUES = [1.0, 0.7, 0.3, 0.0]
+MEASUREMENT_PROB_VALUES = [1.0, 0.0]
 NOISE_VALUES = [0.,] # 1e-1,] #1e-2]
 
 PRECONDITIONG_VALUES = [0.0,]# 1e-3] #1e-2, 1e-3]
