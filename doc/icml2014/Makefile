@@ -13,8 +13,11 @@ $(OUTPUT).pdf: paper.tex $(SECTIONS) $(FIGURES)
 	mv $(subst .tex,.pdf,$<) $@
 
 final: paper.tex $(SECTIONS)
-	./texify < $< > $(subst .tex,.tmp.tex,$<)
+	texify < $< > $(subst .tex,.tmp.tex,$<)
 	$(LATEX) $(subst .tex,.tmp.tex,$<)
+	bibtex $(subst .tex,,$<)
+	$(LATEX)  $(subst .tex,.tmp.tex,$<)
+	$(LATEX)  $(subst .tex,.tmp.tex,$<)
 	mv $(subst .tex,.tmp.pdf,$<) $(OUTPUT).pdf
 
 bib: paper.tex $(SECTIONS)
@@ -25,6 +28,10 @@ bib: paper.tex $(SECTIONS)
 
 run:
 	go icml2014.pdf
+
+split: $(OUTPUT).pdf
+	pdfjam --outfile main.pdf $(OUTPUT).pdf 1-9
+	pdfjam --outfile appendix.pdf $(OUTPUT).pdf 10
 
 clean:
 	rm -rf *.{aux,bbl,blg,log,out}

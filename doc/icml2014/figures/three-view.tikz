@@ -8,7 +8,7 @@
 \begin{tikzpicture}
 
 % Hidden nodes
-   \node[style=node, scale=0.8] (h) at (0,0) {$h$};
+   \node[style=node, scale=0.8] (h) at (0,0) {$h_1$};
    \node[style=obsnode, scale=0.8] (x1) at (-1.0, -1.0) {$x_1$};
    \node[style=obsnode, scale=0.8] (x2) at (0.0, -1.0) {$x_3$};
    \node[style=obsnode, scale=0.8] (x3) at (1.0, -1.0) {$x_3$};

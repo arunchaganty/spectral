@@ -39,16 +39,16 @@
    \draw[-latex] (h4) -- (x4a);
    \draw[-latex] (h4) -- (x4b);
 
-\begin{pgfonlayer}{background}
-\draw[line width=1pt, dotted, black] 
-                ($(x1b.north east) + (45:0.3cm)$) -- 
-                ($(x1a.north west) + (135:0.3cm)$) -- 
-                ($(x2a.north west) + (135:0.3cm)$) -- 
-                ($(x2a.south west) + (-135:0.3cm)$) -- 
-                ($(h1.south) + (-90:0.3cm)$) -- 
-                ($(x1b.east) + (0:0.3cm)$) -- 
-                cycle;
-\end{pgfonlayer}
+%\begin{pgfonlayer}{background}
+%\draw[line width=1pt, dotted, black] 
+%                ($(x1b.north east) + (45:0.3cm)$) -- 
+%                ($(x1a.north west) + (135:0.3cm)$) -- 
+%                ($(x2a.north west) + (135:0.3cm)$) -- 
+%                ($(x2a.south west) + (-135:0.3cm)$) -- 
+%                ($(h1.south) + (-90:0.3cm)$) -- 
+%                ($(x1b.east) + (0:0.3cm)$) -- 
+%                cycle;
+%\end{pgfonlayer}
 
 \end{tikzpicture}
 

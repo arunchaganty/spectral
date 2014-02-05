@@ -8,6 +8,7 @@
 \usepackage{amsmath,amssymb,amsthm} 
 
 \usepackage{datetime}
+\usepackage[utf8]{inputenc}
 
 % For citations
 \usepackage{natbib}
@@ -49,8 +50,11 @@
 
 \begin{document} 
 
+%\newcommand\paperTitle{Moment Constraints Make Learning Latent-Variable Models Easier}
+\newcommand\paperTitle{Estimating Latent-Variable Graphical Models using Moments and Likelihoods}
+
 \twocolumn[
-\icmltitle{Moment Constraints Make Learning Latent-Variable Models Easier}
+\icmltitle{\paperTitle}
 
 % It is OKAY to include author information, even for blind
 % submissions: the style file will automatically remove it for you
@@ -75,6 +79,7 @@ Stanford, CA, USA}
 \subimport{}{directed}
 \subimport{}{piecewise}
 \subimport{}{undirected}
+\subimport{}{examples}
 \subimport{}{related}
 %\subimport{}{experiments}
 \subimport{}{discussion}
@@ -82,6 +87,7 @@ Stanford, CA, USA}
 \bibliography{pliang,ref}
 \bibliographystyle{icml2014}
 
+\twocolumn
 \appendix
 \subimport{}{appendix}
 
