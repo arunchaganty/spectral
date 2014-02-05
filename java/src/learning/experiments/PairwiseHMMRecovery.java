@@ -56,14 +56,21 @@ public class PairwiseHMMRecovery implements  Runnable {
   @Option(gloss="Start at the exact solution?")
   public boolean initExactO = false;
 
+
   @Option(gloss="iterations to run EM")
   public int iters = 100;
 
   @Option(gloss="Run EM?")
   public boolean runEM = false;
+  @Option(gloss="Precision to run EM for")
+  public double emEps = 1e-4;
 
+  @Option(gloss="Project measurements?")
+  public boolean projectMeasurements = true;
+  @Option(gloss="Scale smoothing?")
+  public boolean scaleSmoothing = false;
   @Option(gloss="How much to smooth")
-  public double smoothMeasurements = 1e-2;
+  public double smoothMeasurements = 1e-3;
 
   @Option(gloss="Type of optimization to use") public boolean useLBFGS = false;
   @OptionSet(name="lbfgs") public LBFGSMaximizer.Options lbfgs = new LBFGSMaximizer.Options();
@@ -236,9 +243,11 @@ public class PairwiseHMMRecovery implements  Runnable {
     SimpleMatrix O = params.getValue3();
     SimpleMatrix OT = params.getValue2();
 
-    O = MatrixOps.projectOntoSimplex(O, smoothMeasurements);
+    if(projectMeasurements)
+      O = MatrixOps.projectOntoSimplex(O, smoothMeasurements);
     SimpleMatrix T = O.pseudoInverse().mult(OT);
-    T = MatrixOps.projectOntoSimplex(T, smoothMeasurements);
+    if(projectMeasurements)
+      T = MatrixOps.projectOntoSimplex(T, smoothMeasurements);
 
     end_track("recover-O");
 
@@ -568,7 +577,7 @@ public class PairwiseHMMRecovery implements  Runnable {
               "diff", diff
       ));
 
-      done = diff < 1e-4;
+      done = diff < emEps;
     }
     LogInfo.log(outputList(
             "lhood", lhood_old
@@ -617,7 +626,6 @@ public class PairwiseHMMRecovery implements  Runnable {
 
     double lhood_old = Double.NEGATIVE_INFINITY;
 
-    LogInfo.log(Fmt.D(pi));
     for(int iter = 0; iter < 1000 && !done; iter++){
       // Compute marginals
       double lhood = 0.;
@@ -640,15 +648,12 @@ public class PairwiseHMMRecovery implements  Runnable {
       }
       double z = MatrixOps.sum(pi);
       assert (MatrixOps.equal(z, 1)); // but maybe not exactly because of numerical error
-
-      LogInfo.log(Fmt.D(pi_));
       // Update
       double diff = 0.;
       for(int h1 = 0; h1 < K; h1++) {
         diff += Math.abs(pi[h1] - pi_[h1]);
         pi[h1] = pi_[h1];
       }
-      log(MatrixOps.sum(pi));
       assert( MatrixOps.equal(MatrixOps.sum(pi), 1.0 ));
 
       assert(lhood > lhood_old);
@@ -660,7 +665,7 @@ public class PairwiseHMMRecovery implements  Runnable {
               "diff", diff
       ));
 
-      done = diff < 1e-4;
+      done = diff < emEps;
     }
     LogInfo.log(outputList(
             "lhood", lhood_old
@@ -689,7 +694,8 @@ public class PairwiseHMMRecovery implements  Runnable {
       SimpleMatrix M1_ = MatrixFactory.fromVector(M1);
       SimpleMatrix pi_ = M1_.mult(O_.pseudoInverse());
       // Project on to simplex
-      pi_ = MatrixOps.projectOntoSimplex( pi_.transpose(), smoothMeasurements );
+      if (projectMeasurements)
+        pi_ = MatrixOps.projectOntoSimplex( pi_.transpose(), smoothMeasurements );
 
       pi = MatrixFactory.toVector(pi_);
     }
@@ -799,6 +805,14 @@ public class PairwiseHMMRecovery implements  Runnable {
 
   @Override
   public void run() {
+    // Options pre-processing
+    if(projectMeasurements && scaleSmoothing) {
+      if(N >= 1e7)
+        projectMeasurements = false;
+      else
+        smoothMeasurements /= Math.sqrt(N);
+    }
+
     HiddenMarkovModel model = new HiddenMarkovModel(K, D, L);
     // Initialize model
     begin_track("Generating model");
