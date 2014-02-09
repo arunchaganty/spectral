@@ -85,3 +85,65 @@ Taking the second derivative.
 %  \todo{argue that asymptotic variance is finite, so the estimator is consistent (this is technically good form,
 %but it's fine given space constraints}
 \end{proof}
+
+\subsection{Recovering conditional moments}
+
+% Define up front that we will focus on h, x_1, x_2, x_3
+In step 1 of \LearnMarginals, we use the bottleneck property of a hidden
+  variable $h_i$ to learn conditional moments $\mOpp{v}{i}$ for every
+  'view' $x_v \in \sV_{h_i}$ using \TensorFactorize. 
+We stated that \assumptionref{full-rank-plus} was sufficient to
+  guarantee that \assumptionref{full-rank} holds for the $\TensorFactorize$
+  algorithm\reword.
+In this section, we'll prove its sufficiency.
+
+First, some additional notation.
+
+\paragraph{Notation}
+
+For a $m$-th order tensor $T$ and index set $\sI$, define the {\em
+partial diagonal} $\diag_{\sI}(T)$ to be the $m - |\sI| + 1$ tensor with
+a diagonal along the index elements $\sI$; $\diag_{\sI}(T)_{\alpha,
+i_{n+1, \ldots, m}} = T_{\alpha, \ldots, \alpha, i_{n+1}, \ldots, m}$.
+
+\paragraph{Relation to clique marginals $Z_\sC$}
+
+To use $\TensorFactorize$ on the bottleneck $h_1$ with views $x_1, x_2,
+x_3$, we require that $\pi\oft1 \eqdef \Pr(h_1) \succ 0$ and that $\mOpp{i}{1} \eqdef \Pr(x_v | h_1)$ is full
+  rank for every $v \in \{1,2,3\}$ (\assumptionref{full-rank}).
+Let us explicitly write out $\pi\oft1, \mOpp{i}{1} \forall i \in
+  \{1,2,3\}$ in terms of the clique marginals $Z_\sC$.
+
+Let $\sC_0 = \{h_1, h_2, h_3, \cdots, h_m\}$ be any clique containing
+  $h_1$. $\mPi{1}$ can be obtained from $Z_\sC$ by marginalizing the
+  remaining $h_j ~ j \neq 1$, i.e. $\mPi{1} = Z_\sC(\cdot, \ones, \cdots,
+  \ones)$ 
+
+The form of $\mOpp{v}{1} = \Pr(x_v \given h_1)$ is a bit more
+  complicated. 
+We describe the procedure to construct $\mOpp{1}{1}$ from the data which applies to   $\mOpp{v}{1}$.
+
+By the reduction presented in \lemmaref{reduction}, we can assume
+  w.l.o.g. that $x_i$ are a leaf node for all $i$.
+Let $\{h_2, h_3, \cdots, h_l\}$ be the set of paths through hidden
+  variables from $h_1$ to $x_1$.
+
+\paragraph{Getting conditional distributions}
+
+For any clique, 
+
+
+\subsection{\assumptionref{full-rank-plus}}
+%
+%- Define an inferential path to go through $x_1, x_2, x_3, \cdots, x_n$, with cliques $\sC_1, \cdots, \sC_n$.
+%- Define marginal to be $\diag( Z_\sC(\cdot, 1) ) Z_\sC(\cdot, \cdot)$.
+%- Then, $\Pr(x_n | x_1) = Z_{\sC_1}(\cdot, \cdot, 1, 1) \cdots Z_{\sC_n}(\cdot, \cdot, 1, 1)$.
+%
+%- Thus, as long as $Z_{\sC}(\cdot, \cdot, 0} \succ 0$, $\Pr(x_n | x_1)$ has full rank.
+%
+%- Answer: partial diagonal.
+%- Lemma: if $M \succ 0$ and $M_{ij} > 0$ (i.e. $M$ is a probability distribution), then $1^T M, M 1 \succ 0$ as well.
+%- Lemma: if $T \succ 0$ and $T_{ijk} > 0$, then $T(1, \cdot, \cdot) \succ 0$ as well, and continue by induction.
+%        - is it possible to write out a condition for $\sigma_k$?
+%
+
