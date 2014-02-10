@@ -89,30 +89,64 @@ Taking the second derivative.
 \subsection{Recovering conditional moments}
 
 % Define up front that we will focus on h, x_1, x_2, x_3
-In step 1 of \LearnMarginals, we use the bottleneck property of a hidden
+In step 1 of \LearnMarginals, we used the bottleneck property of a hidden
   variable $h_i$ to learn conditional moments $\mOpp{v}{i}$ for every
-  'view' $x_v \in \sV_{h_i}$ using \TensorFactorize. 
-We stated that \assumptionref{full-rank-plus} was sufficient to
-  guarantee that \assumptionref{full-rank} holds for the $\TensorFactorize$
-  algorithm\reword.
-In this section, we'll prove its sufficiency.
+  'view' $x_v \in \sV_{h_i}$ using \TensorFactorize, provided
+  \assumptionref{full-rank-plus} holds;
+\begin{assumption*}
+For every clique $\sC \in \sG$ (including ones involving observed variables),
+every $R^{k \times k}$ slice of the marginals $Z_\sC$ has full column rank $k$.
+\end{assumption*}
 
-First, some additional notation.
+In this section, we will prove the sufficiency of the assumption. First,
+  let us define some additional notation.
 
 \paragraph{Notation}
 
-For a $m$-th order tensor $T$ and index set $\sI$, define the {\em
-partial diagonal} $\diag_{\sI}(T)$ to be the $m - |\sI| + 1$ tensor with
-a diagonal along the index elements $\sI$; $\diag_{\sI}(T)_{\alpha,
-i_{n+1, \ldots, m}} = T_{\alpha, \ldots, \alpha, i_{n+1}, \ldots, m}$.
+Let $\sC = \{h_1, \cdots, h_m\}$ be a hidden clique in the graph, and
+  let $Z_\sC \eqdef \Pr(h_1, \cdots, h_m)$ be the tensor representing the
+  joint distribution. 
+We can obtain a marginal distribution for a sub-set $B \subset \sC$ by
+  marginalizing out the remaining variables. 
+Without loss of generality, let $|B| = m'$ and let the first $m'$
+  indices of $Z_\sC$ correspond to the $h_i \in B$; we can represent the
+  marginalization operation with linear algebra as $Z_B = Z_\sC(
+  \underbrace{I, \cdots, I}_{m' \text{times}}, \underbrace{\ones, \cdots, \ones}_{m - m'
+  \text{times}} )$. 
 
-\paragraph{Relation to clique marginals $Z_\sC$}
+Next, for a $m$-th order tensor $Z_\sC$ and $B \subset \sC$ with $m' \eqdef |B'|$, define the {\em
+partial diagonal} $\diag_{B}(Z_\sC)$ to be the $m - m' + 1$-th order tensor with
+a diagonal along the elements of $B$; $\diag_{B}(Z_\sC)[i, 
+i_{m'+1, \ldots, m}] = Z_\sC[\underbrace{i, \ldots, i}_{m' \text{times}}, i_{m'+1}, \ldots, m]$.
+
+
+\paragraph{Relation to clique marginals}
 
 To use $\TensorFactorize$ on the bottleneck $h_1$ with views $x_1, x_2,
 x_3$, we require that $\pi\oft1 \eqdef \Pr(h_1) \succ 0$ and that $\mOpp{i}{1} \eqdef \Pr(x_v | h_1)$ is full
   rank for every $v \in \{1,2,3\}$ (\assumptionref{full-rank}).
 Let us explicitly write out $\pi\oft1, \mOpp{i}{1} \forall i \in
   \{1,2,3\}$ in terms of the clique marginals $Z_\sC$.
+
+By the reduction presented in \lemmaref{reduction}, we can assume
+  w.l.o.g. that the observed variables always appear as leaf nodes with a single parent). 
+Let $h_v$ be the parent of $x_v$. Then, 
+\begin{align*}
+  \mOpp{v}{1} &\eqdef \Pr( x_v | h_1 )  \\
+              &= \sum_{h_v} \Pr( x_v | h_v ) \Pr( h_v | h_1 ) \\
+              &= \mOpp{v}{v} \mYpp{v}{1},
+\end{align*}
+where $\mYpp{i}{j} \eqdef \Pr( h_i | h_j )$. 
+
+Let $\Succ(h)$ be the parents (neighbors) of a hidden variable $h$ in
+  a directed (undirected) graphical model. 
+Note that $\mYpp{v}{1}$ can be decomposed in terms of it's parents,
+\begin{align*}
+  \mYpp{v}{1} &\eqdef \Pr( h_v | h_1 )  \\
+  &= \sum_{\vec h \in \sH_{\succ{h_v}}} \Pr( \Succ(h_v) | h_1 ) \Pr( h_v | \Succ(h_v) ) \\
+              &= \mOpp{v}{v} \mYpp{v}{1},
+\end{align*}
+
 
 Let $\sC_0 = \{h_1, h_2, h_3, \cdots, h_m\}$ be any clique containing
   $h_1$. $\mPi{1}$ can be obtained from $Z_\sC$ by marginalizing the
@@ -123,10 +157,6 @@ The form of $\mOpp{v}{1} = \Pr(x_v \given h_1)$ is a bit more
   complicated. 
 We describe the procedure to construct $\mOpp{1}{1}$ from the data which applies to   $\mOpp{v}{1}$.
 
-By the reduction presented in \lemmaref{reduction}, we can assume
-  w.l.o.g. that $x_i$ are a leaf node for all $i$.
-Let $\{h_2, h_3, \cdots, h_l\}$ be the set of paths through hidden
-  variables from $h_1$ to $x_1$.
 
 \paragraph{Getting conditional distributions}
 
