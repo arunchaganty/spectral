@@ -4,32 +4,6 @@
 In the interest of space, we have omitted some proofs from
 the main contents of the paper. We present their proofs in detail below.
 
-%\paragraph{Sample complexity for $Z_\sC$}
-%
-%Consider the estimation of the conditional moments for a bottleneck $h_i$ with views $x_{v_1},
-%x_{v_2}, x_{v_3}$. Let the error in estimation of the moments (i.e.
-%  $\|M_{v_1 v_2} - \hat M_{v_1 v_2} \|_F$, etc.)
-%$\epsilon$. 
-%Results from \citet{anandkumar12moments,anandkumar13tensor} show that 
-%\begin{align*}
-%  \|\mOpphat{v_1}{i} - \mOppit{v_1}{i}\|^2_F 
-%    &= O( 
-%    \frac{k {\pi\oft{i}}_{\max}^2}
-%    {\sigma_k(M_{v_1,v_2})^5 } \epsilon ). 
-%\end{align*}
-%
-%Similarly, we can apply standard perturbation analysis techniques to get
-%an error bound on $Z_\sC$;
-%\begin{align*}
-%  \|Z_\sC - \hat Z_\sC\|_F 
-%  &\le \|M_\sV(\mOppit{v_1}{i_1}, \cdots, \mOppit{v_m}{i_m})  - \hat M_\sV(\hat{\mOppit{v_1}{i_1}}, \cdots, \hat{\mOppit{v_m}{i_m}})\|^2_F.
-%\end{align*}
-%Let $\|\mOppit{v_1}{i_1}\|_F < O$ and $\|\hat{\mOppit{v_1}{i_1}}\|_F < O$; then, we get
-%\begin{align*}
-%  \|Z_\sC - \hat Z_\sC\|_F 
-%  &\le \|M_\sV - \hat M_\sV\|_F O^m + \|\hat M_\sV\|_F O^{m-1} \max\{\|\hat {\mOppit{v_1}{i_1}} - \mOppit{v_1}{i_1}\|_F\}.
-%\end{align*}
-
 \subsection{\lemmaref{pw-variance}}
 \label{app:pw-variance-proof}
 
@@ -103,7 +77,8 @@ In this section, we will show that the following condition
   (\assumptionref{full-rank-plus}) on the clique marginals suffices;
 \begin{assumption*}
 For every clique $\sC \in \sG$ (including ones involving observed variables),
-every $\Re^{k \times k}$ slice of the marginals $Z_\sC$ has full column rank $k$.
+  every $\Re^{k \times k}$ slice of the marginals $Z_\sC$ has full column
+  rank $k$ constructed by summing out the remaining indices.
 \end{assumption*}
 
 %First, let us define some additional notation.
@@ -129,7 +104,8 @@ every $\Re^{k \times k}$ slice of the marginals $Z_\sC$ has full column rank $k$
 %
 %\paragraph{Relation to clique marginals}
 
-\begin{lemma}(Sufficiency of \assumptionref{full-rank-plus})
+\begin{lemma}[Sufficiency of \assumptionref{full-rank-plus}]
+  \label{lem:full-rank-suff}
   Given that \assumptionref{full-rank-plus} holds, then for any hidden
   variable $h_1$ and observed variable $x_v$, $\mPi{1} \succ 0$ and
   $\mOpp{v}{i}$ has full column rank.
@@ -138,6 +114,13 @@ every $\Re^{k \times k}$ slice of the marginals $Z_\sC$ has full column rank $k$
 \begin{proof}
 Let us explicitly write out $\mPi{1}, \mOpp{1}{1}, \mOpp{2}{1},
 \mOpp{3}{1}$ in terms of the clique marginals \{ $Z_\sC \given \sC \in \sG \}$.
+
+\begin{figure}[t]
+  \label{fig:assumption-2}
+  \centering
+  \input{figures/assumption.tikz}
+  \caption{$\mOpp{v}{1}$ can be estimated by considering marginal distributions along any path from $h_1$ to $x_v$}
+\end{figure}
 
 Let $\sC_0 = \{h_1, \cdots, h_m\}$ be any clique containing
   $h_1$. $\mPi{1}$ can be obtained from $Z_\sC$ by marginalizing the
@@ -185,17 +168,89 @@ Note that \assumptionref{full-rank-plus} guarantees that $Y_{j \given
 \subsection{Sample Complexity}
 
 In this section, we will explicitly derive the sample complexity of
-  $\LearnMarginals$.
+  $\LearnMarginals$. The end result is an estimate of the error of
+  each clique marginal $Z_\sC$.
+The analysis proceeds in two stages; (i) bounding the error in
+  estimating in each conditional moment $\mOpp{v}{i}$ and (ii) bounding
+  the error in estimating $Z_\sC$.
 
-Let $\sigma_k(Z_\sC)$ be the smallest singular value of any slice of $Z_\sC$. Then 
+\paragraph{Estimating $\mOpp{v}{i}$}
+
+Consider the estimation of the conditional moments for a bottleneck
+  $h_i$ with views $x_{v_1}, x_{v_2}, x_{v_3}$. 
+Let the error in estimation of the moments be upper-bounded by
+  $\epsilon$, $\|M_{v_i v_j} - \hat M_{v_i v_j} \|_F < \epsilon$ for $i,
+  j \in \{1,2,3\}$, and 
+the singular values of the moments be lower-bounded by $\alpha$,
+  $\sigma_k(M_{v_i v_j}) > \alpha$ for $i, j \in \{1,2,3\}$.
+Results from \citet{anandkumar12moments,anandkumar13tensor} show that 
 \begin{align*}
-  \sigma_k(Y_{j \given j-1}) &\ge \frac{\sigma_k(Z_{\sC_j})}{\mPi{i_{j-1}}_{\max}},
+  \|\mOpphat{v_1}{i} - \mOppit{v_1}{i}\|^2_F 
+    &= O( 
+    \frac{k {\mPi{i}}_{\max}^2}
+    {\beta^5 } \epsilon ). 
 \end{align*}
-and 
+We will now express this quantity in terms of the parameters of the model.
+
+Let $\sigma_1(Z_\sC)$ and $\sigma_k(Z_\sC)$ respectively be the largest
+  and smallest singular value of any slice of $Z_\sC$. 
+From the derivation in \lemmaref{full-rank-suff}, we know that $\mPi{i}$
+  is obtained by marginalizing some slice of $Z_{\sC_j}$, which gives
+  the result that $\sigma_1(Z_\sC) \succ \mPi^{i} \succ \sigma_k(Z_\sC)$.
+Furthermore, 
 \begin{align*}
-  \sigma_k(\mOpp{v}{1}) &\ge \sigma_k(\mOpp{v}{v}) \prod_{j=2}^{l} \frac{\sigma_k(Z_{\sC_j})}{\mPi{i_{j-1}}_{\max}},
+  \sigma_k(Y_{j \given j-1}) &\ge \frac{\sigma_k(Z_{\sC_j})}{\mPi{i_{j-1}}_{\max}}
+                             \ge \frac{\sigma_k(Z_{\sC_j})}{\sigma_1(Z_{\sC_j})}
+                             = \cnd(Z_{\sC_j})^{-1},
+\end{align*}
+where $\cnd(Z_{\sC_j}) \eqdef
+\frac{\sigma_1(Z_{\sC_j})}{\sigma_k(Z_{\sC_j})}$ is defined analogously
+to the condition number of a matrix. 
+Finally,
+\begin{align*}
+  \sigma_k(\mOpp{v}{1}) 
+    &\ge \sigma_k(\mOpp{v}{v}) \prod_{j=2}^{l} \sigma_k(Y_{j \given j-1}) \\
+    &\ge \sigma_k(\mOpp{v}{v}) \prod_{j=2}^{l} \cnd(\sC_{j}).
 \end{align*}
 
+Note that $M_{v_a v_b} = \mOpp{v_a}{i} \diag(\mPi{i})
+\mOpp{v_b}{i}^\top$.
+Without loss of generality, let us assume that $M_{v_a v_b}$ is the
+  moment with the smallest singular value.
+This gives us the following bound on $\beta$,
+\begin{align*}
+  \beta &\ge \sigma_k(M_{v_a,v_b}) \\
+        &\ge \sigma_k(\mOpp{v_a}{i}) \mPi{i}_{\min} \sigma_k(\mOpp{v_b}{i}) \\
+        &\ge \sigma_k(\mOpp{v_a}{v_a}) \sigma_k(\mOpp{v_b}{v_b}) \sigma_k(Z_{\sC_i}) \cnd_{\min}^{d_a + d_b},
+\end{align*}
+where $\cnd_{\min}$ is the smallest $\cnd(Z_\sC)$ for any $\sC \in \sG$
+and $d_a, d_b$ are distance from $h_i$ to $x_{v_a}$ and $x_{v_b}$
+respectively.
+
+Finally, we have the result,
+\begin{align*}
+  \|\mOpphat{v_1}{i} - \mOppit{v_1}{i}\|^2_F 
+    &= O( 
+    \frac{k \sigma_1^2 }
+    {(\sigma_k^3 \cnd_{\min}^{d_a + d_b})^5}
+    \epsilon ). 
+\end{align*}
+
+\paragraph{Estimating $Z_\sC$}
+
+Similarly, we can apply standard perturbation analysis techniques to get
+an error bound on $Z_\sC$;
+\begin{align*}
+  \|Z_\sC - \hat Z_\sC\|_F 
+  &\le \|M_\sV(\mOppit{v_1}{i_1}, \cdots, \mOppit{v_m}{i_m}) \\
+      &\quad - \hat M_\sV(\hat{\mOppit{v_1}{i_1}}, \cdots, \hat{\mOppit{v_m}{i_m}})\|^2_F.
+\end{align*}
+Let $\|\mOppit{v_1}{i_1}\|_F < O$ and $\|\hat{\mOppit{v_1}{i_1}}\|_F < O$; then, we get
+\begin{align*}
+  \|Z_\sC - \hat Z_\sC\|_F 
+  &\le \|M_\sV - \hat M_\sV\|_F O^m \\
+  &\quad + \|\hat M_\sV\|_F O^{m-1} \max\{\|\hat {\mOppit{v_1}{i_1}} - \mOppit{v_1}{i_1}\|_F\}.
+\end{align*}
 
 
 % NOTE: This is made redundant, but maybe useful.
@@ -239,5 +294,4 @@ and
 %       \STATE Return $\mH_\sC \gets \mO_{\Sx{\sV}}( \pinv{\mOpp{v_1}{i_i}}, \cdots, \pinv{\mOpp{v_m}{i_m}} )$.
 %   \end{algorithmic}
 % \end{algorithm}
-
 

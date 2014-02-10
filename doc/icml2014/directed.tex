@@ -92,14 +92,30 @@ Note that in each of the above cases,
 We capture this general property as follows:
 \begin{property}(Exclusive views)
   \label{prop:exclusive-views}
-  A hidden clique $\sC$ of $\sG$ is said to possess the \textbf{exclusive views
-  property} if for every hidden variable $h_i \in \sC$,
-  there is some observed variable, $x_{v}$, which is conditionally
-  independent of the rest of the clique given $h_i$,
-  and whose conditional
-  moment $\mOpp{v}{i} \eqdef \Pr(x_{v} \mid h_i)$ can be estimated consistently.
-We call $x_v$ the exclusive view of $h_i$ in $\sC$.
+A hidden sub-graph $\sG' \subseteq \sG$ (typically a clique $\sC \in
+  \sG$) is said to possess the \textbf{exclusive views property} if for
+  every hidden variable $h_i \in \sG'$, there is some observed variable,
+  $x_{v}$, which is conditionally independent of the rest of the clique
+  given $h_i$, and whose conditional moment $\mOpp{v}{i} \eqdef
+  \Pr(x_{v} \mid h_i)$ can be estimated consistently.
+We call $x_v$ the exclusive view of $h_i$ in $\sG'$.
 \end{property}
+
+For the rest of this section, we will only consider sub-graphs which are
+  cliques. 
+In \sectionref{undirected}, we will show how the generalization
+  to sub-graphs allows us to efficiently estimate the pseudo-likelihood.
+
+% \begin{property}(Exclusive views)
+%   \label{prop:exclusive-views}
+%   A hidden clique $\sC$ of $\sG$ is said to possess the \textbf{exclusive views
+%   property} if for every hidden variable $h_i \in \sC$,
+%   there is some observed variable, $x_{v}$, which is conditionally
+%   independent of the rest of the clique given $h_i$,
+%   and whose conditional
+%   moment $\mOpp{v}{i} \eqdef \Pr(x_{v} \mid h_i)$ can be estimated consistently.
+% We call $x_v$ the exclusive view of $h_i$ in $\sC$.
+% \end{property}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \paragraph{Estimating hidden clique marginals}
@@ -188,8 +204,8 @@ we describe a reduction of any graphical model to
 
 \begin{lemma}[Canonical form]
   \label{lem:reduction}
-Every directed graphical model can be transformed into one in which
-  the observed variables are leaves with exactly one parent. 
+Every directed (undirected) graphical model can be transformed into one in which
+  the observed variables are leaves with exactly one parent (neighbour). 
 There is a one-to-one correspondence between the parameters of this
   transformed model and the original one.
 \end{lemma}
@@ -220,11 +236,17 @@ There is a one-to-one correspondence between the parameters of this
   $\hp$ and $x_v$. Consequently, for any clique $\sC \contains \hp$, the
   parameters in the original graphical model can be obtained by
   substituting $\hp$ with $x_v$.
+
+  This procedure applies straightforwardly for undirected graphical
+  models, considering the neighbors $\sN(x_v)$ instead of its parents
+  and children.
 \end{proof}
 
 \begin{lemma}[Bottlenecks guarantee exclusive views]
-  Provided \propertyref{bottleneck} holds, every hidden variable
-    $h_{i_1}, \cdots, h_{i_m}$ in a clique $\sC$ has a exclusive view.
+  \label{lem:bottleneck-views}  
+Let $\sG' = \{ h_{i_1}, \cdots, h_{i_m} \} \subseteq \sG$ be
+  a connected sub-graph of hidden variables. If every hidden variable
+  $h_i \in \sG'$ is a bottleneck, then they each have an exclusive view.
 \end{lemma}
 \begin{proof}
   By \lemmaref{reduction}, we can assume that every observed
@@ -233,19 +255,19 @@ There is a one-to-one correspondence between the parameters of this
   checking whether or not two nodes are connected or not. Note that this
   proof applies for undirected graphs as well.
 
-  Let $h$ be a hidden variable in $\sC$, let $\sV_{h}$ be the set of
-    views for it and let $\sC^- \eqdef \sC \setminus \{h\}$.
+  Let $h$ be a hidden variable in $\sG'$, let $\sV_{h}$ be the set of
+  views for it and let ${\sG'}^- \eqdef \sG' \setminus \{h\}$.
   By definition, the views of $h$ are conditionally independent, viz.
     every connecting path between two views $x_1, x_2 \in \sV_h$ must pass through
     $h$.
   A view $x \in \sV_{h}$ is exclusive for $h$ iff $x \not\in \sV_{h'} ~ \forall h'
-  \in \sC^-$.
+  \in {\sG'}^-$.
 
-  Suppose $h$ had no unique view, then $\sV_{h} \subseteq \Union_{h' \in \sC^-} \sV_{h'}$. 
+  Suppose $h$ had no unique view, then $\sV_{h} \subseteq \Union_{h' \in {\sG'}^-} \sV_{h'}$. 
   However, this would imply that for every $x_1, x_2 \in \sV_{h}$, there
-    exists some $h_1, h_2 \in \sC^-$ (not necessarily distinct) such that
+  exists some $h_1, h_2 \in {\sG'}^-$ (not necessarily distinct) such that
     $x_1$ is connected to $h_1$ and $x_2$ is connected $h_2$.
-  By participation in the clique, either $h_1 = h_2$ or $h_1$ is
+  By participation in the sub-graph, either $h_1 = h_2$ or $h_1$ is
     connected to $h_2$, implying that $x_1$ and $x_2$ are connected
     via a path that does not pass through $h$, contradicting the
     statement that $x_1, x_2 \in \sV_h$. 
@@ -254,7 +276,7 @@ There is a one-to-one correspondence between the parameters of this
     h \in \sC} \sV_{h'}$ and hence there exists a unique view for $h$.
 
   Algorithmically, finding the unique view for $h$ can be done by
-  subtracting the views of all other variables in the clique from
+  subtracting the views of all other variables in the sub-graph from
   $\sV_h$,i.e. $x_{v_h} \in \sV_h \setminus \Union_{h' \in \sC} \sV_{h'}$
 \end{proof}
 
@@ -395,11 +417,12 @@ To make this property more interpretable, let us assume the following property:%
 \begin{assumption} 
 \label{asm:full-rank-plus}
 For every clique $\sC \in \sG$ (including ones involving observed variables),
-every $R^{k \times k}$ slice of the marginals $Z_\sC$ has full column rank $k$.
+  every $\Re^{k \times k}$ slice of the marginals $Z_\sC$ has full column
+  rank $k$ constructed by summing out the remaining indices.
 \end{assumption}
 In our directed grid example (\sectionref{directedExample}), for the clique $\sC = \{ h_1, h_2 \}$ this
   condition implies $\pi = \Pr(h_1) \succ 0$ and $T = \Pr(h_2 \mid h_1)$ has column rank $k$; 
-for the clique $\sC = \{ h_1, x_1 \}$, it implies $O = \Pr(x_1 \mid h_1)$ has column rank $k$ 
+for the clique $\sC = \{ h_1, x_1 \}$, it implies $O = \Pr(x_1 \mid h_1)$ has column rank $k$.
 
 %\todo{did they prove this; if so just say "they show", not "we can show"}
 %Using results from

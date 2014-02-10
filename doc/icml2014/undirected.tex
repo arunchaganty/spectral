@@ -148,25 +148,29 @@ This motivates looking at pseudolikelihood objective of \citep{besag75pseudo} fo
 efficient solution.
 The pseudolikelihood objective sums over the log-probability of each variable $a$ given its neighbors $\sN(a)$:
 $$L_\text{pseudo}(\theta) \eqdef \E_{x \sim \sD}\left[\sum_{a \in X \cup H} \log p_\theta(a \mid x_{\sN(a)})\right].$$
-In the fully-supervised setting, pseudolikelihood provides computationally efficient consistent estimates,
+In the fully-supervised setting, it is well-known that pseudolikelihood provides computationally efficient consistent estimates,
 albeit at the cost of statistical efficiency.
 Coincidentally, this is the same high-level motivation for using method of moments in the first place.
 
 However, pseudolikelihood also replaces the log-partition function $A(\theta)$
-with a sum over the variables: $A_a(\theta; x_{\sN(a)}) = \sum_a \exp(\theta^\top\phi(a))$,
+with a sum over the variables in the neighbourhood: $A_a(\theta; x_{\sN(a)}) = \sum_{a' \in \{a\} \union \sN(a)} \exp(\theta^\top\phi(a'))$,
 which cannot be computed from just the hidden clique marginals $Z_\sC$,
 since the neighbors $\sN(a)$ in general do not form a clique.
-However, we adapt our earlier algorithm ($\LearnClique$) to estimate the marginals over all neighborhoods $Z_{\sN(a)}$.
-While this method is only viable for graphs of low degree ($|\sN(a)|$ is small),
+We adapt our earlier algorithm ($\LearnClique$) to estimate the
+  marginals over all neighborhoods $Z_{\sN(a)}$ by noting that
+  \lemmaref{bottleneck-views} guarantees exclusive views for any connected
+  sub-graph of $\sG$, not just cliques.
+
+While this method is only viable for graphs of low degree, i.e.\@ when $|\sN(a)|$ is small,
 it can handle graphs with high treewidth.
 For example, in the grid model, the degree is only 4.
 Note that neither sample nor computational complexity depends on the treewidth.
 
 \paragraph{Learning with partial moment constraints.}
 
-In general, we might only have exclusive views (\propertyref{exclusive-views}) for a subset of the cliques.
+In general, it might be case that we only have exclusive views (\propertyref{exclusive-views}) for a subset of the cliques.
 In this case, we can estimate the expected features $\mu_\sC$ for those cliques
-  and use posterior regularization \citep{graca08em} or generalized expectation criteria \citep{mann08ge}
+  and use posterior regularization \citep{graca08em} or the generalized expectation criteria \citep{mann08ge}
   to encourage $\E_{p_\theta}[\phi(\vx_\sC,\vh_\sC)]$ to match $\mu_\sC$.
 The resulting objective functions are still non-convex, but we expect
   local optima to be alleviated. 
