@@ -189,23 +189,23 @@
 \providecommand{\assumptionref}[1] {\itemref{Assumption}{asm}{#1}}
 
 % Text
-\newcommand{\todo}[1]{{\tiny \hl{\textsc{TODO:} #1}}}
-\newcommand{\note}[1]{{\tiny \hl{\textsc{Note:} #1}}}
+\providecommand{\todo}[1]{{\tiny \hl{\textsc{TODO:} #1}}}
+\providecommand{\note}[1]{{\tiny \hl{\textsc{Note:} #1}}}
 \providecommand{\comment}[1]{%
   \text{\phantom{(#1)}} \tag{#1}
   %\tag{#1}
 }
 
 % Editing notes
-\newcommand{\editnote}[2]{\ensuremath{\underline{\textrm{#1}}_{\textrm{#2}}}}
-\newcommand{\editupnote}[1]{\ensuremath{^{[\hl{\textrm{#1}}]}}}
-\newcommand{\vague}{\editupnote{vague}}
-\newcommand{\verify}{\editupnote{verify}}
-\newcommand{\reword}{\editupnote{reword}}
-\newcommand{\define}{\editupnote{define}}
-\newcommand{\expand}{\editupnote{expand}}
-\newcommand{\needcite}{\editupnote{citation needed}}
-\newcommand{\findcite}[1]{\editupnote{find: #1}}
+\providecommand{\editnote}[2]{\ensuremath{\underline{\textrm{#1}}_{\textrm{#2}}}}
+\providecommand{\editupnote}[1]{\ensuremath{^{[\hl{\textrm{#1}}]}}}
+\providecommand{\vague}{\editupnote{vague}}
+\providecommand{\verify}{\editupnote{verify}}
+\providecommand{\reword}{\editupnote{reword}}
+\providecommand{\define}{\editupnote{define}}
+\providecommand{\expand}{\editupnote{expand}}
+\providecommand{\needcite}{\editupnote{citation needed}}
+\providecommand{\findcite}[1]{\editupnote{find: #1}}
 
 % Operators
 \providecommand{\union}{\cup}
@@ -225,40 +225,40 @@
 % Constants/etc.
 \renewcommand{\Re} {\mathbb{R}}
 \providecommand{\Nn} {\mathbb{N}}
-\newcommand{\Cm} {\mathbb{C}}
-\newcommand{\Qm} {\mathbb{Q}}
-\newcommand{\Sm} {\mathbb{S}}
-\newcommand{\half} {\frac{1}{2}}
+\providecommand{\Cm} {\mathbb{C}}
+\providecommand{\Qm} {\mathbb{Q}}
+\providecommand{\Sm} {\mathbb{S}}
+\providecommand{\half} {\frac{1}{2}}
 
 % Calculus
-\newcommand{\ud}{\, \mathrm{d}}
-\newcommand{\diff}[2] {\frac{\partial #1}{\, \partial #2}}
-\newcommand{\difff}[2] {\frac{\partial^2}{\, \partial #1\, \partial #2}}
-\newcommand{\diffn}[2] {\frac{\partial^{#2}}{\, \partial {#1}^{#2}}}
-\newcommand{\grad}{\nabla}
+\providecommand{\ud}{\, \mathrm{d}}
+\providecommand{\diff}[2] {\frac{\partial #1}{\, \partial #2}}
+\providecommand{\difff}[2] {\frac{\partial^2}{\, \partial #1\, \partial #2}}
+\providecommand{\diffn}[2] {\frac{\partial^{#2}}{\, \partial {#1}^{#2}}}
+\providecommand{\grad}{\nabla}
 
 % Optimization
-\newcommand{\mL} {\mathcal{L}}
-\newcommand {\argmax} {\arg\max}
-\newcommand {\argmin} {\arg\min}
+\providecommand{\mL} {\mathcal{L}}
+\providecommand {\argmax} {\arg\max}
+\providecommand {\argmin} {\arg\min}
 \providecommand {\subjecto} {\textrm{subject to}}
 
 % Linear Algebra
-\newcommand{\hprod} {\circ} % Hadamard
-\newcommand{\inv}[1] {{#1}^{-1}}
-\newcommand{\pinv}[1] {{#1}^{\dagger}}
-\newcommand{\pinvt}[1] {{#1}^{\dagger T}}
-\newcommand{\innerp}[2] {\langle #1, #2 \rangle}
+\providecommand{\hprod} {\circ} % Hadamard
+\providecommand{\inv}[1] {{#1}^{-1}}
+\providecommand{\pinv}[1] {{#1}^{\dagger}}
+\providecommand{\pinvt}[1] {{#1}^{\dagger T}}
+\providecommand{\innerp}[2] {\langle #1, #2 \rangle}
 \providecommand{\diag} {\textrm{diag}}
 \providecommand{\triu} {\textrm{triu}}
 \providecommand {\trace} {\textrm{tr}}
 \providecommand {\Tr} {\textrm{tr}}
-\newcommand{\tp}[1]{^{\otimes#1}}
+\providecommand{\tp}[1]{^{\otimes#1}}
 \providecommand {\KL} {\textrm{KL}}
 \providecommand {\rank} {\textrm{rank}}
 
 % Machine Learning
-\newcommand{\mD} {\mathcal{D}}
+\providecommand{\mD} {\mathcal{D}}
 
 
 % Convex Geometry
@@ -268,12 +268,12 @@
 
 % Misc
 \providecommand {\sgn} {\textrm{sgn}}
-\newcommand{\oft}[1] {^{(#1)}}
-\newcommand{\oneby}[1] {\frac{1}{#1}}
-\newcommand{\bytwo}[1] {\frac{#1}{2}}
+\providecommand{\oft}[1] {^{(#1)}}
+\providecommand{\oneby}[1] {\frac{1}{#1}}
+\providecommand{\bytwo}[1] {\frac{#1}{2}}
 
-\newcommand{\mM} {\mathcal{M}}
-\newcommand{\tuple}[1] {\langle #1 \rangle}
+\providecommand{\mM} {\mathcal{M}}
+\providecommand{\tuple}[1] {\langle #1 \rangle}
 
 \renewcommand{\vec}[1] {\mathbf{#1}}
 

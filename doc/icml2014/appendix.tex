@@ -91,89 +91,153 @@ Taking the second derivative.
 % Define up front that we will focus on h, x_1, x_2, x_3
 In step 1 of \LearnMarginals, we used the bottleneck property of a hidden
   variable $h_i$ to learn conditional moments $\mOpp{v}{i}$ for every
-  'view' $x_v \in \sV_{h_i}$ using \TensorFactorize, provided
-  \assumptionref{full-rank-plus} holds;
+  view $x_v \in \sV_{h_i}$ using \TensorFactorize. 
+In order to do so, we require that \assumptionref{full-rank} holds, i.e.
 \begin{assumption*}
-For every clique $\sC \in \sG$ (including ones involving observed variables),
-every $R^{k \times k}$ slice of the marginals $Z_\sC$ has full column rank $k$.
+  Given a bottleneck $h_1$ with views $x_1, x_2, x_3$, the conditional
+  moments $\mOpp{1}{1}, \mOpp{2}{1}, \mOpp{3}{1}$ have full column rank
+  $k$, and $\pi\oft 1 \succ 0$.
 \end{assumption*}
 
-In this section, we will prove the sufficiency of the assumption. First,
-  let us define some additional notation.
+In this section, we will show that the following condition
+  (\assumptionref{full-rank-plus}) on the clique marginals suffices;
+\begin{assumption*}
+For every clique $\sC \in \sG$ (including ones involving observed variables),
+every $\Re^{k \times k}$ slice of the marginals $Z_\sC$ has full column rank $k$.
+\end{assumption*}
 
-\paragraph{Notation}
+%First, let us define some additional notation.
+%
+%\paragraph{Notation}
+%
+%Let $\sC = \{h_1, \cdots, h_m\}$ be a hidden clique in the graph, and
+%  let $Z_\sC \eqdef \Pr(h_1, \cdots, h_m)$ be the tensor representing the
+%  joint distribution. 
+%We can obtain a marginal distribution for a sub-set $B \subset \sC$ by
+%  marginalizing out the remaining variables. 
+%Without loss of generality, let $|B| = m'$ and let the first $m'$
+%  indices of $Z_\sC$ correspond to the $h_i \in B$; we can represent the
+%  marginalization operation with linear algebra as $Z_B = Z_\sC(
+%  \underbrace{I, \cdots, I}_{m' \text{times}}, \underbrace{\ones, \cdots, \ones}_{m - m'
+%  \text{times}} )$. 
+%
+%Next, for a $m$-th order tensor $Z_\sC$ and $B \subset \sC$ with $m' \eqdef |B'|$, define the {\em
+%partial diagonal} $\diag_{B}(Z_\sC)$ to be the $m - m' + 1$-th order tensor with
+%a diagonal along the elements of $B$; $\diag_{B}(Z_\sC)[i, 
+%i_{m'+1, \ldots, m}] = Z_\sC[\underbrace{i, \ldots, i}_{m' \text{times}}, i_{m'+1}, \ldots, m]$.
+%
+%
+%\paragraph{Relation to clique marginals}
 
-Let $\sC = \{h_1, \cdots, h_m\}$ be a hidden clique in the graph, and
-  let $Z_\sC \eqdef \Pr(h_1, \cdots, h_m)$ be the tensor representing the
-  joint distribution. 
-We can obtain a marginal distribution for a sub-set $B \subset \sC$ by
-  marginalizing out the remaining variables. 
-Without loss of generality, let $|B| = m'$ and let the first $m'$
-  indices of $Z_\sC$ correspond to the $h_i \in B$; we can represent the
-  marginalization operation with linear algebra as $Z_B = Z_\sC(
-  \underbrace{I, \cdots, I}_{m' \text{times}}, \underbrace{\ones, \cdots, \ones}_{m - m'
-  \text{times}} )$. 
+\begin{lemma}(Sufficiency of \assumptionref{full-rank-plus})
+  Given that \assumptionref{full-rank-plus} holds, then for any hidden
+  variable $h_1$ and observed variable $x_v$, $\mPi{1} \succ 0$ and
+  $\mOpp{v}{i}$ has full column rank.
+\end{lemma}
 
-Next, for a $m$-th order tensor $Z_\sC$ and $B \subset \sC$ with $m' \eqdef |B'|$, define the {\em
-partial diagonal} $\diag_{B}(Z_\sC)$ to be the $m - m' + 1$-th order tensor with
-a diagonal along the elements of $B$; $\diag_{B}(Z_\sC)[i, 
-i_{m'+1, \ldots, m}] = Z_\sC[\underbrace{i, \ldots, i}_{m' \text{times}}, i_{m'+1}, \ldots, m]$.
+\begin{proof}
+Let us explicitly write out $\mPi{1}, \mOpp{1}{1}, \mOpp{2}{1},
+\mOpp{3}{1}$ in terms of the clique marginals \{ $Z_\sC \given \sC \in \sG \}$.
 
-
-\paragraph{Relation to clique marginals}
-
-To use $\TensorFactorize$ on the bottleneck $h_1$ with views $x_1, x_2,
-x_3$, we require that $\pi\oft1 \eqdef \Pr(h_1) \succ 0$ and that $\mOpp{i}{1} \eqdef \Pr(x_v | h_1)$ is full
-  rank for every $v \in \{1,2,3\}$ (\assumptionref{full-rank}).
-Let us explicitly write out $\pi\oft1, \mOpp{i}{1} \forall i \in
-  \{1,2,3\}$ in terms of the clique marginals $Z_\sC$.
-
-By the reduction presented in \lemmaref{reduction}, we can assume
-  w.l.o.g. that the observed variables always appear as leaf nodes with a single parent). 
-Let $h_v$ be the parent of $x_v$. Then, 
-\begin{align*}
-  \mOpp{v}{1} &\eqdef \Pr( x_v | h_1 )  \\
-              &= \sum_{h_v} \Pr( x_v | h_v ) \Pr( h_v | h_1 ) \\
-              &= \mOpp{v}{v} \mYpp{v}{1},
-\end{align*}
-where $\mYpp{i}{j} \eqdef \Pr( h_i | h_j )$. 
-
-Let $\Succ(h)$ be the parents (neighbors) of a hidden variable $h$ in
-  a directed (undirected) graphical model. 
-Note that $\mYpp{v}{1}$ can be decomposed in terms of it's parents,
-\begin{align*}
-  \mYpp{v}{1} &\eqdef \Pr( h_v | h_1 )  \\
-  &= \sum_{\vec h \in \sH_{\succ{h_v}}} \Pr( \Succ(h_v) | h_1 ) \Pr( h_v | \Succ(h_v) ) \\
-              &= \mOpp{v}{v} \mYpp{v}{1},
-\end{align*}
-
-
-Let $\sC_0 = \{h_1, h_2, h_3, \cdots, h_m\}$ be any clique containing
+Let $\sC_0 = \{h_1, \cdots, h_m\}$ be any clique containing
   $h_1$. $\mPi{1}$ can be obtained from $Z_\sC$ by marginalizing the
-  remaining $h_j ~ j \neq 1$, i.e. $\mPi{1} = Z_\sC(\cdot, \ones, \cdots,
-  \ones)$ 
+  remaining hidden variables in $\sC$, i.e. $\mPi{1} = Z_{\sC_0}(\cdot,
+  \ones, \cdots, \ones)$.
+Given that $\mPi{1}$ is strictly greater diagonal of some slice of $Z_{\sC_0}$,
+  \assumptionref{full-rank-plus} guarantees that $\mPi{1} \succ 0$.
 
-The form of $\mOpp{v}{1} = \Pr(x_v \given h_1)$ is a bit more
+Expression $\mOpp{v}{1} = \Pr(x_v \given h_1)$ is a bit more
   complicated. 
-We describe the procedure to construct $\mOpp{1}{1}$ from the data which applies to   $\mOpp{v}{1}$.
+By the reduction presented in \lemmaref{reduction}, we can assume
+  w.l.o.g. that the observed variables only appear as leaf nodes with
+  a single parent. 
+Let $h_v$ be the parent of $x_v$, and let $h_{i_1}, h_{i_2}, \cdots, h_{i_l}$ be any
+  path from $h_1 \eqdef h_{i_1}$ to $h_v \eqdef h_{i_l}$.
+Then,
+\begin{align*}
+  \mOpp{v}{1} &\eqdef \Pr( x_v \given h_1 )  \\
+              &= \sum_{h_v} \Pr( x_v \given h_v ) \Pr( h_v \given h_1 ) \\
+              &= \sum_{h_{i_l}} \Pr( x_v \given h_{i_l} ) \sum_{h_{i_{l-1}}} \Pr( h_{i_{l}} \given h_{i_{l-1}} ) \Pr( h_{i_{l-1}} \given h_1 ) \\
+              &= \sum_{\vh} \Pr( x_v \given h_{i_l} ) \Pr( h_{i_{l}} \given
+              h_{i_{l-1}} ) \cdots \Pr( h_{i_2} \given h_{i_1} ).
+\end{align*}
+
+Let $C_{i_j}$ be the clique containing $h_{i_j}$ and $h_{i_{j-1}}$. 
+The conditional distribution $\Pr( h_{i_j} \given h_{i_{j-1}} )$ can be
+  got by first marginalizing all other hidden variables in $\sC$ (achieved by
+  multiplying those indices by $\ones$), and then by normalizing by $\Pr(h_{i_{j-1}})$ (achieved by multiplying by the matrix $\inv{\diag(\mPi{i_{j-1}})}$); \todo{Better notation}
+\begin{align*}
+  Y_{j \given j-1} 
+    &\eqdef \Pr( h_{i_j} \given h_{i_{j-1}} ) \\
+    &= Z_{\sC_{i_j}}(\cdot, \cdot, \underbrace{\ones, \cdots, \ones}_{h \neq h_{i_j}, h_{i_{j-1}}})
+        \inv{\diag(\mPi{i_{j-1}})}.
+\end{align*}
+
+Finally, we have the following expression,
+\begin{align*}
+  \mOpp{v}{1} &= \mOpp{v}{v} Y_{l \given l-1} \cdots Y_{2 \given 1}.
+\end{align*}
+
+Note that \assumptionref{full-rank-plus} guarantees that $Y_{j \given
+  j -1}$ is full rank, from which it directly follows that $\mOpp{v}{1}$, completing our proof.
+\end{proof}
+
+\subsection{Sample Complexity}
+
+In this section, we will explicitly derive the sample complexity of
+  $\LearnMarginals$.
+
+Let $\sigma_k(Z_\sC)$ be the smallest singular value of any slice of $Z_\sC$. Then 
+\begin{align*}
+  \sigma_k(Y_{j \given j-1}) &\ge \frac{\sigma_k(Z_{\sC_j})}{\mPi{i_{j-1}}_{\max}},
+\end{align*}
+and 
+\begin{align*}
+  \sigma_k(\mOpp{v}{1}) &\ge \sigma_k(\mOpp{v}{v}) \prod_{j=2}^{l} \frac{\sigma_k(Z_{\sC_j})}{\mPi{i_{j-1}}_{\max}},
+\end{align*}
 
 
-\paragraph{Getting conditional distributions}
 
-For any clique, 
+% NOTE: This is made redundant, but maybe useful.
+% Let $h_v$ be the parent of $x_v$. Then, 
+% \begin{align*}
+%   \mOpp{v}{1} &\eqdef \Pr( x_v \given h_1 )  \\
+%               &= \sum_{h_v} \Pr( x_v \given h_v ) \Pr( h_v \given h_1 ) \\
+%               &= \mOpp{v}{v} \mYpp{v}{1},
+% \end{align*}
+% where $\mYpp{i}{j} \eqdef \Pr( h_i \given h_j )$. 
+% We will now give a recursive construction for $\mYpp{v}{1}$.
+% 
+% Let $\Succ(h_v)$ be the parents of a hidden variable $h_v$ in
+%   a topological ordering of the hidden variables rooted at $h_1$. 
+% Let $\sC_v$ be any clique containing $h_v$ and a subset of successors
+%   $\Succ_{\sC_v}(h_v) \subseteq \Succ(h_v)$.
+% Note that $\mYpp{v}{1}$ can be decomposed in terms of its successors;
+% \begin{align*}
+%   \mYpp{v}{1} &\eqdef \Pr( h_v \given h_1 )  \\
+%   &= \sum_{\vh} \Pr( \Succ_{\sC_v}(h_v) \given h_1 ) \Pr( h_v \given \Succ_{\sC_v}(h_v) ).
+% \end{align*}
+% 
+% $\Pr( h_v \given \Succ_{\sC_v}(h_v) )$ can be expressed in terms of the
+% $Z_\sC$ by marginalizing out the hidden variables not in
+% $\bar\sC_v \eqdef \Succ_{\sC_v}(h_v) \union \{h_v\}$;
+% \begin{align*}
+%   Z_{\bar\sC} &\eqdef \Pr( h_v \given \Succ_{\sC_v}(h_v) ) \\
+%   &= Z_{\sC}(\underbrace{\cdot}_{\in \bar\sC}, \underbrace{\ones}_{\not\in \bar\sC}).
+% \end{align*}
+% 
+% $\Pr( \Succ_{\sC_v}(h_v) \given h_1 )$ can then be similarly expressed
+% in terms of its successors. \algorithmref{Y} describes the recursive process.
+% 
+% \begin{algorithm}
+%   \caption{\mYpp{C,1}}
+%   \label{algo:Y}
+%   \begin{algorithmic}
+%     \REQUIRE The root $h_1$, a group of hidden variables $C$ participating in a clique.
+%     \ENSURE The hidden moments distribution $\mYpp{C}{1}$.
+%     \STATE For successors $\Succ(h_i)$, find 
+%       \STATE Return $\mH_\sC \gets \mO_{\Sx{\sV}}( \pinv{\mOpp{v_1}{i_i}}, \cdots, \pinv{\mOpp{v_m}{i_m}} )$.
+%   \end{algorithmic}
+% \end{algorithm}
 
-
-\subsection{\assumptionref{full-rank-plus}}
-%
-%- Define an inferential path to go through $x_1, x_2, x_3, \cdots, x_n$, with cliques $\sC_1, \cdots, \sC_n$.
-%- Define marginal to be $\diag( Z_\sC(\cdot, 1) ) Z_\sC(\cdot, \cdot)$.
-%- Then, $\Pr(x_n | x_1) = Z_{\sC_1}(\cdot, \cdot, 1, 1) \cdots Z_{\sC_n}(\cdot, \cdot, 1, 1)$.
-%
-%- Thus, as long as $Z_{\sC}(\cdot, \cdot, 0} \succ 0$, $\Pr(x_n | x_1)$ has full rank.
-%
-%- Answer: partial diagonal.
-%- Lemma: if $M \succ 0$ and $M_{ij} > 0$ (i.e. $M$ is a probability distribution), then $1^T M, M 1 \succ 0$ as well.
-%- Lemma: if $T \succ 0$ and $T_{ijk} > 0$, then $T(1, \cdot, \cdot) \succ 0$ as well, and continue by induction.
-%        - is it possible to write out a condition for $\sigma_k$?
-%
 
