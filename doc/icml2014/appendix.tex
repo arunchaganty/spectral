@@ -104,194 +104,250 @@ For every clique $\sC \in \sG$ (including ones involving observed variables),
 %
 %\paragraph{Relation to clique marginals}
 
+Let us describe $\mOpp{v}{1}$ in terms of the parameters of the model,
+  namely the clique marginals $Z_\sC$.
+Without loss of generality, let $x_v$ be the observed variable in
+  consideration, and let $h_t$ be the unique parent of $x_v$.
+Then, 
+\begin{align*}
+  \mOpp{v}{1} &\eqdef \Pr( x_v \given h_1 )  \\
+              &= \sum_{h_t} \Pr( x_v \given h_t ) \Pr( h_t \given h_1 ) \\
+              &= \mOpp{v}{t} \mYpp{t}{1},
+\end{align*}
+where $\mYpp{i}{j} \eqdef \Pr( h_i \given h_j )$. More generally, for two sets of hidden variables $C \eqdef \{h_{C_1} \cdots h_{C_m} \}$ and $C' \eqdef \{h_{C'_1} \cdots h_{C'_m} \}$, define $\mYpp{C}{C'} \eqdef \Pr( h_{C_1} \cdots h_{C_m} \given h_{C'_1} \cdots h_{C'_n} )$. 
+  
+We will now give a recursive construction for $\mYpp{v}{1}$.
+Without loss of generality, let $h_1, h_2, \cdots, h_t$ be a topological
+  ordering rooted at $h_1$,
+and let $\Pa(h)$ be the parents of a hidden variable $h$ in
+  this topological ordering.
+Then $\mYpp{t}{1}$ can be expressed recursively as,
+\begin{align*}
+  \mYpp{t}{1} &\eqdef \Pr( h_t \given h_1 )  \\
+  &= \sum_{\vh} \Pr( \Pa(h_t) \given h_1 ) \Pr( h_t \given \Pa(h_t) ) \\
+  &= \mYpp{ \Pa(h_t) }{1} \times_{\Pa(h_t)} \mYpp{t}{\Pa(h_t)},
+\end{align*}
+where $A \times_{C} B$ refers to summation along the indices $C$.
+
+We can recursively describe $\mYpp{ \Pa(h_t) }{1}$ in terms of its
+  parents until we reach $h_1$.
+Let $C$ be an intermediate set of hidden variables. Let $h_c \neq h_1$
+  be some hidden variable in $C$. 
+Let $C' = C \union \Pa(h_c) \setminus \{h_c\}$.
+Then,
+\begin{align*}
+  \mYpp{C}{1} &\eqdef \Pr( \vh_C \given h_1 )  \\
+  &= \sum_{\vh_{\Pa(h_c)}} \Pr( C' \given h_1 ) \Pr( h_c \given \Pa(h_c) ) \\
+  &= \mYpp{ C' }{ 1 } \times_{\Pa(h_c)} \mYpp{c}{\Pa(h_c)},
+\end{align*}
+
+Finally, for the base case, $\mYpp{1}{1} = \ones$.
+  
+\begin{algorithm}
+  \caption{$\mYpp{C}{1}$}
+  \label{algo:Y}
+  \begin{algorithmic}
+    \REQUIRE The root $h_1$, a set of hidden variables $C$.
+    \ENSURE The hidden moments distribution $\mYpp{C}{1}$.
+    \IF{ $C = \{h_1\}$ }
+      \STATE $\mYpp{1}{1} = \ones$.
+    \ELSE
+      \STATE Let $h_c \neq h_1$ be some hidden variable in $C$.
+      \STATE Let $C' = C \union \Pa(h_c) \setminus \{h_c\}$.
+      \STATE $\mYpp{C}{1} = \mYpp{C'}{1} \times_{\Pa(h_c)} \mYpp{c}{\Pa(h_c)}$.
+    \ENDIF
+  \end{algorithmic}
+\end{algorithm}
+
+Without loss of generality, let $\{c\} \union P \subset \sC$ for
+a particular clique $\sC \in \sG$. If they are actually composed of two
+cliques $C_1, C_2$, we can construct $Z_{C_1 \union C_2} = Z_{C_1} \dot
+Z_{C_2}$. Furthermore, we can marginalize out any variables in $\sC
+\setminus \bar{P}$ - they are conditionally independent of $h_t$.
+
 \begin{lemma}[Sufficiency of \assumptionref{full-rank-plus}]
   \label{lem:full-rank-suff}
   Given that \assumptionref{full-rank-plus} holds, then for any hidden
   variable $h_1$ and observed variable $x_v$, $\mPi{1} \succ 0$ and
   $\mOpp{v}{i}$ has full column rank.
 \end{lemma}
-
 \begin{proof}
-Let us explicitly write out $\mPi{1}, \mOpp{1}{1}, \mOpp{2}{1},
-\mOpp{3}{1}$ in terms of the clique marginals \{ $Z_\sC \given \sC \in \sG \}$.
+  The important statement that needs to be made is how $\sigma_k(Y)$
+  relates to its parents.
 
-\begin{figure}[t]
-  \label{fig:assumption-2}
-  \centering
-  \input{figures/assumption.tikz}
-  \caption{$\mOpp{v}{1}$ can be estimated by considering marginal distributions along any path from $h_1$ to $x_v$}
-\end{figure}
-
-Let $\sC_0 = \{h_1, \cdots, h_m\}$ be any clique containing
-  $h_1$. $\mPi{1}$ can be obtained from $Z_\sC$ by marginalizing the
-  remaining hidden variables in $\sC$, i.e. $\mPi{1} = Z_{\sC_0}(\cdot,
-  \ones, \cdots, \ones)$.
-Given that $\mPi{1}$ is strictly greater diagonal of some slice of $Z_{\sC_0}$,
-  \assumptionref{full-rank-plus} guarantees that $\mPi{1} \succ 0$.
-
-Expression $\mOpp{v}{1} = \Pr(x_v \given h_1)$ is a bit more
-  complicated. 
-By the reduction presented in \lemmaref{reduction}, we can assume
-  w.l.o.g. that the observed variables only appear as leaf nodes with
-  a single parent. 
-Let $h_v$ be the parent of $x_v$, and let $h_{i_1}, h_{i_2}, \cdots, h_{i_l}$ be any
-  path from $h_1 \eqdef h_{i_1}$ to $h_v \eqdef h_{i_l}$.
-Then,
-\begin{align*}
-  \mOpp{v}{1} &\eqdef \Pr( x_v \given h_1 )  \\
-              &= \sum_{h_v} \Pr( x_v \given h_v ) \Pr( h_v \given h_1 ) \\
-              &= \sum_{h_{i_l}} \Pr( x_v \given h_{i_l} ) \sum_{h_{i_{l-1}}} \Pr( h_{i_{l}} \given h_{i_{l-1}} ) \Pr( h_{i_{l-1}} \given h_1 ) \\
-              &= \sum_{\vh} \Pr( x_v \given h_{i_l} ) \Pr( h_{i_{l}} \given
-              h_{i_{l-1}} ) \cdots \Pr( h_{i_2} \given h_{i_1} ).
-\end{align*}
-
-Let $C_{i_j}$ be the clique containing $h_{i_j}$ and $h_{i_{j-1}}$. 
-The conditional distribution $\Pr( h_{i_j} \given h_{i_{j-1}} )$ can be
-  got by first marginalizing all other hidden variables in $\sC$ (achieved by
-  multiplying those indices by $\ones$), and then by normalizing by $\Pr(h_{i_{j-1}})$ (achieved by multiplying by the matrix $\inv{\diag(\mPi{i_{j-1}})}$); \todo{Better notation}
-\begin{align*}
-  Y_{j \given j-1} 
-    &\eqdef \Pr( h_{i_j} \given h_{i_{j-1}} ) \\
-    &= Z_{\sC_{i_j}}(\cdot, \cdot, \underbrace{\ones, \cdots, \ones}_{h \neq h_{i_j}, h_{i_{j-1}}})
-        \inv{\diag(\mPi{i_{j-1}})}.
-\end{align*}
-
-Finally, we have the following expression,
-\begin{align*}
-  \mOpp{v}{1} &= \mOpp{v}{v} Y_{l \given l-1} \cdots Y_{2 \given 1}.
-\end{align*}
-
-Note that \assumptionref{full-rank-plus} guarantees that $Y_{j \given
-  j -1}$ is full rank, from which it directly follows that $\mOpp{v}{1}$, completing our proof.
 \end{proof}
 
-\subsection{Sample Complexity}
+\begin{definition}[Singular Values of Tensor Products]
+  For an m-th order tensor $P$, let $\sS \times_{n=1}^N \Un{n}$ be its
+    Tucker decomposition.
+    By definition, for every index $n$, $\|\sS_{i_n = 1}\|_F \ge
+    \|\sS_{i_n = 2}\|_F \ge \cdots \ge  \|\sS_{i_n = I_n}\|_F$. We
+    define $\sigma_{n,k}(P) = \|\sS_{i_n = k}\|_F$.
+\end{definition}
 
-In this section, we will explicitly derive the sample complexity of
-  $\LearnMarginals$. The end result is an estimate of the error of
-  each clique marginal $Z_\sC$.
-The analysis proceeds in two stages; (i) bounding the error in
-  estimating in each conditional moment $\mOpp{v}{i}$ and (ii) bounding
-  the error in estimating $Z_\sC$.
+\begin{lemma}[Singular Values of Tensor Products]
+  Let $P$ and $Q$ be an m-th and n-th order tensors with $\sigma_{i,k}(P) \ge 0$ for all $i, k$ and  $\sigma_{i,k}(Q) \ge 0$ for all $i, k$. For any index set $I$ of size $k$, $\sigma_{i,k}(P \times_I Q) \ge \min\{\sigma_k(P), \sigma_k(Q)\}^k$
+\end{lemma}
+\begin{proof}
+  \begin{align*}
+    \sigma_k(P \times_I Q) 
+        &\eqdef \min_{u : \|u\|_2 = 1} \| P \times_I Q u \|_2 \\
+  \end{align*}
 
-\paragraph{Estimating $\mOpp{v}{i}$}
+  Let $P = S \times_{n}^{N} U_{n}$ be the Tucker decomposition of $P$,
+    and $Q = S' \times_{n}^{N} V_{n}$ be the Tucker decomposition of $Q$. 
+  Then, 
+  \begin{align*}
+    P \times_I Q 
+    &= [S \times U_{n}] \times_I [S' \times V_{n}] \\
+    &= [S \times U_{n}] \times_I [S \times V_{n}] \\
+     
+     P_{i_1, \ldots, i_m} Q_{i_1, \ldots, i_k, j_{k+1} \ldots j_n} \\
+     &= P_{i_1, \ldots, i_m} Q_{i_1, \ldots, i_k, j_{k+1} \ldots j_n} \\
+  \end{align*}
 
-Consider the estimation of the conditional moments for a bottleneck
-  $h_i$ with views $x_{v_1}, x_{v_2}, x_{v_3}$. 
-Let the error in estimation of the moments be upper-bounded by
-  $\epsilon$, $\|M_{v_i v_j} - \hat M_{v_i v_j} \|_F < \epsilon$ for $i,
-  j \in \{1,2,3\}$, and 
-the singular values of the moments be lower-bounded by $\alpha$,
-  $\sigma_k(M_{v_i v_j}) > \alpha$ for $i, j \in \{1,2,3\}$.
-Results from \citet{anandkumar12moments,anandkumar13tensor} show that 
-\begin{align*}
-  \|\mOpphat{v_1}{i} - \mOppit{v_1}{i}\|^2_F 
-    &= O( 
-    \frac{k {\mPi{i}}_{\max}^2}
-    {\beta^5 } \epsilon ). 
-\end{align*}
-We will now express this quantity in terms of the parameters of the model.
-
-Let $\sigma_1(Z_\sC)$ and $\sigma_k(Z_\sC)$ respectively be the largest
-  and smallest singular value of any slice of $Z_\sC$. 
-From the derivation in \lemmaref{full-rank-suff}, we know that $\mPi{i}$
-  is obtained by marginalizing some slice of $Z_{\sC_j}$, which gives
-  the result that $\sigma_1(Z_\sC) \succ \mPi^{i} \succ \sigma_k(Z_\sC)$.
-Furthermore, 
-\begin{align*}
-  \sigma_k(Y_{j \given j-1}) &\ge \frac{\sigma_k(Z_{\sC_j})}{\mPi{i_{j-1}}_{\max}}
-                             \ge \frac{\sigma_k(Z_{\sC_j})}{\sigma_1(Z_{\sC_j})}
-                             = \cnd(Z_{\sC_j})^{-1},
-\end{align*}
-where $\cnd(Z_{\sC_j}) \eqdef
-\frac{\sigma_1(Z_{\sC_j})}{\sigma_k(Z_{\sC_j})}$ is defined analogously
-to the condition number of a matrix. 
-Finally,
-\begin{align*}
-  \sigma_k(\mOpp{v}{1}) 
-    &\ge \sigma_k(\mOpp{v}{v}) \prod_{j=2}^{l} \sigma_k(Y_{j \given j-1}) \\
-    &\ge \sigma_k(\mOpp{v}{v}) \prod_{j=2}^{l} \cnd(\sC_{j}).
-\end{align*}
-
-Note that $M_{v_a v_b} = \mOpp{v_a}{i} \diag(\mPi{i})
-\mOpp{v_b}{i}^\top$.
-Without loss of generality, let us assume that $M_{v_a v_b}$ is the
-  moment with the smallest singular value.
-This gives us the following bound on $\beta$,
-\begin{align*}
-  \beta &\ge \sigma_k(M_{v_a,v_b}) \\
-        &\ge \sigma_k(\mOpp{v_a}{i}) \mPi{i}_{\min} \sigma_k(\mOpp{v_b}{i}) \\
-        &\ge \sigma_k(\mOpp{v_a}{v_a}) \sigma_k(\mOpp{v_b}{v_b}) \sigma_k(Z_{\sC_i}) \cnd_{\min}^{d_a + d_b},
-\end{align*}
-where $\cnd_{\min}$ is the smallest $\cnd(Z_\sC)$ for any $\sC \in \sG$
-and $d_a, d_b$ are distance from $h_i$ to $x_{v_a}$ and $x_{v_b}$
-respectively.
-
-Finally, we have the result,
-\begin{align*}
-  \|\mOpphat{v_1}{i} - \mOppit{v_1}{i}\|^2_F 
-    &= O( 
-    \frac{k \sigma_1^2 }
-    {(\sigma_k^3 \cnd_{\min}^{d_a + d_b})^5}
-    \epsilon ). 
-\end{align*}
-
-\paragraph{Estimating $Z_\sC$}
-
-Similarly, we can apply standard perturbation analysis techniques to get
-an error bound on $Z_\sC$;
-\begin{align*}
-  \|Z_\sC - \hat Z_\sC\|_F 
-  &\le \|M_\sV(\mOppit{v_1}{i_1}, \cdots, \mOppit{v_m}{i_m}) \\
-      &\quad - \hat M_\sV(\hat{\mOppit{v_1}{i_1}}, \cdots, \hat{\mOppit{v_m}{i_m}})\|^2_F.
-\end{align*}
-Let $\|\mOppit{v_1}{i_1}\|_F < O$ and $\|\hat{\mOppit{v_1}{i_1}}\|_F < O$; then, we get
-\begin{align*}
-  \|Z_\sC - \hat Z_\sC\|_F 
-  &\le \|M_\sV - \hat M_\sV\|_F O^m \\
-  &\quad + \|\hat M_\sV\|_F O^{m-1} \max\{\|\hat {\mOppit{v_1}{i_1}} - \mOppit{v_1}{i_1}\|_F\}.
-\end{align*}
+\end{proof}
 
 
-% NOTE: This is made redundant, but maybe useful.
-% Let $h_v$ be the parent of $x_v$. Then, 
+
+% \begin{proof}
+% Let us explicitly write out $\mPi{1}, \mOpp{1}{1}, \mOpp{2}{1},
+% \mOpp{3}{1}$ in terms of the clique marginals \{ $Z_\sC \given \sC \in \sG \}$.
+% 
+% \begin{figure}[t]
+%   \label{fig:assumption-2}
+%   \centering
+%   \input{figures/assumption.tikz}
+%   \caption{$\mOpp{v}{1}$ can be estimated by considering marginal distributions along any path from $h_1$ to $x_v$}
+% \end{figure}
+% 
+% Let $\sC_0 = \{h_1, \cdots, h_m\}$ be any clique containing
+%   $h_1$. $\mPi{1}$ can be obtained from $Z_\sC$ by marginalizing the
+%   remaining hidden variables in $\sC$, i.e. $\mPi{1} = Z_{\sC_0}(\cdot,
+%   \ones, \cdots, \ones)$.
+% Given that $\mPi{1}$ is strictly greater diagonal of some slice of $Z_{\sC_0}$,
+%   \assumptionref{full-rank-plus} guarantees that $\mPi{1} \succ 0$.
+% 
+% Expression $\mOpp{v}{1} = \Pr(x_v \given h_1)$ is a bit more
+%   complicated. 
+% By the reduction presented in \lemmaref{reduction}, we can assume
+%   w.l.o.g. that the observed variables only appear as leaf nodes with
+%   a single parent. 
+% Let $h_v$ be the parent of $x_v$, and let $h_{i_1}, h_{i_2}, \cdots, h_{i_l}$ be any
+%   path from $h_1 \eqdef h_{i_1}$ to $h_v \eqdef h_{i_l}$.
+% Then,
 % \begin{align*}
 %   \mOpp{v}{1} &\eqdef \Pr( x_v \given h_1 )  \\
 %               &= \sum_{h_v} \Pr( x_v \given h_v ) \Pr( h_v \given h_1 ) \\
-%               &= \mOpp{v}{v} \mYpp{v}{1},
+%               &= \sum_{h_{i_l}} \Pr( x_v \given h_{i_l} ) \sum_{h_{i_{l-1}}} \Pr( h_{i_{l}} \given h_{i_{l-1}} ) \Pr( h_{i_{l-1}} \given h_1 ) \\
+%               &= \sum_{\vh} \Pr( x_v \given h_{i_l} ) \Pr( h_{i_{l}} \given
+%               h_{i_{l-1}} ) \cdots \Pr( h_{i_2} \given h_{i_1} ).
 % \end{align*}
-% where $\mYpp{i}{j} \eqdef \Pr( h_i \given h_j )$. 
-% We will now give a recursive construction for $\mYpp{v}{1}$.
 % 
-% Let $\Succ(h_v)$ be the parents of a hidden variable $h_v$ in
-%   a topological ordering of the hidden variables rooted at $h_1$. 
-% Let $\sC_v$ be any clique containing $h_v$ and a subset of successors
-%   $\Succ_{\sC_v}(h_v) \subseteq \Succ(h_v)$.
-% Note that $\mYpp{v}{1}$ can be decomposed in terms of its successors;
+% Let $C_{i_j}$ be the clique containing $h_{i_j}$ and $h_{i_{j-1}}$. 
+% The conditional distribution $\Pr( h_{i_j} \given h_{i_{j-1}} )$ can be
+%   got by first marginalizing all other hidden variables in $\sC$ (achieved by
+%   multiplying those indices by $\ones$), and then by normalizing by $\Pr(h_{i_{j-1}})$ (achieved by multiplying by the matrix $\inv{\diag(\mPi{i_{j-1}})}$); \todo{Better notation}
 % \begin{align*}
-%   \mYpp{v}{1} &\eqdef \Pr( h_v \given h_1 )  \\
-%   &= \sum_{\vh} \Pr( \Succ_{\sC_v}(h_v) \given h_1 ) \Pr( h_v \given \Succ_{\sC_v}(h_v) ).
+%   Y_{j \given j-1} 
+%     &\eqdef \Pr( h_{i_j} \given h_{i_{j-1}} ) \\
+%     &= Z_{\sC_{i_j}}(\cdot, \cdot, \underbrace{\ones, \cdots, \ones}_{h \neq h_{i_j}, h_{i_{j-1}}})
+%         \inv{\diag(\mPi{i_{j-1}})}.
 % \end{align*}
 % 
-% $\Pr( h_v \given \Succ_{\sC_v}(h_v) )$ can be expressed in terms of the
-% $Z_\sC$ by marginalizing out the hidden variables not in
-% $\bar\sC_v \eqdef \Succ_{\sC_v}(h_v) \union \{h_v\}$;
+% Finally, we have the following expression,
 % \begin{align*}
-%   Z_{\bar\sC} &\eqdef \Pr( h_v \given \Succ_{\sC_v}(h_v) ) \\
-%   &= Z_{\sC}(\underbrace{\cdot}_{\in \bar\sC}, \underbrace{\ones}_{\not\in \bar\sC}).
+%   \mOpp{v}{1} &= \mOpp{v}{v} Y_{l \given l-1} \cdots Y_{2 \given 1}.
 % \end{align*}
 % 
-% $\Pr( \Succ_{\sC_v}(h_v) \given h_1 )$ can then be similarly expressed
-% in terms of its successors. \algorithmref{Y} describes the recursive process.
+% Note that \assumptionref{full-rank-plus} guarantees that $Y_{j \given
+%   j -1}$ is full rank, from which it directly follows that $\mOpp{v}{1}$, completing our proof.
+% \end{proof}
 % 
-% \begin{algorithm}
-%   \caption{\mYpp{C,1}}
-%   \label{algo:Y}
-%   \begin{algorithmic}
-%     \REQUIRE The root $h_1$, a group of hidden variables $C$ participating in a clique.
-%     \ENSURE The hidden moments distribution $\mYpp{C}{1}$.
-%     \STATE For successors $\Succ(h_i)$, find 
-%       \STATE Return $\mH_\sC \gets \mO_{\Sx{\sV}}( \pinv{\mOpp{v_1}{i_i}}, \cdots, \pinv{\mOpp{v_m}{i_m}} )$.
-%   \end{algorithmic}
-% \end{algorithm}
+% \subsection{Sample Complexity}
+% 
+% In this section, we will explicitly derive the sample complexity of
+%   $\LearnMarginals$. The end result is an estimate of the error of
+%   each clique marginal $Z_\sC$.
+% The analysis proceeds in two stages; (i) bounding the error in
+%   estimating in each conditional moment $\mOpp{v}{i}$ and (ii) bounding
+%   the error in estimating $Z_\sC$.
+% 
+% \paragraph{Estimating $\mOpp{v}{i}$}
+% 
+% Consider the estimation of the conditional moments for a bottleneck
+%   $h_i$ with views $x_{v_1}, x_{v_2}, x_{v_3}$. 
+% Let the error in estimation of the moments be upper-bounded by
+%   $\epsilon$, $\|M_{v_i v_j} - \hat M_{v_i v_j} \|_F < \epsilon$ for $i,
+%   j \in \{1,2,3\}$, and 
+% the singular values of the moments be lower-bounded by $\alpha$,
+%   $\sigma_k(M_{v_i v_j}) > \alpha$ for $i, j \in \{1,2,3\}$.
+% Results from \citet{anandkumar12moments,anandkumar13tensor} show that 
+% \begin{align*}
+%   \|\mOpphat{v_1}{i} - \mOppit{v_1}{i}\|^2_F 
+%     &= O( 
+%     \frac{k {\mPi{i}}_{\max}^2}
+%     {\beta^5 } \epsilon ). 
+% \end{align*}
+% We will now express this quantity in terms of the parameters of the model.
+% 
+% Let $\sigma_1(Z_\sC)$ and $\sigma_k(Z_\sC)$ respectively be the largest
+%   and smallest singular value of any slice of $Z_\sC$. 
+% From the derivation in \lemmaref{full-rank-suff}, we know that $\mPi{i}$
+%   is obtained by marginalizing some slice of $Z_{\sC_j}$, which gives
+%   the result that $\sigma_1(Z_\sC) \succ \mPi^{i} \succ \sigma_k(Z_\sC)$.
+% Furthermore, 
+% \begin{align*}
+%   \sigma_k(Y_{j \given j-1}) &\ge \frac{\sigma_k(Z_{\sC_j})}{\mPi{i_{j-1}}_{\max}}
+%                              \ge \frac{\sigma_k(Z_{\sC_j})}{\sigma_1(Z_{\sC_j})}
+%                              = \cnd(Z_{\sC_j})^{-1},
+% \end{align*}
+% where $\cnd(Z_{\sC_j}) \eqdef
+% \frac{\sigma_1(Z_{\sC_j})}{\sigma_k(Z_{\sC_j})}$ is defined analogously
+% to the condition number of a matrix. 
+% Finally,
+% \begin{align*}
+%   \sigma_k(\mOpp{v}{1}) 
+%     &\ge \sigma_k(\mOpp{v}{v}) \prod_{j=2}^{l} \sigma_k(Y_{j \given j-1}) \\
+%     &\ge \sigma_k(\mOpp{v}{v}) \prod_{j=2}^{l} \cnd(\sC_{j}).
+% \end{align*}
+% 
+% Note that $M_{v_a v_b} = \mOpp{v_a}{i} \diag(\mPi{i})
+% \mOpp{v_b}{i}^\top$.
+% Without loss of generality, let us assume that $M_{v_a v_b}$ is the
+%   moment with the smallest singular value.
+% This gives us the following bound on $\beta$,
+% \begin{align*}
+%   \beta &\ge \sigma_k(M_{v_a,v_b}) \\
+%         &\ge \sigma_k(\mOpp{v_a}{i}) \mPi{i}_{\min} \sigma_k(\mOpp{v_b}{i}) \\
+%         &\ge \sigma_k(\mOpp{v_a}{v_a}) \sigma_k(\mOpp{v_b}{v_b}) \sigma_k(Z_{\sC_i}) \cnd_{\min}^{d_a + d_b},
+% \end{align*}
+% where $\cnd_{\min}$ is the smallest $\cnd(Z_\sC)$ for any $\sC \in \sG$
+% and $d_a, d_b$ are distance from $h_i$ to $x_{v_a}$ and $x_{v_b}$
+% respectively.
+% 
+% Finally, we have the result,
+% \begin{align*}
+%   \|\mOpphat{v_1}{i} - \mOppit{v_1}{i}\|^2_F 
+%     &= O( 
+%     \frac{k \sigma_1^2 }
+%     {(\sigma_k^3 \cnd_{\min}^{d_a + d_b})^5}
+%     \epsilon ). 
+% \end{align*}
+% 
+% \paragraph{Estimating $Z_\sC$}
+% 
+% Similarly, we can apply standard perturbation analysis techniques to get
+% an error bound on $Z_\sC$;
+% \begin{align*}
+%   \|Z_\sC - \hat Z_\sC\|_F 
+%   &\le \|M_\sV(\mOppit{v_1}{i_1}, \cdots, \mOppit{v_m}{i_m}) \\
+%       &\quad - \hat M_\sV(\hat{\mOppit{v_1}{i_1}}, \cdots, \hat{\mOppit{v_m}{i_m}})\|^2_F.
+% \end{align*}
+% Let $\|\mOppit{v_1}{i_1}\|_F < O$ and $\|\hat{\mOppit{v_1}{i_1}}\|_F < O$; then, we get
+% \begin{align*}
+%   \|Z_\sC - \hat Z_\sC\|_F 
+%   &\le \|M_\sV - \hat M_\sV\|_F O^m \\
+%   &\quad + \|\hat M_\sV\|_F O^{m-1} \max\{\|\hat {\mOppit{v_1}{i_1}} - \mOppit{v_1}{i_1}\|_F\}.
+% \end{align*}
 
