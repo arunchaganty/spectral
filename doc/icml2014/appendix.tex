@@ -177,34 +177,72 @@ Z_{C_2}$. Furthermore, we can marginalize out any variables in $\sC
 
 \end{proof}
 
-\begin{definition}[Singular Values of Tensor Products]
-  For an m-th order tensor $P$, let $\sS \times_{n=1}^N \Un{n}$ be its
-    Tucker decomposition.
-    By definition, for every index $n$, $\|\sS_{i_n = 1}\|_F \ge
-    \|\sS_{i_n = 2}\|_F \ge \cdots \ge  \|\sS_{i_n = I_n}\|_F$. We
-    define $\sigma_{n,k}(P) = \|\sS_{i_n = k}\|_F$.
-\end{definition}
+Let us review some important properties of the Tucker decomposition of
+  a tensor.
+For an $m$-th order tensor $P \in \Re^{k^m}$, let $P = \sG
+  \times_{n=1}^N \Un{n}$ be its Tucker decomposition, where $\sG \in
+  \Re^{k^m}$ is its {\em core tensor} and $\Un{n} \in \Re^{k\times k}$ is
+  an orthogonal matrix \cite{kolda2009tensor}.
+For any sub-tensors $\sG_{i_n = p}$, $\sG_{i_n = q}$, $\innerp{\sG_{i_n
+  = p}}{\sG_{i_n = q}} = 0$ if $p \neq q$ and $\|\sG_{i_n = p}\|_F
+  = \sigma_{n,p}(P)$.
 
-\begin{lemma}[Singular Values of Tensor Products]
-  Let $P$ and $Q$ be an m-th and n-th order tensors with $\sigma_{i,k}(P) \ge 0$ for all $i, k$ and  $\sigma_{i,k}(Q) \ge 0$ for all $i, k$. For any index set $I$ of size $k$, $\sigma_{i,k}(P \times_I Q) \ge \min\{\sigma_k(P), \sigma_k(Q)\}^k$
-\end{lemma}
+\begin{property}[Tucker Decomposition and Multiplication]
+  Let $P$ and $Q$ be an m-th and n-th order tensors with Tucker decompositions,
+  $P = M \times_{i=1}^m \Un{i}$ and
+  $Q = N \times_{i=1}^n \Vn{i}$.
+  Then, for any index set $I$ of size $k$, 
+  $R \eqdef O \times_{I} Q$ has a tucker decomposition,
+  $R = \sR \times_{i=1}^{m+n-k} \Wn{i}$. 
+  
+  Without loss of generality, assume that $I = \{1, \cdots, k\}$, then 
+  \begin{align*}
+    \Wn{i} &= 1 \left\{
+    \begin{array}{l l}
+      {\Un{i}}^\top \Vn{i} & i \in [1, k] \\
+      \Un{i}              & i \in [k+1, m] \\
+      \Vn{i - m + k}      & i \in [m+1, m+n+k]
+    \end{array}
+    \right.
+  \end{align*}
+
+  Furthermore,
+  \begin{align*}
+    \sigma_{i,p}(R) &= \left\{
+    \begin{array}{l l}
+      \sigma_{i,p}(P) \sigma_{i,k}(Q) & i \in [1, k] \\
+      \sigma_{i,p}(P) & i \in [k+1, m] \\
+      \sigma_{i - m + k,p}(P) & i \in [m+1, m+n+k]
+    \end{array}
+    \right.
+  \end{align*}
+\end{property}
 \begin{proof}
+  As a warm-up, consider the simple case where $m = 3$ and $n = 2$.
+  Here, we have the following decompositions,
   \begin{align*}
-    \sigma_k(P \times_I Q) 
-        &\eqdef \min_{u : \|u\|_2 = 1} \| P \times_I Q u \|_2 \\
+    P &= \sum_{i,j,k} M_{ijk} \Un{1}_{i} \otimes \Un{2}_{j} \otimes \Un{3}_{k} \\
+    Q &= \sum_{l,m} N_{lm} \Vn{1}_{l} \otimes \Vn{2}_{m}.
   \end{align*}
 
-  Let $P = S \times_{n}^{N} U_{n}$ be the Tucker decomposition of $P$,
-    and $Q = S' \times_{n}^{N} V_{n}$ be the Tucker decomposition of $Q$. 
-  Then, 
+  Now, we will try to express $R \eqdef P \times_{1} Q$,
   \begin{align*}
-    P \times_I Q 
-    &= [S \times U_{n}] \times_I [S' \times V_{n}] \\
-    &= [S \times U_{n}] \times_I [S \times V_{n}] \\
-     
-     P_{i_1, \ldots, i_m} Q_{i_1, \ldots, i_k, j_{k+1} \ldots j_n} \\
-     &= P_{i_1, \ldots, i_m} Q_{i_1, \ldots, i_k, j_{k+1} \ldots j_n} \\
+    R_{bcd} &= \sum_{a} P_{abc} Q_{ad} \\
+    &= \sum_{a} \sum_{i,j,k} \sum_{l,m} M_{ijk} \un{1}_{ia} \un{2}_{jb} \un{3}_{kc} 
+                N_{lm} \vn{1}_{la} \vn{2}_{md} \\
+                &= \sum_{a} \sum_{i,j,k} \sum_{m} M_{ijk} (\sum_{l} \un{1}_{ia} N_{lm} \vn{1}_{la}) 
+                    \un{2}_{jb} \un{3}_{kc} \vn{2}_{md} \\
+                    &= \sum_{i,j,k} \sum_{m} M_{ijk} 
+                      \sum_{a} (\un{1}_{i} \circ \sum_{l} N_{lm} \vn{1}_{l})_{a}
+                    \un{2}_{jb} \un{3}_{kc} \vn{2}_{md} \\
+                    &= \sum_{i,j,k} \sum_{m} M_{ijk} 
+                    ({\un{1}_{i}}^\top \sum_{l} N_{lm} \vn{1}_{l}) \un{2}_{jb} \un{3}_{kc} \vn{2}_{md} \\
+                    &= \sum_{i,j,k} \sum_{m} M_{ijk} n_{im} \un{2}_{jb} \un{3}_{kc} \vn{2}_{md} \\
   \end{align*}
+  Let ${\Wn{1}}'$ be composed of columns of ${\wn{1}}'_{ia}$, i.e.
+  ${\Wn{1}}' \eqdef \Un{1} \diag N_m \Vn{1}$. 
+  In other words, from the HOSVD procedure, we can absorb $\Un{1} \diag N_m$ into the core tensor, and 
+
 
 \end{proof}
 
