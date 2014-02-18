@@ -2,58 +2,99 @@
 \label{app:proofs}
 
 In the interest of space, we have omitted some proofs from
-the main contents of the paper. We present their proofs in detail below.
+the main contents of the paper. 
+We present their proofs in detail below.
 
 \subsection{\lemmaref{pw-variance}}
 \label{app:pw-variance-proof}
 
 In \sectionref{piecewise}, we compare the asymptotic variance $\Sigma^\ml_\sC$ of the
 composite likelihood estimator for a clique $\sC$, $\hat Z^\ml_\sC$, with
-that of the pseudolikelihood estimator $\Sigma^\mom_\sC$.
+that of the pseudo-inverse estimator $\Sigma^\mom_\sC$. 
+In this part, we will derive the asymptotic variance of the composite
+  likelihood estimator.
 
 \begin{proof}
-  Using the delta-method \cite{vaart98asymptotic}, we have that the
-  asymptotic distribution of $Z_\sC$ is,
+  Recall that the composite likelihood estimator $\hat Z_\sC
+  = \argmax_{Z_\sC \in \Delta_{k^m-1}} \hat\E[\log Z_\sC(\mOppAll[\vx])]$ is
+  a constrained M-estimator.
+  First, let us re-parametrize the problem to make it unconstrained by
+  using the first $k^m - 1$ elements of $Z_\sC$.  
+  Let $\tilde Z_\sC \in [0,1]^{k^m-1}$ and let 
   \begin{align*}
-    \sqrt{n}(\hat Z_{\sC} - Z_{\sC}) &\convind \sN( 0, \grad^2 \sL_\ml^{-1} \Var[\grad \sL_\ml] \grad^2 \sL_\ml^{-1}).
+    (Z_\sC)_{i_1i_2i_3} &= \left\{
+      \begin{array}{ll}
+        1 - \sum_{i_1,i_2,i_3} (\tilde Z_\sC)_{i_1i_2i_3} & i_1 = i_2 = i_3 = k \\
+        (\tilde Z_\sC)_{i_1i_2i_3} & \text{otherwise}
+        \end{array}
+        \right.
+        .
+  \end{align*}
+  Using the delta-method \cite{vaart98asymptotic} we have that the asymptotic distribution of 
+  $\widehat{{\tilde Z}}_\sC = \argmax_{\tilde Z_\sC \in [0,1]^{k^m-1}} \hat\E[\log Z_\sC(\mOppAll[\vx])]$ is,
+  \begin{align*}
+    \sqrt{n}(\widehat{\tilde{Z}}_{\sC} - \tilde{Z}_{\sC}) &\convind \sN( 0, \grad^2 \sL_\ml^{-1} \Var[\grad \sL_\ml] \grad^2 \sL_\ml^{-1}).
   \end{align*}
 
 Taking the first derivative,
 \begin{align}
-  \grad_{\mH_\sC} \sL_\ml(\sX_\sV) 
-  &= \sum_{x \in \sD} \frac{\mOppAll[\vx]}{\mH_\sC \cdot \mOppAll[\vx]} \nonumber \\ 
-  &= \mOppAll[\vx] \diag(\tilde \mO_{\sV})^{-1} \mO_{\sV}, \label{eqn:lhood-grad}
+  \grad_{\tilde Z_\sC} \sL_\ml(\sX_\sV) 
+  &= \sum_{x \in \sD} \frac{\mOppAll_{\neg \vec k}[\vx] - \mOppAll_{\vec k}[\vx]}{\mH_\sC(\mOppAll[\vx]) } \nonumber \\ 
+  &= \mOppTAll \diag(\tilde \mO_{\sV})^{-1} \mO_{\sV}, \label{eqn:lhood-grad}
 \end{align}
-where $\tilde \mO_\sV$ is marginal distribution with parameters $\mH_\sC$, also represented as a vector in $\Re^{d^m}$.
+where $\mOppAll_{\neg \vec k}[\vx] \in \Re^{k^m-1}$ is the first $k^m-1$
+entries of $\mOppAll[\vx]$, $\mOppAll_{\vec k}[\vx] = \mOpp{v_1}{i_1}_{x_1k}
+\cdots \mOpp{v_m}{i_m}_{x_mk}$ is a constant and $\tilde \mO_\sV$ is
+marginal distribution with parameters $\mH_\sC$.
 
 Taking the second derivative.
 \begin{align}
-  \grad^2_{\mH_\sC} \sL_\ml(\Sx \sV) 
-  &= \sum_{x \in \sD} \frac{\mOppAll[\vx] \mOppAllt[\vx]}{(\mH_\sC \cdot \mOppAll[\vx])^2} \nonumber \\
-  &= \sum_{x \in \sD}\mOppAll[\vx] \mOppAllt[\vx] \frac{\mO_{\sV}[\vx]}{\tilde \mO_{\sV}^2[\vx]} \nonumber \\
-  &= \mOppAll \diag(\mO_{\sV}) \diag(\tilde \mO_{\sV})^{-2} \mOppAllt. \label{eqn:lhood-hess}%
+  \grad^2_{\tilde \mH_\sC} \sL_\ml(\Sx \sV) 
+  &= \sum_{x \in \sD} \frac{\mOppTAll[\vx] \mOppTAllt[\vx]}{(\mH_\sC(\mOppAll[\vx]))^2} \nonumber \\
+  &= \sum_{x \in \sD}\mOppTAll[\vx] \mOppTAllt[\vx] \frac{\mO_{\sV}[\vx]}{\tilde \mO_{\sV}^2[\vx]} \nonumber \\
+  &= \mOppTAll \diag(\mO_{\sV}) \diag(\tilde \mO_{\sV})^{-2} \mOppTAllt. \label{eqn:lhood-hess}%
 \end{align}
-
-% DONE: don't need this
-%It follows that $\grad^2_{\mH_\sC} \sL_\ml(\Sx \sV) \succ 0$ because
-%$\tilde \mO_\sV, \tilde \mO_\sV \succ 0$ and $\mOppAll$ is
-%full rank and stochastic.
-
-% PL: this should just be a consequence
-%Next, we show that it is
-%strictly concave, which guarantees that it has a unique maximizer.
 
   From \equationref{lhood-grad}, we get
   \begin{align*}
-    \Var [\grad \sL_\ml(\vec x_\sC)] &= \mOppAll \diag(\tilde M_\sV) \Sigma_\sV \diag(\tilde M_\sV) \mOppAll^T .
+    \Var [\grad \sL_\ml(\vec x_\sC)] &= \mOppTAll \diag(\tilde M_\sV) \Sigma_\sV \diag(\tilde M_\sV) \mOppTAll^T .
   \end{align*}
 
   Finally, using \equationref{lhood-hess}, we have
   \begin{align*}
-    \Sigma_{Z_\sC} 
+    \Sigma_{\tilde Z_\sC} 
       &= \grad^2 \sL_\ml(\vec x_\sC)^{-1} \Var [\grad \sL_\ml(\vec x_\sC)] \grad^2 \sL_\ml(\vec x_\sC)^{-1}) \\
-      &= \pinvt{\mOppAll} \diag(\tilde M_\sV) \Sigma_\sV \diag(\tilde M_\sV) \pinv{\mOppAll}.
+      &= \pinvt{\mOppTAll} \diag(\tilde M_\sV) \Sigma_\sV \diag(\tilde M_\sV) \pinv{\mOppTAll}.
   \end{align*}
+
+Note that by the definition of $\tilde Z_\sC$, we have the covariance
+between the first $k^m - 1$ elements of $Z_\sC$. 
+We now need to include the covariance with the last element,
+  $(Z_\sC)_{\vec k}$. 
+
+It is easy to verify that for a vector $\alpha \in \Delta_{k-1}$, where
+  $\alpha_k = \sum_{i=1}^{k-1} \alpha_i$, the covariance between
+  $\alpha_i$ for $1 \le i \le k-1$ and $\alpha_k$ and that the variance
+  of $\alpha_k$ are,
+\begin{align*}
+  \Cov[ \alpha_i, \alpha_k ] 
+    &= \E[ \alpha_i \alpha_k ] - \E[ \alpha_i ]\E[ \alpha_k ] \\ 
+    &= - \sum_{j=1}^{k-1} \Sigma_{ij} \\
+  \Var[ \alpha_k ] 
+    &= \E[ \alpha_k \alpha_k ] - \E[ \alpha_k ]^2 \\ 
+    &= \sum_{i=1}^{k-1} \sum_{j=1}^{k-1} \Sigma_{ij}.
+\end{align*}
+
+Thus, the asymptotic variance of $Z_\sC$ is the following,
+\begin{align*}
+    \Sigma_{Z_\sC} &= 
+    \begin{bmatrix}
+    \Sigma_{\tilde Z_\sC} & \Sigma_{\tilde Z_\sC} \ones \\
+    \ones^\top \Sigma_{\tilde Z_\sC} & \ones^\top \Sigma_{\tilde Z_\sC} \ones
+    \end{bmatrix}.
+\end{align*}
+
+
 
   At the true parameters, $\tilde M_\sV = M_\sV$, completing the proof.
 %  \todo{argue that asymptotic variance is finite, so the estimator is consistent (this is technically good form,
@@ -389,3 +430,27 @@ For any sub-tensors $\sG_{i_n = p}$, $\sG_{i_n = q}$, $\innerp{\sG_{i_n
 %   &\quad + \|\hat M_\sV\|_F O^{m-1} \max\{\|\hat {\mOppit{v_1}{i_1}} - \mOppit{v_1}{i_1}\|_F\}.
 % \end{align*}
 
+% Let's return to the X = {X_{ijk}}, Y = Y_{lm} example. We defined Z_{jkm} = \sum_i X_{ijk} Y_{im}.
+% 
+% Let's look at some mode unfolding of Z - we want to show that each of these is full rank (and we care about their singular values).
+% 
+% First, consider the unfolding along 'm' - I'm going to single out indices using (Z_m)_jk to be a little clearer with text math:
+% 
+% ([Z_(3)]_m)_jk = (Z_m)_{jk}
+%                      = (Y_m)_{i} (X_i)_{jk}
+%                      =  Y_(2) * X_(1)'
+% 
+% In other words, this is just the product of the two mode unfoldings and this is going to have full rank (because each has full rank). This is clearly the easy case.
+% 
+% Next, consider
+% 
+% ([Z_(1)]_j)_km = (Z_j)_{km}
+%                      = \sum_i (X_{j})_{ik} Y_{im}.
+% 
+% The trick is to take the outer product of Y and the identity matrix. Then we get a new "Y" that looks like Y_{ikk'm} = Y_{im} \delta_{kk'}. Then,
+% 
+% ([Z_(1)]_j)_km = (Z_j)_{km}
+%                      = \sum_{ik} (X_j)_{ik} * (Y_{ik})_{k'm}
+%                      = X_(2) * Y_(12),
+% 
+% the product of these two unfoldings. It's easy to show that rank Y_(12)  = rank(Y) because of the property that sigma(A \otimes B) = \sigma(A) \sigma(B).
