@@ -16,76 +16,101 @@ In this part, we will derive the asymptotic variance of the composite
 
 \begin{proof}
   Recall that the composite likelihood estimator $\hat Z_\sC
-  = \argmax_{Z_\sC \in \Delta_{k^m-1}} \hat\E[\log Z_\sC(\mOppAll[\vx])]$ is
-  a constrained M-estimator.
+  \in \Delta_{k^m-1}$ is a constrained M-estimator.
   First, let us re-parametrize the problem to make it unconstrained by
   using the first $k^m - 1$ elements of $Z_\sC$.  
   Let $\tilde Z_\sC \in [0,1]^{k^m-1}$ and let 
   \begin{align*}
-    (Z_\sC)_{i_1i_2i_3} &= \left\{
+    (Z_\sC)_{i_1 \ldots i_m} &= \left\{
       \begin{array}{ll}
-        1 - \sum_{i_1,i_2,i_3} (\tilde Z_\sC)_{i_1i_2i_3} & i_1 = i_2 = i_3 = k \\
-        (\tilde Z_\sC)_{i_1i_2i_3} & \text{otherwise.}
+        1 - \sum_{\vi} (\tilde Z_\sC)_{i_1 \ldots i_m} & i_1 = \cdots = i_m = k \\
+        (\tilde Z_\sC)_{i_1 \ldots i_m} & \text{otherwise.}
         \end{array}
         \right.
   \end{align*}
-  Using the delta-method \cite{vaart98asymptotic} we have that the asymptotic distribution of 
-  $\widehat{{\tilde Z}}_\sC = \argmax_{\tilde Z_\sC \in [0,1]^{k^m-1}} \hat\E[\log Z_\sC(\mOppAll[\vx])]$ is,
+  The objective can then be written as,
   \begin{align*}
-    \sqrt{n}(\widehat{\tilde{Z}}_{\sC} - \tilde{Z}_{\sC}) &\convind \sN( 0, \grad^2 \sL_\ml^{-1} \Var[\grad \sL_\ml] \grad^2 \sL_\ml^{-1}).
+    \sL_\ml &= \frac{1}{|\sD|} \sum_{\vx \in \sD} \ell(\vx) \\
+    \ell(\vx) &= \log(\tilde Z_\sC \mOppAll_{\neg \vk}[\vx] + (1 - \tilde Z_\sC) \mOppAll_{\vk}[\vx]),
+  \end{align*}
+  where $\mOppAll_{\neg \vec k}[\vx] \in \Re^{k^m-1}$ is the first $k^m-1$
+    entries of $\mOppAll[\vx]$ and
+  $\mOppAll_{\vec k}[\vx] = \mOpp{v_1}{i_1}_{x_1k} \cdots
+    \mOpp{v_m}{i_m}_{x_mk}$ is a constant. 
+Let $\mOppTAll[\vx] = \mOppAll_{\neg \vk}[\vx] - \mOppAll_{\vk}[\vx]$, then,
+  \begin{align*}
+    \ell(\vx) &= \log(\tilde Z_\sC(\mOppTAll[\vx]) + \mOppAll_{\vk}[\vx]).
+  \end{align*}
+
+Using the delta-method \cite{vaart98asymptotic} we have that the asymptotic distribution of 
+  $\widehat{{\tilde Z}}_\sC = \argmax_{\tilde Z_\sC \in [0,1]^{k^m-1}} \E[\ell(\vx)]$ is,
+  \begin{align*}
+    \sqrt{n}(\widehat{\tilde{Z}}_{\sC} - \tilde{Z}_{\sC}) 
+      &\convind \sN( 0, \E[\grad^2 \ell^{-1}] \Var[\grad \ell] \E[\grad^2 \ell^{-1}]).
   \end{align*}
 
 Taking the first derivative,
 \begin{align}
-  \grad_{\tilde Z_\sC} \sL_\ml(\sX_\sV) 
-  &= \sum_{\vx \in \sD} \frac{\mOppAll_{\neg \vec k}[\vx] - \mOppAll_{\vec k}[\vx]}{\mH_\sC(\mOppAll[\vx]) } \nonumber \\ 
-  &= \sum_{\vx \in \sX} \mOppTAll[\vx] \frac{M_\sV[\vx]}{\tilde M_\sV[\vx]} \nonumber \\ 
-  &= \mOppTAll \diag(\tilde \mO_{\sV})^{-1} \mO_{\sV}, \label{eqn:lhood-grad}
+  \grad_{\tilde Z_\sC} \ell(\vx)
+  &= \frac{\mOppTAll[\vx]}{\mH_\sC(\mOppAll[\vx]) } \nonumber \\ 
+  &= \mOppTAll \diag(M_{\sV})^{-1} e_\vx, \label{eqn:lhood-grad}
 \end{align}
-where $\mOppAll_{\neg \vec k}[\vx] \in \Re^{k^m-1}$ is the first $k^m-1$
-  entries of $\mOppAll[\vx]$, 
-$\mOppAll_{\vec k}[\vx] = \mOpp{v_1}{i_1}_{x_1k} \cdots
-  \mOpp{v_m}{i_m}_{x_mk}$ is a constant,
-$\mOppTAll[\vx] = \mOppAll_{\neg \vec k}[\vx] - \mOppAll_{\vec k}[\vx]$
-and $\tilde \mO_\sV$ is marginal distribution with parameters $\mH_\sC$.
+where $e_\vx$ is a one-hot vector and $M_\sV$ is the marginal
+distribution of the observed data at the true parameters.
 
 Taking the second derivative.
 \begin{align}
-  \grad^2_{\tilde \mH_\sC} \sL_\ml(\Sx \sV) 
-  &= - \sum_{\vx \in \sD} \frac{\mOppTAll[\vx] \mOppTAllt[\vx]}{(\mH_\sC(\mOppAll[\vx]))^2} \nonumber \\
-  &= - \sum_{\vx \in \sX}\mOppTAll[\vx] \mOppTAllt[\vx] \frac{\mO_{\sV}[\vx]}{\tilde \mO_{\sV}^2[\vx]} \nonumber \\
-  &= - \mOppTAll \diag(\mO_{\sV}) \diag(\tilde \mO_{\sV})^{-2} \mOppTAllt. \label{eqn:lhood-hess}%
+  \grad^2_{\tilde \mH_\sC} \ell(\vx)
+  &= - \frac{\mOppTAll[\vx] \mOppTAllt[\vx]}{(\mH_\sC(\mOppAll[\vx]))^2} \nonumber \\
+  &= - \mOppTAll \diag(M_{\sV})^{-1} e_\vx e_\vx^\top  \diag(M_{\sV})^{-1} \mOppTAllt. \label{eqn:lhood-hess}%
 \end{align}
 
-  From \equationref{lhood-grad}, we get
+From \equationref{lhood-grad} and \equationref{lhood-hess}, we get
   \begin{align*}
-    \Var [\grad \sL_\ml(\vec x_\sC)] &= \mOppTAll \diag(\tilde M_\sV)^{-1} \Sigma_\sV \diag(\tilde M_\sV)^{-1} \mOppTAllt .
+    \Var [\grad \ell(\vx)] &= \mOppTAll \diag(M_\sV)^{-1} \diag(\Sigma_\sV) \diag(M_\sV)^{-1} \mOppTAllt \\
+    \E[\grad^2 \ell(\vx)] &= -\mOppTAll \diag(M_\sV)^{-1} \diag(\Sigma_\sV) \diag(M_\sV)^{-1} \mOppTAllt.
   \end{align*}
-
-  Finally, using \equationref{lhood-hess}, and noting that at the true parameters $\tilde M_\sV = M_\sV$, 
-  \begin{align*}
+As expected, $\E[\grad^2 \ell(\vx)] = -\Var [\grad \ell(\vx)]$ because $\widehat{\tilde Z_\sC}$ is a maximum likelihood estimator. 
+Finally, noting that $\Sigma_\sV = \diag(M_\sV) - M_\sV M_\sV^\top$ for
+  a multinomial distribution, we get,
+\begin{align*}
     \Sigma_{\tilde Z_\sC} 
-      &= \grad^2 \sL_\ml(\vec x_\sC)^{-1} \Var [\grad \sL_\ml(\vec x_\sC)] \grad^2 \sL_\ml(\vec x_\sC)^{-1} \\
-      &= \mOppTAllit \Sigma_\sV \mOppTAlli.
-  \end{align*}
+      &= \E[\grad^2 \ell(\vx)]^{-1} \Var [\grad \ell(\vx)] \E[\grad^2 \ell(\vx)]^{-1} \\
+      &= \Var[\grad \ell(\vx)]^{-1} \\
+      &= \mOppTAllit \diag(\tilde M_\sV) \diag(\Sigma_\sV)^{-1} \diag(\tilde M_\sV) \mOppTAlli \\
+      &= \mOppTAllit \diag(M_\sV) (\diag(M_\sV) - \diag(M_\sV)^2)^{-1} \diag(M_\sV) \mOppTAlli \\
+      &= \mOppTAllit \diag(M_\sV) (I - \diag(M_\sV))^{-1} \mOppTAlli \\
+      &= \mOppTAllit \tilde D_\sV \mOppTAlli,
+\end{align*}
+where $\tilde D_\sV = \diag( \frac{M_\sV[\vx]}{1 - M_\sV[\vx]} )$.
+Note that given our assumptions, $\ones \succ M_\sV \succ \zeros$. Thus
+the asymptotic variance is finite, and our estimator is consistent as
+well.
 
 Note that by the definition of $\tilde Z_\sC$, we have the covariance
 between the first $k^m - 1$ elements of $Z_\sC$. 
 We now need to include the covariance with the last element,
-  $(Z_\sC)_{\vec k}$. 
+  $Z_\sC[\vk]$. 
 
 It is easy to verify that for a vector $\alpha \in \Delta_{k-1}$, where
   $\alpha_k = \sum_{i=1}^{k-1} \alpha_i$, the covariance between
   $\alpha_i$ for $1 \le i \le k-1$ and $\alpha_k$ and that the variance
-  of $\alpha_k$ are,
+  of $\alpha_k$ is,
 \begin{align*}
-  \Cov[ \alpha_i, \alpha_k ] 
-    &= \E[ \alpha_i \alpha_k ] - \E[ \alpha_i ]\E[ \alpha_k ] 
-    &&= - \sum_{j=1}^{k-1} \Sigma_{ij} \\
-  \Var[ \alpha_k ] 
-    &= \E[ \alpha_k \alpha_k ] - \E[ \alpha_k ]^2 
-    &&= \sum_{i=1}^{k-1} \sum_{j=1}^{k-1} \Sigma_{ij}.
+    \Sigma_{\alpha} &= 
+    \begin{bmatrix}
+    \Sigma_{\tilde \alpha} & \Sigma_{\tilde \alpha} \ones \\
+    \ones^\top \Sigma_{\tilde \alpha} & \ones^\top \Sigma_{\tilde \alpha} \ones
+    \end{bmatrix}.
 \end{align*}
+%\begin{align*}
+%  \Cov[ \alpha_i, \alpha_k ] 
+%    &= \E[ \alpha_i \alpha_k ] - \E[ \alpha_i ]\E[ \alpha_k ] 
+%    &&= - \sum_{j=1}^{k-1} \Sigma_{ij} \\
+%  \Var[ \alpha_k ] 
+%    &= \E[ \alpha_k \alpha_k ] - \E[ \alpha_k ]^2 
+%    &&= \sum_{i=1}^{k-1} \sum_{j=1}^{k-1} \Sigma_{ij}.
+%\end{align*}
 
 Thus, the asymptotic variance of $Z_\sC$ is,
 \begin{align*}
@@ -98,10 +123,6 @@ Thus, the asymptotic variance of $Z_\sC$ is,
 
 \todo{How do we compare $\Sigma^\mom$ with this? Should I consider a projection?}
 
-\todo{Argue that the asymptotic variance is finite.}
-
-%  \todo{argue that asymptotic variance is finite, so the estimator is consistent (this is technically good form,
-%but it's fine given space constraints}
 \end{proof}
 
 \subsection{Recovering conditional moments}
