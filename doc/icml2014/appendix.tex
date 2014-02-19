@@ -8,9 +8,9 @@ We present their proofs in detail below.
 \subsection{\lemmaref{pw-variance}}
 \label{app:pw-variance-proof}
 
-In \sectionref{piecewise}, we compare the asymptotic variance $\Sigma^\ml_\sC$ of the
-composite likelihood estimator for a clique $\sC$, $\hat Z^\ml_\sC$, with
-that of the pseudo-inverse estimator $\Sigma^\mom_\sC$. 
+In \sectionref{piecewise}, we compare the asymptotic variance
+  $\Sigma^\ml_\sC$ of the composite likelihood estimator for a clique
+  $\sC$, with that of the pseudo-inverse estimator $\Sigma^\mom_\sC$. 
 In this part, we will derive the asymptotic variance of the composite
   likelihood estimator.
 
@@ -25,10 +25,9 @@ In this part, we will derive the asymptotic variance of the composite
     (Z_\sC)_{i_1i_2i_3} &= \left\{
       \begin{array}{ll}
         1 - \sum_{i_1,i_2,i_3} (\tilde Z_\sC)_{i_1i_2i_3} & i_1 = i_2 = i_3 = k \\
-        (\tilde Z_\sC)_{i_1i_2i_3} & \text{otherwise}
+        (\tilde Z_\sC)_{i_1i_2i_3} & \text{otherwise.}
         \end{array}
         \right.
-        .
   \end{align*}
   Using the delta-method \cite{vaart98asymptotic} we have that the asymptotic distribution of 
   $\widehat{{\tilde Z}}_\sC = \argmax_{\tilde Z_\sC \in [0,1]^{k^m-1}} \hat\E[\log Z_\sC(\mOppAll[\vx])]$ is,
@@ -39,32 +38,35 @@ In this part, we will derive the asymptotic variance of the composite
 Taking the first derivative,
 \begin{align}
   \grad_{\tilde Z_\sC} \sL_\ml(\sX_\sV) 
-  &= \sum_{x \in \sD} \frac{\mOppAll_{\neg \vec k}[\vx] - \mOppAll_{\vec k}[\vx]}{\mH_\sC(\mOppAll[\vx]) } \nonumber \\ 
+  &= \sum_{\vx \in \sD} \frac{\mOppAll_{\neg \vec k}[\vx] - \mOppAll_{\vec k}[\vx]}{\mH_\sC(\mOppAll[\vx]) } \nonumber \\ 
+  &= \sum_{\vx \in \sX} \mOppTAll[\vx] \frac{M_\sV[\vx]}{\tilde M_\sV[\vx]} \nonumber \\ 
   &= \mOppTAll \diag(\tilde \mO_{\sV})^{-1} \mO_{\sV}, \label{eqn:lhood-grad}
 \end{align}
 where $\mOppAll_{\neg \vec k}[\vx] \in \Re^{k^m-1}$ is the first $k^m-1$
-entries of $\mOppAll[\vx]$, $\mOppAll_{\vec k}[\vx] = \mOpp{v_1}{i_1}_{x_1k}
-\cdots \mOpp{v_m}{i_m}_{x_mk}$ is a constant and $\tilde \mO_\sV$ is
-marginal distribution with parameters $\mH_\sC$.
+  entries of $\mOppAll[\vx]$, 
+$\mOppAll_{\vec k}[\vx] = \mOpp{v_1}{i_1}_{x_1k} \cdots
+  \mOpp{v_m}{i_m}_{x_mk}$ is a constant,
+$\mOppTAll[\vx] = \mOppAll_{\neg \vec k}[\vx] - \mOppAll_{\vec k}[\vx]$
+and $\tilde \mO_\sV$ is marginal distribution with parameters $\mH_\sC$.
 
 Taking the second derivative.
 \begin{align}
   \grad^2_{\tilde \mH_\sC} \sL_\ml(\Sx \sV) 
-  &= \sum_{x \in \sD} \frac{\mOppTAll[\vx] \mOppTAllt[\vx]}{(\mH_\sC(\mOppAll[\vx]))^2} \nonumber \\
-  &= \sum_{x \in \sD}\mOppTAll[\vx] \mOppTAllt[\vx] \frac{\mO_{\sV}[\vx]}{\tilde \mO_{\sV}^2[\vx]} \nonumber \\
-  &= \mOppTAll \diag(\mO_{\sV}) \diag(\tilde \mO_{\sV})^{-2} \mOppTAllt. \label{eqn:lhood-hess}%
+  &= - \sum_{\vx \in \sD} \frac{\mOppTAll[\vx] \mOppTAllt[\vx]}{(\mH_\sC(\mOppAll[\vx]))^2} \nonumber \\
+  &= - \sum_{\vx \in \sX}\mOppTAll[\vx] \mOppTAllt[\vx] \frac{\mO_{\sV}[\vx]}{\tilde \mO_{\sV}^2[\vx]} \nonumber \\
+  &= - \mOppTAll \diag(\mO_{\sV}) \diag(\tilde \mO_{\sV})^{-2} \mOppTAllt. \label{eqn:lhood-hess}%
 \end{align}
 
   From \equationref{lhood-grad}, we get
   \begin{align*}
-    \Var [\grad \sL_\ml(\vec x_\sC)] &= \mOppTAll \diag(\tilde M_\sV) \Sigma_\sV \diag(\tilde M_\sV) \mOppTAll^T .
+    \Var [\grad \sL_\ml(\vec x_\sC)] &= \mOppTAll \diag(\tilde M_\sV)^{-1} \Sigma_\sV \diag(\tilde M_\sV)^{-1} \mOppTAllt .
   \end{align*}
 
-  Finally, using \equationref{lhood-hess}, we have
+  Finally, using \equationref{lhood-hess}, and noting that at the true parameters $\tilde M_\sV = M_\sV$, 
   \begin{align*}
     \Sigma_{\tilde Z_\sC} 
-      &= \grad^2 \sL_\ml(\vec x_\sC)^{-1} \Var [\grad \sL_\ml(\vec x_\sC)] \grad^2 \sL_\ml(\vec x_\sC)^{-1}) \\
-      &= \pinvt{\mOppTAll} \diag(\tilde M_\sV) \Sigma_\sV \diag(\tilde M_\sV) \pinv{\mOppTAll}.
+      &= \grad^2 \sL_\ml(\vec x_\sC)^{-1} \Var [\grad \sL_\ml(\vec x_\sC)] \grad^2 \sL_\ml(\vec x_\sC)^{-1} \\
+      &= \mOppTAllit \Sigma_\sV \mOppTAlli.
   \end{align*}
 
 Note that by the definition of $\tilde Z_\sC$, we have the covariance
@@ -78,14 +80,14 @@ It is easy to verify that for a vector $\alpha \in \Delta_{k-1}$, where
   of $\alpha_k$ are,
 \begin{align*}
   \Cov[ \alpha_i, \alpha_k ] 
-    &= \E[ \alpha_i \alpha_k ] - \E[ \alpha_i ]\E[ \alpha_k ] \\ 
-    &= - \sum_{j=1}^{k-1} \Sigma_{ij} \\
+    &= \E[ \alpha_i \alpha_k ] - \E[ \alpha_i ]\E[ \alpha_k ] 
+    &&= - \sum_{j=1}^{k-1} \Sigma_{ij} \\
   \Var[ \alpha_k ] 
-    &= \E[ \alpha_k \alpha_k ] - \E[ \alpha_k ]^2 \\ 
-    &= \sum_{i=1}^{k-1} \sum_{j=1}^{k-1} \Sigma_{ij}.
+    &= \E[ \alpha_k \alpha_k ] - \E[ \alpha_k ]^2 
+    &&= \sum_{i=1}^{k-1} \sum_{j=1}^{k-1} \Sigma_{ij}.
 \end{align*}
 
-Thus, the asymptotic variance of $Z_\sC$ is the following,
+Thus, the asymptotic variance of $Z_\sC$ is,
 \begin{align*}
     \Sigma_{Z_\sC} &= 
     \begin{bmatrix}
@@ -94,9 +96,10 @@ Thus, the asymptotic variance of $Z_\sC$ is the following,
     \end{bmatrix}.
 \end{align*}
 
+\todo{How do we compare $\Sigma^\mom$ with this? Should I consider a projection?}
 
+\todo{Argue that the asymptotic variance is finite.}
 
-  At the true parameters, $\tilde M_\sV = M_\sV$, completing the proof.
 %  \todo{argue that asymptotic variance is finite, so the estimator is consistent (this is technically good form,
 %but it's fine given space constraints}
 \end{proof}
@@ -108,7 +111,7 @@ In step 1 of \LearnMarginals, we used the bottleneck property of a hidden
   variable $h_i$ to learn conditional moments $\mOpp{v}{i}$ for every
   view $x_v \in \sV_{h_i}$ using \TensorFactorize. 
 In order to do so, we require that \assumptionref{full-rank} holds, i.e.
-\begin{assumption*}
+\begin{assumption*}[1]
   Given a bottleneck $h_1$ with views $x_1, x_2, x_3$, the conditional
   moments $\mOpp{1}{1}, \mOpp{2}{1}, \mOpp{3}{1}$ have full column rank
   $k$, and $\pi\oft 1 \succ 0$.
@@ -116,7 +119,7 @@ In order to do so, we require that \assumptionref{full-rank} holds, i.e.
 
 In this section, we will show that the following condition
   (\assumptionref{full-rank-plus}) on the clique marginals suffices;
-\begin{assumption*}
+\begin{assumption*}[2]
 For every clique $\sC \in \sG$ (including ones involving observed variables),
   every $\Re^{k \times k}$ slice of the marginals $Z_\sC$ has full column
   rank $k$ constructed by summing out the remaining indices.
@@ -155,7 +158,13 @@ Then,
               &= \sum_{h_t} \Pr( x_v \given h_t ) \Pr( h_t \given h_1 ) \\
               &= \mOpp{v}{t} \mYpp{t}{1},
 \end{align*}
-where $\mYpp{i}{j} \eqdef \Pr( h_i \given h_j )$. More generally, for two sets of hidden variables $C \eqdef \{h_{C_1} \cdots h_{C_m} \}$ and $C' \eqdef \{h_{C'_1} \cdots h_{C'_m} \}$, define $\mYpp{C}{C'} \eqdef \Pr( h_{C_1} \cdots h_{C_m} \given h_{C'_1} \cdots h_{C'_n} )$. 
+where $\mYpp{i}{j} \eqdef \Pr( h_i \given h_j )$. 
+More generally, for two sets of hidden variables $C \eqdef \{h_{C_1}
+\cdots h_{C_m} \}$ and $C' \eqdef \{h_{C'_1} \cdots h_{C'_m} \}$, 
+define $\mYpp{C}{C'} \eqdef \Pr( h_{C_1} \cdots h_{C_m} \given h_{C'_1}
+\cdots h_{C'_n} )$. 
+With this representation, $\mYpp{C}{C'}$ is a $|C| + |C'|$-th order
+tensor.
   
 We will now give a recursive construction for $\mYpp{v}{1}$.
 Without loss of generality, let $h_1, h_2, \cdots, h_t$ be a topological
@@ -174,16 +183,17 @@ We can recursively describe $\mYpp{ \Pa(h_t) }{1}$ in terms of its
   parents until we reach $h_1$.
 Let $C$ be an intermediate set of hidden variables. Let $h_c \neq h_1$
   be some hidden variable in $C$. 
-Let $C' = C \union \Pa(h_c) \setminus \{h_c\}$.
+Let $C' = C \union \Pa(h_c) \setminus \{h_c\}$ and $\del C = C'
+  \setminus (C \union \{h_1\})$.
 Then,
 \begin{align*}
   \mYpp{C}{1} &\eqdef \Pr( \vh_C \given h_1 )  \\
-  &= \sum_{\vh_{\Pa(h_c)}} \Pr( C' \given h_1 ) \Pr( h_c \given \Pa(h_c) ) \\
-  &= \mYpp{ C' }{ 1 } \times_{\Pa(h_c)} \mYpp{c}{\Pa(h_c)},
+  &= \sum_{\vh_{\del C}} \Pr( C' \given h_1 ) \Pr( h_c \given \Pa(h_c) ) \\
+  &= \mYpp{ C' }{ 1 } \times_{\del C} \mYpp{c}{\Pa(h_c)},
 \end{align*}
-
 Finally, for the base case, $\mYpp{1}{1} = \ones$.
-  
+This procedure is algorithmically described in \algorithmref{Y}.
+
 \begin{algorithm}
   \caption{$\mYpp{C}{1}$}
   \label{algo:Y}
@@ -200,11 +210,21 @@ Finally, for the base case, $\mYpp{1}{1} = \ones$.
   \end{algorithmic}
 \end{algorithm}
 
-Without loss of generality, let $\{c\} \union P \subset \sC$ for
-a particular clique $\sC \in \sG$. If they are actually composed of two
-cliques $C_1, C_2$, we can construct $Z_{C_1 \union C_2} = Z_{C_1} \dot
-Z_{C_2}$. Furthermore, we can marginalize out any variables in $\sC
-\setminus \bar{P}$ - they are conditionally independent of $h_t$.
+This recursive definition along with \lemmaref{tensor-multiplication} allows us to to describe the
+singular values of $\mYpp{C}{1}$ in terms of those of $\mYpp{C'}{1}$ and
+$\mYpp{c}{\Pa(h_c)}$. 
+
+
+Without loss of generality, let $\{c\} \union P = \sC$ for
+a particular clique $\sC \in \sG$\footnote{If they are actually composed of two
+cliques $\sC_1, \sC_2$, we can construct $Z_{\sC_1 \union \sC_2} = Z_{\sC_1} \cdot
+Z_{\sC_2}$.}. Then, 
+\begin{align*}
+\mYpp{c}{\Pa(h_c)} 
+  &\eqdef \Pr(h_c \given \Pa(h_c)) \\
+  &= \frac{\Pr(h_c, \Pa(h_c))}{\Pr(\Pa(h_c))} \\
+  &= Z_\sC \diag{Z_\sC(\ones, \cdot, \ldots, \cdot)}^{-1}.
+\end{align*}
 
 \begin{lemma}[Sufficiency of \assumptionref{full-rank-plus}]
   \label{lem:full-rank-suff}
@@ -215,78 +235,65 @@ Z_{C_2}$. Furthermore, we can marginalize out any variables in $\sC
 \begin{proof}
   The important statement that needs to be made is how $\sigma_k(Y)$
   relates to its parents.
-
 \end{proof}
 
-Let us review some important properties of the Tucker decomposition of
-  a tensor.
-For an $m$-th order tensor $P \in \Re^{k^m}$, let $P = \sG
-  \times_{n=1}^N \Un{n}$ be its Tucker decomposition, where $\sG \in
-  \Re^{k^m}$ is its {\em core tensor} and $\Un{n} \in \Re^{k\times k}$ is
-  an orthogonal matrix \cite{kolda2009tensor}.
-For any sub-tensors $\sG_{i_n = p}$, $\sG_{i_n = q}$, $\innerp{\sG_{i_n
-  = p}}{\sG_{i_n = q}} = 0$ if $p \neq q$ and $\|\sG_{i_n = p}\|_F
-  = \sigma_{n,p}(P)$.
-
-\begin{property}[Tucker Decomposition and Multiplication]
-  Let $P$ and $Q$ be an m-th and n-th order tensors with Tucker decompositions,
-  $P = M \times_{i=1}^m \Un{i}$ and
-  $Q = N \times_{i=1}^n \Vn{i}$.
-  Then, for any index set $I$ of size $k$, 
-  $R \eqdef O \times_{I} Q$ has a tucker decomposition,
-  $R = \sR \times_{i=1}^{m+n-k} \Wn{i}$. 
-  
-  Without loss of generality, assume that $I = \{1, \cdots, k\}$, then 
-  \begin{align*}
-    \Wn{i} &= 1 \left\{
-    \begin{array}{l l}
-      {\Un{i}}^\top \Vn{i} & i \in [1, k] \\
-      \Un{i}              & i \in [k+1, m] \\
-      \Vn{i - m + k}      & i \in [m+1, m+n+k]
-    \end{array}
-    \right.
-  \end{align*}
-
-  Furthermore,
-  \begin{align*}
-    \sigma_{i,p}(R) &= \left\{
-    \begin{array}{l l}
-      \sigma_{i,p}(P) \sigma_{i,k}(Q) & i \in [1, k] \\
-      \sigma_{i,p}(P) & i \in [k+1, m] \\
-      \sigma_{i - m + k,p}(P) & i \in [m+1, m+n+k]
-    \end{array}
-    \right.
-  \end{align*}
-\end{property}
+\begin{lemma}[Tensor Multiplication and Singular Values]
+  \label{lem:tensor-multiplication}
+Let $\sP, \sQ, \sR$ and $M$ be defined as above. 
+Let $I \subset [m - k + n - k]$ be an arbitrary subset of the index set of $\sR$,
+  and let $I_1$, $I_2$ be the respective subsets of $I$ contained in $\sP$ and $\sQ$.
+Then,
+\begin{align}
+  \sigma_{\max}(\sP\munf{I_1}) \sigma_{\max}(\sP\munf{I_2}) 
+\ge \sigma_{\max}(\sR\munf{I}) 
+\ge \sigma_{\min}(\sR\munf{I}) 
+\sigma_{\min}(\sP\munf{I_1}) \sigma_{\min}(\sP\munf{I_2}).
+\end{align}
+\end{lemma}
 \begin{proof}
-  As a warm-up, consider the simple case where $m = 3$ and $n = 2$.
-  Here, we have the following decompositions,
+  Without loss of generality, let $M = \{(1,1), \ldots, (\ell,\ell)\}$. 
+  Then,
   \begin{align*}
-    P &= \sum_{i,j,k} M_{ijk} \Un{1}_{i} \otimes \Un{2}_{j} \otimes \Un{3}_{k} \\
-    Q &= \sum_{l,m} N_{lm} \Vn{1}_{l} \otimes \Vn{2}_{m}.
+    \sR_{\vi\vj} &\eqdef \sum_{\vk} \sP_{\vk \vi} \sQ_{\vk \vj}.
   \end{align*}
 
-  Now, we will try to express $R \eqdef P \times_{1} Q$,
+Consider an $(I)$-unfolding of $\sR$,
   \begin{align*}
-    R_{bcd} &= \sum_{a} P_{abc} Q_{ad} \\
-    &= \sum_{a} \sum_{i,j,k} \sum_{l,m} M_{ijk} \un{1}_{ia} \un{2}_{jb} \un{3}_{kc} 
-                N_{lm} \vn{1}_{la} \vn{2}_{md} \\
-                &= \sum_{a} \sum_{i,j,k} \sum_{m} M_{ijk} (\sum_{l} \un{1}_{ia} N_{lm} \vn{1}_{la}) 
-                    \un{2}_{jb} \un{3}_{kc} \vn{2}_{md} \\
-                    &= \sum_{i,j,k} \sum_{m} M_{ijk} 
-                      \sum_{a} (\un{1}_{i} \circ \sum_{l} N_{lm} \vn{1}_{l})_{a}
-                    \un{2}_{jb} \un{3}_{kc} \vn{2}_{md} \\
-                    &= \sum_{i,j,k} \sum_{m} M_{ijk} 
-                    ({\un{1}_{i}}^\top \sum_{l} N_{lm} \vn{1}_{l}) \un{2}_{jb} \un{3}_{kc} \vn{2}_{md} \\
-                    &= \sum_{i,j,k} \sum_{m} M_{ijk} n_{im} \un{2}_{jb} \un{3}_{kc} \vn{2}_{md} \\
+    \sR\munf{I}_{\vi,\vj} 
+       &= \sum_{\vk} \sP_{\vk \vi} \sQ_{\vk \vj} \\
+       &= \sum_{\vk} \sP\munf{I_1}_{\vx_1; \vy_1 \vk} \sQ\munf{I_2}_{\vx_2; \vy_2, \vk},
   \end{align*}
-  Let ${\Wn{1}}'$ be composed of columns of ${\wn{1}}'_{ia}$, i.e.
-  ${\Wn{1}}' \eqdef \Un{1} \diag N_m \Vn{1}$. 
-  In other words, from the HOSVD procedure, we can absorb $\Un{1} \diag N_m$ into the core tensor, and 
+  where $\vx_1 \in \Range(I_1)$, $\vy_1 \in \Range([m] \setminus I_1)$, $\vx_2 \in \Range(I_2)$ and $\vy_2  \in \Range([n] \setminus I_2)$.
 
+The key idea is to represent the above as a matrix multiplication.
+To do so, we can temporarily ``inflate'' the unfoldings $\sP\munf{I_1}$
+  and $\sQ\munf{I_2}$ by taking the outer product of $\sQ\munf{I_2}$ with
+  identity matrices. Let us define 
+  $\sP' \eqdef \sP \otimes I_{d_{j'_1}} \otimes \cdots \otimes I_{d_{j'_{|\vj'|}}}$ and 
+  $\sQ' \eqdef \sQ \otimes I_{d_{i'_1}} \otimes \cdots \otimes I_{d_{i'_{|\vi'|}}}$.
 
+Now, $\sP'$ is a $(m + 2 * |\vj'|)$-th order tensor and similarly $\sQ'$ is a $(n + 2 * |\vi'|)$-th 
+  order tensor. We choose new index sets $I'_1$ and $I'_2$ to include these identity indices. 
+Then,
+  \begin{align*}
+    \sR\munf{I}_{\vi,\vj} 
+    &= \sum_{\vy_1, \vy_2 \vk}
+    {\sP'}\munf{I'_1}_{\vx_1\vy'_2, \vy_1 \vy_2 \vk} {\sQ'}\munf{I'_2}_{\vx_2\vy'_1, \vy_1 \vy_2 \vk} \\
+          \sR\munf{I} &= {\sP'}\munf{I'_1} {\sQ'}\munf{I'_2}.
+  \end{align*}
+
+  Finally, we can use \equationref{matrix-singular} to bound the singular values of $\sR\munf{I}$:
+  \begin{align*}
+    \sigma_{\max}(\sR\munf{I}) 
+    &\le \sigma_{\max}({\sP'}\munf{I'_1}) \sigma_{\max}({\sQ'}\munf{I'_2}) \\
+      &= \sigma_{\max}(\sP\munf{I_1}) \sigma_{\max}(\sQ\munf{I_2}) \\
+    \sigma_{\min}(\sR\munf{I})  
+    &\ge \sigma_{\min}({\sP'}\munf{I'_1}) \sigma_{\min}({\sQ'}\munf{I'_2}) \\
+      &\ge \sigma_{\min}(\sP\munf{I_1}) \sigma_{\min}(\sQ\munf{I_2}).
+  \end{align*}
+
+  We used the well-known property that the singular values of the tensor product of two matrices is equal to the product of singular values of the matrices. \lemmaref{tensor-prod} presents a proof of this fact for completeness.
 \end{proof}
-
 
 
 % \begin{proof}

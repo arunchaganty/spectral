@@ -92,13 +92,14 @@ Note that in each of the above cases,
 We capture this general property as follows:
 \begin{property}(Exclusive views)
   \label{prop:exclusive-views}
-A hidden sub-graph $\sG' \subseteq \sG$ (typically a clique $\sC \in
-  \sG$) is said to possess the \textbf{exclusive views property} if for
-  every hidden variable $h_i \in \sG'$, there is some observed variable,
+A hidden clique $\sC \in \sG$ is said to possess the \textbf{exclusive views property} if for
+  every hidden variable $h_i \in \sC$, there is some observed variable,
   $x_{v}$, which is conditionally independent of the rest of the clique
   given $h_i$, and whose conditional moment $\mOpp{v}{i} \eqdef
   \Pr(x_{v} \mid h_i)$ can be estimated consistently.
-We call $x_v$ the exclusive view of $h_i$ in $\sG'$.
+We call $x_v$ the exclusive view of $h_i$ in $\sC$.
+
+This property also extends to any connected sub-graph $\sG' \in \sG$.
 \end{property}
 
 For the rest of this section, we will only consider sub-graphs which are
@@ -246,7 +247,7 @@ There is a one-to-one correspondence between the parameters of this
   \label{lem:bottleneck-views}  
 Let $\sG' = \{ h_{i_1}, \cdots, h_{i_m} \} \subseteq \sG$ be
   a connected sub-graph of hidden variables. If every hidden variable
-  $h_i \in \sG'$ is a bottleneck, then they each have an exclusive view.
+  $h_i \in \sG'$ is a bottleneck, then they have an exclusive view.
 \end{lemma}
 \begin{proof}
   By \lemmaref{reduction}, we can assume that every observed
@@ -273,11 +274,11 @@ Let $\sG' = \{ h_{i_1}, \cdots, h_{i_m} \} \subseteq \sG$ be
     statement that $x_1, x_2 \in \sV_h$. 
     
   Thus, it must be the case that $\sV_{h} \subsetneq \Union_{h' \neq
-    h \in \sC} \sV_{h'}$ and hence there exists a unique view for $h$.
+    h \in \sG'} \sV_{h'}$ and hence there exists a unique view for $h$.
 
   Algorithmically, finding the unique view for $h$ can be done by
   subtracting the views of all other variables in the sub-graph from
-  $\sV_h$,i.e. $x_{v_h} \in \sV_h \setminus \Union_{h' \in \sC} \sV_{h'}$
+  $\sV_h$,i.e. $x_{v_h} \in \sV_h \setminus \Union_{h' \in \sG'} \sV_{h'}$
 \end{proof}
 
 With this lemma in place, we present the full algorithm, $\LearnMarginals$,
