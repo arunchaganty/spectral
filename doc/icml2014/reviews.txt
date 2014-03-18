@@ -1,0 +1,217 @@
+ICML 2014
+International Conference on Machine Learning
+June 21-26, 2014, Beijing, China
+
+  Reviews For Paper
+Track Cycle 2
+Paper ID 1285
+Title Estimating Latent-Variable Graphical Models using Moments and Likelihoods
+________________________________
+Masked Reviewer ID: Assigned_Reviewer_1
+Review:
+Question
+Overall Rating Weak accept
+Reviewer confidence Reviewer is knowledgeable
+Detailed comments for the authors This paper proposes a new method for
+estimating parameters of a latent-variable
+graphical model mixing moment-matching methods (namely the tensor factorization
+procedure of Anandkumar et al. 2012) with composite likelihood estimation.
+
+Overall, I found the paper very clear and well written. While the
+increment over previous work in spectral learning is rather small, I
+found the comparison (in statistical efficiency) between the
+pseudo-inverse estimator and the composite likelihood estimator in
+Corollary 1 very interesting. On the negative side, I would like to
+have seen some empirical comparison between the proposed method and
+EM, as this would strengthen the theoretical analysis. Figure 5 is
+nice, but an HMM with 2 states and 3 observations is really very small
+- nonetheless,
+by looking at the plots, the errors still look pretty large, given that the
+number of parameters is only 2+2*2+3*2=12...
+
+In Lemma 1, it is said that "there is a one-to-one correspondence between the
+parameters of this transformed model [in the canonical form] and the original
+one." However, this hides the fact that the parameter space of
+the transformed model is in general a superset of the original set of parameters
+(for example, in Figure 3, all three conditional moments are constrained to be
+the identity). The spectral learning procedure will ignore these structural
+constraints when operating in the transformed model. It would be interesting to
+discuss procedures to map back from the transformed model to the original one
+once the parameters are learned.
+
+In the equation in line 560, I think there is a P(h_c) multiplicative term
+missing in the second equality.
+
+The authors use the same notation (Z_C) to denote two different things
+(lines 711
+and 713). This notation overload is confusing. I suggest using
+different letters.
+
+In line 763, shouldn't it be \phi(a, x_{N(a)}) instead of \phi(a)?
+
+Minor comments/typos:
+- Figure 2: the middle observed variable should be x2, not x3
+- footnote 1: replace "Assumption 2" by "Property 2"
+- line 385: "a exclusive view" -> an exclusive view
+- line 408: replace \subsetneq by \nsubseteq
+- line 470: maybe replace "Non-examples" by "negative examples" or
+"counter-examples"?
+- line 817: "this but family" -> this family
+- line 844: "These methods which allows for prediction" -> these methods allow
+for prediction
+Summary of evaluation / Paper's main strengths and weaknesses This
+paper proposes a new method for estimating parameters of a
+latent-variable
+graphical model mixing moment-matching methods (namely the tensor factorization
+procedure of Anandkumar et al. 2012) with composite likelihood estimation.
+
+Main strengths:
+- I found the paper very clear and well written.
+- I found the comparison (in statistical efficiency) between the
+pseudo-inverse estimator and the composite likelihood estimator in
+Corollary 1 very interesting.
+
+Main weaknesses:
+- The increment over previous work in spectral learning is rather small
+- I would like to have seen some empirical comparison between the proposed
+method and EM, as this would strengthen the theoretical analysis.
+
+________________________________
+Masked Reviewer ID: Assigned_Reviewer_2
+Review:
+Question
+Overall Rating Strong accept
+Reviewer confidence Reviewer is knowledgeable
+Detailed comments for the authors The paper addresses the important
+question of parameter estimates for
+both directed and undirected graphical models with latent variables. A
+key step (not original to this paper) is the use of tensor
+factorisation to "reveal partial information about the hidden
+variables". As the discussion notes there are different trade-offs one
+can make for such problems. Important to the approach here is the
+reliance on "exclusive views". This restriction is not too great and I
+accept the argument that it encompasses an interestingly broad class
+of models.
+
+This is a good paper and I could find little to criticise. Everything
+makes sense and is to the point. And a problem worth solving is
+addressed. My main gripe is that proper empirical validation is
+missing. One gets the feeling that the authors ran out of time to do
+it. Such an evaluation would certainly improve the paper. For example,
+there is an expectation that when only some cliques have exclusive
+views then (if approached appropriately) local optima would be
+alleviated. It would be great to check out this expectation.
+
+Typos, etc:
+
+There is no Fig 1(a) although it is referenced.
+
+In Definition 1, state explicitly that we need independence
+conditional on *h*.
+
+There is no Fig 4.1 although it is referenced.
+
+line: 816 but family, but -> family, but
+Summary of evaluation / Paper's main strengths and weaknesses +
+Extends learning with latent variables to a broader class
++ Puts current work into context of existing work well
+
+- No real empirical evaluation.
+________________________________
+Masked Reviewer ID: Assigned_Reviewer_3
+Review:
+Question
+Overall Rating Weak accept
+Reviewer confidence Reviewer is knowledgeable
+Detailed comments for the authors This paper provides both novel
+algorithmic and theoretical developments in the area of using the
+spectral method of moments to learn latent variable models. The
+combination of the moment method with composite maximum likelihood,
+along with the statistical efficiency analysis of the different
+approaches, is an important contribution, and the extension to
+log-linear models broadens the applicability of these techniques in a
+substantial way. Moreover, the fact that the learning is not
+computationally linked to the treewidth is an important development.
+The paper does not, however, provide compelling empirical analysis.
+The empirical results are provided only in the directed case, are on a
+very simple problem, and are given very little discussion. Despite
+this shortcoming (which is hard to reconcile given space constraints),
+the paper does provide important contributions, and as such, I am
+recommending acceptance.
+
+More specific comments/recommendations follow below:
+
+1) The paper emphasizes that the techniques presented allow for a
+broader class of models to be estimated. However, in the case of
+directed models, no particular algorithmic developments presented in
+the paper allow for a direct broadening of the model class that can be
+learned via the spectral method of moments. The authors do provide a
+novel characterization of the model class that can be learned via the
+spectral method of moments (i.e., models that satisfy the bottleneck
+property); however, it is my understanding that such models can be
+learned using the techniques of, for example Anandkumar et al 2013a. I
+suggest emphasizing that in the directed case the paper characterizes
+succinctly the model class that can be learned directly via the
+spectral method of moments and an important contribution is the
+broadening to the class of undirected log-linear models. It was
+slightly misleading in the directed case since the class of graphs
+satisfying the bottle-neck property is not more general than the class
+of models to which the spectral method of moments could in general be
+applied, since decorrelation etc. techniques can be used to apply the
+method in more general settings. A slight clarification regarding this
+issue (in the introduction) would strengthen the paper's presentation.
+
+2) If possible, briefly comment on how to extend to more complex
+distributions (i.e., not just multinomial). For example, in the case
+of multivariate Gaussian observations would it always be
+straightforward to obtain the covariance matrices (and not just the
+conditional means) for the variables? If so, could you briefly comment
+or provide a relevant reference.
+
+3) A comparison to EM (using a standard library with a reasonable
+number of random restarts) in the empirical analysis would strengthen
+the paper. Can we expect this method to outperform EM (in general the
+classic spectral method of moments does not always outperform EM
+despite local minima issues)?
+
+4) Minor aesthetic issues are noted below:
+
+Line 273: Inconsistent transpose notation, I suggest "^T" -> "^\top".
+Line 303: "a set of views" -> "a set of exclusive views"
+Line 318: "gotten from" -> "obtained from"
+Lines 302, 324, 325: Inconsistent notation for set of exclusive views.
+Both \mathcal{V} and mathbf{x}_{\mathcal{V}} used to denote set of
+exclusive views.
+Line 402 "is connected $h_2$" -> "is connected to $h_2$"
+Line 468 "(exclusive to $h_3$)" should be "(exclusive to $h_1$)", correct?
+Summary of evaluation / Paper's main strengths and weaknesses Overall
+the paper provides important algorithmic and theoretical advancements
+but lacks in empirical detail.
+
+Strengths/Important Contributions:
+
+-Succinctly characterizes the class of latent variable models (both
+directed and undirected) for which the spectral method of moments can
+be applied without pre-processing.
+
+-Demonstrates how the method of moments can be combined with composite
+maximum likelihood to achieve an estimator with a convex objective and
+improved statistical efficiency (proofs are provided). This is a
+significant contribution to the spectral method of moments community.
+
+-Provides description of how to apply the approach to log-linear
+models, allowing models with high treewidth (but low-degree) to be
+efficiently learned.
+
+Weaknesses:
+
+-Claim that the paper broadens the class of models that can be learned
+via the spectral method of moments is somewhat unclear in the directed
+case. The bottleneck property seems rather to restrict that class of
+models that can be learned. Some clarification may be necessary.
+
+-Focuses on multinomial setting without mention of how the method can
+be extended to more complex distributions.
+
+-Lack of compelling empirical analysis. There is no comparison to
+plain EM, and the only experiment is in a very simple setting.

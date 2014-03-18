@@ -1,0 +1,51 @@
+Thank you very much for your constructive comments and suggestions; we
+will try to respond to your questions below:
+
+# (All reviewers) Regarding empirical comparisons
+
+We are actively looking into studying the empirical performance of our
+proposed algorithms.
+
+# (Reviewer 1) Regarding the canonical transformation in Lemma 1 
+
+- The parameter space defined after the canonical transformation (Lemma
+  1) is only artificially larger in that it just simplifies notation
+  without actually changing the underlying learning problem. 
+- In particular, when the conditional moments $O^{(v,new}) = P(x_v
+  | h_{new})$ are desired, we already know them to be the identity, $I$,
+  and do not need to use the tensor factorization method to learn them.
+- Furthermore, in the case when the conditional moments for another
+  hidden variable (say $h_1$) are desired, e.g. $O^{(v,1}) = P(x_v
+  | h_1)$, then only a single $x_v$ need be used. Thus, the
+  transformation does not actually increase the size of the
+  parameter space.
+- Finally, the identity transformation between $x_v$ and $h_new$ lets us
+  write $p(x_v | h_1, h_2) = p(h_new | h_1, h_2)$.
+
+# (Reviwer 3) Novelty in the directed graphical model case
+
+We agree that our work presents a natural extension of the work of
+Anandkumar et al., however, we believe our method still offers two novel
+contributions in the directed case:
+- Firstly, we show that directed graphical models with high tree width
+  can be _efficiently_ learned using the spectral method. Though Parikh
+  et al. (2012) have studied recovering parameters in a similar class of
+  graphical models in the observable operator setting, the
+  method presented there relies on a junction tree representation that
+  scales with the treewidth. The algorithm we present scales with
+  the degree of each variable.
+- Secondly, we have shown that using composite likelihoods leads to
+  asymptotically better estimators; this result applies in the directed
+  setting as well.
+
+# (Reviwer 3) Extensions to more complex distributions 
+
+Given the three view assumption, our work straightforwardly generalizes
+to the case where the observed variables take real values. Following
+similar treatment as in Anandkumar et al. 2013a, we would be able to
+recover the conditional means of the output variables. Techniques like
+those proposed in Anandkumar et al. (2012a) or Hsu and Kakade (2012)
+could be extended to recover covariances in limited settings (i.e.
+Dirichlet distributions and spherical Gaussians respectively), but the
+problem remains hard in the general case.
+
