@@ -47,16 +47,9 @@ public abstract class ExponentialFamilyModel<T> {
   abstract public void updateMarginals(Params parameters, int L, double scale, Params marginals);
 
   public void updateMarginals(Params parameters, Counter<T> examples, double scale, Params marginals) {
-    int progress = 0;
-//    StopWatch sw = new StopWatch();
-//    sw.start();
     for(T example : examples) {
       updateMarginals(parameters, example, scale * examples.getFraction(example), marginals);
-//      if( progress++ % 1000 == 0 ) {
-//        LogInfo.logs( "%d / %d [%f ms/ex]", progress, examples.size(), sw.getCurrTimeLong() / (1000.));
-//        sw.reset();
-//        sw.start();
-//      }
+//      updateMarginals(parameters, example, getProbability(parameters, example), marginals);
     }
   }
   public void updateMarginals(Params parameters, int[] histogram, double scale, Params marginals) {

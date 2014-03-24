@@ -883,7 +883,7 @@ public class PairwiseHMMRecovery implements  Runnable {
                 "diff", diff
         ));
         //assert( lhood - lhood_ > -1e-3); // Numerical error.
-        if( diff < 1e-3 ) break;
+        if( diff < emEps ) break;
 
         lhood_ = lhood;
         params.copyOver(marginals);

@@ -151,8 +151,8 @@ public class Utils {
     if(out!=null){
       out.println( StrUtils.join(items, "\t") );
       out.flush();
+      out.close();
     }
-
     LogInfo.end_track();
     return done && iter == 1;  // Didn't make any updates
   }

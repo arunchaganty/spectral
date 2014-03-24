@@ -150,7 +150,6 @@ public class ExpectationMaximization implements Runnable {
             Counter<Example> data,
             Params theta
     ) {
-      LogInfo.begin_track("solveEM");
       LogInfo.logs( "Solving EM objective with %d parameters, using %f instances (%d unique)",
               theta.size(), data.sum(), data.size() );
 

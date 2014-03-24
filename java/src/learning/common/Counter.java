@@ -86,7 +86,7 @@ public class Counter<V> implements Collection<V> {
   }
 
   public double getFraction(V item) {
-    return getCount(item)/sum;
+    return getCount(item)/sum();
   }
 
   public double sum() {

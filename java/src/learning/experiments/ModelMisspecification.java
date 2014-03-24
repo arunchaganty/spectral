@@ -26,8 +26,8 @@ public class ModelMisspecification implements Runnable {
   public void run() {
     MixtureOfGaussians model = MixtureOfGaussians.generate(options);
     MixtureOfGaussians model_ = ParameterRecovery.recoverGMM(guessK, (int)N, model, 0.0);
-    LogInfo.logs(model.getMeans()[0]);
-    LogInfo.logs(model_.getMeans()[0]);
+    LogInfo.log(model.getMeans()[0]);
+    LogInfo.log(model_.getMeans()[0]);
 
     // Generate a bunch of data and report the likelihood.
     SimpleMatrix[] data = model.sample((int)N);
