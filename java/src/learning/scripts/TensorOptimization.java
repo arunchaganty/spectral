@@ -110,12 +110,12 @@ public class TensorOptimization implements  Runnable {
 //    T = FullTensor.fromDecomposition(
 //        new double[]{1.0},
 //        new double[][]{x});
-//    factorize(T, x, 10);
+//    symmetricFactorize(T, x, 10);
 //    // Less stupid thing.
 //    T = FullTensor.fromDecomposition(
 //        new double[]{0.5},
 //        new double[][]{x});
-//    factorize(T, x, 100);
+//    symmetricFactorize(T, x, 100);
 //
     Random rnd = new Random(1);
 

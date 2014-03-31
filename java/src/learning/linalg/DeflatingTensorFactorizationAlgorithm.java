@@ -3,6 +3,7 @@ package learning.linalg;
 import fig.basic.*;
 import org.ejml.simple.SimpleMatrix;
 import org.javatuples.Pair;
+import org.javatuples.Quartet;
 
 import java.util.Random;
 
@@ -34,7 +35,7 @@ public abstract class DeflatingTensorFactorizationAlgorithm implements TensorFac
    * @return eigenvalues and eigenvectors
    */
   @Override
-  public Pair<SimpleMatrix, SimpleMatrix> symmetricFactorize(FullTensor T, int K) {
+  public Pair<SimpleMatrix, SimpleMatrix> symmetricOrthogonalFactorize(FullTensor T, int K) {
     SimpleMatrix[] eigenvectors = new SimpleMatrix[K];
     double[] eigenvalues = new double[K];
 
@@ -82,9 +83,14 @@ public abstract class DeflatingTensorFactorizationAlgorithm implements TensorFac
   }
 
   @Override
-  public Pair<SimpleMatrix, SimpleMatrix> factorize(FullTensor T, int K) {
+  public Pair<SimpleMatrix, SimpleMatrix> symmetricFactorize(FullTensor T, int K) {
     // TODO: Implement whitening routine here
     throw new RuntimeException("Can't handle unsymmetric tensors");
+  }
+
+  @Override
+  public Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, SimpleMatrix> asymmetricFactorize(FullTensor T, int K) {
+    throw new RuntimeException("Can't handle asymmetric tensors");
   }
 
 }
