@@ -37,7 +37,7 @@ For ease of exposition we make the following simplifications to our presentation
 %\end{figure}
 
 %Consider the directed grid model shown in \figureref{grid} which
-Consider the directed grid model shown in \figureref{approach}(a).
+Consider the directed grid model shown in \figureref{approach}.
   % DONE: all the different dependency => too strong
   %captures the local dependency structures possible in
   %a Bayesian network.
@@ -125,7 +125,7 @@ We now show this condition is sufficient to learn the marginal
   distribution of the clique.
 Consider any hidden clique $\sC = \{h_{i_1}, \cdots, h_{i_m}\} \in \sG$ for which this property holds. Let
   $x_{v_j}$ be any exclusive view for $h_{i_j}$ in $\sC$ and $\sV
-  = \{x_{v_1}, \cdots, x_{v_m}\}$ be a set of views for the clique $\sC$.
+  = \{x_{v_1}, \cdots, x_{v_m}\}$ be a set of exclusive views for the clique $\sC$.
 We can write down the moments $\mO_\sV$ as follows:
 \begin{align*}
   \mO_\sV 
@@ -142,7 +142,7 @@ hidden marginals $Z_\sC$ by inverting:
 \begin{align*}
   Z_{\sC} &= \mO_\sV(\pinv{\mOpp{v_1}{i_1}},\cdots,\pinv{\mOpp{v_m}{i_m}}).
 \end{align*}
-Finally, the conditional probability tables for $\sC$ can easily be gotten from
+Finally, the conditional probability tables for $\sC$ can easily be obtained from
   $Z_\sC$ via renormalization.
 \algorithmref{learnclique} summarizes the procedure, \LearnClique.
 
@@ -172,9 +172,9 @@ In the example above, we were able to guarantee \propertyref{exclusive-views}
   %followed by using \TensorFactorize to learn the conditional moments.
 We define such a hidden variable to be a bottleneck:
 \begin{definition}[Bottleneck]
-  A hidden variable $h$ is said to be a \textbf{bottleneck} if there exists at
-    least three conditionally independent observed variables, or views,
-    $x_1, x_2, x_3$. 
+  A hidden variable $h$ is said to be a \textbf{bottleneck} if there
+  exists at least three observed variables, or views, $x_1, x_2, x_3$
+  that are conditionally independent given $h$. 
   Let $\sV_{h}$ denote a set of views for $h$ (not necessarily unique).
 \end{definition}
 
@@ -267,13 +267,13 @@ Let $\sG' = \{ h_{i_1}, \cdots, h_{i_m} \} \subseteq \sG$ be
   Suppose $h$ had no unique view, then $\sV_{h} \subseteq \Union_{h' \in {\sG'}^-} \sV_{h'}$. 
   However, this would imply that for every $x_1, x_2 \in \sV_{h}$, there
   exists some $h_1, h_2 \in {\sG'}^-$ (not necessarily distinct) such that
-    $x_1$ is connected to $h_1$ and $x_2$ is connected $h_2$.
+    $x_1$ is connected to $h_1$ and $x_2$ is connected to $h_2$.
   By participation in the sub-graph, either $h_1 = h_2$ or $h_1$ is
     connected to $h_2$, implying that $x_1$ and $x_2$ are connected
     via a path that does not pass through $h$, contradicting the
     statement that $x_1, x_2 \in \sV_h$. 
     
-  Thus, it must be the case that $\sV_{h} \subsetneq \Union_{h' \neq
+  Thus, it must be the case that $\sV_{h} \nsubseteq \Union_{h' \neq
     h \in \sG'} \sV_{h'}$ and hence there exists a unique view for $h$.
 
   Algorithmically, finding the unique view for $h$ can be done by
@@ -361,7 +361,7 @@ and $\Pr(x^a_i | h_i) = \Pr(x^b_i | h_i) = O$ for $i \in \{2,3,4\}$.
 Note that while $h_1$ is not directly connected to an observed variable,
   it is still a bottleneck, with views $x^a_2, x^a_3, x^a_4$.
 We can recover $T$ from the clique $\{h_1, h_2\}$ by using views $x^a_2$
-  (exclusive to $h_2$) and $x^a_3$ (exclusive to $h_3$).
+  (exclusive to $h_2$) and $x^a_3$ (exclusive to $h_1$).
   %Note that while
   %$x^a_3$ is also a view for $h_2$, $x^a_3$ is independent of $h_2$ given
   %$h_1$.

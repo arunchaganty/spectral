@@ -135,7 +135,7 @@ Assume the conditional moments $\mOpp{1}{1}, \mOpp{2}{1}, \mOpp{3}{1}$ have full
 \end{assumption}
 
 In brief, the algorithm first computes a whitening matrix $W \in
-  \Re^{d \times k}$ such that $W^T \mO_{12} W = I_{k \times k}$,
+  \Re^{d \times k}$ such that $W^\top \mO_{12} W = I_{k \times k}$,
   and uses it to transform $\mO_{123}$ into a symmetric orthogonal tensor.  
 Then a robust tensor power method is applied to extract the eigenvectors
 of the whitened $\mO_{123}$; unwhitening yields the columns of $\mOpp{3}{1}$.
