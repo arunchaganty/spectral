@@ -9,12 +9,10 @@ import java.util.*;
 import java.io.*;
 
 import fig.basic.Option;
-import fig.basic.OptionSet;
 import fig.basic.LogInfo;
 import fig.exec.Execution;
 
 import org.ejml.simple.SimpleMatrix;
-import org.apache.commons.io.FilenameUtils;
 
 /**
  * Recover parameters from symmetric multi-views using the Tensor powerup method
@@ -124,7 +122,7 @@ public class TensorMethod {
     FullTensor Tw = whitened.getValue1();
 
 
-    Pair<SimpleMatrix, SimpleMatrix> pair = getMethod().symmetricFactorize(Tw, K);
+    Pair<SimpleMatrix, SimpleMatrix> pair = getMethod().symmetricOrthogonalFactorize(Tw, K);
     SimpleMatrix eigenvalues = pair.getValue0(); SimpleMatrix eigenvectors = pair.getValue1();
 
     pair = unwhiten(eigenvalues, eigenvectors, Winv);
@@ -308,7 +306,7 @@ public class TensorMethod {
     FullTensor Tw = obj.computeP123().multiply123(W, W, W);
 
     // Eigendecompose to find stuff.
-    Pair<SimpleMatrix, SimpleMatrix> pair = getMethod().symmetricFactorize(Tw, K);
+    Pair<SimpleMatrix, SimpleMatrix> pair = getMethod().symmetricOrthogonalFactorize(Tw, K);
     SimpleMatrix eigenvalues = pair.getValue0(); SimpleMatrix eigenvectors = pair.getValue1();
 
     // Unwhiten
@@ -361,7 +359,7 @@ public class TensorMethod {
     LogInfo.end_track("symmetrize-views+whiten");
 
     // Recover parameters
-    Pair<SimpleMatrix, SimpleMatrix> pair = getMethod().symmetricFactorize(Tw, K);
+    Pair<SimpleMatrix, SimpleMatrix> pair = getMethod().symmetricOrthogonalFactorize(Tw, K);
     SimpleMatrix eigenvalues = pair.getValue0(); SimpleMatrix eigenvectors = pair.getValue1();
 
     // Unwhiten

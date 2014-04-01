@@ -4,6 +4,7 @@ import fig.basic.*;
 import fig.exec.Execution;
 import org.ejml.simple.SimpleMatrix;
 import org.javatuples.Pair;
+import org.javatuples.Quartet;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -126,7 +127,7 @@ public class TensorJointGradientDescent implements  TensorFactorizationAlgorithm
    * @return
    */
   @Override
-  public Pair<SimpleMatrix, SimpleMatrix> symmetricFactorize(FullTensor T, int K) {
+  public Pair<SimpleMatrix, SimpleMatrix> symmetricOrthogonalFactorize(FullTensor T, int K) {
     double[] lambda = new double[K];
     Arrays.fill(lambda, 1.0/K);
     SymmetricStateVectors state = new SymmetricStateVectors(T, K, lambda);
@@ -138,8 +139,13 @@ public class TensorJointGradientDescent implements  TensorFactorizationAlgorithm
   }
 
   @Override
-  public Pair<SimpleMatrix, SimpleMatrix> factorize(FullTensor T, int K) {
+  public Pair<SimpleMatrix, SimpleMatrix> symmetricFactorize(FullTensor T, int K) {
     // Project down into the moments
     throw new RuntimeException("Not yet implemented");
+  }
+
+  @Override
+  public Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, SimpleMatrix> asymmetricFactorize(FullTensor T, int K) {
+    throw new RuntimeException("Can't handle asymmetric tensors");
   }
 }

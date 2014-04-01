@@ -44,7 +44,7 @@ public class TensorPowerMethodTest {
   public void eigendecompositionTest(SimpleMatrix w, SimpleMatrix X) {
     FullTensor T = FullTensor.fromDecomposition(w, X);
     SimpleMatrix P = X.mult(MatrixFactory.diag(w)).mult(X.transpose());
-    Pair<SimpleMatrix, SimpleMatrix> pair = new TensorPowerMethod().symmetricFactorize(T, T.getDim(0));
+    Pair<SimpleMatrix, SimpleMatrix> pair = new TensorPowerMethod().symmetricOrthogonalFactorize(T, T.getDim(0));
 
     SimpleMatrix w_ = pair.getValue0();
     w_ = MatrixOps.alignMatrix( w_, w, true );
