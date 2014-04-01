@@ -207,6 +207,33 @@ public class HiddenMarkovModelsTest {
   }
 
   @Test
+  public void testNodeMarginals() {
+    Example ex1 = new Example(new int[] {1,1}) ;
+    double[][] nodeMarginals = new double[][] {
+            {0.8760330578512396, 0.12396694214876035},
+            {0.31210500729217305, 0.687894992707827}
+          };
+    double[][] nodeMarginals_ = model.computeHiddenNodeMarginals(hmm1, ex1);
+    for(int i = 0; i < 2; i++)
+      for(int j = 0; j < 2; j++)
+        Assert.assertTrue(Math.abs(nodeMarginals[i][j] - nodeMarginals_[i][j]) < 1e-3);
+  }
+
+  @Test
+  public void testEdgeMarginals() {
+    Example ex1 = new Example(new int[] {1,1}) ;
+    double[][][] edgeMarginals = new double[][][]{{
+            {0.2975206611570248, 0.5785123966942148},
+            {0.014584346135148274, 0.10938259601361207}
+        }};
+    double[][][] edgeMarginals_ = model.computeEdgeMarginals(hmm1, ex1);
+    for(int t = 0; t < 1; t++)
+      for(int i = 0; i < 2; i++)
+        for(int j = 0; j < 2; j++)
+        Assert.assertTrue(Math.abs(edgeMarginals[t][i][j] - edgeMarginals_[t][i][j]) < 1e-3);
+  }
+
+  @Test
   public void testMarginals() {
     HiddenMarkovModel.Parameters marginals;
 
@@ -218,15 +245,20 @@ public class HiddenMarkovModelsTest {
     Assert.assertTrue(marginals.isValid());
     // By definition
     for(int i = 0; i < marginals.weights.length; i++) {
-      Assert.assertTrue(Math.abs(marginals.weights[i] - hmm1.weights[i]) < 1e-1);
+      Assert.assertTrue(Math.abs(marginals.weights[i] - hmm1.weights[i]) < 1e-3);
     }
 
+    model.L = 2;
     Counter<Example> data = model.getDistribution(hmm1);
     marginals = (HiddenMarkovModel.Parameters) model.getMarginals(hmm1, data);
-    Assert.assertTrue(marginals.isValid());
+    HiddenMarkovModel.Parameters marginals_ = model.getSampleMarginals(data);
     // By definition
+    log(data);
+    log(marginals);
+    log(marginals_);
+    Assert.assertTrue(marginals.isValid());
     for(int i = 0; i < marginals.weights.length; i++) {
-      Assert.assertTrue(Math.abs(marginals.weights[i] - hmm1.weights[i]) < 1e-1);
+      Assert.assertTrue(Math.abs(marginals.weights[i] - hmm1.weights[i]) < 1e-3);
     }
 
   }
@@ -236,7 +268,7 @@ public class HiddenMarkovModelsTest {
     Counter<Example> data = model.getDistribution(hmm1);
     HiddenMarkovModel.Parameters marginal = model.getSampleMarginals(data);
     for(int i = 0; i < marginal.weights.length; i++) {
-      Assert.assertTrue(Math.abs(marginal.weights[i] - hmm1.weights[i]) < 1e-1);
+      Assert.assertTrue(Math.abs(marginal.weights[i] - hmm1.weights[i]) < 1e-3);
     }
   }
 
@@ -246,7 +278,7 @@ public class HiddenMarkovModelsTest {
     Counter<Example> data = model.drawSamples(hmm1, new Random(1), 1000000);
     HiddenMarkovModel.Parameters marginal = model.getSampleMarginals(data);
     for(int i = 0; i < marginal.weights.length; i++) {
-      Assert.assertTrue(Math.abs(marginal.weights[i] - hmm1.weights[i]) < 1e-1);
+      Assert.assertTrue(Math.abs(marginal.weights[i] - hmm1.weights[i]) < 1e-2);
     }
   }
 
