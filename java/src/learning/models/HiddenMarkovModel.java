@@ -212,6 +212,10 @@ public class HiddenMarkovModel extends ExponentialFamilyModel<Example> {
     return D;
   }
 
+  public int getL() {
+    return L;
+  }
+
   @Override
   public int numFeatures() {
     return K + K*K + K*D;
@@ -462,15 +466,15 @@ public class HiddenMarkovModel extends ExponentialFamilyModel<Example> {
   }
 
   @Override
-  public void updateMarginals(Params params, int L, double scale, Params marginals_) {
+  public void updateMarginals(Params params, int L, double scale, double count, Params marginals_) {
     int temp = this.L;
     this.L = L;
-    updateMarginals(params, (Example)null, scale, marginals_);
+    updateMarginals(params, (Example)null, scale, count, marginals_);
     this.L = temp;
   }
 
   @Override
-  public void updateMarginals(Params params, Example ex, double scale, Params marginals_) {
+  public void updateMarginals(Params params, Example ex, double scale, double count, Params marginals_) {
     if(!(params instanceof Parameters))
       throw new IllegalArgumentException();
     if(!(marginals_ instanceof Parameters))

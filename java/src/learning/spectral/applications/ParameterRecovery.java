@@ -136,7 +136,9 @@ public class ParameterRecovery {
   }
 
   public static MixtureOfGaussians recoverGMM(int K, int N, HasSampleMoments moments, double smoothMeasurements) {
-    Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> moments_ = moments.computeSampleMoments(N);
+    Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> moments_ = (N > (int) 1e6 && moments instanceof HasExactMoments)
+            ? ((HasExactMoments) moments).computeExactMoments()
+            : moments.computeSampleMoments(N);
     if( moments instanceof HasExactMoments) {
       Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> momentsExact = ((HasExactMoments) moments).computeExactMoments();
       LogInfo.log( "P13 error: " + MatrixOps.diff(moments_.getValue0(), momentsExact.getValue0() ) );

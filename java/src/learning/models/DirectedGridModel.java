@@ -326,7 +326,7 @@ public class DirectedGridModel extends ExponentialFamilyModel<Example> {
 
 
   @Override
-  public void updateMarginals(Params parameters, Example example, double scale, Params marginals) {
+  public void updateMarginals(Params parameters, Example example, double scale, double count, Params marginals) {
     throw new RuntimeException("not yet implemented.");
 //    assert example == null || example.x.length == 2 * this.L;
 //
@@ -391,9 +391,9 @@ public class DirectedGridModel extends ExponentialFamilyModel<Example> {
   }
 
   @Override
-  public void updateMarginals(Params parameters, int L, double scale, Params marginals) {
+  public void updateMarginals(Params parameters, int L, double scale, double count, Params marginals) {
     assert( this.L == L );
-    updateMarginals(parameters, (Example)null, scale, marginals);
+    updateMarginals(parameters, (Example)null, scale, count, marginals);
   }
 
   @Override

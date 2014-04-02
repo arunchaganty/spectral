@@ -117,14 +117,14 @@ public abstract class Model extends ExponentialFamilyModel<Example> {
   }
 
   @Override
-  public void updateMarginals(Params params, int L, double scale, Params marginals_) {
+  public void updateMarginals(Params params, int L, double scale, double count, Params marginals_) {
     int temp = this.L;
     this.L = L;
-    updateMarginals(params, (Example) null, scale, marginals_);
+    updateMarginals(params, (Example) null, scale, count, marginals_);
     this.L = temp;
   }
   @Override
-  public void updateMarginals(Params params, Example example, double scale, Params marginals_) {
+  public void updateMarginals(Params params, Example example, double scale, double count, Params marginals_) {
     fullParams.copyOver(params);
 //    ParamsVec parameters = (ParamsVec) params;
 //    ParamsVec marginals = (ParamsVec) marginals_;

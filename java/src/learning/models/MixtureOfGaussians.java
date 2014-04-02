@@ -5,31 +5,34 @@
  */
 package learning.models;
 
+import fig.basic.LogInfo;
+import fig.basic.Option;
+import fig.basic.OptionsParser;
+import fig.prob.MultGaussian;
 import learning.Misc;
 import learning.data.ComputableMoments;
 import learning.data.HasExactMoments;
 import learning.data.HasSampleMoments;
-import learning.linalg.*;
-
+import learning.linalg.FullTensor;
+import learning.linalg.MatrixFactory;
+import learning.linalg.MatrixOps;
+import learning.linalg.RandomFactory;
 import org.ejml.simple.SimpleMatrix;
-import org.ejml.data.DenseMatrix64F;
-
-import fig.basic.Option;
-import fig.basic.OptionsParser;
-import fig.basic.LogInfo;
-import fig.prob.MultGaussian;
+import org.javatuples.Pair;
+import org.javatuples.Quartet;
+import org.javatuples.Triplet;
 
 import java.io.FileOutputStream;
-import java.io.ObjectOutputStream;
 import java.io.IOException;
-
+import java.io.ObjectOutputStream;
 import java.util.Random;
-
-import org.javatuples.*;
 
 /**
  * A mixture of experts model
+ *
+ * TODO (arun): I hate this class
  */
+@Deprecated
 public class MixtureOfGaussians implements HasExactMoments, HasSampleMoments {
 
   protected int K; // Number of components
@@ -44,7 +47,7 @@ public class MixtureOfGaussians implements HasExactMoments, HasSampleMoments {
 
   Random rnd = new Random();
 
-  public MixtureOfGaussians( int K, int D, int V, SimpleMatrix weights, SimpleMatrix[] means, SimpleMatrix[][] covs ) {
+  public MixtureOfGaussians(int K, int D, int V, SimpleMatrix weights, SimpleMatrix[] means, SimpleMatrix[][] covs) {
     this.K = K;
     this.D = D;
     this.V = V;
@@ -164,7 +167,7 @@ public class MixtureOfGaussians implements HasExactMoments, HasSampleMoments {
   public SimpleMatrix sample( int N, int view, int cluster ) {
     double[] mean = MatrixFactory.toVector( MatrixOps.col( means[view], cluster ) );
     double[][] cov = MatrixFactory.toArray( covs[view][cluster] );
-		fig.prob.MultGaussian mgRnd = new MultGaussian( mean, cov );
+		MultGaussian mgRnd = new MultGaussian( mean, cov );
 		double[][] y = new double[N][D];
 
 		for(int n = 0; n < N; n++)
@@ -175,7 +178,7 @@ public class MixtureOfGaussians implements HasExactMoments, HasSampleMoments {
   public Pair<SimpleMatrix,int[]> sampleWithCluster( int N, int view, int cluster ) {
     double[] mean = MatrixFactory.toVector( MatrixOps.col( means[view], cluster ) );
     double[][] cov = MatrixFactory.toArray( covs[view][cluster] );
-		fig.prob.MultGaussian mgRnd = new MultGaussian( mean, cov );
+		MultGaussian mgRnd = new MultGaussian( mean, cov );
 		double[][] y = new double[N][D];
 		int[] h = new int[N];
 
@@ -475,7 +478,7 @@ public class MixtureOfGaussians implements HasExactMoments, HasSampleMoments {
     if( !parser.parse( args ) ) {
       return;
     }
-    MixtureOfGaussians model = MixtureOfGaussians.generate( genOptions );
+    MixtureOfGaussians model = MixtureOfGaussians.generate(genOptions);
 
     int N = (int) outOptions.N;
     int D = (int) genOptions.D;

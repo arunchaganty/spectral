@@ -4,6 +4,7 @@ import fig.basic.LogInfo;
 import fig.basic.Option;
 import fig.basic.OptionSet;
 import fig.exec.Execution;
+import learning.common.Utils;
 import learning.models.MixtureOfGaussians;
 import learning.spectral.applications.ParameterRecovery;
 import org.ejml.simple.SimpleMatrix;
@@ -30,9 +31,12 @@ public class ModelMisspecification implements Runnable {
     LogInfo.log(model_.getMeans()[0]);
 
     // Generate a bunch of data and report the likelihood.
-    SimpleMatrix[] data = model.sample((int)N);
-    LogInfo.logs("True likelihood %f", model.computeLikelihood(data)/N);
-    LogInfo.logs("Fit likelihood %f", model_.computeLikelihood(data)/N);
+    SimpleMatrix[] data = model.sample((int) N);
+    LogInfo.log( Utils.outputList(
+            "true-likelihood", model.computeLikelihood(data)/N,
+            "fit-likelihood", model_.computeLikelihood(data) / N,
+            "likelihood-error", (model.computeLikelihood(data) - model_.computeLikelihood(data)) / N
+    ) );
   }
 
   public static void main(String[] args) {

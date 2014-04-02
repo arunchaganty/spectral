@@ -43,32 +43,36 @@ public abstract class ExponentialFamilyModel<T> {
     return Math.exp( getLogLikelihood(parameters,ex) - getLogLikelihood(parameters));
   }
 
-  abstract public void updateMarginals(Params parameters, T example, double scale, Params marginals);
-  abstract public void updateMarginals(Params parameters, int L, double scale, Params marginals);
+  abstract public void updateMarginals(Params parameters, T example, double scale, double count, Params marginals);
+  abstract public void updateMarginals(Params parameters, int L, double scale, double count, Params marginals);
 
   public void updateMarginals(Params parameters, Counter<T> examples, double scale, Params marginals) {
+    double cnt = 0.;
     for(T example : examples) {
-      updateMarginals(parameters, example, scale * examples.getFraction(example), marginals);
-//      updateMarginals(parameters, example, getProbability(parameters, example), marginals);
+      cnt += examples.getFraction(example);
+      updateMarginals(parameters, example, scale * examples.getFraction(example), cnt, marginals);
     }
   }
   public void updateMarginals(Params parameters, int[] histogram, double scale, Params marginals) {
     double sum = MatrixOps.sum(histogram);
+    double cnt = 0.;
     for(int length = 0; length < histogram.length; length++) {
-      if(histogram[length] > 0.)
-        updateMarginals(parameters, length, scale * histogram[length]/sum, marginals);
+      if(histogram[length] > 0.) {
+        cnt += histogram[length]/sum;
+        updateMarginals(parameters, length, scale * histogram[length]/sum, cnt, marginals);
+      }
     }
   }
 
 
   public Params getMarginals(Params parameters) {
     Params marginals = newParams();
-    updateMarginals(parameters, (T) null, 1.0, marginals);
+    updateMarginals(parameters, (T) null, 1.0, 1.0, marginals);
     return marginals;
   }
   public Params getMarginals(Params parameters, T example) {
     Params marginals = newParams();
-    updateMarginals(parameters, example, 1.0, marginals);
+    updateMarginals(parameters, example, 1.0, 1.0, marginals);
     return marginals;
   }
   public Params getMarginals(Params parameters, Counter<T> examples) {
