@@ -391,6 +391,21 @@ public class MatrixOps {
   }
 
   /**
+   * Get pointwise minimums
+   * @param X
+   * @param Y
+   * @return
+   */
+  public static SimpleMatrix min( SimpleMatrix X, SimpleMatrix Y ) {
+    SimpleMatrix m = new SimpleMatrix(X);
+    for(int elem = 0; elem < m.getNumElements(); elem++) {
+      m.set(elem, Math.min(m.get(elem), Y.get(elem)));
+    }
+    return m;
+  }
+
+
+  /**
    * Find the maximum value of the matrix X
    */
   public static double max( double[] x ) {
@@ -1242,6 +1257,40 @@ public class MatrixOps {
       System.arraycopy(X[match[1]], 0, Z[match[0]], 0, nCols);
 
     return Z;
+  }
+
+  /**
+   * Align the rows of matrix X so that the rows/columns are matched with the
+   * columns of Y (ignores signs)
+   */
+  public static SimpleMatrix alignMatrixWithSigns( SimpleMatrix X, SimpleMatrix Y ) {
+    assert( X.numRows() == Y.numRows() );
+    assert( X.numCols() == Y.numCols() );
+    int nRows = X.numRows();
+    int nCols = X.numCols();
+
+    // Populate the weight matrix
+    double[][] W =  MatrixFactory.toArray( min(cdist(Y, X.scale(-1.)), cdist(Y, X)) );
+    // Compute min-weight matching
+    int[][] matching = HungarianAlgorithm.findWeightedMatching( W, false );
+    // Shuffle rows
+    SimpleMatrix X_ = new SimpleMatrix( nRows, nCols );
+    for( int[] match : matching ) {
+      SimpleMatrix row = row( X, match[1] );
+      // Decide on sign
+      SimpleMatrix row_ = row(Y, match[0]);
+      if( diff(row.scale(-1.), row_) < diff(row, row_) )
+        row = row.scale(-1.);
+      setRow( X_, match[0], row );
+    }
+
+    return X_;
+  }
+  public static SimpleMatrix alignMatrixWithSigns( SimpleMatrix X, SimpleMatrix Y, boolean compareColumns ) {
+    if( compareColumns )
+      return alignMatrixWithSigns(X.transpose(), Y.transpose()).transpose();
+    else
+      return alignMatrixWithSigns(X, Y);
   }
 
   /**

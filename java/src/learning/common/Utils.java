@@ -9,13 +9,16 @@ import learning.data.ComputableMoments;
 import learning.data.HasExactMoments;
 import learning.linalg.FullTensor;
 import learning.linalg.MatrixOps;
+import org.apache.commons.math3.util.MathArrays;
 import org.ejml.simple.SimpleMatrix;
+import org.javatuples.Pair;
 import org.javatuples.Quartet;
 
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -196,5 +199,15 @@ public class Utils {
     // Fill in recursively.
     enumerateHelper(K, L, stateVectors, new int[L], 0);
     return stateVectors.toArray(new int[count][L]);
+  }
+
+  public static <T> List<Pair<T, Integer>> argsort(List<T> items) {
+    List<Pair<T,Integer>> idx = new ArrayList<>();
+    for( int i = 0; i < items.size(); i++) {
+      idx.add(Pair.with(items.get(i), i));
+    }
+    Collections.sort(idx);
+
+    return idx;
   }
 }

@@ -37,6 +37,8 @@ public class RandomFactory {
 
     return X;
   }
+
+  @Deprecated
   public static SimpleMatrix randn(int N, int D) {
     return randn( rand, N, D );
   }
