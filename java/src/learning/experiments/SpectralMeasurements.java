@@ -250,7 +250,7 @@ public class SpectralMeasurements implements Runnable {
 
   SimpleMatrix getGridEdgeMarginals(LatentGridModel model, SimpleMatrix O, Counter<Example> data) {
     int K = modelA.getK();
-    double[][] T = new double[K][K];
+    double[][] T;
     T = RandomFactory.rand_(initRandom, K,K);
     MatrixOps.abs(T);
     MatrixOps.scale(T, 1./MatrixOps.sum(T));

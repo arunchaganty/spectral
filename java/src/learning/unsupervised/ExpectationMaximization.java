@@ -4,22 +4,15 @@ import fig.basic.*;
 import fig.exec.Execution;
 import learning.models.ExponentialFamilyModel;
 import learning.models.Params;
-import learning.models.loglinear.Example;
-import learning.models.loglinear.Model;
-import learning.models.loglinear.Models;
 import learning.common.Counter;
-
-import java.io.PrintWriter;
-import java.util.*;
 
 import static learning.common.Utils.optimize;
 import static learning.common.Utils.outputList;
-import static learning.common.Utils.writeStringHard;
 
 /**
  * Expectation Maximization for a model
  */
-public class ExpectationMaximization implements Runnable {
+public class ExpectationMaximization<T> {
 
   @Option(gloss="Regularization for theta") public double thetaRegularization = 1e-5; //0; //1e-3;
 
@@ -43,8 +36,8 @@ public class ExpectationMaximization implements Runnable {
    *    - dL = tau - \sum_i \E_\beta(\sigma(Y_i, X_i)) - 1/betaRegularization \beta
    */
   public class Objective implements Maximizer.FunctionState {
-    final ExponentialFamilyModel<Example> modelA;
-    final Counter<Example> X;
+    final ExponentialFamilyModel<T> modelA;
+    final Counter<T> X;
     final Params theta;
     final Params gradient;
     final Params q; // Marginal distribution $z|x$
@@ -53,13 +46,13 @@ public class ExpectationMaximization implements Runnable {
     double objective;
     boolean objectiveValid, gradientValid;
 
-    public Objective(ExponentialFamilyModel<Example> modelA, Counter<Example> X, Params theta, final Params q) {
+    public Objective(ExponentialFamilyModel<T> modelA, Counter<T> X, Params theta, final Params q) {
       this.modelA = modelA;
       this.X = X;
       this.theta = theta;
       this.gradient = theta.copy();
 
-      histogram = computeHistogram(X);
+      histogram = computeHistogram(modelA, X);
 
       this.q = q;
     }
@@ -119,24 +112,24 @@ public class ExpectationMaximization implements Runnable {
     }
   }
 
-  static int[] computeHistogram(Counter<Example> examples) {
+  static <T> int[] computeHistogram(ExponentialFamilyModel<T> model, Counter<T> examples) {
     // Get max length
     int maxLength = 0;
-    for(Example ex : examples) {
-      if(ex.x.length > maxLength) maxLength = ex.x.length;
+    for(T ex : examples) {
+      if(model.getSize(ex) > maxLength) maxLength = model.getSize(ex);
     }
     // Populate
     int[] histogram = new int[maxLength+1];
-    for(Example ex : examples) {
-      histogram[ex.x.length]++;
+    for(T ex : examples) {
+      histogram[model.getSize(ex)]++;
     }
 
     return histogram;
   }
 
   public class EMState {
-    public ExponentialFamilyModel<Example> model;
-    public Counter<Example> data;
+    public ExponentialFamilyModel<T> model;
+    public Counter<T> data;
     public int[] histogram;
 
     final Maximizer maximizer;
@@ -146,8 +139,8 @@ public class ExpectationMaximization implements Runnable {
     public final Objective objective;
 
     public EMState(
-            ExponentialFamilyModel<Example> model,
-            Counter<Example> data,
+            ExponentialFamilyModel<T> model,
+            Counter<T> data,
             Params theta
     ) {
       LogInfo.logs( "Solving EM objective with %d parameters, using %f instances (%d unique)",
@@ -156,7 +149,7 @@ public class ExpectationMaximization implements Runnable {
       this.model = model;
       this.data = data;
       this.theta = theta;
-      histogram = computeHistogram(data);
+      histogram = computeHistogram(model, data);
 
       maximizer = newMaximizer();
       marginals = model.newParams();
@@ -186,8 +179,8 @@ public class ExpectationMaximization implements Runnable {
 
 
   public EMState newState(
-          ExponentialFamilyModel<Example> modelA,
-          Counter<Example> data,
+          ExponentialFamilyModel<T> modelA,
+          Counter<T> data,
           Params theta
   ) {
     return new EMState(modelA, data, theta);
@@ -204,8 +197,8 @@ public class ExpectationMaximization implements Runnable {
    * @return - (theta, beta) that optimize.
    */
   public Params solveEM(
-          ExponentialFamilyModel<Example> modelA,
-          Counter<Example> data,
+          ExponentialFamilyModel<T> modelA,
+          Counter<T> data,
           Params theta
           ) {
     LogInfo.begin_track("solveEM");
@@ -235,104 +228,6 @@ public class ExpectationMaximization implements Runnable {
     LogInfo.end_track("solveEM");
 
     return theta;
-  }
-
-  public static class Options {
-    @Option(gloss="Seed for parameters") public Random trueParamsRandom = new Random(44);
-    @Option(gloss="Seed for generated data") public Random genRandom = new Random(42);
-    @Option(gloss="Noise") public double trueParamsNoise = 1.0;
-    @Option(gloss="K") public int K = 2;
-    @Option(gloss="D") public int D = 3;
-    @Option(gloss="L") public int L = 1;
-
-    @Option(gloss="data points") public int genNumExamples = (int) 1e6;
-  }
-
-  public static Options opts = new Options();
-
-  Model createModels() {
-    LogInfo.begin_track("Creating models");
-    // Create two simple models
-    Models.MixtureModel modelA = new Models.MixtureModel(opts.K, opts.D, opts.L);
-    LogInfo.end_track("Creating models");
-
-    return modelA;
-  }
-
-  public void run(){
-    Model modelA = createModels();
-
-    // Create some data
-    LogInfo.begin_track("Creating data");
-    Params trueParams = modelA.newParams();
-    {
-      double[] params = trueParams.toArray();
-      for(int i = 0; i < params.length; i++)
-        params[i] = Math.sin(i);
-//      params[i] = Math.sin(i);
-    }
-//    trueParams.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
-    trueParams.write(Execution.getFile("true.params"));
-
-    Params trueMeasurements = modelA.getMarginals(trueParams);
-    trueMeasurements.write(Execution.getFile("true.counts"));
-
-    // Generate examples from the model
-    Counter<Example> data =  modelA.drawSamples(trueParams, opts.genRandom, opts.genNumExamples);
-    LogInfo.logs("Generated %d examples", data.size());
-    LogInfo.end_track("Creating data");
-
-    // Fit
-    LogInfo.begin_track("Fitting model");
-
-    // Initializing stuff
-    Params theta = trueParams.copy();
-    theta.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
-    writeStringHard(Execution.getFile("fit0.params"), theta.toString());
-
-    LogInfo.log("likelihood(true): " + modelA.getLogLikelihood(trueParams, data));
-    LogInfo.log("likelihood(est.): " +  modelA.getLogLikelihood(theta, data));
-
-    Params measurements;
-
-    measurements = modelA.getMarginals(theta);
-    writeStringHard(Execution.getFile("fit0.counts"), measurements.toString());
-
-    theta = solveEM(modelA, data, theta);
-
-    Counter<Example> dist = modelA.getDistribution(trueParams);
-    Counter<Example> dist_ = modelA.getDistribution(theta);
-
-    for( Example ex : dist ) {
-      LogInfo.logs("%s: %f vs %f", ex, dist.getCount(ex), dist_.getCount(ex));
-    }
-//      List<Example> hiddenStates = generateExamples(L);
-//    measurements = modelA.getMarginals(theta);
-//    int[] perm = new int[trueMeasurements.K];
-//
-//    double error = theta.computeDiff(trueParams, perm);
-//    Execution.putOutput("params-error", error);
-//    LogInfo.logs("params error: " + error + " " + Fmt.D(perm));
-//
-//    error = measurements.computeDiff(trueMeasurements, perm);
-//    Execution.putOutput("counts-error", error);
-//    LogInfo.logs("counts error: " + error + " " + Fmt.D(perm));
-    LogInfo.log("likelihood(true): " + modelA.getLogLikelihood(trueParams, data));
-    LogInfo.log("likelihood(est.): " + modelA.getLogLikelihood(theta, data));
-
-    // Compute the likelihoods
-    theta.write(Execution.getFile("fit.params"));
-////    measurements.write(Execution.getFile("fit.counts"));
-////
-    LogInfo.end_track("Fitting model");
-  }
-
-  /**
-   * Run the measurements objective on some trivially simple problem
-   * @param args
-   */
-  public static void main(String[] args) {
-    Execution.run(args, new ExpectationMaximization(), "main", opts);
   }
 }
 

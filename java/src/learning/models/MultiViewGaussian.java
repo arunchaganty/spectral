@@ -6,6 +6,7 @@
 package learning.models;
 
 import fig.basic.Indexer;
+import fig.exec.Execution;
 import learning.Misc;
 import learning.common.Counter;
 import learning.data.ComputableMoments;
@@ -347,6 +348,34 @@ public class MultiViewGaussian extends ExponentialFamilyModel<double[][]> {
       }
     }
     return scale; // Number of 'updates' made.
+  }
+
+  @Override
+  public Params recoverFromMoments(SimpleMatrix pi, SimpleMatrix M1, SimpleMatrix M2, SimpleMatrix M3, double smoothMeasurements) {
+    assert( M1.numRows() == D );
+    assert( M1.numCols() == K );
+
+    // Project onto the simplex and
+    pi = MatrixOps.projectOntoSimplex(pi);
+
+    LogInfo.log("pi: " + pi);
+    LogInfo.log("M3: " + M3);
+
+    Params params = newParams();
+    for( int h = 0; h < K; h++ ) {
+      params.toArray()[pi(h)] = pi.get(h);
+      for( int d = 0; d < D; d++ ) {
+        params.toArray()[mu(h,0,d)] = M1.get(h,d);
+        params.toArray()[mu(h,1,d)] = M2.get(h,d);
+        params.toArray()[mu(h,2,d)] = M3.get(h,d);
+      }
+    }
+    return params;
+  }
+
+  @Override
+  public int getSize(double[][] example) {
+    return example.length;
   }
 }
 

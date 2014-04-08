@@ -29,7 +29,8 @@ public class TensorMethod {
 
   public enum Method {
     PowerMethod,
-    GradientPowerMethod
+    GradientPowerMethod,
+    AssymetricAltMin,
   };
   @Option(gloss="Method for tensor factorization")
   public Method method = Method.PowerMethod;
@@ -49,6 +50,9 @@ public class TensorMethod {
         break;
       case GradientPowerMethod:
         tf = new TensorGradientDescent();
+        break;
+      case AssymetricAltMin:
+        tf = new AsymmetricAlternateMinimizer();
         break;
       default:
         throw new RuntimeException("Invalid method");

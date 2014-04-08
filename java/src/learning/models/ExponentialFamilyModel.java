@@ -2,9 +2,9 @@ package learning.models;
 
 import learning.linalg.FullTensor;
 import learning.linalg.MatrixOps;
-import learning.models.loglinear.Example;
 import learning.common.Counter;
 import org.ejml.simple.SimpleMatrix;
+import org.javatuples.Quartet;
 
 import java.util.Random;
 
@@ -80,7 +80,7 @@ public abstract class ExponentialFamilyModel<T> {
     updateMarginals(parameters, examples, 1.0, marginals);
     return marginals;
   }
-  public Params getSampleMarginals(Counter<Example> examples) {
+  public Params getSampleMarginals(Counter<T> examples) {
     throw new RuntimeException();
   }
   public Counter<T> getDistribution(Params params) {
@@ -103,6 +103,28 @@ public abstract class ExponentialFamilyModel<T> {
    * @return - the number of updates made
    */
   public abstract double updateMoments(T ex, double count, SimpleMatrix P12, SimpleMatrix P13, SimpleMatrix P32, FullTensor P123);
+
+  public Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> getMoments(Counter<T> data) {
+    int D = getD();
+    SimpleMatrix P12 = new SimpleMatrix(D,D);
+    SimpleMatrix P13 = new SimpleMatrix(D,D);
+    SimpleMatrix P32 = new SimpleMatrix(D,D);
+    FullTensor P123 = new FullTensor(D,D,D);
+
+    double count = 0.;
+
+    // Iterate over data and compute.
+    for(T ex : data) {
+      count += updateMoments(ex, data.getFraction(ex), P12, P13, P32, P123);
+    }
+    // Rescale everything by count (which is usually 1)
+    P12.scale(1./count);
+    P13.scale(1./count);
+    P32.scale(1./count);
+    P123.scale(1./count);
+
+    return Quartet.with(P12, P13, P32, P123);
+  }
 
   public T bestLabelling(Params params, T ex) {
     throw new RuntimeException("not supported");
@@ -148,6 +170,10 @@ public abstract class ExponentialFamilyModel<T> {
     return new SimpleMatrix(H);
   }
 
+  public Params recoverFromMoments(SimpleMatrix pi, SimpleMatrix M1, SimpleMatrix M2, SimpleMatrix M3, double smoothMeasurements) {
+    throw new RuntimeException("not supported");
+  }
 
+  public abstract int getSize(T example);
 }
 

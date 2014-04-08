@@ -644,5 +644,8 @@ public class HiddenMarkovModel extends ExponentialFamilyModel<Example> {
     return updates;
   }
 
+  public int getSize(Example ex) {
+    return ex.x.length;
+  }
 
 }

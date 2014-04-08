@@ -316,6 +316,9 @@ public class LatentGridModel extends ExponentialFamilyModel<Example> {
     return examples;
   }
 
+  public int getSize(Example ex) {
+    return ex.x.length;
+  }
 
 
 }

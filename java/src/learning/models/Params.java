@@ -276,6 +276,10 @@ public abstract class Params implements Serializable {
     }
     return cost;
   }
+  public double computeDiff(Params that) {
+    int K = numGroups();
+    return computeDiff(that, new int[K]);
+  }
 
   public double computeDiff2(Params that, int[] perm) {
     // Compute differences in ParamsVec with optimal permutation of parameters.
@@ -329,6 +333,10 @@ public abstract class Params implements Serializable {
       }
     }
     return Math.sqrt(cost);
+  }
+  public double computeDiff2(Params that) {
+    int K = numGroups();
+    return computeDiff2(that, new int[K]);
   }
 
   /**
