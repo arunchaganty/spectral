@@ -375,22 +375,26 @@ public class MultiViewGaussian extends ExponentialFamilyModel<double[][]> {
       params.weights[sigma(h)] = 1.0;
     }
 
-    for(double[][] ex: data) {
-      double scale = data.getFraction(ex);
-      double[] responsibilities = new double[K];
-      for(int h = 0; h < K; h++) {
-        responsibilities[h] = lhood(params, h, ex);
-      }
-      double z = MatrixOps.logsumexp(responsibilities);
-      for(int h = 0; h < K; h++) responsibilities[h] = Math.exp(responsibilities[h] - z);
+    for(int i = 0; i < 2; i++) {
+      double[] sigmas = new double[K];
+      for(double[][] ex: data) {
+        double scale = data.getFraction(ex);
+        double[] responsibilities = new double[K];
+        for(int h = 0; h < K; h++) {
+          responsibilities[h] = lhood(params, h, ex);
+        }
+        double z = MatrixOps.logsumexp(responsibilities);
+        for(int h = 0; h < K; h++) responsibilities[h] = Math.exp(responsibilities[h] - z);
 
-      for(int h = 0; h < K; h++) {
-        for(int v = 0; v < L; v++) {
-          for(int d = 0; d < D; d++) {
-            params.weights[sigma(h)] += scale / (L * D) * responsibilities[h] / K * (Math.pow(ex[v][d] - params.toArray()[mu(h,v,d)], 2));
+        for(int h = 0; h < K; h++) {
+          for(int v = 0; v < L; v++) {
+            for(int d = 0; d < D; d++) {
+              sigmas[h] += scale / (L * D) * responsibilities[h] / K * (Math.pow(ex[v][d] - params.toArray()[mu(h,v,d)], 2));
+            }
           }
         }
       }
+      for(int h = 0; h < K; h++) params.weights[sigma(h)] = sigmas[h];
     }
 
     return params;
