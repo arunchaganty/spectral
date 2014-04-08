@@ -170,7 +170,7 @@ public abstract class ExponentialFamilyModel<T> {
     return new SimpleMatrix(H);
   }
 
-  public Params recoverFromMoments(SimpleMatrix pi, SimpleMatrix M1, SimpleMatrix M2, SimpleMatrix M3, double smoothMeasurements) {
+  public Params recoverFromMoments(Counter<T> data, SimpleMatrix pi, SimpleMatrix M1, SimpleMatrix M2, SimpleMatrix M3, double smoothMeasurements) {
     throw new RuntimeException("not supported");
   }
 

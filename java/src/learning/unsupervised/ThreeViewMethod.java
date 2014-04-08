@@ -27,6 +27,7 @@ public class ThreeViewMethod<T> {
     Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, SimpleMatrix> factorization = algo.recoverParameters(modelA.getK(), moments);
 
     Params theta = modelA.recoverFromMoments(
+            data,
             factorization.getValue0(),
             factorization.getValue1(),
             factorization.getValue2(),

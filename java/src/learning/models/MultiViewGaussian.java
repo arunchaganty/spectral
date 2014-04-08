@@ -288,15 +288,17 @@ public class MultiViewGaussian extends ExponentialFamilyModel<double[][]> {
                            - marginals.weights[mu(h,v,d)]);
         }
       }
-      // - Update sigma
+      // - Update sigma (not in an online fashion)
       // TODO: Handle online updates (requires x^2 to be tracked)
       //      - Maybe keep track of some state?
-//      for(int v = 0; v < L; v++) {
-//        for(int d = 0; d < K; d++ ) {
-          marginals.weights[sigma(h)] = 1.0;
-//                  scale * responsibilities[h] / K * (Math.pow(example[v][d] - marginals.weights[mu(h,v,d)], 2) - marginals.weights[sigma(h)]);
-//        }
-//      }
+      for(int v = 0; v < L; v++) {
+        for(int d = 0; d < K; d++ ) {
+          marginals.weights[sigma(h)] +=
+                  scale / (L*K) *
+                          ((example != null) ? (responsibilities[h] / K * (Math.pow(example[v][d] - marginals.weights[mu(h,v,d)], 2)))
+                                  :  (parameters.weights[sigma(h)]) );
+        }
+      }
     }
   }
 
@@ -351,25 +353,46 @@ public class MultiViewGaussian extends ExponentialFamilyModel<double[][]> {
   }
 
   @Override
-  public Params recoverFromMoments(SimpleMatrix pi, SimpleMatrix M1, SimpleMatrix M2, SimpleMatrix M3, double smoothMeasurements) {
+  public Params recoverFromMoments(Counter<double[][]> data, SimpleMatrix pi, SimpleMatrix M1, SimpleMatrix M2, SimpleMatrix M3, double smoothMeasurements) {
     assert( M1.numRows() == D );
     assert( M1.numCols() == K );
 
     // Project onto the simplex and
-    pi = MatrixOps.projectOntoSimplex(pi);
+    pi = MatrixOps.projectOntoSimplex(pi.transpose()).transpose();
 
     LogInfo.log("pi: " + pi);
     LogInfo.log("M3: " + M3);
 
-    Params params = newParams();
+    Parameters params = newParams();
     for( int h = 0; h < K; h++ ) {
       params.toArray()[pi(h)] = pi.get(h);
       for( int d = 0; d < D; d++ ) {
-        params.toArray()[mu(h,0,d)] = M1.get(h,d);
-        params.toArray()[mu(h,1,d)] = M2.get(h,d);
-        params.toArray()[mu(h,2,d)] = M3.get(h,d);
+        params.weights[mu(h,0,d)] = M1.get(h,d);
+        params.weights[mu(h,1,d)] = M2.get(h,d);
+        params.weights[mu(h,2,d)] = M3.get(h,d);
+      }
+      // initialize
+      params.weights[sigma(h)] = 1.0;
+    }
+
+    for(double[][] ex: data) {
+      double scale = data.getFraction(ex);
+      double[] responsibilities = new double[K];
+      for(int h = 0; h < K; h++) {
+        responsibilities[h] = lhood(params, h, ex);
+      }
+      double z = MatrixOps.logsumexp(responsibilities);
+      for(int h = 0; h < K; h++) responsibilities[h] = Math.exp(responsibilities[h] - z);
+
+      for(int h = 0; h < K; h++) {
+        for(int v = 0; v < L; v++) {
+          for(int d = 0; d < D; d++) {
+            params.weights[sigma(h)] += scale / (L * D) * responsibilities[h] / K * (Math.pow(ex[v][d] - params.toArray()[mu(h,v,d)], 2));
+          }
+        }
       }
     }
+
     return params;
   }
 

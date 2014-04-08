@@ -101,7 +101,7 @@ public class ModelMisspecification implements Runnable {
     double mom_lhood = -model.getLogLikelihood(momParams, data);
     LogInfo.log(
             Utils.outputList(
-                    "momm-params", momParams,
+                    "mom-params", momParams,
                     "params-error-mom", trueParams.computeDiff(momParams),
                     "lhood-error-mom", mom_lhood - true_lhood
             ));
