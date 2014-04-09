@@ -125,6 +125,17 @@ public abstract class ExponentialFamilyModel<T> {
 
     return Quartet.with(P12, P13, P32, P123);
   }
+  public Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> getMoments(Params params) {
+    int D = getD();
+    SimpleMatrix P12 = new SimpleMatrix(D,D);
+    SimpleMatrix P13 = new SimpleMatrix(D,D);
+    SimpleMatrix P32 = new SimpleMatrix(D,D);
+    FullTensor P123 = new FullTensor(D,D,D);
+    updateMoments(params, 1.0, P12, P13, P32, P123);
+
+    return Quartet.with(P12, P13, P32, P123);
+  }
+
 
   public T bestLabelling(Params params, T ex) {
     throw new RuntimeException("not supported");
@@ -168,6 +179,10 @@ public abstract class ExponentialFamilyModel<T> {
     }
 
     return new SimpleMatrix(H);
+  }
+
+  public double updateMoments(Params params, double scale, SimpleMatrix P12, SimpleMatrix P13, SimpleMatrix P32, FullTensor P123) {
+    throw new RuntimeException("not supported");
   }
 
   public Params recoverFromMoments(Counter<T> data, SimpleMatrix pi, SimpleMatrix M1, SimpleMatrix M2, SimpleMatrix M3, double smoothMeasurements) {

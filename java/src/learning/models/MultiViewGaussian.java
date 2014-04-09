@@ -80,13 +80,24 @@ public class MultiViewGaussian extends ExponentialFamilyModel<double[][]> {
       }
 
       // - means (nothing)
-      {
+      { // Set the means to be equal
+        for(int h = 0; h < K; h++) {
+          for(int d = 0; d < D; d++) {
+            double avg = 0.;
+            for(int v = 0; v < L; v++)
+               avg += weights[mu(h,v,d)] / L;
+            for(int v = 0; v < L; v++)
+              weights[mu(h,v,d)] = avg;
+          }
+        }
       }
 
-      // - variances (are positive)
-      for(int h = 0; h < K; h++) {
-        weights[sigma(h)] = Math.abs(weights[sigma(h)]);
-      }
+      // - variances (are positive) and equal
+      double sigma = 0.;
+      for(int h = 0; h < K; h++)
+        sigma += Math.abs(weights[sigma(h)]) / K;
+      for(int h = 0; h < K; h++)
+        weights[sigma(h)] = sigma;
     }
 
     public boolean isValid() {
@@ -318,16 +329,21 @@ public class MultiViewGaussian extends ExponentialFamilyModel<double[][]> {
 
     double[] pi = parameters.getPi();
     // Draw samples from N gaussians
-    for(int n = 0; n < N; n++) {
-      int k = RandomFactory.multinomial(genRandom, pi);
-      double[][] point = new double[L][D];
-      for(int v = 0; v < L; v++) {
-        for(int d = 0; d < D; d++) {
-          point[v][d] = parameters.weights[mu(k,v,d)] + RandomFactory.randn(genRandom, parameters.weights[sigma(k)]);
-        }
-      }
+    double[] choices = RandomFactory.multinomial(genRandom, pi, N);
+    for(int k = 0; k < K; k++) {
+      double[][][] M = new double[L][N][D];
+      for(int v = 0; v < L; v++)
+        M[v] = RandomFactory.randn_(genRandom, (int) choices[k], D);
 
-      samples.add(point);
+      for(int n = 0; n < choices[k]; n++) {
+        double[][] point = new double[L][D];
+        for(int v = 0; v < L; v++) {
+          for(int d = 0; d < D; d++) {
+            point[v][d] = parameters.weights[mu(k,v,d)] + M[v][n][d] * Math.sqrt(parameters.weights[sigma(k)]);
+          }
+        }
+        samples.add(point);
+      }
     }
 
     return samples;
@@ -353,6 +369,32 @@ public class MultiViewGaussian extends ExponentialFamilyModel<double[][]> {
   }
 
   @Override
+  public double updateMoments(Params params_, double scale, SimpleMatrix P12, SimpleMatrix P13, SimpleMatrix P32, FullTensor P123) {
+    if(!(params_ instanceof Parameters))
+      throw new IllegalArgumentException();
+    Parameters params = (Parameters) params_;
+
+    DenseMatrix64F P12_ = P12.getMatrix();
+    DenseMatrix64F P13_ = P13.getMatrix();
+    DenseMatrix64F P32_ = P32.getMatrix();
+    for(int d1 = 0; d1 < D; d1++) {
+      for(int d2 = 0; d2 < D; d2++) {
+        for(int h = 0; h < K; h++) {
+          P12_.add(d1, d2, scale * params.weights[pi(h)] * params.weights[mu(h, 0, d1)] * params.weights[mu(h, 1, d2)]);
+          P13_.add(d1, d2, scale * params.weights[pi(h)] * params.weights[mu(h, 0, d1)] * params.weights[mu(h, 2, d2)]);
+          P32_.add(d1, d2, scale * params.weights[pi(h)] * params.weights[mu(h, 2, d1)] * params.weights[mu(h, 1, d2)]);
+        }
+        for(int d3 = 0; d3 < D; d3++) {
+          for(int h = 0; h < K; h++) {
+            P123.X[d1][d2][d3] += scale * params.weights[pi(h)] * params.weights[mu(h, 0, d1)] * params.weights[mu(h, 1, d2)] * params.weights[mu(h, 2, d3)];
+          }
+        }
+      }
+    }
+    return scale; // Number of 'updates' made.
+  }
+
+  @Override
   public Params recoverFromMoments(Counter<double[][]> data, SimpleMatrix pi, SimpleMatrix M1, SimpleMatrix M2, SimpleMatrix M3, double smoothMeasurements) {
     assert( M1.numRows() == D );
     assert( M1.numCols() == K );
@@ -367,9 +409,9 @@ public class MultiViewGaussian extends ExponentialFamilyModel<double[][]> {
     for( int h = 0; h < K; h++ ) {
       params.toArray()[pi(h)] = pi.get(h);
       for( int d = 0; d < D; d++ ) {
-        params.weights[mu(h,0,d)] = M1.get(h,d);
-        params.weights[mu(h,1,d)] = M2.get(h,d);
-        params.weights[mu(h,2,d)] = M3.get(h,d);
+        params.weights[mu(h,0,d)] = M1.get(d,h);
+        params.weights[mu(h,1,d)] = M2.get(d,h);
+        params.weights[mu(h,2,d)] = M3.get(d,h);
       }
       // initialize
       params.weights[sigma(h)] = 1.0;
@@ -399,6 +441,7 @@ public class MultiViewGaussian extends ExponentialFamilyModel<double[][]> {
 
     return params;
   }
+
 
   @Override
   public int getSize(double[][] example) {

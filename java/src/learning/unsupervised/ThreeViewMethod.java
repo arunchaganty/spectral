@@ -19,10 +19,12 @@ public class ThreeViewMethod<T> {
   public Params solve(
           ExponentialFamilyModel<T> modelA,
           Counter<T> data,
+          Params initParams,
           double smoothMeasurements
   ) {
     LogInfo.begin_track("solveMoM");
 
+    Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> moments_ = modelA.getMoments(initParams);
     Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> moments = modelA.getMoments(data);
     Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, SimpleMatrix> factorization = algo.recoverParameters(modelA.getK(), moments);
 

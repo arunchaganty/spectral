@@ -87,21 +87,25 @@ public class ModelMisspecification implements Runnable {
     // Run EM
     ExpectationMaximization<double[][]> em = new ExpectationMaximization<>();
     Params emParams = em.solveEM(model, data, initParams);
+    for(int h = 0; h < K; h++) emParams.toArray()[model.sigma(h)] = trueParams.toArray()[model.sigma(h)];
     double em_lhood = -model.getLogLikelihood(emParams, data);
     LogInfo.log(
             Utils.outputList(
-                    "em-params", initParams,
+                    "em-params", emParams,
+                    "em-lhood", em_lhood,
                     "params-error-em", trueParams.computeDiff(emParams),
                     "lhood-error-em", em_lhood - true_lhood
             ));
 
     // Run Spectral
     ThreeViewMethod<double[][]> spectral = new ThreeViewMethod<>();
-    Params momParams = spectral.solve(model, data, smoothMeasurements);
+    Params momParams = spectral.solve(model, data, trueParams, smoothMeasurements);
+    for(int h = 0; h < K; h++) momParams.toArray()[model.sigma(h)] = trueParams.toArray()[model.sigma(h)];
     double mom_lhood = -model.getLogLikelihood(momParams, data);
     LogInfo.log(
             Utils.outputList(
                     "mom-params", momParams,
+                    "mom-lhood", mom_lhood,
                     "params-error-mom", trueParams.computeDiff(momParams),
                     "lhood-error-mom", mom_lhood - true_lhood
             ));
