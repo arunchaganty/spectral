@@ -10,6 +10,7 @@ import learning.models.MixtureOfGaussians;
 import learning.models.MultiViewGaussian;
 import learning.models.Params;
 import learning.spectral.applications.ParameterRecovery;
+import learning.unsupervised.DirectedExpectationMaximization;
 import learning.unsupervised.ExpectationMaximization;
 import learning.unsupervised.ThreeViewMethod;
 import org.ejml.simple.SimpleMatrix;
@@ -85,7 +86,7 @@ public class ModelMisspecification implements Runnable {
             ));
 
     // Run EM
-    ExpectationMaximization<double[][]> em = new ExpectationMaximization<>();
+    DirectedExpectationMaximization<double[][]> em = new DirectedExpectationMaximization<>();
     Params emParams = em.solveEM(model, data, initParams);
     for(int h = 0; h < K; h++) emParams.toArray()[model.sigma(h)] = trueParams.toArray()[model.sigma(h)];
     double em_lhood = -model.getLogLikelihood(emParams, data);

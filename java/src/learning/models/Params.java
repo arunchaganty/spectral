@@ -3,7 +3,6 @@ package learning.models;
 import fig.basic.BipartiteMatcher;
 import fig.basic.Indexer;
 import fig.basic.ListUtils;
-import fig.basic.Pair;
 import learning.models.loglinear.BinaryFeature;
 import learning.models.loglinear.Feature;
 import learning.models.loglinear.UnaryFeature;
@@ -346,5 +345,11 @@ public abstract class Params implements Serializable {
     throw new RuntimeException("Not implemented yet");
   }
 
+  public boolean isValid() {
+    return true;
+  }
+
+  public void project() {
+  }
 
 }

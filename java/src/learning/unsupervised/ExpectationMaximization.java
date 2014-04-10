@@ -19,6 +19,9 @@ public class ExpectationMaximization<T> {
   @Option(gloss="Number of iterations") public int iters = 1000;
   @Option(gloss="Number of iterations") public int mIters = 1;
 
+  @Option(gloss="If this is a directed model, you will need to project")
+  public boolean shouldProject = false;
+
   @Option(gloss="Diagnostic mode") public boolean diagnosticMode = false;
 
   @Option(gloss="Type of optimization to use") public boolean useLBFGS = true;
@@ -26,6 +29,8 @@ public class ExpectationMaximization<T> {
   @OptionSet(name="backtrack") public BacktrackingLineSearch.Options backtrack = new BacktrackingLineSearch.Options();
 
   Maximizer newMaximizer() {
+    if(useLBFGS && shouldProject)
+      throw new RuntimeException("Can not use L-BFGS if you need to project");
     if (useLBFGS) return new LBFGSMaximizer(backtrack, lbfgs);
     return new GradientMaximizer(backtrack);
   }
@@ -71,6 +76,7 @@ public class ExpectationMaximization<T> {
      */
   public double value() {
       if( objectiveValid ) return (objective);
+      if(!theta.isValid()) return Double.NEGATIVE_INFINITY;
       // Every time the point changes, re-cache
       theta.cache();
 
@@ -151,7 +157,7 @@ public class ExpectationMaximization<T> {
       this.theta = theta;
       histogram = computeHistogram(model, data);
 
-      maximizer = newMaximizer();
+      maximizer =  newMaximizer();
       marginals = model.newParams();
 
       // Create the M-objective (for $\theta$) - main computations are the partition function for A, B and expected counts
@@ -164,6 +170,8 @@ public class ExpectationMaximization<T> {
     state.objective.invalidate();
     state.theta.cache();
 
+    double oldObjective = state.objective.value();
+
     // Optimize each one-by-one
     // Get marginals
     state.marginals.clear();
@@ -172,8 +180,16 @@ public class ExpectationMaximization<T> {
 
     LogInfo.begin_track("M-step");
     boolean done = optimize(state.maximizer, state.objective, "M", mIters, diagnosticMode);
+    // At the end of this, project back onto the 'right' manifold
+    state.theta.project();
     state.objective.invalidate();
     LogInfo.end_track("M-step");
+
+    double objective = state.objective.value();
+
+    assert objective > oldObjective;
+
+    done = done && (state.objective.value() - oldObjective) < 1e-5;
     return done;
   }
 

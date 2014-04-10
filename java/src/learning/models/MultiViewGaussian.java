@@ -6,12 +6,7 @@
 package learning.models;
 
 import fig.basic.Indexer;
-import fig.exec.Execution;
-import learning.Misc;
 import learning.common.Counter;
-import learning.data.ComputableMoments;
-import learning.data.HasExactMoments;
-import learning.data.HasSampleMoments;
 import learning.linalg.*;
 
 import learning.models.loglinear.Feature;
@@ -19,18 +14,9 @@ import learning.models.loglinear.UnaryFeature;
 import org.ejml.simple.SimpleMatrix;
 import org.ejml.data.DenseMatrix64F;
 
-import fig.basic.Option;
-import fig.basic.OptionsParser;
 import fig.basic.LogInfo;
-import fig.prob.MultGaussian;
-
-import java.io.FileOutputStream;
-import java.io.ObjectOutputStream;
-import java.io.IOException;
 
 import java.util.Random;
-
-import org.javatuples.*;
 
 /**
  * A mixture of experts model
@@ -67,11 +53,12 @@ public class MultiViewGaussian extends ExponentialFamilyModel<double[][]> {
     @Override
     public void initRandom(Random random, double noise) {
       super.initRandom(random, noise);
-      // Now normalize appropriately
-      normalize();
+      // Now project appropriately
+      project();
     }
 
-    public void normalize() {
+    @Override
+    public void project() {
       // - pi
       {
         double z = 0.;
@@ -100,6 +87,7 @@ public class MultiViewGaussian extends ExponentialFamilyModel<double[][]> {
         weights[sigma(h)] = sigma;
     }
 
+    @Override
     public boolean isValid() {
       // - pi
       {
@@ -158,7 +146,7 @@ public class MultiViewGaussian extends ExponentialFamilyModel<double[][]> {
 
 //      if(! params.isValid() )
 //        LogInfo.warning("Invalid params; normalizing");
-//      params.normalize();
+//      params.project();
       assert params.isValid();
 
       return params;
@@ -235,15 +223,21 @@ public class MultiViewGaussian extends ExponentialFamilyModel<double[][]> {
 
   /**
    * log-likelihood given a particular cluster
+   * p(x,h) = \pi(h) * 1/(2*\pi sigma_h^2)^d/2 exp( 1/2 (x - mu_h)^2/sigma_h^2 )
    */
   double lhood(Parameters parameters, int h, double[][] example) {
 
     double lhood = 0.;
     lhood += Math.log(parameters.weights[pi(h)]);
     for(int v = 0; v < L; v++) {
-      for(int d = 0; d < K; d++ ) {
-        if(example != null)
-          lhood += - 0.5 * Math.pow(example[v][d] - parameters.weights[mu(h,v,d)], 2) / parameters.weights[sigma(h)];
+      for(int d = 0; d < D; d++ ) {
+        lhood += -0.5 * Math.log(2 * Math.PI * parameters.weights[sigma(h)]);
+        if(example != null) {
+          double diff = example[v][d] - parameters.weights[mu(h,v,d)];
+          lhood += - 0.5 * diff * diff / parameters.weights[sigma(h)];
+        } else {
+          lhood += 0.5 * Math.log(2 * Math.PI * parameters.weights[sigma(h)]);
+        }
       }
     }
     return lhood;
@@ -265,7 +259,7 @@ public class MultiViewGaussian extends ExponentialFamilyModel<double[][]> {
   }
 
   @Override
-  public void updateMarginals(Params parameters_, double[][] example, double scale, double count, Params marginals_) {
+  protected void updateMarginals(Params parameters_, double[][] example, double scale, double count, Params marginals_) {
     if(!(parameters_ instanceof Parameters))
       throw new IllegalArgumentException();
     if(!(marginals_ instanceof Parameters))
@@ -288,35 +282,55 @@ public class MultiViewGaussian extends ExponentialFamilyModel<double[][]> {
 
     assert MatrixOps.equal(MatrixOps.sum(marginals.getPi()), 1.0);
 
-    // For online updates to other quantities weighted by \pi(h) * scale
+    // - Keep track of the means
     for(int h = 0; h < K; h++) {
       // - Update means
       for(int v = 0; v < L; v++) {
-        for(int d = 0; d < K; d++ ) {
-          marginals.weights[mu(h,v,d)] +=
-                  scale * responsibilities[h] * (
-                          ((example != null) ? example[v][d] : parameters.weights[mu(h,v,d)])
-                           - marginals.weights[mu(h,v,d)]);
+        for(int d = 0; d < D; d++ ) {
+          marginals.weights[mu(h,v,d)] += scale *  // Scale for this example
+                  responsibilities[h]  *
+                  ((example != null) ? example[v][d] : parameters.weights[mu(h,v,d)]);
         }
       }
-      // - Update sigma (not in an online fashion)
-      // TODO: Handle online updates (requires x^2 to be tracked)
-      //      - Maybe keep track of some state?
+      // - Update the squared terms - will remove the mean contribution in the end.
       for(int v = 0; v < L; v++) {
-        for(int d = 0; d < K; d++ ) {
-          marginals.weights[sigma(h)] +=
-                  scale / (L*K) *
-                          ((example != null) ? (responsibilities[h] / K * (Math.pow(example[v][d] - marginals.weights[mu(h,v,d)], 2)))
-                                  :  (parameters.weights[sigma(h)]) );
+        for(int d = 0; d < D; d++ ) {
+          marginals.weights[sigma(h)] += scale / (L*D) *
+                  responsibilities[h] *
+                  ((example != null) ? (example[v][d] * example[v][d]) :  (parameters.weights[sigma(h)] + parameters.weights[mu(h,v,d)] * parameters.weights[mu(h,v,d)]));
         }
       }
     }
   }
 
   @Override
-  public void updateMarginals(Params parameters_, int L, double scale, double count, Params marginals_) {
+  protected void updateMarginals(Params parameters_, int L, double scale, double count, Params marginals_) {
     // The parameters are the marginals!
     marginals_.plusEquals(scale, parameters_);
+  }
+
+  protected void postUpdateMarginals(Params parameters, Params marginals_) {
+    if(!(marginals_ instanceof Parameters))
+      throw new IllegalArgumentException();
+    // Normalize the marginals
+    Parameters marginals = (Parameters) marginals_;
+
+    for(int h = 0; h < K; h++) {
+      // - Update means
+      for(int v = 0; v < L; v++) {
+        for(int d = 0; d < D; d++ ) {
+          marginals.weights[mu(h,v,d)] /= marginals.weights[pi(h)];
+        }
+      }
+
+      double mean2 = 0.;
+      for(int v = 0; v < L; v++) {
+        for(int d = 0; d < D; d++ ) {
+          mean2 += marginals.weights[mu(h,v,d)] * marginals.weights[mu(h,v,d)] / (L*D);
+        }
+      }
+      marginals.weights[sigma(h)] = marginals.weights[sigma(h)]/marginals.weights[pi(h)] - mean2;
+    }
   }
 
   @Override

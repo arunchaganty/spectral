@@ -41,26 +41,31 @@ public class MultiViewGaussianTests {
   @Test
   public void testExactMarginals() {
     MultiViewGaussian model; MultiViewGaussian.Parameters params;
-    model = new MultiViewGaussian(2,2,3);
+    model = new MultiViewGaussian(2,3,3);
     params = model.newParams();
     params.initRandom(rnd, 1.0);
 
     MultiViewGaussian.Parameters params_= (MultiViewGaussian.Parameters) model.getMarginals(params);
+    LogInfo.log(params);
+    LogInfo.log(params_);
     Assert.assertTrue(MatrixOps.allclose(params.toArray(), params_.toArray()));
   }
 
   @Test
   public void testEmpiricalMarginals() {
     MultiViewGaussian model; MultiViewGaussian.Parameters params;
-    model = new MultiViewGaussian(2,2,3);
+    model = new MultiViewGaussian(2,3,3);
     params = model.newParams();
     params.initRandom(rnd, 1.0);
 
-    Counter<double[][]> data = model.drawSamples(params, new Random(10), (int) 1e2);
+    Counter<double[][]> data = model.drawSamples(params, new Random(10), (int) 1e5);
 
     MultiViewGaussian.Parameters params_= (MultiViewGaussian.Parameters) model.getMarginals(params, data);
+
+    LogInfo.log(params);
+    LogInfo.log(params_);
     LogInfo.log(Fmt.D(MatrixOps.diff(params.toArray(), params_.toArray())));
-    Assert.assertTrue(MatrixOps.allclose(params.toArray(), params_.toArray(), 1e-5));
+    Assert.assertTrue(MatrixOps.allclose(params.toArray(), params_.toArray(), 1e-2));
   }
 
 
