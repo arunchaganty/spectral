@@ -87,22 +87,22 @@ Note that given our assumptions, $\ones \succ M_\sV \succ \zeros$. Thus
 the asymptotic variance is finite, and our estimator is consistent as
 well.
 
-Note that by the definition of $\tilde Z_\sC$, we have the covariance
-between the first $k^m - 1$ elements of $Z_\sC$. 
-We now need to include the covariance with the last element,
-  $Z_\sC[\vk]$. 
-
-It is easy to verify that for a vector $\alpha \in \Delta_{k-1}$, where
-  $\alpha_k = \sum_{i=1}^{k-1} \alpha_i$, the covariance between
-  $\alpha_i$ for $1 \le i \le k-1$ and $\alpha_k$ and that the variance
-  of $\alpha_k$ is,
-\begin{align*}
-    \Sigma_{\alpha} &= 
-    \begin{bmatrix}
-    \Sigma_{\tilde \alpha} & \Sigma_{\tilde \alpha} \ones \\
-    \ones^\top \Sigma_{\tilde \alpha} & \ones^\top \Sigma_{\tilde \alpha} \ones
-    \end{bmatrix}.
-\end{align*}
+% Note that by the definition of $\tilde Z_\sC$, we have the covariance
+% between the first $k^m - 1$ elements of $Z_\sC$. 
+% We now need to include the covariance with the last element,
+%   $Z_\sC[\vk]$. 
+% 
+% It is easy to verify that for a vector $\alpha \in \Delta_{k-1}$, where
+%   $\alpha_k = \sum_{i=1}^{k-1} \alpha_i$, the covariance between
+%   $\alpha_i$ for $1 \le i \le k-1$ and $\alpha_k$ and that the variance
+%   of $\alpha_k$ is,
+% \begin{align*}
+%     \Sigma_{\alpha} &= 
+%     \begin{bmatrix}
+%     \Sigma_{\tilde \alpha} & \Sigma_{\tilde \alpha} \ones \\
+%     \ones^\top \Sigma_{\tilde \alpha} & \ones^\top \Sigma_{\tilde \alpha} \ones
+%     \end{bmatrix}.
+% \end{align*}
 %\begin{align*}
 %  \Cov[ \alpha_i, \alpha_k ] 
 %    &= \E[ \alpha_i \alpha_k ] - \E[ \alpha_i ]\E[ \alpha_k ] 
@@ -112,17 +112,17 @@ It is easy to verify that for a vector $\alpha \in \Delta_{k-1}$, where
 %    &&= \sum_{i=1}^{k-1} \sum_{j=1}^{k-1} \Sigma_{ij}.
 %\end{align*}
 
-Thus, the asymptotic variance of $Z_\sC$ is,
-\begin{align*}
-    \Sigma_{Z_\sC} &= 
-    \begin{bmatrix}
-    \Sigma_{\tilde Z_\sC} & \Sigma_{\tilde Z_\sC} \ones \\
-    \ones^\top \Sigma_{\tilde Z_\sC} & \ones^\top \Sigma_{\tilde Z_\sC} \ones
-    \end{bmatrix}.
-\end{align*}
+%Thus, the asymptotic variance of $Z_\sC$ is,
+%\begin{align*}
+%    \Sigma_{Z_\sC} &= 
+%    \begin{bmatrix}
+%    \Sigma_{\tilde Z_\sC} & \Sigma_{\tilde Z_\sC} \ones \\
+%    \ones^\top \Sigma_{\tilde Z_\sC} & \ones^\top \Sigma_{\tilde Z_\sC} \ones
+%    \end{bmatrix}.
+%\end{align*}
 
-\todo{How do we compare $\Sigma^\mom$ with this? I need to compute the variance of projecting $\mom$}
-However, this matrix singular (the determinant is $0$).
+%\todo{How do we compare $\Sigma^\mom$ with this? I need to compute the variance of projecting $\mom$}
+%However, this matrix singular (the determinant is $0$).
 
 \end{proof}
 
@@ -265,12 +265,12 @@ Let $\sP, \sQ, \sR$ and $M$ be defined as above.
 Let $I \subset [m - k + n - k]$ be an arbitrary subset of the index set of $\sR$,
   and let $I_1$, $I_2$ be the respective subsets of $I$ contained in $\sP$ and $\sQ$.
 Then,
-\begin{align}
+\begin{align*}
   \sigma_{\max}(\sP\munf{I_1}) \sigma_{\max}(\sP\munf{I_2}) 
-\ge \sigma_{\max}(\sR\munf{I}) 
-\ge \sigma_{\min}(\sR\munf{I}) 
+&\ge \sigma_{\max}(\sR\munf{I})  \\
+&\ge \sigma_{\min}(\sR\munf{I}) 
 \sigma_{\min}(\sP\munf{I_1}) \sigma_{\min}(\sP\munf{I_2}).
-\end{align}
+\end{align*}
 \end{lemma}
 \begin{proof}
   Without loss of generality, let $M = \{(1,1), \ldots, (\ell,\ell)\}$. 

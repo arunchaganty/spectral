@@ -55,7 +55,7 @@ We use the notation $[\cdot]$ to indicate indexing; for example $M[i]$
 For a tensor $T \in \Re^{d \times \ldots \times d}$ and a vector $\vec
   i = (i_1, \cdots, i_\ell)$, define the projection $T[\vec i] = T_{i_1 \ldots i_\ell}$.
 Similarly, for a set $\sC$ of size $k$ and vector $\vec x \in \Re^d$, we
-  will use the notation $\vec x_\sC$ to get a vector $\Re^k$ which selects
+  will use the notation $\vec x_\sC$ to get a vector in $\Re^k$ which selects
   the appropriate elements of $\vec x$.
 
 We use $\otimes$ to denote the tensor product: if $u \in \Re^d,
@@ -87,7 +87,7 @@ We consider up to third-order moments:
 \end{align*}
 We will view $\mO_i, \mO_{ij}, \mO_{ijk}$ as tensors of
   orders $1, 2, 3$ in $\Re^d, \Re^{d\times d}, \Re^{d \times d \times d}$.
-Next, define the \emph{hidden marginals}:
+Next, we define the \emph{hidden marginals}:
 \begin{align*}
   \mH_i &\eqdef \Pr(h_i), &
   \mH_{ij} &\eqdef \Pr(h_i, h_j), &
@@ -123,7 +123,7 @@ The parameters of this model are the mixture probabilities $\pi\oft 1 \eqdef
 \end{align*}
 
 \citet{anandkumar13tensor} presented a robust tensor power method, which
-  we call $\TensorFactorize$, which converts estimates of the observed moments 
+  we call $\TensorFactorize$, which transforms estimates of the observed moments 
   into estimates of the parameters, $\pi\oft 1, \mOpp{1}{1},
   \mOpp{2}{1},\mOpp{3}{1}$ (up to permutation of the columns), provided
   the following assumption holds:
