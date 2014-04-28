@@ -58,7 +58,7 @@ Note that the observed variables $x^a_1, x^b_1, x^a_2$ are
 The moments of $x^a_1$, $\mO_1 \eqdef \Pr(x^a_1)$ are directly related to
   $\pi$ by $\mO_1 = O \pi$. 
 By \assumptionref{full-rank}, $O$ has full column rank and thus can be
-  inverted to recover $\pi$: $\pi = \pinv O \mO_1$.
+  inverted to recover $\pi$: $\pi = O\pinv  \mO_1$.
 
 \paragraph{Estimating $T$}
 Similarly, we can write down the moments of $x^a_1, x^a_2$, $\mO_{12}
@@ -66,7 +66,7 @@ Similarly, we can write down the moments of $x^a_1, x^a_2$, $\mO_{12}
   \eqdef \Pr(h_1, h_2)$ and solve for $\mH_{12}$:
 \begin{align*}
 \mO_{12} = O \mH_{12} O^\top \quad\Rightarrow\quad
-  \mH_{12} = \pinv O \mO_{12} \pinvt O.
+  \mH_{12} = O\pinv  \mO_{12} O\pinvt .
 \end{align*}
 $T$ can be recovered from the $\mH_{12}$ by suitable renormalization.
 
@@ -76,7 +76,7 @@ $\mH_{234} \eqdef \Pr(h_2, h_3, h_4)$ from the third-order moments
 $\mO_{234} \eqdef \Pr(x^a_2, x^a_3, x^a_4)$:
 \begin{align*}
   \mO_{234} = \mH_{234}(O, O, O) \quad\Rightarrow\quad
-  \mH_{234} = \mO_{234}(\pinv O, \pinv O, \pinv O).
+  \mH_{234} = \mO_{234}(O\pinv , O\pinv , O\pinv ).
 \end{align*}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -94,7 +94,7 @@ We capture this general property as follows:
   \label{prop:exclusive-views}
 A hidden clique $\sC \in \sG$ is said to possess the \textbf{exclusive views property} if for
   every hidden variable $h_i \in \sC$, there is some observed variable,
-  $x_{v}$, which is conditionally independent of the rest of the clique
+  $x_{v}$ which is conditionally independent of the rest of the clique
   given $h_i$, and whose conditional moment $\mOpp{v}{i} \eqdef
   \Pr(x_{v} \mid h_i)$ can be estimated consistently.
 We call $x_v$ the exclusive view of $h_i$ in $\sC$.
@@ -123,9 +123,9 @@ In \sectionref{undirected}, we will show how the generalization
 
 We now show this condition is sufficient to learn the marginal
   distribution of the clique.
-Consider any hidden clique $\sC = \{h_{i_1}, \cdots, h_{i_m}\} \in \sG$ for which this property holds. Let
+Consider any hidden clique $\sC = \{i_1, \cdots, i_m\}$ for which this property holds. Let
   $x_{v_j}$ be any exclusive view for $h_{i_j}$ in $\sC$ and $\sV
-  = \{x_{v_1}, \cdots, x_{v_m}\}$ be a set of exclusive views for the clique $\sC$.
+  = \{v_1, \cdots, v_m\}$ be a set of exclusive views for the clique $\sC$.
 We can write down the moments $\mO_\sV$ as follows:
 \begin{align*}
   \mO_\sV 
@@ -133,14 +133,14 @@ We can write down the moments $\mO_\sV$ as follows:
   %&= \sum_{\vh \in \sH}
       %\Pr(\Sh{\sC}) \Pr(\Sx{\sV} \given \Sh{\sC}) \\
       &= \sum_{\vh \in \sH} \Pr(\Sh{\sC}) 
-          \Pr(x_{i_1} | h_{v_1}) \cdots \Pr(x_{i_m} | h_{v_m}) \\
+          \Pr(x_{v_1} | h_{i_1}) \cdots \Pr(x_{v_m} | h_{i_m}) \\
     &= Z_{\sC}(\mOpp{v_1}{i_1},\cdots,\mOpp{v_m}{i_m}).
 \end{align*}
 
 If each $\mOpp{v_j}{i_j}$ has full column rank, then we can recover the
 hidden marginals $Z_\sC$ by inverting:
 \begin{align*}
-  Z_{\sC} &= \mO_\sV(\pinv{\mOpp{v_1}{i_1}},\cdots,\pinv{\mOpp{v_m}{i_m}}).
+  Z_{\sC} &= \mO_\sV(\mOpp{v_1}{i_1}\pinv,\cdots,\mOpp{v_m}{i_m}\pinv).
 \end{align*}
 Finally, the conditional probability tables for $\sC$ can easily be obtained from
   $Z_\sC$ via renormalization.
@@ -153,7 +153,7 @@ Finally, the conditional probability tables for $\sC$ can easily be obtained fro
     \REQUIRE Hidden clique $\sC$ with exclusive views (\propertyref{exclusive-views}).
     \ENSURE Marginal distribution of the clique $Z_\sC$.
       \STATE Identify exclusive views $\Sx{\sV} = \{x_{v_1}, \cdots, x_{v_m}\}$.
-      \STATE Return $\mH_\sC \gets \mO_{\Sx{\sV}}( \pinv{\mOpp{v_1}{i_i}}, \cdots, \pinv{\mOpp{v_m}{i_m}} )$.
+      \STATE Return $\mH_\sC \gets \mO_{\Sx{\sV}}( \mOpp{v_1}{i_i}\pinv, \cdots, {\mOpp{v_m}{i_m}}\pinv )$.
   \end{algorithmic}
 \end{algorithm}
 Of course, for $Z_{\sC}$ to be identifiable, we need various rank conditions,
@@ -226,13 +226,12 @@ There is a one-to-one correspondence between the parameters of this
   parents $\Pa(x_v)$ and children $\text{Ch}(x_v) \union \{x_{v_1}, x_{v_2}, x_{v_3}\}$,
   where $x_{v_1},x_{v_2},x_{v_3}$ are three copies of $x$
   (\figureref{reduction}). 
-  The domain of $\hp$ is the same as $x$,
-    and $\mOpp{v}{\textrm{new}} = I$.\footnote{
+  The domain of $\hp$ is the same as $x_v$\footnote{
       Though we have assumed that all hidden variables share the
       same domain, $[k]$, our work generalizes to hidden domains of
       different sizes, provided \assumptionref{full-rank-plus} is satisfied.
-      }
-
+      },
+    and $\mOpp{v}{\textrm{new}} = I$.
   Then, there is a one-to-one correspondence between every value of
   $\hp$ and $x_v$. Consequently, for any clique $\sC \contains \hp$, the
   parameters in the original graphical model can be obtained by
@@ -483,8 +482,8 @@ the asymptotic variance for the pseudoinverse version of $\LearnClique$:
   \begin{align*}
     \Sigma^{\mom} &= \mOppAlli \Sigma_\sV \mOppAllit.
   \end{align*}
-  %where $\pinv{\mOppAll} \eqdef \pinv{\mOpp{v_1}{i_1}} \otimes
-  %\cdots \otimes \pinv{\mOpp{v_m}{i_m}}$, a $d^m \times k^m$ matrix.
+  %where ${\mOppAll}\pinv \eqdef {\mOpp{v_1}{i_1}}\pinv \otimes
+  %\cdots \otimes {\mOpp{v_m}{i_m}}\pinv$, a $d^m \times k^m$ matrix.
 \end{lemma}
 \begin{proof}
 For clique $\sC$, recall we have
@@ -492,7 +491,7 @@ For clique $\sC$, recall we have
 %Choosing to represent $Z_\sC$ and $M_\sV$ as vectors and
 %$\mOppi{v_1}{i_1} \otimes \cdots \otimes \mOppi{v_m}{i_m}$ as the
 %matrix,
-We can rewrite this representation more compactly as: $Z_{\sC} = \pinv{\mOppAll} \mO_\sV$.
+We can rewrite this representation more compactly as: $Z_{\sC} = {\mOppAll}\pinv \mO_\sV$.
 By the delta-method \cite{vaart98asymptotic},
 % DONE: need to shorten
 %we have that the asymptotic variance of $M_\sV$ is:
