@@ -242,6 +242,16 @@ public class Models {
       }
       return examples;
     }
+      @Override
+      public Counter<Example> getFullDistribution(Params params_) {
+          ParamsVec params = (ParamsVec) params_;
+          Counter<Example> examples = new Counter<>();
+          examples.addAll(generateExamples(L));
+          for(Example ex: examples) {
+              examples.set( ex, getProbability(params, ex));
+          }
+          return examples;
+      }
     @Override
     public double updateMoments(Example ex, double count, SimpleMatrix P12, SimpleMatrix P13, SimpleMatrix P32, FullTensor P123) {
       double updates = 0.;
@@ -541,6 +551,7 @@ public class Models {
       }
       return updates;
     }
+
   }
 
 

@@ -174,8 +174,19 @@ public abstract class Model extends ExponentialFamilyModel<Example> {
     return examples;
   }
 
+
   public int getSize(Example ex) {
     return ex.x.length;
   }
+
+    @Override
+    public Example bestLabelling(Params params, Example ex) {
+        Hypergraph<Example> Hp = createHypergraph(ex, fullParams.weights, null, 1.0);
+        Hp.computePosteriors(true);
+        ex = newExample(ex.x);
+        Hp.fetchBestHyperpath(ex);
+        return ex;
+    }
+
 }
 

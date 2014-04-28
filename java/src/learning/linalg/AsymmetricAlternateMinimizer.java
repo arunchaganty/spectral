@@ -117,16 +117,9 @@ public class AsymmetricAlternateMinimizer implements TensorFactorizationAlgorith
                  List<Quartet<Double, SimpleMatrix, SimpleMatrix, SimpleMatrix>> fixedPoints) {
 
     // Sort the list by value of T(a,b,c)
-    List<Double> scores = new ArrayList<>();
-    for(Quartet<Double, SimpleMatrix, SimpleMatrix, SimpleMatrix> fixedPoint : fixedPoints ) {
-      scores.add(T.project3(fixedPoint.getValue1(), fixedPoint.getValue2(), fixedPoint.getValue3()));
-    }
-    List<Pair<Double,Integer>> ordering = Utils.argsort(scores);
-    Collections.reverse(ordering);
-    List<Quartet<Double, SimpleMatrix, SimpleMatrix, SimpleMatrix>> candidates = new LinkedList<>();
-    for( Pair<Double, Integer> elem : ordering ) {
-      candidates.add( fixedPoints.get(elem.getValue1()) );
-    }
+    List<Quartet<Double, SimpleMatrix, SimpleMatrix, SimpleMatrix>> candidates =
+            Utils.sort(fixedPoints, (fixedPoint) -> T.project3(fixedPoint.getValue1(), fixedPoint.getValue2(), fixedPoint.getValue3()) );
+    Collections.reverse(candidates);
 
     List<Quartet<Double, SimpleMatrix, SimpleMatrix, SimpleMatrix>> centers = new ArrayList<>();
     while(centers.size() < K && candidates.size() > 0) {

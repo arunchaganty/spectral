@@ -20,6 +20,11 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * Various utilities
@@ -201,13 +206,20 @@ public class Utils {
     return stateVectors.toArray(new int[count][L]);
   }
 
-  public static <T> List<Pair<T, Integer>> argsort(List<T> items) {
-    List<Pair<T,Integer>> idx = new ArrayList<>();
-    for( int i = 0; i < items.size(); i++) {
-      idx.add(Pair.with(items.get(i), i));
-    }
-    Collections.sort(idx);
+  public static <T> Stream<Pair<T,Integer>> mapi(Stream<T> stream) {
+    final AtomicInteger i = new AtomicInteger();
+    return stream.map((T elem) -> Pair.with(elem, i.getAndIncrement()));
+  }
 
-    return idx;
+  public static <T extends Comparable> List<Pair<T, Integer>> argsort(List<T> items) {
+    return argsort(items.stream()).collect(toList());
+  }
+  public static <T extends Comparable> Stream<Pair<T, Integer>> argsort(Stream<T> items) {
+    return mapi(items).sorted();
+  }
+
+  public static <T,U extends Comparable<U>> List<T> sort(List<T> items, Function<T,U> key) {
+    return argsort(items.stream().map(key)).map( (Pair<U,Integer> p) -> items.get(p.getValue1())).collect(toList());
   }
 }
+
