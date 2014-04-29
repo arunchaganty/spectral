@@ -31,13 +31,13 @@ Consider a clique $\sC = \{h_{i_1}, \cdots h_{i_m}\} \in \sG$, with
   exclusive views $\sV = \{x_{v_1}, \cdots, x_{v_m}\}$. 
 The expected composite likelihood over $\Sx{\sV}$ given parameters $\mH_\sC$
 with respect to the true distribution $\sM_\sV$ can be written in tensor form:
-\begin{align*}
+\begin{align}
   \sL_\ml %(\Sx{\sV}) 
-  &= \E[\log \Pr( \Sx \sV )] \\
-  &= \E[\log \sum_{\Sh \sC} \Pr( \Sx \sV \given \Sh \sC )] \\
-  &= \E[\log \mH_\sC(\mOpp{v_1}{i_1} [x_{v_1}], \cdots, \mOpp{v_m}{i_m} [x_{v_m}])] \\
-  &= \E[\log \mH_\sC(\mOppAll[\Sx\sV])].
-\end{align*}
+  &= \E[\log \Pr( \Sx \sV )] \nonumber \\
+  &= \E[\log \sum_{\Sh \sC} \Pr( \Sx \sV \given \Sh \sC )] \nonumber \\
+  &= \E[\log \mH_\sC(\mOpp{v_1}{i_1} [x_{v_1}], \cdots, \mOpp{v_m}{i_m} [x_{v_m}])] \nonumber \\
+  &= \E[\log \mH_\sC(\mOppAll[\Sx\sV])]. \label{eqn:piecewise-obj}
+\end{align}
 The final form is an expectation over a log of linear function of $\mH_\sC$, which is concave in
 $\mH_\sC$.  But unlike maximum likelihood in fully-observed settings,
 we do not have a closed form solution, so we use EM to optimize.
@@ -62,7 +62,7 @@ Since the function is convex, EM converges to a global optimum.
 \subsection{Statistical efficiency}
 
 We have proposed two methods for estimating the hidden marginals $Z_\sC$ given
-the conditional moments $\mOppAll$: one based on computing a simple pseudoinverse,
+the conditional moments $\mOppAll$, one based on computing a simple pseudoinverse,
 and the other based on composite likelihood.
 We use the notation $\hat Z^\mom_\sC$ to denote the pseudoinverse
   estimator and $\hat Z^\ml_\sC$ to denote the composite likelihood
@@ -74,13 +74,55 @@ given access to only samples of $\Sx\sV$.\footnote{Of course, we could improve s
 by maximizing the likelihood of all of $\vx$, but that would again lead to non-convex optimization problems.}
 But can we quantify the \emph{relative efficiency} of the pseudoinverse estimator
 compared to the composite likelihood estimator?
-Let us first compute the asymptotic variance of the latter.
+We turn to asymptotic statistics to answer this question. 
 
+To begin, let us compute the asymptotic variances of the two estimators. 
+Note that $\hat Z_\sC$ is constrained to lie on the simplex
+$\Delta_{k^m-1}$; before we proceed we
+reparameterize our problem in terms of the $\tilde Z_\sC \in
+[0,1]^{k^m-1}$ to handle this constraint. 
+Let $\vk = (k, \cdots, k)$ be an $m$-dimensional vector of all $k$s. We
+can express $Z_\sC$ in terms of $\tilde Z_\sC$ as follows:
+\begin{align*}
+  Z_\sC[\vi] &= \left\{
+    \begin{array}{ll}
+      1 - \sum_{\vi' \prec \vk} \tilde Z_\sC[\vi'] & \vi = \vk \\
+      \tilde Z_\sC[\vi] & \text{otherwise.}
+      \end{array}
+      \right.
+\end{align*}
+
+Now, abusing notation slightly by using the vectorized forms of $M_\sV
+\in \Re^{d^m}$, $Z_\sC \in \Re^{k^m}$, $\tilde Z_\sC \in \Re^{k^m-1}$
+and the matrix form of $\mOppAll \in \Re^{d^m \times k^m}$, the marginal
+distribution can be expressed as follows,
+\begin{align*}
+  M_\sV &= Z_\sC( \mOpp{v_1}{i_1}, \cdots, \mOpp{v_m}{i_m} ) \\
+        &= \mOppAll Z_\sC \\
+        &= \mOppAll_{\neg \vk} \tilde Z_\sC + \mOppAll_{\vk} (1 - \ones^\top \tilde Z_\sC) \\
+        &= (\mOppAll_{\neg \vk} -  \mOppAll_{\vk}\ones^\top) \tilde Z_\sC + \mOppAll_{\vk} \\
+        &= \mOppTAll \tilde Z_\sC + \mOppAll_{\vk},
+\end{align*}
+where $\mOppAll_{\neg \vk} \in \Re^{d^m \times k^m - 1}$ matrix containing the
+first $k^m-1$ columns of $\mOppAll$, $\mOppAll_\vk \in \Re^{d^m}$ is the
+last column, and $\mOppTAll \eqdef (\mOppAll_{\neg \vk}
+- \mOppAll_{\vk}\ones^\top)$.
+
+We are now ready to study the asymptotic properties of $Z_\sC$ through
+$\tilde{Z}_\sC$.
+
+\begin{lemma}[Asymptotic variance of the pseudo likelihood estimator for $Z_\sC$]
+  \label{lem:pl-variance}
+  The asymptotic variance of $\hat Z^\mom_{\sC}$ based on composite likelihood is
+  \begin{align*}
+    \Sigma^{\mom} &= \mOppTAlli \Sigma_\sV \mOppTAllit.
+  \end{align*}
+\end{lemma}
 \begin{lemma}[Asymptotic variance of the composite likelihood estimator for $Z_\sC$]
   \label{lem:pw-variance}
   The asymptotic variance of $\hat Z^\ml_{\sC}$ based on composite likelihood is
   \begin{align*}
-    \Sigma^{\ml} &= \mOppAlli \dM_\sV \Sigma_\sV \dM_\sV \mOppAllit.
+    \Sigma^{\ml} &= \mOppTAlli \dM_\sV (I - \dM_\sV)\inv \mOppTAllit.
   \end{align*}
 \end{lemma}
 \begin{proof}
@@ -100,13 +142,13 @@ than the composite likelihood estimator in that $e^\mom \eqdef \Tr(\Sigmamli \Si
 \begin{proof}
   From \lemmaref{mom-variance} and \lemmaref{pw-variance}, the asymptotic variances of the method of moments estimator, $\hat Z_\sC^{\mom}$, and the piecewise likelihood estimator, $\hat Z_\sC^{\ml}$, are,
   \begin{align*}
-    \Sigma^{\mom} &= \mOppAlli \Sigma_\sV \mOppAllit & \Sigma^{\ml} &= \mOppAlli \dM_\sV \Sigma_\sV \dM_\sV \mOppAllit,
+    \Sigma^{\mom} &= \mOppTAlli \Sigma_\sV \mOppTAllit & \Sigma^{\ml} &= \mOppTAlli \dM_\sV (I - \dM_\sV)\inv \mOppTAllit,
   \end{align*}
 
   Note that $\Tr(\dM_\sV) = 1$ as it represents the marginal
   distribution of $\sV$; thus, $\Sigma^{(\mom)} \succ \Sigma^{(\ml)}
   \succ 0$.  Finally the asymptotic efficiency of the method of moments
-  estimator is, $e^\mom = \Tr( \Sigma^{\ml}\Sigma^{\mom -1} ) = \Tr( \dM_\sV \Sigma_\sV \dM_\sV \Sigma_\sV^{-1} )$.
+  estimator is, $e^\mom = \Tr( \Sigma^{\ml}\Sigma^{\mom -1} ) = \Tr( D_\sV (I - D_\sV)\inv \Sigma_\sV^{-1} )$.
 \end{proof}
 
 \paragraph{Intuitions}

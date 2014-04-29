@@ -153,7 +153,7 @@ Finally, the conditional probability tables for $\sC$ can easily be obtained fro
     \REQUIRE Hidden clique $\sC$ with exclusive views (\propertyref{exclusive-views}).
     \ENSURE Marginal distribution of the clique $Z_\sC$.
       \STATE Identify exclusive views $\Sx{\sV} = \{x_{v_1}, \cdots, x_{v_m}\}$.
-      \STATE Return $\mH_\sC \gets \mO_{\Sx{\sV}}( \mOpp{v_1}{i_i}\pinv, \cdots, {\mOpp{v_m}{i_m}}\pinv )$.
+      \STATE Return $\mH_\sC \gets \mO_{\sV}( \mOpp{v_1}{i_i}\pinv, \cdots, {\mOpp{v_m}{i_m}}\pinv )$.
   \end{algorithmic}
 \end{algorithm}
 Of course, for $Z_{\sC}$ to be identifiable, we need various rank conditions,
@@ -438,70 +438,58 @@ for the clique $\sC = \{ h_1, x_1 \}$, it implies $O = \Pr(x_1 \mid h_1)$ has co
 From \citet{anandkumar13tensor} given \assumptionref{full-rank-plus},
 we have that $\mOpphat{v}{i}$ converges to $\mOpp{v}{i}$ at a rate of $n^{-\frac12}$ with a constant that
 depends polynomially on the $k$-th singular value of $\mOpp{v}{i}$.
-%Of course, the singular value of $\mOpp{v}{i}$ become exponentially worse as $x_v$ and $h_i$ become farther.
-%So while we can obtain consistent estimates, the sample complexity
-%is exponential in the mimimum distance from $h_i$ to any three views, as to be expected.
-%(\todo{say something
-%quantitative?  annoying part is that we would have to bring in the bounds, so leave it out probably}).
-% DONE: need to setup the asymptotic - it's not fresh in everyone's mind.
+
+\todo{Present sample complexity bounds for $\mOpp{v}{i}$.}
+\todo{Present sample complexity bounds for $Z_\sC$.}
+
 % Easy case
-Next, we need to show that the hidden marginals $\hat Z_\sC$ converge to $Z_\sC$.
-First, $\hat M_\sV$ is just an empirical average of multinomials over the data points.
-Abusing notation slightly, we let $M_\sV$ also denote its $d^{m}$-dimensional vectorized version.
-We also represent $\mH_\sC$ as
-  a vector in $\Re^{k^m}$, and represent $\mOppAll \eqdef
-  \mOpp{v_1}{i_1} \otimes \cdots \otimes
-  \mOpp{v_m}{i_m}$ as a matrix in $\Re^{d^m \times
-  k^m}$.
-By the central limit theorem, we have:
-$\sqrt{n} (\hat M_\sV - M_\sV) \convind \sN(0, \Sigma_\sV)$,
-where $\Sigma_\sV$ is the \emph{asymptotic variance} of $\hat M_\sV$: 
-% ARUN: I don't think so - \todo{doesn't this need to be multiplied by something?}
-\begin{align*}
-\Sigma_\sV \eqdef \dM_\sV - M_\sV M_\sV^\top, \quad \dM_\sV \eqdef \text{diag}(M_\sV).
-\end{align*}
-
-% PL: this is not obviously correct
-%To address the first, we will need that the following assumption on the
-%  parameters of the model:
-%\begin{assumption} 
-%  \label{asm:full-rank-plus}
-%  For every clique $\sC = \{h_{i_1}, \cdots, h_{i_m}\} \in \sG$, let
-%    $Z_\sC$ be the marginal distribution for that clique. 
-%  Then every mode-$i$ unfolding of $Z_\sC$ has full column rank.\verify
-%\end{assumption}
-%Intuitively, the assumption guarantees that the marginal probability of
-%  any hidden state is non-zero.
-
-We can now use the delta-method to convert the above result into 
-the asymptotic variance for the pseudoinverse version of $\LearnClique$:
-\begin{lemma}[Asymptotic variance of pseudoinverse estimator for $Z_\sC$]
-  \label{lem:mom-variance}  
-  Assume $\hat M_{\sV}$ has asymptotic variance $\Sigma_\sV$ defined above.
-  Then the asymptotic variance of $\hat Z_\sC$ is:
-  \begin{align*}
-    \Sigma^{\mom} &= \mOppAlli \Sigma_\sV \mOppAllit.
-  \end{align*}
-  %where ${\mOppAll}\pinv \eqdef {\mOpp{v_1}{i_1}}\pinv \otimes
-  %\cdots \otimes {\mOpp{v_m}{i_m}}\pinv$, a $d^m \times k^m$ matrix.
-\end{lemma}
-\begin{proof}
-For clique $\sC$, recall we have
-  $Z_{\sC} = \mO_\sV(\mOppi{v_1}{i_1},\cdots,\mOppi{v_m}{i_m})$.
-%Choosing to represent $Z_\sC$ and $M_\sV$ as vectors and
-%$\mOppi{v_1}{i_1} \otimes \cdots \otimes \mOppi{v_m}{i_m}$ as the
-%matrix,
-We can rewrite this representation more compactly as: $Z_{\sC} = {\mOppAll}\pinv \mO_\sV$.
-By the delta-method \cite{vaart98asymptotic},
-% DONE: need to shorten
-%we have that the asymptotic variance of $M_\sV$ is:
-%\begin{align*}
-%  \sqrt{n}(\hat M_\sV - M_\sV) \convind \sN(0, \Sigma_\sV),
-%\end{align*}
-%where $\Sigma_\sV$ is the variance of the observations. 
-we immediately get:
-$\sqrt{n}(\hat Z_\sC - Z_\sC) \convind \sN(0, \mOppAlli \Sigma_\sV \mOppAllit)$.
-\end{proof}
+% Next, we need to show that the hidden marginals $\hat Z_\sC$ converge to $Z_\sC$.
+% First, $\hat M_\sV$ is just an empirical average of multinomials over the data points.
+% Abusing notation slightly, we let $\hat M_\sV$ also denote its
+% $d^{m}$-dimensional vectorized version.
+% We also represent $\mH_\sC$ as
+%   a vector in $\Re^{k^m}$, and represent $\mOppAll \eqdef
+%   \mOpp{v_1}{i_1} \otimes \cdots \otimes
+%   \mOpp{v_m}{i_m}$ as a matrix in $\Re^{d^m \times
+%   k^m}$.
+% By the central limit theorem, we have:
+% $\sqrt{n} (\hat M_\sV - M_\sV) \convind \sN(0, \Sigma_\sV)$,
+% where $\Sigma_\sV$ is the \emph{asymptotic variance} of $\hat M_\sV$: 
+% % ARUN: I don't think so - \todo{doesn't this need to be multiplied by something?}
+% \begin{align*}
+% \Sigma_\sV \eqdef \dM_\sV - M_\sV M_\sV^\top, \quad \dM_\sV \eqdef \text{diag}(M_\sV).
+% \end{align*}
+% 
+% Our next step will be to use the delta-method to convert the above
+% result into the asymptotic variance for the pseudoinverse version of
+% $\LearnClique$. 
+% \begin{lemma}[Asymptotic variance of pseudoinverse estimator for $\tilde Z_\sC$]
+%   \label{lem:mom-variance}  
+%   Assume $\hat M_{\sV}$ has asymptotic variance $\Sigma_\sV$ defined above.
+%   Then the asymptotic variance of $\hat{Z_\sC}$ is:
+%   \begin{align*}
+%     \Sigma^{\mom} &= \mOppAlli \Sigma_\sV \mOppAllit.
+%   \end{align*}
+%   %where ${\mOppAll}\pinv \eqdef {\mOpp{v_1}{i_1}}\pinv \otimes
+%   %\cdots \otimes {\mOpp{v_m}{i_m}}\pinv$, a $d^m \times k^m$ matrix.
+% \end{lemma}
+% \begin{proof}
+% For clique $\sC$, recall we have
+%   $Z_{\sC} = \mO_\sV(\mOppi{v_1}{i_1},\cdots,\mOppi{v_m}{i_m})$.
+% %Choosing to represent $Z_\sC$ and $M_\sV$ as vectors and
+% %$\mOppi{v_1}{i_1} \otimes \cdots \otimes \mOppi{v_m}{i_m}$ as the
+% %matrix,
+% We can rewrite this representation more compactly as: $Z_{\sC} = {\mOppAll}\pinv \mO_\sV$.
+% By the delta-method \cite{vaart98asymptotic},
+% % DONE: need to shorten
+% %we have that the asymptotic variance of $M_\sV$ is:
+% %\begin{align*}
+% %  \sqrt{n}(\hat M_\sV - M_\sV) \convind \sN(0, \Sigma_\sV),
+% %\end{align*}
+% %where $\Sigma_\sV$ is the variance of the observations. 
+% we immediately get:
+% $\sqrt{n}(\hat Z_\sC - Z_\sC) \convind \sN(0, \mOppAlli \Sigma_\sV \mOppAllit)$.
+% \end{proof}
 
 % DONE: too brazen to say
 %Note that extending these results to finite sample bounds can be done

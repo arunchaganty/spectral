@@ -14,32 +14,47 @@ In \sectionref{piecewise}, we compare the asymptotic variance
 In this part, we will derive the asymptotic variance of the composite
   likelihood estimator.
 
-\begin{proof}
-  Recall that the composite likelihood estimator $\hat Z_\sC
-  \in \Delta_{k^m-1}$ is a constrained M-estimator.
-  First, let us re-parametrize the problem to make it unconstrained by
-  using the first $k^m - 1$ elements of $Z_\sC$.  
-  Let $\tilde Z_\sC \in [0,1]^{k^m-1}$ and let 
-  \begin{align*}
-    (Z_\sC)_{i_1 \ldots i_m} &= \left\{
-      \begin{array}{ll}
-        1 - \sum_{\vi} (\tilde Z_\sC)_{i_1 \ldots i_m} & i_1 = \cdots = i_m = k \\
-        (\tilde Z_\sC)_{i_1 \ldots i_m} & \text{otherwise.}
-        \end{array}
-        \right.
-  \end{align*}
-  The objective can then be written as,
+Note that $\hat Z_\sC$ is constrained to lie on the simplex
+$\Delta_{k^m-1}$; before we proceed, to handle this constraint, we
+reparameterize our problem in terms of the $\tilde Z_\sC \in
+[0,1]^{k^m-1}$. 
+Let $\vk = (k, \cdots, k)$ be a $m$-dimensional vector of all $k$s. We
+write $Z_\sC$ to be,
+\begin{align*}
+  Z_\sC[\vi] &= \left\{
+    \begin{array}{ll}
+      1 - \sum_{\vi' \prec \vk} \tilde Z_\sC[\vi'] & \vi = \vk \\
+      \tilde Z_\sC[\vi] & \text{otherwise.}
+      \end{array}
+      \right.
+\end{align*}
+
+Now, abusing notation slightly by using the vectorized forms of $M_\sV
+\in \Re^{d^m}$, $Z_\sC \in \Re^{k^m}$, $\tilde Z_\sC \in \Re^{k^m-1}$
+and the matrix form of $\mOppAll \in \Re^{d^m \times k^m}$, the marginal
+distribution can be expressed as follows,
+\begin{align*}
+  M_\sV &= Z_\sC( \mOpp{v_1}{i_1}, \cdots, \mOpp{v_m}{i_m} ) \\
+        &= \mOppAll Z_\sC \\
+        &= \mOppAll_{\neg \vk} \tilde Z_\sC + \mOppAll_{\vk} (1 - \ones^\top \tilde Z_\sC) \\
+        &= (\mOppAll_{\neg \vk} -  \mOppAll_{\vk}\ones^\top) \tilde Z_\sC + \mOppAll_{\vk} \\
+        &= \mOppTAll \tilde Z_\sC + \mOppAll_{\vk},
+\end{align*}
+where $\mOppAll_{\neg \vk} \in \Re^{d^m \times k^m - 1}$ matrix containing the
+first $k^m-1$ columns of $\mOppAll$, $\mOppAll_\vk \in \Re^{d^m}$ is the
+last column, and $\mOppTAll \eqdef (\mOppAll_{\neg \vk}
+- \mOppAll_{\vk}\ones^\top)$.
+
+We are now ready to study the asymptotic properties of $Z_\sC$ through
+$\tilde Z_\sC$,
+\begin{proof}[Proof for Lemma 4]
+  We proceed using the delta method. The objective,
+  \equationref{piecewise-obj} can be written in terms of $\tilde Z_\sC$
+  and $\mOppTAll$ (defined above) as,
   \begin{align*}
     \sL_\ml &= \frac{1}{|\sD|} \sum_{\vx \in \sD} \ell(\vx) \\
-    \ell(\vx) &= \log(\tilde Z_\sC \mOppAll_{\neg \vk}[\vx] + (1 - \tilde Z_\sC) \mOppAll_{\vk}[\vx]),
-  \end{align*}
-  where $\mOppAll_{\neg \vec k}[\vx] \in \Re^{k^m-1}$ is the first $k^m-1$
-    entries of $\mOppAll[\vx]$ and
-  $\mOppAll_{\vec k}[\vx] = \mOpp{v_1}{i_1}_{x_1k} \cdots
-    \mOpp{v_m}{i_m}_{x_mk}$ is a constant. 
-Let $\mOppTAll[\vx] = \mOppAll_{\neg \vk}[\vx] - \mOppAll_{\vk}[\vx]$, then,
-  \begin{align*}
-    \ell(\vx) &= \log(\tilde Z_\sC(\mOppTAll[\vx]) + \mOppAll_{\vk}[\vx]).
+    \ell(\vx) &= \log(M_\sV[\vx]) \\
+              &= \log(\tilde Z_\sC\ \mOppTAll[\vx] + \mOppAll_{\vk}[\vx]).
   \end{align*}
 
 Using the delta-method \cite{vaart98asymptotic} we have that the asymptotic distribution of 
@@ -58,7 +73,7 @@ Taking the first derivative,
 where $e_\vx$ is a one-hot vector and $M_\sV$ is the marginal
 distribution of the observed data at the true parameters.
 
-Taking the second derivative.
+Taking the second derivative,
 \begin{align}
   \grad^2_{\tilde \mH_\sC} \ell(\vx)
   &= - \frac{\mOppTAll[\vx] \mOppTAllt[\vx]}{(\mH_\sC(\mOppAll[\vx]))^2} \nonumber \\
@@ -77,7 +92,7 @@ Finally, noting that $\Sigma_\sV = \diag(M_\sV) - M_\sV M_\sV^\top$ for
     \Sigma_{\tilde Z_\sC} 
       &= \E[\grad^2 \ell(\vx)]^{-1} \Var [\grad \ell(\vx)] \E[\grad^2 \ell(\vx)]^{-1} \\
       &= \Var[\grad \ell(\vx)]^{-1} \\
-      &= \mOppTAllit \diag(\tilde M_\sV) \diag(\Sigma_\sV)^{-1} \diag(\tilde M_\sV) \mOppTAlli \\
+      &= \mOppTAllit \diag(M_\sV) \diag(\Sigma_\sV)^{-1} \diag(M_\sV) \mOppTAlli \\
       &= \mOppTAllit \diag(M_\sV) (\diag(M_\sV) - \diag(M_\sV)^2)^{-1} \diag(M_\sV) \mOppTAlli \\
       &= \mOppTAllit \diag(M_\sV) (I - \diag(M_\sV))^{-1} \mOppTAlli \\
       &= \mOppTAllit \tilde D_\sV \mOppTAlli,
