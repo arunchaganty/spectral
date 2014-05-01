@@ -140,14 +140,16 @@ The pseudoinverse estimator is strictly less efficient
 than the composite likelihood estimator in that $e^\mom \eqdef \frac{1}{k^m-1} \Tr(\Sigmaml\Sigmamomi ) < 1$.
 \end{corollary}
 \begin{proof}
+  For the sake of brevity, let $\bar k = k^m - 1$.
   Given the asymptotic variances above, we have that the relative efficiency is,
   \begin{align*}
     e^\mom
-    &= \frac{1}{k^m-1} \Tr(\Sigmaml \Sigmamomi) \\
-    &= \frac{1}{k^m-1} \Tr( \mOppTAlli \dM_\sV (I - \dM_\sV)\inv \mOppTAllit (\mOppTAlli \Sigma_\sV \mOppTAllit)\inv )  \\
-    &= \frac{1}{k^m-1} \Tr( \mOppTAlli \dM_\sV (I - \dM_\sV)\inv \mOppTAllit \mOppTAllt \Sigma_\sV\inv \mOppTAll ) \\ 
-    &= \frac{1}{k^m-1} \Tr( I_{k^m-1}  \dM_\sV (I - \dM_\sV)\inv   I_{k^m-1} \Sigma_\sV\inv ).
+    &= \frac{1}{\bar k} \Tr(\Sigmaml \Sigmamomi) \\
+    &= \frac{1}{\bar k} \Tr( \mOppTAlli \dM_\sV (I - \dM_\sV)\inv \mOppTAllit (\mOppTAlli \Sigma_\sV \mOppTAllit)\inv )  \\
+    &= \frac{1}{\bar k} \Tr( \mOppTAlli \dM_\sV (I - \dM_\sV)\inv \mOppTAllit \mOppTAllt \Sigma_\sV\inv \mOppTAll ) \\ 
+    &= \frac{1}{\bar k} \Tr( K  D_\sV (I - D_\sV)\inv  K \Sigma_\sV\inv ),
   \end{align*}
+  where $K = \mOppTAll \mOppTAlli$ is a positive semidefinite matrix.
 
   Using H\"{o}lder's inequality, we can upper bound this quantity in more intuitive terms,
   \begin{align*}

@@ -1,0 +1,278 @@
+\documentclass[xcolor={svgnames}]{beamer}
+
+\setbeameroption{hide notes} 
+
+%\usetheme{NLP}
+\usetheme{boxes}
+\useoutertheme{infolines}
+
+\usepackage{graphicx}
+\usepackage{lmodern}
+\usepackage{calc}
+
+\usepackage{soul}
+
+\usepackage{amsmath,amsthm,amssymb}   
+
+\usepackage{listings}
+\usepackage[style=authoryear,babel=hyphen]{biblatex}
+\addbibresource{ref.bib}
+\addbibresource{pliang.bib}
+
+%\usepackage{algorithm,algorithmic}
+
+\usepackage{tikz}
+\usepackage[debug,debugmarks]{scabby}
+%\usepackage{scabby}
+
+\usepackage[customcolors]{hf-tikz}
+
+\usepackage{mathtools}
+
+\input{macros}
+\input{spectral-macros}
+\input{diagrams}
+
+% these will be used later in the title page
+\title[Moments and Likelihoods]{Estimating Latent Variable Graphical Models with Moments and Likelihoods}
+\author[Chaganty, Liang]{%
+    Arun Tejasvi Chaganty\\
+    Percy Liang
+}
+\institute{Stanford University}
+
+\begin{document}
+
+% "Beamer, do the following at the start of every section"
+\AtBeginSection[] 
+{%
+\begin{frame}<beamer> 
+\frametitle{Outline} % make a frame titled "Outline"
+\tableofcontents[currentsection]  % show TOC and highlight current section
+\end{frame}
+}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\section{Introduction}
+
+\begin{frame}
+  \frametitle{Latent Variable Graphical Models}
+
+  \splitcolumn{%
+      \begin{itemize}
+        \item Gaussian Mixture Models \tikzmark{gmm}
+        \item Latent Dirichlet Allocation
+        \item Hidden Markov Models \tikzmark{hmm}
+        \item PCFGs
+        \item \dots
+      \end{itemize}
+  }{%
+  \begin{canvas}
+    \point{mark}{(1cm,0)};
+    \point{gmm}{($(mark) + (0,+0cm)$)};
+    \point{hmm}{($(mark) + (0,-1cm)$)};
+
+    \node[anchor=south west] (mog) at (gmm) {%
+      \includegraphics[width=0.45\textwidth,height=3cm,keepaspectratio]{figures/mog.pdf}
+    };
+
+    %\drawgen{($(gmm) + (0,0.0cm)$)};
+    \drawhmm{(hmm)};
+  \end{canvas}
+  }
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Parameter Estimation is Hard}
+
+  \begin{tikzpicture}
+    % x, y
+    \llhood{0}{0};
+    \node<2->[scale=0.3,circle,fill=black] at (mle) {};
+    \node<2-> at ($(mle) + (0.6cm,0)$) {$\mathmb{\textrm{MLE}}$};
+    \node<3->[scale=0.3,circle,fill=black] at (em1) {};
+    \node<3-> at ($(em1) + (0.5cm,0)$) {$\mathmr{\textrm{EM}}$};
+    \node<3->[scale=0.3,circle,fill=black] at (em2) {};
+    \node<3-> at ($(em2) + (0.5cm,0)$) {$\mathmr{\textrm{EM}}$};
+
+    \node<3->[scale=0.3,circle,fill=black] at (spec) {};
+    \node<3-> at ($(spec) + (0.5cm,0.3cm)$) {$\mathmg{\textrm{MoM}}$};
+   % \draw<4->[latex-latex,DarkGreen,line width=1pt] ($(mle) + (-0.8cm,0.8cm)$) -- node[above]{$\mathmg{\epsilon}$} ($(mle) + (+0.8cm,0.8cm)$);
+  \end{tikzpicture}
+
+  % Simple message: MLE is consistent but intractable, EM is efficient not but consistent. Can we get something in between.
+
+  \begin{itemize}
+    \item<1-> Log-likelihood function is non-convex.
+    \item<2-> MLE is consistent but intractable.
+    \item<3-> Local methods (EM, gradient descent, etc.) are tractable but inconsistent\alt<3-4>{.}{\em and generalize easily.}
+    \item<4-> {\em Method of moments} estimators can be consistent and
+      computationally-efficient, but more data. 
+         \uncover<6->{\bf Thus far, applicable to a limited set of models.}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Main contributions}
+
+  \splitcolumn{%
+    \begin{itemize}
+     % \item {\em Before our work}
+     % \begin{itemize}
+     %   \item Gaussian Mixture Models \tikzmark{gmm}
+     %   \item Hidden Markov Models 
+     %   \item Latent Dirichlet Allocation
+     % \end{itemize}
+     \item<2-> Succinct conditions and an algorithm for a {\bf broader model
+       family}. \tikzmark{grid}
+    \item<3-> Efficiently learn models with low-degree but {\bf high-treewidth}.
+    \item<3-> Extends to {\bf log-linear models}.
+    \item<4-> Combine moment estimators with composite
+      likelihood estimators.
+    \end{itemize}
+  }{%
+  \begin{canvas}
+    \point{mark}{(4cm,0)};
+    %\point{gmm}{({pic cs:gmm} -| mark)};
+    %\point{grid}{({pic cs:grid} -| mark)};
+    \point{gmm}{($(mark) + (0,3cm)$)};
+    \point{grid}{($(mark) + (0,-1cm)$)};
+
+%    \node[anchor=south west] (mog) at (gmm) {%
+%      \includegraphics[width=0.45\textwidth,height=3cm,keepaspectratio]{figures/mog.pdf}
+%    };
+
+    \drawgen{($(gmm) + (0,0.0cm)$)};
+    \drawgrid<2->{(grid)};
+  \end{canvas}
+  }
+
+
+%  \cornertext<1->{\cite{AnandkumarGeHsu2012}}
+%
+%  \begin{canvas}
+%    % Tasks.
+%
+%    \node<1->[anchor=west] (diag) at (-3cm, 1cm) {%
+%      \includegraphics[width=0.45\textwidth,height=3cm,keepaspectratio]{figures/mog.pdf}
+%    };
+%    %\drawgen{(-3cm,1cm)}
+%    \node[below=0.6cm of diag.south] {Before};
+%
+%    % Highlight
+%    \draw<2>[scale=0.8,fill=green,opacity=0.4,dashed] (1cm,2.5cm) rectangle (6.5cm,-2.5cm);
+%      \drawgrid{(3cm,1cm)}
+%      \node[below=0.1cm of h4.south] {After};
+%  \end{canvas}
+
+\end{frame}
+
+% \begin{frame}
+%   \frametitle{Related Work}
+%   \begin{itemize}
+%     \item<1-> Method of Moments [Pearson, 1894]
+%     \item<2-> Observable operators
+%     \begin{itemize}
+%       \item Control Theory [Ljung, 1987]
+%       \item Observable operator models [Jaeger, 2000; {\small{Littman/Sutton/Singh, 2004}}]
+%       \item Hidden Markov models [Hsu/Kakade/Zhang, 2009]
+%       \item Low-treewidth graphs [Parikh et al., 2012]
+%       \item Weighted finite state automata [Balle \& Mohri, 2012]
+%     \end{itemize}
+%      \item<3-> Parameter Estimation
+%   \begin{itemize}
+%     \item Mixture of Gaussians [Kalai/Moitra/Valiant, 2010]
+%     \item \alert{Mixture models, HMMs [Anandkumar/Hsu/Kakade, 2012]}
+%     \item Latent Dirichlet Allocation [Anandkumar/Hsu/Kakade, 2012]
+%     \item Stochastic block models [Anandkumar/Ge/Hsu/Kakade, 2012]
+%     \item Linear Bayesian networks [Anandkumar/Hsu/Javanmard/Kakade, 2012]
+%   \end{itemize}
+%   \end{itemize}
+% \end{frame}
+
+\section{Three-view Mixture Models}
+
+\begin{frame}
+  \frametitle{Three-view Mixture Models}
+  \cornertext<1->{\cite{AnandkumarGeHsu2012}}
+  \begin{canvas}
+    % The model
+    \point{mark}{(1cm,0)};
+    \point{start}{(1cm,1cm)}; %{pic cs:gen} -| mark)};
+    \drawgen<1->{($(start) + (-4cm,1cm)$)};
+    %\node[anchor=west] (diag1) at ($(start)$) {%
+    %  \includegraphics[width=0.45\textwidth,height=2cm,keepaspectratio]{figures/gen.png}
+    %};
+    \node<1->[anchor=west] (diag) at ($(start) + (0cm,0.0cm)$) {%
+      \includegraphics[width=0.45\textwidth,height=3cm,keepaspectratio]{figures/mog.pdf}
+    };
+
+    \node<6-> (bottleneck) at ($(x2.south) - (0,0.4cm)$) {\textmb{\bf Bottleneck}};
+
+    \uncover<2>{
+    \vectorfactorization{(-3cm,-2cm)}
+    }
+    \uncover<3>{
+    \matrixfactorization{(-3cm,-2cm)}
+    }
+
+
+    \node<5-> (tf) at ($(t3.north) + (-1cm,0.5cm)$) {Tensor eigen-decomposition};
+
+    \uncover<4->{
+    \tensorfactorization{(-3cm,-2cm)}
+    }
+
+  \end{canvas}
+\end{frame}
+
+\begin{frame}
+  \frametitle{}
+
+  \begin{canvas}
+    % Tasks.
+    \drawgen{(-3cm,1cm)}
+    \node[below=0.1cm of x2.south] {Bottlenecked};
+
+    % Highlight
+    \draw<2>[scale=0.8,fill=green,opacity=0.4,dashed] (1cm,3.0cm) rectangle (6.5cm,-3.0cm);
+      \drawgrid{(3cm,1cm)}
+      \node[below=0.8cm of h4.south] {Uniformly bottlenecked};
+
+  \end{canvas}
+
+\end{frame}
+
+\section{Uniformly Bottlenecked Models}
+% Example 
+% General algorithm
+% Conditions
+% Efficiency 1: EM (+diagram).
+
+\section{Log-linear models}
+% Convergence in the limit.
+% Pseudo-likelihood and optimizations.
+
+\section{Conclusions}
+
+\begin{frame}
+  \frametitle{Conclusions}
+  \begin{itemize}
+      \item Uniformly bottlenecked models
+      \item Scales with the size of each clique, not the tree-width
+      \item Solving bottlenecks breaks problem into convex pieces; can be solved more accurately
+      \item The marginals make the log-linear recovery problem convex.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{}
+    Thank you!
+\end{frame}
+
+\end{document}
+

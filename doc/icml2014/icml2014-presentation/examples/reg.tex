@@ -1,0 +1,37 @@
+\documentclass[xcolor={svgnames}]{beamer}
+
+\usetheme{boxes}
+\useoutertheme{infolines}
+
+\usepackage{graphicx}
+\usepackage{lmodern}
+\usepackage{calc}
+
+\usepackage{soul}
+
+\usepackage{amsmath,amsthm,amssymb}   
+
+\usepackage{tikz}
+\usepackage[debug]{scabby}
+\usepackage[customcolors]{hf-tikz}
+
+\usepackage{mathtools}
+
+\input{macros}
+\input{spectral-macros}
+\input{diagrams}
+
+% these will be used later in the title page
+\begin{document}
+
+\begin{frame}
+  \begin{canvas}
+    \regressionA{(6,2)};
+    \regressionB{(6,0)};
+    \regressionC{(6,-2)};
+
+  \end{canvas}
+
+\end{frame}
+
+\end{document}

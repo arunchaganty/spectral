@@ -1,0 +1,391 @@
+
+\newcommand<>{\drawgen}[1]{%
+  \uncover#2{
+    \point{start-gen}{#1}
+    \node[style=node] (h) at (start-gen) {$h$};
+%    \node[left=0.1cm of h] {$h$};
+    \node[style=obsnode,below=1cm of h] (x2) {$x_2$};
+    \node[style=obsnode,left=0.5cm of x2] (x1) {$x_1$};
+    \node[style=obsnode,right=0.5cm of x2] (x3) {$x_3$};
+    \draw[-latex] (h) -- (x1);
+    \draw[-latex] (h) -- (x2);
+    \draw[-latex] (h) -- (x3);
+  }
+}
+
+\newcommand<>{\drawdisc}[1]{%
+  \uncover#2{
+    \point{start-disc}{#1}
+    \node[style=node] (h) at (start-disc) {};
+    \node[right=0.1cm of h] {$h$};
+
+    \node[style=obsnode,left=0.3cm of h] (x) {};
+    \node[left=0.1cm of x] {$x$};
+
+    \node[style=obsnode,below=1cm of h] (y) {};
+    \node[left=0.1cm of y] {$y$};
+    \draw[-latex] (h) -- (y);
+    \draw[-latex] (x) -- (y);
+  }
+}
+
+\newcommand<>{\drawhmm}[1]  {
+  \uncover#2{
+% Hidden nodes
+   \point{start-hmm}{#1}
+   \node[style=node, scale=0.8] (h1) at (start-hmm) {$h_1$};
+   \node[style=node, scale=0.8, right= 0.5cm of h1] (h2) {$h_2$};
+   \node[style=node, scale=0.8, right= 0.5cm of h2] (h3) {$h_3$};
+   \node[scale=0.8, right= 0.5cm of h3] (h4) {$\ldots$};
+
+   \draw[-latex] (h1) -- (h2);
+   \draw[-latex] (h2) -- (h3);
+   \draw[-latex] (h3) -- (h4);
+
+% Observed nodes
+   \node[style=obsnode, scale=0.7, below=0.3cm of h1] (x1) {$x_1$};
+   \draw[-latex] (h1) -- (x1);
+
+   \node[style=obsnode, scale=0.7, below=0.3cm of h2] (x2) {$x_2$};
+   \draw[-latex] (h2) -- (x2);
+
+   \node[style=obsnode, scale=0.7, below=0.3cm of h3] (x3) {$x_3$};
+   \draw[-latex] (h3) -- (x3);
+   }
+}
+
+\newcommand<>{\drawgrid}[1]  {
+  \uncover#2{
+    \point{start-grid}{#1}
+   \node[style=node, scale=0.8] (h1) at (start-grid) {$h_1$};
+   \node[style=node, scale=0.8, below left= 0.5cm of h1] (h2) {$h_2$};
+   \node[style=node, scale=0.8, below right= 0.5cm of h1] (h3) {$h_3$};
+   \node[style=node, scale=0.8, below right= 0.5cm of h2] (h4) {$h_4$};
+
+   \draw[-latex] (h1) -- (h2);
+   \draw[-latex] (h1) -- (h3);
+   \draw[-latex] (h2) -- (h4);
+   \draw[-latex] (h3) -- (h4);
+
+% Observed nodes
+   \node[style=obsnode, scale=0.7, above left=0.3cm of h1] (x1a) {$x^a_1$};
+   \node[style=obsnode, scale=0.7, above right=0.3cm of h1] (x1b) {$x^b_1$};
+   \draw[-latex] (h1) -- (x1a);
+   \draw[-latex] (h1) -- (x1b);
+
+   \node[style=obsnode, scale=0.7, above left=0.3cm of h2] (x2a) {$x^a_2$};
+   \node[style=obsnode, scale=0.7, below left=0.3cm of h2] (x2b) {$x^b_2$};
+   \draw[-latex] (h2) -- (x2a);
+   \draw[-latex] (h2) -- (x2b);
+
+   \node[style=obsnode, scale=0.7, above right=0.3cm of h3] (x3a) {$x^a_3$};
+   \node[style=obsnode, scale=0.7, below right=0.3cm of h3] (x3b) {$x^b_3$};
+   \draw[-latex] (h3) -- (x3a);
+   \draw[-latex] (h3) -- (x3b);
+    
+   \node[style=obsnode, scale=0.7, below left=0.3cm of  h4] (x4a) {$x^a_4$};
+   \node[style=obsnode, scale=0.7, below right=0.3cm of h4] (x4b) {$x^b_4$};
+
+   \draw[-latex] (h4) -- (x4a);
+   \draw[-latex] (h4) -- (x4b);
+   }
+}
+
+\newcommand<>{\drawtree}[1]  {
+\uncover#2{
+\point{start-tree}{#1}
+
+% Hidden nodes
+   \node[style=node, scale=0.8] (h1) at (0,0) {$h_1$};
+   \node[style=node, scale=0.8] (h2) at (-1.3cm,-1cm) {$h_2$};
+   \node[style=node, scale=0.8] (h3) at (0,   -1cm) {$h_3$};
+   \node[style=node, scale=0.8] (h4) at (1.3cm, -1cm) {$h_4$};
+
+   \draw[-latex] (h1) -- (h2);
+   \draw[-latex] (h1) -- (h3);
+   \draw[-latex] (h1) -- (h4);
+
+% Observed nodes
+  \node[style=obsnode, scale=0.7] (x2a) at (-1.6cm, -2.0cm) {$x^a_2$};
+  \node[style=obsnode, scale=0.7] (x2b) at (-1.0cm, -2.0cm) {$x^b_2$};
+  \draw[-latex] (h2) -- (x2a);
+  \draw[-latex] (h2) -- (x2b);
+
+  \node[style=obsnode, scale=0.7] (x3a) at (-0.3cm, -2.0cm) {$x^a_3$};
+  \node[style=obsnode, scale=0.7] (x3b) at (0.3cm, -2.0cm) {$x^b_3$};
+  \draw[-latex] (h3) -- (x3a);
+  \draw[-latex] (h3) -- (x3b);
+
+  \node[style=obsnode, scale=0.7] (x4a) at (1.0cm, -2.0cm) {$x^a_4$};
+  \node[style=obsnode, scale=0.7] (x4b) at (1.6cm, -2.0cm) {$x^b_4$};
+  \draw[-latex] (h4) -- (x4a);
+  \draw[-latex] (h4) -- (x4b);
+  }
+}
+
+\newcommand{\tensorfactorization}[1]{%
+  \point{start-tf}{#1}
+  \tikzcube{tensoring}{black,fill=white}{($(start-tf) + (0,0,0)$)}{1}{1}{1};
+  \node at ($(tensoring) + (1.0cm,-0.3cm)$) {$=$};
+  \tensorfiber{t1}{fill=blue!70}{($(tensoring) + (2.5cm,0.0cm)$)};
+  \node at ($(t1) + (1.0cm,-0.3cm)$) {$+$};
+  \tensorfiber{t2}{fill=green!70}{($(t1) + (2.5cm,0.0cm)$)};
+  \node at ($(t2) + (1.0cm,-0.3cm)$) {$+ \dots + $};
+  \tensorfiber{t3}{fill=red!70}{($(t2) + (3.0cm,0.0cm)$)};
+
+  \draw [decorate,decoration={brace,amplitude=10pt,raise=4pt,mirror},yshift=0pt] 
+    ($(t1) + (-1cm,-1cm)$) -- ($(t3) + (0.2cm,-1cm)$) node [below,black,midway,yshift=-0.6cm] {$k$};
+}
+
+\newcommand{\matrixfactorization}[1]{%
+    \point{start-mf}{#1}
+    \tikzrect{mat}{black,fill=white}{($(start-mf) + (0,0)$)}{1}{1};
+    \node at ($(mat) + (1.0cm,-0.3cm)$) {$=$};
+    \matfiber{t1}{fill=blue!70}{($(mat) + (2.5cm,0.0cm)$)};
+    \node at ($(t1) + (1.0cm,-0.3cm)$) {$+$};
+    \matfiber{t2}{fill=green!70}{($(t1) + (2.5cm,0.0cm)$)};
+    \node at ($(t2) + (1.0cm,-0.3cm)$) {$+ \dots + $};
+    \matfiber{t3}{fill=red!70}{($(t2) + (3.0cm,0.0cm)$)};
+    \draw [decorate,decoration={brace,amplitude=10pt,raise=4pt,mirror},yshift=0pt] 
+      ($(t1) + (-1cm,-1cm)$) -- ($(t3) + (0.2cm,-1cm)$) node [below,black,midway,yshift=-0.6cm] {$k$};
+}
+
+
+\newcommand{\vectorfactorization}[1]{%
+    \point{start-vf}{#1}
+    \tikzrect{vec}{black,fill=white}{($(start-vf) + (0,0)$)}{0.3}{1};
+    \node at ($(vec) + (1.0cm,-0.3cm)$) {$=$};
+    \tikzrect{t1}{fill=blue!70}{($($(vec) + (2.5cm,0.0cm)$)$)}{0.3}{1};
+    \node at ($(t1) + (1.0cm,-0.3cm)$) {$+$};
+    \tikzrect{t2}{fill=green!70}{($($(t1) + (2.5cm,0.0cm)$)$)}{0.3}{1};
+    \node at ($(t2) + (1.0cm,-0.3cm)$) {$+ \dots + $};
+    \tikzrect{t3}{fill=red!70}{($($(t2) + (3cm,0.0cm)$)$)}{0.3}{1};
+    \draw [decorate,decoration={brace,amplitude=10pt,raise=4pt,mirror},yshift=0pt] 
+      ($(t1) + (-1cm,-1cm)$) -- ($(t3) + (0.2cm,-1cm)$) node [below,black,midway,yshift=-0.6cm] {$k$};
+}
+
+\newcommand{\llhood}[2]{%
+  \begin{axis}[
+      x=1cm,
+      y=3cm,
+      scale only axis,
+      height=8cm,
+      width=4cm,
+      axis lines*=left,
+      xtick=\empty,
+      ytick=\empty,
+      xlabel=parameters,
+      ylabel=$-$log-likelihood
+      ]
+    \addplot[
+        black,
+        thick,
+        smooth,
+        ] file [% Provide data as a table
+          ] {data/llhood.table}
+     node[pos=0.27] (em1) {}
+     node[pos=0.55] (spec) {}
+     node[pos=0.61] (mle) {}
+     node[pos=0.85] (em2) {}
+     node[pos=0.9] (em2-start) {}
+     ;
+
+  \end{axis}
+}
+
+\newcommand{\mog}[2]{%
+    \begin{axis}[
+        xshift=#1,
+        yshift=#2,
+        scale only axis,
+        height=3cm,
+        width=3cm,
+        axis lines*=left,
+        xlabel=$x_1$,
+        ylabel=$x_2$,
+        xtick=\empty,
+        ytick=\empty,
+        mark options={scale=0.2,line width=0}
+        ]
+      \addplot+[
+          smooth,
+          only marks
+          ] file [% Provide data as a table
+            ] {data/mog-0.table};
+      \addplot+[
+          smooth,
+          only marks
+          ] file [% Provide data as a table
+            ] {data/mog-1.table};
+      \addplot+[
+          smooth,
+          only marks
+          ] file [% Provide data as a table
+            ] {data/mog-2.table}
+       ;
+
+    \end{axis}
+}
+
+\newcommand{\innerpdiag}[2]{%
+  \node[scale=2.0] at ($#1 + (-1.3cm,-0.3cm)$) {$\langle$};
+  \node at ($#1!0.5!#2 + (-0.3cm,-0.3cm) $) {$,$};
+  \node[scale=2.0] at ($#2 + (0.8cm,-0.3cm)$) {$\rangle$};
+}
+\newcommand{\innerpdiagv}[2]{%
+  \node[scale=2.0] at ($#1 + (-0.7cm,-0.45cm)$) {$\langle$};
+  \node at ($#1!0.5!#2 + (-0.1cm,-0.45cm) $) {$,$};
+  \node[scale=2.0] at ($#2 + (0.4cm,-0.45cm)$) {$\rangle$};
+}
+\newcommand{\innerpdiagm}[2]{%
+  \node[scale=2.0] at ($#1 + (-1.3cm,-0.45cm)$) {$\langle$};
+  \node at ($#1!0.5!#2 + (-0.5cm,-0.45cm) $) {$,$};
+  \node[scale=2.0] at ($#2 + (0.4cm,-0.45cm)$) {$\rangle$};
+}
+\newcommand{\innerpdiagt}[2]{%
+  \node[scale=2.0] at ($#1 + (-1.3cm,-0.3cm)$) {$\langle$};
+  \node at ($#1!0.5!#2 + (-0.3cm,-0.3cm) $) {$,$};
+  \node[scale=2.0] at ($#2 + (0.7cm,-0.3cm)$) {$\rangle$};
+}
+
+\newcommand{\regressionA}[1]{%
+    \point{start-reg-a}{#1};
+    \point{start-reg-a-A}{(start-reg-a)};
+    \point{start-reg-a-B}{($(start-reg-a) + (1cm,0) $)};
+
+    \tikzrect{A}{black,fill=yellow}{($(start-reg-a-A) + (0,0)$)}{0.3}{1};
+    \tikzrect{B}{black,fill=blue!70}{($(start-reg-a-B) + (0,0)$)}{0.3}{1};
+    \innerpdiagv{(start-reg-a-A)}{(start-reg-a-B)};
+}
+
+\newcommand{\regressionB}[1]{%
+    \point{start-reg-b}{#1};
+    \point{start-reg-b-A}{(start-reg-b)};
+    \point{start-reg-b-B}{($(start-reg-b) + (1.5cm,0) $)};
+
+    \tikzrect{A}{black,fill=yellow}{($(start-reg-b-A) + (0,0)$)}{1}{1};
+    \tikzrect{B}{black,fill=blue!70}{($(start-reg-b-B) + (0,0)$)}{1}{1};
+    \innerpdiagm{(start-reg-b-A)}{(start-reg-b-B)};
+}
+
+\newcommand{\regressionC}[1]{%
+    \point{start-reg-c}{#1};
+    \point{start-reg-c-A}{(start-reg-c)};
+    \point{start-reg-c-B}{($(start-reg-c) + (1.8cm,0) $)};
+
+    \tikzcube{A}{black,fill=yellow}{($(start-reg-c-A) + (0,0)$)}{1}{1}{1};
+    \tikzcube{B}{black,fill=blue!70}{($(start-reg-c-B) + (0,0)$)}{1}{1}{1};
+    \innerpdiagt{(start-reg-c-A)}{(start-reg-c-B)};
+}
+
+\newcommand{\spectralexpertsdiag}{
+  % x, y
+  % Nodes
+  %\node[style=txt,anchor=south west] (data1) at (1cm,1cm) {$\left\{ x, y \right\}_{(x,y) \in \sD}$};
+  \node[style=txt] (data2) at (-4cm,1cm) {$\left\{ x\tp{2}, y^2 \right\}_{(x,y) \in \sD}$};
+  \node[style=txt,below=1cm of data2.center] (data3) {$\left\{ x\tp{3}, y^3 \right\}_{(x,y) \in \sD}$};
+
+  %\node[style=txt,anchor=south west] (m1) at (2cm,1cm) {$\E\left[\beta_h\right]$};
+  \node[style=txt] (m2) at (1cm,1cm) {$M_2$}; %{$\E\left[\beta_h\tp{2}\right]$};
+  \node[style=txt,below=1cm of m2.center] (m3) {$M_3$}; %{$\E\left[\beta_h\tp{3}\right]$};
+
+  \node[below=0.5cm of m2.center] (params-pos) {};
+  \node[style=txt,right=3.0cm of params-pos] (params) {$\pi, B$};
+
+  % Arrows
+  %\draw[-latex] (data1) -- (m1);
+  \draw[-latex] (data2) -- (m2);
+  \draw[-latex] (data3) -- (m3);
+
+  % Bias influence
+  %\draw[-latex,dashed,gray] (m1.east) -- ++(0.1cm,0) -- ++(0,-0.50cm) -- ++(-3.00cm,0) node (bias-1) {} -- ( bias-1 |- m3) -- (m3.west);
+
+  % Mean
+  \draw[-latex] (m2.east) -- ++(0.1cm,0) node (tf-1) {} -- (tf-1 |- params-pos) -- node[above,scale=0.5] {tensor factorization} (params);
+  \draw[-latex] (m3.east) -- ++(0.1cm,0) node (tf-2) {} -- (tf-2 |- params-pos) -- (params);
+
+  % Box for regression
+  \begin{pgfonlayer}{background}
+  %\draw[fill=blue,opacity=0.1,dashed] ($(data1.north east) + (-0.1cm,0.1cm)$) rectangle ($(m3.south west) + (0.1cm,-0.1cm)$);
+  \draw[fill=blue,opacity=0.1,dashed] ($(data2.north east) + (-0.1cm,0.1cm)$) rectangle ($(m3.south west) + (0.1cm,-0.1cm)$);
+  \end{pgfonlayer}
+
+  % tensor factorization
+  \begin{pgfonlayer}{background}
+  \draw[fill=green,opacity=0.1,dashed] ($(m2.north east) + (-0.1cm,0.1cm)$) rectangle ($(params.south west) + (0.1cm,-1.0cm)$);
+  \end{pgfonlayer}
+  \node (params-mid) at ($(params-pos) !.5! (params)$) {};
+  \point{reg-label}{($(data3.east) !.5! (m3.west) + (0, -1.0cm)$)};
+  \point{tf-label}{(params-mid |- reg-label)};
+}
+
+
+\newcommand{\mkmlrplot}[1]{%
+\begin{tikzpicture}
+\begin{axis}[ 
+    height=5cm, width=5cm, 
+    axis lines*=left, 
+    xlabel=$x$, ylabel=$y$, 
+    xtick=\empty, ytick=\empty, 
+    mark options={scale=0.3,line width=0},
+    xmin=-1.2, xmax=1.2,
+    ]
+  #1
+\end{axis}
+\end{tikzpicture}
+}
+
+\newcommand{\mlrfull}{%
+  \only<1>{%
+    \mkmlrplot{%
+       \addplot+[blue,           , mark=none] {0.316 + -0.862*x};
+       \addplot+[green,          , mark=none] {-0.715 + -0.268*x};
+       \addplot+[red,            , mark=none] {-1.076 + 0.595*x};
+     }
+  }
+  \only<2>{%
+    \mkmlrplot{%
+       \addplot+[blue,                 mark=none] {0.316 + -0.862*x};
+       \addplot+[green,                mark=none] {-0.715 + -0.268*x};
+       \addplot+[red,  line width=2pt, mark=none] {-1.076 + 0.595*x};
+     }
+  }
+  \only<3>{%
+    \mkmlrplot{%
+       \addplot+[blue,                 mark=none] {0.316 + -0.862*x};
+       \addplot+[green,                mark=none] {-0.715 + -0.268*x};
+       \addplot+[red,  line width=2pt, mark=none] {-1.076 + 0.595*x};
+       \addplot[smooth, black, only marks] table {data/mlr-1.table};
+     }
+  }
+  \only<4>{%
+    \mkmlrplot{%
+       \addplot+[blue, line width=2pt, mark=none] {0.316 + -0.862*x};
+       \addplot+[green,                mark=none] {-0.715 + -0.268*x};
+       \addplot+[red,                  mark=none] {-1.076 + 0.595*x};
+       \addplot[smooth, black, only marks] table {data/mlr-1.table};
+     }
+  }
+  \only<5>{%
+    \mkmlrplot{%
+       \addplot+[blue, line width=2pt, mark=none] {0.316 + -0.862*x};
+       \addplot+[green,                mark=none] {-0.715 + -0.268*x};
+       \addplot+[red,                  mark=none] {-1.076 + 0.595*x};
+       \addplot[smooth, black, only marks] table {data/mlr-2.table};
+     }
+  }
+  \only<6>{%
+    \mkmlrplot{%
+       \addplot[smooth, black, only marks] table {data/mlr.table};
+       \addplot+[blue, line width=2pt, mark=none] {0.316 + -0.862*x};
+       \addplot+[green,line width=2pt, mark=none] {-0.715 + -0.268*x};
+       \addplot+[red,  line width=2pt, mark=none] {-1.076 + 0.595*x};
+     }
+  }
+  \only<7>{%
+    \mkmlrplot{%
+       \addplot[smooth, black, only marks] table {data/mlr.table};
+     }
+  }
+}
+

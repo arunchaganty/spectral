@@ -1,0 +1,24 @@
+  \begin{axis}[
+      axis lines*=left,
+      xlabel=$\theta$,
+      ylabel=$-\log p_{\theta}(x)$
+      ]
+    \addplot[
+        black,
+        thick,
+        smooth,
+        ] file [% Provide data as a table
+          ] {llhood.table}
+     node[pos=0.27] (em1) {}
+     node[pos=0.5] (spec) {}
+     node[pos=0.61] (mle) {}
+     node[pos=0.85] (em2) {}
+     ;
+
+  \end{axis}
+  %\point{em1}{(em1)}
+  %\point{mle}{(mle)}
+  %\point{em2}{(em2)}
+  %\point{spec}{(spec)}
+
+
