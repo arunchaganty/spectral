@@ -1,0 +1,129 @@
+\subsection{\lemmaref{mom-pw-variance}}
+\label{app:pw-proof}
+
+In \sectionref{piecewise}, we compare the asymptotic variance
+  $\Sigma^\ml_\sC$ of the composite likelihood estimator for a clique
+  $\sC$, with that of the pseudo-inverse estimator, $\Sigma^\mom_\sC$. 
+In this part, we will derive the asymptotic variance of the composite
+  likelihood estimator.
+
+Recall, that in \sectionref{piecewise} we reparameterized the
+constrained estimators $Z_\sC \in \Delta_{k^m-1}$ with $\tilde Z_\sC \in
+[0,1]^{k^m}$. We used the vectorized forms of the marginal distribution $M_\sV
+\in \Re^{d^m}$, the parameters $Z_\sC \in \Re^{k^m}$, $\tilde Z_\sC \in \Re^{k^m-1}$
+and the matrix form of the conditional moments, $\mOppAll \in \Re^{d^m \times k^m}$, to represent the marginal distribution as
+\begin{align*}
+  M_\sV &= \mOppTAll \tilde Z_\sC + \mOppAll_{\vk},
+\end{align*}
+where $\mOppTAll \eqdef (\mOppAll_{\neg \vk}
+- \mOppAll_{\vk}\ones^\top)$, $\mOppAll_{\neg \vk} \in \Re^{d^m \times
+k^m - 1}$ matrix containing the first $k^m-1$ columns of $\mOppAll$,
+$\mOppAll_\vk \in \Re^{d^m}$ is the last column.
+
+\begin{proof}[Proof for Lemma 4]
+  We proceed using the delta method. First, let us look at the
+  asymptotic variance of the pseudo-inverse estimator. With the
+  reparameterization $\tilde Z_\sC$, we get,
+  \begin{align*}
+    M_\sV &= \mOppTAll \tilde Z_\sC + \mOppAll_\vk \\
+    \tilde Z_\sC &= \mOppTAlli (M_\sV - \mOppAll_\vk).
+  \end{align*}
+  As this is just a linear transformation on $M_\sV$, we get,
+  \begin{align*}
+      \Sigmamom_{\sC} &= \mOppTAlli \Sigma_\sV \mOppTAllit,
+  \end{align*}
+  where $\Sigma_\sV$ is the variance of the multinomial distribution
+  described by $M_\sV$; $\Sigma_\sV = D_\sV - M_\sV M_\sV^\top$, where
+  we have used $D_\sV \eqdef \diag(M_\sV)$ as before.
+
+  Now, let us look at the variance of the piecewise estimator.  The
+  objective, \equationref{piecewise-obj} can be written in terms of
+  $\tilde Z_\sC$ and $\mOppTAll$ as,
+  \begin{align*}
+    \sL_\ml &= \frac{1}{|\sD|} \sum_{\vx \in \sD} \ell(\vx) \\
+    \ell(\vx) &= \log(M_\sV[\vx]) \\
+              &= \log(\tilde Z_\sC\ \mOppTAll[\vx] + \mOppAll_{\vk}[\vx]).
+  \end{align*}
+
+Using the delta-method \cite{vaart98asymptotic} we have that the asymptotic distribution of 
+  $\widehat{{\tilde Z}}_\sC = \argmax_{\tilde Z_\sC \in [0,1]^{k^m-1}} \E[\ell(\vx)]$ is,
+  \begin{align*}
+    \sqrt{n}(\widehat{\tilde{Z}}_{\sC} - \tilde{Z}_{\sC}) 
+      &\convind \sN( 0, \E[\grad^2 \ell^{-1}] \Var[\grad \ell] \E[\grad^2 \ell^{-1}]).
+  \end{align*}
+
+Taking the first derivative,
+\begin{align}
+  \grad_{\tilde Z_\sC} \ell(\vx)
+  &= \frac{\mOppTAll[\vx]}{\mH_\sC(\mOppAll[\vx]) } \nonumber \\ 
+  &= \mOppTAll \diag(M_{\sV})^{-1} e_\vx, \label{eqn:lhood-grad}
+\end{align}
+where $e_\vx$ is a one-hot vector and $M_\sV$ is the marginal
+distribution of the observed data at the true parameters.
+
+Taking the second derivative,
+\begin{align}
+  \grad^2_{\tilde \mH_\sC} \ell(\vx)
+  &= - \frac{\mOppTAll[\vx] \mOppTAllt[\vx]}{(\mH_\sC(\mOppAll[\vx]))^2} \nonumber \\
+  &= - \mOppTAll \diag(M_{\sV})^{-1} e_\vx e_\vx^\top  \diag(M_{\sV})^{-1} \mOppTAllt. \label{eqn:lhood-hess}%
+\end{align}
+
+From \equationref{lhood-grad} and \equationref{lhood-hess}, we get
+  \begin{align*}
+    \Var [\grad \ell(\vx)] &= \mOppTAll \diag(M_\sV)^{-1} \diag(\Sigma_\sV) \diag(M_\sV)^{-1} \mOppTAllt \\
+    \E[\grad^2 \ell(\vx)] &= -\mOppTAll \diag(M_\sV)^{-1} \diag(\Sigma_\sV) \diag(M_\sV)^{-1} \mOppTAllt.
+  \end{align*}
+As expected, $\E[\grad^2 \ell(\vx)] = -\Var [\grad \ell(\vx)]$ because $\widehat{\tilde Z_\sC}$ is a maximum likelihood estimator. 
+Finally, noting that $\diag(\Sigma_\sV) = \diag(D_\sV - M_\sV
+M_\sV^\top) = D_\sV (I - D_\sV)$, we get,
+\begin{align*}
+    \Sigmaml_{\sC} 
+      &= \E[\grad^2 \ell(\vx)]^{-1} \Var [\grad \ell(\vx)] \E[\grad^2 \ell(\vx)]^{-1} \\
+      &= \Var[\grad \ell(\vx)]^{-1} \\
+      &= \mOppTAllit \diag(M_\sV) \diag(\Sigma_\sV)^{-1} \diag(M_\sV) \mOppTAlli \\
+      &= \mOppTAllit D_\sV (D_\sV)(I-D_\sV)^{-1} D_\sV \mOppTAlli \\
+      &= \mOppTAllit D_\sV (I - D_\sV)^{-1} \mOppTAlli.
+\end{align*}
+Note that given our assumptions, $\ones \succ M_\sV \succ \zeros$. Thus
+the asymptotic variance is finite, and our estimator is consistent as
+well.
+
+% Note that by the definition of $\tilde Z_\sC$, we have the covariance
+% between the first $k^m - 1$ elements of $Z_\sC$. 
+% We now need to include the covariance with the last element,
+%   $Z_\sC[\vk]$. 
+% 
+% It is easy to verify that for a vector $\alpha \in \Delta_{k-1}$, where
+%   $\alpha_k = \sum_{i=1}^{k-1} \alpha_i$, the covariance between
+%   $\alpha_i$ for $1 \le i \le k-1$ and $\alpha_k$ and that the variance
+%   of $\alpha_k$ is,
+% \begin{align*}
+%     \Sigma_{\alpha} &= 
+%     \begin{bmatrix}
+%     \Sigma_{\tilde \alpha} & \Sigma_{\tilde \alpha} \ones \\
+%     \ones^\top \Sigma_{\tilde \alpha} & \ones^\top \Sigma_{\tilde \alpha} \ones
+%     \end{bmatrix}.
+% \end{align*}
+%\begin{align*}
+%  \Cov[ \alpha_i, \alpha_k ] 
+%    &= \E[ \alpha_i \alpha_k ] - \E[ \alpha_i ]\E[ \alpha_k ] 
+%    &&= - \sum_{j=1}^{k-1} \Sigma_{ij} \\
+%  \Var[ \alpha_k ] 
+%    &= \E[ \alpha_k \alpha_k ] - \E[ \alpha_k ]^2 
+%    &&= \sum_{i=1}^{k-1} \sum_{j=1}^{k-1} \Sigma_{ij}.
+%\end{align*}
+
+%Thus, the asymptotic variance of $Z_\sC$ is,
+%\begin{align*}
+%    \Sigma_{Z_\sC} &= 
+%    \begin{bmatrix}
+%    \Sigma_{\tilde Z_\sC} & \Sigma_{\tilde Z_\sC} \ones \\
+%    \ones^\top \Sigma_{\tilde Z_\sC} & \ones^\top \Sigma_{\tilde Z_\sC} \ones
+%    \end{bmatrix}.
+%\end{align*}
+
+%\todo{How do we compare $\Sigma^\mom$ with this? I need to compute the variance of projecting $\mom$}
+%However, this matrix singular (the determinant is $0$).
+
+\end{proof}
+

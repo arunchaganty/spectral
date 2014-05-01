@@ -1,0 +1,143 @@
+\subsection{Recovering conditional moments}
+\label{app:assumption-proof}
+
+% Define up front that we will focus on h, x_1, x_2, x_3
+In step 1 of \LearnMarginals, we used the bottleneck property of a hidden
+  variable $h_i$ to learn conditional moments $\mOpp{v}{i}$ for every
+  view $x_v \in \sV_{h_i}$ using \TensorFactorize. 
+In order to do so, we require that \assumptionref{full-rank} holds, i.e.
+\begin{assumption*}
+  Given a bottleneck $h_1$ with views $x_1, x_2, x_3$, the conditional
+  moments $\mOpp{1}{1}, \mOpp{2}{1}, \mOpp{3}{1}$ have full column rank
+  $k$, and $\pi\oft 1 \succ 0$.
+\end{assumption*}
+
+To interpret this assumption better, we would like find an equivalent
+condition on the model parameters $Z_\sC$ that imply the above condition
+on $\mOpp{v}{i}$. In this section, we will show that
+\assumptionref{full-rank} is actually implied by the following condition
+(\assumptionref{full-rank-plus});
+\begin{assumption*}
+For every clique $\sC \in \sG$ (including ones involving observed
+variables), every mode-unfolding of the marginals $Z_\sC$ has full
+column rank.
+\end{assumption*}
+
+\paragraph{A recursive construction of $\mOpp{v}{i}$}
+
+Without loss of generality, let $i = 1$. We will express the conditional
+distribution $\mOpp{v}{1} \eqdef \Pr(x_v | h_1)$ recursively through the
+parents of $x_v$, its parents, and so on. The approach is analogous to
+message passing, and the key idea is to express the same in the form of
+a tensor multiplication. \figureref{message-proof} outlines the
+procedure.
+
+\begin{figure}
+  \label{fig:message-proof}
+  \caption{A recursive construction of the conditional moments $\mOpp{v}{i}$.}
+\end{figure}
+
+Recall that $x_v$ is the observed variable in consideration; let $h_t$
+be its unique parent. Then, 
+\begin{align*}
+  \mOpp{v}{1} &\eqdef \Pr( x_v \given h_1 )  \\
+              &= \sum_{h_t} \Pr( x_v \given h_t ) \Pr( h_t \given h_1 ) \\
+              &= \mOpp{v}{t} \mYpp{t}{1},
+\end{align*}
+where $\mYpp{i}{j} \eqdef \Pr( h_i \given h_j )$. 
+More generally, for two sets of hidden variables $C \eqdef \{h_{C_1}
+\cdots h_{C_m} \}$ and $C' \eqdef \{h_{C'_1} \cdots h_{C'_m} \}$, 
+define $\mYpp{C}{C'} \eqdef \Pr( h_{C_1} \cdots h_{C_m} \given h_{C'_1}
+\cdots h_{C'_n} )$. 
+With this representation, $\mYpp{C}{C'}$ is a $|C| + |C'|$-th order
+tensor.
+  
+Going forward, we will construct $\mYpp{v}{1}$ recursively.
+Without loss of generality, let $h_1, h_2, \cdots, h_t$ be a topological
+  ordering rooted at $h_1$,
+and let $\Pa(h)$ be the parents of a hidden variable $h$ in
+  this topological ordering.
+Then $\mYpp{t}{1}$ can be expressed as,
+\begin{align*}
+  \mYpp{t}{1} &\eqdef \Pr( h_t \given h_1 )  \\
+  &= \sum_{\vh \in H_{\Pa(h_t)}} \Pr( \Pa(h_t) \given h_1 ) \Pr( h_t \given \Pa(h_t) ) \\
+  &= \mYpp{ \Pa(h_t) }{1} \times_{\Pa(h_t)} \mYpp{t}{\Pa(h_t)},
+\end{align*}
+where $A \times_{C} B$ refers to summation along the indices $C$. We
+refer to the operation $A \times_C B$ as tensor multiplication.
+\appendixref{tensor-multiplication} prooves some key properties of this
+operation. 
+Note that $\mYpp{t}{\Pa(h_t)}$ is the conditional probability $\Pr(h_t
+ | \Pa(h_t))$, which can be easily computed from the hidden marginals
+ $Z_\sC$ that contain $h_t$. 
+We will describe this procedure in further detail soon.
+
+Now, let's further expand $\mYpp{ \Pa(h_t) }{1}$ in terms of {\em its
+  parents}, recursively doing so until we reach $h_1$.
+Let $C$ be an intermediate set of hidden variables. Let $h_c \neq h_1$
+  be some hidden variable in $C$ which we wish to eliminate. 
+Let $C' = C \union \Pa(h_c) \setminus \{h_c\}$ and $\del C = C'
+  \setminus (C \union \{h_1\})$, the variables in the interface between $C$ and $C'$.
+Then,
+\begin{align*}
+  \mYpp{C}{1} &\eqdef \Pr( h_C \given h_1 )  \\
+  &= \sum_{\vh \in H_{\del C}} \Pr( C' \given h_1 ) \Pr( h_c \given \Pa(h_c) ) \\
+  &= \mYpp{ C' }{ 1 } \times_{\del C} \mYpp{c}{\Pa(h_c)},
+\end{align*}
+Finally, for the base case, $\mYpp{1}{1} = \ones$.
+This procedure is algorithmically described in \algorithmref{Y}.
+
+\begin{algorithm}
+  \caption{$\mYpp{C}{1}$}
+  \label{algo:Y}
+  \begin{algorithmic}
+    \REQUIRE The root $h_1$, a set of hidden variables $C$.
+    \ENSURE The hidden moments distribution $\mYpp{C}{1}$.
+    \IF{ $C = \{h_1\}$ }
+      \STATE $\mYpp{1}{1} = \ones$.
+    \ELSE
+      \STATE Let $h_c \neq h_1$ be some hidden variable in $C$.
+      \STATE Let $C' = C \union \Pa(h_c) \setminus \{h_c\}$.
+      \STATE $\mYpp{C}{1} = \mYpp{C'}{1} \times_{\Pa(h_c)} \mYpp{c}{\Pa(h_c)}$.
+    \ENDIF
+  \end{algorithmic}
+\end{algorithm}
+
+\paragraph{Constructing $\mYpp{c}{\Pa(h_c)}$}
+
+Note that in the process of the algorithm, $\mYpp{t}{1}$ is expressed
+entirely as tensor multiplications with terms of the form
+$\mYpp{c}{\Pa(h_c)}$ for some hidden variable $h_c$.  Let's finally
+derive a concrete expression for $\mYpp{c}{\Pa(h_c)}$ from the
+parameters, the hidden marginals $Z_\sC$.
+
+Without loss of generality, let $\sC \eqdef \{c\} \union P$ be a clique
+  in the graph $\sG$.
+If instead $\sC \subseteq \sC_1 \union \sC_2$ for some $\sC_1, \sC_2 \in
+  \sG$, we can simply construct $Z_{\sC}$ from the union of $\sC_1$ and
+  $\sC_2$,
+\begin{align*}
+  Z_\sC &= Z_{\sC_1} \times_{\del \sC} Z_{\sC_2},
+\end{align*}
+where $\del \sC = (\sC_1 \union \sC_2) \setminus \sC$.
+
+Proceeding,
+\begin{align*}
+\mYpp{c}{\Pa(h_c)} 
+  &\eqdef \Pr(h_c \given \Pa(h_c)) \\
+  &= \frac{\Pr(h_c, \Pa(h_c))}{\Pr(\Pa(h_c))} \\
+  &= Z_\sC \diag{Z_\sC(\ones, \cdot, \ldots, \cdot)}^{-1}.
+\end{align*}
+
+\begin{lemma}[Sufficiency of \assumptionref{full-rank-plus}]
+  \label{lem:full-rank-suff}
+  Given that \assumptionref{full-rank-plus} holds, then for any hidden
+  variable $h_1$ and observed variable $x_v$, $\mPi{1} \succ 0$ and
+  $\mOpp{v}{i}$ has full column rank.
+\end{lemma}
+\begin{proof}
+  The important statement that needs to be made is how $\sigma_k(Y)$
+  relates to its parents.
+\end{proof}
+
+
