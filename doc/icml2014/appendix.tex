@@ -5,52 +5,47 @@ In the interest of space, we have omitted some proofs from
 the main contents of the paper. 
 We present their proofs in detail below.
 
-\subsection{\lemmaref{pw-variance}}
-\label{app:pw-variance-proof}
+\subsection{\lemmaref{mom-pw-variance}}
+\label{app:mon-pw-variance-proof}
 
 In \sectionref{piecewise}, we compare the asymptotic variance
   $\Sigma^\ml_\sC$ of the composite likelihood estimator for a clique
-  $\sC$, with that of the pseudo-inverse estimator $\Sigma^\mom_\sC$. 
+  $\sC$, with that of the pseudo-inverse estimator, $\Sigma^\mom_\sC$. 
 In this part, we will derive the asymptotic variance of the composite
   likelihood estimator.
 
-Note that $\hat Z_\sC$ is constrained to lie on the simplex
-$\Delta_{k^m-1}$; before we proceed, to handle this constraint, we
-reparameterize our problem in terms of the $\tilde Z_\sC \in
-[0,1]^{k^m-1}$. 
-Let $\vk = (k, \cdots, k)$ be a $m$-dimensional vector of all $k$s. We
-write $Z_\sC$ to be,
+Recall, that in \sectionref{piecewise} we reparameterized the
+constrained estimators $Z_\sC \in \Delta_{k^m-1}$ with $\tilde Z_\sC \in
+[0,1]^{k^m}$. We used the vectorized forms of the marginal distribution $M_\sV
+\in \Re^{d^m}$, the parameters $Z_\sC \in \Re^{k^m}$, $\tilde Z_\sC \in \Re^{k^m-1}$
+and the matrix form of the conditional moments, $\mOppAll \in \Re^{d^m \times k^m}$, to represent the marginal distribution as
 \begin{align*}
-  Z_\sC[\vi] &= \left\{
-    \begin{array}{ll}
-      1 - \sum_{\vi' \prec \vk} \tilde Z_\sC[\vi'] & \vi = \vk \\
-      \tilde Z_\sC[\vi] & \text{otherwise.}
-      \end{array}
-      \right.
+  M_\sV &= \mOppTAll \tilde Z_\sC + \mOppAll_{\vk},
 \end{align*}
+where $\mOppTAll \eqdef (\mOppAll_{\neg \vk}
+- \mOppAll_{\vk}\ones^\top)$, $\mOppAll_{\neg \vk} \in \Re^{d^m \times
+k^m - 1}$ matrix containing the first $k^m-1$ columns of $\mOppAll$,
+$\mOppAll_\vk \in \Re^{d^m}$ is the last column.
 
-Now, abusing notation slightly by using the vectorized forms of $M_\sV
-\in \Re^{d^m}$, $Z_\sC \in \Re^{k^m}$, $\tilde Z_\sC \in \Re^{k^m-1}$
-and the matrix form of $\mOppAll \in \Re^{d^m \times k^m}$, the marginal
-distribution can be expressed as follows,
-\begin{align*}
-  M_\sV &= Z_\sC( \mOpp{v_1}{i_1}, \cdots, \mOpp{v_m}{i_m} ) \\
-        &= \mOppAll Z_\sC \\
-        &= \mOppAll_{\neg \vk} \tilde Z_\sC + \mOppAll_{\vk} (1 - \ones^\top \tilde Z_\sC) \\
-        &= (\mOppAll_{\neg \vk} -  \mOppAll_{\vk}\ones^\top) \tilde Z_\sC + \mOppAll_{\vk} \\
-        &= \mOppTAll \tilde Z_\sC + \mOppAll_{\vk},
-\end{align*}
-where $\mOppAll_{\neg \vk} \in \Re^{d^m \times k^m - 1}$ matrix containing the
-first $k^m-1$ columns of $\mOppAll$, $\mOppAll_\vk \in \Re^{d^m}$ is the
-last column, and $\mOppTAll \eqdef (\mOppAll_{\neg \vk}
-- \mOppAll_{\vk}\ones^\top)$.
-
-We are now ready to study the asymptotic properties of $Z_\sC$ through
-$\tilde Z_\sC$,
 \begin{proof}[Proof for Lemma 4]
-  We proceed using the delta method. The objective,
-  \equationref{piecewise-obj} can be written in terms of $\tilde Z_\sC$
-  and $\mOppTAll$ (defined above) as,
+  We proceed using the delta method. First, let us look at the
+  asymptotic variance of the pseudo-inverse estimator. With the
+  reparameterization $\tilde Z_\sC$, we get,
+  \begin{align*}
+    M_\sV &= \mOppTAll \tilde Z_\sC + \mOppAll_\vk \\
+    \tilde Z_\sC &= \mOppTAlli (M_\sV - \mOppAll_\vk).
+  \end{align*}
+  As this is just a linear transformation on $M_\sV$, we get,
+  \begin{align*}
+      \Sigmamom_{\sC} &= \mOppTAlli \Sigma_\sV \mOppTAllit,
+  \end{align*}
+  where $\Sigma_\sV$ is the variance of the multinomial distribution
+  described by $M_\sV$; $\Sigma_\sV = D_\sV - M_\sV M_\sV^\top$, where
+  we have used $D_\sV \eqdef \diag(M_\sV)$ as before.
+
+  Now, let us look at the variance of the piecewise estimator.  The
+  objective, \equationref{piecewise-obj} can be written in terms of
+  $\tilde Z_\sC$ and $\mOppTAll$ as,
   \begin{align*}
     \sL_\ml &= \frac{1}{|\sD|} \sum_{\vx \in \sD} \ell(\vx) \\
     \ell(\vx) &= \log(M_\sV[\vx]) \\
@@ -86,18 +81,16 @@ From \equationref{lhood-grad} and \equationref{lhood-hess}, we get
     \E[\grad^2 \ell(\vx)] &= -\mOppTAll \diag(M_\sV)^{-1} \diag(\Sigma_\sV) \diag(M_\sV)^{-1} \mOppTAllt.
   \end{align*}
 As expected, $\E[\grad^2 \ell(\vx)] = -\Var [\grad \ell(\vx)]$ because $\widehat{\tilde Z_\sC}$ is a maximum likelihood estimator. 
-Finally, noting that $\Sigma_\sV = \diag(M_\sV) - M_\sV M_\sV^\top$ for
-  a multinomial distribution, we get,
+Finally, noting that $\diag(\Sigma_\sV) = \diag(D_\sV - M_\sV
+M_\sV^\top) = D_\sV (I - D_\sV)$, we get,
 \begin{align*}
-    \Sigma_{\tilde Z_\sC} 
+    \Sigmaml_{\sC} 
       &= \E[\grad^2 \ell(\vx)]^{-1} \Var [\grad \ell(\vx)] \E[\grad^2 \ell(\vx)]^{-1} \\
       &= \Var[\grad \ell(\vx)]^{-1} \\
       &= \mOppTAllit \diag(M_\sV) \diag(\Sigma_\sV)^{-1} \diag(M_\sV) \mOppTAlli \\
-      &= \mOppTAllit \diag(M_\sV) (\diag(M_\sV) - \diag(M_\sV)^2)^{-1} \diag(M_\sV) \mOppTAlli \\
-      &= \mOppTAllit \diag(M_\sV) (I - \diag(M_\sV))^{-1} \mOppTAlli \\
-      &= \mOppTAllit \tilde D_\sV \mOppTAlli,
+      &= \mOppTAllit D_\sV (D_\sV)(I-D_\sV)^{-1} D_\sV \mOppTAlli \\
+      &= \mOppTAllit D_\sV (I - D_\sV)^{-1} \mOppTAlli.
 \end{align*}
-where $\tilde D_\sV = \diag( \frac{M_\sV[\vx]}{1 - M_\sV[\vx]} )$.
 Note that given our assumptions, $\ones \succ M_\sV \succ \zeros$. Thus
 the asymptotic variance is finite, and our estimator is consistent as
 well.
@@ -148,48 +141,39 @@ In step 1 of \LearnMarginals, we used the bottleneck property of a hidden
   variable $h_i$ to learn conditional moments $\mOpp{v}{i}$ for every
   view $x_v \in \sV_{h_i}$ using \TensorFactorize. 
 In order to do so, we require that \assumptionref{full-rank} holds, i.e.
-\begin{assumption*}[1]
+\begin{assumption*}
   Given a bottleneck $h_1$ with views $x_1, x_2, x_3$, the conditional
   moments $\mOpp{1}{1}, \mOpp{2}{1}, \mOpp{3}{1}$ have full column rank
   $k$, and $\pi\oft 1 \succ 0$.
 \end{assumption*}
 
-In this section, we will show that the following condition
-  (\assumptionref{full-rank-plus}) on the clique marginals suffices;
-\begin{assumption*}[2]
-For every clique $\sC \in \sG$ (including ones involving observed variables),
-  every $\Re^{k \times k}$ slice of the marginals $Z_\sC$ has full column
-  rank $k$ constructed by summing out the remaining indices.
+To interpret this assumption better, we would like find an equivalent
+condition on the model parameters $Z_\sC$ that imply the above condition
+on $\mOpp{v}{i}$. In this section, we will show that
+\assumptionref{full-rank} is actually implied by the following condition
+(\assumptionref{full-rank-plus});
+\begin{assumption*}
+For every clique $\sC \in \sG$ (including ones involving observed
+variables), every mode-unfolding of the marginals $Z_\sC$ has full
+column rank.
 \end{assumption*}
 
-%First, let us define some additional notation.
-%
-%\paragraph{Notation}
-%
-%Let $\sC = \{h_1, \cdots, h_m\}$ be a hidden clique in the graph, and
-%  let $Z_\sC \eqdef \Pr(h_1, \cdots, h_m)$ be the tensor representing the
-%  joint distribution. 
-%We can obtain a marginal distribution for a sub-set $B \subset \sC$ by
-%  marginalizing out the remaining variables. 
-%Without loss of generality, let $|B| = m'$ and let the first $m'$
-%  indices of $Z_\sC$ correspond to the $h_i \in B$; we can represent the
-%  marginalization operation with linear algebra as $Z_B = Z_\sC(
-%  \underbrace{I, \cdots, I}_{m' \text{times}}, \underbrace{\ones, \cdots, \ones}_{m - m'
-%  \text{times}} )$. 
-%
-%Next, for a $m$-th order tensor $Z_\sC$ and $B \subset \sC$ with $m' \eqdef |B'|$, define the {\em
-%partial diagonal} $\diag_{B}(Z_\sC)$ to be the $m - m' + 1$-th order tensor with
-%a diagonal along the elements of $B$; $\diag_{B}(Z_\sC)[i, 
-%i_{m'+1, \ldots, m}] = Z_\sC[\underbrace{i, \ldots, i}_{m' \text{times}}, i_{m'+1}, \ldots, m]$.
-%
-%
-%\paragraph{Relation to clique marginals}
+\paragraph{A recursive construction of $\mOpp{v}{i}$}
 
-Let us describe $\mOpp{v}{1}$ in terms of the parameters of the model,
-  namely the clique marginals $Z_\sC$.
-Without loss of generality, let $x_v$ be the observed variable in
-  consideration, and let $h_t$ be the unique parent of $x_v$.
-Then, 
+Without loss of generality, let $i = 1$. We will express the conditional
+distribution $\mOpp{v}{1} \eqdef \Pr(x_v | h_1)$ recursively through the
+parents of $x_v$, its parents, and so on. The approach is analogous to
+message passing, and the key idea is to express the same in the form of
+a tensor multiplication. \figureref{message-proof} outlines the
+procedure.
+
+\begin{figure}
+  \label{fig:message-proof}
+  \caption{A recursive construction of the conditional moments $\mOpp{v}{i}$.}
+\end{figure}
+
+Recall that $x_v$ is the observed variable in consideration; let $h_t$
+be its unique parent. Then, 
 \begin{align*}
   \mOpp{v}{1} &\eqdef \Pr( x_v \given h_1 )  \\
               &= \sum_{h_t} \Pr( x_v \given h_t ) \Pr( h_t \given h_1 ) \\
@@ -203,29 +187,36 @@ define $\mYpp{C}{C'} \eqdef \Pr( h_{C_1} \cdots h_{C_m} \given h_{C'_1}
 With this representation, $\mYpp{C}{C'}$ is a $|C| + |C'|$-th order
 tensor.
   
-We will now give a recursive construction for $\mYpp{v}{1}$.
+Going forward, we will construct $\mYpp{v}{1}$ recursively.
 Without loss of generality, let $h_1, h_2, \cdots, h_t$ be a topological
   ordering rooted at $h_1$,
 and let $\Pa(h)$ be the parents of a hidden variable $h$ in
   this topological ordering.
-Then $\mYpp{t}{1}$ can be expressed recursively as,
+Then $\mYpp{t}{1}$ can be expressed as,
 \begin{align*}
   \mYpp{t}{1} &\eqdef \Pr( h_t \given h_1 )  \\
-  &= \sum_{\vh} \Pr( \Pa(h_t) \given h_1 ) \Pr( h_t \given \Pa(h_t) ) \\
+  &= \sum_{\vh \in H_{\Pa(h_t)}} \Pr( \Pa(h_t) \given h_1 ) \Pr( h_t \given \Pa(h_t) ) \\
   &= \mYpp{ \Pa(h_t) }{1} \times_{\Pa(h_t)} \mYpp{t}{\Pa(h_t)},
 \end{align*}
-where $A \times_{C} B$ refers to summation along the indices $C$.
+where $A \times_{C} B$ refers to summation along the indices $C$. We
+refer to the operation $A \times_C B$ as tensor multiplication.
+\appendixref{tensor-multiplication} prooves some key properties of this
+operation. 
+Note that $\mYpp{t}{\Pa(h_t)}$ is the conditional probability $\Pr(h_t
+ | \Pa(h_t))$, which can be easily computed from the hidden marginals
+ $Z_\sC$ that contain $h_t$. 
+We will describe this procedure in further detail soon.
 
-We can recursively describe $\mYpp{ \Pa(h_t) }{1}$ in terms of its
-  parents until we reach $h_1$.
+Now, let's further expand $\mYpp{ \Pa(h_t) }{1}$ in terms of {\em its
+  parents}, recursively doing so until we reach $h_1$.
 Let $C$ be an intermediate set of hidden variables. Let $h_c \neq h_1$
-  be some hidden variable in $C$. 
+  be some hidden variable in $C$ which we wish to eliminate. 
 Let $C' = C \union \Pa(h_c) \setminus \{h_c\}$ and $\del C = C'
-  \setminus (C \union \{h_1\})$.
+  \setminus (C \union \{h_1\})$, the variables in the interface between $C$ and $C'$.
 Then,
 \begin{align*}
-  \mYpp{C}{1} &\eqdef \Pr( \vh_C \given h_1 )  \\
-  &= \sum_{\vh_{\del C}} \Pr( C' \given h_1 ) \Pr( h_c \given \Pa(h_c) ) \\
+  \mYpp{C}{1} &\eqdef \Pr( h_C \given h_1 )  \\
+  &= \sum_{\vh \in H_{\del C}} \Pr( C' \given h_1 ) \Pr( h_c \given \Pa(h_c) ) \\
   &= \mYpp{ C' }{ 1 } \times_{\del C} \mYpp{c}{\Pa(h_c)},
 \end{align*}
 Finally, for the base case, $\mYpp{1}{1} = \ones$.
@@ -247,15 +238,25 @@ This procedure is algorithmically described in \algorithmref{Y}.
   \end{algorithmic}
 \end{algorithm}
 
-This recursive definition along with \lemmaref{tensor-multiplication} allows us to to describe the
-singular values of $\mYpp{C}{1}$ in terms of those of $\mYpp{C'}{1}$ and
-$\mYpp{c}{\Pa(h_c)}$. 
+\paragraph{Constructing $\mYpp{c}{\Pa(h_c)}$}
 
+Note that in the process of the algorithm, $\mYpp{t}{1}$ is expressed
+entirely as tensor multiplications with terms of the form
+$\mYpp{c}{\Pa(h_c)}$ for some hidden variable $h_c$.  Let's finally
+derive a concrete expression for $\mYpp{c}{\Pa(h_c)}$ from the
+parameters, the hidden marginals $Z_\sC$.
 
-Without loss of generality, let $\{c\} \union P = \sC$ for
-a particular clique $\sC \in \sG$\footnote{If they are actually composed of two
-cliques $\sC_1, \sC_2$, we can construct $Z_{\sC_1 \union \sC_2} = Z_{\sC_1} \cdot
-Z_{\sC_2}$.}. Then, 
+Without loss of generality, let $\sC \eqdef \{c\} \union P$ be a clique
+  in the graph $\sG$.
+If instead $\sC \subseteq \sC_1 \union \sC_2$ for some $\sC_1, \sC_2 \in
+  \sG$, we can simply construct $Z_{\sC}$ from the union of $\sC_1$ and
+  $\sC_2$,
+\begin{align*}
+  Z_\sC &= Z_{\sC_1} \times_{\del \sC} Z_{\sC_2},
+\end{align*}
+where $\del \sC = (\sC_1 \union \sC_2) \setminus \sC$.
+
+Proceeding,
 \begin{align*}
 \mYpp{c}{\Pa(h_c)} 
   &\eqdef \Pr(h_c \given \Pa(h_c)) \\
@@ -273,6 +274,8 @@ Z_{\sC_2}$.}. Then,
   The important statement that needs to be made is how $\sigma_k(Y)$
   relates to its parents.
 \end{proof}
+
+\section{Tensor Multiplication}
 
 \begin{lemma}[Tensor Multiplication and Singular Values]
   \label{lem:tensor-multiplication}
