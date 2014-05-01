@@ -96,31 +96,53 @@
 \point{start-tree}{#1}
 
 % Hidden nodes
-   \node[style=node, scale=0.8] (h1) at (0,0) {$h_1$};
-   \node[style=node, scale=0.8] (h2) at (-1.3cm,-1cm) {$h_2$};
-   \node[style=node, scale=0.8] (h3) at (0,   -1cm) {$h_3$};
-   \node[style=node, scale=0.8] (h4) at (1.3cm, -1cm) {$h_4$};
+   \node[style=node, scale=0.8] (h1) at ($(start-tree) + (0,0)$) {$h_1$};
+   \node[style=node, scale=0.8] (h2) at ($(start-tree) + (-1.3cm,-1cm)$) {$h_2$};
+   \node[style=node, scale=0.8] (h3) at ($(start-tree) + (0,   -1cm)$) {$h_3$};
+   \node[style=node, scale=0.8] (h4) at ($(start-tree) + (1.3cm, -1cm)$) {$h_4$};
 
    \draw[-latex] (h1) -- (h2);
    \draw[-latex] (h1) -- (h3);
    \draw[-latex] (h1) -- (h4);
 
 % Observed nodes
-  \node[style=obsnode, scale=0.7] (x2a) at (-1.6cm, -2.0cm) {$x^a_2$};
-  \node[style=obsnode, scale=0.7] (x2b) at (-1.0cm, -2.0cm) {$x^b_2$};
+  \node[style=obsnode, scale=0.7] (x2a) at ($(start-tree) + (-1.6cm, -2.0cm)$) {$x^a_2$};
+  \node[style=obsnode, scale=0.7] (x2b) at ($(start-tree) + (-1.0cm, -2.0cm)$) {$x^b_2$};
   \draw[-latex] (h2) -- (x2a);
   \draw[-latex] (h2) -- (x2b);
 
-  \node[style=obsnode, scale=0.7] (x3a) at (-0.3cm, -2.0cm) {$x^a_3$};
-  \node[style=obsnode, scale=0.7] (x3b) at (0.3cm, -2.0cm) {$x^b_3$};
+  \node[style=obsnode, scale=0.7] (x3a) at ($(start-tree) + (-0.3cm, -2.0cm)$) {$x^a_3$};
+  \node[style=obsnode, scale=0.7] (x3b) at ($(start-tree) + (0.3cm, -2.0cm)$) {$x^b_3$};
   \draw[-latex] (h3) -- (x3a);
   \draw[-latex] (h3) -- (x3b);
 
-  \node[style=obsnode, scale=0.7] (x4a) at (1.0cm, -2.0cm) {$x^a_4$};
-  \node[style=obsnode, scale=0.7] (x4b) at (1.6cm, -2.0cm) {$x^b_4$};
+  \node[style=obsnode, scale=0.7] (x4a) at ($(start-tree) + (1.0cm, -2.0cm)$) {$x^a_4$};
+  \node[style=obsnode, scale=0.7] (x4b) at ($(start-tree) + (1.6cm, -2.0cm)$) {$x^b_4$};
   \draw[-latex] (h4) -- (x4a);
   \draw[-latex] (h4) -- (x4b);
   }
+}
+
+\newcommand<>{\drawnoisyor}[1]  {
+\uncover#2{
+\point{start-nor}{#1}
+\node[style=node, scale=0.8] (h1) at ($(start-nor) + (-0.5,0)$) {$h_1$};
+   \node[style=node, scale=0.8] (h2) at ($(start-nor) + (+0.5,0)$) {$h_2$};
+   \node[style=obsnode, scale=0.8] (x1) at ($(start-nor) + (-2.0, -1.0)$) {$x_1$};
+   \node[style=obsnode, scale=0.8] (x2) at ($(start-nor) + (-1.0, -1.0)$) {$x_2$};
+   \node[style=obsnode, scale=0.8] (x3) at ($(start-nor) + (0.0, -1.0) $){$x_3$};
+   \node[style=obsnode, scale=0.8] (x4) at ($(start-nor) + (1.0, -1.0) $){$x_4$};
+   \node[style=obsnode, scale=0.8] (x5) at ($(start-nor) + (2.0, -1.0) $){$x_5$};
+
+   \draw[-latex] (h1) -- (x1);
+   \draw[-latex] (h1) -- (x2);
+   \draw[-latex] (h1) -- (x3);
+
+   \draw[-latex] (h2) -- (x2);
+   \draw[-latex] (h2) -- (x3);
+   \draw[-latex] (h2) -- (x4);
+   \draw[-latex] (h2) -- (x5);
+   }
 }
 
 \newcommand{\tensorfactorization}[1]{%

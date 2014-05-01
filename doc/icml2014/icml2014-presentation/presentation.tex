@@ -22,15 +22,15 @@
 %\usepackage{algorithm,algorithmic}
 
 \usepackage{tikz}
-\usepackage[debug,debugmarks]{scabby}
-%\usepackage{scabby}
+%\usepackage[debug,debugmarks]{scabby}
+\usepackage{scabby}
 
 \usepackage[customcolors]{hf-tikz}
 
 \usepackage{mathtools}
 
 \input{macros}
-\input{spectral-macros}
+%\input{spectral-macros}
 \input{diagrams}
 
 % these will be used later in the title page
@@ -99,8 +99,8 @@
     \node<3->[scale=0.3,circle,fill=black] at (em2) {};
     \node<3-> at ($(em2) + (0.5cm,0)$) {$\mathmr{\textrm{EM}}$};
 
-    \node<3->[scale=0.3,circle,fill=black] at (spec) {};
-    \node<3-> at ($(spec) + (0.5cm,0.3cm)$) {$\mathmg{\textrm{MoM}}$};
+    \node<4->[scale=0.3,circle,fill=black] at (spec) {};
+    \node<4-> at ($(spec) + (0.5cm,0.3cm)$) {$\mathmg{\textrm{MoM}}$};
    % \draw<4->[latex-latex,DarkGreen,line width=1pt] ($(mle) + (-0.8cm,0.8cm)$) -- node[above]{$\mathmg{\epsilon}$} ($(mle) + (+0.8cm,0.8cm)$);
   \end{tikzpicture}
 
@@ -109,7 +109,7 @@
   \begin{itemize}
     \item<1-> Log-likelihood function is non-convex.
     \item<2-> MLE is consistent but intractable.
-    \item<3-> Local methods (EM, gradient descent, etc.) are tractable but inconsistent\alt<3-4>{.}{\em and generalize easily.}
+    \item<3-> Local methods (EM, gradient descent, etc.) are tractable but inconsistent\alt<3-4>{.}{\em~and generalize easily.}
     \item<4-> {\em Method of moments} estimators can be consistent and
       computationally-efficient, but more data. 
          \uncover<6->{\bf Thus far, applicable to a limited set of models.}
@@ -127,8 +127,8 @@
      %   \item Hidden Markov Models 
      %   \item Latent Dirichlet Allocation
      % \end{itemize}
-     \item<2-> Succinct conditions and an algorithm for a {\bf broader model
-       family}. \tikzmark{grid}
+     \item<2-> An algorithm for a {\bf broader model family} with
+       succinct conditions. \tikzmark{grid}
     \item<3-> Efficiently learn models with low-degree but {\bf high-treewidth}.
     \item<3-> Extends to {\bf log-linear models}.
     \item<4-> Combine moment estimators with composite
@@ -248,14 +248,210 @@
 \end{frame}
 
 \section{Uniformly Bottlenecked Models}
-% Example 
-% General algorithm
-% Conditions
+
+\begin{frame}
+  \frametitle{Example: a grid model.}
+  \splitcolumn{%
+    \begin{itemize}
+      \item<2-> Bottleneck! $\Pr(x_i^a | h_i)$.
+      \item<4-> Linear relation! $\Pr(x_1^b) = \Pr(x_1^b | h_1) \mathmg{\Pr(h_1)}$.
+      \item<6-> Linear relation! $\Pr(x_1^b, x_3^a) = \Pr(x_1^b | h_1) \Pr(x_3^b | h_3) \Pr(h_1) \mathmg{\Pr(h_3 | h_1)}$.
+      \item<8-> Linear relation! $\Pr(x_2^b, x_3^b, x_4^b) = \Pr(x_2^b | h_2) \Pr(x_3^b | h_3) \Pr(x_4^b | h_4)$\\
+        $\mathmg{\Pr(h_4 | h_2, h_3)} \Pr(h_2) \Pr(h_3)$.
+      \item<10-> {\bf Solving the bottlenecks has made the problem easy!}
+    \end{itemize}
+  }{%
+  \begin{canvas}
+    \point{mark}{(3cm,0)};
+    \point{start-grid}{(mark)};
+   \node[style=node, scale=0.8] (h1) at (start-grid) {$h_1$};
+   \node[style=node, scale=0.8, below left= 0.5cm of h1] (h2) {$h_2$};
+   \node[style=node, scale=0.8, below right= 0.5cm of h1] (h3) {$h_3$};
+   \node[style=node, scale=0.8, below right= 0.5cm of h2] (h4) {$h_4$};
+
+   \point{pi}{($(h1.north) + (0,0.1cm)$)};
+   \draw[-latex] (h1) -- node[scale=0.7,above] (T1) {} (h2);
+   \draw[-latex] (h1) -- node[scale=0.7,above] (T2) {} (h3);
+   \draw[-latex] (h2) -- (h4);
+   \draw[-latex] (h3) -- (h4);
+   \point{V}{($(h4.north) + (0,0.1cm)$)};
+
+% Observed nodes
+   \node[style=obsnode, scale=0.7, above left=0.3cm of h1] (x1a) {$x^a_1$};
+   \node[style=obsnode, scale=0.7, above right=0.3cm of h1] (x1b) {$x^b_1$};
+   \draw[-latex] (h1) -- (x1a);
+   \draw[-latex] (h1) -- (x1b);
+
+   \node[style=obsnode, scale=0.7, above left=0.3cm of h2] (x2a) {$x^a_2$};
+   \node[style=obsnode, scale=0.7, below left=0.3cm of h2] (x2b) {$x^b_2$};
+   \draw[-latex] (h2) -- node[scale=0.7,above] (O1) {} (x2a);
+   \draw[-latex] (h2) -- node[scale=0.7,below] (O2) {} (x2b);
+
+   \node[style=obsnode, scale=0.7, above right=0.3cm of h3] (x3a) {$x^a_3$};
+   \node[style=obsnode, scale=0.7, below right=0.3cm of h3] (x3b) {$x^b_3$};
+   \draw[-latex] (h3) -- (x3a);
+   \draw[-latex] (h3) -- (x3b);
+    
+   \node[style=obsnode, scale=0.7, below left=0.3cm of  h4] (x4a) {$x^a_4$};
+   \node[style=obsnode, scale=0.7, below right=0.3cm of h4] (x4b) {$x^b_4$};
+
+   \draw[-latex] (h4) -- (x4a);
+   \draw[-latex] (h4) -- (x4b);
+
+   % Story - 
+  \begin{pgfonlayer}{background}
+  \draw<2>[draw=black,fill=green!70,rounded corners,line width=1pt, dotted] 
+                  ($(x2a.north west) + (135:0.3cm)$) -- 
+                  ($(x2b.south west) + (-135:0.3cm)$) -- 
+                  ($(x4a.south east) + (-45:0.3cm)$) -- 
+                  ($(h2.east) + (0:0.3cm)$) -- 
+                  ($(x2a.north east) + (45:0.3cm)$) -- 
+                  cycle;
+  \draw<4>[draw=black,fill=green!70,rounded corners,line width=1pt, dotted] 
+                  ($(x1a.north west) + (135:0.3cm)$) -- 
+                  ($(x1a.north east) + (45:0.3cm)$) -- 
+                  ($(h1.south east) + (-45:0.3cm)$) -- 
+                  ($(h1.south west) + (-135:0.3cm)$) -- 
+                  cycle;
+  \draw<6>[draw=black,fill=green!70,rounded corners,line width=1pt, dotted] 
+                  ($(x1b.north west) + (135:0.3cm)$) -- 
+                  ($(x3a.north east) + (45:0.3cm)$) -- 
+                  ($(h3.south east) + (-45:0.3cm)$) -- 
+                  ($(h1.south west) + (-135:0.3cm)$) -- 
+                  cycle;
+  \draw<8>[draw=black,fill=green!70,rounded corners,line width=1pt, dotted] 
+                  ($(h2.north west) + (135:0.3cm)$) -- 
+                  ($(x2b.south west) + (-135:0.3cm)$) -- 
+                  ($(x4a.south west) + (-135:0.3cm)$) -- 
+                  ($(x4b.south east) + (-45:0.3cm)$) -- 
+                  ($(x3b.north east) + (45:0.3cm)$) -- 
+                  ($(h3.north east) + (45:0.3cm)$) -- 
+                  cycle;
+  \end{pgfonlayer}
+
+   \node<1>[scale=1.0] at (pi) {$\mathmg{\pi}$};
+   \node<1>[scale=1.0] at (T1) {$\mathmg{T}$};
+   \node<1>[scale=1.0] at (T2) {$\mathmg{T}$};
+   \node<1>[scale=1.0] at (V) {$\mathmg{V}$};
+   \node<1>[scale=1.0] at (O1) {$\mathmg{O}$};
+   \node<1>[scale=1.0] at (O2) {$\mathmg{O}$};
+
+   \node<3->[scale=1.0] at (O1) {\textmg{\checkmark}};
+   \node<3->[scale=1.0] at (O2) {\textmg{\checkmark}};
+
+   \node<5->[scale=1.0] at (pi) {\textmg{\checkmark}};
+
+   \node<7->[scale=1.0] at (T1) {\textmg{\checkmark}};
+   \node<7->[scale=1.0] at (T2) {\textmg{\checkmark}};
+
+   \node<9->[scale=1.0] at (V) {\textmg{\checkmark}};
+
+  \end{canvas}
+  }
+\end{frame}
+\begin{frame}
+  \frametitle{Views and Bottlenecks}
+  \begin{itemize}
+    \item<+-> {\bf Key insight:} Easy to learn latent parameters given a view $\Pr(x|h)$. 
+    \item<+-> For any clique, if each hidden variable has a unique
+      view, the distribution of the hidden variables is just a linear equation!
+    \item<+-> {\bf Uniformly bottlenecked}: Every hidden variable has
+      atleast three conditionally independent observed variables.
+      \sidenote{Guarantees unique views.}
+    \item<+-> Algorithm: (a) estimate $\Pr(x|h)$ using bottlenecks, (b)
+      solve a linear equation between $\Pr(h_1,\cdots,h_m)$ and $P(x_1,
+      \cdots, x_m)$.
+    \item<+-> {\bf Assumptions}: For every clique $\Pr(h_1, \cdots, h_m)$,
+      every conditioning $\Pr(h_1, \cdots, h_k | h_{k+1}, \cdots h_m)$
+      is ``full-rank''.
+  \end{itemize}
+  
+\end{frame}
+\begin{frame}
+  \frametitle{More Uniformly Bottlenecked Examples}
+  \begin{canvas}
+    \drawhmm<1->{(-4cm, 2cm)};
+    \node at ($(start-hmm) + (0, 0.6cm)$) {Hidden Markov models};
+    \drawtree<1->{(2cm, 2cm)};
+    \node at ($(start-tree) + (0, 0.6cm)$) {Latent Tree models};
+    \drawnoisyor<3->{(0cm, -2cm)};
+    \node<3-> at ($(start-nor) + (0, 0.7cm)$) {Noisy Or (non-example)};
+
+% \begin{pgfonlayer}{background}
+% \draw<2->[rounded corners,line width=1pt, dotted, black] 
+%                 ($(h2.north east) + (45:0.2cm)$) -- 
+%                 ($(x3.north east) + (45:0.2cm)$) -- 
+%                 ($(x3.south east) + (-45:0.2cm)$) -- 
+%                 ($(x1.south west) + (-135:0.2cm)$) -- 
+%                 ($(x1.north west) + (135:0.2cm)$) -- 
+%                 ($(h2.north west) + (135:0.2cm)$) -- 
+%                 cycle;
+% \end{pgfonlayer}
+% 
+% \begin{pgfonlayer}{background}
+% \draw<2>[rounded corners,line width=1pt, dotted, black] 
+%                 ($(h4.north east) + (45:0.2cm)$) -- 
+%                 ($(x4b.north east) + (45:0.2cm)$) -- 
+%                 ($(x4b.south east) + (-45:0.2cm)$) -- 
+%                 ($(x3b.south west) + (-135:0.2cm)$) -- 
+%                 ($(x3b.north west) + (135:0.2cm)$) -- 
+%                 ($(h4.north west) + (135:0.2cm)$) -- 
+%                 cycle;
+% \end{pgfonlayer}
+
+
+  \end{canvas}
+
+\end{frame}
+
 % Efficiency 1: EM (+diagram).
+\section{Combining with likelihood estimators}
+\begin{frame}
+  \frametitle{Convex composite likelihoods}
+  \splitcolumn{%
+    \begin{itemize}
+      \item<1-> Given the observed marginals, $\Pr(x|h)$, the hidden marginals
+        $\Pr(h_1, \cdots, h_m)$ is linearly related.
+      \item<2-> The composite log-likelihood over $x_1, \cdots, x_m$ is
+        actually convex!
+      \item<3-> Running EM will converge and is more statistically efficient.
+    \end{itemize}
+  }{%
+    \begin{canvas}
+      \point{stuff}{(3cm,0cm)};
+      \node<1>[scale=0.5] at (0.5cm,0) {\llhood{3.5}{0}};
+      \node<2->[anchor=center] (obj) at (stuff) {%
+      \includegraphics[width=\textwidth,height=6cm,keepaspectratio]{figures/piecewise-objective.pdf}
+      };
+    \end{canvas}
+  }
+\end{frame}
 
 \section{Log-linear models}
-% Convergence in the limit.
-% Pseudo-likelihood and optimizations.
+\begin{frame}
+  \frametitle{Log-linear models}
+  \begin{itemize}
+    \item<1-> $p_\theta(\bx, \bh) = \exp\left( \theta^\top \phi(\bx,\bh) - A(\theta) \right)$.
+    \item<2-> The {\em unsupervised} negative log-likelihood is non-convex,
+        \begin{align*}
+        L_\text{unsup}(\theta) \eqdef \E_{\bx \sim \sD}[\log \sum_{\bh \in \sH} p_\theta(\bx,\bh)].
+        \end{align*}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Estimation is convex with marginals}
+  \begin{itemize}
+    \item<1-> $p_\theta(\bx, \bh) = \exp\left( \theta^\top \phi(\bx,\bh) - A(\theta) \right)$.
+      \item<1-> In the supervised case with $\bh$ though, the objective {\em is convex},
+        \begin{align*}
+        \label{eqn:logLinearSupervised}
+        L_\text{sup}(\theta) &\eqdef \E_{(\bx,\bh) \sim \sD_\text{sup}}[\log p_\theta(\bx,\bh)] \\
+                             &= \theta^\top \left(\sum_{\sC \in \sG} \E[\phi(\bx_\sC,\bh_\sC)]\right) - A(\theta).
+        \end{align*}
+      \item<2-> {\bf Key idea:} We can estimate marginals $\E_{(\bx,\bh) \sim \sD_\text{sup}}[\log p_\theta(\bx,\bh)]$!
+  \end{itemize}
+\end{frame}
 
 \section{Conclusions}
 
