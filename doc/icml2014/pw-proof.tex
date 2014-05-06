@@ -130,7 +130,8 @@ Noting that $\diag(\Sigma_\sV) = D_\sV (I - D_\sV)$, the inner
         \ones^\top \mOppTAll
       \end{bmatrix} \\
    &=
-    \mOppTAllt (\tD_{\sV}^{-1} (I - \tD_\sV) + \frac{\ones^\top \tM_\sV}{1 - \ones^\top \tM_\sV} \ones\ones^\top) \mOppTAll.
+    \mOppTAllt \tD_{\sV}^{-1} (I - \tD_\sV) \mOppTAll + \mOppTAllt \frac{\ones^\top \tM_\sV}{1 - \ones^\top \tM_\sV} \ones\ones^\top \mOppTAll \\
+   &= \Sigmamom + \mOppTAllt \frac{\ones^\top \tM_\sV}{1 - \ones^\top \tM_\sV} \ones\ones^\top \mOppTAll.
 \end{align*}
 
 Finally, noting that $\diag(\Sigma_\sV) = D_\sV (I - D_\sV)$, we get,
@@ -138,12 +139,15 @@ Finally, noting that $\diag(\Sigma_\sV) = D_\sV (I - D_\sV)$, we get,
     \Sigmaml_{\sC} 
       &= \E[\grad^2 \ell(\vx)]^{-1} \Var [\grad \ell(\vx)] \E[\grad^2 \ell(\vx)]^{-1} \\
       &= \Var[\grad \ell(\vx)]^{-1} \\
-      &=
-        \mOppTAlli (\tD_{\sV}^{-1} (I - \tD_\sV) + \frac{\ones^\top \tM_\sV}{1 - \ones^\top \tM_\sV} \ones\ones^\top)\inv \mOppTAllit.
+      &= 
+        \mOppTAlli (\tD_{\sV}^{-1} (I - \tD_\sV) + \frac{\ones^\top \tM_\sV}{1 - \ones^\top \tM_\sV} \ones\ones^\top)\inv \mOppTAllit \\
+      &= (\Sigmamom + \mOppTAllt \frac{\ones^\top \tM_\sV}{1 - \ones^\top \tM_\sV} \ones\ones^\top \mOppTAll)\inv.
 \end{align*}
-Note that given our assumptions, $\ones \succ M_\sV \succ \zeros$. Thus
-the asymptotic variance is finite, and our estimator is consistent as
-well.
+Note that given our assumptions, $\ones \succ M_\sV \succ \zeros$. 
+Thus the asymptotic variance is finite, and our estimator is consistent
+  as well. 
+Note also, that the expression for $\Sigmaml$ already implies that
+  $Z^\ml_\sC$ is a strictly more efficient estimator than $Z^\mom_\sC$.
 
 \end{proof}
 
