@@ -1,61 +1,99 @@
-\subsection{Tensor Multiplication}
+\subsection{Tensor Operations}
 \label{app:tensor-multiplication}
 
+%In this section, we present basic results regarding two tensor
+%operations we define, tensor multiplication, which is analogous to
+%matrix multiplication, and the diagonal tensor.
 In this section, we present basic results regarding tensor
-multiplication. First, let us review definitions.
+multiplication, an operation analogous to matrix multiplication.
+First, let us define some notation.
 
-Let $\sP \in \Re^{d_1 \times \ldots \times d_m}$ be a $m$-th order tensor and let $\sQ \in \Re^{d'_1 \times \ldots \times d'_n}$ be an $n$-th order tensor, where wlog, $m \ge n$. 
-Let $M$ be an index matching set $M = \{ (a_1; b_1),
+In the following, let $\sP \in \Re^{d_1 \times \ldots \times d_m}$ be
+  a $m$-th order tensor and let $\sQ \in \Re^{d'_1 \times \ldots \times
+  d'_n}$ be an $n$-th order tensor. %, where wlog, $m \ge n$. 
+We use the notation $\Domain(\sP) = [d_1] \times \cdots \times [d_m]$
+  to denote the domain of the indices of $\sP$.
+Let $M$ be an index matching set, i.e. $M = \{ (a_1; b_1),
   (a_2, b_2), \ldots, (a_\ell, b_\ell) \}$, such that the corresopnding
   dimensions agree, i.e. $d_{a_i} = d'_{b_i}$ for all $i$. Let $D_{\ba}
   = [d_{a_1}] \times \cdots \times [d_{a_\ell}]$ and $D'_{\bb}
-  = [d'_{a_1}] \times \cdots \times [d'_{a_\ell}]$ be the domains of the
+  = [d'_{b_1}] \times \cdots \times [d'_{b_\ell}]$ be the domains of the
   corresponding indices.
-We define the tensor multiplication operation $\sR \eqdef P \times_{M}
-  Q$ to be the $(m - \ell + n - \ell)$-th order tensor formed by
-  conjoining $\sP$ and $\sR$ followed by summing out the indices in $M$:
+
+Finally, for some $\vi \in [d_1] \times \cdots \times [d_\ell]$ and $\vj
+\in [d_{\ell + 1}] \times \cdots \times [d_m]$ and  we use the notation
+$\sP[\vi \cdot \vj]_\pi \eqdef \sP[\pi(i_1, \cdot, i_\ell, j_{\ell+1},
+\cdots j_m)]$ to conjoin indices $\vi$ and $\vj$ up to the permutation
+$\pi$. 
+%For our purposes, the specific ordering of the tensor's indices
+%are not important and are usually referred to by variable naming.
+
+% \begin{definition}[Diagonal Tensor]
+%   The diagonalized tensor $\diag(\sP)$ is a $(2m)$-th order tensor
+%   constructed by taking the tensor product along $I^{\otimes p}$,
+%   \begin{align*}
+%     \diag(\sP)[\vi,\vj] &\eqdef \sP[\vi] \delta[\vi,\vj],
+%   \end{align*}
+%   where $\vi, \vj \in [d_1] \times \cdots \times [d_m]$ and $\delta(\vi,
+%   \vj) = \BI[\vi = \vj]$ is the Kronecker delta function.
+% \end{definition}
+% 
+% Note that when $\sP$ is a vector, the diagonal tensor is a diagonal
+% matrix, with entries given by the vector.
+
+\begin{definition}[Tensor Multiplication]
+  We define the tensor multiplication operation $\sR \eqdef P \times_{M}
+  Q$ to be the $(m - \ell + n - \ell)$-th order tensor $\sR$ formed by
+  conjoining $\sP$ and $\sQ$ followed by summing out the indices in $M$:
 \begin{align*}
-  \sR[\vi,\vj] &\eqdef \sum_{\bu, \bv \in D_\ba \times D'_\bb} \sP[\vi,\bu] \sQ[\bv ,\vj] ~ \delta_{u_1 v_1} \delta_{u_2 v_2} \ldots \delta_{u_\ell v_\ell}.
+  \sR[\vi\cdot\vj] &\eqdef \sum_{\mathclap{\bu, \bv \in D_\ba \times D'_\bb}} \sP[\vi \cdot \bu]_{\pi_P} \sQ[\vj \cdot \bv]_{\pi_Q} ~ \delta_{u_1 v_1} \delta_{u_2 v_2} \ldots \delta_{u_\ell v_\ell},
 \end{align*}
+  for every $\vi \in \Domain(\sP) \setminus D_a$ and $\vj \in
+  \Domain(\sQ) \setminus D'_b$, where $\pi_P$ and $\pi_Q$ are
+  permutations of the indices that respect the matching $M$. For
+  notational convenience, we will omit $\pi_P$, $\pi_Q$ in the sequel.
+\end{definition}
 
 Note that when $m, n = 2$, i.e. $\sP$ and $\sQ$ are matrices, and $M
-  = {(2,1)}$, the operation is equivalent to matrix multiplication. 
+  = \{(2,1)\}$, the operation is equivalent to matrix multiplication. 
 Furthermore, similar to matrix multiplication, the operator defined above
   is associative and distributive. 
 It is also commutative for symmetric tensors.
 
-Given an index set $I \subset [m]$ we
+\paragraph{Unfoldings}
+For a tensor $\sP$, as defined above, 
+  given an index set $I \subset [m]$ we
   define an unfolding of a tensor $\sP$ along $I$,
- $\sP\munf{I}$, to be a matrix of dimension $(\prod_{i \in I} d_i)
+ $\sP\munf{I}$, to be a matrix of dimensions $(\prod_{i \in I} d_i)
  \times (\prod_{j \not\in I} d_j)$. $\sP\munf{I}$ has elements
- $\sP\munf{I}[\vi;\vj] = \sP[\pi(\vi\vj)]$, where $\pi$ is an
+ $\sP\munf{I}[\vi;\vj] = \sP[\vi\cdot\vj]_{\pi}$, where $\pi$ is an
  appropriate permutation to align the indices of $\vi$ and $\vj$ with
  the ordering of $I$. 
 For example, if $\sP$ were a $4$-th order tensor and $I = \{1,3\}$,
   $\sP\munf{13}[i_1,i_2; j_1,j_2] = \sP[i_1,j_1,i_2,j_2]$.
 For notational convenience, we will omit the permutation $\pi$ subsequently.
 
-
 The main result of this section is, similar to matrix multiplication, if
-$\sR = \sP \times_{M} \sQ$, then the singular values of mode-unfolding
+$\sR = \sP \times_{M} \sQ$, then the singular values of unfoldings
 of $\sR$ are bounded by those of $\sP$ and $\sQ$.
 
 \begin{lemma}[Tensor Multiplication and Singular Values]
   \label{lem:tensor-multiplication}
-Let $\sP, \sQ$ be $n$-th order and $m$-th order tensors, $M$ be an
-  admissible index mapping and $\sR = \sP \times_M \sQ$. 
-Let $I \subset [m - k + n - k]$ be an arbitrary subset of the index set
+Let $\sP, \sQ$ be $m$-th order and $n$-th order tensors respectively, $M$ be an
+  index mapping and $\sR = \sP \times_M \sQ$. 
+Let $I \subset [m - k + n - k]$ be any arbitrary subset of the index set
   of $\sR$,
-and let $I_1$, $I_2$ be the respective subsets of $I$ contained in $\sP$
-  and $\sQ$.
+and let $I_P$, $I_Q$ be the partitioning of $I$ into subsets contained
+  in $\sP$ and $\sQ$ respectively.
 Then,
 \begin{align*}
-\sigma_{\max}(\sR\munf{I}) &\le \sigma_{\max}(\sP\munf{I_1}) \sigma_{\max}(\sQ\munf{I_2}) \\
-\sigma_{\min}(\sR\munf{I}) &\ge \sigma_{\min}(\sP\munf{I_1}) \sigma_{\min}(\sQ\munf{I_2}).
+\sigma_{\max}(\sR\munf{I}) &\le \sigma_{\max}(\sP\munf{I_P}) \sigma_{\max}(\sQ\munf{I_P}) \\
+\sigma_{\min}(\sR\munf{I}) &\ge \sigma_{\min}(\sP\munf{I_Q}) \sigma_{\min}(\sQ\munf{I_Q}).
 \end{align*}
 \end{lemma}
 
-Note that in the matrix case, when $m = n = 2$, when $R = P Q^\top$, we get the standard result that 
+Note that in the matrix case, when $m = n = 2$ and $M=\{(2,1)\}$, i.e.
+when $R = P Q$, we get the standard result that 
 \begin{align}
 \sigma_{\max}(R) &\le \sigma_{\max}(P) \sigma_{\max}(Q) \\
 \sigma_{\min}(R) &\ge \sigma_{\min}(P) \sigma_{\min}(Q) \label{eqn:matrix-singular}.
@@ -63,52 +101,60 @@ Note that in the matrix case, when $m = n = 2$, when $R = P Q^\top$, we get the 
 
 \begin{proof}
   Without loss of generality, let $M = \{(1,1), \ldots, (\ell,\ell)\}$,
-  and $D = [d_1] \times \cdots \times [d_\ell]$. 
-  Then,
+  and $D_\ell = [d_1] \times \cdots \times [d_\ell]$. 
+  Then, 
   \begin{align*}
-    \sR[\vi\vj] &\eqdef \sum_{\vk \in D_\ell} \sP[\vk \vi] \sQ[\vk \vj].
+    \sR[\vi\cdot\vj] &\eqdef \sum_{\vk \in D_\ell} \sP[\vk\cdot\vi_P\cdot\vj_P] \sQ[\vk\cdot\vi_Q\cdot\vj_Q],
   \end{align*}
+  where $\vi_P, \vi_Q$, are the components of $\vi$ in $\sP$ and $\sQ$
+  respectively and $\vj_P, \vj_Q$ is similarly defined.
 
 Consider an $(I)$-unfolding of $\sR$,
   \begin{align*}
-    \sR\munf{I}[\vi,\vj] 
-       &= \sum_{\vk} \sP[\vk \vi] \sQ[\vk \vj] \\
-       &= \sum_{\vk} \sP\munf{I_1}[\vx_1; \vy_1, \vk] \sQ\munf{I_2}[\vx_2; \vy_2, \vk],
+    \sR\munf{I}[\vi;\vj] 
+       &= \sum_{\vk \in D_\ell} \sP[\vk\cdot \vi_P \cdot \vj_P] \sQ[\vk\cdot \vi_Q \cdot \vj_Q] \\
+       &= \sum_{\vk \in D_\ell} \sP\munf{I_P}[\vi_P; \vj_P \cdot \vk] \sQ\munf{I_Q}[\vj_Q; \vj_Q \cdot \vk].
   \end{align*}
-  where $\vx_1 \in \Range(I_1)$, $\vy_1 \in \Range([m] \setminus I_1)$, $\vx_2 \in \Range(I_2)$ and $\vy_2  \in \Range([n] \setminus I_2)$.
+Note that the indices that were summed out belong in the complement of $I_P$ and $I_Q$ respectively.
 
-The key idea is to represent the above as a matrix multiplication.
-To do so, we can temporarily ``inflate'' the unfoldings $\sP\munf{I_1}$
-  and $\sQ\munf{I_2}$ by taking the outer product of $\sP\munf{I_1}$ with
-  $|I_2|$ identity matrices, and vice-versa. Define 
+The key idea is to represent the above expression as matrix multiplication.
+To do so, we can temporarily ``inflate'' the unfoldings $\sP\munf{I_P}$
+  and $\sQ\munf{I_Q}$ by taking the outer product of $\sP\munf{I_P}$ with
+  $|I_Q|$ identity matrices, and vice-versa. Define 
 \begin{align*}
-  \sP' &\eqdef \sP \otimes I_{d'_1} \otimes \cdots \otimes I_{d'_{|I_2|}} \\
-  \sQ' &\eqdef \sQ \otimes I_{d'_1} \otimes \cdots \otimes I_{d'_{|I_1|}}.
+  \sP' &\eqdef \sP \otimes I_{d'_1} \otimes \cdots \otimes I_{d'_{|I_Q|}} \\
+  \sQ' &\eqdef \sQ \otimes I_{d'_1} \otimes \cdots \otimes I_{d'_{|I_P|}}.
 \end{align*}
 
-Now, $\sP'$ is a $(m + 2 * |I_2|)$-th order tensor and similarly $\sQ'$
-  is a $(n + 2 * |I_1|)$-th order tensor. We choose new index sets
-  $I'_1$ and $I'_2$ to include exactly one of these identity indices. 
+Now, $\sP'$ is a $(m + 2 |I_Q|)$-th order tensor and similarly $\sQ'$
+  is a $(n + 2 |I_P|)$-th order tensor. 
+For every identity matrix we tensor $\sP$ and $\sQ$ by we include one of
+  its indices to include in the new set $I'_P$ and $I'_Q$ respectively.
+  Note that $\sP\munf{I'_P}$ is a $(I_P + I_Q)\times (m - |I_P| + |I_Q| + \ell)$ matrix, and 
+$\sP\munf{I'_Q}$ is $(I_P + I_Q) \times (n - |I_Q| + |I_P| + \ell)$
 Then,
 \begin{align*}
-    \sR\munf{I}[\vi,\vj] 
-    &= \sum_{\vy_1, \vy_2 \vk}
-    {\sP'}\munf{I'_1}[\vx_1\vy'_2; \vy_1 \vy_2 \vk]  
-    {\sQ'}\munf{I'_2}[\vx_2\vy'_1; \vy_1 \vy_2 \vk] \\
-    \sR\munf{I} &= {\sP'}\munf{I'_1} {\sQ'}\munf{I'_2}.
+    \sR\munf{I}[\vi;\vj] 
+    &= \sum_{\be_P, \be_Q \vk}
+    {\sP'}\munf{I'_P}[\vi_P\be'_Q; \vj_P \be_Q \vk]  
+    {\sQ'}\munf{I'_Q}[\vi_Q\be'_P; \vj_Q \be_P \vk] \\
+    \sR\munf{I} &= {\sP'}\munf{I'_P} {\sQ'}\munf{I'_Q}.
 \end{align*}
 
 Using lemma \lemmaref{tensor-prod} and the bound on matrix singular
 values, \equationref{matrix-singular}, we get,
 \begin{align*}
 \sigma_{\max}(\sR\munf{I}) 
-    &\le \sigma_{\max}({\sP'}\munf{I'_1}) \sigma_{\max}({\sQ'}\munf{I'_2}) \\
-      &= \sigma_{\max}(\sP\munf{I_1}) \sigma_{\max}(\sQ\munf{I_2}) \\
+    &\le \sigma_{\max}({\sP'}\munf{I'_P}) \sigma_{\max}({\sQ'}\munf{I'_Q}) \\
+      &= \sigma_{\max}(\sP\munf{I_P}) \sigma_{\max}(\sQ\munf{I_Q}) \\
     \sigma_{\min}(\sR\munf{I})  
-    &\ge \sigma_{\min}({\sP'}\munf{I'_1}) \sigma_{\min}({\sQ'}\munf{I'_2}) \\
-      &= \sigma_{\min}(\sP\munf{I_1}) \sigma_{\min}(\sQ\munf{I_2}).
+    &\ge \sigma_{\min}({\sP'}\munf{I'_P}) \sigma_{\min}({\sQ'}\munf{I'_Q}) \\
+      &= \sigma_{\min}(\sP\munf{I_P}) \sigma_{\min}(\sQ\munf{I_Q}).
 \end{align*}
 \end{proof}
+
+For completeness, we also provide a proof for the following standard
+lemma regarding the tensor product of matrices.
 
 \begin{lemma}[Singular values of the tensor products of matrices]
   \label{lem:tensor-prod}
