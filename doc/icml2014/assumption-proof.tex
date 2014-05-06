@@ -20,8 +20,8 @@ on $\mOpp{v}{i}$. In this section, we will show that
 (\assumptionref{full-rank-plus});
 \begin{assumption*}
 For every clique $\sC \in \sG$ (including ones involving observed
-  variables), for every {\em conditioning} of the marginals, every
-  unfolding has full rank. 
+  variables) and for every {\em conditioning} of the clique's marginals,
+  every unfolding has full rank. 
 \end{assumption*}
 
 \paragraph{A recursive construction of $\mOpp{v}{i}$}
@@ -40,14 +40,14 @@ procedure.
 
 Recall that $x_v$ is the observed variable in consideration; let $h_t$
 be its unique parent. Then, 
-\begin{align*}
-  \mOpp{v}{1} &\eqdef \Pr( x_v \given h_1 )  \\
-              &= \sum_{h_t} \Pr( x_v \given h_t ) \Pr( h_t \given h_1 ) \\
-              &= \mOpp{v}{t} \mYpp{t}{1},
-\end{align*}
+\begin{align}
+  \mOpp{v}{1} &\eqdef \Pr( x_v \given h_1 ) \nonumber \\
+              &= \sum_{h_t}  \Pr( h_t \given h_1 ) \Pr( x_v \given h_t ) \nonumber\\
+              &= \mOpp{v}{t} \mYpp{t}{1}, \label{eqn:expanding-O}
+\end{align}
 where $\mYpp{i}{j} \eqdef \Pr( h_i \given h_j )$. 
 More generally, for two sets of hidden variables $C \eqdef \{h_{C_1}
-\cdots h_{C_m} \}$ and $C' \eqdef \{h_{C'_1} \cdots h_{C'_m} \}$, 
+\cdots h_{C_m} \}$ and $C' \eqdef \{h_{C'_1} \cdots h_{C'_n} \}$, 
 define $\mYpp{C}{C'} \eqdef \Pr( h_{C_1} \cdots h_{C_m} \given h_{C'_1}
 \cdots h_{C'_n} )$. 
 With this representation, $\mYpp{C}{C'}$ is a $|C| + |C'|$-th order
@@ -62,12 +62,13 @@ Then $\mYpp{t}{1}$ can be expressed as,
 \begin{align*}
   \mYpp{t}{1} &\eqdef \Pr( h_t \given h_1 )  \\
   &= \sum_{\vh \in H_{\Pa(h_t)}} \Pr( \Pa(h_t) \given h_1 ) \Pr( h_t \given \Pa(h_t) ) \\
-  &= \mYpp{ \Pa(h_t) }{1} \times_{\Pa(h_t)} \mYpp{t}{\Pa(h_t)},
+  &= \mYpp{t}{\Pa(h_t)} \times_{\Pa(h_t)} \mYpp{ \Pa(h_t) }{1},
 \end{align*}
 where $A \times_{C} B$ refers to summation along the indices $C$. We
 refer to the operation $A \times_C B$ as tensor multiplication.
-\appendixref{tensor-multiplication} prooves some key properties of this
+\appendixref{tensor-multiplication} proves some key properties of this
 operation. 
+
 Note that $\mYpp{t}{\Pa(h_t)}$ is the conditional probability $\Pr(h_t
  | \Pa(h_t))$, which is assumed to be full rank, and can be easily
  computed from the hidden marginals $Z_\sC$ that contain $h_t$. 
@@ -80,14 +81,15 @@ Let $C' = C \union \Pa(h_c) \setminus \{h_c\}$, the new set of hidden
   variables containing the parents of $h_c$ instead of $h_c$ and $\del
   C = C' \setminus (C \union \{h_1\})$, the variables in the interface
   between $C$ and $C'$.
+Note that $\Pa(h_c) \subseteq \del C$.
 Then,
-\begin{align*}
-  \mYpp{C}{1} &\eqdef \Pr( h_C \given h_1 )  \\
-  &= \sum_{\vh \in H_{\del C}} \Pr( C' \given h_1 ) \Pr( h_c \given \Pa(h_c) ) \\
-  &= \mYpp{ C' }{ 1 } \times_{\del C} \mYpp{c}{\Pa(h_c)},
-\end{align*}
-Finally, for the base case, $\mYpp{1}{1} = \ones$.
-This procedure is algorithmically described in \algorithmref{Y}.
+\begin{align}
+  \mYpp{C}{1} &\eqdef \Pr( h_c \given h_1 ) \nonumber \\
+  &= \sum_{\vh \in H_{\del C}} \Pr( h_c \given \Pa(h_c) ) \Pr( C' \given h_1 ) \nonumber \\
+  &= \mYpp{c}{\Pa(h_c)}  \times_{\del C} \mYpp{ C' }{ 1 }. \label{eqn:recursive-step}
+\end{align}
+This process is repeated until the base case, $\mYpp{1}{1} = \ones$.
+\algorithmref{Y} summarizes the procedure.
 
 \begin{algorithm}
   \caption{$\mYpp{C}{1}$}
@@ -107,11 +109,11 @@ This procedure is algorithmically described in \algorithmref{Y}.
 
 \paragraph{Constructing $\mYpp{c}{\Pa(h_c)}$}
 
-Note that in the process of the algorithm, $\mYpp{t}{1}$ is expressed
-entirely as tensor multiplications with terms of the form
-$\mYpp{c}{\Pa(h_c)}$ for some hidden variable $h_c$. 
-$\mYpp{c}{\Pa(h_c)}$ can be easily computed from the clique marginals
-$Z_\sC$.
+The algorithm constructs an expression for $\mYpp{t}{1}$ entirely as
+  tensor multiplications of terms of the form $\mYpp{c}{\Pa(h_c)}$ for
+  some hidden variable $h_c$. 
+The individual $\mYpp{c}{\Pa(h_c)}$ can be easily computed from the
+  clique marginals $Z_\sC$ as follows.
 
 Without loss of generality, let $\sC \eqdef \{c\} \union \Pa(h_c)$ be a clique
   in the graph $\sG$.
@@ -131,28 +133,50 @@ Proceeding,
   &= Z_\sC \times_{\Pa(h_c)} \diag{Z_\sC(\ones, \cdot, \ldots, \cdot)}^{-1},
 \end{align*}
 where $\diag(\sP)$ is a ``diagonal'' tensor constructed by taking the
-tensor product with $I^{\otimes p}$,
+tensor product with $I^{\otimes p}$:
 \begin{align*}
   \diag(\sP)[\vi,\vj] &\eqdef \sP[\vi] \delta[\vi,\vj].
 \end{align*}
 
 \paragraph{Sample complexity results}
 
-From the algorithm described above, blah.
+With an expression for $\mOpp{v}{i}$, we are finally ready to describe
+sufficient conditions for $\mOpp{v}{i}$ to be full rank, along with the
+sample complexity for estimation.
 
 \begin{lemma}[Sufficiency of \assumptionref{full-rank-plus}]
   \label{lem:full-rank-suff}
-  Given that \assumptionref{full-rank-plus} holds, then for any hidden
-  variable $h_1$ and observed variable $x_v$, $\mPi{1} \succ 0$ and
+  Given the full rank conditions in \assumptionref{full-rank-plus}, then
+  for any hidden variable $h_i$ and observed variable $x_v$,
   $\mOpp{v}{i}$ has full column rank.
 \end{lemma}
 \begin{proof}
+Again, wlog, let $i=1$. 
+The key step of the proof will be to use the property that the tensor
+  multiplication in \equationref{recursive-step} preserves rank.
 
-  - $Y$
-  - Use theorem of tensor multiplication.
+\theoremref{tensor-multiplication} shows that for any two tensors $A,
+  B$ and an index set $C$, the unfoldings $I$ of $A \times_C B$ are full
+  rank when the projected unfoldings $I_A$ of $A$ and $I_B$ of $B$ are
+  full rank:
+\begin{align*}
+  \sigma_{\min}( (A \times_C B)\munf{I} )
+    &\ge \sigma_{\min}(A\munf{I_A}) \sigma_{\min}(B\munf{I_B}).
+\end{align*}
+
+By the assumption, any unfolding of $\mYpp{c}{\Pa(h_c)}$ is full-rank. 
+From \equationref{recursive-step} and
+  \theoremref{tensor-multiplication}, this implies that $\mYpp{C}{1}$ is
+  full rank for any $C$, including $C = \{h_t\}$.
+
+Thus, $\mYpp{t}{1}$ is a full rank matrix. 
+Again, by assumption,
+  $\mOpp{v}{t}$ is full rank. From \equationref{expanding-O}, we finally
+  get that $\mOpp{v}{1}$ is full rank.
 \end{proof}
 
-The sample complexity of estimating $\mOpp{v}{i}$ depends mainly on
+Next, we turn to the question of the sample complexity of estimating
+$\mOpp{v}{i}$, which depends mainly on smallest singular value,
 $\sigma_{\min}(\mOpp{v}{i})$. 
 
 \begin{lemma}[Singular values of $\mOpp{v}{1}$]
@@ -163,24 +187,60 @@ Let $h_1 \succ h_2 \cdots \succ h_t$ be a topological ordering of
   variables according to the graph $\sG$.
   Then, the smallest singular value of $\mOpp{v}{1}$ is at least the product of the smallest singular values of $\mYpp{c}{\Pa(h_c)}$.
 \begin{align*}
-  \sigma_{\min}(\sP) &\ge \prod_{c \in [t]} \sigma_{\min}(\mYpp{c}{\Pa(h_c)}),
+  \sigma_{\min}(\sP) &\ge \sigma_{\min}(\mOpp{v}{t}) 
+        \prod_{c \in [t]} \sigma_{\min}(\mYpp{c}{\Pa(h_c)}),
 \end{align*}
-where $h_c$
-
+where the parents $\Pa(h_c)$ are decided by the topological ordering. 
 \end{lemma}
 \begin{proof}
-  - $Y$
-  - Use theorem of tensor multiplication.
+  The proof follows directly by application of
+  \theoremref{tensor-multiplication} to \equationref{expanding-O} and
+  \equationref{recursive-step}.
 \end{proof}
 
-\begin{lemma}[Sample complexity for $\mOpp{v}{1}$]
-  \label{lem:sample-complexity}
-  The sample complexity to estimate $\mOpp{v}{i}$ via the tensor power method \citep{anandkumar13tensor} is 
-\end{lemma}
+Finally, using the tensor power method of \citep{anandkumar13tensor}, we
+  get the following result on sample complexity.
+\begin{theorem}[Sample complexity for $\mOpp{v}{i}$]
+  \label{thm:sample-complexity}
+  Wlog, let $v=1$ and $i=1$. Let $x_1, x_2, x_3$ be three views for
+  $h_1$.  
+  If 
+\begin{align*}
+  \|\hat M_{1,2} - M_{1,2}\|_{\op} &\le \epsilon & \|\hat M_{1,2,3} - M_{1,2,3}\|_{\op} &\le \epsilon,
+\end{align*}
+for some $\epsilon < \half$, then
+with probability at least $1 - \delta$,
+\begin{align*}
+  \|\mOpphat{1}{1} - \mOpp{1}{1}\|_F 
+    &\le  \\
+    &
+      O\left( k 
+      \frac{{\pi\oft{1}}_{\max}/{\pi\oft{1}}_{\min}} 
+      {(\sigma_{\min}(\mOpp{1}{1}) \sigma_{\min}(\mOpp{1}{2}))^{5/2}} \right) \epsilon.
+\end{align*}
+
+Furthermore, if $\sigma_{\min}(\mYpp{c}{\Pa(h_c)}) \le \sigma$ for every
+  such
+$\mYpp{c}{\Pa(h_c)}$, we get,
+\begin{align*}
+  \|\mOpphat{1}{1} - \mOpp{1}{1}\|_F 
+    &\le 
+      O\left( k 
+      \frac{{\pi\oft{1}}_{\max}/{\pi\oft{1}}_{\min}} 
+      {\sigma^{5t}} \right) \epsilon,
+\end{align*}
+where $t$ is the length of the topological ordering, $h_1 > \cdots
+> h_t$ as defined above.
+\end{theorem}
 \begin{proof}
-  The result follows directly from Theorem x of \citet{anandkumar13tensor}.
+  The first statement is a result of from Theorem 5.1 of
+  \citet{anandkumar13tensor}. The second statement follows directly from
+  \lemmaref{mopp-singular-values}.
 \end{proof}
 
-
-
+\theoremref{sample-complexity} says that the number of samples required
+  to estimate the view $\mOpp{v}{i}$ grows exponentially in the {\em
+  distance} between $x_v$ and $h_i$. 
+Intuitively, this is because the influence from $h_i$ to $x_v$ gets
+  diluted for every latent variable it must factor through.
 
