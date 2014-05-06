@@ -72,13 +72,16 @@ For a tensor $\sP$, as defined above,
 For example, if $\sP$ were a $4$-th order tensor and $I = \{1,3\}$,
   $\sP\munf{13}[i_1,i_2; j_1,j_2] = \sP[i_1,j_1,i_2,j_2]$.
 For notational convenience, we will omit the permutation $\pi$ subsequently.
+Let $D_I = \bigtimes_{i \in I} [d_i]$ and  $\bar I \eqdef [m] \setminus
+  I$ to represent the complement of indices. Note that $\sP\munf{I}
+  = (\sP\munf{\bar I})^\top$.
 
 The main result of this section is, similar to matrix multiplication, if
 $\sR = \sP \times_{M} \sQ$, then the singular values of unfoldings
 of $\sR$ are bounded by those of $\sP$ and $\sQ$.
 
-\begin{lemma}[Tensor Multiplication and Singular Values]
-  \label{lem:tensor-multiplication}
+\begin{theorem}[Tensor Multiplication and Singular Values]
+  \label{thm:tensor-multiplication}
 Let $\sP, \sQ$ be $m$-th order and $n$-th order tensors respectively, $M$ be an
   index mapping and $\sR = \sP \times_M \sQ$. 
 Let $I \subset [m - k + n - k]$ be any arbitrary subset of the index set
@@ -90,7 +93,7 @@ Then,
 \sigma_{\max}(\sR\munf{I}) &\le \sigma_{\max}(\sP\munf{I_P}) \sigma_{\max}(\sQ\munf{I_P}) \\
 \sigma_{\min}(\sR\munf{I}) &\ge \sigma_{\min}(\sP\munf{I_Q}) \sigma_{\min}(\sQ\munf{I_Q}).
 \end{align*}
-\end{lemma}
+\end{theorem}
 
 Note that in the matrix case, when $m = n = 2$ and $M=\{(2,1)\}$, i.e.
 when $R = P Q$, we get the standard result that 
@@ -113,9 +116,10 @@ Consider an $(I)$-unfolding of $\sR$,
   \begin{align*}
     \sR\munf{I}[\vi;\vj] 
        &= \sum_{\vk \in D_\ell} \sP[\vk\cdot \vi_P \cdot \vj_P] \sQ[\vk\cdot \vi_Q \cdot \vj_Q] \\
-       &= \sum_{\vk \in D_\ell} \sP\munf{I_P}[\vi_P; \vj_P \cdot \vk] \sQ\munf{I_Q}[\vj_Q; \vj_Q \cdot \vk].
+       &= \sum_{\vk \in D_\ell} \sP\munf{I_P}[\vi_P; \vj_P \cdot \vk] \sQ\munf{\bar I_Q}[\vj_Q ; \vi_Q \cdot \vk].
   \end{align*}
-Note that the indices that were summed out belong in the complement of $I_P$ and $I_Q$ respectively.
+Note that the indices that were summed out belong in the complement of
+$I_P$ and $I_Q$ respectively.
 
 The key idea is to represent the above expression as matrix multiplication.
 To do so, we can temporarily ``inflate'' the unfoldings $\sP\munf{I_P}$
@@ -123,22 +127,25 @@ To do so, we can temporarily ``inflate'' the unfoldings $\sP\munf{I_P}$
   $|I_Q|$ identity matrices, and vice-versa. Define 
 \begin{align*}
   \sP' &\eqdef \sP \otimes I_{d'_1} \otimes \cdots \otimes I_{d'_{|I_Q|}} \\
-  \sQ' &\eqdef \sQ \otimes I_{d'_1} \otimes \cdots \otimes I_{d'_{|I_P|}}.
+  \sQ' &\eqdef \sQ \otimes I_{d'_1} \otimes \cdots \otimes I_{d'_{|\bar I_P|}}.
 \end{align*}
 
 Now, $\sP'$ is a $(m + 2 |I_Q|)$-th order tensor and similarly $\sQ'$
-  is a $(n + 2 |I_P|)$-th order tensor. 
-For every identity matrix we tensor $\sP$ and $\sQ$ by we include one of
-  its indices to include in the new set $I'_P$ and $I'_Q$ respectively.
-  Note that $\sP\munf{I'_P}$ is a $(I_P + I_Q)\times (m - |I_P| + |I_Q| + \ell)$ matrix, and 
-$\sP\munf{I'_Q}$ is $(I_P + I_Q) \times (n - |I_Q| + |I_P| + \ell)$
+  is a $(n + 2 |\bar I_P|)$-th order tensor. 
+For every identity matrix we tensor $\sP$ and $\sQ$ by, we include one of
+  its indices in the new set $I'_P$ and $I'_Q$ respectively.
+Note that ${\sP'}\munf{I'_P}$ is a $(I_P + I_Q)\times (|\bar I_P| + \ell
+  + |I_Q|)$ matrix, and ${\sQ'}\munf{\bar I'_Q}$ is $(|\bar I_Q| + |\bar
+  I_P|) \times (|\bar I_Q| + \ell + |\bar I_P|)$ matrix.
 Then,
 \begin{align*}
     \sR\munf{I}[\vi;\vj] 
-    &= \sum_{\be_P, \be_Q \vk}
-    {\sP'}\munf{I'_P}[\vi_P\be'_Q; \vj_P \be_Q \vk]  
-    {\sQ'}\munf{I'_Q}[\vi_Q\be'_P; \vj_Q \be_P \vk] \\
-    \sR\munf{I} &= {\sP'}\munf{I'_P} {\sQ'}\munf{I'_Q}.
+    &= \sum_{\be_P, \be_Q, \vk}
+    {\sP'}\munf{I'_P}[\vi_P \cdot \be'_Q; \vj_P \cdot \vk \cdot \be_Q ]  \\ 
+    &\quad \hphantom{\sum_{\be_P, \be_Q, \vk}}
+    {\sQ'}\munf{I'_Q}[\vi_Q \cdot \be'_P; \vj_Q \cdot \vk \cdot \be_P ] \\
+    \sR\munf{I} &= {\sP'}\munf{I'_P} ({\sQ'}\munf{\bar I'_Q})^\top \\
+                &= {\sP'}\munf{I'_P} {\sQ'}\munf{I'_Q}.
 \end{align*}
 
 Using lemma \lemmaref{tensor-prod} and the bound on matrix singular

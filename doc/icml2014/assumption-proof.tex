@@ -3,8 +3,9 @@
 
 % Define up front that we will focus on h, x_1, x_2, x_3
 In step 1 of \LearnMarginals, we used the bottleneck property of a hidden
-  variable $h_i$ to learn conditional moments $\mOpp{v}{i}$ for every
-  view $x_v \in \sV_{h_i}$ using \TensorFactorize. 
+  variable $h_i$ to learn conditional moments $\mOpp{v}{i} \eqdef
+  \Pr(x_v | h_i)$ for every view $x_v \in \sV_{h_i}$ using
+  \TensorFactorize. 
 In order to do so, we require that \assumptionref{full-rank} holds, i.e.
 \begin{assumption*}
   Given a bottleneck $h_1$ with views $x_1, x_2, x_3$, the conditional
@@ -19,8 +20,8 @@ on $\mOpp{v}{i}$. In this section, we will show that
 (\assumptionref{full-rank-plus});
 \begin{assumption*}
 For every clique $\sC \in \sG$ (including ones involving observed
-variables), every mode-unfolding of the marginals $Z_\sC$ has full
-column rank.
+  variables), for every {\em conditioning} of the marginals, every
+  unfolding has full rank. 
 \end{assumption*}
 
 \paragraph{A recursive construction of $\mOpp{v}{i}$}
@@ -33,8 +34,8 @@ a tensor multiplication. \figureref{message-proof} outlines the
 procedure.
 
 \begin{figure}
-  \label{fig:message-proof}
   \caption{A recursive construction of the conditional moments $\mOpp{v}{i}$.}
+  \label{fig:message-proof}
 \end{figure}
 
 Recall that $x_v$ is the observed variable in consideration; let $h_t$
@@ -68,16 +69,17 @@ refer to the operation $A \times_C B$ as tensor multiplication.
 \appendixref{tensor-multiplication} prooves some key properties of this
 operation. 
 Note that $\mYpp{t}{\Pa(h_t)}$ is the conditional probability $\Pr(h_t
- | \Pa(h_t))$, which can be easily computed from the hidden marginals
- $Z_\sC$ that contain $h_t$. 
-We will describe this procedure in further detail soon.
+ | \Pa(h_t))$, which is assumed to be full rank, and can be easily
+ computed from the hidden marginals $Z_\sC$ that contain $h_t$. 
 
 Now, let's further expand $\mYpp{ \Pa(h_t) }{1}$ in terms of {\em its
   parents}, recursively doing so until we reach $h_1$.
 Let $C$ be an intermediate set of hidden variables. Let $h_c \neq h_1$
   be some hidden variable in $C$ which we wish to eliminate. 
-Let $C' = C \union \Pa(h_c) \setminus \{h_c\}$ and $\del C = C'
-  \setminus (C \union \{h_1\})$, the variables in the interface between $C$ and $C'$.
+Let $C' = C \union \Pa(h_c) \setminus \{h_c\}$, the new set of hidden
+  variables containing the parents of $h_c$ instead of $h_c$ and $\del
+  C = C' \setminus (C \union \{h_1\})$, the variables in the interface
+  between $C$ and $C'$.
 Then,
 \begin{align*}
   \mYpp{C}{1} &\eqdef \Pr( h_C \given h_1 )  \\
@@ -107,11 +109,11 @@ This procedure is algorithmically described in \algorithmref{Y}.
 
 Note that in the process of the algorithm, $\mYpp{t}{1}$ is expressed
 entirely as tensor multiplications with terms of the form
-$\mYpp{c}{\Pa(h_c)}$ for some hidden variable $h_c$.  Let's finally
-derive a concrete expression for $\mYpp{c}{\Pa(h_c)}$ from the
-parameters, the hidden marginals $Z_\sC$.
+$\mYpp{c}{\Pa(h_c)}$ for some hidden variable $h_c$. 
+$\mYpp{c}{\Pa(h_c)}$ can be easily computed from the clique marginals
+$Z_\sC$.
 
-Without loss of generality, let $\sC \eqdef \{c\} \union P$ be a clique
+Without loss of generality, let $\sC \eqdef \{c\} \union \Pa(h_c)$ be a clique
   in the graph $\sG$.
 If instead $\sC \subseteq \sC_1 \union \sC_2$ for some $\sC_1, \sC_2 \in
   \sG$, we can simply construct $Z_{\sC}$ from the union of $\sC_1$ and
@@ -126,8 +128,17 @@ Proceeding,
 \mYpp{c}{\Pa(h_c)} 
   &\eqdef \Pr(h_c \given \Pa(h_c)) \\
   &= \frac{\Pr(h_c, \Pa(h_c))}{\Pr(\Pa(h_c))} \\
-  &= Z_\sC \diag{Z_\sC(\ones, \cdot, \ldots, \cdot)}^{-1}.
+  &= Z_\sC \times_{\Pa(h_c)} \diag{Z_\sC(\ones, \cdot, \ldots, \cdot)}^{-1},
 \end{align*}
+where $\diag(\sP)$ is a ``diagonal'' tensor constructed by taking the
+tensor product with $I^{\otimes p}$,
+\begin{align*}
+  \diag(\sP)[\vi,\vj] &\eqdef \sP[\vi] \delta[\vi,\vj].
+\end{align*}
+
+\paragraph{Sample complexity results}
+
+From the algorithm described above, blah.
 
 \begin{lemma}[Sufficiency of \assumptionref{full-rank-plus}]
   \label{lem:full-rank-suff}
@@ -136,8 +147,40 @@ Proceeding,
   $\mOpp{v}{i}$ has full column rank.
 \end{lemma}
 \begin{proof}
-  The important statement that needs to be made is how $\sigma_k(Y)$
-  relates to its parents.
+
+  - $Y$
+  - Use theorem of tensor multiplication.
 \end{proof}
+
+The sample complexity of estimating $\mOpp{v}{i}$ depends mainly on
+$\sigma_{\min}(\mOpp{v}{i})$. 
+
+\begin{lemma}[Singular values of $\mOpp{v}{1}$]
+  \label{lem:mopp-singular-values}
+
+Let $h_t$ be the unique parent of $x_v$, as above.
+Let $h_1 \succ h_2 \cdots \succ h_t$ be a topological ordering of
+  variables according to the graph $\sG$.
+  Then, the smallest singular value of $\mOpp{v}{1}$ is at least the product of the smallest singular values of $\mYpp{c}{\Pa(h_c)}$.
+\begin{align*}
+  \sigma_{\min}(\sP) &\ge \prod_{c \in [t]} \sigma_{\min}(\mYpp{c}{\Pa(h_c)}),
+\end{align*}
+where $h_c$
+
+\end{lemma}
+\begin{proof}
+  - $Y$
+  - Use theorem of tensor multiplication.
+\end{proof}
+
+\begin{lemma}[Sample complexity for $\mOpp{v}{1}$]
+  \label{lem:sample-complexity}
+  The sample complexity to estimate $\mOpp{v}{i}$ via the tensor power method \citep{anandkumar13tensor} is 
+\end{lemma}
+\begin{proof}
+  The result follows directly from Theorem x of \citet{anandkumar13tensor}.
+\end{proof}
+
+
 
 
