@@ -201,7 +201,7 @@ where the parents $\Pa(h_c)$ are decided by the topological ordering.
 Finally, using the tensor power method of \citep{anandkumar13tensor}, we
   get the following result on sample complexity.
 \begin{theorem}[Sample complexity for $\mOpp{v}{i}$]
-  \label{thm:sample-complexity}
+  \label{thm:sample-complexity-1}
   Wlog, let $v=1$ and $i=1$. Let $x_1, x_2, x_3$ be three views for
   $h_1$.  
   If 
@@ -233,14 +233,10 @@ where $t$ is the length of the topological ordering, $h_1 > \cdots
 > h_t$ as defined above.
 \end{theorem}
 \begin{proof}
-  The first statement is a result of from Theorem 5.1 of
-  \citet{anandkumar13tensor}. The second statement follows directly from
+  The first statement follows directly from Theorem 5.1 of
+  \citet{anandkumar13tensor} by noting that $\|M_{1,2}\|_\op \le 1$ and
+  $\|M_{1,2,3}\|_\op \le 1$ (as they represent probability
+  distributions). The second statement follows directly from
   \lemmaref{mopp-singular-values}.
 \end{proof}
-
-\theoremref{sample-complexity} says that the number of samples required
-  to estimate the view $\mOpp{v}{i}$ grows exponentially in the {\em
-  distance} between $x_v$ and $h_i$. 
-Intuitively, this is because the influence from $h_i$ to $x_v$ gets
-  diluted for every latent variable it must factor through.
 

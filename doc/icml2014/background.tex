@@ -130,7 +130,7 @@ The parameters of this model are the mixture probabilities $\pi\oft 1 \eqdef
 
 \begin{assumption}
 \label{asm:full-rank}
-Assume the conditional moments $\mOpp{1}{1}, \mOpp{2}{1}, \mOpp{3}{1}$ have full column rank
+The conditional moments $\mOpp{1}{1}$, $\mOpp{2}{1}$, $\mOpp{3}{1}$ have full column rank
   $k$, and that $\pi\oft 1 \succ 0$.
 \end{assumption}
 
@@ -143,5 +143,5 @@ of the whitened $\mO_{123}$; unwhitening yields the columns of $\mOpp{3}{1}$.
 
 The tensor factorization method attacks the heart of the non-convexity
   in latent-variable models.  In the next two sections,
-  we will see how to build on top of this result to estimate directed (Section~\ref{sec:directed})
+  we will see how to use this result to estimate directed (Section~\ref{sec:directed})
   and undirected (Section~\ref{sec:undirected}) models.

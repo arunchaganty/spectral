@@ -1,0 +1,43 @@
+\subsection{\lemmaref{lem:bottleneck-views}}
+\label{app:exclusive-views}
+
+In \sectionref{directed}, we stated that bottlenecks guaranteed
+  exclusive views. We provide the proof below.
+\begin{lemma*}[Bottlenecks guarantee exclusive views]
+  %\label{lem:bottleneck-views}  
+Let $\sG' = \{ h_{i_1}, \cdots, h_{i_m} \} \subseteq \sG$ be
+  a connected sub-graph of hidden variables. If every hidden variable
+  $h_i \in \sG'$ is a bottleneck, then they have an exclusive view.
+\end{lemma*}
+\begin{proof}
+  By \lemmaref{reduction}, we can assume that every observed
+  variable is a leaf in the graph, causing any v-structures in the graph
+  to be active. This allows us to reason about independence simply by
+  checking whether or not two nodes are connected or not. Note that this
+  proof applies for undirected graphs as well.
+
+  Let $h$ be a hidden variable in $\sG'$, let $\sV_{h}$ be the set of
+  views for it and let ${\sG'}^- \eqdef \sG' \setminus \{h\}$.
+  By definition, the views of $h$ are conditionally independent, viz.
+    every connecting path between two views $x_1, x_2 \in \sV_h$ must pass through
+    $h$.
+  A view $x \in \sV_{h}$ is exclusive for $h$ iff $x \not\in \sV_{h'} ~ \forall h'
+  \in {\sG'}^-$.
+
+  Suppose $h$ had no unique view, then $\sV_{h} \subseteq \Union_{h' \in {\sG'}^-} \sV_{h'}$. 
+  However, this would imply that for every $x_1, x_2 \in \sV_{h}$, there
+  exists some $h_1, h_2 \in {\sG'}^-$ (not necessarily distinct) such that
+    $x_1$ is connected to $h_1$ and $x_2$ is connected to $h_2$.
+  By participation in the sub-graph, either $h_1 = h_2$ or $h_1$ is
+    connected to $h_2$, implying that $x_1$ and $x_2$ are connected
+    via a path that does not pass through $h$, contradicting the
+    statement that $x_1, x_2 \in \sV_h$. 
+    
+  Thus, it must be the case that $\sV_{h} \nsubseteq \Union_{h' \neq
+    h \in \sG'} \sV_{h'}$ and hence there exists a unique view for $h$.
+
+  Algorithmically, finding the unique view for $h$ can be done by
+  subtracting the views of all other variables in the sub-graph from
+  $\sV_h$,i.e. $x_{v_h} \in \sV_h \setminus \Union_{h' \in \sG'} \sV_{h'}$
+\end{proof}
+
