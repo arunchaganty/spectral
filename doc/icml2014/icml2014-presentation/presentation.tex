@@ -351,22 +351,170 @@
 \end{frame}
 \begin{frame}
   \frametitle{Views and Bottlenecks}
+  \splitcolumn{%
   \begin{itemize}
-    \item<+-> {\bf Key insight:} Easy to learn latent parameters given a view $\Pr(x|h)$. 
-    \item<+-> For any clique, if each hidden variable has a unique
-      view, the distribution of the hidden variables is just a linear equation!
+    \item<+-> {\bf Key insight:} Easy given views $\Pr(x|h)$. 
+    \item<+-> If each hidden variable has a unique view, learning
+      cliques is solving a linear equation!
     \item<+-> {\bf Uniformly bottlenecked}: Every hidden variable has
-      atleast three conditionally independent observed variables.
-      \sidenote{Guarantees unique views.}
-    \item<+-> Algorithm: (a) estimate $\Pr(x|h)$ using bottlenecks, (b)
-      solve a linear equation between $\Pr(h_1,\cdots,h_m)$ and $P(x_1,
+      $\ge 3$ conditionally independent observed variables.
+  \end{itemize}
+  }{%
+  \begin{canvas}
+    \point{mark}{(3cm,0)};
+    \point{start-grid}{(mark)};
+   \node[style=node, scale=0.8] (h1) at (start-grid) {$h_1$};
+   \node[style=node, scale=0.8, below left= 0.5cm of h1] (h2) {$h_2$};
+   \node[style=node, scale=0.8, below right= 0.5cm of h1] (h3) {$h_3$};
+   \node[style=node, scale=0.8, below right= 0.5cm of h2] (h4) {$h_4$};
+
+   \point{pi}{($(h1.north) + (0,0.1cm)$)};
+   \draw[-latex] (h1) -- node[scale=0.7,above] (T1) {} (h2);
+   \draw[-latex] (h1) -- node[scale=0.7,above] (T2) {} (h3);
+   \draw[-latex] (h2) -- (h4);
+   \draw[-latex] (h3) -- (h4);
+   \point{V}{($(h4.north) + (0,0.1cm)$)};
+
+% Observed nodes
+   \node[style=obsnode, scale=0.7, above left=0.3cm of h1] (x1a) {$x^a_1$};
+   \node[style=obsnode, scale=0.7, above right=0.3cm of h1] (x1b) {$x^b_1$};
+   \draw[-latex] (h1) -- (x1a);
+   \draw[-latex] (h1) -- (x1b);
+
+   \node[style=obsnode, scale=0.7, above left=0.3cm of h2] (x2a) {$x^a_2$};
+   \node[style=obsnode, scale=0.7, below left=0.3cm of h2] (x2b) {$x^b_2$};
+   \draw[-latex] (h2) -- node[scale=0.7,above] (O1) {} (x2a);
+   \draw[-latex] (h2) -- node[scale=0.7,below] (O2) {} (x2b);
+
+   \node[style=obsnode, scale=0.7, above right=0.3cm of h3] (x3a) {$x^a_3$};
+   \node[style=obsnode, scale=0.7, below right=0.3cm of h3] (x3b) {$x^b_3$};
+   \draw[-latex] (h3) -- (x3a);
+   \draw[-latex] (h3) -- (x3b);
+    
+   \node[style=obsnode, scale=0.7, below left=0.3cm of  h4] (x4a) {$x^a_4$};
+   \node[style=obsnode, scale=0.7, below right=0.3cm of h4] (x4b) {$x^b_4$};
+
+   \draw[-latex] (h4) -- (x4a);
+   \draw[-latex] (h4) -- (x4b);
+
+   % Story - 
+  \begin{pgfonlayer}{background}
+  \draw[draw=black,fill=green!70,rounded corners,line width=1pt, dotted] 
+                  ($(h2.north west) + (135:0.3cm)$) -- 
+                  ($(x2b.south west) + (-135:0.3cm)$) -- 
+                  ($(x4a.south west) + (-135:0.3cm)$) -- 
+                  ($(x4b.south east) + (-45:0.3cm)$) -- 
+                  ($(x3b.north east) + (45:0.3cm)$) -- 
+                  ($(h3.north east) + (45:0.3cm)$) -- 
+                  cycle;
+  \end{pgfonlayer}
+
+   %\node<1>[scale=1.0] at (pi) {$\mathmg{\pi}$};
+   %\node<1>[scale=1.0] at (T1) {$\mathmg{T}$};
+   %\node<1>[scale=1.0] at (T2) {$\mathmg{T}$};
+   %\node<1>[scale=1.0] at (V) {$\mathmg{V}$};
+   %\node<1>[scale=1.0] at (O1) {$\mathmg{O}$};
+   %\node<1>[scale=1.0] at (O2) {$\mathmg{O}$};
+
+   %\node<3->[scale=1.0] at (O1) {\textmg{\checkmark}};
+   %\node<3->[scale=1.0] at (O2) {\textmg{\checkmark}};
+
+   %\node<5->[scale=1.0] at (pi) {\textmg{\checkmark}};
+
+   %\node<7->[scale=1.0] at (T1) {\textmg{\checkmark}};
+   %\node<7->[scale=1.0] at (T2) {\textmg{\checkmark}};
+
+   %\node<9->[scale=1.0] at (V) {\textmg{\checkmark}};
+
+  \end{canvas}
+  }
+  
+\end{frame}
+
+\begin{frame}
+  \frametitle{Views and Bottlenecks}
+  \splitcolumn{%
+  \begin{itemize}
+    \item<+-> {\bf Algorithm}: (a) estimate $\Pr(x|h)$ using bottlenecks, (b)
+      solve linear equation between $\Pr(h_1,\cdots,h_m)$ and $P(x_1,
       \cdots, x_m)$.
     \item<+-> {\bf Assumptions}: For every clique $\Pr(h_1, \cdots, h_m)$,
       every conditioning $\Pr(h_1, \cdots, h_k | h_{k+1}, \cdots h_m)$
       is ``full-rank''.
   \end{itemize}
+  }{%
+  \begin{canvas}
+    \point{mark}{(3cm,0)};
+    \point{start-grid}{(mark)};
+   \node[style=node, scale=0.8] (h1) at (start-grid) {$h_1$};
+   \node[style=node, scale=0.8, below left= 0.5cm of h1] (h2) {$h_2$};
+   \node[style=node, scale=0.8, below right= 0.5cm of h1] (h3) {$h_3$};
+   \node[style=node, scale=0.8, below right= 0.5cm of h2] (h4) {$h_4$};
+
+   \point{pi}{($(h1.north) + (0,0.1cm)$)};
+   \draw[-latex] (h1) -- node[scale=0.7,above] (T1) {} (h2);
+   \draw[-latex] (h1) -- node[scale=0.7,above] (T2) {} (h3);
+   \draw[-latex] (h2) -- (h4);
+   \draw[-latex] (h3) -- (h4);
+   \point{V}{($(h4.north) + (0,0.1cm)$)};
+
+% Observed nodes
+   \node[style=obsnode, scale=0.7, above left=0.3cm of h1] (x1a) {$x^a_1$};
+   \node[style=obsnode, scale=0.7, above right=0.3cm of h1] (x1b) {$x^b_1$};
+   \draw[-latex] (h1) -- (x1a);
+   \draw[-latex] (h1) -- (x1b);
+
+   \node[style=obsnode, scale=0.7, above left=0.3cm of h2] (x2a) {$x^a_2$};
+   \node[style=obsnode, scale=0.7, below left=0.3cm of h2] (x2b) {$x^b_2$};
+   \draw[-latex] (h2) -- node[scale=0.7,above] (O1) {} (x2a);
+   \draw[-latex] (h2) -- node[scale=0.7,below] (O2) {} (x2b);
+
+   \node[style=obsnode, scale=0.7, above right=0.3cm of h3] (x3a) {$x^a_3$};
+   \node[style=obsnode, scale=0.7, below right=0.3cm of h3] (x3b) {$x^b_3$};
+   \draw[-latex] (h3) -- (x3a);
+   \draw[-latex] (h3) -- (x3b);
+    
+   \node[style=obsnode, scale=0.7, below left=0.3cm of  h4] (x4a) {$x^a_4$};
+   \node[style=obsnode, scale=0.7, below right=0.3cm of h4] (x4b) {$x^b_4$};
+
+   \draw[-latex] (h4) -- (x4a);
+   \draw[-latex] (h4) -- (x4b);
+
+   % Story - 
+  \begin{pgfonlayer}{background}
+  \draw[draw=black,fill=green!70,rounded corners,line width=1pt, dotted] 
+                  ($(h2.north west) + (135:0.3cm)$) -- 
+                  ($(x2b.south west) + (-135:0.3cm)$) -- 
+                  ($(x4a.south west) + (-135:0.3cm)$) -- 
+                  ($(x4b.south east) + (-45:0.3cm)$) -- 
+                  ($(x3b.north east) + (45:0.3cm)$) -- 
+                  ($(h3.north east) + (45:0.3cm)$) -- 
+                  cycle;
+  \end{pgfonlayer}
+
+   %\node<1>[scale=1.0] at (pi) {$\mathmg{\pi}$};
+   %\node<1>[scale=1.0] at (T1) {$\mathmg{T}$};
+   %\node<1>[scale=1.0] at (T2) {$\mathmg{T}$};
+   %\node<1>[scale=1.0] at (V) {$\mathmg{V}$};
+   %\node<1>[scale=1.0] at (O1) {$\mathmg{O}$};
+   %\node<1>[scale=1.0] at (O2) {$\mathmg{O}$};
+
+   %\node<3->[scale=1.0] at (O1) {\textmg{\checkmark}};
+   %\node<3->[scale=1.0] at (O2) {\textmg{\checkmark}};
+
+   %\node<5->[scale=1.0] at (pi) {\textmg{\checkmark}};
+
+   %\node<7->[scale=1.0] at (T1) {\textmg{\checkmark}};
+   %\node<7->[scale=1.0] at (T2) {\textmg{\checkmark}};
+
+   %\node<9->[scale=1.0] at (V) {\textmg{\checkmark}};
+
+  \end{canvas}
+  }
   
 \end{frame}
+
+
 \begin{frame}
   \frametitle{More Uniformly Bottlenecked Examples}
   \begin{canvas}
