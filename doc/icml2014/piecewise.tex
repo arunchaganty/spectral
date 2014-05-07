@@ -141,13 +141,11 @@ than the composite likelihood estimator in that
 \begin{align*}
 e^\mom &\eqdef 
     \frac{1}{k^m-1} \Tr(\Sigmaml\Sigmamomi ) \\
-    &= 1 - \frac{1}{k^m - 1} 
-    \frac{\sum_{\vx = \ones}^{\vx \prec \vk} M_\sV[\vx] (1 - M_\sV[\vx])}
-    {\frac{M_\sV[\bd]}{1 - M_\sV[\bd]} + \sum_{\vx = \ones}^{\vx \prec \vk} M_\sV[\vx] (1 - M_\sV[\vx])} \\
+        &= 1 - \frac{1}{\bar k} \frac{ \ones_{\bar k}^\top \widetilde\Sigma_\sV \ones_{\bar k}}{\frac{1 - \ones^\top \tM_\sV}{\ones^\top \tM_\sV} + \ones_{\bar k}^\top \widetilde\Sigma_\sV \ones_{\bar k}} \\
     &< 1.
 \end{align*}
 
-When $M_\sV$ is close to the uniform distribution, i.e. $M_\sV \approxeq \frac{1}{d^m} \ones$, we get that 
+When $M_\sV$ is close to the uniform distribution, i.e. $M_\sV \approxeq \frac{1}{d^m} \ones \implies \tilde\Sigma_\sV = \frac{d-1}{d^2} I$, we get that 
 \begin{align*}
 e^\mom 
     &= 1 - \frac{(d^m -1)^2}{ (d^m)^2 + (k^m-1)(d^m -1)^2} 
