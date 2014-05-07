@@ -24,6 +24,16 @@ For every clique $\sC \in \sG$ (including ones involving observed
   every unfolding has full rank. 
 \end{assumption*}
 
+% Tour guide
+Going forward, we will describe $\mOpp{v}{i}$ recursively in terms of
+  tensor multiplications of conditional distributions $\Pr(h_c \given
+  \Pa(h_c))$ in a variable elimination ordering.
+We then show that the above assumption implies the unfoldings of the
+  conditional distributions are full rank as well.
+The analysis also tracks singular values, allowing us to present
+  a sample complexity bound that highlights an exponential dependence on
+  the size of the variable elimination set.  
+
 \paragraph{A recursive construction of $\mOpp{v}{i}$}
 
 Without loss of generality, let $i = 1$. We will express the conditional
@@ -109,36 +119,70 @@ This process is repeated until the base case, $\mYpp{1}{1} = \ones$.
   \end{algorithmic}
 \end{algorithm}
 
-% \paragraph{Constructing $\mYpp{c}{\Pa(h_c)}$}
-% 
-% The algorithm constructs an expression for $\mYpp{t}{1}$ entirely as
-%   tensor multiplications of terms of the form $\mYpp{c}{\Pa(h_c)}$ for
-%   some hidden variable $h_c$. 
-% The individual $\mYpp{c}{\Pa(h_c)}$ can be easily computed from the
-%   clique marginals $Z_\sC$ as follows.
-% 
-% Without loss of generality, let $\sC \eqdef \{c\} \union \Pa(h_c)$ be a clique
-%   in the graph $\sG$.
-% If instead $\sC \subseteq \sC_1 \union \sC_2$ for some $\sC_1, \sC_2 \in
-%   \sG$, we can simply construct $Z_{\sC}$ from the union of $\sC_1$ and
-%   $\sC_2$,
-% \begin{align*}
-%   Z_\sC &= Z_{\sC_1} \times_{\del \sC} Z_{\sC_2},
-% \end{align*}
-% where $\del \sC = (\sC_1 \union \sC_2) \setminus \sC$.
-% 
-% Proceeding,
-% \begin{align*}
-% \mYpp{c}{\Pa(h_c)} 
-%   &\eqdef \Pr(h_c \given \Pa(h_c)) \\
-%   &= \frac{\Pr(h_c, \Pa(h_c))}{\Pr(\Pa(h_c))} \\
-%   &= Z_\sC \times_{\Pa(h_c)} \diag{Z_\sC(\ones, \cdot, \ldots, \cdot)}^{-1},
-% \end{align*}
-% where $\diag(\sP)$ is a ``diagonal'' tensor constructed by taking the
-% tensor product with $I^{\otimes p}$:
-% \begin{align*}
-%   \diag(\sP)[\vi,\vj] &\eqdef \sP[\vi] \delta[\vi,\vj].
-% \end{align*}
+\paragraph{Rank conditions for $\mYpp{c}{\Pa(h_c)}$}
+
+\algorithmref{Y} constructs an expression for $\mYpp{t}{1}$ entirely as
+  tensor multiplications of terms of the form $\mYpp{c}{\Pa(h_c)}$ for
+  some hidden variable $h_c$. 
+The singular values of unfoldings of individual $\mYpp{c}{\Pa(h_c)}$ can
+  be easily computed from the clique marginals $Z_\sC$ as follows.
+
+\begin{lemma} 
+  Let $\sC_0 \eqdef {h_c} \union \Pa(h_c) \subseteq \sC_1 \union \cdots
+  \union \sC_\ell$ for $\sC_1, \cdots, \sC_\ell \in \sG$. Note that
+  $\sC_0$ need not belong in the graph.
+
+  Then, for the unfolding $\{c\}$, we get 
+  \begin{align*}
+    \sigma_{\min}(\mYpp{c}{\Pa(c)}\munf{I}) &\ge \max_{i\in[\ell]}\{\sigma_{\min}(Z_{\sC_i}\munf{I_i})\},
+  \end{align*}
+  where $i$ is the subset of $I$ present in clique $\sC_i$.
+\end{lemma} 
+\begin{proof}
+Without loss of generality, let $\sC \eqdef \{c\} \union \Pa(h_c)$ be a clique
+  in the graph $\sG$.
+If instead $\sC \subseteq \sC_1 \union \sC_2$ for some $\sC_1, \sC_2 \in
+\sG$, then $Z_{\sC}$ is the marginalization of some $Z_{\sC_1 \union \sC_2}$
+(which may not be a parameter in our model). 
+
+\lemmaref{tensor-projection} states that when a tensor, $Z_{\sC_1 \union
+\sC_2}$, is projected by a non-zero vector $v$ (in this case, $\ones$),
+then the singular values of the projection $Z_\sC$ are preserved along
+any unfolding $I$ of $Z_\sC$:
+\begin{align*}
+  \sigma_{\min}(Z_{\sC}\munf{I}) &\ge \sigma_{\min}(Z_{\sC_1 \union \sC_2}\munf{I})v_{\min} \\
+  \sigma_{\min}(Z_{\sC_1 \union \sC_2}\munf{I}) &\ge
+  \sigma_{\min}(Z_{\sC}\munf{I})v_{\max}\inv.
+\end{align*}
+
+In this case, we get that $\sigma_{\min}(Z_{\sC_1 \union \sC_2}\munf{I})
+= \sigma_{\min}(Z_{\sC}\munf{I})v_{\max}\inv$.
+
+Furthermore, assuming that any unfolding of $Z_{\sC_1}$ is full rank, we
+have that $Z_{\sC_1 \union \sC_2}$ is also full rank along any common
+unfolding. 
+
+Proceeding,
+\begin{align*}
+\mYpp{c}{\Pa(h_c)} 
+  &\eqdef \Pr(h_c \given \Pa(h_c)) \\
+  &= \frac{\Pr(h_c, \Pa(h_c))}{\Pr(\Pa(h_c))} \\
+  \mYpp{c}{\Pa(h_c)}\munf{I}
+  &= Z_\sC\munf{I} \diag{Z_\sC(\ones, \cdot, \ldots, \cdot)}^{-1},
+\end{align*}
+where $\diag(\sP)$ is a ``diagonal'' tensor constructed by taking the
+tensor product with the identity matrix,
+\begin{align*}
+  \diag(\sP)[\vi,\vj] &\eqdef \sP[\vi] \delta[\vi,\vj].
+\end{align*}
+
+We have from the previous argument that $Z_\sC\munf{I}$ has full column
+rank $k$; furthermore, $Z_\sC(\ones, \cdot, \ldots, \cdot)$ is
+guaranteed to have at least $k$ non-zero elements because its complete
+marginals, $\mPi{i} \succ 0 ~\forall h_i \in \sC$ have full support. 
+Consequently, $\diag(Z_\sC(\ones, \cdot, \ldots, \cdot))$ has column rank $k$.
+\todo{What happens if $\Pr(h_2, h_3) = 0$ at some point?}
+\end{proof}
 
 \paragraph{Sample complexity results}
 
