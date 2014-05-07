@@ -209,12 +209,16 @@ With concrete expressions for $\Sigmamom_\sC$ and $\Sigmaml_\sC$, we can quantit
       &= \ones \\
     \ones^\top \mOppTAll 
         &= \ones^\top (\mOppAll_{\neg \neg \bd, \vk} - \mOppAll_{\neg \bd, \vk}\ones^\top) \\
-        &= \sum_{\bh = \ones}^{\bh \prec \bk} \sum_{\vx = \ones}^{\vx \prec \bd} \Pr(\vx | \bh) e_\bh - (\sum_{\vx = \ones}^{\vx \prec \bd} \Pr(\vx | \vk)) \ones  \\
-        &= \sum_{\bh = \ones}^{\bh \prec \bk} (1 - \Pr(\bd | \bh)) e_\bh - (1 - \Pr(\bd | \bk)) \ones  \\
+        &= \sum_{\bh = \ones}^{\bh \prec \bk} \sum_{\vx = \ones}^{\vx \prec \bd} \Pr(\vx | \bh) e_\bh - (\sum_{\vx = \ones}^{\vx \prec \bd} \Pr(\vx | \vk)) \ones^\top  \\
+        &= \sum_{\bh = \ones}^{\bh \prec \bk} (1 - \Pr(\bd | \bh)) e_\bh - (1 - \Pr(\bd | \bk)) \ones^\top  \\
         &= \mOppTAll_{\bd,\bk} \ones^\top - \mOppTAll_{\bd,\neg \bk}^\top.
   \end{align*}
   This shows that $\ones$ is not in the null space of $\mOppTAll$. 
-  Consequently, we have that 
+  For a unit vector vector $u \in \text{ColumnSpace}(U)$, $v = u\top
+  U^\top D U$ also lies in the $\text{ColumnSpace}(U)$. Thus, $D_{\min}
+  \le u\top (U^\top D_1 U) u \le D_{\max}$.
+
+  Consequently, we have that \todo{Recompute}.
   \begin{align*}
     \underbrace{(\mOppTAll_{\bd,\bk} \ones^\top \ones - \mOppTAll_{\bd,\neg \bk}^\top \ones)}_{C} \ones^\top &\succ \ones^\top \mOppTAll \mOppTAlli &\succ \ones^\top,
   \end{align*}
