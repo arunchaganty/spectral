@@ -10,7 +10,7 @@ In this part, we will derive the asymptotic variances of these two
 Recall, that in \sectionref{piecewise} we reparameterized the
   constrained estimators $Z_\sC \in \Delta_{k^m-1}$ with $\tZ_\sC \in
   [0,1]^{k^m}$. 
-Similarly, we reparameterized  $M_\sV \in \Delta_{d^m - 1}$,
+Similarly, we reparameterized $M_\sV \in \Delta_{d^m - 1}$ with
   $\tM_\sV \eqdef (M_\sV)_{\neg \bd} \in [0,1]^{d^m}$ to compute
   the likelihood.
 We used the vectorized forms of the marginal distribution $\tM_\sV \in
@@ -37,7 +37,7 @@ $\mOppAll_{\vk,\neg \bd} \in \Re^{d^m-1}$ is the last column, ignoring the last 
   \begin{align*}
       \Sigmamom_{\sC} &= \mOppTAlli \widetilde\Sigma_\sV \mOppTAllit,
   \end{align*}
-  where $\widetilde\Sigma_\sV$ is the variance of $\tM_\sV$; $\widetilde\Sigma_\sV = \widetilde{D}_\sV
+  where $\widetilde\Sigma_\sV$ is the variance of $\tM_\sV$: $\widetilde\Sigma_\sV = \widetilde{D}_\sV
   (I - \widetilde{D}_\sV)$, where we have used $\widetilde D_\sV \eqdef \diag(\tM_\sV)$ as
   before.
 
@@ -46,7 +46,9 @@ $\mOppAll_{\vk,\neg \bd} \in \Re^{d^m-1}$ is the last column, ignoring the last 
   $\tZ_\sC$ and $\mOppTAll$ as,
   \begin{align*}
     \sL_\ml &= \frac{1}{|\sD|} \sum_{\vx \in \sD} \ell(\vx) \\
-    \ell(\vx) &= \BI[\vx \neq \bd] \log(\tM_\sV[\vx]) + \BI[\vx = \bd] \log(1 - \ones^\top \tM_\sV) ) \\
+    \ell(\vx) 
+              &= \log(M_\sV[\vx]) \\
+              &= \BI[\vx \neq \bd] \log(\tM_\sV[\vx]) + \BI[\vx = \bd] \log(1 - \ones^\top \tM_\sV) ) \\
               &= \BI[\vx \neq \bd] \log(\mOppTAll[\vx] \tZ_\sC + \mOppAll_{\vk, \neg \bd}[\vx]) \\
               &+ \BI[\vx = \bd] \log(1 - \ones^\top (\mOppTAll \tZ_\sC + \mOppAll_{\vk, \neg \bd})).
   \end{align*}
@@ -77,7 +79,7 @@ distribution of the observed data at the true parameters.
 Taking the second derivative,
 \begin{align}
   \grad^2_{\tilde \mH_\sC} \ell(\vx)
-  &= - \frac{\BI[\vx \neq \bd] \mOppTAll[\vx] \mOppTAllt[\vx] + \BI[\vx = \bd] \mOppTAllt[\bd] \ones \ones^\top \mOppTAll[\bd]}{(\mOppAll[\vx] \mH_\sC)^2} \nonumber \\
+  &= -\frac{\BI[\vx \neq \bd] \mOppTAll[\vx] \mOppTAllt[\vx] + \BI[\vx = \bd] \mOppTAllt \ones \ones^\top \mOppTAll}{(\mOppAll[\vx] \mH_\sC)^2} \nonumber \\
   &= - 
   \begin{bmatrix}
     \mOppTAll \\
@@ -131,23 +133,60 @@ Noting that $\diag(\Sigma_\sV) = D_\sV (I - D_\sV)$, the inner
       \end{bmatrix} \\
    &=
     \mOppTAllt \tD_{\sV}^{-1} (I - \tD_\sV) \mOppTAll + \mOppTAllt \frac{\ones^\top \tM_\sV}{1 - \ones^\top \tM_\sV} \ones\ones^\top \mOppTAll \\
-   &= {\Sigmamom}\inv + \mOppTAllt \frac{\ones^\top \tM_\sV}{1 - \ones^\top \tM_\sV} \ones\ones^\top \mOppTAll.
+   &= {\Sigmamomi} + \mOppTAllt \frac{\ones^\top \tM_\sV}{1 - \ones^\top \tM_\sV} \ones\ones^\top \mOppTAll.
 \end{align*}
 
-Finally, noting that $\diag(\Sigma_\sV) = D_\sV (I - D_\sV)$, we get,
+Finally, we can derive the asymptotic variance of $\Sigmaml_\sC$,
 \begin{align*}
     \Sigmaml_{\sC} 
       &= \E[\grad^2 \ell(\vx)]^{-1} \Var [\grad \ell(\vx)] \E[\grad^2 \ell(\vx)]^{-1} \\
-      &= \Var[\grad \ell(\vx)]^{-1} \\
-      &= 
-        \mOppTAlli (\tD_{\sV}^{-1} (I - \tD_\sV) + \frac{\ones^\top \tM_\sV}{1 - \ones^\top \tM_\sV} \ones\ones^\top)\inv \mOppTAllit \\
-      &= ({\Sigmamom}\inv + \mOppTAllt \frac{\ones^\top \tM_\sV}{1 - \ones^\top \tM_\sV} \ones\ones^\top \mOppTAll)\inv.
+      &= -\Var[\grad \ell(\vx)]^{-1} \\
+      &= ({\Sigmamomi} + \frac{\ones^\top \tM_\sV}{1 - \ones^\top \tM_\sV} (\mOppTAllt  \ones)(\mOppTAllt \ones)^\top)\inv.
 \end{align*}
-Note that given our assumptions, $\ones \succ M_\sV \succ \zeros$. 
-Thus the asymptotic variance is finite, and our estimator is consistent
-  as well. 
-Note also, that the expression for $\Sigmaml$ already implies that
-  $Z^\ml_\sC$ is a strictly more efficient estimator than $Z^\mom_\sC$.
+The above expression is the inversion of an invertible matrix plus a rank-one component. The Sherman-Morrison formula allows us to write the inverse in closed form:
+\begin{align*}
+  (A + uv^\top)\inv &= A\inv - \frac{A\inv uv^\top A\inv}{1 + v^\top A\inv u}.
+\end{align*}
 
+This gives us,
+\begin{align}
+    \Sigmaml_{\sC} 
+    &= \Sigmamom - \frac{\Sigmamom (\mOppTAllt \ones)(\mOppTAllt \ones)^\top \Sigmamom}{\frac{1 - \ones^\top \tM_\sV}{\ones^\top \tM_\sV} + (\mOppTAllt \ones)^\top \Sigmamom (\mOppTAllt \ones)}
+    \label{eqn:asymp-var-ml}
+\end{align}
+
+Note that given our assumptions, $\ones \succ M_\sV \succ \zeros$, and
+  $\ones^\top M_\sV = 1$. 
+Thus the asymptotic variance is finite and our estimator is consistent
+  as well. 
+\end{proof}
+
+With concrete expressions for $\Sigmamom_\sC$ and $\Sigmaml_\sC$, we can quantitatively evaluate their asymptotic efficiency,
+\begin{proof}[Proof for \corollaryref{efficiency}]
+  Firstly, note that \equationref{asymp-var-ml} immediately gives us that
+  ${\Sigmaml_\sC} \preceq {\Sigmamom_\sC}$, as expected.
+
+  Let $\bar k = k^m -1$ and $\bar d = d^m -1$. Consider their relative
+  efficiencies, 
+  \begin{align*}
+    e^\mom 
+        &\eqdef \frac{1}{\bar k} \Tr(\Sigmaml\Sigmamomi ) \\
+        &= \frac{1}{\bar k} \Tr( I -  \frac{\Sigmamom (\mOppTAllt \ones)(\mOppTAllt \ones)^\top}{\frac{1 - \ones^\top \tM_\sV}{\ones^\top \tM_\sV} + (\mOppTAllt \ones)^\top \Sigmamom (\mOppTAllt \ones)} ) \\
+        &= 1 - \frac{1}{\bar k} \Tr( \frac{\mOppTAlli \widetilde\Sigma_\sV \mOppTAllit \mOppTAllt \ones \ones^\top \mOppTAll }{\frac{1 - \ones^\top \tM_\sV}{\ones^\top \tM_\sV} + \ones^\top \mOppTAll \mOppTAlli \widetilde\Sigma_\sV \mOppTAllit \mOppTAllt \ones} ) \\
+        &= 1 - \frac{1}{\bar k} \frac{\Tr( \widetilde\Sigma_\sV I_{\bar k} \ones \ones^\top )}{\frac{1 - \ones^\top \tM_\sV}{\ones^\top \tM_\sV} + \ones^\top I_{\bar k} \widetilde\Sigma_\sV \ones} \\
+        &= 1 - \frac{1}{\bar k} 
+        \frac{\sum_{\vx = \ones}^{\vx \prec \vk} M_\sV[\vx] (1 - M_\sV[\vx])}
+        {\frac{M_\sV[\bd]}{1 - M_\sV[\bd]} + \sum_{\vx = \ones}^{\vx \prec \vk} M_\sV[\vx] (1 - M_\sV[\vx])}
+        &< 1.
+  \end{align*}
+
+  For the uniform distribution $M_\sV[x] = \frac{1}{\bar d + 1}$,
+  \begin{align*}
+    e^\mom 
+    &= 1 - \frac{\frac{\bar d}{(\bar d + 1)^2}}{ \frac{1}{\bar d} + {\bar k} \frac{\bar d}{(\bar d + 1)^2}} \\
+    &= 1 - \frac{{\bar d}^2}{ (\bar d + 1)^2 + \bar{k} {\bar d}^2} \\
+    &\simeq 1 - \frac{1}{1 + \bar k}.
+  \end{align*}
+   
 \end{proof}
 

@@ -78,11 +78,13 @@ We turn to asymptotic statistics to answer this question.
 
 To begin, let us compute the asymptotic variances of the two estimators. 
 Note that $\hat Z_\sC$ is constrained to lie on the simplex
-  $\Delta_{k^m-1}$. 
-To handle this constraint, we reparameterize our problem in
-  terms of $\tilde Z_\sC \in [0,1]^{k^m-1}$: the first $k^m -1$ terms of
-  $\tilde Z_\sC$ and $Z_\sC$ are equal, and the last element, $Z_\sC[k,
-  \ldots, k]$ picks up the slack to make $Z_\sC$ sum to 1:
+  $\Delta_{k^m-1}$ and that $M_\sV$ is similarly constrained to lie on
+  the simplex $\Delta_{d^m-1}$. 
+To handle these constraints, we reparameterize our problem in
+  terms of $\tZ_\sC \in [0,1]^{k^m-1}$ and $\tM_\sV \in [0,1]^{d^m-1}$.
+  The first $k^m -1$ terms of $\tZ_\sC$ and $Z_\sC$ are equal, and the
+  last element, $Z_\sC[k, \ldots, k]$ picks up the slack to make $Z_\sC$
+  sum to 1:
 \begin{align*}
   Z_\sC[\vi] &= \left\{
     \begin{array}{ll}
@@ -92,25 +94,24 @@ To handle this constraint, we reparameterize our problem in
       \right.,
 \end{align*} 
 where $\vk = (k, \ldots, k)$ is the $m$-dimensional vector of all $k$s. 
-
+$M_\sV$ is similarly defined in terms of $\tM_\sV$.
 
 Now, abusing notation slightly by using the vectorized forms of $M_\sV
-\in \Re^{d^m}$, $Z_\sC \in \Re^{k^m}$, $\tilde Z_\sC \in \Re^{k^m-1}$
+\in \Re^{d^m}$, $\tM_\sV \in \Re^{d^m-1}$, $Z_\sC \in \Re^{k^m}$, $\tilde Z_\sC \in \Re^{k^m-1}$
 and the matrix form of $\mOppAll \in \Re^{d^m \times k^m}$, the marginal
 distribution can be expressed as follows,
 \begin{align*}
-  M_\sV 
-        &= \mOppAll Z_\sC \\
-        &= \mOppAll_{\neg \vk} \tilde Z_\sC + \mOppAll_{\vk} (1 - \ones^\top \tilde Z_\sC) \\
-        &= \underbrace{(\mOppAll_{\neg \vk} -  \mOppAll_{\vk}\ones^\top)}_{\mOppTAll} \tilde Z_\sC + \mOppAll_{\vk}.
+  \tM_\sV 
+        &= \mOppAll_{\neg d} Z_\sC \\
+        &= \mOppAll_{\neg \bd, \neg \vk} \tilde Z_\sC + \mOppAll_{\neg \bd, \vk} (1 - \ones^\top \tilde Z_\sC) \\
+        &= \underbrace{(\mOppAll_{\neg \bd, \neg \vk} -  \mOppAll_{\neg \bd, \vk}\ones^\top)}_{\mOppTAll} \tilde Z_\sC + \mOppAll_{\neg \bd, \vk}.
         % &= \mOppTAll \tilde Z_\sC + \mOppAll_{\vk},
 \end{align*}
-where $\mOppAll_{\neg \vk} \in \Re^{d^m \times k^m - 1}$ matrix containing the
-first $k^m-1$ columns of $\mOppAll$, $\mOppAll_\vk \in \Re^{d^m}$ is the
-last column. % and $\mOppTAll \eqdef (\mOppAll_{\neg \vk} - \mOppAll_{\vk}\ones^\top)$.
+where $\mOppAll_{\neg \bd, \neg \vk} \in \Re^{d^m -1 \times k^m - 1}$ matrix containing the
+first $d^m-1$ rows and first $k^m-1$ columns of $\mOppAll$, $\mOppAll_{\neg \bd, \vk} \in \Re^{d^m}$ is the last column. 
 
 We are now ready to study the asymptotic properties of $Z_\sC$ through
-$\tilde{Z}_\sC$.
+$\tZ_\sC$ and $\tM_\sV$.
 
 \providecommand{\hatt}[1] {\hat{\tilde{#1}}}
 \begin{lemma}[Asymptotic variances]
@@ -118,51 +119,44 @@ $\tilde{Z}_\sC$.
   The asymptotic variance of $\hatt Z^\mom_{\sC}$ based on composite likelihood and 
   $\hatt Z^\ml_{\sC}$ based on composite likelihood are respectively,
   \begin{align*}
-    \Sigma^{\mom} &= \mOppTAlli \Sigma_\sV \mOppTAllit
-    &
-    \Sigma^{\ml} &= \mOppTAlli \dM_\sV (I - \dM_\sV)\inv \mOppTAllit,
+    \Sigma^{\mom} &= \mOppTAlli \tilde\Sigma_\sV \mOppTAllit \\
+    \Sigma^{\ml} &= \Sigmamom - \frac{\Sigmamom (\mOppTAllt \ones)(\mOppTAllt \ones)^\top \Sigmamom}{\frac{1 - \ones^\top \tM_\sV}{\ones^\top \tM_\sV} + (\mOppTAllt \ones)^\top \Sigmamom (\mOppTAllt \ones)},
   \end{align*}
-  where $D_\sV = \diag(M_\sV)$ and $\Sigma_\sV = D_\sV - M_\sV
-  M_\sV^\top$, the variance of the multinomial distribution $M_\sV$.
+  where $\tilde \Sigma_\sV = \tD_\sV (I - \tD_\sV)$, the variance of $\tM_\sV$ and $\tD_\sV = \diag(\tM_\sV)$.
 \end{lemma}
 \begin{proof}
   The above two results follow by direct application of the delta-method
-  \cite{vaart98asymptotic}. Refer to \appendixref{pw-variance-proof} for
+  \cite{vaart98asymptotic}. Refer to \appendixref{pw-proof} for
   a complete derivation.
 \end{proof}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The following lemma shows that the gap between the two estimators can be quite substantial,
-and scales with the dimension $d$: % \todo{make sure this is true}:
-\begin{corollary}
+The following corollary (proved in \appendixref{pw-proof}) shows that
+the gap between the two estimators closes at a rate of $k^m$.
+\begin{corollary}[Asymptotic efficiency]
+  \label{cor:efficiency}
 The pseudoinverse estimator is strictly less efficient
-than the composite likelihood estimator in that $e^\mom \eqdef \frac{1}{k^m-1} \Tr(\Sigmaml\Sigmamomi ) < 1$.
+than the composite likelihood estimator in that 
+\begin{align*}
+e^\mom &\eqdef 
+    \frac{1}{k^m-1} \Tr(\Sigmaml\Sigmamomi ) \\
+    &= 1 - \frac{1}{k^m - 1} 
+    \frac{\sum_{\vx = \ones}^{\vx \prec \vk} M_\sV[\vx] (1 - M_\sV[\vx])}
+    {\frac{M_\sV[\bd]}{1 - M_\sV[\bd]} + \sum_{\vx = \ones}^{\vx \prec \vk} M_\sV[\vx] (1 - M_\sV[\vx])} \\
+    &< 1.
+\end{align*}
+
+When $M_\sV$ is close to the uniform distribution, i.e. $M_\sV \approxeq \frac{1}{d^m} \ones$, we get that 
+\begin{align*}
+e^\mom 
+    &= 1 - \frac{(d^m -1)^2}{ (d^m)^2 + (k^m-1)(d^m -1)^2} 
+    &\simeq 1 - \frac{1}{k^m}.
+\end{align*}
 \end{corollary}
-\begin{proof}
-\end{proof}
 
-\paragraph{Intuitions}
-%It is well known that the method of moments estimator is less
-  %statistically efficient than the maximum likelihood estimator. 
-To get a sense for how large the gap is, consider an example in which
-$M_\sV$ is close to the uniform distribution, i.e. $M_\sV
-\approxeq \frac{1}{d} \ones$, and $\Sigma_\sV = \diag(M_\sV) - M_\sV
-M_\sV^\top = \frac{1}{d}(I - \frac{1}{d} \ones \ones^\top)$.
-
-\todo{Redo math!}
-Then the efficiency of the pseudo-likelihood estimator is,
-$e^\mom \approxeq \Tr(\frac{1}{d^2} I) = \frac{1}{d}$.
-
-In other words, the gap in variance between the two estimators
-grows linearly with the dimension of the observations, $d$.
-
-% (ARUN): Possibly cut this whole part.
 \figureref{cl-hmm} compares the parameter recovery error of the
   pseudoinverse estimator and the composite likelihood estimator.
-  %for
-  %a hidden Markov model with 2 hidden states ($k=2$) and 3 emissions
-  %($d=3$).
 Empirically, we observe that using the composite likelihood estimator
 indeed leads to more accurate estimates.
 
