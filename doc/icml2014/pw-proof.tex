@@ -18,20 +18,20 @@ We used the vectorized forms of the marginal distribution $\tM_\sV \in
   \Re^{k^m-1}$ and the matrix form of the conditional moments, $\mOppAll
   \in \Re^{d^m \times k^m}$, to represent the marginal distribution as
 \begin{align*}
-  \tM_\sV &= \mOppTAll \tZ_\sC + \mOppAll_{\vk, \neg \bd},
+  \tM_\sV &= \mOppTAll \tZ_\sC + \mOppAll_{\neg \bd, \vk},
 \end{align*}
-where $\mOppTAll \eqdef (\mOppAll_{\neg \vk, \neg \bd}
-- \mOppAll_{\vk, \neg \bd}\ones^\top)$, $\mOppAll_{\neg \vk, \neg \bd} \in \Re^{d^m - 1 \times
+where $\mOppTAll \eqdef (\mOppAll_{\neg \bd, \neg \vk}
+- \mOppAll_{\neg \bd, \vk}\ones^\top)$, $\mOppAll_{\neg \neg \bd, \vk} \in \Re^{d^m - 1 \times
 k^m - 1}$ matrix containing the first $d^m-1$ rows and first $k^m-1$ columns of $\mOppAll$,
-$\mOppAll_{\vk,\neg \bd} \in \Re^{d^m-1}$ is the last column, ignoring the last row.
+$\mOppAll_{\neg \bd, \vk} \in \Re^{d^m-1}$ is the last column, ignoring the last row.
 
 \begin{proof}[Proof for \lemmaref{mom-pw-variance}]
   We proceed using the delta method. First, let us look at the
   asymptotic variance of the pseudo-inverse estimator. With the
   reparameterization $\tZ_\sC$, we get,
   \begin{align*}
-    \tM_\sV &= \mOppTAll \tZ_\sC + \mOppAll_{\vk,\neg \bd} \\
-    \tZ_\sC &= \mOppTAlli (\tM_\sV - \mOppAll_{\vk, \neg \bd}).
+    \tM_\sV &= \mOppTAll \tZ_\sC + \mOppAll_{\neg \bd, \vk} \\
+    \tZ_\sC &= \mOppTAlli (\tM_\sV - \mOppAll_{\neg \bd, \vk}).
   \end{align*}
   As this is just a linear transformation on $\tM_\sV$, we get,
   \begin{align*}
@@ -49,8 +49,8 @@ $\mOppAll_{\vk,\neg \bd} \in \Re^{d^m-1}$ is the last column, ignoring the last 
     \ell(\vx) 
               &= \log(M_\sV[\vx]) \\
               &= \BI[\vx \neq \bd] \log(\tM_\sV[\vx]) + \BI[\vx = \bd] \log(1 - \ones^\top \tM_\sV) ) \\
-              &= \BI[\vx \neq \bd] \log(\mOppTAll[\vx] \tZ_\sC + \mOppAll_{\vk, \neg \bd}[\vx]) \\
-              &+ \BI[\vx = \bd] \log(1 - \ones^\top (\mOppTAll \tZ_\sC + \mOppAll_{\vk, \neg \bd})).
+              &= \BI[\vx \neq \bd] \log(\mOppTAll[\vx] \tZ_\sC + \mOppAll_{\neg \bd, \vk}[\vx]) \\
+              &+ \BI[\vx = \bd] \log(1 - \ones^\top (\mOppTAll \tZ_\sC + \mOppAll_{\neg \bd, \vk})).
   \end{align*}
 
 Using the delta-method \cite{vaart98asymptotic} we have that the asymptotic distribution of 
@@ -130,8 +130,8 @@ Noting that $\diag(\Sigma_\sV) = D_\sV (I - D_\sV)$,
         \mOppTAll \\
         \ones^\top \mOppTAll
       \end{bmatrix} \\
-   &=
-    - \mOppTAllt \tD_{\sV}^{-1} (I - \tD_\sV) \mOppTAll + \mOppTAllt \ones \frac{\ones^\top \tM_\sV}{1 - \ones^\top \tM_\sV} \ones^\top \mOppTAll \\
+%   &=
+%    - \mOppTAllt \tD_{\sV}^{-1} (I - \tD_\sV) \mOppTAll + \mOppTAllt \ones \frac{\ones^\top \tM_\sV}{1 - \ones^\top \tM_\sV} \ones^\top \mOppTAll \\
    &=
     - \mOppTAllt \tS_\sV \mOppTAll + s_\sV \mOppTAllt \ones \ones^\top \mOppTAll,
 \end{align*}
@@ -166,7 +166,7 @@ This gives us,
       - \frac{s_\sV \mOppTAlli \tS_\sV\inv J \ones \ones^\top J \tS_\sV\inv \mOppTAllit }
       {1 + s_\sV \ones^\top J \tS_\sV\inv J \ones}, \label{eqn:asymp-var-ml}
 \end{align}
-where $J \eqdef \mOppAll \mOppAlli = U U^\top$, where $U$ is a $d^m
+where $J \eqdef \mOppTAll \mOppTAlli = U U^\top$, where $U$ is a $d^m
 - 1 \times k^m$ matrix with orthonormal columns.
 
 Given our assumptions, $\ones \succ M_\sV \succ \zeros$, and
@@ -186,16 +186,66 @@ With concrete expressions for $\Sigmamom_\sC$ and $\Sigmaml_\sC$, we can quantit
       &\quad - \frac{1}{\bar k} \Tr( \frac{s_\sV \mOppTAlli \tS_\sV\inv J \ones \ones^\top J \tS_\sV\inv \mOppTAllit \mOppTAllt  \tilde\Sigma_\sV\inv \mOppTAll }
       {1 + s_\sV \ones^\top J \tS_\sV\inv J \ones} ) \\
         &= \frac{1}{\bar k} \Tr( J \tS_\sV\inv J \tilde\Sigma_\sV\inv ) - \frac{1}{\bar k} \frac{s_\sV \ones^\top J \tS_\sV\inv J \tilde\Sigma_\sV\inv J \tS_\sV\inv J \ones }
-      {1 + s_\sV \ones^\top J \tS_\sV\inv J \ones} \\
-        &< 1.
+      {1 + s_\sV \ones^\top J \tS_\sV\inv J \ones},
+  \end{align*}
+  where $J \eqdef \mOppTAll \mOppTAlli = U U^\top$ as before. 
+  
+  Note that $\Tr(J) = \rank(J) = {\bar k}$.
+  Next we use H\"{o}lder's inequality for the trace: $\Tr(D A) \le
+  \|D\|_\infty \Tr(A)$ if $D$ is diagonal. Thus,
+  \begin{align*}
+      \Tr( J \tS_\sV\inv J \tilde\Sigma_\sV\inv ) 
+        &= \Tr( \tS_\sV\inv J \tilde\Sigma_\sV\inv J ) \\
+        &\le \|\tS_\sV\inv\|_\infty \Tr( J \tilde\Sigma_\sV\inv J ) \\
+        &\le \|\tS_\sV\inv\|_\infty \Tr( \tilde\Sigma_\sV\inv J ) \\
+        &\le \|\tS_\sV\inv\|_\infty \|\tilde\Sigma_\sV\inv\|_\infty \Tr( J ) \\
+        &= {\bar k} \|\tS_\sV\inv\|_\infty \|\tilde\Sigma_\sV\inv\|_\infty.
+  \end{align*}
+
+  We also have that,
+  \begin{align*}
+    \ones^\top \mOppAll 
+      &= \sum_{\bh = \ones}^{\bh \prec \bk} \sum_{\vx = \ones}^{\bd} \Pr(\vx | \bh) e_\bh  \\
+      &= \ones \\
+    \ones^\top \mOppTAll 
+        &= \ones^\top (\mOppAll_{\neg \neg \bd, \vk} - \mOppAll_{\neg \bd, \vk}\ones^\top) \\
+        &= \sum_{\bh = \ones}^{\bh \prec \bk} \sum_{\vx = \ones}^{\vx \prec \bd} \Pr(\vx | \bh) e_\bh - (\sum_{\vx = \ones}^{\vx \prec \bd} \Pr(\vx | \vk)) \ones  \\
+        &= \sum_{\bh = \ones}^{\bh \prec \bk} (1 - \Pr(\bd | \bh)) e_\bh - (1 - \Pr(\bd | \bk)) \ones  \\
+        &= \mOppTAll_{\bd,\bk} \ones^\top - \mOppTAll_{\bd,\neg \bk}^\top.
+  \end{align*}
+  This shows that $\ones$ is not in the null space of $\mOppTAll$. 
+  Consequently, we have that 
+  \begin{align*}
+    \underbrace{(\mOppTAll_{\bd,\bk} \ones^\top \ones - \mOppTAll_{\bd,\neg \bk}^\top \ones)}_{C} \ones^\top &\succ \ones^\top \mOppTAll \mOppTAlli &\succ \ones^\top,
+  \end{align*}
+  for some constant $C$.
+
+  Thus,
+  \begin{align*}
+      \ones^\top J \tS_\sV\inv J \tilde\Sigma_\sV\inv J \tS_\sV\inv J \ones 
+      &\ge C^3 \sum_{\vx=\ones}^{\vx \prec \bd} \frac{M_\sV[\vx]}{(1 - M_\sV[\vx])^3} \\
+      \ones^\top J \tS_\sV\inv J \ones 
+      &\le \sum_{\vx=\ones}^{\vx \prec \bd} \frac{M_\sV[\vx]}{1 - M_\sV[\vx]}.
+  \end{align*}
+
+  Finally, we have the result,
+  \begin{align*}
+    e^\mom 
+    &\le \|\tS_\sV\inv\|_\infty  \|\tilde\Sigma_\sV\inv\|_\infty \\
+    &\quad - \frac{1}{\bar k} \frac{1 - M_\sV[\bd]}{M_\sV[\bd]} \frac{C^3 \sum_{\vx=\ones}^{\vx \prec \bd} \frac{M_\sV[\vx]}{(1 - M_\sV[\vx])^3}}{1 + \frac{1 - M_\sV[\bd]}{M_\sV[\bd]} {\bar k} \sum_{\vx=\ones}^{\vx \prec \bd} \frac{M_\sV[\vx]}{1 - M_\sV[\vx]}}.
   \end{align*}
 
   For the uniform distribution $M_\sV[x] = \frac{1}{\bar d + 1}$,
+  $\|\tS_\sV\inv\|_\infty = \frac{1}{\bar d}$, $\|\tilde
+  \Sigma_\sV\inv\|_\infty = \frac{(\bar d + 1)^2}{\bar d}$:
   \begin{align*}
     e^\mom 
-    &= 1 - \frac{\frac{\bar d}{(\bar d + 1)^2}}{ \frac{1}{\bar d} + {\bar k} \frac{\bar d}{(\bar d + 1)^2}} \\
-    &= 1 - \frac{{\bar d}^2}{ (\bar d + 1)^2 + \bar{k} {\bar d}^2} \\
-    &\simeq 1 - \frac{1}{1 + \bar k}.
+    &\ge \frac{1}{\bar d + 1} \frac{(\bar d + 1)^2}{\bar d} 
+    - \frac{1}{\bar k} \frac{{\bar d} C^3 \frac{(\bar d + 1)^2}{(\bar d)^3} {\bar d}}
+    {1 + {\bar d} (\frac{1}{\bar d}) {\bar d}} \\
+    &= 1 + \frac{1}{\bar d} - \frac{1}{\bar k} C^3 \frac{(\bar d+1)^2}{(1+ \bar d)(\bar d)} \\
+    &= 1 + \frac{1}{\bar d} - C^3 \frac{1+\bar d}{\bar k} \\
+    &= (1 + \frac{1}{\bar d}) (1 - \frac{C^3}{\bar d}{\bar k}).
   \end{align*}
    
 \end{proof}
