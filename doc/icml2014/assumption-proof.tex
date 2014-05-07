@@ -109,36 +109,36 @@ This process is repeated until the base case, $\mYpp{1}{1} = \ones$.
   \end{algorithmic}
 \end{algorithm}
 
-\paragraph{Constructing $\mYpp{c}{\Pa(h_c)}$}
-
-The algorithm constructs an expression for $\mYpp{t}{1}$ entirely as
-  tensor multiplications of terms of the form $\mYpp{c}{\Pa(h_c)}$ for
-  some hidden variable $h_c$. 
-The individual $\mYpp{c}{\Pa(h_c)}$ can be easily computed from the
-  clique marginals $Z_\sC$ as follows.
-
-Without loss of generality, let $\sC \eqdef \{c\} \union \Pa(h_c)$ be a clique
-  in the graph $\sG$.
-If instead $\sC \subseteq \sC_1 \union \sC_2$ for some $\sC_1, \sC_2 \in
-  \sG$, we can simply construct $Z_{\sC}$ from the union of $\sC_1$ and
-  $\sC_2$,
-\begin{align*}
-  Z_\sC &= Z_{\sC_1} \times_{\del \sC} Z_{\sC_2},
-\end{align*}
-where $\del \sC = (\sC_1 \union \sC_2) \setminus \sC$.
-
-Proceeding,
-\begin{align*}
-\mYpp{c}{\Pa(h_c)} 
-  &\eqdef \Pr(h_c \given \Pa(h_c)) \\
-  &= \frac{\Pr(h_c, \Pa(h_c))}{\Pr(\Pa(h_c))} \\
-  &= Z_\sC \times_{\Pa(h_c)} \diag{Z_\sC(\ones, \cdot, \ldots, \cdot)}^{-1},
-\end{align*}
-where $\diag(\sP)$ is a ``diagonal'' tensor constructed by taking the
-tensor product with $I^{\otimes p}$:
-\begin{align*}
-  \diag(\sP)[\vi,\vj] &\eqdef \sP[\vi] \delta[\vi,\vj].
-\end{align*}
+% \paragraph{Constructing $\mYpp{c}{\Pa(h_c)}$}
+% 
+% The algorithm constructs an expression for $\mYpp{t}{1}$ entirely as
+%   tensor multiplications of terms of the form $\mYpp{c}{\Pa(h_c)}$ for
+%   some hidden variable $h_c$. 
+% The individual $\mYpp{c}{\Pa(h_c)}$ can be easily computed from the
+%   clique marginals $Z_\sC$ as follows.
+% 
+% Without loss of generality, let $\sC \eqdef \{c\} \union \Pa(h_c)$ be a clique
+%   in the graph $\sG$.
+% If instead $\sC \subseteq \sC_1 \union \sC_2$ for some $\sC_1, \sC_2 \in
+%   \sG$, we can simply construct $Z_{\sC}$ from the union of $\sC_1$ and
+%   $\sC_2$,
+% \begin{align*}
+%   Z_\sC &= Z_{\sC_1} \times_{\del \sC} Z_{\sC_2},
+% \end{align*}
+% where $\del \sC = (\sC_1 \union \sC_2) \setminus \sC$.
+% 
+% Proceeding,
+% \begin{align*}
+% \mYpp{c}{\Pa(h_c)} 
+%   &\eqdef \Pr(h_c \given \Pa(h_c)) \\
+%   &= \frac{\Pr(h_c, \Pa(h_c))}{\Pr(\Pa(h_c))} \\
+%   &= Z_\sC \times_{\Pa(h_c)} \diag{Z_\sC(\ones, \cdot, \ldots, \cdot)}^{-1},
+% \end{align*}
+% where $\diag(\sP)$ is a ``diagonal'' tensor constructed by taking the
+% tensor product with $I^{\otimes p}$:
+% \begin{align*}
+%   \diag(\sP)[\vi,\vj] &\eqdef \sP[\vi] \delta[\vi,\vj].
+% \end{align*}
 
 \paragraph{Sample complexity results}
 
