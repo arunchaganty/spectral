@@ -229,7 +229,7 @@ There is a one-to-one correspondence between the parameters of the
   The domain of $\hp$ is the same as $x_v$\footnote{
       Though we have assumed that all hidden variables share the
       same domain, $[k]$, our work generalizes to hidden domains of
-      different sizes, provided \assumptionref{full-rank-plus} is satisfied.
+      different sizes, provided \assumptionref{full-rank} is satisfied.
       },
     and $\mOpp{v}{\textrm{new}} = I$.
   Then, there is a one-to-one correspondence between every value of
@@ -386,24 +386,24 @@ respectively.
 
 To apply $\TensorFactorize$, we need that each $\mOpp{v}{i}$ has full
   column rank and that $\pi^{(i)} \eqdef \Pr(h_i) \succ 0$.
-But $\mOpp{v}{i}$ is a product of tensors on the path from $h_i$ to
-  $x_v$, marginalizing out the rest of the graph.
-To make this property more interpretable, let us assume the following
-  property which we prove to be sufficient in
-  \appendixref{assumption-proof}:
-\begin{assumption} 
-\label{asm:full-rank-plus}
-The marginal distribution of every latent variable has full support:
-  $\forall{h_i \in H},~ \mPi{i} \succ 0$.
-For every clique $\sC \in \sG$ (including ones with observed variables),
-  and every conditional distribution $\Pr(h_c \given \Pa(h_c))$, where
-  $h_c \in \sC$, every {\em tensor unfolding} has full column rank, $k$.
-\end{assumption}
-In our directed grid example (\sectionref{directedExample}), for the
-  clique $\sC = \{ h_1, h_2 \}$ this condition implies $\pi = \Pr(h_1)
-  \succ 0$ and $T = \Pr(h_2 \mid h_1)$ has column rank $k$; for the clique
-  $\sC = \{ h_1, x_1 \}$, it implies $O = \Pr(x_1 \mid h_1)$ has column
-  rank $k$.
+% But $\mOpp{v}{i}$ is a product of tensors on the path from $h_i$ to
+%   $x_v$, marginalizing out the rest of the graph.
+% To make this property more interpretable, let us assume the following
+%   property which we prove to be sufficient in
+%   \appendixref{assumption-proof}:
+% \begin{assumption} 
+% \label{asm:full-rank-plus}
+% The marginal distribution of every latent variable has full support:
+%   $\forall{h_i \in H},~ \mPi{i} \succ 0$.
+% For every clique $\sC \in \sG$ (including ones with observed variables),
+%   and every conditional distribution $\Pr(h_c \given \Pa(h_c))$, where
+%   $h_c \in \sC$, every {\em tensor unfolding} has full column rank, $k$.
+% \end{assumption}
+% In our directed grid example (\sectionref{directedExample}), for the
+%   clique $\sC = \{ h_1, h_2 \}$ this condition implies $\pi = \Pr(h_1)
+%   \succ 0$ and $T = \Pr(h_2 \mid h_1)$ has column rank $k$; for the clique
+%   $\sC = \{ h_1, x_1 \}$, it implies $O = \Pr(x_1 \mid h_1)$ has column
+%   rank $k$.
 
 Intuitively, we need to ensure that every marginal distribution
   $\Pr(x_v)$ can be separated into $k$ different conditional distributions
@@ -424,11 +424,10 @@ The full rank assumption asks that the conditional distributions are
 %  \|\mOpphat{v_1}{i} - \mOpp{v_1}{i}\|^2_F &= \frac{1}{\sqrt{n}} O\left( \frac{k {\pi\oft{i}}_{\max}^2}{\sigma_k(M_{v_1,v_2})^5} \right). 
 %\end{align*}
 
-From \citet{anandkumar13tensor} given \assumptionref{full-rank-plus}, we
+From \citet{anandkumar13tensor} given \assumptionref{full-rank}, we
   have that $\mOpphat{v}{i}$ converges to $\mOpp{v}{i}$ at a rate of
   $n^{-\frac12}$ with a constant that depends polynomially on the $k$-th
   singular value of $\mOpp{v}{i}$:
-
 \begin{theorem}[Sample complexity for $\mOpp{v}{i}$]
   \label{thm:sample-complexity}
   Wlog, let $v=1$ and $i=1$. Let $x_1, x_2, x_3$ be three views for
@@ -442,27 +441,30 @@ From \citet{anandkumar13tensor} given \assumptionref{full-rank-plus}, we
       {\sqrt{n}(\sigma_{\min}(\mOpp{1}{1}) \sigma_{\min}(\mOpp{1}{2}))^{5/2}} \right) \epsilon.
 \end{align*}
 
-If $\sigma_{\min}(\Pr(c \given \Pa(h_c))) \le \sigma$ for every clique
-  $\sC \in \sG$ and hidden variable $h_c \in \sC$,
-\begin{align*}
-  \|\mOpphat{1}{1} - \mOpp{1}{1}\|_F 
-    &\le 
-      O\left( 
-      \frac{k \log(1/\delta) {\pi\oft{1}}_{\max}/{\pi\oft{1}}_{\min}} 
-      {\sqrt{n} \sigma^{5t}} \right) \epsilon,
-\end{align*}
-where $t$ is the length of the shortest topological ordering from $h_1$
-to the unique parent of $x_1$, $h_t$.
+%If $\sigma_{\min}(\Pr(c \given \Pa(h_c))) \le \sigma$ for every clique
+%  $\sC \in \sG$ and hidden variable $h_c \in \sC$,
+%\begin{align*}
+%  \|\mOpphat{1}{1} - \mOpp{1}{1}\|_F 
+%    &\le 
+%      O\left( 
+%      \frac{k \log(1/\delta) {\pi\oft{1}}_{\max}/{\pi\oft{1}}_{\min}} 
+%      {\sqrt{n} \sigma^{5t}} \right) \epsilon,
+%\end{align*}
+%where $t$ is the length of the shortest topological ordering from $h_1$
+%to the unique parent of $x_1$, $h_t$.
 \end{theorem}
 
-\theoremref{sample-complexity}, proved in \appendixref{assumption-proof}
-  says that the number of samples required to estimate the view
-  $\mOpp{v}{i}$ grows exponentially in the {\em distance} between $x_v$
-  and $h_i$. 
+In general, $\sigma_{\min}(\mOpp{v}{i})$ can depend exponentially on the
+  path length between the hidden variable $h_i$ and $x_v$.
 Intuitively, this is expected because the influence from $h_i$ to $x_v$
   gets diluted for every latent variable it must factor through.
 
-\todo{Present sample complexity bounds for $Z_\sC$?}
+%\theoremref{sample-complexity}, proved in \appendixref{assumption-proof}
+%  says that the number of samples required to estimate the view
+%  $\mOpp{v}{i}$ grows exponentially in the {\em distance} between $x_v$
+%  and $h_i$. 
+
+%\todo{Present sample complexity bounds for $Z_\sC$?}
 
 % Easy case
 % Next, we need to show that the hidden marginals $\hat Z_\sC$ converge to $Z_\sC$.

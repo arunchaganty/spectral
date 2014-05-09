@@ -102,7 +102,7 @@ and the matrix form of $\mOppAll \in \Re^{d^m \times k^m}$, the marginal
 distribution can be expressed as follows,
 \begin{align*}
   \tM_\sV 
-        &= \mOppAll_{\neg d} Z_\sC \\
+        &= \mOppAll_{\neg \bd} Z_\sC \\
         &= \mOppAll_{\neg \bd, \neg \vk} \tilde Z_\sC + \mOppAll_{\neg \bd, \vk} (1 - \ones^\top \tilde Z_\sC) \\
         &= \underbrace{(\mOppAll_{\neg \bd, \neg \vk} -  \mOppAll_{\neg \bd, \vk}\ones^\top)}_{\mOppTAll} \tilde Z_\sC + \mOppAll_{\neg \bd, \vk}.
         % &= \mOppTAll \tilde Z_\sC + \mOppAll_{\vk},
@@ -119,10 +119,15 @@ $\tZ_\sC$ and $\tM_\sV$.
   The asymptotic variance of $\hatt Z^\mom_{\sC}$ based on composite likelihood and 
   $\hatt Z^\ml_{\sC}$ based on composite likelihood are respectively,
   \begin{align*}
-    \Sigma^{\mom} &= \mOppTAlli \tilde\Sigma_\sV \mOppTAllit \\
-    \Sigma^{\ml} &= \Sigmamom - \frac{\Sigmamom (\mOppTAllt \ones)(\mOppTAllt \ones)^\top \Sigmamom}{\frac{1 - \ones^\top \tM_\sV}{\ones^\top \tM_\sV} + (\mOppTAllt \ones)^\top \Sigmamom (\mOppTAllt \ones)},
+    \Sigmamom &= \mOppTAlli \tilde\Sigma_\sV \mOppTAllit \\
+    \Sigmaml 
+    &= \mOppTAlli \tS_\sV \mOppTAllit 
+      - \frac{s_\sV \mOppTAlli \tS_\sV J \ones \ones^\top J \tS_\sV \mOppTAllit }
+      {1 + s_\sV \ones^\top J \tS_\sV J \ones}.
   \end{align*}
-  where $\tilde \Sigma_\sV = \tD_\sV (I - \tD_\sV)$, the variance of $\tM_\sV$ and $\tD_\sV = \diag(\tM_\sV)$.
+  where $J = \mOppTAll \mOppTAlli$, $\tilde \Sigma_\sV = \tD_\sV (I
+  - \tD_\sV)$, the variance of $\tM_\sV$, $\tS_\sV = \tD_\sV (I
+  - \tD_\sV)\inv$ and $\tD_\sV = \diag(\tM_\sV)$.
 \end{lemma}
 \begin{proof}
   The above two results follow by direct application of the delta-method
@@ -140,23 +145,37 @@ The pseudoinverse estimator is strictly less efficient
 than the composite likelihood estimator in that 
 \begin{align*}
 e^\mom &\eqdef 
-    \frac{1}{k^m-1} \Tr(\Sigmaml\Sigmamomi ) \\
-        &= 1 - \frac{1}{\bar k} \frac{ \ones_{\bar k}^\top \widetilde\Sigma_\sV \ones_{\bar k}}{\frac{1 - \ones^\top \tM_\sV}{\ones^\top \tM_\sV} + \ones_{\bar k}^\top \widetilde\Sigma_\sV \ones_{\bar k}} \\
-    &< 1.
+    \frac{1}{\bbk} \Tr(\Sigmaml\Sigmamomi ) \\
+        &= \frac{1}{\bbk} \Tr( J \tS_\sV\inv J \tilde\Sigma_\sV\inv ) - \frac{1}{\bbk} \frac{s_\sV \ones^\top J \tS_\sV\inv J \tilde\Sigma_\sV\inv J \tS_\sV\inv J \ones }
+      {1 + s_\sV \ones^\top J \tS_\sV\inv J \ones} \\
+    &\le \|\tS_\sV\inv\|_\infty  \|\tilde\Sigma_\sV\inv\|_\infty 
+    - 
+        \frac{1}{\bar k} 
+    \frac{
+        c^2 s_\sV/(\|\tS_\sV\|_{\infty} \|\tilde\Sigma_\sV\|_{\infty}
+            \sigma_{\max}(\mOppTAll))
+    }
+    {1 + (c^2 s_\sV \|\tS_\sV\inv\|_{\infty})/
+          \sigma_{\min}(\mOppTAll)
+    },
 \end{align*}
+where $c = \|\mOppTAll_{\bd,\bk} \ones^\top - \mOppTAll_{\bd,\neg \bk}^\top\|_2 \le \sqrt{\bbk}$ and $\bbk = k^m - 1$.
 
-When $M_\sV$ is close to the uniform distribution, i.e. $M_\sV \approxeq \frac{1}{d^m} \ones \implies \tilde\Sigma_\sV = \frac{d-1}{d^2} I$, we get that 
+When $M_\sV$ is close to the uniform distribution, i.e. $M_\sV \approxeq \frac{1}{d^m} \ones$, we get that 
 \begin{align*}
 e^\mom 
-    &= 1 - \frac{(d^m -1)^2}{ (d^m)^2 + (k^m-1)(d^m -1)^2} 
-    &\simeq 1 - \frac{1}{k^m}.
+    &\le
+    \left(1 + \frac{1}{d^m - 1}\right)^2 
+    \left(1 - \frac{d^m - 1}{k^m - 1} \frac{c^2/\sigma_{\max}(\mOppTAll)}{1 + c^2 (d^m - 1)^2 / \sigma_{\min}(\mOppTAll)}\right).
 \end{align*}
 \end{corollary}
 
+This says that as $d \to \infty$, the pseudo-inverse estimator becomes
+efficient. 
 \figureref{cl-hmm} compares the parameter recovery error of the
   pseudoinverse estimator and the composite likelihood estimator.
 Empirically, we observe that using the composite likelihood estimator
-indeed leads to more accurate estimates.
+still leads to more accurate estimates in non-asymptotic regimes.
 
 % Visualize
 % To visualize this phenomenon, note that the pseudoinverse estimator can be written
