@@ -208,10 +208,10 @@ Then, we have the following lemma linking the singular values of $\sQ$
   Let $\sP, \sQ$ and $v$ be defined as above. For any unfolding $I
   \not\contains v$, 
 \begin{align*}
-  \sigma_{\max}(\sQ\munf{I}) &\le \sigma_{\max}(\sP\munf{I}) v_{\max} \\
-  \sigma_{\min}(\sQ\munf{I}) &\ge \sigma_{\min}(\sP\munf{I}) v_{\min}.
+  \sigma_{\min}(\sP\munf{I}) &\ge \frac{\sigma_{\min}(\sQ\munf{I})}{v_{\max}}.
 \end{align*}
-In particular, $\rank(\sP\munf{I}) = \rank(\sQ\munf{I})$.
+In particular, if $\sQ\munf{I}$ has full row/column rank, $\sR\munf{I}$
+  does too.
 \end{lemma}
 \begin{proof}
   We will show that $\sQ\munf{I}$ is $\sP\munf{I}$ related by
@@ -234,12 +234,16 @@ In particular, $\rank(\sP\munf{I}) = \rank(\sQ\munf{I})$.
   = D_{\bar I } \times D_{\bar I \setminus \{m\}}$ matrix.
   \begin{align*}
     \sQ\munf{I}[\vi;\vj] 
-      &= \sum_{j'=\ones, k=1}^{\bd, d_m} \sP\munf{I}[\vi;\vj'\ k] (v[k] \delta[\vj';\vj]) \\
+    &= \sum_{j'=\ones, k=1}^{\bd, d_m} \sP\munf{I}[\vi;\vj'\ k] \underbrace{(v[k] \delta[\vj' \vj])}_{v'[k \vj'; \vj]} \\
     \sQ\munf{I}
       &= \sP\munf{I} \bI \otimes v.
   \end{align*}
   If $v$ has no non-zero elements, $\bI \otimes v$ has full-column
-  rank, with singular values $v_1, \cdots, v_{d_m}$.
+  rank, with singular values $v_1, \cdots, v_{d_m}$. 
+  Matrix multiplication can not increase the rank of the matrix, and
+  thus $\rank(\sP\munf{I}) \ge \rank(\sQ\munf{I})$. 
+
+
 \end{proof}
 
 

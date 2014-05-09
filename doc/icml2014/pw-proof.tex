@@ -197,12 +197,39 @@ With concrete expressions for $\Sigmamom_\sC$ and $\Sigmaml_\sC$, we can quantit
       \Tr( J \tS_\sV\inv J \tilde\Sigma_\sV\inv ) 
         &= \Tr( \tS_\sV\inv J \tilde\Sigma_\sV\inv J ) \\
         &\le \|\tS_\sV\inv\|_\infty \Tr( J \tilde\Sigma_\sV\inv J ) \\
-        &\le \|\tS_\sV\inv\|_\infty \Tr( \tilde\Sigma_\sV\inv J ) \\
+        &= \|\tS_\sV\inv\|_\infty \Tr( \tilde\Sigma_\sV\inv J ) \\
         &\le \|\tS_\sV\inv\|_\infty \|\tilde\Sigma_\sV\inv\|_\infty \Tr( J ) \\
         &= {\bar k} \|\tS_\sV\inv\|_\infty \|\tilde\Sigma_\sV\inv\|_\infty.
   \end{align*}
 
-  We also have that,
+  To bound the next term, we need bound the projection of the ones
+  vector, $\ones$, through $J \eqdef U U^\top$, which is equivalent to
+  measuring the projection into the subspace of $U$,
+  \begin{align*}
+      \ones^\top J \tS_\sV\inv J \tilde\Sigma_\sV\inv J \tS_\sV\inv J \ones \\
+      &=
+      (\ones^\top U) (U^\top \tS_\sV\inv U) (U^\top \tilde\Sigma_\sV\inv U) \\
+      &\quad (U^\top \tS_\sV\inv U) (U^\top \ones)  \\
+      &\ge 
+      (\tS_\sV\inv)^2_{\min}
+      (\tilde\Sigma_\sV\inv)_{\min}
+      \|\ones^\top U\|^2_2 \\
+      &\ge 
+      \frac{\|\ones^\top U\|^2_2}{\|\tS_\sV\|_\infty \|\tilde\Sigma_\sV\|_\infty},
+  \end{align*}
+  where we have used the property that each of the bracketed terms is an
+  eigen-decomposition, and $U^\top \ones$, lies in the subspace $U$.
+  We similarly have that
+  \begin{align*}
+      \ones^\top J \tS_\sV\inv J \ones \\
+      &=
+      (\ones^\top U) (U^\top \tS_\sV\inv U) (U^\top \ones) \\
+      &\le 
+      \|\tS_\sV\inv\|_{\infty}
+      \|\ones^\top U\|^2_2.
+  \end{align*}
+
+  Finally, to bound $\|\ones^\top U\|_2$, we have:
   \begin{align*}
     \ones^\top \mOppAll 
       &= \sum_{\bh = \ones}^{\bh \prec \bk} \sum_{\vx = \ones}^{\bd} \Pr(\vx | \bh) e_\bh  \\
@@ -211,32 +238,50 @@ With concrete expressions for $\Sigmamom_\sC$ and $\Sigmaml_\sC$, we can quantit
         &= \ones^\top (\mOppAll_{\neg \neg \bd, \vk} - \mOppAll_{\neg \bd, \vk}\ones^\top) \\
         &= \sum_{\bh = \ones}^{\bh \prec \bk} \sum_{\vx = \ones}^{\vx \prec \bd} \Pr(\vx | \bh) e_\bh - (\sum_{\vx = \ones}^{\vx \prec \bd} \Pr(\vx | \vk)) \ones^\top  \\
         &= \sum_{\bh = \ones}^{\bh \prec \bk} (1 - \Pr(\bd | \bh)) e_\bh - (1 - \Pr(\bd | \bk)) \ones^\top  \\
-        &= \mOppTAll_{\bd,\bk} \ones^\top - \mOppTAll_{\bd,\neg \bk}^\top.
+        &= \mOppTAll_{\bd,\bk} \ones^\top - \mOppTAll_{\bd,\neg \bk}^\top \\
+        &= \sum_{\vh = \ones}^{\vh \prec \vk} (\Pr(\bd | \vk) - \Pr(\bd | \vh))e_\bh.
   \end{align*}
-  This shows that $\ones$ is not in the null space of $\mOppTAll$. 
-  For a unit vector vector $u \in \text{ColumnSpace}(U)$, $v = u\top
-  U^\top D U$ also lies in the $\text{ColumnSpace}(U)$. Thus, $D_{\min}
-  \le u\top (U^\top D_1 U) u \le D_{\max}$.
-
-  Consequently, we have that \todo{Recompute}.
+  Let $c = \|\mOppTAll_{\bd,\bk} \ones^\top - \mOppTAll_{\bd,\neg
+  \bk}^\top\|_2 \le \sqrt{k}$.
+  In particular, if $\mOppTAll = U W V^\top$, we have 
   \begin{align*}
-    \underbrace{(\mOppTAll_{\bd,\bk} \ones^\top \ones - \mOppTAll_{\bd,\neg \bk}^\top \ones)}_{C} \ones^\top &\succ \ones^\top \mOppTAll \mOppTAlli &\succ \ones^\top,
+    \ones^\top U W V^\top 
+        &= \ones^\top \mOppTAll \\
+    \ones^\top U 
+      &= \ones^\top \mOppTAll V W\inv \\
+    \|\ones^\top U\|_2 
+        &\le \frac{\|\ones^\top \mOppTAll\|_2}{\sigma_{\min}(\mOppTAll)} \\
+        &\le \frac{c}{\sigma_{\min}(\mOppTAll)} \\
+    \|\ones^\top U\|_2 
+        &\ge \frac{c}{\sigma_{\max}(\mOppTAll)} \\
   \end{align*}
-  for some constant $C$.
 
   Thus,
   \begin{align*}
       \ones^\top J \tS_\sV\inv J \tilde\Sigma_\sV\inv J \tS_\sV\inv J \ones 
-      &\ge C^3 \sum_{\vx=\ones}^{\vx \prec \bd} \frac{M_\sV[\vx]}{(1 - M_\sV[\vx])^3} \\
-      \ones^\top J \tS_\sV\inv J \ones 
-      &\le \sum_{\vx=\ones}^{\vx \prec \bd} \frac{M_\sV[\vx]}{1 - M_\sV[\vx]}.
+      &\ge \frac
+          {c^2}
+          { \|\tS_\sV\|_{\infty} \|\tilde\Sigma_\sV\|_{\infty}
+          \sigma_{\max}(\mOppTAll)} \\
+      \ones^\top J \tS_\sV\inv J \ones  
+      &\le \frac
+          {c^2 \|\tS_\sV\inv\|_{\infty}}
+          {\sigma_{\min}(\mOppTAll)}.
   \end{align*}
 
   Finally, we have the result,
   \begin{align*}
     e^\mom 
     &\le \|\tS_\sV\inv\|_\infty  \|\tilde\Sigma_\sV\inv\|_\infty \\
-    &\quad - \frac{1}{\bar k} \frac{1 - M_\sV[\bd]}{M_\sV[\bd]} \frac{C^3 \sum_{\vx=\ones}^{\vx \prec \bd} \frac{M_\sV[\vx]}{(1 - M_\sV[\vx])^3}}{1 + \frac{1 - M_\sV[\bd]}{M_\sV[\bd]} {\bar k} \sum_{\vx=\ones}^{\vx \prec \bd} \frac{M_\sV[\vx]}{1 - M_\sV[\vx]}}.
+    &\quad - 
+        \frac{1}{\bar k} 
+    \frac{
+        c^2 s_\sV/(\|\tS_\sV\|_{\infty} \|\tilde\Sigma_\sV\|_{\infty}
+            \sigma_{\max}(\mOppTAll))
+    }
+    {1 + (c^2 s_\sV \|\tS_\sV\inv\|_{\infty})/
+          \sigma_{\min}(\mOppTAll)
+    }.
   \end{align*}
 
   For the uniform distribution $M_\sV[x] = \frac{1}{\bar d + 1}$,
@@ -244,13 +289,20 @@ With concrete expressions for $\Sigmamom_\sC$ and $\Sigmaml_\sC$, we can quantit
   \Sigma_\sV\inv\|_\infty = \frac{(\bar d + 1)^2}{\bar d}$:
   \begin{align*}
     e^\mom 
-    &\ge \frac{1}{\bar d + 1} \frac{(\bar d + 1)^2}{\bar d} 
-    - \frac{1}{\bar k} \frac{{\bar d} C^3 \frac{(\bar d + 1)^2}{(\bar d)^3} {\bar d}}
-    {1 + {\bar d} (\frac{1}{\bar d}) {\bar d}} \\
-    &= 1 + \frac{1}{\bar d} - \frac{1}{\bar k} C^3 \frac{(\bar d+1)^2}{(1+ \bar d)(\bar d)} \\
-    &= 1 + \frac{1}{\bar d} - C^3 \frac{1+\bar d}{\bar k} \\
-    &= (1 + \frac{1}{\bar d}) (1 - \frac{C^3}{\bar d}{\bar k}).
+    &\le \frac{1}{\bar d} \frac{(\bar d + 1)^2}{\bar d} 
+    - \frac{1}{\bbk} \frac{
+    (c^2 \bbd)/(\bbd \frac{\bbd}{(\bbd +1)^2} \sigma_{\min}(\mOppTAll))
+    }{
+    1 + c^2 \bbd \frac{1}{\bbd} / \sigma_{\min}(\mOppTAll)
+    } \\
+    &= (1 + \frac{1}{\bbd})^2 - \frac{\bbd}{\bbk} (1 + \frac{1}{\bbd})^2 \frac{c^2/\sigma_{\max}(\mOppTAll)}{1 + c^2 \bbd^2 / \sigma_{\min}(\mOppTAll)} \\
+    &= (1 + \frac{1}{\bbd})^2 (1 - \frac{\bbd}{\bbk} \frac{c^2/\sigma_{\max}(\mOppTAll)}{1 + c^2 \bbd^2 / \sigma_{\min}(\mOppTAll)}).
   \end{align*}
+
+  This efficiency shows a trade off between $\bbd$ and $\bbk$. For any
+  given $\bbk$, the pseudo-inverse estimator is efficient for
+  a sufficiently large $\bbd$. Conversely, for a fixed $\bbd$, the
+  pseudo-inverse estimator is inefficient for large $\bbk < \bbd$.
    
 \end{proof}
 
