@@ -41,7 +41,7 @@ with respect to the true distribution $\sM_\sV$ can be written in tensor form:
 The final form is an expectation over a log of linear function of $\mH_\sC$, which is concave in
 $\mH_\sC$.  But unlike maximum likelihood in fully-observed settings,
 we do not have a closed form solution, so we use EM to optimize.
-Since the function is convex, EM converges to a global optimum.
+Since the function is concave, EM converges to a global maximum.
 \algorithmref{piecewise} summarizes our algorithm.
 
 \begin{algorithm}
@@ -107,17 +107,17 @@ distribution can be expressed as follows,
         &= \underbrace{(\mOppAll_{\neg \bd, \neg \vk} -  \mOppAll_{\neg \bd, \vk}\ones^\top)}_{\mOppTAll} \tilde Z_\sC + \mOppAll_{\neg \bd, \vk}.
         % &= \mOppTAll \tilde Z_\sC + \mOppAll_{\vk},
 \end{align*}
-where $\mOppAll_{\neg \bd, \neg \vk} \in \Re^{d^m -1 \times k^m - 1}$ matrix containing the
-first $d^m-1$ rows and first $k^m-1$ columns of $\mOppAll$, $\mOppAll_{\neg \bd, \vk} \in \Re^{d^m}$ is the last column. 
+where $\mOppAll_{\neg \bd, \neg \vk} \in \Re^{d^m -1 \times k^m - 1}$ is a matrix containing the
+first $d^m-1$ rows and first $k^m-1$ columns of $\mOppAll$ and $\mOppAll_{\neg \bd, \vk} \in \Re^{d^m}$ is the last column $\mOppAll$, ignoring the last row. 
 
 We are now ready to study the asymptotic properties of $Z_\sC$ through
 $\tZ_\sC$ and $\tM_\sV$.
 
-\providecommand{\hatt}[1] {\hat{\tilde{#1}}}
+\providecommand{\hatt}[1] {\widehat{\widetilde{#1}}}
 \begin{lemma}[Asymptotic variances]
   \label{lem:mom-pw-variance}
-  The asymptotic variance of $\hatt Z^\mom_{\sC}$ based on composite likelihood and 
-  $\hatt Z^\ml_{\sC}$ based on composite likelihood are respectively,
+  The asymptotic variance of $\hatt{Z^\mom_{\sC}}$ based on composite likelihood and 
+  $\hatt{Z^\ml_{\sC}}$ based on composite likelihood are respectively,
   \begin{align*}
     \Sigmamom_\sC &= \mOppTAlli \tilde\Sigma_\sV \mOppTAllit \\
     \Sigmaml_\sC 
@@ -136,8 +136,9 @@ $\tZ_\sC$ and $\tM_\sV$.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The following corollary (proved in \appendixref{pw-proof}) shows that
-the gap between the two estimators closes at a rate of $k^m$.
+The following corollary (proved in \appendixref{pw-proof}) gives
+a qualitative handle on the relative efficiency of the pseudoinverse
+estimator.
 \begin{corollary}[Asymptotic efficiency]
   \label{cor:efficiency}
 The pseudoinverse estimator is strictly less efficient

@@ -22,7 +22,7 @@ For ease of exposition we make the following simplifications to our presentation
   graphical models, though it generalizes to factor graphs;
 (ii) we derive our algorithm assuming infinite data; in \sectionref{sampleComplexity} we 
   describe error bounds for the finite sample regime; and
-(iii) we present the algorithm solely in terms of linear algebra operations; in
+(iii) we present the algorithm solely in terms of linear algebraic operations; in
   \sectionref{piecewise}, we show how we can get a more statistically
   efficient estimator using composite likelihoods.
 
@@ -101,7 +101,6 @@ We call $x_v$ the exclusive view of $h_i$ in $\sC$.
 
 This property also extends to any connected sub-graph $\sG' \in \sG$.
 \end{property}
-
 For the rest of this section, we will only consider sub-graphs which are
   cliques. 
 In \sectionref{undirected}, we will show how the generalization
@@ -168,7 +167,8 @@ We have shown how to estimate the parameters of any clique that possesses the ex
   views property (\propertyref{exclusive-views}). But in a general graph, which cliques have this property?
 In the example above, we were able to guarantee \propertyref{exclusive-views}
   by identifying a hidden variable, $h_1$ along with three conditionally
-  independent observed variables, $x^a_1, x^b_1, x^a_2$.
+  independent observed variables, $x^a_1, x^b_1, x^a_2$ using the tensor
+  factorization method.
   %followed by using \TensorFactorize to learn the conditional moments.
 We define such a hidden variable to be a bottleneck:
 \begin{definition}[Bottleneck]
@@ -281,12 +281,21 @@ in \algorithmref{directed}.
 
 
 % DONE: move here because not central to story
-\paragraph{Remark.} We note that \propertyref{bottleneck} can be relaxed if some cliques
+\paragraph{Remarks.} We note that \propertyref{bottleneck} can be relaxed if some cliques
   share parameters.
 In the directed grid model, we can identify the conditional moments $O$ from just
   $x^a_1, x^b_1$ and $x^a_2$.
   Therefore, we do not require that $h_2, h_3$ or $h_4$
   be bottlenecks, and can omit the observations $x^b_2, x^b_3$ and $x^b_4$.
+
+The method also extends directly to case in which the observed variables
+  are real valued, while the hidden variables remain discrete. 
+In this scenario, the tensor factorization method of
+  \citet{anandkumar13tensor} recovers the expected conditional means,
+  $\mu_{vi} \eqdef \E[x_v | h_i]$ for an observed variable $x_v$ and
+  hidden variable $h_i$.
+\algorithmref{learnclique} and \algorithmref{directed} still apply and allow
+  us to recover clique marginals $Z_\sC$.
 %  \todo{make this a footnote if running out of space}
 % PL: don't understand this comment
 %In this case, we only require that the hidden variables in distinct
@@ -456,7 +465,7 @@ From \citet{anandkumar13tensor} given \assumptionref{full-rank}, we
 
 In general, $\sigma_{\min}(\mOpp{v}{i})$ can depend exponentially on the
   path length between the hidden variable $h_i$ and $x_v$.
-Intuitively, this is expected because the influence from $h_i$ to $x_v$
+This is expected because the influence from $h_i$ to $x_v$
   gets diluted for every latent variable it must factor through.
 
 %\theoremref{sample-complexity}, proved in \appendixref{assumption-proof}

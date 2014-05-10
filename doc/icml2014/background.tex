@@ -4,7 +4,8 @@
 Let $\sG$ be a discrete graphical model with observed variables $X$ and
   hidden variables $H$.
 Let $\Pa(a) \subset X \union H$ be the parents of a variable $a$ in a directed
-  model, and $\sN(a) \subset X \union H$ be the neighbors of $a$ in an
+  model, and 
+let $\sN(a) \subset X \union H$ be the neighbors of $a$ in an
   undirected model.
 We will use $x_1, x_2, \cdots, x_L \in X$ to denote observed variables and
   $h_1, h_2, \cdots, h_M \in H$ to denote hidden variables.
@@ -52,22 +53,23 @@ and a bit of notation is necessary.
 We use the notation $[\cdot]$ to indicate indexing; for example $M[i]$
   is the $i$-th row of a matrix $M$ and $M[i,j]$ is the $i,j$-th element
   of $M$.
-For a tensor $T \in \Re^{d \times \ldots \times d}$ and a vector $\vec
-  i = (i_1, \cdots, i_\ell)$, define the projection $T[\vec i] = T_{i_1 \ldots i_\ell}$.
-Similarly, for a set $\sC$ of size $k$ and vector $\vec x \in \Re^d$, we
-  will use the notation $\vec x_\sC$ to get a vector in $\Re^k$ which selects
-  the appropriate elements of $\vec x$.
+For a tensor $T \in \Re^{d \times \ldots \times d}$ and a vector $\bi
+  = (i_1, \cdots, i_\ell)$, define the projection $T[\bi] = T[i_1 \ldots
+  i_\ell]$.
+Similarly, for a set $\sC$ of size $m$ and vector $\bx \in \Re^d$, we
+  will use the notation $\bx_\sC$ to get a vector in $\Re^m$ which selects
+  the appropriate elements of $\bx$.
 
 We use $\otimes$ to denote the tensor product: if $u \in \Re^d,
   v \in \Re^k$, then $u \otimes v \in \Re^{d \times k}$.
 For an $\ell$-th order tensor $T \in \Re^{d \times \ldots \times
-  d}$ and vectors $x_1, \cdots, x_\ell \in \Re^{d}$, define 
-  the partial application:
+  d}$ and vectors $\bx_1, \cdots, \bx_\ell \in \Re^{d}$, define 
+  the application:
 \begin{align*}
-  T(x_1, \cdots, x_\ell) 
+  T(\bx_1, \cdots, \bx_\ell) 
       %&= \sum_{i_1 = 1}^{d} \cdots \sum_{i_\ell = 1}^{d} 
-  &= \sum_{\bi}
-            T[i_1, i_2, \ldots, i_\ell] x_1[i_1] \cdots x_\ell[i_\ell].
+&= \sum_{\bi = \ones}^{\vec d}
+            T[i_1, i_2, \ldots, i_\ell] \bx_1[i_1] \cdots \bx_\ell[i_\ell].
 \end{align*}
 Analogously, for a matrices $M_1 \in \Re^{d \times k}, \cdots,
   M_\ell \in \Re^{d \times k}$, we define
@@ -75,8 +77,9 @@ Analogously, for a matrices $M_1 \in \Re^{d \times k}, \cdots,
   T(M_1, \cdots, M_\ell)[\vec j]
       %&= \sum_{i_1 = 1}^{d} \cdots \sum_{i_\ell = 1}^{d} 
   &= \sum_{\bi}
-            T[\vec i] {M_1}[i_1,j_1] \cdots M_\ell[i_\ell, j_\ell].
+            T[\vec i] {M_1}[i_1,j_1] \cdots M_\ell[i_\ell, j_\ell],
 \end{align*}
+a tensor in $\Re^{k \times \ldots \times k}$.
 %where $\vec i = (i_1, \cdots, i_\ell)$ and $\vec j = (i_1, \cdots, j_\ell)$
 
 We consider up to third-order moments:
@@ -118,8 +121,8 @@ The parameters of this model are the mixture probabilities $\pi\oft 1 \eqdef
   The key idea is that the observed moments $\mO_{12}, \mO_{23}, \mO_{13}$ and
   $\mO_{123}$ admit a factorization in terms of parameters:
 \begin{align*}
-  \mO_{ij} &= \sum_h {\pi \oft 1}[h] {\mOpp{i}{1}}[\cdot,h] \otimes {\mOpp{j}{1}}[\cdot,h] \quad \forall i,j \in \{1,2,3\} \\
-  \mO_{123} &= \sum_h {\pi \oft 1}[h] {\mOpp{1}{1}}[\cdot,h] \otimes {\mOpp{2}{1}}[\cdot,h] \otimes  {\mOpp{3}{1}}[\cdot,h].
+  \mO_{ij} &= \sum_h {\pi \oft 1}[h] {\mOppt{i}{1}}[h] \otimes {\mOppt{j}{1}}[h] \quad \forall i,j \in \{1,2,3\} \\
+  \mO_{123} &= \sum_h {\pi \oft 1}[h] {\mOppt{1}{1}}[h] \otimes {\mOppt{2}{1}}[h] \otimes  {\mOppt{3}{1}}[h].
 \end{align*}
 
 \citet{anandkumar13tensor} presented a robust tensor power method, which

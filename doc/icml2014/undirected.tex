@@ -74,7 +74,7 @@ L_\text{sup}(\theta) &\eqdef \E_{(\vx,\vh) \sim \sD_\text{sup}}[\log p_\theta(\v
 While we don't have supervised data,
 note that the method of moments gives us hidden marginals $Z_\sC = \BP(\vh_\sC)$.
 Furthermore, given $\mOpp{v}{i}$ and $Z_\sC$ of any $\sC \ni v$, we can recover
-all marginals $\BP(\vx_\sC, \vh_\sC) = Z_\sC \cdot \mOpp[\vx_\sV]$.%\todo{clean up}.
+all marginals $\BP(\vx_\sC, \vh_\sC) = Z_\sC \cdot \mOppAll[\vx_\sV]$.%\todo{clean up}.
 Finally, the key step is that we can compute all the expected feature vectors from the marginals:
 \begin{align}
 \label{eqn:logLinearFeatures}
@@ -125,7 +125,7 @@ estimator for $Z_\sC$ for any graphical model satisfying the exclusive views pro
 Consequently, the result is that the output of \algorithmref{undirected},
 $\hat\theta$, is a consistent estimator.\footnote{Of course, the log-linear model must be identifiable
 (it is violated, for example, if two components of $\phi(\vx_\sC, \vh_\sC)$ were identical).
-In general, we can identify the parameters up to kernel of $\nabla^2 A(\theta)$.}
+In general, we can identify the parameters up to the kernel of $\nabla^2 A(\theta)$.}
 
 \renewcommand{\algorithmicrequire}{\textbf{Input:}}
 \renewcommand{\algorithmicensure}{\textbf{Output:}}
@@ -152,7 +152,7 @@ In the fully-supervised setting, it is well-known that pseudolikelihood provides
 albeit at the cost of statistical efficiency.
 Coincidentally, this is the same high-level motivation for using method of moments in the first place.
 
-However, pseudolikelihood also replaces the log-partition function $A(\theta)$
+The pseudolikelihood also replaces the log-partition function $A(\theta)$
 with a sum over the variables in the neighbourhood: $A_a(\theta; x_{\sN(a)}) = \sum_{a' \in \{a\} \union \sN(a)} \exp(\theta^\top\phi_{\sN(a)}(a'))$,
 which cannot be computed from just the hidden clique marginals $Z_\sC$,
 since the neighbors $\sN(a)$ in general do not form a clique.
