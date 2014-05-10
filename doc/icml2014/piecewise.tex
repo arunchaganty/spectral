@@ -119,15 +119,14 @@ $\tZ_\sC$ and $\tM_\sV$.
   The asymptotic variance of $\hatt Z^\mom_{\sC}$ based on composite likelihood and 
   $\hatt Z^\ml_{\sC}$ based on composite likelihood are respectively,
   \begin{align*}
-    \Sigmamom &= \mOppTAlli \tilde\Sigma_\sV \mOppTAllit \\
-    \Sigmaml 
-    &= \mOppTAlli \tS_\sV \mOppTAllit 
-      - \frac{s_\sV \mOppTAlli \tS_\sV J \ones \ones^\top J \tS_\sV \mOppTAllit }
-      {1 + s_\sV \ones^\top J \tS_\sV J \ones}.
+    \Sigmamom_\sC &= \mOppTAlli \tilde\Sigma_\sV \mOppTAllit \\
+    \Sigmaml_\sC 
+    &= \mOppTAlli \tS_\sV\inv \mOppTAllit 
+      - \frac{s_\sV \mOppTAlli \tS_\sV\inv J \ones \ones^\top J \tS_\sV\inv \mOppTAllit }
+      {1 + s_\sV \ones^\top J \tS_\sV\inv J \ones}.
   \end{align*}
-  where $J = \mOppTAll \mOppTAlli$, $\tilde \Sigma_\sV = \tD_\sV (I
-  - \tD_\sV)$, the variance of $\tM_\sV$, $\tS_\sV = \tD_\sV (I
-  - \tD_\sV)\inv$ and $\tD_\sV = \diag(\tM_\sV)$.
+  where $J = \mOppTAll \mOppTAlli$, $\tD_\sV = \diag(\tM_\sV)$, $\tilde \Sigma_\sV = \tD_\sV (I
+  - \tD_\sV)$, the variance of $\tM_\sV$, $\tS_\sV = \tD_\sV\inv (I - \tD_\sV)$ and $s_\sV = \frac{1 - M_\sV[\bd]}{M_\sV[\bd]}$.
 \end{lemma}
 \begin{proof}
   The above two results follow by direct application of the delta-method
@@ -148,14 +147,14 @@ e^\mom &\eqdef
     \frac{1}{\bbk} \Tr(\Sigmaml\Sigmamomi ) \\
         &= \frac{1}{\bbk} \Tr( J \tS_\sV\inv J \tilde\Sigma_\sV\inv ) - \frac{1}{\bbk} \frac{s_\sV \ones^\top J \tS_\sV\inv J \tilde\Sigma_\sV\inv J \tS_\sV\inv J \ones }
       {1 + s_\sV \ones^\top J \tS_\sV\inv J \ones} \\
-    &\le \|\tS_\sV\inv\|_\infty  \|\tilde\Sigma_\sV\inv\|_\infty 
-    - 
+    &\le \|\tS_\sV\inv\|_\infty  \|\tilde\Sigma_\sV\inv\|_\infty
+      - 
         \frac{1}{\bar k} 
     \frac{
-        c^2 s_\sV/(\|\tS_\sV\|_{\infty} \|\tilde\Sigma_\sV\|_{\infty}
+        s_\sV c^2 /(\|\tS_\sV\|^2_{\infty} \|\tilde\Sigma_\sV\|_{\infty}
             \sigma_{\max}(\mOppTAll))
     }
-    {1 + (c^2 s_\sV \|\tS_\sV\inv\|_{\infty})/
+    {1 + (s_\sV c^2 \|\tS_\sV\inv\|_{\infty})/
           \sigma_{\min}(\mOppTAll)
     },
 \end{align*}
@@ -166,12 +165,14 @@ When $M_\sV$ is close to the uniform distribution, i.e. $M_\sV \approxeq \frac{1
 e^\mom 
     &\le
     \left(1 + \frac{1}{d^m - 1}\right)^2 
-    \left(1 - \frac{d^m - 1}{k^m - 1} \frac{c^2/\sigma_{\max}(\mOppTAll)}{1 + c^2 (d^m - 1)^2 / \sigma_{\min}(\mOppTAll)}\right).
+    \left(1 - \frac{1}{\bbk} \frac{c^2/\sigma_{\max}(\mOppTAll)}{1 + c^2 / \sigma_{\min}(\mOppTAll)}\right).
 \end{align*}
 \end{corollary}
 
-This says that as $d \to \infty$, the pseudo-inverse estimator becomes
-efficient. 
+The relative efficiency tells us that the pseudo-inverse estimator is
+strictly sub-optimal for any finite $\bbk$ or $\bbd$. Furthermore for
+a given $\bbk$, it is most efficient in large dimensions, and in general
+its efficiency increases as $\bbk$ and $\bbd$ grow.
 \figureref{cl-hmm} compares the parameter recovery error of the
   pseudoinverse estimator and the composite likelihood estimator.
 Empirically, we observe that using the composite likelihood estimator

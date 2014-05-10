@@ -11,19 +11,20 @@ Recall, that in \sectionref{piecewise} we reparameterized the
   constrained estimators $Z_\sC \in \Delta_{k^m-1}$ with $\tZ_\sC \in
   [0,1]^{k^m}$. 
 Similarly, we reparameterized $M_\sV \in \Delta_{d^m - 1}$ with
-  $\tM_\sV \eqdef (M_\sV)_{\neg \bd} \in [0,1]^{d^m}$ to compute
+  $\tM_\sV \in [0,1]^{d^m}$ to compute
   the likelihood.
 We used the vectorized forms of the marginal distribution $\tM_\sV \in
-  \Re^{d^m}$, the parameters $Z_\sC \in \Re^{k^m}$, $\tZ_\sC \in
-  \Re^{k^m-1}$ and the matrix form of the conditional moments, $\mOppAll
-  \in \Re^{d^m \times k^m}$, to represent the marginal distribution as
+  \Re^{d^m - 1}$, the parameters $\tZ_\sC \in \Re^{k^m-1}$ and the
+  matrix form of the conditional moments, $\mOppAll \in \Re^{d^m \times
+  k^m}$, to represent the marginal distribution as
 \begin{align*}
   \tM_\sV &= \mOppTAll \tZ_\sC + \mOppAll_{\neg \bd, \vk},
 \end{align*}
 where $\mOppTAll \eqdef (\mOppAll_{\neg \bd, \neg \vk}
-- \mOppAll_{\neg \bd, \vk}\ones^\top)$, $\mOppAll_{\neg \neg \bd, \vk} \in \Re^{d^m - 1 \times
-k^m - 1}$ matrix containing the first $d^m-1$ rows and first $k^m-1$ columns of $\mOppAll$,
-$\mOppAll_{\neg \bd, \vk} \in \Re^{d^m-1}$ is the last column, ignoring the last row.
+- \mOppAll_{\neg \bd, \vk}\ones^\top) \in \Re^{d^m - 1 \times
+k^m - 1}$ is a matrix containing the first $d^m-1$ rows and first $k^m-1$ columns of $\mOppAll$
+and $\mOppAll_{\neg \bd, \vk} \in \Re^{d^m-1}$ is the last column of
+$\mOppAll$, ignoring the last row.
 
 \begin{proof}[Proof for \lemmaref{mom-pw-variance}]
   We proceed using the delta method. First, let us look at the
@@ -33,7 +34,8 @@ $\mOppAll_{\neg \bd, \vk} \in \Re^{d^m-1}$ is the last column, ignoring the last
     \tM_\sV &= \mOppTAll \tZ_\sC + \mOppAll_{\neg \bd, \vk} \\
     \tZ_\sC &= \mOppTAlli (\tM_\sV - \mOppAll_{\neg \bd, \vk}).
   \end{align*}
-  As this is just a linear transformation on $\tM_\sV$, we get,
+  As this is just a linear transformation on $\tM_\sV$, 
+  the asymptotic variance of $\widehat{\tZ^\mom_\sC}$ is,
   \begin{align*}
       \Sigmamom_{\sC} &= \mOppTAlli \widetilde\Sigma_\sV \mOppTAllit,
   \end{align*}
@@ -41,11 +43,16 @@ $\mOppAll_{\neg \bd, \vk} \in \Re^{d^m-1}$ is the last column, ignoring the last
   (I - \widetilde{D}_\sV)$, where we have used $\widetilde D_\sV \eqdef \diag(\tM_\sV)$ as
   before.
 
-  Now, let us look at the variance of the piecewise estimator.  The
-  objective, \equationref{piecewise-obj} can be written in terms of
-  $\tZ_\sC$ and $\mOppTAll$ as,
+  Now, let us look at the variance of the piecewise estimator.  Using
+  the delta-method \cite{vaart98asymptotic} we have that the asymptotic
+  variance of 
+  $\widehat{\tZ^\ml_\sC} = \argmax_{\tZ_\sC \in [0,1]^{k^m-1}} \E[\ell(\vx)]$ is,
   \begin{align*}
-    \sL_\ml &= \frac{1}{|\sD|} \sum_{\vx \in \sD} \ell(\vx) \\
+    \Sigmaml_\sC &= \E[\grad^2 \ell^{-1}] \Var[\grad \ell] \E[\grad^2 \ell^{-1}]),
+  \end{align*}
+  where $\ell(\bx)$ is the likelihood of the data. $\ell(\bx)$ can be
+  written in terms of $\tZ_\sC$ and $\mOppTAll$ as,
+  \begin{align*}
     \ell(\vx) 
               &= \log(M_\sV[\vx]) \\
               &= \BI[\vx \neq \bd] \log(\tM_\sV[\vx]) + \BI[\vx = \bd] \log(1 - \ones^\top \tM_\sV) ) \\
@@ -53,18 +60,11 @@ $\mOppAll_{\neg \bd, \vk} \in \Re^{d^m-1}$ is the last column, ignoring the last
               &+ \BI[\vx = \bd] \log(1 - \ones^\top (\mOppTAll \tZ_\sC + \mOppAll_{\neg \bd, \vk})).
   \end{align*}
 
-Using the delta-method \cite{vaart98asymptotic} we have that the asymptotic distribution of 
-  $\widehat{{\tZ}}_\sC = \argmax_{\tZ_\sC \in [0,1]^{k^m-1}} \E[\ell(\vx)]$ is,
-  \begin{align*}
-    \sqrt{n}(\widehat{{\tZ}}_{\sC} - {\tZ}_{\sC}) 
-      &\convind \sN( 0, \E[\grad^2 \ell^{-1}] \Var[\grad \ell] \E[\grad^2 \ell^{-1}]).
-  \end{align*}
-
 Taking the first derivative,
 \begin{align}
   \grad_{\tZ_\sC} \ell(\vx)
   &= 
-  \frac{\BI[\vx \neq \bd] \mOppTAllt[\vx] - \BI[\vx = \bd] \mOppTAllt \ones}{\mOppAll[\vx] \mH_\sC} 
+  \frac{\BI[\vx \neq \bd] \mOppTAll[\vx]^\top - \BI[\vx = \bd] \ones^\top \mOppTAll}{\mOppAll[\vx] \mH_\sC} 
   \nonumber \\ 
   &= 
   \begin{bmatrix}
@@ -73,13 +73,14 @@ Taking the first derivative,
   \end{bmatrix}^\top
   D_{\sV}^{-1} e_\vx, \label{eqn:lhood-grad}
 \end{align}
-where $e_\vx$ is a one-hot vector and $M_\sV$ is the marginal
-distribution of the observed data at the true parameters.
+where $\mOppTAll[\vx] \in \Re^{1\times k^m-1}$, $e_\vx$ is a one-hot
+vector and $M_\sV$ is the marginal distribution of the observed data at
+the true parameters.
 
 Taking the second derivative,
 \begin{align}
   \grad^2_{\tilde \mH_\sC} \ell(\vx)
-  &= -\frac{\BI[\vx \neq \bd] \mOppTAll[\vx] \mOppTAllt[\vx] + \BI[\vx = \bd] \mOppTAllt \ones \ones^\top \mOppTAll}{(\mOppAll[\vx] \mH_\sC)^2} \nonumber \\
+  &= -\frac{\BI[\vx \neq \bd] \mOppTAll[\vx]^\top \mOppTAll[\vx] + \BI[\vx = \bd] \mOppTAllt \ones \ones^\top \mOppTAll}{(\mOppAll[\vx] \mH_\sC)^2} \nonumber \\
   &= - 
   \begin{bmatrix}
     \mOppTAll \\
@@ -108,6 +109,16 @@ From \equationref{lhood-grad} and \equationref{lhood-hess}, we get
         &= \hphantom{-}
         \begin{bmatrix}
           \mOppTAll \\
+          - \ones^\top \mOppTAll
+        \end{bmatrix}^\top
+          D_{\sV}^{-1} \diag(\Sigma_\sV) D_{\sV}^{-1} 
+        \begin{bmatrix}
+          \mOppTAll \\
+          - \ones^\top \mOppTAll
+        \end{bmatrix} \\
+        &= \hphantom{-}
+        \begin{bmatrix}
+          \mOppTAll \\
           \ones^\top \mOppTAll
         \end{bmatrix}^\top
           D_{\sV}^{-1} \diag(\Sigma_\sV) D_{\sV}^{-1} 
@@ -116,6 +127,8 @@ From \equationref{lhood-grad} and \equationref{lhood-hess}, we get
           \ones^\top \mOppTAll
         \end{bmatrix}.
   \end{align*}
+The last equality holds because $D_{\sV}^{-1} \diag(\Sigma_\sV)
+D_{\sV}^{-1}$ is diagonal.
 As expected, $\E[\grad^2 \ell(\vx)] = -\Var [\grad \ell(\vx)]$ because
 $\widehat{\tZ_\sC}$ is a maximum likelihood estimator. 
 Noting that $\diag(\Sigma_\sV) = D_\sV (I - D_\sV)$, 
@@ -135,7 +148,7 @@ Noting that $\diag(\Sigma_\sV) = D_\sV (I - D_\sV)$,
    &=
     - \mOppTAllt \tS_\sV \mOppTAll + s_\sV \mOppTAllt \ones \ones^\top \mOppTAll,
 \end{align*}
-where $\tS_\sV$ and $s_\sV$ are defined as follows,
+where $\tS_\sV$ and $s_\sV$ are sub-matrices of $\tS_\sV$, 
 \begin{align*}
   \begin{bmatrix}
           \tS_\sV & \zeros \\
@@ -181,10 +194,10 @@ With concrete expressions for $\Sigmamom_\sC$ and $\Sigmaml_\sC$, we can quantit
   efficiencies, 
   \begin{align*}
     e^\mom 
-        &\eqdef \frac{1}{\bar k} \Tr(\Sigmaml\Sigmamomi ) \\
+        &\eqdef \frac{1}{\bar k} \Tr(\Sigmaml_\sC\Sigmamomi_\sC ) \\
         &= \frac{1}{\bar k} \Tr( \mOppTAlli \tS_\sV\inv \mOppTAllit \mOppTAllt \tilde\Sigma_\sV\inv \mOppTAll ) \\
-      &\quad - \frac{1}{\bar k} \Tr( \frac{s_\sV \mOppTAlli \tS_\sV\inv J \ones \ones^\top J \tS_\sV\inv \mOppTAllit \mOppTAllt  \tilde\Sigma_\sV\inv \mOppTAll }
-      {1 + s_\sV \ones^\top J \tS_\sV\inv J \ones} ) \\
+      &\quad - \frac{1}{\bar k} \frac{s_\sV \Tr( \mOppTAlli \tS_\sV\inv J \ones \ones^\top J \tS_\sV\inv \mOppTAllit \mOppTAllt  \tilde\Sigma_\sV\inv \mOppTAll  )}
+      {1 + s_\sV \ones^\top J \tS_\sV\inv J \ones} \\
         &= \frac{1}{\bar k} \Tr( J \tS_\sV\inv J \tilde\Sigma_\sV\inv ) - \frac{1}{\bar k} \frac{s_\sV \ones^\top J \tS_\sV\inv J \tilde\Sigma_\sV\inv J \tS_\sV\inv J \ones }
       {1 + s_\sV \ones^\top J \tS_\sV\inv J \ones},
   \end{align*}
@@ -203,8 +216,7 @@ With concrete expressions for $\Sigmamom_\sC$ and $\Sigmaml_\sC$, we can quantit
   \end{align*}
 
   To bound the next term, we need bound the projection of the ones
-  vector, $\ones$, through $J \eqdef U U^\top$, which is equivalent to
-  measuring the projection into the subspace of $U$,
+  vector, $\ones$, through $J \eqdef U U^\top$,
   \begin{align*}
       \ones^\top J \tS_\sV\inv J \tilde\Sigma_\sV\inv J \tS_\sV\inv J \ones \\
       &=
@@ -215,7 +227,7 @@ With concrete expressions for $\Sigmamom_\sC$ and $\Sigmaml_\sC$, we can quantit
       (\tilde\Sigma_\sV\inv)_{\min}
       \|\ones^\top U\|^2_2 \\
       &\ge 
-      \frac{\|\ones^\top U\|^2_2}{\|\tS_\sV\|_\infty \|\tilde\Sigma_\sV\|_\infty},
+      \frac{\|\ones^\top U\|^2_2}{\|\tS_\sV\|^2_\infty \|\tilde\Sigma_\sV\|_\infty},
   \end{align*}
   where we have used the property that each of the bracketed terms is an
   eigen-decomposition, and $U^\top \ones$, lies in the subspace $U$.
@@ -238,12 +250,12 @@ With concrete expressions for $\Sigmamom_\sC$ and $\Sigmaml_\sC$, we can quantit
         &= \ones^\top (\mOppAll_{\neg \neg \bd, \vk} - \mOppAll_{\neg \bd, \vk}\ones^\top) \\
         &= \sum_{\bh = \ones}^{\bh \prec \bk} \sum_{\vx = \ones}^{\vx \prec \bd} \Pr(\vx | \bh) e_\bh - (\sum_{\vx = \ones}^{\vx \prec \bd} \Pr(\vx | \vk)) \ones^\top  \\
         &= \sum_{\bh = \ones}^{\bh \prec \bk} (1 - \Pr(\bd | \bh)) e_\bh - (1 - \Pr(\bd | \bk)) \ones^\top  \\
-        &= \mOppTAll_{\bd,\bk} \ones^\top - \mOppTAll_{\bd,\neg \bk}^\top \\
-        &= \sum_{\vh = \ones}^{\vh \prec \vk} (\Pr(\bd | \vk) - \Pr(\bd | \vh))e_\bh.
+        &= \sum_{\vh = \ones}^{\vh \prec \vk} (\Pr(\bd | \vk) - \Pr(\bd | \vh))e_\bh \\
+        &= \mOppTAll_{\bd,\bk} \ones^\top - \mOppTAll_{\bd,\neg \bk}^\top.
   \end{align*}
   Let $c = \|\mOppTAll_{\bd,\bk} \ones^\top - \mOppTAll_{\bd,\neg
   \bk}^\top\|_2 \le \sqrt{k}$.
-  In particular, if $\mOppTAll = U W V^\top$, we have 
+  Let $\mOppTAll = U W V^\top$ be the SVD of $\mOppTAll$. We have,
   \begin{align*}
     \ones^\top U W V^\top 
         &= \ones^\top \mOppTAll \\
@@ -276,33 +288,34 @@ With concrete expressions for $\Sigmamom_\sC$ and $\Sigmaml_\sC$, we can quantit
     &\quad - 
         \frac{1}{\bar k} 
     \frac{
-        c^2 s_\sV/(\|\tS_\sV\|_{\infty} \|\tilde\Sigma_\sV\|_{\infty}
+        s_\sV c^2 /(\|\tS_\sV\|^2_{\infty} \|\tilde\Sigma_\sV\|_{\infty}
             \sigma_{\max}(\mOppTAll))
     }
-    {1 + (c^2 s_\sV \|\tS_\sV\inv\|_{\infty})/
+    {1 + (s_\sV c^2 \|\tS_\sV\inv\|_{\infty})/
           \sigma_{\min}(\mOppTAll)
     }.
   \end{align*}
 
   For the uniform distribution $M_\sV[x] = \frac{1}{\bar d + 1}$,
-  $\|\tS_\sV\inv\|_\infty = \frac{1}{\bar d}$, $\|\tilde
-  \Sigma_\sV\inv\|_\infty = \frac{(\bar d + 1)^2}{\bar d}$:
+  $\|\tS_\sV\|_\infty = \bbd$, $\|\tilde
+  \Sigma_\sV\|_\infty = \frac{\bbd}{(\bbd + 1)^2}$:
   \begin{align*}
     e^\mom 
-    &\le \frac{1}{\bar d} \frac{(\bar d + 1)^2}{\bar d} 
+    &\le \frac{1}{\bbd} \frac{(\bbd + 1)^2}{\bbd} 
     - \frac{1}{\bbk} \frac{
-    (c^2 \bbd)/(\bbd \frac{\bbd}{(\bbd +1)^2} \sigma_{\min}(\mOppTAll))
+    \bbd c^2/(\bbd^2 \frac{\bbd}{(\bbd +1)^2} \sigma_{\min}(\mOppTAll))
     }{
     1 + c^2 \bbd \frac{1}{\bbd} / \sigma_{\min}(\mOppTAll)
     } \\
-    &= (1 + \frac{1}{\bbd})^2 - \frac{\bbd}{\bbk} (1 + \frac{1}{\bbd})^2 \frac{c^2/\sigma_{\max}(\mOppTAll)}{1 + c^2 \bbd^2 / \sigma_{\min}(\mOppTAll)} \\
-    &= (1 + \frac{1}{\bbd})^2 (1 - \frac{\bbd}{\bbk} \frac{c^2/\sigma_{\max}(\mOppTAll)}{1 + c^2 \bbd^2 / \sigma_{\min}(\mOppTAll)}).
+    &= (1 + \frac{1}{\bbd})^2 - \frac{1}{\bbk} (1 + \frac{1}{\bbd})^2 \frac{c^2/\sigma_{\max}(\mOppTAll)}
+      {1 + c^2 / \sigma_{\min}(\mOppTAll)} \\
+    &= (1 + \frac{1}{\bbd})^2 (1 - \frac{1}{\bbk} \frac{c^2/\sigma_{\max}(\mOppTAll)}{1 + c^2 / \sigma_{\min}(\mOppTAll)}).
   \end{align*}
 
-  This efficiency shows a trade off between $\bbd$ and $\bbk$. For any
-  given $\bbk$, the pseudo-inverse estimator is efficient for
-  a sufficiently large $\bbd$. Conversely, for a fixed $\bbd$, the
-  pseudo-inverse estimator is inefficient for large $\bbk < \bbd$.
-   
+  This shows that the pseudoinverse estimator is strictly less efficient
+  than the composite likelihood estimator for finite $k$ and $d$.
+  Furthermore, for a fixed $\bbk$, the pseudoinverse estimator is most
+  efficient for large $\bbd$, and in general it is more efficient for
+  larger $\bbk$.
 \end{proof}
 
