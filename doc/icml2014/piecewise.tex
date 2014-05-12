@@ -2,9 +2,10 @@
 \label{sec:piecewise}
 
 The previous section provided a method of moments estimator
-which used (i) tensor decomposition to recover conditional moments,
-and (ii) matrix inversion to recover the hidden marginals.
-Now we aim to improve statistical efficiency by replacing (ii) with a likelihood-based objective.
+which used (i) tensor decomposition to recover conditional moments
+and (ii) matrix pseudoinversion to recover the hidden marginals.
+In this section, we will improve statistical efficiency by replacing (ii)
+with a convex likelihood-based objective.
 
 % DONE: set the stage a bit more
 Of course, optimizing the original marginal likelihood is subject to local optima.
@@ -12,17 +13,18 @@ We make two observations to arrive at a convex optimization problem.
 The first is that we have used tensor decomposition to recover the conditional moments,
 so effectively a subset of the parameters have been fixed.
 However, this alone is not enough, for the full likelihood is still non-convex.
-The second insight is that we can optimize a \emph{composite likelihood objective} \cite{lindsay88composite}
-rather than the full objective.
+The second observation is that we can optimize a \emph{composite likelihood objective} \cite{lindsay88composite}
+rather than the full objective to circumvent non-convexity.
 
 %The method of moments approach to recover parameters for each clique
   %$\sC$ presented in the previous section is easy to understand and
   %analyze, but sensitive to noise. 
 %In this section we propose an alternate solution, optimizing the 
   %likelihood for each clique, that is more robust to noise.
-We show that under the same conditions as \algorithmref{directed}, the
-  negative composite likelihood function is strictly convex and thus
-  tractable to estimate exactly.
+% PL: this is redundant
+%We show that under the same conditions as \algorithmref{directed}, the
+  %negative composite likelihood function is strictly convex and thus
+  %tractable to estimate exactly.
   %guaranteeing that
   %gradient-based optimization will converge to the unique global
   %optimum.
@@ -40,7 +42,7 @@ with respect to the true distribution $\sM_\sV$ can be written in tensor form:
 \end{align}
 The final form is an expectation over a log of linear function of $\mH_\sC$, which is concave in
 $\mH_\sC$.  But unlike maximum likelihood in fully-observed settings,
-we do not have a closed form solution, so we use EM to optimize.
+we do not have a closed-form solution, so we use EM to optimize.
 Since the function is concave, EM converges to a global maximum.
 \algorithmref{piecewise} summarizes our algorithm.
 
@@ -65,59 +67,69 @@ We have proposed two methods for estimating the hidden marginals $Z_\sC$ given
 the conditional moments $\mOppAll$, one based on computing a simple pseudoinverse,
 and the other based on composite likelihood.
 Let $\hat Z^\mom_\sC$ to denote the pseudoinverse estimator and $\hat
-  Z^\ml_\sC$ to denote the composite likelihood estimator.
+  Z^\ml_\sC$ to denote the composite likelihood estimator.\footnote{For simplicity, assume that $\mOppAll$ is known.
+  In practice, $\mOppAll$ would be estimated via tensor factorization.}
 
 The Cramer-Rao lower bound tells us that maximum likelihood yields the
   most statistically efficient composite estimator for $Z_\sC$ given
   access to only samples of $\Sx\sV$.\footnote{Of course, we could improve
   statistical efficiency by maximizing the likelihood of all of $\vx$, but
-  that would again lead to a non-convex optimization problem.}
+  this would lead to a non-convex optimization problem.}
 But can we quantify the \emph{relative efficiency} of the pseudoinverse
   estimator compared to the composite likelihood estimator?
 We turn to asymptotic statistics to answer this question. 
 
-To begin, let us compute the asymptotic variances of the two estimators. 
-Note that $\hat Z_\sC$ is constrained to lie on the simplex
-  $\Delta_{k^m-1}$ and that $M_\sV$ is similarly constrained to lie on
-  the simplex $\Delta_{d^m-1}$. 
-To handle these constraints, we reparameterize our problem in
+To begin, let us compute the asymptotic variances of the two estimators.
+Let $Z_\sC \in \Delta_{k^m-1}$ and $M_\sV \in \Delta_{d^m-1}$
+denote the true quantities, which we would converge
+to in the limit of infinite data.
+%Note that $Z_\sC$ is constrained to lie on the simplex
+  %$\Delta_{k^m-1}$ and that $M_\sV$ is similarly constrained to lie on
+  %the simplex $\Delta_{d^m-1}$. 
+In practice, we also constrain the estimator $\hat Z_\sC$ to the simplex,
+which complicates its asymptotic variance.
+Thus, we reparameterize our problem in
   terms of $\tZ_\sC \in [0,1]^{k^m-1}$ and $\tM_\sV \in [0,1]^{d^m-1}$.
   The first $k^m -1$ terms of $\tZ_\sC$ and $Z_\sC$ are equal, and the
-  last element, $Z_\sC[k, \ldots, k]$ picks up the slack to make $Z_\sC$
-  sum to 1:
+  last element, $Z_\sC[k, \ldots, k]$ is the remaining proability mass:
+  %picks up the slack to make $Z_\sC$ sum to 1:
 \begin{align*}
   Z_\sC[\vi] &= \left\{
     \begin{array}{ll}
-      1 - \sum_{\vi' \prec \vk} \tilde Z_\sC[\vi'] & \vi = \vk \\
-      \tilde Z_\sC[\vi] & \text{otherwise.}
+      1 - \sum_{\vi' \prec \vk} \tZ_\sC[\vi'] & \vi = \vk \\
+      \tZ_\sC[\vi] & \text{otherwise,}
       \end{array}
-      \right.,
+      \right.
 \end{align*} 
-where $\vk = (k, \ldots, k)$ is the $m$-dimensional vector of all $k$s. 
+where $\vk = (k, \ldots, k)$ is the $m$-dimensional vector of all $k$'s. 
 $M_\sV$ is similarly defined in terms of $\tM_\sV$.
 
 Now, abusing notation slightly by using the vectorized forms of $M_\sV
-\in \Re^{d^m}$, $\tM_\sV \in \Re^{d^m-1}$, $Z_\sC \in \Re^{k^m}$, $\tilde Z_\sC \in \Re^{k^m-1}$
+\in \Re^{d^m}$, $\tM_\sV \in \Re^{d^m-1}$, $Z_\sC \in \Re^{k^m}$, $\tZ_\sC \in \Re^{k^m-1}$
 and the matrix form of $\mOppAll \in \Re^{d^m \times k^m}$, the marginal
-distribution can be expressed as follows,
+distribution can be expressed as follows:
 \begin{align*}
   \tM_\sV 
         &= \mOppAll_{\neg \bd} Z_\sC \\
-        &= \mOppAll_{\neg \bd, \neg \vk} \tilde Z_\sC + \mOppAll_{\neg \bd, \vk} (1 - \ones^\top \tilde Z_\sC) \\
-        &= \underbrace{(\mOppAll_{\neg \bd, \neg \vk} -  \mOppAll_{\neg \bd, \vk}\ones^\top)}_{\mOppTAll} \tilde Z_\sC + \mOppAll_{\neg \bd, \vk}.
-        % &= \mOppTAll \tilde Z_\sC + \mOppAll_{\vk},
+        &= \mOppAll_{\neg \bd, \neg \vk} \tZ_\sC + \mOppAll_{\neg \bd, \vk} (1 - \ones^\top \tZ_\sC) \\
+        &= \underbrace{(\mOppAll_{\neg \bd, \neg \vk} -  \mOppAll_{\neg \bd, \vk}\ones^\top)}_{\eqdef \mOppTAll} \tZ_\sC + \mOppAll_{\neg \bd, \vk},
+        % &= \mOppTAll \tZ_\sC + \mOppAll_{\vk},
 \end{align*}
-where $\mOppAll_{\neg \bd, \neg \vk} \in \Re^{d^m -1 \times k^m - 1}$ is a matrix containing the
-first $d^m-1$ rows and first $k^m-1$ columns of $\mOppAll$ and $\mOppAll_{\neg \bd, \vk} \in \Re^{d^m}$ is the last column $\mOppAll$, ignoring the last row. 
+where $\neg \bd$ selects all but the last row,
+$\neg \bk$ selects all but the last column, and
+$\bk$ selects only the last column.
+%where $\mOppAll_{\neg \bd, \neg \vk} \in \Re^{d^m -1 \times k^m - 1}$ is a matrix containing the
+%first $d^m-1$ rows and first $k^m-1$ columns of $\mOppAll$ and $\mOppAll_{\neg \bd, \vk} \in \Re^{d^m}$ is the last column $\mOppAll$, ignoring the last row. 
 
-We are now ready to study the asymptotic properties of $Z_\sC$ through
-$\tZ_\sC$ and $\tM_\sV$.
+We will now study the asymptotic properties of estimators of $\tZ_\sC$.
+%$\hatt{Z_{\sC}}$
+%We are now ready to study the asymptotic properties of $Z_\sC$ through
+%$\tZ_\sC$ and $\tM_\sV$.
 
-\providecommand{\hatt}[1] {\widehat{\widetilde{#1}}}
 \begin{lemma}[Asymptotic variances]
   \label{lem:mom-pw-variance}
-  The asymptotic variance of $\hatt{Z^\mom_{\sC}}$ based on composite likelihood and 
-  $\hatt{Z^\ml_{\sC}}$ based on composite likelihood are respectively,
+  The asymptotic variances of the pseudoinverse estimator $\hatt{Z^\mom_{\sC}}$
+  and composite likelihood estimator $\hatt{Z^\ml_{\sC}}$ are:
   \begin{align*}
     \Sigmamom_\sC &= \mOppTAlli \tilde\Sigma_\sV \mOppTAllit \\
     \Sigmaml_\sC 
@@ -142,7 +154,7 @@ estimator.
 \begin{corollary}[Asymptotic efficiency]
   \label{cor:efficiency}
 The pseudoinverse estimator is strictly less efficient
-than the composite likelihood estimator in that 
+than the composite likelihood estimator in that its relative efficiency is:
 \begin{align*}
 e^\mom &\eqdef 
     \frac{1}{\bbk} \Tr(\Sigmaml\Sigmamomi ) \\
@@ -161,7 +173,8 @@ e^\mom &\eqdef
 \end{align*}
 where $c = \|\mOppTAll_{\bd,\bk} \ones^\top - \mOppTAll_{\bd,\neg \bk}^\top\|_2 \le \sqrt{\bbk}$ and $\bbk = k^m - 1$.
 
-When $M_\sV$ is close to the uniform distribution, i.e. $M_\sV \approxeq \frac{1}{d^m} \ones$, we get that 
+When $M_\sV$ is close to the uniform distribution,
+i.e. $M_\sV \approxeq \frac{1}{d^m} \ones$ \todo{this is sketchy - what is formally meant here}, we get that 
 \begin{align*}
 e^\mom 
     &\le
@@ -170,14 +183,16 @@ e^\mom
 \end{align*}
 \end{corollary}
 
-The relative efficiency tells us that the pseudo-inverse estimator is
-strictly sub-optimal for any finite $\bbk$ or $\bbd$. Furthermore for
+The relative efficiency tells us that the pseudoinverse estimator is
+strictly suboptimal for any finite $\bbk$ or $\bbd$.
+\todo{from the above expression, $e^\mom$ is not always less than $1$}
+Furthermore for
 a given $\bbk$, it is most efficient in large dimensions, and in general
 its efficiency increases as $\bbk$ and $\bbd$ grow.
-\figureref{cl-hmm} compares the parameter recovery error of the
-  pseudoinverse estimator and the composite likelihood estimator.
-Empirically, we observe that using the composite likelihood estimator
-still leads to more accurate estimates in non-asymptotic regimes.
+Empirically, we also observe that the composite likelihood estimator
+leads to more accurate estimates in non-asymptotic regimes (see \figureref{cl-hmm}).
+%\figureref{cl-hmm} compares the parameter recovery error of the
+  %pseudoinverse estimator and the composite likelihood estimator.
 
 % Visualize
 % To visualize this phenomenon, note that the pseudoinverse estimator can be written

@@ -496,16 +496,20 @@ From \citet{anandkumar13tensor} given the non-degeneracy assumptions
   $\mOpp{v}{i}$:
 \begin{theorem}[Sample complexity for $\mOpp{v}{i}$]
   \label{thm:sample-complexity}
-  Wlog, let $v=1$ and $i=1$. Let $x_1, x_2, x_3$ be three views for
+  Without loss of generality, let $v=1, i=1$, and let $x_1, x_2, x_3$ be three views for
   $h_1$. With probability at least $1 - \delta$,
 \begin{align*}
   \|\mOpphat{1}{1} - \mOpp{1}{1}\|_F 
     &\le  \\
     &
+  \hspace{-0.3in}
       O\left(
-      \frac{k \log(1/\delta) {\pi\oft{1}}_{\max}/{\pi\oft{1}}_{\min} } 
-      {\sqrt{n}(\sigma_{k}(\mOpp{1}{1}) \sigma_{k}(\mOpp{1}{2}))^{5/2}} \right) \epsilon.
+      % PL: remove pi_max because that's upper bounded by 1.
+      \frac{k \log(1/\delta) } 
+      {\sqrt{n} \, \pi\oft{1}_{\min} (\sigma_{k}(\mOpp{1}{1}) \sigma_{k}(\mOpp{1}{2}))^{5/2}} \right) \epsilon,
 \end{align*}
+where $\pi\oft{1}_{\min}$ is the smallest element of $\pi\oft{1}$.
+\todo{what's $\epsilon$?}
 
 %If $\sigma_{\min}(\Pr(c \given \Pa(h_c))) \le \sigma$ for every clique
 %  $\sC \in \sG$ and hidden variable $h_c \in \sC$,
@@ -520,10 +524,14 @@ From \citet{anandkumar13tensor} given the non-degeneracy assumptions
 %to the unique parent of $x_1$, $h_t$.
 \end{theorem}
 
-In general, $\sigma_{k}(\mOpp{v}{i})$ can depend exponentially on the
-  path length between the hidden variable $h_i$ and $x_v$.
-This is expected because the influence from $h_i$ to $x_v$
-  gets diluted for every latent variable it must factor through.
+% PL: we don't have a crisp theorem (because there's multiple paths), so leave it vague.
+Note that $\sigma_{k}(\mOpp{v}{i})$ can become extremely
+small if $h_i$ and $x_v$ are connected via many intermediate hidden variables.
+\todo{cite work - Sontag?}
+%In general, $\sigma_{k}(\mOpp{v}{i})$ will depend exponentially on the
+  %path length between the hidden variable $h_i$ and $x_v$.
+%This is expected because the influence from $h_i$ to $x_v$
+  %gets diluted for every latent variable it must factor through.
 
 %\theoremref{sample-complexity}, proved in \appendixref{assumption-proof}
 %  says that the number of samples required to estimate the view
