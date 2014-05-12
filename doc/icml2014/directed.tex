@@ -108,6 +108,25 @@ A hidden clique $\sC \in \sG$ is said to possess the \emph{exclusive views prope
 We call $x_v$ an exclusive view of $h_i$ in $\sC$.
 If every clique has the exclusive views property, then we say that $\sG$ does as well.
 \end{property}
+
+Next, we state the non-degeneracy assumptions under which our general
+  algorithm is guaranteed to obtain consistent estimates.
+\begin{assumption}[Non-degeneracy]
+  \label{asm:non-degeneracy}
+  (i) The marginal distribution of each hidden variable $h_i$ have
+  full support: $\mPi{i} \succ 0$. 
+  (ii) The conditional moments $\mOpp{v}{i}$ have full column rank $k$.
+\end{assumption}
+
+Intuitively, we need to ensure that every marginal distribution
+  $\Pr(x_v)$ can be separated into $k$ different conditional distributions
+  $\Pr(x_v | h_i)$. 
+The full rank assumption asks that the conditional distributions are
+  linearly independent; if this were not the case, the conditional
+  distribution for a particular latent state could be imitated by the
+  combination of several other latent states.
+
+
 % PL: to save space
 %This property also extends to any connected subgraph $\sG' \in \sG$.
 %For the rest of this section, we will only consider subgraphs which are
@@ -200,8 +219,10 @@ First, let us revisit the definition of a bottleneck:
 Now define the following property:
 \begin{property}[Uniformly bottlenecked]
   \label{prop:bottleneck}
-  A graphical model $\sG$ is \emph{uniformly bottlenecked} if
-  every hidden variable in $\sG$ is a bottleneck.
+  A clique $\sC$ is \emph{uniformly bottlenecked} if
+  every hidden variable in $\sC$ is a bottleneck. 
+  If every clique $\sC \in \sG$ is uniformly bottlenecked, then we say
+  that the graph $\sG$ is uniformly bottlenecked as well.
 \end{property}
 Note that two hidden variables are allowed to have overlapping views.
 %If every hidden variable is a bottleneck, then we can estimate $\mOpp{v}{i}$
@@ -438,8 +459,6 @@ $Z_\sC$,
 and $M_\sV$,
 respectively.
 
-To apply $\TensorFactorize$, we need that each $\mOpp{v}{i}$ has full
-  column rank and that each $\pi^{(i)} \eqdef \Pr(h_i) \succ 0$.
 % But $\mOpp{v}{i}$ is a product of tensors on the path from $h_i$ to
 %   $x_v$, marginalizing out the rest of the graph.
 % To make this property more interpretable, let us assume the following
@@ -459,14 +478,6 @@ To apply $\TensorFactorize$, we need that each $\mOpp{v}{i}$ has full
 %   $\sC = \{ h_1, x_1 \}$, it implies $O = \Pr(x_1 \mid h_1)$ has column
 %   rank $k$.
 
-Intuitively, we need to ensure that every marginal distribution
-  $\Pr(x_v)$ can be separated into $k$ different conditional distributions
-  $\Pr(x_v | h_i)$. 
-The full rank assumption asks that the conditional distributions are
-  linearly independent; if this were not the case, the conditional
-  distribution for a particular latent state could be imitated by the
-  combination of several other latent states.
-
 %\todo{did they prove this; if so just say "they show", not "we can show"}
 %Using results from
 %  \citet{anandkumar12moments,anandkumar13tensor} we can show that
@@ -478,10 +489,11 @@ The full rank assumption asks that the conditional distributions are
 %  \|\mOpphat{v_1}{i} - \mOpp{v_1}{i}\|^2_F &= \frac{1}{\sqrt{n}} O\left( \frac{k {\pi\oft{i}}_{\max}^2}{\sigma_k(M_{v_1,v_2})^5} \right). 
 %\end{align*}
 
-From \citet{anandkumar13tensor} given \assumptionref{full-rank}, we
-  have that $\mOpphat{v}{i}$ converges to $\mOpp{v}{i}$ at a rate of
-  $n^{-\frac12}$ with a constant that depends polynomially on the $k$-th
-  singular value of $\mOpp{v}{i}$:
+From \citet{anandkumar13tensor} given the non-degeneracy assumptions
+  \assumptionref{non-degeneracy}, we have that $\mOpphat{v}{i}$
+  converges to $\mOpp{v}{i}$ at a rate of $n^{-\frac12}$ with a constant
+  that depends polynomially on the $k$-th singular value of
+  $\mOpp{v}{i}$:
 \begin{theorem}[Sample complexity for $\mOpp{v}{i}$]
   \label{thm:sample-complexity}
   Wlog, let $v=1$ and $i=1$. Let $x_1, x_2, x_3$ be three views for
