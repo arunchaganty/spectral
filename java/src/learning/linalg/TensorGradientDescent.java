@@ -15,7 +15,7 @@ public class TensorGradientDescent extends DeflatingTensorFactorizationAlgorithm
   @Option(gloss="Number of iterations to run the power method")
   public int iters = 50;
   @Option(gloss="Random number generator for tensor method and random projections")
-  Random rnd = new Random();
+  Random rnd = new Random(23);
   @OptionSet(name="lbfgs") public LBFGSMaximizer.Options lbfgs = new LBFGSMaximizer.Options();
   @OptionSet(name="backtrack") public BacktrackingLineSearch.Options backtrack = new BacktrackingLineSearch.Options();
 

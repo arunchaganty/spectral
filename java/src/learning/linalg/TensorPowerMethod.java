@@ -17,7 +17,7 @@ public class TensorPowerMethod extends DeflatingTensorFactorizationAlgorithm {
   @Option(gloss="Number of attempts in order to find the real maxima")
   public int attempts = 100;
   @Option(gloss="Random number generator for tensor method and random projections")
-  Random rnd = new Random();
+  Random rnd = new Random(33);
 
   public TensorPowerMethod() {
   }

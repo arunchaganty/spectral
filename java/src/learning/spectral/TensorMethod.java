@@ -23,7 +23,7 @@ public class TensorMethod {
   @Option(gloss="Number of attempts to find good eigen-vectors")
   public int attempts = 300;
   @Option(gloss="Random number generator for tensor method and random projections")
-  public Random rnd = new Random();
+  public Random rnd = new Random(44);
   @Option(gloss="Oversampling factor for the random projection")
   public double oversamplingFactor = 2.0;
 
