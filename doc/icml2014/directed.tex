@@ -10,23 +10,23 @@
   %in latent variable models.
   In this section, we will develop a consistent parameter estimate for a class of directed graphical models.
   In general directed models, the conditional moments $\mOpp{v}{i} \eqdef \Pr(x_v \mid h_i)$
-  do not correspond directly to the underlying parameters.
+which we were able to recover from {\TensorFactorize}, are not the underlying parameters.
   %Once we recover the conditional moments $\mOpp{v}{j} \eqdef \Pr(x_v
   %| h_j)$ for some $v, j$, we present a systematic approach to learn the
   %conditional probability tables for every clique for a class of directed
   %graphical models.
-  Let us see how we can estimate the parameters with an example (Section~\ref{sec:directedExample}).
+  Let us first consider an example (Section~\ref{sec:directedExample});
   Section~\ref{sec:directedGeneral} will describe the algorithm in full generality.
 For ease of exposition we make the following simplifications to our presentation:
 (i) we describe our algorithm entirely in the context of directed
-  graphical models, though it generalizes to factor graphs;
+  graphical models, though it generalizes to undirected models;
 (ii) we derive our algorithm assuming infinite data; in \sectionref{sampleComplexity} we 
   describe error bounds for the finite sample regime; and
-(iii) we present the algorithm solely in terms of linear algebraic operations; in
-  \sectionref{piecewise}, we show how we can get a more statistically
-  efficient estimator using composite likelihoods.
+(iii) we present the algorithm solely in terms of linear algebraic operations;
+  \sectionref{piecewise} provides a statistically
+  more efficient estimator using composite likelihood.
 
-\subsection{Example: Directed grid model}
+\subsection{Example: directed grid model}
 \label{sec:directedExample}
 
 %\begin{figure}
@@ -42,23 +42,26 @@ Consider the directed grid model shown in \figureref{approach}.
   %captures the local dependency structures possible in
   %a Bayesian network.
 The model has eight observed variables $x^a_1, x^b_1 \cdots, x^a_4, x^b_4$ and four
-  hidden variables $h_1, \cdots, h_4$.
+  hidden variables $h_1, \ldots, h_4$.
 The parameters of this model are the conditional probability tables
 $\pi \eqdef \Pr(h_1) \in \Re^k, T \eqdef \Pr(h_2 | h_1) = \Pr(h_3 | h_1) \in \Re^{k \times k},
 V \eqdef \Pr(h_4 | h_2, h_3) \in \Re^{k \times k \times k}$ and $O \eqdef \Pr(x^a_i | h_i)
 =  \Pr(x^b_i | h_i) \in \Re^{d \times k}$. 
-Assume $O$ and $T$ have full column rank.
+%Assume $O$ and $T$ have full column rank. % PL: if we put this in, we have to say something about V, which is too complex.
 
 \paragraph{Estimating $O$}
 Note that the observed variables $x^a_1, x^b_1, x^a_2$ are
-  conditionally independent given $h_1$; we can use
-  $\TensorFactorize$ (\sectionref{setup}) to recover $O$.
+  conditionally independent given $h_1$; we can therefore use
+  $\TensorFactorize$ from \sectionref{setup} to recover $O$.
 
 \paragraph{Estimating $\pi$}
 The moments of $x^a_1$, $\mO_1 \eqdef \Pr(x^a_1)$ are directly related to
-  $\pi$ by $\mO_1 = O \pi$. 
-By \assumptionref{full-rank}, $O$ has full column rank and thus can be
-  inverted to recover $\pi$: $\pi = O\pinv  \mO_1$.
+  $\pi$ by a linear system: $\mO_1 = O \pi$. 
+% PL: weird to refer to refer to this assumption from previous section
+% where it's talking about another model.
+%By \assumptionref{full-rank}, $O$ has full column rank and thus can be
+  %inverted to recover $\pi$: $\pi = O\pinv  \mO_1$.
+If $O$ has full column rank, we can recover $\pi$ by taking the pseudoinverse: $\pi = O\pinv  \mO_1$.
 
 \paragraph{Estimating $T$}
 Similarly, we can write down the moments of $x^a_1, x^a_2$, $\mO_{12}
@@ -68,7 +71,7 @@ Similarly, we can write down the moments of $x^a_1, x^a_2$, $\mO_{12}
 \mO_{12} = O \mH_{12} O^\top \quad\Rightarrow\quad
   \mH_{12} = O\pinv  \mO_{12} O\pinvt .
 \end{align*}
-$T$ can be recovered from the $\mH_{12}$ by suitable renormalization.
+$T$ can be recovered from the $\mH_{12}$ by renormalizing the columns.
 
 \paragraph{Estimating $V$}
 Finally, we can estimate $V$ by renormalizing the hidden marginals
@@ -83,28 +86,34 @@ $\mO_{234} \eqdef \Pr(x^a_2, x^a_3, x^a_4)$:
 \subsection{General algorithm}
 \label{sec:directedGeneral}
 
-Note that in each of the above cases,
-  for any clique $\sC$, each hidden variable $h_i \in \sC$ has its own
-  view which is conditionally independent given the other hidden variables in
-  the clique.
+%Let us now generalize the intuitions of the directed grid to general graphs.
+The intuitions of the directed grid generalize readily to general graphs.
+% PL: this prose is redundant with property
+%Note that in each of the above cases,
+  %for any clique $\sC$, each hidden variable $h_i \in \sC$ has its own
+  %view which is conditionally independent given the other hidden variables in
+  %the clique.
 %Fundamentally, algorithm takes advantage of having a view for every
   %hidden variable in a clique to help identify its hidden state.
-We capture this general property as follows:
+The key property required for our algorithm to work is as follows:
+%We capture this general property as follows:
 \begin{property}(Exclusive views)
   \label{prop:exclusive-views}
-A hidden clique $\sC \in \sG$ is said to possess the \textbf{exclusive views property} if for
-  every hidden variable $h_i \in \sC$, there is some observed variable,
+A hidden clique $\sC \in \sG$ is said to possess the \emph{exclusive views property} if for
+  every hidden variable $h_i \in \sC$, (i)
+  there exists some observed variable,
   $x_{v}$ which is conditionally independent of the rest of the clique
-  given $h_i$, and whose conditional moment $\mOpp{v}{i} \eqdef
+  given $h_i$, and (ii) the conditional moments $\mOpp{v}{i} \eqdef
   \Pr(x_{v} \mid h_i)$ can be estimated consistently.
-We call $x_v$ the exclusive view of $h_i$ in $\sC$.
-
-This property also extends to any connected sub-graph $\sG' \in \sG$.
+We call $x_v$ an exclusive view of $h_i$ in $\sC$.
+If every clique has exclusive views, then we say that $\sG$ does as well.
 \end{property}
-For the rest of this section, we will only consider sub-graphs which are
-  cliques. 
-In \sectionref{undirected}, we will show how the generalization
-  to sub-graphs allows us to efficiently estimate the pseudo-likelihood.
+% PL: to save space
+%This property also extends to any connected subgraph $\sG' \in \sG$.
+%For the rest of this section, we will only consider subgraphs which are
+  %cliques. 
+%In \sectionref{undirected}, we will show how the generalization
+  %to subgraphs allows us to efficiently estimate the pseudo-likelihood.
 
 % \begin{property}(Exclusive views)
 %   \label{prop:exclusive-views}
@@ -122,16 +131,16 @@ In \sectionref{undirected}, we will show how the generalization
 
 We now show this condition is sufficient to learn the marginal
   distribution of the clique.
-Consider any hidden clique $\sC = \{i_1, \cdots, i_m\}$ for which this property holds. Let
-  $x_{v_j}$ be any exclusive view for $h_{i_j}$ in $\sC$ and $\sV
-  = \{v_1, \cdots, v_m\}$ be a set of exclusive views for the clique $\sC$.
+Consider any hidden clique $\sC = \{i_1, \ldots, i_m\}$ with the exclusive views property. Let
+  $x_{v_j}$ be any exclusive view for $h_{i_j}$ in $\sC$ and define $\sV
+  = \{v_1, \ldots, v_m\}$. % be a set of exclusive views for the clique $\sC$.
 We can write down the moments $\mO_\sV$ as follows:
 \begin{align*}
   \mO_\sV 
   &\eqdef \Pr(\Sx{\sV}) \\
   %&= \sum_{\vh \in \sH}
       %\Pr(\Sh{\sC}) \Pr(\Sx{\sV} \given \Sh{\sC}) \\
-      &= \sum_{\vh \in \sH} \Pr(\Sh{\sC}) 
+      &= \sum_{\vh_\sC} \Pr(\Sh{\sC}) 
           \Pr(x_{v_1} | h_{i_1}) \cdots \Pr(x_{v_m} | h_{i_m}) \\
     &= Z_{\sC}(\mOpp{v_1}{i_1},\cdots,\mOpp{v_m}{i_m}).
 \end{align*}
@@ -141,9 +150,9 @@ hidden marginals $Z_\sC$ by inverting:
 \begin{align*}
   Z_{\sC} &= \mO_\sV(\mOpp{v_1}{i_1}\pinv,\cdots,\mOpp{v_m}{i_m}\pinv).
 \end{align*}
-Finally, the conditional probability tables for $\sC$ can easily be obtained from
-  $Z_\sC$ via renormalization.
 \algorithmref{learnclique} summarizes the procedure, \LearnClique.
+Given $Z_\sC$, the conditional probability tables for $\sC$ can easily be
+obtained via renormalization (see \sectionref{sampleComplexity}).
 
 \begin{algorithm}
   \caption{\LearnClique~(pseudoinverse)}
@@ -151,12 +160,13 @@ Finally, the conditional probability tables for $\sC$ can easily be obtained fro
   \begin{algorithmic}
     \REQUIRE Hidden clique $\sC$ with exclusive views (\propertyref{exclusive-views}).
     \ENSURE Marginal distribution of the clique $Z_\sC$.
-      \STATE Identify exclusive views $\Sx{\sV} = \{x_{v_1}, \cdots, x_{v_m}\}$.
-      \STATE Return $\mH_\sC \gets \mO_{\sV}( \mOpp{v_1}{i_i}\pinv, \cdots, {\mOpp{v_m}{i_m}}\pinv )$.
+      \STATE Identify exclusive views $\Sx{\sV} = \{x_{v_1}, \dots, x_{v_m}\}$.
+      \STATE Return $\mH_\sC \gets \mO_{\sV}( \mOpp{v_1}{i_i}\pinv, \dots, {\mOpp{v_m}{i_m}}\pinv )$.
   \end{algorithmic}
 \end{algorithm}
-Of course, for $Z_{\sC}$ to be identifiable, we need various rank conditions,
-which will be established in \sectionref{sampleComplexity}.
+% PL: sample complexity, not rank
+%Of course, for $Z_{\sC}$ to be identifiable, we need various rank conditions,
+%which will be established in \sectionref{sampleComplexity}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \paragraph{Structural properties}
@@ -164,29 +174,43 @@ which will be established in \sectionref{sampleComplexity}.
 % DONE: transition the content more gradually (checkpoint: what have we done so far, what next)
 % DONE: refer to properties by name in addition to by number
 We have shown how to estimate the parameters of any clique that possesses the exclusive
-  views property (\propertyref{exclusive-views}). But in a general graph, which cliques have this property?
-In the example above, we were able to guarantee \propertyref{exclusive-views}
-  by identifying a hidden variable, $h_1$ along with three conditionally
-  independent observed variables, $x^a_1, x^b_1, x^a_2$ using the tensor
-  factorization method.
+  views property (\propertyref{exclusive-views}).
+  But in a general graph, which cliques have this property?
+  To provide intuition, we will provide more interpretable sufficient conditions
+  and examples.
+
+%In the example above, we were able to guarantee \propertyref{exclusive-views}
+  %by identifying a hidden variable, $h_1$ along with three conditionally
+  %independent observed variables, $x^a_1, x^b_1, x^a_2$ using the tensor
+  %factorization method.
   %followed by using \TensorFactorize to learn the conditional moments.
-We define such a hidden variable to be a bottleneck:
+First, let us revisit the definition of a bottleneck:
 \begin{definition}[Bottleneck]
-  A hidden variable $h$ is said to be a \textbf{bottleneck} if there
-  exists at least three observed variables, or views, $x_1, x_2, x_3$
-  that are conditionally independent given $h$. 
-  Let $\sV_{h}$ denote a set of views for $h$ (not necessarily unique).
+  A hidden variable $h_i$ is said to be a \textbf{bottleneck} if there
+  exists at least three observed variables (views), $x_{v_1}, x_{v_2}, x_{v_3}$
+  that are conditionally independent given $h_i$,
+  and $\mOpp{v_1}{i},\mOpp{v_2}{i},\mOpp{v_3}{i}$ have full column rank $k$.
+  % PL: need to add rank constraint; otherwise, doesn't imply exclusive views
+  Let $\sV_{h_i}$ denote any set of views for $h_i$.
 \end{definition}
 
 % DONE: don't talk about parameter recovery yet, just establish exclusive views
 %Finally, the claim we make is that we can recover parameters for any
   %graphical model where every hidden variable is a bottleneck:
-We will prove that the following simple property guarantees that all cliques
-have the exclusive views property:
+Now define the following property:
 \begin{property}[Uniformly bottlenecked]
   \label{prop:bottleneck}
-  Every hidden variable is a bottleneck.
+  A graphical model $\sG$ is \emph{uniformly bottlenecked} if
+  every hidden variable in $\sG$ is a bottleneck.
 \end{property}
+Note that two hidden variables are allowed to have overlapping views.
+%If every hidden variable is a bottleneck, then we can estimate $\mOpp{v}{i}$
+It is clear that having uniform bottlenecks implies part (ii)
+of the exclusive views property (\propertyref{exclusive-views}) via \TensorFactorize,
+but we will show that part (i) follows as well.
+
+%We will prove that the following simple property guarantees that all cliques
+%have the exclusive views property:
 
 %Applying \TensorFactorize to every bottleneck gives us a set of views
 %  for every hidden variable. 
@@ -196,8 +220,8 @@ have the exclusive views property:
 %  that the candidate views actually imply that \propertyref{exclusive-views}
 %  holds for every clique in the graph.
 
-Before we establish this relationship,
-we describe a reduction of any graphical model to
+%Before we establish this relationship,
+First, we describe a reduction of any graphical model to
   a canonical form to make our arguments simpler.
   % DONE: don't say this yet since reader can't appreciate it.
   %that will allow us to handle the case where an observed
@@ -219,19 +243,23 @@ There is a one-to-one correspondence between the parameters of the
   \end{figure}
 
   \providecommand{\hp}{\ensuremath{h_\text{\rm new}}}
-
   Let $x_v$ be an observed variable with parents $\Pa(x_v)$ and children $\text{Ch}(x_v)$.
   Consider the following transformation.
   Replace $x_v$ with a new hidden variable \hp\ with the same
   parents $\Pa(x_v)$ and children $\text{Ch}(x_v) \union \{x_{v_1}, x_{v_2}, x_{v_3}\}$,
-  where $x_{v_1},x_{v_2},x_{v_3}$ are three copies of $x$
-  (\figureref{reduction}). 
-  The domain of $\hp$ is the same as $x_v$\footnote{
-      Though we have assumed that all hidden variables share the
-      same domain, $[k]$, our work generalizes to hidden domains of
-      different sizes, provided \assumptionref{full-rank} is satisfied.
-      },
-    and $\mOpp{v}{\textrm{new}} = I$.
+  where $x_{v_1},x_{v_2},x_{v_3}$ are three copies of $x_v$
+  (\figureref{reduction}).
+  Define $\Pr(\hp \mid \Pa(x_v)) = \Pr(x_v \mid \Pa(x_v))$ and
+  $\Pr(x_{v_j} \mid \hp) = I$.
+  %$\Pr(x_{v_j} \mid \hp) = \left[ \begin{array}{c} I_{k \times k} \\ 0_{(d-k) \times k} \end{array} \right]$.
+  %The domain of $\hp$ is the same as $x_{v_1},x_{v_2},x_{v_3}$.
+  % PL: cut to save space
+  %\footnote{
+      %Though we have assumed that all hidden variables share the
+      %same domain, $[k]$, our work generalizes to hidden domains of
+      %different sizes, provided \assumptionref{full-rank} is satisfied.
+      %},
+    %and $\mOpp{v}{\textrm{new}} = I$.
   Then, there is a one-to-one correspondence between every value of
   $\hp$ and $x_v$. Consequently, for any clique $\sC \contains \hp$, the
   parameters in the original graphical model can be obtained by
@@ -242,18 +270,25 @@ There is a one-to-one correspondence between the parameters of the
   and children.
 \end{proof}
 
-\begin{lemma}[Bottlenecks guarantee exclusive views]
+Now we establish the link between bottlenecks and exclusive views
+(see \appendixref{exclusive-views} for the complete proof):
+\begin{lemma}[Uniformly bottlenecked implies exclusive views]
   \label{lem:bottleneck-views}  
-Let $\sG' = \{ h_{i_1}, \cdots, h_{i_m} \} \subseteq \sG$ be
-  a connected sub-graph of hidden variables. If every hidden variable
-  $h_i \in \sG'$ is a bottleneck, then they have an exclusive view.
+% PL: simplify to cliques (this is also bad notation, since \sG is a set of cliques, not nodes)
+%Let $\sG' = \{ h_{i_1}, \dots, h_{i_m} \} \subseteq \sG$ be
+  %a connected subgraph of hidden variables.
+  %If every hidden variable
+  %$h_i \in \sG'$ is a bottleneck, then $\sG'$ has the exclusive views property.
+If a graphical model $\sG$ is uniformly bottlenecked,
+then $\sG$ has the exclusive views property.
 \end{lemma}
-\begin{proof}
-  The independence conditions required by the bottleneck condition
-  effectively guarantee that atleast one of the three views for
-  a bottleneck be exclusive. 
-  \appendixref{exclusive-views} provides a complete proof.
-\end{proof}
+% PL: save space, doesn't add much
+%\begin{proof}
+%  The independence conditions required by the bottleneck condition
+%  effectively guarantee that at least one of the three views for
+%  a bottleneck be exclusive. 
+%  \appendixref{exclusive-views} provides a complete proof.
+%\end{proof}
 
 With this lemma in place, we present the full algorithm, $\LearnMarginals$,
 in \algorithmref{directed}.
@@ -267,12 +302,12 @@ in \algorithmref{directed}.
 
       \FOR{each hidden variable $h_i \in H$} 
         \STATE Apply $\TensorFactorize$ to learn conditional moments
-        $\mOpp{v}{i}$ for every $\sV_{h_i}$.
+        $\mOpp{v}{i}$ for every $v \in \sV_{h_i}$.
 
 %    \COMMENT{Recover observation potentials $O$ using bottlenecks}
       \ENDFOR
 %      \COMMENT{\textbf{Step 2:} Recover clique potentials from the piecewise likelihood.}
-\FOR{every clique $\sC = \{h_{i_1}, \cdots, h_{i_m}\} \in \sG$} 
+\FOR{every clique $\sC = \{h_{i_1}, \ldots, h_{i_m}\} \in \sG$} 
 \STATE Apply $\LearnClique$ to learn the marginals $\mH_\sC$.
 \ENDFOR
   \end{algorithmic}

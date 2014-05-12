@@ -3,23 +3,31 @@
 
 Let $\sG$ be a discrete graphical model with observed variables $X$ and
   hidden variables $H$.
-Let $\Pa(a) \subset X \union H$ be the parents of a variable $a$ in a directed
-  model, and 
-let $\sN(a) \subset X \union H$ be the neighbors of $a$ in an
-  undirected model.
-We will use $x_1, x_2, \cdots, x_L \in X$ to denote observed variables and
-  $h_1, h_2, \cdots, h_M \in H$ to denote hidden variables.
+For a directed model,
+  let $\Pa(a) \subset X \union H$ be the parents of a variable $a$;
+  for an undirected model,
+  let $\sN(a) \subset X \union H$ be the neighbors of $a$.
+  Abusing notation slightly, we use $\sG$ to denote the set of cliques.
+  %(for directed models, these are $\sG = \{ \Pa(a) \union \{a\} : a \in X \union H \}$).
+We use $x_1, x_2, \dots, x_L \in X$ to denote observed variables and
+  $h_1, h_2, \dots, h_M \in H$ to denote hidden variables.
 For an integer $n$, let $[n] = \{ 1, \dots, n \}$.
 For ease of exposition, we assume that $x_v \in [d]$ for
-all $v$, and that $h_i \in [k]$ for all $i$.
-Let $\sX$ be the joint domain of the observed variables, i.e. $\sX \eqdef [d]^L$ and
+all $v \in [L]$, and that $h_i \in [k]$ for all $i \in [M]$.
+Let $\sX$ be the joint domain of the observed variables, i.e. $\sX \eqdef [d]^L$, and
 let $\sH$ be the joint domain of the hidden variables, i.e. $\sH \eqdef [k]^M$.
 
 % PL: don't know what this means
 %We assume that the model $\sG$ is parametrized at every clique $\sC$.
-If $\sG$ is directed, the model parameters correspond to
-the conditional probability tables for each clique $(\Pa(a), a) \in \sG$.
-If $\sG$ is undirected, we assume a log-linear parametrization of each clique $\sC \in \sG$.
+For directed models,
+$p_\theta(\bx,\bh) = \prod_{a \in X \cup H} p_\theta(a \mid \Pa(a))$,
+where the parameters $\theta$ are the conditional probability tables.
+For undirected models,
+$p_\theta(\bx,\bh) \propto \prod_{\sC \in \sG} \exp(\theta^\top\phi_\sC(\bx_\sC, \bh_\sC))$,
+where $\theta$ are the canonical parameters of an exponential family.
+
+% PL: log-linear parametrization - can't say this for each clique: this is a global notion.
+%If $\sG$ is undirected, we assume a log-linear parametrization of each clique $\sC \in \sG$.
 
 \paragraph{Problem statement}
 
@@ -45,31 +53,33 @@ In practice, one uses local optimization procedures (e.g., EM
   optima.
 We will later return to likelihoods, but let us first
 describe a method of moments approach for parameter estimation.
-The starting point is moments of the marginal distribution $\BP(\vx)$,
-and a bit of notation is necessary.
+First, a bit of notation is necessary.
+%The starting point is moments of the marginal distribution $\BP(\vx)$,
+%and a bit of notation is necessary.
 
 \paragraph{Notation}
 
 We use the notation $[\cdot]$ to indicate indexing; for example $M[i]$
   is the $i$-th row of a matrix $M$ and $M[i,j]$ is the $i,j$-th element
   of $M$.
-For a tensor $T \in \Re^{d \times \ldots \times d}$ and a vector $\bi
-  = (i_1, \cdots, i_\ell)$, define the projection $T[\bi] = T[i_1 \ldots
-  i_\ell]$.
-Similarly, for a set $\sC$ of size $m$ and vector $\bx \in \Re^d$, we
-  will use the notation $\bx_\sC$ to get a vector in $\Re^m$ which selects
-  the appropriate elements of $\bx$.
+For a tensor $T \in \Re^{d \times \cdots \times d}$ and a vector $\bi
+  = (i_1, \ldots, i_\ell)$, define the projection $T[\bi] = T[i_1, \ldots, i_\ell]$.
+Similarly, for a set $\sC$ of size $m$ and vector $v \in \Re^d$, we
+  will use the notation $v_\sC$ to get a vector in $\Re^m$ which selects
+  the appropriate elements of $v$.
 
 We use $\otimes$ to denote the tensor product: if $u \in \Re^d,
   v \in \Re^k$, then $u \otimes v \in \Re^{d \times k}$.
 For an $\ell$-th order tensor $T \in \Re^{d \times \ldots \times
-  d}$ and vectors $\bx_1, \cdots, \bx_\ell \in \Re^{d}$, define 
+  d}$ and vectors $v_1, \cdots, v_\ell \in \Re^{d}$, define 
   the application:
 \begin{align*}
-  T(\bx_1, \cdots, \bx_\ell) 
+  T(v_1, \cdots, v_\ell) 
       %&= \sum_{i_1 = 1}^{d} \cdots \sum_{i_\ell = 1}^{d} 
-&= \sum_{\bi = \ones}^{\vec d}
-            T[i_1, i_2, \ldots, i_\ell] \bx_1[i_1] \cdots \bx_\ell[i_\ell].
+% PL: this isn't great notation; reader can figure it out
+%&= \sum_{\bi = \ones}^{\vec d}
+  &= \sum_{\bi}
+            T[\bi] v_1[i_1] \cdots v_\ell[i_\ell].
 \end{align*}
 Analogously, for a matrices $M_1 \in \Re^{d \times k}, \cdots,
   M_\ell \in \Re^{d \times k}$, we define
@@ -77,18 +87,21 @@ Analogously, for a matrices $M_1 \in \Re^{d \times k}, \cdots,
   T(M_1, \cdots, M_\ell)[\vec j]
       %&= \sum_{i_1 = 1}^{d} \cdots \sum_{i_\ell = 1}^{d} 
   &= \sum_{\bi}
-            T[\vec i] {M_1}[i_1,j_1] \cdots M_\ell[i_\ell, j_\ell],
+            T[\vec i] {M_1}[i_1,j_1] \cdots M_\ell[i_\ell, j_\ell].
 \end{align*}
-a tensor in $\Re^{k \times \ldots \times k}$.
+%a tensor in $\Re^{k \times \ldots \times k}$. % PL: not true, since [j] is applied
 %where $\vec i = (i_1, \cdots, i_\ell)$ and $\vec j = (i_1, \cdots, j_\ell)$
 
-We consider up to third-order moments:
+%with respect to the true data distribution $p_{\theta^*}(\bx,\bh)$;
+We will use $\Pr(\cdot)$ to denote various moment tensors
+constructed from the true data distribution $p_{\theta^*}(\bx,\bh)$:
+%We consider up to third-order moments:
 \begin{align*}
   \mO_i &\eqdef \Pr(x_i), &
   \mO_{ij} &\eqdef \Pr(x_i, x_j), &
   \mO_{ijk} &\eqdef \Pr(x_i, x_j, x_k).
 \end{align*}
-We will view $\mO_i, \mO_{ij}, \mO_{ijk}$ as tensors of
+Here, $\mO_i, \mO_{ij}, \mO_{ijk}$ are tensors of
   orders $1, 2, 3$ in $\Re^d, \Re^{d\times d}, \Re^{d \times d \times d}$.
 Next, we define the \emph{hidden marginals}:
 \begin{align*}
@@ -114,7 +127,7 @@ These are tensors of
   graphical models. %, that sidesteps the local optima problem altogether. 
 In that model, we have three observed variables $x_1, x_2, x_3$
   that are independent conditioned on a hidden variable $h_1$.  
-The parameters of this model are the mixture probabilities $\pi\oft 1 \eqdef
+The parameters of this model are the prior probabilities $\pi\oft 1 \eqdef
   \Pr(h_1) \in \Re^k$ and the conditional moments $\mOpp{i}{1} \eqdef
   \Pr(x_i \given h_1) \in \Re^{d \times k}$ for $i \in \{1,2,3\}$.
 
@@ -134,15 +147,16 @@ The parameters of this model are the mixture probabilities $\pi\oft 1 \eqdef
 \begin{assumption}
 \label{asm:full-rank}
 The conditional moments $\mOpp{1}{1}$, $\mOpp{2}{1}$, $\mOpp{3}{1}$ have full column rank
-  $k$, and that $\pi\oft 1 \succ 0$.
+  $k$, and $\pi\oft 1 \succ 0$.
 \end{assumption}
 
 In brief, the algorithm first computes a whitening matrix $W \in
   \Re^{d \times k}$ such that $W^\top \mO_{12} W = I_{k \times k}$,
-  and uses it to transform $\mO_{123}$ into a symmetric orthogonal tensor.  
+  and uses $W$ to transform $\mO_{123}$ into a symmetric orthogonal tensor.  
 Then a robust tensor power method is applied to extract the eigenvectors
 of the whitened $\mO_{123}$; unwhitening yields the columns of $\mOpp{3}{1}$.
-  $\mOpp{1}{1}$ and $\mOpp{2}{1}$ can then be recovered with a few matrix operations.
+The other parameters can be recovered with a few additional matrix operations.
+%$\mOpp{1}{1}$ and $\mOpp{2}{1}$ can then be recovered with a few matrix operations.
 
 The tensor factorization method attacks the heart of the non-convexity
   in latent-variable models.  In the next two sections,

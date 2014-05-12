@@ -1,9 +1,10 @@
 \begin{abstract} 
 
-Recent work on the method of moments provide consistent estimates
-  for latent-variable models, avoiding local optima issues,
-  but are applicable only to certain types of graphical models.
-On the other hand, pure likelihood objectives, though more universal,
+Recent work on the method of moments enable
+  consistent parameter estimation, but
+  only for certain types of latent-variable models. %, avoiding local optima issues,
+  %but are applicable only to certain types of graphical models.
+On the other hand, pure likelihood objectives, though more universally applicable,
   are difficult to optimize.
 In this work, we show that using the method of moments in conjunction
   with composite marginal likelihood
@@ -26,9 +27,9 @@ In this work, we show that using the method of moments in conjunction
   %hidden variable has at least three conditionally independent observed
   %variables.
 %This family includes loopy graphs with high treewidth.
-Specifically, we use tensor factorization to reveal partial information
+Specifically, we first use tensor factorization to reveal information
 about the hidden variables.  This renders the otherwise non-convex
-likelihood objective convex, and EM can then be used to attain the global optimum.
+likelihood objective convex, and EM can then be used to obtain the global optimum.
 %We use the method of moments to tie each hidden to some observed
   %variables, and show that the rest of the problem can be cast as convex
   %optimization of the likelihood.
