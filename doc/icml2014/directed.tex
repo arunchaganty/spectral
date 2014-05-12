@@ -97,7 +97,7 @@ The intuitions of the directed grid generalize readily to general graphs.
   %hidden variable in a clique to help identify its hidden state.
 The key property required for our algorithm to work is as follows:
 %We capture this general property as follows:
-\begin{property}(Exclusive views)
+\begin{property}[Exclusive views]
   \label{prop:exclusive-views}
 A hidden clique $\sC \in \sG$ is said to possess the \emph{exclusive views property} if for
   every hidden variable $h_i \in \sC$, (i)
@@ -106,7 +106,7 @@ A hidden clique $\sC \in \sG$ is said to possess the \emph{exclusive views prope
   given $h_i$, and (ii) the conditional moments $\mOpp{v}{i} \eqdef
   \Pr(x_{v} \mid h_i)$ can be estimated consistently.
 We call $x_v$ an exclusive view of $h_i$ in $\sC$.
-If every clique has exclusive views, then we say that $\sG$ does as well.
+If every clique has the exclusive views property, then we say that $\sG$ does as well.
 \end{property}
 % PL: to save space
 %This property also extends to any connected subgraph $\sG' \in \sG$.
@@ -318,16 +318,16 @@ in \algorithmref{directed}.
 % DONE: move here because not central to story
 \paragraph{Remarks.} We note that \propertyref{bottleneck} can be relaxed if some cliques
   share parameters.
-In the directed grid model, we can identify the conditional moments $O$ from just
-  $x^a_1, x^b_1$ and $x^a_2$.
-  Therefore, we do not require that $h_2, h_3$ or $h_4$
-  be bottlenecks, and can omit the observations $x^b_2, x^b_3$ and $x^b_4$.
+For example, in the directed grid model, we can recover the conditional moments $O$ from
+  $x^a_1, x^b_1$ and $x^a_2$ with $h_1$ as the bottleneck.
+  Therefore, $h_2, h_3$ and $h_4$
+  need not be bottlenecks, and we can omit the observations $x^b_2, x^b_3$ and $x^b_4$.
 
-The method also extends directly to case in which the observed variables
-  are real valued, while the hidden variables remain discrete. 
-In this scenario, the tensor factorization method of
+Our method also extends directly to case in which the observed variables
+  are real-valued, while the hidden variables remain discrete. 
+In this setting, the tensor factorization method of
   \citet{anandkumar13tensor} recovers the expected conditional means,
-  $\mu_{vi} \eqdef \E[x_v | h_i]$ for an observed variable $x_v$ and
+  $\mu_{vi} \eqdef \E(x_v | h_i) \in \Re^{d \times k}$ for each observed variable $x_v$ and
   hidden variable $h_i$.
 \algorithmref{learnclique} and \algorithmref{directed} still apply and allow
   us to recover clique marginals $Z_\sC$.
@@ -362,20 +362,21 @@ In this scenario, the tensor factorization method of
 \paragraph{Example: hidden Markov model.}
 
 In the HMM (\figureref{examples-hmm}), the parameters
-are $O \eqdef \Pr(x_i|h_i)$  and that $T \eqdef \Pr(h_{i+1} | h_i)$
+are $O \eqdef \Pr(x_i|h_i)$ and $T \eqdef \Pr(h_{i+1} | h_i)$
 for all $i$. % (i.e. we have parameter sharing).
 While the first and last hidden variables $h_1, h_M$ in the
   sequence are not bottlenecks, they still have exclusive views ($x_1$ and
-  $x_M$ respectively) whose parameters we know because they share
-  parameters, $O$.
+  $x_M$, respectively)
+  due to parameter sharing.
+  %whose parameters we know because they share parameters, $O$.
 %We first use the bottleneck $h_2$ with views $x_1, x_2, x_3$ to estimate $O$,
 %and then recover $\pi$ from $\{h_1\}$ and recover $T$ from the clique $\{h_{1}, h_{2}\}$.
 
 \paragraph{Example: latent tree model.}
 
 In the latent tree model (\figureref{examples-tree}), the parameters
-are $\Pr(h_i) = \pi$, $\Pr(h_i | h_1) = T$ for $i \in \{2,3,4\}$
-and $\Pr(x^a_i | h_i) = \Pr(x^b_i | h_i) = O$ for $i \in \{2,3,4\}$.
+are $\pi \eqdef \Pr(h_i)$, $T \eqdef \Pr(h_i | h_1)$ for $i \in \{2,3,4\}$,
+and $O \eqdef \Pr(x^a_i | h_i) = \Pr(x^b_i | h_i)$ for $i \in \{2,3,4\}$.
 Note that while $h_1$ is not directly connected to an observed variable,
   it is still a bottleneck, with views $x^a_2, x^a_3, x^a_4$.
 We can recover $T$ from the clique $\{h_1, h_2\}$ by using views $x^a_2$
@@ -397,17 +398,26 @@ We can recover $T$ from the clique $\{h_1, h_2\}$ by using views $x^a_2$
 \paragraph{Non-examples}
 \label{sec:non-example}
 
-The simplest example of a model that cannot be recovered by our algorithm is
-  a mixture model with a single view, i.e. \figureref{three-view} with
-  just the variables $h_1$ and $x_1$.
-However, without further assumptions the model itself is not
-  identifiable\footnote{To see this, observe that probability-mass
-  can be arbitrarily exchanged between $\Pr(h_1)$ and $\Pr(x_1 | h_1)$ while preserving the marginals $\Pr(x_1)$}.
-A class of binary-valued noisy-or networks
-(see \figureref{examples-noisy-or} for an example)
-which do not possess the
-  bottleneck property are nonetheless identifiable;
-  see \citet{halpern13noisyor} for an algorithm.
+%In a certain sense, having three views is necessary for identifiability;
+%two views is certainly not enough.
+% PL: perhaps too simple, saving space
+%The simplest example of a model that cannot be recovered by our algorithm is
+%  a mixture model with a single view, i.e. \figureref{three-view} with
+%  just the variables $h_1$ and $x_1$.
+%However, without further assumptions the model itself is not
+%  identifiable\footnote{To see this, observe that probability-mass
+%  can be arbitrarily exchanged between $\Pr(h_1)$ and $\Pr(x_1 | h_1)$ while preserving the marginals $\Pr(x_1)$}.
+%A class of binary-valued noisy-or networks
+%(see \figureref{examples-noisy-or} for an example)
+%which do not possess the
+%  bottleneck property are nonetheless identifiable;
+%  see \citet{halpern13noisyor} for an algorithm.
+%Having three views is in some sense necessary for the uniqueness of tensor factorization.
+There are certainly models which are identifiable but do not have exclusive views.
+For example, \figureref{examples-noisy-or} shows
+  a binary-valued noisy-or network which can be
+  learned by the algorithm of \citet{halpern13noisyor},
+  but does not satisfy the exclusive views property.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Sample complexity}
@@ -429,7 +439,7 @@ and $M_\sV$,
 respectively.
 
 To apply $\TensorFactorize$, we need that each $\mOpp{v}{i}$ has full
-  column rank and that $\pi^{(i)} \eqdef \Pr(h_i) \succ 0$.
+  column rank and that each $\pi^{(i)} \eqdef \Pr(h_i) \succ 0$.
 % But $\mOpp{v}{i}$ is a product of tensors on the path from $h_i$ to
 %   $x_v$, marginalizing out the rest of the graph.
 % To make this property more interpretable, let us assume the following
