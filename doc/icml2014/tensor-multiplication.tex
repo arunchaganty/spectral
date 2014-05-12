@@ -95,16 +95,16 @@ and let $I_P$, $I_Q$ be the partitioning of $I$ into subsets contained
   in $\sP$ and $\sQ$ respectively.
 Then,
 \begin{align*}
-\sigma_{\max}(\sR\munf{I}) &\le \sigma_{\max}(\sP\munf{I_P}) \sigma_{\max}(\sQ\munf{I_P}) \\
-\sigma_{\min}(\sR\munf{I}) &\ge \sigma_{\min}(\sP\munf{I_Q}) \sigma_{\min}(\sQ\munf{I_Q}).
+\sigma_{1}(\sR\munf{I}) &\le \sigma_{1}(\sP\munf{I_P}) \sigma_{1}(\sQ\munf{I_P}) \\
+\sigma_{k}(\sR\munf{I}) &\ge \sigma_{k}(\sP\munf{I_Q}) \sigma_{k}(\sQ\munf{I_Q}).
 \end{align*}
 \end{theorem}
 
 Note that in the matrix case, when $m = n = 2$ and $M=\{(2,1)\}$, i.e.
 when $R = P Q$, we get the standard result that 
 \begin{align}
-\sigma_{\max}(R) &\le \sigma_{\max}(P) \sigma_{\max}(Q) \\
-\sigma_{\min}(R) &\ge \sigma_{\min}(P) \sigma_{\min}(Q) \label{eqn:matrix-singular}.
+\sigma_{1}(R) &\le \sigma_{1}(P) \sigma_{1}(Q) \\
+\sigma_{k}(R) &\ge \sigma_{k}(P) \sigma_{k}(Q) \label{eqn:matrix-singular}.
 \end{align}
 
 \begin{proof}
@@ -156,12 +156,12 @@ Then,
 Using lemma \lemmaref{tensor-prod} and the bound on matrix singular
 values, \equationref{matrix-singular}, we get,
 \begin{align*}
-\sigma_{\max}(\sR\munf{I}) 
-    &\le \sigma_{\max}({\sP'}\munf{I'_P}) \sigma_{\max}({\sQ'}\munf{I'_Q}) \\
-      &= \sigma_{\max}(\sP\munf{I_P}) \sigma_{\max}(\sQ\munf{I_Q}) \\
-    \sigma_{\min}(\sR\munf{I})  
-    &\ge \sigma_{\min}({\sP'}\munf{I'_P}) \sigma_{\min}({\sQ'}\munf{I'_Q}) \\
-      &= \sigma_{\min}(\sP\munf{I_P}) \sigma_{\min}(\sQ\munf{I_Q}).
+\sigma_{1}(\sR\munf{I}) 
+    &\le \sigma_{1}({\sP'}\munf{I'_P}) \sigma_{1}({\sQ'}\munf{I'_Q}) \\
+      &= \sigma_{1}(\sP\munf{I_P}) \sigma_{1}(\sQ\munf{I_Q}) \\
+    \sigma_{k}(\sR\munf{I})  
+    &\ge \sigma_{k}({\sP'}\munf{I'_P}) \sigma_{k}({\sQ'}\munf{I'_Q}) \\
+      &= \sigma_{k}(\sP\munf{I_P}) \sigma_{k}(\sQ\munf{I_Q}).
 \end{align*}
 \end{proof}
 
@@ -208,7 +208,7 @@ Then, we have the following lemma linking the singular values of $\sQ$
   Let $\sP, \sQ$ and $v$ be defined as above. For any unfolding $I
   \not\contains v$, 
 \begin{align*}
-  \sigma_{\min}(\sP\munf{I}) &\ge \frac{\sigma_{\min}(\sQ\munf{I})}{v_{\max}}.
+  \sigma_{k}(\sP\munf{I}) &\ge \frac{\sigma_{k}(\sQ\munf{I})}{v_{\max}}.
 \end{align*}
 In particular, if $\sQ\munf{I}$ has full row/column rank, $\sR\munf{I}$
   does too.

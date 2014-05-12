@@ -134,7 +134,7 @@ The singular values of unfoldings of individual $\mYpp{c}{\Pa(h_c)}$ can
 
   Then, for the unfolding $\{c\}$, we get 
   \begin{align*}
-    \sigma_{\min}(\mYpp{c}{\Pa(c)}\munf{I}) &\ge \max_{i\in[\ell]}\{\sigma_{\min}(Z_{\sC_i}\munf{I_i})\},
+    \sigma_{k}(\mYpp{c}{\Pa(c)}\munf{I}) &\ge \max_{i\in[\ell]}\{\sigma_{k}(Z_{\sC_i}\munf{I_i})\},
   \end{align*}
   where $i$ is the subset of $I$ present in clique $\sC_i$.
 \end{lemma} 
@@ -150,13 +150,13 @@ If instead $\sC \subseteq \sC_1 \union \sC_2$ for some $\sC_1, \sC_2 \in
 then the singular values of the projection $Z_\sC$ are preserved along
 any unfolding $I$ of $Z_\sC$:
 \begin{align*}
-  \sigma_{\min}(Z_{\sC}\munf{I}) &\ge \sigma_{\min}(Z_{\sC_1 \union \sC_2}\munf{I})v_{\min} \\
-  \sigma_{\min}(Z_{\sC_1 \union \sC_2}\munf{I}) &\ge
-  \sigma_{\min}(Z_{\sC}\munf{I})v_{\max}\inv.
+  \sigma_{k}(Z_{\sC}\munf{I}) &\ge \sigma_{k}(Z_{\sC_1 \union \sC_2}\munf{I})v_{k} \\
+  \sigma_{k}(Z_{\sC_1 \union \sC_2}\munf{I}) &\ge
+  \sigma_{k}(Z_{\sC}\munf{I})v_{\max}\inv.
 \end{align*}
 
-In this case, we get that $\sigma_{\min}(Z_{\sC_1 \union \sC_2}\munf{I})
-= \sigma_{\min}(Z_{\sC}\munf{I})v_{\max}\inv$.
+In this case, we get that $\sigma_{k}(Z_{\sC_1 \union \sC_2}\munf{I})
+= \sigma_{k}(Z_{\sC}\munf{I})v_{\max}\inv$.
 
 Furthermore, assuming that any unfolding of $Z_{\sC_1}$ is full rank, we
 have that $Z_{\sC_1 \union \sC_2}$ is also full rank along any common
@@ -206,8 +206,8 @@ The key step of the proof will be to use the property that the tensor
   rank when the projected unfoldings $I_A$ of $A$ and $I_B$ of $B$ are
   full rank:
 \begin{align*}
-  \sigma_{\min}( (A \times_C B)\munf{I} )
-    &\ge \sigma_{\min}(A\munf{I_A}) \sigma_{\min}(B\munf{I_B}).
+  \sigma_{k}( (A \times_C B)\munf{I} )
+    &\ge \sigma_{k}(A\munf{I_A}) \sigma_{k}(B\munf{I_B}).
 \end{align*}
 
 By the assumption, any unfolding of $\mYpp{c}{\Pa(h_c)}$ is full-rank. 
@@ -223,7 +223,7 @@ Again, by assumption,
 
 Next, we turn to the question of the sample complexity of estimating
 $\mOpp{v}{i}$, which depends mainly on smallest singular value,
-$\sigma_{\min}(\mOpp{v}{i})$. 
+$\sigma_{k}(\mOpp{v}{i})$. 
 
 \begin{lemma}[Singular values of $\mOpp{v}{1}$]
   \label{lem:mopp-singular-values}
@@ -233,8 +233,8 @@ Let $h_1 \succ h_2 \cdots \succ h_t$ be a topological ordering of
   variables according to the graph $\sG$.
   Then, the smallest singular value of $\mOpp{v}{1}$ is at least the product of the smallest singular values of $\mYpp{c}{\Pa(h_c)}$.
 \begin{align*}
-  \sigma_{\min}(\sP) &\ge \sigma_{\min}(\mOpp{v}{t}) 
-        \prod_{c \in [t]} \sigma_{\min}(\mYpp{c}{\Pa(h_c)}),
+  \sigma_{k}(\sP) &\ge \sigma_{k}(\mOpp{v}{t}) 
+        \prod_{c \in [t]} \sigma_{k}(\mYpp{c}{\Pa(h_c)}),
 \end{align*}
 where the parents $\Pa(h_c)$ are decided by the topological ordering. 
 \end{lemma}
@@ -262,10 +262,10 @@ with probability at least $1 - \delta$,
     &
       O\left( k 
       \frac{{\pi\oft{1}}_{\max}/{\pi\oft{1}}_{\min}} 
-      {(\sigma_{\min}(\mOpp{1}{1}) \sigma_{\min}(\mOpp{1}{2}))^{5/2}} \right) \epsilon.
+      {(\sigma_{k}(\mOpp{1}{1}) \sigma_{k}(\mOpp{1}{2}))^{5/2}} \right) \epsilon.
 \end{align*}
 
-Furthermore, if $\sigma_{\min}(\mYpp{c}{\Pa(h_c)}) \le \sigma$ for every
+Furthermore, if $\sigma_{k}(\mYpp{c}{\Pa(h_c)}) \le \sigma$ for every
   such
 $\mYpp{c}{\Pa(h_c)}$, we get,
 \begin{align*}

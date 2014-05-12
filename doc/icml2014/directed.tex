@@ -492,7 +492,7 @@ From \citet{anandkumar13tensor} given \assumptionref{full-rank}, we
     &
       O\left(
       \frac{k \log(1/\delta) {\pi\oft{1}}_{\max}/{\pi\oft{1}}_{\min} } 
-      {\sqrt{n}(\sigma_{\min}(\mOpp{1}{1}) \sigma_{\min}(\mOpp{1}{2}))^{5/2}} \right) \epsilon.
+      {\sqrt{n}(\sigma_{k}(\mOpp{1}{1}) \sigma_{k}(\mOpp{1}{2}))^{5/2}} \right) \epsilon.
 \end{align*}
 
 %If $\sigma_{\min}(\Pr(c \given \Pa(h_c))) \le \sigma$ for every clique
@@ -508,7 +508,7 @@ From \citet{anandkumar13tensor} given \assumptionref{full-rank}, we
 %to the unique parent of $x_1$, $h_t$.
 \end{theorem}
 
-In general, $\sigma_{\min}(\mOpp{v}{i})$ can depend exponentially on the
+In general, $\sigma_{k}(\mOpp{v}{i})$ can depend exponentially on the
   path length between the hidden variable $h_i$ and $x_v$.
 This is expected because the influence from $h_i$ to $x_v$
   gets diluted for every latent variable it must factor through.

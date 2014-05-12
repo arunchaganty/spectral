@@ -262,10 +262,10 @@ With concrete expressions for $\Sigmamom_\sC$ and $\Sigmaml_\sC$, we can quantit
     \ones^\top U 
       &= \ones^\top \mOppTAll V W\inv \\
     \|\ones^\top U\|_2 
-        &\le \frac{\|\ones^\top \mOppTAll\|_2}{\sigma_{\min}(\mOppTAll)} \\
-        &\le \frac{c}{\sigma_{\min}(\mOppTAll)} \\
+        &\le \frac{\|\ones^\top \mOppTAll\|_2}{\sigma_{k}(\mOppTAll)} \\
+        &\le \frac{c}{\sigma_{k}(\mOppTAll)} \\
     \|\ones^\top U\|_2 
-        &\ge \frac{c}{\sigma_{\max}(\mOppTAll)}.
+        &\ge \frac{c}{\sigma_{1}(\mOppTAll)}.
   \end{align*}
 
   Thus,
@@ -274,11 +274,11 @@ With concrete expressions for $\Sigmamom_\sC$ and $\Sigmaml_\sC$, we can quantit
       &\ge \frac
           {c^2}
           { \|\tS_\sV\|_{\infty} \|\tilde\Sigma_\sV\|_{\infty}
-          \sigma_{\max}(\mOppTAll)} \\
+          \sigma_{1}(\mOppTAll)} \\
       \ones^\top J \tS_\sV\inv J \ones  
       &\le \frac
           {c^2 \|\tS_\sV\inv\|_{\infty}}
-          {\sigma_{\min}(\mOppTAll)}.
+          {\sigma_{k}(\mOppTAll)}.
   \end{align*}
 
   Finally, we have the result,
@@ -289,10 +289,10 @@ With concrete expressions for $\Sigmamom_\sC$ and $\Sigmaml_\sC$, we can quantit
         \frac{1}{\bar k} 
     \frac{
         s_\sV c^2 /(\|\tS_\sV\|^2_{\infty} \|\tilde\Sigma_\sV\|_{\infty}
-            \sigma_{\max}(\mOppTAll))
+            \sigma_{1}(\mOppTAll))
     }
     {1 + (s_\sV c^2 \|\tS_\sV\inv\|_{\infty})/
-          \sigma_{\min}(\mOppTAll)
+          \sigma_{k}(\mOppTAll)
     }.
   \end{align*}
 
@@ -303,13 +303,13 @@ With concrete expressions for $\Sigmamom_\sC$ and $\Sigmaml_\sC$, we can quantit
     e^\mom 
     &\le \frac{1}{\bbd} \frac{(\bbd + 1)^2}{\bbd} 
     - \frac{1}{\bbk} \frac{
-    \bbd c^2/(\bbd^2 \frac{\bbd}{(\bbd +1)^2} \sigma_{\min}(\mOppTAll))
+    \bbd c^2/(\bbd^2 \frac{\bbd}{(\bbd +1)^2} \sigma_{k}(\mOppTAll))
     }{
-    1 + c^2 \bbd \frac{1}{\bbd} / \sigma_{\min}(\mOppTAll)
+    1 + c^2 \bbd \frac{1}{\bbd} / \sigma_{k}(\mOppTAll)
     } \\
-    &= (1 + \frac{1}{\bbd})^2 - \frac{1}{\bbk} (1 + \frac{1}{\bbd})^2 \frac{c^2/\sigma_{\max}(\mOppTAll)}
-      {1 + c^2 / \sigma_{\min}(\mOppTAll)} \\
-    &= (1 + \frac{1}{\bbd})^2 (1 - \frac{1}{\bbk} \frac{c^2/\sigma_{\max}(\mOppTAll)}{1 + c^2 / \sigma_{\min}(\mOppTAll)}).
+    &= (1 + \frac{1}{\bbd})^2 - \frac{1}{\bbk} (1 + \frac{1}{\bbd})^2 \frac{c^2/\sigma_{1}(\mOppTAll)}
+      {1 + c^2 / \sigma_{k}(\mOppTAll)} \\
+    &= (1 + \frac{1}{\bbd})^2 (1 - \frac{1}{\bbk} \frac{c^2/\sigma_{1}(\mOppTAll)}{1 + c^2 / \sigma_{k}(\mOppTAll)}).
   \end{align*}
 
   This shows that the pseudoinverse estimator is strictly less efficient
