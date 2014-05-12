@@ -508,8 +508,10 @@ From \citet{anandkumar13tensor} given the non-degeneracy assumptions
       \frac{k \log(1/\delta) } 
       {\sqrt{n} \, \pi\oft{1}_{\min} (\sigma_{k}(\mOpp{1}{1}) \sigma_{k}(\mOpp{1}{2}))^{5/2}} \right) \epsilon,
 \end{align*}
-where $\pi\oft{1}_{\min}$ is the smallest element of $\pi\oft{1}$.
-\todo{what's $\epsilon$?}
+where $\pi\oft{1}_{\min}$ is the smallest element of $\pi\oft{1}$ and
+$\epsilon$ is the error in the moments, $\epsilon \eqdef \max\{ 
+\|M_{12} - \hat M_{12}\|_{\op}, 
+\|M_{123} - \hat M_{123}\|_{\op} \}$.
 
 %If $\sigma_{\min}(\Pr(c \given \Pa(h_c))) \le \sigma$ for every clique
 %  $\sC \in \sG$ and hidden variable $h_c \in \sC$,
