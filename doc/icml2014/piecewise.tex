@@ -70,127 +70,183 @@ Let $\hat Z^\mom_\sC$ to denote the pseudoinverse estimator and $\hat
   Z^\ml_\sC$ to denote the composite likelihood estimator.\footnote{For simplicity, assume that $\mOppAll$ is known.
   In practice, $\mOppAll$ would be estimated via tensor factorization.}
 
+%We turn to asymptotic statistics to answer this question.
 The Cramer-Rao lower bound tells us that maximum likelihood yields the
   most statistically efficient composite estimator for $Z_\sC$ given
   access to only samples of $\Sx\sV$.\footnote{Of course, we could improve
   statistical efficiency by maximizing the likelihood of all of $\vx$, but
   this would lead to a non-convex optimization problem.}
-But can we quantify the \emph{relative efficiency} of the pseudoinverse
-  estimator compared to the composite likelihood estimator?
-We turn to asymptotic statistics to answer this question. 
+Let us go one step further and quantify the \emph{relative efficiency} of the pseudoinverse
+  estimator compared to the composite likelihood estimator.
 
-To begin, let us compute the asymptotic variances of the two estimators.
-Let $Z_\sC \in \Delta_{k^m-1}$ and $M_\sV \in \Delta_{d^m-1}$
-denote the true quantities, which we would converge
-to in the limit of infinite data.
+%To begin, let us compute the asymptotic variances of the two estimators.
+%Let $Z_\sC \in \Delta_{k^m-1}$ and $M_\sV \in \Delta_{d^m-1}$
+%denote the true quantities, which we would converge
+%to in the limit of infinite data.
 %Note that $Z_\sC$ is constrained to lie on the simplex
   %$\Delta_{k^m-1}$ and that $M_\sV$ is similarly constrained to lie on
   %the simplex $\Delta_{d^m-1}$. 
-In practice, we also constrain the estimator $\hat Z_\sC$ to the simplex,
-which complicates its asymptotic variance.
-Thus, we reparameterize our problem in
-  terms of $\tZ_\sC \in [0,1]^{k^m-1}$ and $\tM_\sV \in [0,1]^{d^m-1}$.
-  The first $k^m -1$ terms of $\tZ_\sC$ and $Z_\sC$ are equal, and the
-  last element, $Z_\sC[k, \ldots, k]$ is the remaining proability mass:
-  %picks up the slack to make $Z_\sC$ sum to 1:
-\begin{align*}
-  Z_\sC[\vi] &= \left\{
-    \begin{array}{ll}
-      1 - \sum_{\vi' \prec \vk} \tZ_\sC[\vi'] & \vi = \vk \\
-      \tZ_\sC[\vi] & \text{otherwise,}
-      \end{array}
-      \right.
-\end{align*} 
-where $\vk = (k, \ldots, k)$ is the $m$-dimensional vector of all $k$'s. 
-$M_\sV$ is similarly defined in terms of $\tM_\sV$.
 
-Now, abusing notation slightly by using the vectorized forms of $M_\sV
-\in \Re^{d^m}$, $\tM_\sV \in \Re^{d^m-1}$, $Z_\sC \in \Re^{k^m}$, $\tZ_\sC \in \Re^{k^m-1}$
-and the matrix form of $\mOppAll \in \Re^{d^m \times k^m}$, the marginal
-distribution can be expressed as follows:
-\begin{align*}
-  \tM_\sV 
-        &= \mOppAll_{\neg \bd} Z_\sC \\
-        &= \mOppAll_{\neg \bd, \neg \vk} \tZ_\sC + \mOppAll_{\neg \bd, \vk} (1 - \ones^\top \tZ_\sC) \\
-        &= \underbrace{(\mOppAll_{\neg \bd, \neg \vk} -  \mOppAll_{\neg \bd, \vk}\ones^\top)}_{\eqdef \mOppTAll} \tZ_\sC + \mOppAll_{\neg \bd, \vk},
-        % &= \mOppTAll \tZ_\sC + \mOppAll_{\vk},
-\end{align*}
-where $\neg \bd$ selects all but the last row,
-$\neg \bk$ selects all but the last column, and
-$\bk$ selects only the last column.
+Abusing notation slightly, we can think of $M_\sV$ just as a flat multinomial over $d^m$ outcomes
+and $Z_\sC$ as a multinomial over $k^m$ outcomes, where the two are related by
+$\mOppAll \in \Re^{d^m \times k^m}$.
+We will not need to access the internal tensor structure of $M_\sV$ and $Z_\sC$,
+so to simplify the notation, let $m=1$
+and define $\mu = M_\sV \in \Re^d$,
+$z = Z_\sC \in \Re^k$,
+and $O = \mOppAll \in \Re^{d \times k}$.
+The hidden marginals $z$ and observed marginals $\mu$ are related via $\mu = O z$.
+Let $\hat z,\hat\mu$ denote the estimated quantities
+and $z^*,\mu^*$ denote the true quantities.
+Let $\hat\E[\cdot]$ denote an expectation over the empirical distribution ($n$ i.i.d. points) over $x$.
+
+The pseudoinverse estimator is defined as $\hat z^\mom = \Pi(O^\dagger \hat\mu)$,
+where $\hat\mu = \hat\E[x]$, and $\Pi(z)$ be the projection of $z$ onto the
+$(k-1)$-dimensional simplex.  The projection makes the result more comparable with likelihood-based methods,
+which work on the simplex by default.
+
+The composite likelihood estimator is given by $\hat z^\ml = \arg\max_{z \in \Delta^{k-1}} \hat\E[\ell(z; x)]$,
+where $\ell(z; x) = \log(O[x] z)$ is the log-likelihood function
+(note that $O[x, h] = \Pr(x \mid h)$ and $z^*[h] = \Pr(h)$).
+
+\begin{lemma}[Asymptotic variances]
+  \label{lem:mom-pw-variance}
+  The asymptotic variances of the pseudoinverse estimator $\hat z^\mom$
+  and composite likelihood estimator $\hat z^\ml$ are:
+  \begin{align*}
+    \Sigmamom_\sC &= C O^\dagger [\diag(\mu) - \mu\mu^\top] O^{\dagger\top} C^\top, \\
+    \Sigmaml_\sC &= C O^\dagger \diag(\mu) O^{\dagger\top} C^\top,
+  \end{align*}
+where $C \in \Re^{k \times k}$ is the projection matrix corresponding to the
+orthogonal complement of $\{ \alpha 1 : \alpha \in \Re \}$.
+\end{lemma}
+
+\begin{proof}
+  The above two results follow by direct application of the delta-method
+  \cite{vaart98asymptotic}.
+  %Refer to \appendixref{pw-proof} for a complete derivation.
+First compute the asymptotic variance of the pseudoinverse:
+The covariance of $\hat\mu = \hat\E[x]$ is given by the variance of a standard multinomial distribution:
+$\Var(\hat\mu) = \frac{1}{n}(\diag(\mu) - \mu\mu^\top)$.
+Recall the pseudoinverse estimator is defined by $\hat z = O^\dagger \hat\mu$,
+so $\Var(\hat z) = \frac{1}{n} O^\dagger (\diag(\mu) - \mu\mu^\top) O^{\dagger\top}$.
+
+For the asymptotic variance of the composite likelihood,
+we just need to compute the Fisher information.
+The first derivative is
+$\nabla\ell(z; x) = \frac{O[x]^\top}{O[x] z} \in \Re^k$,
+and the second derivative is
+$\nabla^2\ell(z; x) = -\frac{O[x]^\top O[x]}{(O[x] z)^2} \in \Re^{k \times k}$.
+The Fisher information is given by
+$-\E[\nabla^2\ell(z;x)] = O^\top \diag(\mu) \diag(\mu)^{-2} O = O^\top \diag(\mu)^{-1} O$.
+The asymptotic variance is given by the inverse Fisher information.
+\end{proof}
+
+%In practice, we also constrain the estimator $\hat Z_\sC$ to the simplex,
+%which complicates its asymptotic variance.
+%Thus, we reparameterize our problem in
+%  terms of $\tZ_\sC \in [0,1]^{k^m-1}$ and $\tM_\sV \in [0,1]^{d^m-1}$.
+%  The first $k^m -1$ terms of $\tZ_\sC$ and $Z_\sC$ are equal, and the
+%  last element, $Z_\sC[k, \ldots, k]$ is the remaining proability mass:
+%  %picks up the slack to make $Z_\sC$ sum to 1:
+%\begin{align*}
+%  Z_\sC[\vi] &= \left\{
+%    \begin{array}{ll}
+%      1 - \sum_{\vi' \prec \vk} \tZ_\sC[\vi'] & \vi = \vk \\
+%      \tZ_\sC[\vi] & \text{otherwise,}
+%      \end{array}
+%      \right.
+%\end{align*} 
+%where $\vk = (k, \ldots, k)$ is the $m$-dimensional vector of all $k$'s. 
+%$M_\sV$ is similarly defined in terms of $\tM_\sV$.
+%
+%Now, abusing notation slightly by using the vectorized forms of $M_\sV
+%\in \Re^{d^m}$, $\tM_\sV \in \Re^{d^m-1}$, $Z_\sC \in \Re^{k^m}$, $\tZ_\sC \in \Re^{k^m-1}$
+%and the matrix form of $\mOppAll \in \Re^{d^m \times k^m}$, the marginal
+%distribution can be expressed as follows:
+%\begin{align*}
+%  \tM_\sV 
+%        &= \mOppAll_{\neg \bd} Z_\sC \\
+%        &= \mOppAll_{\neg \bd, \neg \vk} \tZ_\sC + \mOppAll_{\neg \bd, \vk} (1 - \ones^\top \tZ_\sC) \\
+%        &= \underbrace{(\mOppAll_{\neg \bd, \neg \vk} -  \mOppAll_{\neg \bd, \vk}\ones^\top)}_{\eqdef \mOppTAll} \tZ_\sC + \mOppAll_{\neg \bd, \vk},
+%        % &= \mOppTAll \tZ_\sC + \mOppAll_{\vk},
+%\end{align*}
+%where $\neg \bd$ selects all but the last row,
+%$\neg \bk$ selects all but the last column, and
+%$\bk$ selects only the last column.
 %where $\mOppAll_{\neg \bd, \neg \vk} \in \Re^{d^m -1 \times k^m - 1}$ is a matrix containing the
 %first $d^m-1$ rows and first $k^m-1$ columns of $\mOppAll$ and $\mOppAll_{\neg \bd, \vk} \in \Re^{d^m}$ is the last column $\mOppAll$, ignoring the last row. 
 
-We will now study the asymptotic properties of estimators of $\tZ_\sC$.
+%We will now study the asymptotic properties of estimators of $\tZ_\sC$.
 %$\hatt{Z_{\sC}}$
 %We are now ready to study the asymptotic properties of $Z_\sC$ through
 %$\tZ_\sC$ and $\tM_\sV$.
 
-\begin{lemma}[Asymptotic variances]
-  \label{lem:mom-pw-variance}
-  The asymptotic variances of the pseudoinverse estimator $\hatt{Z^\mom_{\sC}}$
-  and composite likelihood estimator $\hatt{Z^\ml_{\sC}}$ are:
-  \begin{align*}
-    \Sigmamom_\sC &= \mOppTAlli \tilde\Sigma_\sV \mOppTAllit \\
-    \Sigmaml_\sC 
-    &= \mOppTAlli \tS_\sV\inv \mOppTAllit 
-      - \frac{s_\sV \mOppTAlli \tS_\sV\inv J \ones \ones^\top J \tS_\sV\inv \mOppTAllit }
-      {1 + s_\sV \ones^\top J \tS_\sV\inv J \ones}.
-  \end{align*}
-  where $J = \mOppTAll \mOppTAlli$, $\tD_\sV = \diag(\tM_\sV)$, $\tilde \Sigma_\sV = \tD_\sV (I
-  - \tD_\sV)$, the variance of $\tM_\sV$, $\tS_\sV = \tD_\sV\inv (I - \tD_\sV)$ and $s_\sV = \frac{1 - M_\sV[\bd]}{M_\sV[\bd]}$.
-\end{lemma}
-\begin{proof}
-  The above two results follow by direct application of the delta-method
-  \cite{vaart98asymptotic}. Refer to \appendixref{pw-proof} for
-  a complete derivation.
-\end{proof}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-The following corollary (proved in \appendixref{pw-proof}) gives
-a qualitative handle on the relative efficiency of the pseudoinverse
-estimator.
-\begin{corollary}[Asymptotic efficiency]
-  \label{cor:efficiency}
-The pseudoinverse estimator is strictly less efficient
-than the composite likelihood estimator in that its relative efficiency is:
-\begin{align*}
-e^\mom &\eqdef 
-    \frac{1}{\bbk} \Tr(\Sigmaml\Sigmamomi ) \\
-        &= \frac{1}{\bbk} \Tr( J \tS_\sV\inv J \tilde\Sigma_\sV\inv ) - \frac{1}{\bbk} \frac{s_\sV \ones^\top J \tS_\sV\inv J \tilde\Sigma_\sV\inv J \tS_\sV\inv J \ones }
-      {1 + s_\sV \ones^\top J \tS_\sV\inv J \ones} \\
-    &\le \|\tS_\sV\inv\|_\infty  \|\tilde\Sigma_\sV\inv\|_\infty
-      - 
-        \frac{1}{\bar k} 
-    \frac{
-        s_\sV c^2 /(\|\tS_\sV\|^2_{\infty} \|\tilde\Sigma_\sV\|_{\infty}
-            \sigma_{1}(\mOppTAll))
-    }
-    {1 + (s_\sV c^2 \|\tS_\sV\inv\|_{\infty})/
-          \sigma_{k}(\mOppTAll)
-    },
-\end{align*}
-where $c = \|\mOppTAll_{\bd,\bk} \ones^\top - \mOppTAll_{\bd,\neg \bk}^\top\|_2 \le \sqrt{\bbk}$ and $\bbk = k^m - 1$.
-
-When $M_\sV$ is the uniform distribution, i.e. $M_\sV = \frac{1}{d^m}
-  \ones$, we get that 
-\begin{align*}
-e^\mom 
-    &\le
-    \left(1 + \frac{1}{d^m - 1}\right)^2 
-    \left(1 - \frac{1}{\bbk} \frac{c^2/\sigma_{1}(\mOppTAll)}{1 + c^2 / \sigma_{k}(\mOppTAll)}\right).
-\end{align*}
-\end{corollary}
-
-The relative efficiency tells us that the pseudoinverse estimator is
-strictly suboptimal for any finite $\bbk$ or $\bbd$.
-\todo{from the above expression, $e^\mom$ is not always less than $1$}
-Furthermore for
-a given $\bbk$, it is most efficient in large dimensions, and in general
-its efficiency increases as $\bbk$ and $\bbd$ grow.
-Empirically, we also observe that the composite likelihood estimator
-leads to more accurate estimates in non-asymptotic regimes (see \figureref{cl-hmm}).
+%\begin{lemma}[Asymptotic variances]
+%  \label{lem:mom-pw-variance}
+%  The asymptotic variances of the pseudoinverse estimator $\hatt{Z^\mom_{\sC}}$
+%  and composite likelihood estimator $\hatt{Z^\ml_{\sC}}$ are:
+%  \begin{align*}
+%    \Sigmamom_\sC &= \mOppTAlli \tilde\Sigma_\sV \mOppTAllit \\
+%    \Sigmaml_\sC 
+%    &= \mOppTAlli \tS_\sV\inv \mOppTAllit 
+%      - \frac{s_\sV \mOppTAlli \tS_\sV\inv J \ones \ones^\top J \tS_\sV\inv \mOppTAllit }
+%      {1 + s_\sV \ones^\top J \tS_\sV\inv J \ones}.
+%  \end{align*}
+%  where $J = \mOppTAll \mOppTAlli$, $\tD_\sV = \diag(\tM_\sV)$, $\tilde \Sigma_\sV = \tD_\sV (I
+%  - \tD_\sV)$, the variance of $\tM_\sV$, $\tS_\sV = \tD_\sV\inv (I - \tD_\sV)$ and $s_\sV = \frac{1 - M_\sV[\bd]}{M_\sV[\bd]}$.
+%\end{lemma}
+%\begin{proof}
+%  The above two results follow by direct application of the delta-method
+%  \cite{vaart98asymptotic}. Refer to \appendixref{pw-proof} for
+%  a complete derivation.
+%\end{proof}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%The following corollary (proved in \appendixref{pw-proof}) gives
+%a qualitative handle on the relative efficiency of the pseudoinverse
+%estimator.
+%\begin{corollary}[Asymptotic efficiency]
+%  \label{cor:efficiency}
+%The pseudoinverse estimator is strictly less efficient
+%than the composite likelihood estimator in that its relative efficiency is:
+%\begin{align*}
+%e^\mom &\eqdef 
+%    \frac{1}{\bbk} \Tr(\Sigmaml\Sigmamomi ) \\
+%        &= \frac{1}{\bbk} \Tr( J \tS_\sV\inv J \tilde\Sigma_\sV\inv ) - \frac{1}{\bbk} \frac{s_\sV \ones^\top J \tS_\sV\inv J \tilde\Sigma_\sV\inv J \tS_\sV\inv J \ones }
+%      {1 + s_\sV \ones^\top J \tS_\sV\inv J \ones} \\
+%    &\le \|\tS_\sV\inv\|_\infty  \|\tilde\Sigma_\sV\inv\|_\infty
+%      - 
+%        \frac{1}{\bar k} 
+%    \frac{
+%        s_\sV c^2 /(\|\tS_\sV\|^2_{\infty} \|\tilde\Sigma_\sV\|_{\infty}
+%            \sigma_{1}(\mOppTAll))
+%    }
+%    {1 + (s_\sV c^2 \|\tS_\sV\inv\|_{\infty})/
+%          \sigma_{k}(\mOppTAll)
+%    },
+%\end{align*}
+%where $c = \|\mOppTAll_{\bd,\bk} \ones^\top - \mOppTAll_{\bd,\neg \bk}^\top\|_2 \le \sqrt{\bbk}$ and $\bbk = k^m - 1$.
+%
+%When $M_\sV$ is the uniform distribution, i.e. $M_\sV = \frac{1}{d^m}
+%  \ones$, we get that 
+%\begin{align*}
+%e^\mom 
+%    &\le
+%    \left(1 + \frac{1}{d^m - 1}\right)^2 
+%    \left(1 - \frac{1}{\bbk} \frac{c^2/\sigma_{1}(\mOppTAll)}{1 + c^2 / \sigma_{k}(\mOppTAll)}\right).
+%\end{align*}
+%\end{corollary}
+%
+%The relative efficiency tells us that the pseudoinverse estimator is
+%strictly suboptimal for any finite $\bbk$ or $\bbd$.
+%\todo{from the above expression, $e^\mom$ is not always less than $1$}
+%Furthermore for
+%a given $\bbk$, it is most efficient in large dimensions, and in general
+%its efficiency increases as $\bbk$ and $\bbd$ grow.
+%Empirically, we also observe that the composite likelihood estimator
+%leads to more accurate estimates in non-asymptotic regimes (see \figureref{cl-hmm}).
 %\figureref{cl-hmm} compares the parameter recovery error of the
   %pseudoinverse estimator and the composite likelihood estimator.
 

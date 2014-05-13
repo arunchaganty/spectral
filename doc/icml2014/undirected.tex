@@ -4,11 +4,11 @@
 % DONE: need more of a transition from previous sections
 Recall that we used tensor factorization and composite likelihood
 to estimate the hidden marginals $Z_\sC = \BP(\vh_\sC)$ and $\mOpp{v}{i} = \BP(x_v \mid h_i)$.
-For directed models, obtaining the local conditional tables from $Z_\sC$ requires
+For directed models, obtaining the local conditional tables from $Z_\sC$ simply requires
 renormalizing $Z_\sC$.
-For undirected log-linear models, the parameters cannot simply be obtained locally;
-we will have to perform global optimization.
-Fortunately, we will show that this optimization problem is convex
+For undirected log-linear models, the canonical parameters cannot be obtained
+locally.
+Fortunately, we can construct a convex optimization problem
 by relating the recovered conditional moments with the expected features of
 the log-linear model.
 
@@ -22,7 +22,7 @@ We consider log-linear models of the following form:
 \begin{align}
 p_\theta(\vx, \vh) &= \exp\left( \theta^\top \phi(\vx,\vh) - A(\theta) \right),
 \end{align}
-where $A(\theta) = \sum_{\vx, \vh}  \exp( \sum_\sC \theta^\top \phi(\vx,\vh) )$ is the log-partition function.
+where $A(\theta) = \log \sum_{\vx, \vh}  \exp( \theta^\top \phi(\vx,\vh) )$ is the log-partition function.
 
 % FIGURE: example
 \begin{figure}
