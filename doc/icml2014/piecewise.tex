@@ -132,14 +132,32 @@ Recall the pseudoinverse estimator is defined by $\hat z = O^\dagger \hat\mu$,
 so $\Var(\hat z) = \frac{1}{n} O^\dagger (\diag(\mu) - \mu\mu^\top) O^{\dagger\top}$.
 
 For the asymptotic variance of the composite likelihood,
-we just need to compute the Fisher information.
+let us make some simple calculations.
 The first derivative is
 $\nabla\ell(z; x) = \frac{O[x]^\top}{O[x] z} \in \Re^k$,
 and the second derivative is
 $\nabla^2\ell(z; x) = -\frac{O[x]^\top O[x]}{(O[x] z)^2} \in \Re^{k \times k}$.
-The Fisher information is given by
-$-\E[\nabla^2\ell(z;x)] = O^\top \diag(\mu) \diag(\mu)^{-2} O = O^\top \diag(\mu)^{-1} O$.
-The asymptotic variance is given by the inverse Fisher information.
+The expectations are $\E[\nabla\ell(z; x)] = \bone$
+and $H(z) \eqdef -\E[\nabla^2\ell(z;x)] = O^\top \diag(\mu) \diag(\mu)^{-2} O = O^\top \diag(\mu)^{-1} O$.
+Define the variance $V(z) = \Var[\nabla\ell(z; x)]$.
+
+We perform a Taylor expansion:
+$\hat\E[\nabla\ell(\hat z; x)] =
+\hat\E[\nabla\ell(z^*; x)] +
+\hat\E[\nabla^2\ell(z^*; x)] (\hat z - z^*) + o_P(\|\hat z - z^*\|_2)$
+In unconstrained optimization, the left-hand side is zero,
+but in this case, we only know that $\hat\E[\nabla\ell(\hat z; x)] = \alpha \bone$.
+On the right-hand side, $\hat\E[\nabla\ell(z^*; x)]$ is an empirical average of $n$ i.i.d. variables
+with mean $\E[\nabla\ell(z^*; x)] = \bone$ and
+variance $\frac1n \Var(\nabla\ell(z^*; x)) = \frac1n[O^\top\diag(\mu)^{-1}O - \bone\bone^\top]$.
+The second term $\hat\E[\nabla^2\ell(z^*; x)]$ converges in probability to $O^\top \diag(\mu)^{-1} O$.
+Assuming that $\alpha = 1$, the $\bone$'s cancel out \todo{this is sketchy},
+then we have that the asymptotic variance is
+$H(z^*)^{-1} G(z^*) H(z^*)^{-1} = (O^\dagger \diag(\mu) O^{\dagger\top}) [O^\top\diag(\mu)^{-1}O - \bone\bone^\top] (O^\dagger \diag(\mu) O^{\dagger\top})$.
+\todo{finish this proof}
+Need to show $\diag(\mu) O^{\dagger\top}\bone$ is larger than $\mu$.
+We get equality when $O = I$.  In general, we expect this to hold.  But in practice,
+we found $O^\dagger$ to have negative entries.
 \end{proof}
 
 %In practice, we also constrain the estimator $\hat Z_\sC$ to the simplex,
