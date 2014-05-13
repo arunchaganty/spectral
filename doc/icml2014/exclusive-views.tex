@@ -21,11 +21,13 @@ We provide the proof below.
 \end{lemma*}
 
 \begin{proof}
-By the canonical reduction (\lemmaref{reduction}), we can assume without
-  loss of generality that all observed variables are leaves and thus
-  all v-structures are active.
-Combined with the faithful representation assumption, this lets us
+%By the canonical reduction (\lemmaref{reduction}), we can assume without
+%  loss of generality that all observed variables are leaves and thus
+%  all v-structures are active.
+The faithful representation assumption lets us
   reason about independences solely in terms of graph connectivity.
+\todo{v-structures no longer matter because of the assumption.
+Does this need to be explained?}
 
 Let $h_0$ be a hidden variable in the clique $\sC$ and let $x_1, x_2$ be any
   two conditionally independent observed variables. 
@@ -35,7 +37,7 @@ Recall that if $x_1$ is an exclusive view of $h_0$ in $\sC$,
 % Since $x_1 \perp x_2 \given h_0$, every path from $x_1$ to $x_2$ must go through $h_0$. 
 Suppose neither $x_1$ nor $x_2$ are exclusive views for $h_0$, 
   then there exists some $h_1, h_2 \in \sC$ that $x_1, x_2$ are respectively dependent on.
-However, $h_1$ and $h_2$ are connected by participation in the clique; consequently there is a path $x_1 \to h_1 \to h_2 \to x_2$. 
+However, $h_1$ and $h_2$ are connected by participation in the clique; consequently there is an active trail $x_1 - h_1 - h_2 - x_2$. 
 By \assumptionref{ci}, this implies that $x_1$ and $x_2$ are not
   independent conditioned on $h_0$, which is a contradiction.
 
