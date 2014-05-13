@@ -77,6 +77,31 @@ where $\mOppTAll[\vx] \in \Re^{1\times k^m-1}$, $e_\vx$ is a one-hot
 vector and $M_\sV$ is the marginal distribution of the observed data at
 the true parameters.
 
+Note that the expectation of the first derivative is indeed $\zeros$,
+\begin{align*}
+  \E[\grad_{\tZ_\sC} \ell(\vx)]
+  &= 
+  \begin{bmatrix}
+    \mOppTAll \\
+    -\ones^\top \mOppTAll
+  \end{bmatrix}^\top
+  D_{\sV}^{-1} \E[e_\vx] \\
+  &= 
+  \begin{bmatrix}
+    \mOppTAll \\
+    -\ones^\top \mOppTAll
+  \end{bmatrix}^\top
+  D_{\sV}^{-1} M_\sV \\
+  &= 
+  \begin{bmatrix}
+    \mOppTAll \\
+    -\ones^\top \mOppTAll
+  \end{bmatrix}^\top
+  \ones \\
+  &= \ones^\top\mOppTAll -\ones^\top \mOppTAll \\
+  &= \zeros.
+\end{align*}
+
 Taking the second derivative,
 \begin{align}
   \grad^2_{\tilde \mH_\sC} \ell(\vx)
@@ -95,67 +120,43 @@ Taking the second derivative,
 
 From \equationref{lhood-grad} and \equationref{lhood-hess}, we get
   \begin{align*}
-    \Var [\grad \ell(\vx)] &= -
+    \Var [\grad \ell(\vx)] &= \hphantom{-}
         \begin{bmatrix}
           \mOppTAll \\
           \ones^\top \mOppTAll
         \end{bmatrix}^\top
-          D_{\sV}^{-1} \diag(\Sigma_\sV) D_{\sV}^{-1} 
+          D_{\sV}^{-1} D_\sV D_{\sV}^{-1} 
         \begin{bmatrix}
           \mOppTAll \\
           \ones^\top \mOppTAll
         \end{bmatrix} \\
         \E[\grad^2 \ell(\vx)] 
-        &= \hphantom{-}
+        &= -
         \begin{bmatrix}
           \mOppTAll \\
           - \ones^\top \mOppTAll
         \end{bmatrix}^\top
-          D_{\sV}^{-1} \diag(\Sigma_\sV) D_{\sV}^{-1} 
+          D_{\sV}^{-1} D_\sV D_{\sV}^{-1} 
         \begin{bmatrix}
           \mOppTAll \\
           - \ones^\top \mOppTAll
         \end{bmatrix} \\
-        &= \hphantom{-}
+        &= -
         \begin{bmatrix}
           \mOppTAll \\
           \ones^\top \mOppTAll
         \end{bmatrix}^\top
-          D_{\sV}^{-1} \diag(\Sigma_\sV) D_{\sV}^{-1} 
+          D_{\sV}^{-1} 
         \begin{bmatrix}
           \mOppTAll \\
           \ones^\top \mOppTAll
-        \end{bmatrix}.
+        \end{bmatrix} \\
+   &=
+    - \mOppTAllt \tD_\sV\inv \mOppTAll + d_\sV\inv \mOppTAllt \ones \ones^\top \mOppTAll,
   \end{align*}
-The last equality holds because $D_{\sV}^{-1} \diag(\Sigma_\sV)
-D_{\sV}^{-1}$ is diagonal.
+The last equality holds because $D_{\sV}^{-1}$ is diagonal.
 As expected, $\E[\grad^2 \ell(\vx)] = -\Var [\grad \ell(\vx)]$ because
 $\widehat{\tZ_\sC}$ is a maximum likelihood estimator. 
-Noting that $\diag(\Sigma_\sV) = D_\sV (I - D_\sV)$, 
-\begin{align*}
-  \Var [\grad \ell(\vx)] &=
-      - \begin{bmatrix}
-        \mOppTAll \\
-        \ones^\top \mOppTAll
-      \end{bmatrix}^\top
-        D_{\sV}^{-1} (I - D_\sV) 
-      \begin{bmatrix}
-        \mOppTAll \\
-        \ones^\top \mOppTAll
-      \end{bmatrix} \\
-%   &=
-%    - \mOppTAllt \tD_{\sV}^{-1} (I - \tD_\sV) \mOppTAll + \mOppTAllt \ones \frac{\ones^\top \tM_\sV}{1 - \ones^\top \tM_\sV} \ones^\top \mOppTAll \\
-   &=
-    - \mOppTAllt \tS_\sV \mOppTAll + s_\sV \mOppTAllt \ones \ones^\top \mOppTAll,
-\end{align*}
-where $\tS_\sV$ and $s_\sV$ are sub-matrices of $\tS_\sV$, 
-\begin{align*}
-  \begin{bmatrix}
-          \tS_\sV & \zeros \\
-          \zeros^\top & s_\sV
-  \end{bmatrix}
-  &\eqdef D_\sV\inv (I - D_\sV).
-\end{align*}
 
 Finally, we can derive the asymptotic variance of $\Sigmaml_\sC$,
 \begin{align*}
