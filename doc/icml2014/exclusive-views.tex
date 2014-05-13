@@ -2,7 +2,7 @@
 \label{app:exclusive-views}
 
 In \sectionref{directed}, we stated that bottlenecks guaranteed
-exclusive views provided conditional independence assumptions \assumptionref{ci}. 
+exclusive views provided the graph faithfully represents conditional independences (\assumptionref{ci}). 
 We provide the proof below.
   We generalize the lemma so that it applies
   on any connected subgraph, not just cliques.
@@ -11,44 +11,36 @@ We provide the proof below.
 
 \begin{lemma*}[Bottlenecks guarantee exclusive views]
   %\label{lem:bottleneck-views}  
-  Let $\sG$ be a graphical model satisfying conditional independence
-  assumptions (\assumptionref{ci}) and be uniformly bottlenecked, then
-  $\sG$ has the exclusive views property.
+  Let $\sG$ be a graphical model satisfying the faithful representation assumption (\assumptionref{ci}).
+  Let $\sC \in \sG$ be a uniformly bottlenecked clique, then
+  $\sC$ has the exclusive views property, i.e.\ every variable in $\sC$
+  has an exclusive view.
 %Let $\sG' = \{ h_{i_1}, \ldots, h_{i_m} \} \subseteq \sG$ be
 %  a connected subgraph of hidden variables. If every hidden variable
 %  $h_i \in \sG'$ is a bottleneck, then $\sG'$ has the exclusive view property.
 \end{lemma*}
 
 \begin{proof}
-Let $h_0$ be a hidden variable in the clique $\sC$ and $x_1, x_2$ be any
+By the canonical reduction (\lemmaref{reduction}), we can assume without
+  loss of generality that all observed variables are leaves and thus
+  all v-structures are active.
+Combined with the faithful representation assumption, this lets us
+  reason about independences solely in terms of graph connectivity.
+
+Let $h_0$ be a hidden variable in the clique $\sC$ and let $x_1, x_2$ be any
   two conditionally independent observed variables. 
-One of $x_1$ or $x_2$ is an exclusive view for $h_0$ iff it is
-  independent of all other hidden variables in the clique, given $h_0$.
-Intuitively, if this weren't the case, then we would be able to find
-  an active path between $x_1$ and $x_2$ that does not go through $h_0$,
-  violating the conditional independence condition.
+Recall that if $x_1$ is an exclusive view of $h_0$ in $\sC$,
+  then, conditioned on $h_0$, $x_1$ is independent of every other variable $h_i
+  \in \sC$.
+% Since $x_1 \perp x_2 \given h_0$, every path from $x_1$ to $x_2$ must go through $h_0$. 
+Suppose neither $x_1$ nor $x_2$ are exclusive views for $h_0$, 
+  then there exists some $h_1, h_2 \in \sC$ that $x_1, x_2$ are respectively dependent on.
+However, $h_1$ and $h_2$ are connected by participation in the clique; consequently there is a path $x_1 \to h_1 \to h_2 \to x_2$. 
+By \assumptionref{ci}, this implies that $x_1$ and $x_2$ are not
+  independent conditioned on $h_0$, which is a contradiction.
 
-% TODO: One line here about how assumptions save us.
-% The conditional independence assumptions (\assumptionref{ci}) exclude
-%   edge cases wherein the active trail still preserves 
-% for them to be both depend on any other
-% variable $h'$ in the clique.
-
-Suppose neither $x_1$ nor $x_2$ were exclusive views for $h_0$, 
-  then there exists some $h_1, h_2 \in \sC$ (not necessarily distinct)  that $x_1, x_2$ are
-  respectively dependent on:
-  $x_1 \not\perp h_1 \given h_0$ and $x_2 \not\perp h_2 \given h_0$. 
-Both $h_1$ and $h_2$ are part of the same clique $\sC$, thus by
-  \assumptionref{ci}, we have that $h_1 \not\perp h_2 \given h_0$. 
-
-Since $x_1 \not\perp h_1 \given h$, there exists an active trail from
-$x_1 \to h_1$. Furthermore, because $h_1$ and $h_2$ are in the same
-clique, the active trail extends to $h_2$, i.e. $x_1 \not\perp h_2$.
-However, since $x_1 \to h_1 \to h_2$ is an active trail in the unconditioned graph, i.e. $x_1 \not\perp h_1$; by \assumptionref{ci}, it remains active trail when conditioned on $h$.
-
-Consequently, $x_1 \not\perp h_2 \given h_0$, which
-contradicts the assumption that as $x_1 \perp x_2 \given h_0$,
-$x_1 \not\perp h_i \given h_0$ and $x_2 \not\perp h_i \given h_0$ for all $h_i \in \sC$.
+Thus, at least one of $x_1$ or $x_2$ is isolated from the rest of the
+variables in the clique and forms an exclusive view for $h_0$ in $\sC$.
 
 \end{proof}
 

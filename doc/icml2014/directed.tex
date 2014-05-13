@@ -228,36 +228,15 @@ Note that two hidden variables are allowed to have overlapping views.
 %If every hidden variable is a bottleneck, then we can estimate $\mOpp{v}{i}$
 It is clear that having uniform bottlenecks implies part (ii)
 of the exclusive views property (\propertyref{exclusive-views}) via \TensorFactorize,
-but we will show that part (i) follows as well, given basic assumptions
-on the conditional independence structure of the graphical model.
+but we will show that part (i) follows as well, given that the graphical model faithfully represents conditional independences:
 
-\begin{assumption}[Conditional Independence]
+\begin{assumption}[Faithful Representation]
   \label{asm:ci}  
-  \
-  \begin{enumerate}
-    \item If, conditioned on a variable $h$, two variables $x_1, x_2$
-      are independent, then $x_1$ and $x_2$ are not both dependent on
-      any other variable $h'$: $x_1 \perp x_2 \given h \implies x_1
-      \perp h' \given h \vee x_2 \perp h' \given h$ for every $h' \in
-      \sC$.
-    \item
-      For every clique $\sC \in \sG$, conditioned on a variable $h \in
-      \sC$, all other variables in the clique are dependent:
-      $h_i \not\perp h_j \given h$ for every $h_i, h_j \in \sC$.
-    \item
-      Given an active path in the unconditioned model, then it remains
-        active when conditioned on $h$. 
-      Let $a, b, c$ be three variables in the graph such that
-      $$ a \not\perp b \wedge b \not\perp c \implies a \not\perp c,$$
-      then,
-      $$ a \not\perp b \given h \wedge b \not\perp c \given h \implies a \not\perp c \given h.$$
-%      Suppose $$x \not\perp h_1 \wedge h_1 \not\perp h_2 \implies
-%      x \not\perp h_2,$$ then $$x \not\perp h_1 \given h \wedge h_1 \not\perp h_2
-%      \given h \implies x \not\perp h_2 \given h$$.
-  \end{enumerate}
+  If there is an active trail from any two variables $a, b$ in the graph
+    $\sG$, then they are not independent, i.e $a \not\perp b$. 
+  If there is an active trail between $a$ and $b$ conditioned on any variable,
+    say $c$, then they are also not independent, i.e. $a\not\perp b \given c$.
 \end{assumption}
-
-%TODO: Describe with example the cliques ruled out.
 
 %We will prove that the following simple property guarantees that all cliques
 %have the exclusive views property:
@@ -329,8 +308,8 @@ Now we establish the link between bottlenecks and exclusive views
   %a connected subgraph of hidden variables.
   %If every hidden variable
   %$h_i \in \sG'$ is a bottleneck, then $\sG'$ has the exclusive views property.
-  If a graphical model $\sG$ satisfies conditional independence
-  assumptions (\assumptionref{ci}) and is uniformly bottlenecked, then
+  If a graphical model $\sG$ satisfies the faithful representation 
+  assumption (\assumptionref{ci}) and is uniformly bottlenecked, then
   $\sG$ has the exclusive views property.
 \end{lemma}
 % PL: save space, doesn't add much

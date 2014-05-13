@@ -152,14 +152,27 @@ In the fully-supervised setting, it is well-known that pseudolikelihood provides
 albeit at the cost of statistical efficiency.
 Coincidentally, this is the same high-level motivation for using method of moments in the first place.
 
-The pseudolikelihood also replaces the log-partition function $A(\theta)$
-with a sum over the variables in the neighbourhood: $A_a(\theta; x_{\sN(a)}) = \sum_{a' \in \{a\} \union \sN(a)} \exp(\theta^\top\phi_{\sN(a)}(a'))$,
-which cannot be computed from just the hidden clique marginals $Z_\sC$,
-since the neighbors $\sN(a)$ in general do not form a clique.
-We adapt our earlier algorithm ($\LearnClique$) to estimate the
-  marginals over all neighborhoods $Z_{\sN(a)}$ by noting that
-  \lemmaref{bottleneck-views} guarantees exclusive views for any connected
-  subgraph of $\sG$, not just cliques.
+
+The pseudolikelihood also replaces the log-partition function
+  $A(\theta)$ with a sum over the variables in the neighborhood:
+  $A_a(\theta; x_{\sN(a)}) = \sum_{a' \in \{a\} \union \sN(a)}
+  \exp(\theta^\top\phi_{\sN(a)}(a'))$.
+Note that the neighbors $\sN(a)$ in general do not form a clique, and
+  thus the uniformly bottlenecked assumption alone is not sufficient to
+  guarantee exclusive views for each variable in the subgraph.
+However, when we do have exclusive views for each neighborhood, as in
+  \figureref{examples-mrf}, we can adapt our earlier algorithm
+  ($\LearnClique$) to estimate the marginals over all neighborhoods $Z_{\sN(a)}$.
+
+% Arun: WRONG
+% The pseudolikelihood also replaces the log-partition function $A(\theta)$
+% with a sum over the variables in the neighborhood: $A_a(\theta; x_{\sN(a)}) = \sum_{a' \in \{a\} \union \sN(a)} \exp(\theta^\top\phi_{\sN(a)}(a'))$,
+% which cannot be computed from just the hidden clique marginals $Z_\sC$,
+% since the neighbors $\sN(a)$ in general do not form a clique.
+% We adapt our earlier algorithm ($\LearnClique$) to estimate the
+%   marginals over all neighborhoods $Z_{\sN(a)}$ by noting that
+%   \lemmaref{bottleneck-views} guarantees exclusive views for any connected
+%   subgraph of $\sG$, not just cliques.
 
 While this method is only viable for graphs of low degree, i.e.\@ when $|\sN(a)|$ is small,
 it can handle graphs with high treewidth.
