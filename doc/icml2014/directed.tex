@@ -228,7 +228,36 @@ Note that two hidden variables are allowed to have overlapping views.
 %If every hidden variable is a bottleneck, then we can estimate $\mOpp{v}{i}$
 It is clear that having uniform bottlenecks implies part (ii)
 of the exclusive views property (\propertyref{exclusive-views}) via \TensorFactorize,
-but we will show that part (i) follows as well.
+but we will show that part (i) follows as well, given basic assumptions
+on the conditional independence structure of the graphical model.
+
+\begin{assumption}[Conditional Independence]
+  \label{asm:ci}  
+  \
+  \begin{enumerate}
+    \item If, conditioned on a variable $h$, two variables $x_1, x_2$
+      are independent, then $x_1$ and $x_2$ are not both dependent on
+      any other variable $h'$: $x_1 \perp x_2 \given h \implies x_1
+      \perp h' \given h \vee x_2 \perp h' \given h$ for every $h' \in
+      \sC$.
+    \item
+      For every clique $\sC \in \sG$, conditioned on a variable $h \in
+      \sC$, all other variables in the clique are dependent:
+      $h_i \not\perp h_j \given h$ for every $h_i, h_j \in \sC$.
+    \item
+      Given an active path in the unconditioned model, then it remains
+        active when conditioned on $h$. 
+      Let $a, b, c$ be three variables in the graph such that
+      $$ a \not\perp b \wedge b \not\perp c \implies a \not\perp c,$$
+      then,
+      $$ a \not\perp b \given h \wedge b \not\perp c \given h \implies a \not\perp c \given h.$$
+%      Suppose $$x \not\perp h_1 \wedge h_1 \not\perp h_2 \implies
+%      x \not\perp h_2,$$ then $$x \not\perp h_1 \given h \wedge h_1 \not\perp h_2
+%      \given h \implies x \not\perp h_2 \given h$$.
+  \end{enumerate}
+\end{assumption}
+
+%TODO: Describe with example the cliques ruled out.
 
 %We will prove that the following simple property guarantees that all cliques
 %have the exclusive views property:
@@ -300,8 +329,9 @@ Now we establish the link between bottlenecks and exclusive views
   %a connected subgraph of hidden variables.
   %If every hidden variable
   %$h_i \in \sG'$ is a bottleneck, then $\sG'$ has the exclusive views property.
-If a graphical model $\sG$ is uniformly bottlenecked,
-then $\sG$ has the exclusive views property.
+  If a graphical model $\sG$ satisfies conditional independence
+  assumptions (\assumptionref{ci}) and is uniformly bottlenecked, then
+  $\sG$ has the exclusive views property.
 \end{lemma}
 % PL: save space, doesn't add much
 %\begin{proof}
@@ -447,17 +477,17 @@ For example, \figureref{examples-noisy-or} shows
 %\LearnMarginals combines two consistent algorithms, \TensorFactorize and
 %\LearnCliqueNs, and is thus consistent itself.
 
-In this section, we provide formal conditions under which $\LearnMarginals$
-will produce consistent estimates.
-We let
-$\mOpphat{v}{i}$,
-$\hat Z_\sC$,
-and $\hat M_\sV$,
-denote estimators for
-$\mOpp{v}{i}$,
-$Z_\sC$,
-and $M_\sV$,
-respectively.
+%In this section, we provide formal conditions under which $\LearnMarginals$
+%will produce consistent estimates.
+%We let
+%$\mOpphat{v}{i}$,
+%$\hat Z_\sC$,
+%and $\hat M_\sV$,
+%denote estimators for
+%$\mOpp{v}{i}$,
+%$Z_\sC$,
+%and $M_\sV$,
+%respectively.
 
 % But $\mOpp{v}{i}$ is a product of tensors on the path from $h_i$ to
 %   $x_v$, marginalizing out the rest of the graph.
@@ -488,27 +518,32 @@ respectively.
 %\begin{align*}
 %  \|\mOpphat{v_1}{i} - \mOpp{v_1}{i}\|^2_F &= \frac{1}{\sqrt{n}} O\left( \frac{k {\pi\oft{i}}_{\max}^2}{\sigma_k(M_{v_1,v_2})^5} \right). 
 %\end{align*}
-
+It is easy to see that $\LearnMarginals$ has a polynomial sample complexity because it composes two parts that individually have polynomial sample complexity.
 From \citet{anandkumar13tensor} given the non-degeneracy assumptions
   \assumptionref{non-degeneracy}, we have that $\mOpphat{v}{i}$
   converges to $\mOpp{v}{i}$ at a rate of $n^{-\frac12}$ with a constant
   that depends polynomially on the $k$-th singular value of
-  $\mOpp{v}{i}$:
-\begin{theorem}[Sample complexity for $\mOpp{v}{i}$]
-  \label{thm:sample-complexity}
-  Without loss of generality, let $v=1, i=1$, and let $x_1, x_2, x_3$ be three views for
-  $h_1$. With probability at least $1 - \delta$,
-\begin{align*}
-  \|\mOpphat{1}{1} - \mOpp{1}{1}\|_F 
-    &\le  \\
-    &
-  \hspace{-0.3in}
-      O\left(
-      % PL: remove pi_max because that's upper bounded by 1.
-      \frac{k \log(1/\delta) } 
-      {\sqrt{n} \, \pi\oft{1}_{\min} (\sigma_{k}(\mOpp{1}{1}) \sigma_{k}(\mOpp{1}{2}))^{5/2}} \right),
-\end{align*}
-where $\pi\oft{1}_{\min}$ is the smallest element of $\pi\oft{1}$.
+  $\mOpp{v}{i}$.
+% PL: we don't have a crisp theorem (because there's multiple paths), so leave it vague.
+Recovering the marginals $Z_\sC$ from the conditional moments via $\LearnClique$ is a linear operation and thus also has polynomial sample complexity. 
+Note that $\sigma_{k}(\mOpp{v}{i})$ can become extremely
+small if $h_i$ and $x_v$ are connected via many intermediate hidden variables.
+\todo{cite work - Sontag?}
+%\begin{theorem}[Sample complexity for $\mOpp{v}{i}$]
+%  \label{thm:sample-complexity}
+%  Without loss of generality, let $v=1, i=1$, and let $x_1, x_2, x_3$ be three views for
+%  $h_1$. With probability at least $1 - \delta$,
+%\begin{align*}
+%  \|\mOpphat{1}{1} - \mOpp{1}{1}\|_F 
+%    &\le  \\
+%    &
+%  \hspace{-0.3in}
+%      O\left(
+%      % PL: remove pi_max because that's upper bounded by 1.
+%      \frac{k \log(1/\delta) } 
+%      {\sqrt{n} \, \pi\oft{1}_{\min} (\sigma_{k}(\mOpp{1}{1}) \sigma_{k}(\mOpp{1}{2}))^{5/2}} \right),
+%\end{align*}
+%where $\pi\oft{1}_{\min}$ is the smallest element of $\pi\oft{1}$.
 
 %If $\sigma_{\min}(\Pr(c \given \Pa(h_c))) \le \sigma$ for every clique
 %  $\sC \in \sG$ and hidden variable $h_c \in \sC$,
@@ -521,12 +556,7 @@ where $\pi\oft{1}_{\min}$ is the smallest element of $\pi\oft{1}$.
 %\end{align*}
 %where $t$ is the length of the shortest topological ordering from $h_1$
 %to the unique parent of $x_1$, $h_t$.
-\end{theorem}
-
-% PL: we don't have a crisp theorem (because there's multiple paths), so leave it vague.
-Note that $\sigma_{k}(\mOpp{v}{i})$ can become extremely
-small if $h_i$ and $x_v$ are connected via many intermediate hidden variables.
-\todo{cite work - Sontag?}
+%\end{theorem}
 %In general, $\sigma_{k}(\mOpp{v}{i})$ will depend exponentially on the
   %path length between the hidden variable $h_i$ and $x_v$.
 %This is expected because the influence from $h_i$ to $x_v$

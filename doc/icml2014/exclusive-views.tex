@@ -2,7 +2,8 @@
 \label{app:exclusive-views}
 
 In \sectionref{directed}, we stated that bottlenecks guaranteed
-  exclusive views. We provide the proof below.
+exclusive views provided conditional independence assumptions \assumptionref{ci}. 
+We provide the proof below.
   We generalize the lemma so that it applies
   on any connected subgraph, not just cliques.
   Also, the statement is made in terms of subgraphs,
@@ -10,40 +11,44 @@ In \sectionref{directed}, we stated that bottlenecks guaranteed
 
 \begin{lemma*}[Bottlenecks guarantee exclusive views]
   %\label{lem:bottleneck-views}  
-Let $\sG' = \{ h_{i_1}, \ldots, h_{i_m} \} \subseteq \sG$ be
-  a connected subgraph of hidden variables. If every hidden variable
-  $h_i \in \sG'$ is a bottleneck, then $\sG'$ has the exclusive view property.
+  Let $\sG$ be a graphical model satisfying conditional independence
+  assumptions (\assumptionref{ci}) and be uniformly bottlenecked, then
+  $\sG$ has the exclusive views property.
+%Let $\sG' = \{ h_{i_1}, \ldots, h_{i_m} \} \subseteq \sG$ be
+%  a connected subgraph of hidden variables. If every hidden variable
+%  $h_i \in \sG'$ is a bottleneck, then $\sG'$ has the exclusive view property.
 \end{lemma*}
 
 \begin{proof}
-  By \lemmaref{reduction}, we can assume that every observed
-  variable is a leaf in the graph, causing any v-structures in the graph
-  to be active. This allows us to reason about independence simply by
-  checking whether or not two nodes are connected or not.
-  Note that this proof applies for undirected graphs as well.
+Let $h_0$ be a hidden variable in the clique $\sC$ and $x_1, x_2$ be any
+  two conditionally independent observed variables. 
+One of $x_1$ or $x_2$ is an exclusive view for $h_0$ iff it is
+  independent of all other hidden variables in the clique, given $h_0$.
+Intuitively, if this weren't the case, then we would be able to find
+  an active path between $x_1$ and $x_2$ that does not go through $h_0$,
+  violating the conditional independence condition.
 
-  Let $h$ be a hidden variable in $\sG'$, let $\sV_{h}$ be the set of
-  views for it and let ${\sG'}^- \eqdef \sG' \setminus \{h\}$.
-  By definition, the views of $h$ are conditionally independent, viz.
-    every connecting path between two views $x_1, x_2 \in \sV_h$ must pass through
-    $h$.
-  A view $x \in \sV_{h}$ is exclusive for $h$ iff $x \not\in \sV_{h'}$ for all $h'
-  \in {\sG'}^-$.
+% TODO: One line here about how assumptions save us.
+% The conditional independence assumptions (\assumptionref{ci}) exclude
+%   edge cases wherein the active trail still preserves 
+% for them to be both depend on any other
+% variable $h'$ in the clique.
 
-  Suppose $h$ had no unique view, then $\sV_{h} \subseteq \Union_{h' \in {\sG'}^-} \sV_{h'}$. 
-  However, this would imply that for every $x_1, x_2 \in \sV_{h}$, there
-  exists some $h_1, h_2 \in {\sG'}^-$ (not necessarily distinct) such that
-    $x_1$ is connected to $h_1$ and $x_2$ is connected to $h_2$.
-  By participation in the subgraph, either $h_1 = h_2$ or $h_1$ is
-    connected to $h_2$, implying that $x_1$ and $x_2$ are connected
-    via a path that does not pass through $h$, contradicting the
-    statement that $x_1, x_2 \in \sV_h$. 
-    
-  Thus, it must be the case that $\sV_{h} \nsubseteq \Union_{h' \neq
-    h \in \sG'} \sV_{h'}$ and hence there exists a unique view for $h$.
+Suppose neither $x_1$ nor $x_2$ were exclusive views for $h_0$, 
+  then there exists some $h_1, h_2 \in \sC$ (not necessarily distinct)  that $x_1, x_2$ are
+  respectively dependent on:
+  $x_1 \not\perp h_1 \given h_0$ and $x_2 \not\perp h_2 \given h_0$. 
+Both $h_1$ and $h_2$ are part of the same clique $\sC$, thus by
+  \assumptionref{ci}, we have that $h_1 \not\perp h_2 \given h_0$. 
 
-  Algorithmically, finding the unique view for $h$ can be done by
-  subtracting the views of all other variables in the subgraph from
-  $\sV_h$,i.e. $x_{v_h} \in \sV_h \setminus \Union_{h' \in \sG'} \sV_{h'}$
+Since $x_1 \not\perp h_1 \given h$, there exists an active trail from
+$x_1 \to h_1$. Furthermore, because $h_1$ and $h_2$ are in the same
+clique, the active trail extends to $h_2$, i.e. $x_1 \not\perp h_2$.
+However, since $x_1 \to h_1 \to h_2$ is an active trail in the unconditioned graph, i.e. $x_1 \not\perp h_1$; by \assumptionref{ci}, it remains active trail when conditioned on $h$.
+
+Consequently, $x_1 \not\perp h_2 \given h_0$, which
+contradicts the assumption that as $x_1 \perp x_2 \given h_0$,
+$x_1 \not\perp h_i \given h_0$ and $x_2 \not\perp h_i \given h_0$ for all $h_i \in \sC$.
+
 \end{proof}
 
