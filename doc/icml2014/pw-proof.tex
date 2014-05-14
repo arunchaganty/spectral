@@ -1,11 +1,12 @@
 \subsection{\lemmaref{mom-pw-variance}}
 \label{app:pw-proof}
 
-In \sectionref{piecewise}, we compare the asymptotic variance
+In \sectionref{piecewise}, we compared the asymptotic variance
   $\Sigma^\ml_\sC$ of the composite likelihood estimator for a clique
   $\sC$, with that of the pseudoinverse estimator, $\Sigma^\mom_\sC$. 
-In this part, we will derive the asymptotic variances of these two
-  estimators and compare their relative efficiencies.
+  Now we will derive these asymptotic variances in detail.
+%In this part, we will derive the asymptotic variances of these two
+  %estimators and compare their relative efficiencies.
 
 Recall, that in \sectionref{piecewise} we simplified notation by taking
   $m=1$ and flattening the moments $M_\sV$ and hidden marginals $Z_\sC$
@@ -20,7 +21,7 @@ constrained to lie on simplexes. This makes asymptotic analysis tricky
 because $\mu, z$ lie on subspaces with Lebesgue measure zero in $\Re^d$
 and $\Re^k$ respectively.
 To handle this constraint, we re-parameterize the problem in terms of
-  $\tm \in \Re^{d-1}$ and $\tz \in \Re^{d-1}$, 
+  $\tm \in \Re^{d-1}$ and $\tz \in \Re^{k-1}$, 
 which are related to the original representation as follows:
 \begin{align*}
   \mu &= 
@@ -52,23 +53,23 @@ Now, $\tm$ and $\tz$ are related as,
       \tz \\
       1 - \ones^\top\tz
     \end{bmatrix} \\
-  \tm &= O_{\neg k,\neg d} \tz - O_{k,\neg d} \ones^\top \tz +  O_{k,\neg d} \\
-  \tm &= \underbrace{(O_{\neg k,\neg d} - O_{k,\neg d} \ones^\top )}_{\tO} \tz +  O_{k,\neg d}.
+  \tm &= O_{\neg k,\neg d} \tz + O_{k,\neg d} - O_{k,\neg d} \ones^\top \tz \\
+      &= \underbrace{(O_{\neg k,\neg d} - O_{k,\neg d} \ones^\top )}_{\eqdef \tO} \tz +  O_{k,\neg d}.
 \end{align*}
 
 With this reparameterization, we are ready to derive the asymptotic
 variances of the two estimators.
 
 \begin{proof}[Proof for \lemmaref{mom-pw-variance}]
-  We proceed using the delta method. First, let us look at the
+  First, let us look at the
   asymptotic variance of the pseudoinverse estimator. With the
   reparameterization $\tz$, we get,
   \begin{align*}
     \tm &= \tO \tz \\
     \tz &= \tOi \tm.
   \end{align*}
-  $\tz$ is just a linear transformation of $\tm$, thus
-  the asymptotic variance of $\widehat{z}^\mom$ is,
+  Since $\tz$ is just a linear transformation of $\tm$,
+  the asymptotic variance of $\widehat{z}^\mom$ is:
   \begin{align*}
       \Sigmamom &= \tOi \tSi \tOit \\
       &= \tOi \tD \tOit - \tOi \tD \ones \ones^\top \tD \tOit,
@@ -78,7 +79,9 @@ variances of the two estimators.
   Now, let us look at the variance of the piecewise estimator.  Using
   the delta-method \cite{vaart98asymptotic} we have that the asymptotic
   variance of 
-  $\widehat{z}^\ml = \argmin_{\tz \in [0,1]^{k-1}} \hat\E[-\ell(\vx)]$ is,
+  %$\widehat{z}^\ml = \argmin_{\tz \in [0,1]^{k-1}} \hat\E[-\ell(\vx)]$ is,
+  % Definitely not optimizing over the whole set
+  $\widehat{z}^\ml = \argmin_{\tz} \hat\E[-\ell(\vx)]$ is,
   \begin{align*}
     \Sigmaml &= -\E[\grad^2 \ell^{-1}] \Var[\grad \ell] \E[\grad^2 \ell^{-1}]),
   \end{align*}
