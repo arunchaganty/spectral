@@ -158,6 +158,17 @@ Taking the second derivative,
 
 From \equationref{lhood-grad} and \equationref{lhood-hess}, we get
   \begin{align*}
+    \E[\grad^2 \ell(x; \tz^*)] 
+    &= -
+        \begin{bmatrix}
+          \tO \\
+          -\ones^\top \tO
+        \end{bmatrix}^\top
+          D^{-1} \E[e_x e_x^\top] D^{-1} 
+        \begin{bmatrix}
+          \tO \\
+          -\ones^\top \tO
+        \end{bmatrix} \\
     \Var [\grad \ell(x; \tz^*)] 
     &= \hphantom{-}
         \begin{bmatrix}
@@ -179,18 +190,7 @@ From \equationref{lhood-grad} and \equationref{lhood-hess}, we get
           \tO \\
           -\ones^\top \tO
         \end{bmatrix} \\
-    \E[\grad^2 \ell(x; \tz^*)] 
-        &= -
-        \begin{bmatrix}
-          \tO \\
-          - \ones^\top \tO
-        \end{bmatrix}^\top
-          D^{-1} D D^{-1} 
-        \begin{bmatrix}
-          \tO \\
-          - \ones^\top \tO
-        \end{bmatrix} \\
-        &= -
+    &= \hphantom{-}
         \begin{bmatrix}
           \tO \\
           - \ones^\top \tO
@@ -203,7 +203,7 @@ From \equationref{lhood-grad} and \equationref{lhood-hess}, we get
           \tO \\
           - \ones^\top \tO
         \end{bmatrix} \\
-   &= - (\tOt \tD\inv \tO + \td\inv \tOt \ones \ones^\top \tO),
+        &= \hphantom{-} \tOt \tD\inv \tO + \td\inv \tOt \ones \ones^\top \tO,
   \end{align*}
 where $\td = 1 - \ones^\top \tm$.
 As expected, $\E[\grad^2 \ell(x)] = -\Var [\grad \ell(x)]$ because
@@ -225,10 +225,10 @@ the inverse in closed form:
 This gives us,
 \begin{align}
     \Sigmaml
-    &= (\tOt \tD \tO)\inv
+    &= (\tOt \tD\inv \tO)\inv
       - \frac{
-      (\tOt \tD \tO)\inv (\tOt \ones) (\tOt \ones)^\top (\tOt \tD \tO)\inv }
-      {\td + (\tOt \ones)^\top (\tOt \tD \tO)\inv (\tOt \ones)} \nonumber \\
+      (\tOt \tD\inv \tO)\inv (\tOt \ones) (\tOt \ones)^\top (\tOt \tD\inv \tO)\inv }
+      {\td + (\tOt \ones)^\top (\tOt \tD\inv \tO)\inv (\tOt \ones)} \nonumber \\
     &= \tOi \tD \tOit 
       - \frac{\tOi \tD (\tOit \tOt \ones) (\tOit \tOt \ones)^\top  \tD \tOit }
       {\td + (\tOit \tOt \ones)^\top \tD (\tOit \tOt \ones)} \nonumber \\
@@ -408,3 +408,18 @@ estimator is consistent as well.
 %   larger $\bbk$.
 % \end{proof}
 % 
+
+% \begin{align*}
+%   \Tr(\Sigmamom - \Sigmaml) 
+%   &= 
+%       \Tr\left( 
+%       \frac{\tOi \tD v v^\top \tD \tOit }
+%         {1 - \ones^\top \tD \ones + v^\top \tD v } 
+%       - \tOi \tD \ones \ones^\top \tD \tOit 
+%       \right) \\
+%   &= 
+%       \frac{v^\top \tD \tOit \tOi \tD v}
+%         {1 - \ones^\top \tD \ones + v^\top \tD v } 
+%       - \ones^\top \tD \tOit  \tOi \tD \ones \\
+% \end{align*}
+
