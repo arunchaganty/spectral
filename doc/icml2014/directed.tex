@@ -238,7 +238,9 @@ independences given by the graph:
     %$\sG$, then they are not independent, i.e $a \not\perp b$. 
   We say that a graphical model $\sG$ is \emph{faithful}
   if for any variables $a,b,c$
-  such that there is an active trail\footnote{See \todo{cite textbook} for a definition.} between $a$ and $b$ conditioned on $c$,
+  such that there is an active trail\footnote{See
+  \citet{koller2009probabilistic} for a definition.} between $a$ and $b$
+  conditioned on $c$,
   then $a$ and $b$ are dependent given $c$ (i.e., $a\not\perp b \given c$).
 \end{property}
 
@@ -303,8 +305,7 @@ There is a one-to-one correspondence between the parameters of the
   and children.
 \end{proof}
 
-Now we establish the link between bottlenecks and exclusive views
-(see \appendixref{exclusive-views} for the complete proof):
+Now we establish the link between bottlenecks and exclusive views:
 \begin{lemma}[Uniformly bottlenecked implies exclusive views]
   \label{lem:bottleneck-views}  
 % PL: simplify to cliques (this is also bad notation, since \sG is a set of cliques, not nodes)
@@ -322,7 +323,7 @@ $h_i \in \sC \backslash \{h_0\}$ given $h_0$.
 Consider any such two $x_1, x_2$.
 Conditioned on $h_0$, there exists an active trail between them (specifically, $x_1 - h_1 - h_2 - x_2$).
 Since $\sG$ is faithful, we have $x_1 \not\perp x_2 \mid h_0$.
-As this holds for any $x_1,x_2$, $h_0$ cannot be a bottleneck.
+As this holds for any $x_1$ and $x_2$, $h_0$ cannot be a bottleneck.
 \end{proof}
 
 With this lemma in place, we present the full algorithm, $\LearnMarginals$,
@@ -510,8 +511,12 @@ From \citet{anandkumar13tensor} given the non-degeneracy assumptions
 % PL: we don't have a crisp theorem (because there's multiple paths), so leave it vague.
 Recovering the marginals $Z_\sC$ from the conditional moments via $\LearnClique$ is a linear operation and thus also has polynomial sample complexity. 
 Note that $\sigma_{k}(\mOpp{v}{i})$ can become extremely
-small if $h_i$ and $x_v$ are connected via many intermediate hidden variables.
-\todo{cite work - Sontag?}
+small if $h_i$ and $x_v$ are connected via many intermediate hidden variables
+\footnote{To see this, consider a chain-structured graphical model: $h_1
+\to h_2 \cdots \to h_t \to x_v$. In this example, if
+$\sigma_k(\Pr(h_{i+1} \given h_{i})) \ge \sigma_k$ for each $i = 1,
+\cdots, t-1$, then $\sigma_k(\mOpp{v}{1})$ can be as bad as
+$\sigma_k^t \sigma_k(\mOpp{v}{t})$.}.
 %\begin{theorem}[Sample complexity for $\mOpp{v}{i}$]
 %  \label{thm:sample-complexity}
 %  Without loss of generality, let $v=1, i=1$, and let $x_1, x_2, x_3$ be three views for

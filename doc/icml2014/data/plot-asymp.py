@@ -14,7 +14,7 @@ def do_command(args):
     plt.rc('ytick', labelsize = 24)
     plt.rc('text', usetex = True)
 
-    data = scabby.tab_to_table(scabby.read_tab_file(open('asymp-comparison.table')), 'noise', 'dZ_pi', 'std_dZ_pi', 'dZ_cl', 'std_dZ_cl')
+    data = scabby.tab_to_table(scabby.read_tab_file(args.fname), 'noise', 'dZ_pi', 'std_dZ_pi', 'dZ_cl', 'std_dZ_cl')
     print data
     plt.errorbar( data.T[0], data.T[1], yerr=data.T[2], linestyle='-', marker='o', label='Pseudoinverse')
     plt.errorbar( data.T[0], data.T[3], yerr=data.T[4], linestyle='-', marker='s', label='Composite-Likelihood')
@@ -30,14 +30,17 @@ def do_command(args):
 
     plt.tight_layout()
 
-    plt.savefig('asymp.pdf')
+    if args.output:
+        plt.savefig(args.output + ".pdf")
+        plt.savefig(args.output + ".png")
     plt.show()
     
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser( description='' )
-    #parser.add_argument( '', type=str, help="" )
+    parser.add_argument( 'fname', type=file, help="table to plot" )
+    parser.add_argument( 'output', type=str, default=None, help="Where to output" )
     parser.set_defaults(func=do_command)
 
     #subparsers = parser.add_subparsers()

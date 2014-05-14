@@ -65,8 +65,8 @@ variances of the two estimators.
   asymptotic variance of the pseudoinverse estimator. With the
   reparameterization $\tz$, we get,
   \begin{align*}
-    \tm &= \tO \tz \\
-    \tz &= \tOi \tm.
+    \tm &= \tO \tz +  O_{\neg d,k} \\
+    \tz &= \tOi (\tm - O_{\neg d,k}).
   \end{align*}
   Note that $\mu$ is a multinomial distribution, hence the variance of
     $\hat\tm$ is $(\tD - \tm \tm^\top)$ where $\tD \eqdef \diag(\tm)$.
