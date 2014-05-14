@@ -19,8 +19,8 @@ np.random.seed(12)
 def generate_random_instance(k, d, badO = False):
     z = normalize(rand(k))
     if badO:
-        O = 0.9 * column_normalize(rand(d-1, k))
-        O = np.vstack((O, 0.1 * np.ones(k)))
+        O = 0.5 * column_normalize(rand(d-1, k))
+        O = np.vstack((O, 0.5 * np.ones(k)))
     else:
         O = column_normalize(rand(d, k))
     assert np.allclose(O.sum(), k, 1e-4)
@@ -41,12 +41,12 @@ def recover_pseudoinverse(Ot, Ondk, mut_):
 
     return zt_
 
-def recover_composite_likelihood(O, mu, iters = 1000, eps = 1e-4, z0 = None):
+def recover_composite_likelihood(O, mu, iters = 100000, eps = 1e-6, z0 = None):
     d, k = O.shape
     # Initialize pi randomly
     lhood_ = -np.inf
-    if z0 is None or (z0 < 0).any() or (z0 > 1).any():
-        print "random init"
+    if z0 is None or z0.sum() > 1 or (z0 < 0).any() or (z0 > 1).any():
+        #print "random init"
         z = normalize(rand(k))
     else:
         z = np.hstack((z0, 1 - z0.sum()))
@@ -125,13 +125,19 @@ def do_command(args):
     zt = z[:-1]
     Ondk = O[:-1, -1]
     Ot = O[:-1, :-1] - Ondk.reshape(D-1, 1).dot( ones((1,K-1)) )
-    print "ones residual", norm( ones((D-1,1)).T.dot(Ot) )
+    Oti = pinv(Ot)
+    o = ones((D-1,1))
+    v = (Ot.dot(Oti)).T.dot(o)
+
+    print "O cond", svd(O)[1]
+    print "ones residual", norm( Ot.T.dot(o) ), norm( v )
+    print "mu residual", (Oti.dot(mut)), norm(Oti.dot(mut))
 
     dZ_pi, dZ_cl = [], []
 
     for attempt in xrange(attempts):
         mut_, zt_pi, zt_cl = do_experiment(O, Ot, Ondk, mu, args)
-        if attempt % attempts/20 == 0:
+        if attempt % (attempts/20) == 0:
             sys.stderr.write('.')
             sys.stderr.flush()
 
@@ -144,15 +150,17 @@ def do_command(args):
     dZ_pi, dZ_cl = np.array(dZ_pi), np.array(dZ_cl)
     sys.stderr.write('\n')
 
-    Oti = pinv(Ot)
-    P = Ot.dot(Oti)
     Dt = np.diag(mut)
     mut = np.atleast_2d(mut)
-    o = ones((D-1,1))
-    v = P.dot(o)
     # Theory!
-    S_pi = Oti.dot(Dt - Dt.dot(o).dot(o.T).dot(Dt)).dot(Oti.T) / args.n
-    S_cl = Oti.dot(Dt - Dt.dot(v).dot(v.T).dot(Dt)/(1 - o.T.dot(Dt).dot(o) + v.T.dot(Dt).dot(v))).dot(Oti.T) / args.n
+    S_0 = Oti.dot(Dt).dot(Oti.T)
+    S_pi0 = Oti.dot(Dt.dot(o).dot(o.T).dot(Dt)).dot(Oti.T)
+    S_pi = (S_0 - S_pi0) / args.n
+    S_cl0 = Oti.dot(Dt).dot(v).dot(v.T).dot(Dt).dot(Oti.T)/(1. - o.T.dot(Dt).dot(o) + v.T.dot(Dt).dot(v))
+    S_cl = (S_0 - S_cl0) / args.n 
+    print "S_0", S_0
+    print "S_pi0", S_pi0
+    print "S_cl0", S_cl0
     
     # Practice!
     S_pi_ = (dZ_pi - dZ_pi.mean()).T.dot(dZ_pi - dZ_pi.mean()) / attempts

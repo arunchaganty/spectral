@@ -71,7 +71,7 @@ variances of the two estimators.
   Note that $\mu$ is a multinomial distribution, hence the variance of
     $\hat\tm$ is $(\tD - \tm \tm^\top)$ where $\tD \eqdef \diag(\tm)$.
   Since $\tz$ is just a linear transformation of $\tm$,
-  the asymptotic variance of $\widehat{z}^\mom = \tOi \tm$ is:
+  the asymptotic variance of $\hat{z}^\mom = \tOi \hat\tm$ is:
   \begin{align*}
       \Sigmamom &= \tOi \Var(\hat\tm) \tOit \\
       &= \tOi (\tD - \tm \tm^\top) \tOit \\
@@ -84,7 +84,7 @@ variances of the two estimators.
   variance of 
   %$\widehat{z}^\ml = \argmin_{\tz \in [0,1]^{k-1}} \hat\E[-\ell(x)]$ is,
   % Definitely not optimizing over the whole set
-  $\widehat{z}^\ml = \argmax_{\tz} \hat\E[\ell(x ; \tz)]$ is,
+  $\hat{z}^\ml = \argmax_{\tz} \hat\E[\ell(x ; \tz)]$ is,
   \begin{align*}
     \Sigmaml &= \E[\grad^2 \ell(x ; \tz^*)]^{-1} \Var[\grad \ell(x ; \tz^*)] \E[\grad^2 \ell(x ; \tz^*)]^{-1},
   \end{align*}
