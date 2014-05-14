@@ -228,15 +228,19 @@ Note that two hidden variables are allowed to have overlapping views.
 %If every hidden variable is a bottleneck, then we can estimate $\mOpp{v}{i}$
 It is clear that having uniform bottlenecks implies part (ii)
 of the exclusive views property (\propertyref{exclusive-views}) via \TensorFactorize,
-but we will show that part (i) follows as well, given that the graphical model faithfully represents conditional independences:
+but we will show that part (i) follows as well.
 
-\begin{assumption}[Faithful Representation]
-  \label{asm:ci}  
-  If there is an active trail from any two variables $a, b$ in the graph
-    $\sG$, then they are not independent, i.e $a \not\perp b$. 
-  If there is an active trail between $a$ and $b$ conditioned on any variable,
-    say $c$, then they are also not independent, i.e. $a\not\perp b \given c$.
-\end{assumption}
+To rule out edge cases, we assume the graphical model only has conditional
+independences given by the graph:
+\begin{property}[Faithful representation]
+  \label{prop:ci}  
+  %If there is an active trail from any two variables $a, b$ in the graph
+    %$\sG$, then they are not independent, i.e $a \not\perp b$. 
+  We say that a graphical model $\sG$ is \emph{faithful}
+  if for any variables $a,b,c$
+  such that there is an active trail\footnote{See \todo{cite textbook} for a definition.} between $a$ and $b$ conditioned on $c$,
+  then $a$ and $b$ are dependent given $c$ (i.e., $a\not\perp b \given c$).
+\end{property}
 
 %We will prove that the following simple property guarantees that all cliques
 %have the exclusive views property:
@@ -250,7 +254,7 @@ but we will show that part (i) follows as well, given that the graphical model f
 %  holds for every clique in the graph.
 
 %Before we establish this relationship,
-First, we describe a reduction of any graphical model to
+We now describe a reduction of any graphical model to
   a canonical form to make our arguments simpler.
   % DONE: don't say this yet since reader can't appreciate it.
   %that will allow us to handle the case where an observed
@@ -308,17 +312,18 @@ Now we establish the link between bottlenecks and exclusive views
   %a connected subgraph of hidden variables.
   %If every hidden variable
   %$h_i \in \sG'$ is a bottleneck, then $\sG'$ has the exclusive views property.
-  If a graphical model $\sG$ satisfies the faithful representation 
-  assumption (\assumptionref{ci}) and is uniformly bottlenecked, then
+  If a graphical model $\sG$ is faithful and uniformly bottlenecked, then
   $\sG$ has the exclusive views property.
 \end{lemma}
-% PL: save space, doesn't add much
-%\begin{proof}
-%  The independence conditions required by the bottleneck condition
-%  effectively guarantee that at least one of the three views for
-%  a bottleneck be exclusive. 
-%  \appendixref{exclusive-views} provides a complete proof.
-%\end{proof}
+\begin{proof}
+We prove the contrapositive: suppose that there is some hidden clique $\sC \in \sG$ with $h_0 \in \sC$
+that does not have exclusive views.  This means each observed variable $x_i$ is conditionally dependent on some
+$h_i \in \sC \backslash \{h_0\}$ given $h_0$.
+Consider any such two $x_1, x_2$.
+Conditioned on $h_0$, there exists an active trail between them (specifically, $x_1 - h_1 - h_2 - x_2$).
+Since $\sG$ is faithful, we have $x_1 \not\perp x_2 \mid h_0$.
+As this holds for any $x_1,x_2$, $h_0$ cannot be a bottleneck.
+\end{proof}
 
 With this lemma in place, we present the full algorithm, $\LearnMarginals$,
 in \algorithmref{directed}.
@@ -342,7 +347,6 @@ in \algorithmref{directed}.
 \ENDFOR
   \end{algorithmic}
 \end{algorithm}
-
 
 
 % DONE: move here because not central to story
