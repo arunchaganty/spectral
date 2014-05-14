@@ -11,7 +11,7 @@ In \sectionref{piecewise}, we compared the asymptotic variance
 Recall, that in \sectionref{piecewise} we simplified notation by taking
   $m=1$ and flattening the moments $M_\sV$ and hidden marginals $Z_\sC$
   into vectors $\mu \in \Re^d$ and $z \in \Re^k$ and similarly
-  flattening the tensor $\mOppAll$ into a matrix $O \in \Re^{d\times
+  flattening the tensor $O$ into a matrix $O \in \Re^{d\times
   k}$.
 The hidden marginals $z$ and observed marginals $\mu$ are related via
   $\mu = O z$.
@@ -46,15 +46,15 @@ Now, $\tm$ and $\tz$ are related as,
   \end{bmatrix} 
   &=
     \begin{bmatrix}
-      O_{\neg k,\neg d} & O_{k, \neg d} \\ 
-      O_{\neg k,d} & O_{k, d} \\ 
+      O_{\neg d,\neg k} & O_{\neg d, k} \\ 
+      O_{d,\neg k} & O_{d, k} \\ 
     \end{bmatrix}
     \begin{bmatrix}
       \tz \\
       1 - \ones^\top\tz
     \end{bmatrix} \\
-  \tm &= O_{\neg k,\neg d} \tz + O_{k,\neg d} - O_{k,\neg d} \ones^\top \tz \\
-      &= \underbrace{(O_{\neg k,\neg d} - O_{k,\neg d} \ones^\top )}_{\eqdef \tO} \tz +  O_{k,\neg d}.
+  \tm &= O_{\neg d,\neg k} \tz + O_{\neg d, k} - O_{\neg d, k} \ones^\top \tz \\
+      &= \underbrace{(O_{\neg d,\neg k} - O_{\neg d, k} \ones^\top )}_{\eqdef \tO} \tz +  O_{\neg d,k}.
 \end{align*}
 
 With this reparameterization, we are ready to derive the asymptotic
@@ -68,61 +68,62 @@ variances of the two estimators.
     \tm &= \tO \tz \\
     \tz &= \tOi \tm.
   \end{align*}
+  Note that $\mu$ is a multinomial distribution, hence the variance of
+    $\hat\tm$ is $(\tD - \tm \tm^\top)$ where $\tD \eqdef \diag(\tm)$.
   Since $\tz$ is just a linear transformation of $\tm$,
-  the asymptotic variance of $\widehat{z}^\mom$ is:
+  the asymptotic variance of $\widehat{z}^\mom = \tOi \tm$ is:
   \begin{align*}
-      \Sigmamom &= \tOi \tSi \tOit \\
+      \Sigmamom &= \tOi \Var(\hat\tm) \tOit \\
+      &= \tOi (\tD - \tm \tm^\top) \tOit \\
       &= \tOi \tD \tOit - \tOi \tD \ones \ones^\top \tD \tOit,
   \end{align*}
-  where $\tSi$ is the variance of $\tm$ and $\tD \eqdef \diag(\tm)$.
+  
 
   Now, let us look at the variance of the piecewise estimator.  Using
   the delta-method \cite{vaart98asymptotic} we have that the asymptotic
   variance of 
-  %$\widehat{z}^\ml = \argmin_{\tz \in [0,1]^{k-1}} \hat\E[-\ell(\vx)]$ is,
+  %$\widehat{z}^\ml = \argmin_{\tz \in [0,1]^{k-1}} \hat\E[-\ell(x)]$ is,
   % Definitely not optimizing over the whole set
-  $\widehat{z}^\ml = \argmin_{\tz} \hat\E[-\ell(\vx)]$ is,
+  $\widehat{z}^\ml = \argmax_{\tz} \hat\E[\ell(x ; \tz)]$ is,
   \begin{align*}
-    \Sigmaml &= -\E[\grad^2 \ell^{-1}] \Var[\grad \ell] \E[\grad^2 \ell^{-1}]),
+    \Sigmaml &= \E[\grad^2 \ell(x ; \tz^*)]^{-1} \Var[\grad \ell(x ; \tz^*)] \E[\grad^2 \ell(x ; \tz^*)]^{-1},
   \end{align*}
-  where $\ell(\bx)$ is the likelihood of the data. $\ell(\bx)$ can be
-  written in terms of $\tz$ and $\tO$ as,
+  where $\ell(x;\tz)$ is the log-likelihood of the observations $x$
+  given parameters $\tz$. We can write $\ell(x;\tz)$ in terms of $\tz$
+  and $\tO$ as,
   \begin{align*}
-    \ell(\vx) 
-              &= \log( \mu[\vx] ) \\
-              &= \BI[\vx \neq \bd] \log(\tm[\vx]) + \BI[\vx = \bd] \log(1 - \ones^\top \tm ) \\
-              &= \BI[\vx \neq \bd] \log(\tO[\vx] \tz + \mOppAll_{\neg \bd, \vk}[\vx]) \\
-              &\quad + \BI[\vx = \bd] \log(1 - \ones^\top (\tO \tz + \mOppAll_{\neg \bd, \vk})).
+    \ell(x;\tz) 
+              &= \log( \mu[x] ) \\
+              &= \log( \BI[x \neq d] \tm[x] + \BI[x = d] (1 - \ones^\top \tm ) )\\
+              &= \log( \BI[x \neq d] (\tO[x] \tz + O_{\neg d, k}[x]) \\
+              &\quad + \BI[x = d] (1 - \ones^\top (\tO \tz + O_{\neg d, k})) ).
   \end{align*}
 
 Taking the first derivative,
 \begin{align}
-  \grad_{\tz} \ell(\vx)
+  \grad \ell(x; \tz)
   &= 
-  \frac{\BI[\vx \neq \bd] \tO[\vx]^\top - \BI[\vx = \bd] \ones^\top \tO}{O[\vx] z} 
+  \frac{\BI[x \neq d] \tO[x]^\top - \BI[x = d] \tO^\top \ones }{\mu[x]} 
   \nonumber \\ 
   &= 
   \begin{bmatrix}
     \tO \\
     -\ones^\top \tO
   \end{bmatrix}^\top
-  D^{-1} e_\vx, \label{eqn:lhood-grad}
+  D^{-1} e_x, \label{eqn:lhood-grad}
 \end{align}
-where $e_\vx$ is a one-hot
-vector and $M$ is the marginal distribution of the observed data at
-the true parameters.
+where $e_x$ is an indicator vector on $x$ and $D \eqdef \diag(\mu)$.
 
 It is easily verified that the expectation of the first derivative is indeed $\zeros$.
-\begin{comment}
-Note that the expectation of the first derivative is indeed $\zeros$,
+%Note that the expectation of the first derivative is indeed $\zeros$,
 \begin{align*}
-  \E[\grad_{\tz} \ell(\vx)]
+  \E[\grad \ell(x; \tz)]
   &= 
   \begin{bmatrix}
     \tO \\
     -\ones^\top \tO
   \end{bmatrix}^\top
-  D^{-1} \E[e_\vx] \\
+  D^{-1} \E[e_x] \\
   &= 
   \begin{bmatrix}
     \tO \\
@@ -135,40 +136,50 @@ Note that the expectation of the first derivative is indeed $\zeros$,
     -\ones^\top \tO
   \end{bmatrix}^\top
   \ones \\
-  &= \ones^\top\tO -\ones^\top \tO \\
-  &= \zeros^\top.
+  &= \tOt\ones - \tOt\ones \\
+  &= \zeros.
 \end{align*}
-\end{comment}
 
 Taking the second derivative,
 \begin{align}
-  \grad^2_{\tz} \ell(\vx)
-  &= -\frac{\BI[\vx \neq \bd] \tO[\vx]^\top \tO[\vx] + \BI[\vx = \bd] \tOt \ones \ones^\top \tO}{(\mOppAll[\vx] z)^2} \nonumber \\
+  \grad^2 \ell(x; \tz)
+  &= -\frac{\BI[x \neq d] \tO[x]^\top \tO[x] + \BI[x = d] \tOt \ones \ones^\top \tO}{\mu[x]^2} \nonumber \\
   &= - 
   \begin{bmatrix}
     \tO \\
-    \ones^\top \tO
+    -\ones^\top \tO
   \end{bmatrix}^\top
-    D^{-1} e_\vx e_\vx^\top D^{-1} 
+    D^{-1} e_x e_x^\top D^{-1} 
   \begin{bmatrix}
     \tO \\
-    \ones^\top \tO
+    -\ones^\top \tO
   \end{bmatrix}. \label{eqn:lhood-hess}%
 \end{align}
 
 From \equationref{lhood-grad} and \equationref{lhood-hess}, we get
   \begin{align*}
-    \Var [\grad \ell(\vx)] &= \hphantom{-}
+    \Var [\grad \ell(x; \tz^*)] 
+    &= \hphantom{-}
         \begin{bmatrix}
           \tO \\
-          \ones^\top \tO
+          -\ones^\top \tO
+        \end{bmatrix}^\top
+          D^{-1} \E[e_x e_x^\top] D^{-1} 
+        \begin{bmatrix}
+          \tO \\
+          -\ones^\top \tO
+        \end{bmatrix} \\
+    &= \hphantom{-}
+        \begin{bmatrix}
+          \tO \\
+          -\ones^\top \tO
         \end{bmatrix}^\top
           D^{-1} D D^{-1} 
         \begin{bmatrix}
           \tO \\
-          \ones^\top \tO
+          -\ones^\top \tO
         \end{bmatrix} \\
-        \E[\grad^2 \ell(\vx)] 
+    \E[\grad^2 \ell(x; \tz^*)] 
         &= -
         \begin{bmatrix}
           \tO \\
@@ -179,40 +190,70 @@ From \equationref{lhood-grad} and \equationref{lhood-hess}, we get
           \tO \\
           - \ones^\top \tO
         \end{bmatrix} \\
-   &= \tOt \tD\inv \tO + \td\inv \tOt \ones \ones^\top \tO,
+        &= -
+        \begin{bmatrix}
+          \tO \\
+          - \ones^\top \tO
+        \end{bmatrix}^\top
+        \begin{bmatrix}
+          \tD\inv & \zeros \\
+          \zeros^\top & \td\inv
+        \end{bmatrix}
+        \begin{bmatrix}
+          \tO \\
+          - \ones^\top \tO
+        \end{bmatrix} \\
+   &= - (\tOt \tD\inv \tO + \td\inv \tOt \ones \ones^\top \tO),
   \end{align*}
-where $\td\inv = 1 - \ones^\top \tm$.
-As expected, $\E[\grad^2 \ell(\vx)] = -\Var [\grad \ell(\vx)]$ because
-$\widehat{\tz}$ is a maximum likelihood estimator. 
+where $\td = 1 - \ones^\top \tm$.
+As expected, $\E[\grad^2 \ell(x)] = -\Var [\grad \ell(x)]$ because
+$\hat{z}$ is a maximum likelihood estimator. 
 
 Finally, we can derive the asymptotic variance of $\Sigmaml$,
 \begin{align*}
-    \Sigmaml
-      &= -\E[\grad^2 \ell(\vx)]^{-1} \Var [\grad \ell(\vx)] \E[\grad^2 \ell(\vx)]^{-1} \\
-      &= \Var[\grad \ell(\vx)]^{-1} \\
+    \Sigmaml &= \E[\grad^2 \ell(x ; \tz^*)]^{-1} \Var[\grad \ell(x ; \tz^*)] \E[\grad^2 \ell(x ; \tz^*)]^{-1} \\
+      &= \Var[\grad \ell(x;\tz^*)]^{-1} \\
       &= (\tOt \tD\inv \tO + \td\inv (\tOt \ones)(\tOt \ones)^\top)\inv,
 \end{align*}
 The above expression is the inversion of an invertible matrix plus
 a rank-one component. The Sherman-Morrison formula allows us to write
 the inverse in closed form:
 \begin{align*}
-  (A + uv^\top)\inv &= A\inv - \frac{A\inv uv^\top A\inv}{1 + v^\top A\inv u}.
+  (A + \alpha uv^\top)\inv &= A\inv - \frac{A\inv uv^\top A\inv}{\alpha\inv + v^\top A\inv u}.
 \end{align*}
 
 This gives us,
 \begin{align}
     \Sigmaml
+    &= (\tOt \tD \tO)\inv
+      - \frac{
+      (\tOt \tD \tO)\inv (\tOt \ones) (\tOt \ones)^\top (\tOt \tD \tO)\inv }
+      {\td + (\tOt \ones)^\top (\tOt \tD \tO)\inv (\tOt \ones)} \nonumber \\
     &= \tOi \tD \tOit 
-      - \frac{\td\inv \tOi \tD \tOit \tOt \ones \ones^\top \tO \tOi \tD \tOit }
-      {1 + \td\inv \ones^\top \tO \tOi \tD \tOit \tOt \ones} \nonumber \\
+      - \frac{\tOi \tD (\tOit \tOt \ones) (\tOit \tOt \ones)^\top  \tD \tOit }
+      {\td + (\tOit \tOt \ones)^\top \tD (\tOit \tOt \ones)} \nonumber \\
     &= \tOi \tD \tOit 
       - \frac{\tOi \tD v v^\top \tD \tOit }
       {\td + v^\top \tD v} \nonumber \\
     &= \tOi \tD \tOit 
       - \frac{\tOi \tD v v^\top \tD \tOit }
-      {1 + v^\top \tD v - \ones^\top \tD \ones}, \label{eqn:asymp-var-ml}
+      {1 - \ones^\top \tD \ones + v^\top \tD v }, \label{eqn:asymp-var-ml}
 \end{align}
-where $v \eqdef \tO \tOi \ones$. 
+where $v \eqdef (\tO \tOi)^\top \ones$, the projection of $\ones$ into the
+column space of $\tO$. 
+
+If $k = d$, then by assumption $\tO$ is invertible and $v = \ones$. In this case,
+\begin{align*}
+    \Sigmaml
+    &= \tOi \tD \tOit 
+      - \frac{\tOi \tD \ones \ones^\top \tD \tOit }
+      {1 - \ones^\top \tD \ones + \ones^\top \tD \ones } \\
+    &= \tOi \tD \tOit 
+      - \tOi \tD \ones \ones^\top \tD \tOit.
+\end{align*}
+In other words, when $k = d$, the asymptotic variance of the
+pseudoinverse estimator and the composite likelihood estimator are
+equal.
 
 Given our assumptions, $\ones \succ \mu \succ \zeros$. Consequently,
 $\tD$ is invertible and the asymptotic variance is finite and our
@@ -291,18 +332,18 @@ estimator is consistent as well.
 % 
 %   Finally, to bound $\|\ones^\top U\|_2$, we have:
 %   \begin{align*}
-%     \ones^\top \mOppAll 
-%       &= \sum_{\bh = \ones}^{\bh \prec \bk} \sum_{\vx = \ones}^{\bd} \Pr(\vx | \bh) e_\bh  \\
+%     \ones^\top O 
+%       &= \sum_{\bh = \ones}^{\bh \prec k} \sum_{x = \ones}^{d} \Pr(x | \bh) e_\bh  \\
 %       &= \ones \\
 %     \ones^\top \tO 
-%         &= \ones^\top (\mOppAll_{\neg \neg \bd, \vk} - \mOppAll_{\neg \bd, \vk}\ones^\top) \\
-%         &= \sum_{\bh = \ones}^{\bh \prec \bk} \sum_{\vx = \ones}^{\vx \prec \bd} \Pr(\vx | \bh) e_\bh - (\sum_{\vx = \ones}^{\vx \prec \bd} \Pr(\vx | \vk)) \ones^\top  \\
-%         &= \sum_{\bh = \ones}^{\bh \prec \bk} (1 - \Pr(\bd | \bh)) e_\bh - (1 - \Pr(\bd | \bk)) \ones^\top  \\
-%         &= \sum_{\vh = \ones}^{\vh \prec \vk} (\Pr(\bd | \vk) - \Pr(\bd | \vh))e_\bh \\
-%         &= \tO_{\bd,\bk} \ones^\top - \tO_{\bd,\neg \bk}^\top.
+%         &= \ones^\top (O_{\neg \neg d, k} - O_{\neg d, k}\ones^\top) \\
+%         &= \sum_{\bh = \ones}^{\bh \prec k} \sum_{x = \ones}^{x \prec d} \Pr(x | \bh) e_\bh - (\sum_{x = \ones}^{x \prec d} \Pr(x | k)) \ones^\top  \\
+%         &= \sum_{\bh = \ones}^{\bh \prec k} (1 - \Pr(d | \bh)) e_\bh - (1 - \Pr(d | k)) \ones^\top  \\
+%         &= \sum_{\vh = \ones}^{\vh \prec k} (\Pr(d | k) - \Pr(d | \vh))e_\bh \\
+%         &= \tO_{d,k} \ones^\top - \tO_{d,\neg k}^\top.
 %   \end{align*}
-%   Let $c = \|\tO_{\bd,\bk} \ones^\top - \tO_{\bd,\neg
-%   \bk}^\top\|_2 \le \sqrt{k}$.
+%   Let $c = \|\tO_{d,k} \ones^\top - \tO_{d,\neg
+%   k}^\top\|_2 \le \sqrt{k}$.
 %   Let $\tO = U W V^\top$ be the SVD of $\tO$. We have,
 %   \begin{align*}
 %     \ones^\top U W V^\top 
