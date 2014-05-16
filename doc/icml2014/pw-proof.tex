@@ -19,7 +19,8 @@ The hidden marginals $z$ and observed marginals $\mu$ are related via
 Note that $\mu$ and $z$ are multinomial distributions and are hence
 constrained to lie on simplexes. This makes asymptotic analysis tricky
 because $\mu, z$ lie on subspaces with Lebesgue measure zero in $\Re^d$
-and $\Re^k$ respectively.
+and $\Re^k$ respectively. 
+
 To handle this constraint, we re-parameterize the problem in terms of
   $\tm \in \Re^{d-1}$ and $\tz \in \Re^{k-1}$, 
 which are related to the original representation as follows:
@@ -53,8 +54,54 @@ Now, $\tm$ and $\tz$ are related as,
       \tz \\
       1 - \ones^\top\tz
     \end{bmatrix} \\
+ %  \mu
+ %  &=
+ %    \begin{bmatrix}
+ %      O_{\neg d,\neg k}\tz + O_{\neg d, k}(1 - \ones^\top \tz) \\ 
+ %      O_{d,\neg k}\tz + O_{d, k}(1 - \ones^\top \tz) \\ 
+ %    \end{bmatrix} \\
+ %  &=
+ %    \begin{bmatrix}
+ %      O_{\neg d,\neg k} - O_{\neg d, k} \ones^\top \\
+ %      O_{d,\neg k} - O_{d, k} \ones^\top
+ %    \end{bmatrix} \tz 
+ %    + 
+ %    \begin{bmatrix}
+ %      O_{\neg d, k} \\
+ %      O_{d, k}
+ %    \end{bmatrix} \\
+ %  &=
+ %    \begin{bmatrix}
+ %      \tO \\
+ %      \ones - \ones^\top\tO
+ %    \end{bmatrix} \tz 
+ %    + 
+ %    \begin{bmatrix}
+ %      O_{\neg d, k} \\
+ %      1 - \ones^\top O_{\neg d, k}
+ %    \end{bmatrix} \\
   \tm &= O_{\neg d,\neg k} \tz + O_{\neg d, k} - O_{\neg d, k} \ones^\top \tz \\
       &= \underbrace{(O_{\neg d,\neg k} - O_{\neg d, k} \ones^\top )}_{\eqdef \tO} \tz +  O_{\neg d,k}.
+\end{align*}
+
+We also describe $\mu$ in terms of $\tz$,
+\begin{align*}
+  \mu 
+  &= 
+    \begin{bmatrix}
+      \tm \\
+      1 - \ones^\top\tm
+    \end{bmatrix} \\
+    &=
+    \begin{bmatrix}
+      \tO \\
+      - \ones^\top\tO
+    \end{bmatrix} \tz 
+    + 
+    \begin{bmatrix}
+      O_{\neg d, k} \\
+      1 - \ones^\top O_{\neg d, k}
+    \end{bmatrix}.
 \end{align*}
 
 With this reparameterization, we are ready to derive the asymptotic
@@ -71,14 +118,13 @@ variances of the two estimators.
   Note that $\mu$ is a multinomial distribution, hence the variance of
     $\hat\tm$ is $(\tD - \tm \tm^\top)$ where $\tD \eqdef \diag(\tm)$.
   Since $\tz$ is just a linear transformation of $\tm$,
-  the asymptotic variance of $\hat{z}^\mom = \tOi \hat\tm$ is:
+  the asymptotic variance of $\hat{z}^\mom = \tOi (\hat\tm - O_{\neg d,k})$ is:
   \begin{align*}
       \Sigmamom &= \tOi \Var(\hat\tm) \tOit \\
-      &= \tOi (\tD - \tm \tm^\top) \tOit \\
-      &= \tOi \tD \tOit - \tOi \tD \ones \ones^\top \tD \tOit,
+      &= \tOi (\tD - \tm \tm^\top) \tOit.
+      %&= \tOi \tD \tOit - \tOi \tD \ones \ones^\top \tD \tOit,
   \end{align*}
   
-
   Now, let us look at the variance of the piecewise estimator.  Using
   the delta-method \cite{vaart98asymptotic} we have that the asymptotic
   variance of 
@@ -94,17 +140,35 @@ variances of the two estimators.
   \begin{align*}
     \ell(x;\tz) 
               &= \log( \mu[x] ) \\
-              &= \log( \BI[x \neq d] \tm[x] + \BI[x = d] (1 - \ones^\top \tm ) )\\
-              &= \log( \BI[x \neq d] (\tO[x] \tz + O_{\neg d, k}[x]) \\
-              &\quad + \BI[x = d] (1 - \ones^\top (\tO \tz + O_{\neg d, k})) ).
+              &= \log \left( 
+    e_x^\top \begin{bmatrix}
+      \tO \\
+      - \ones^\top\tO
+    \end{bmatrix} \tz 
+    + 
+    e_x^\top \begin{bmatrix}
+      O_{\neg d, k} \\
+      1 - \ones^\top O_{\neg d, k}
+    \end{bmatrix}
+    \right),
+ %             
+ %             \BI[x \neq d] \tm[x] + \BI[x = d] (1 - \ones^\top \tm ) )\\
+ %             &= \log( \BI[x \neq d] (\tO[x] \tz + O_{\neg d, k}[x]) \\
+ %             &\quad + \BI[x = d] (1 - \ones^\top (\tO \tz + O_{\neg d, k})) ).
   \end{align*}
+where $e_x$ is an indicator vector on $x$.
 
 Taking the first derivative,
 \begin{align}
   \grad \ell(x; \tz)
   &= 
-  \frac{\BI[x \neq d] \tO[x]^\top - \BI[x = d] \tO^\top \ones }{\mu[x]} 
-  \nonumber \\ 
+  \frac{
+  1}{\mu[x]}
+  \begin{bmatrix}
+    \tO \\
+    -\ones^\top \tO
+  \end{bmatrix}^\top
+ e_x \nonumber \\
   &= 
   \begin{bmatrix}
     \tO \\
@@ -112,7 +176,7 @@ Taking the first derivative,
   \end{bmatrix}^\top
   D^{-1} e_x, \label{eqn:lhood-grad}
 \end{align}
-where $e_x$ is an indicator vector on $x$ and $D \eqdef \diag(\mu)$.
+where $D \eqdef \diag(\mu)$.
 
 It is easily verified that the expectation of the first derivative is indeed $\zeros$.
 %Note that the expectation of the first derivative is indeed $\zeros$,
@@ -143,8 +207,21 @@ It is easily verified that the expectation of the first derivative is indeed $\z
 Taking the second derivative,
 \begin{align}
   \grad^2 \ell(x; \tz)
-  &= -\frac{\BI[x \neq d] \tO[x]^\top \tO[x] + \BI[x = d] \tOt \ones \ones^\top \tO}{\mu[x]^2} \nonumber \\
-  &= - 
+  &= 
+  \frac{
+  1}{\mu[x]^2}
+  \begin{bmatrix}
+    \tO \\
+    -\ones^\top \tO
+  \end{bmatrix}^\top
+ e_x e_x^\top 
+  \begin{bmatrix}
+    \tO \\
+    -\ones^\top \tO
+  \end{bmatrix}
+  \nonumber
+ \\ 
+  &= 
   \begin{bmatrix}
     \tO \\
     -\ones^\top \tO
@@ -203,62 +280,124 @@ From \equationref{lhood-grad} and \equationref{lhood-hess}, we get
           \tO \\
           - \ones^\top \tO
         \end{bmatrix} \\
-        &= \hphantom{-} \tOt \tD\inv \tO + \td\inv \tOt \ones \ones^\top \tO,
+        &= \hphantom{-} \tOt (\tD\inv + \td\inv \ones \ones^\top) \tO,
   \end{align*}
 where $\td = 1 - \ones^\top \tm$.
 As expected, $\E[\grad^2 \ell(x)] = -\Var [\grad \ell(x)]$ because
 $\hat{z}$ is a maximum likelihood estimator. 
 
-Finally, we can derive the asymptotic variance of $\Sigmaml$,
+Finally, the asymptotic variance of $\Sigmaml$ is,
 \begin{align*}
     \Sigmaml &= \E[\grad^2 \ell(x ; \tz^*)]^{-1} \Var[\grad \ell(x ; \tz^*)] \E[\grad^2 \ell(x ; \tz^*)]^{-1} \\
       &= \Var[\grad \ell(x;\tz^*)]^{-1} \\
-      &= (\tOt \tD\inv \tO + \td\inv (\tOt \ones)(\tOt \ones)^\top)\inv,
+      &= \left( \tO^\top(\tD\inv + \td\inv \ones \ones^\top) \tO \right)\inv
 \end{align*}
-The above expression is the inversion of an invertible matrix plus
-a rank-one component. The Sherman-Morrison formula allows us to write
-the inverse in closed form:
-\begin{align*}
-  (A + \alpha uv^\top)\inv &= A\inv - \frac{A\inv uv^\top A\inv}{\alpha\inv + v^\top A\inv u}.
-\end{align*}
-
-This gives us,
-\begin{align}
-    \Sigmaml
-    &= (\tOt \tD\inv \tO)\inv
-      - \frac{
-      (\tOt \tD\inv \tO)\inv (\tOt \ones) (\tOt \ones)^\top (\tOt \tD\inv \tO)\inv }
-      {\td + (\tOt \ones)^\top (\tOt \tD\inv \tO)\inv (\tOt \ones)} \nonumber \\
-    &= \tOi \tD \tOit 
-      - \frac{\tOi \tD (\tOit \tOt \ones) (\tOit \tOt \ones)^\top  \tD \tOit }
-      {\td + (\tOit \tOt \ones)^\top \tD (\tOit \tOt \ones)} \nonumber \\
-    &= \tOi \tD \tOit 
-      - \frac{\tOi \tD v v^\top \tD \tOit }
-      {\td + v^\top \tD v} \nonumber \\
-    &= \tOi \tD \tOit 
-      - \frac{\tOi \tD v v^\top \tD \tOit }
-      {1 - \ones^\top \tD \ones + v^\top \tD v }, \label{eqn:asymp-var-ml}
-\end{align}
-where $v \eqdef (\tO \tOi)^\top \ones$, the projection of $\ones$ into the
-column space of $\tO$. 
-
-If $k = d$, then by assumption $\tO$ is invertible and $v = \ones$. In this case,
-\begin{align*}
-    \Sigmaml
-    &= \tOi \tD \tOit 
-      - \frac{\tOi \tD \ones \ones^\top \tD \tOit }
-      {1 - \ones^\top \tD \ones + \ones^\top \tD \ones } \\
-    &= \tOi \tD \tOit 
-      - \tOi \tD \ones \ones^\top \tD \tOit.
-\end{align*}
-In other words, when $k = d$, the asymptotic variance of the
-pseudoinverse estimator and the composite likelihood estimator are
-equal.
 
 Given our assumptions, $\ones \succ \mu \succ \zeros$. Consequently,
 $\tD$ is invertible and the asymptotic variance is finite and our
 estimator is consistent as well. 
 \end{proof}
+
+With concrete expressions for $\Sigmamom$ and $\Sigmaml$, let us
+qualitatively compare their asymptotic efficiencies.
+
+First, consider the case where $d=k$ and $\tO$ is invertible. The
+asymptotic variance of the composite likelihood estimator, $\Sigmaml$,
+is then,
+\begin{align*}
+    \Sigmaml 
+      &= \left( \tO^\top(\tD\inv + \td\inv \ones \ones^\top) \tO \right)\inv \\
+      &= \tO\inv (\tD\inv - \td\inv \ones \ones^\top)\inv \tO\tinv \\
+      &= \tO\inv (\tD - \frac{\tD \ones \ones^\top \tD}{\td + \ones^\top \tD \ones}) \tO\tinv \\
+      &= \tO\inv (\tD - \frac{\tm \tm^\top}{1 - \ones^\top \tm + \ones^\top \tm}) \tO\tinv \\
+      &= \tO\inv (\tD - \tm \tm^\top) \tO\tinv \\
+      &= \Sigmamom,
+\end{align*}
+where we have used the property that $\tD \ones = \tm$ and $\td
+= 1 - \ones^\top \tm$.
+This says that the asymptotic variance of the pseudoinverse estimator
+matches the composite likelihood estimator when $d=k$.
+
+Next, consider the case where the moments are the uniform distribution,
+$\mu = \frac{\ones}{d}$ and $\tD = \frac{1}{d} I$,
+\begin{align*}
+    \Sigmaml 
+      &= \left( \tOt(d I + d \ones \ones^\top) \tO \right)\inv \\
+      &= \frac{1}{d} \left( \tOt\tO + \tOt\ones \ones^\top \tO \right)\inv \\
+      &= \frac{1}{d} \left(
+      (\tOt\tO)\inv - \frac{(\tOt\tO)\inv \tOt\ones \ones^\top \tO (\tOt\tO)\inv}
+        {1 + \ones^\top \tO (\tOt\tO)\inv \tOt\ones} 
+        \right)\\
+      &= \frac{1}{d} \left(
+      \tOi\tOit - \frac{\tOi\tOit\tOt \ones \ones^\top \tO\tOi\tOit}
+        {1+ \ones^\top \tO \tOi \tOit \tOt\ones} 
+        \right)
+        \\
+      &= \frac{1}{d} \left(
+      \tOi\tOit - \frac{\tOi \ones \ones^\top \tOit}
+        {1+ \|\tO \tOi \ones\|_2^2} 
+        \right) \\
+    \Sigmamom 
+    &= \tOi (\frac{I}{d} - \frac{\ones \ones^\top}{d^2}) \tOit \\
+    &= \frac{1}{d} \tOi\tOit - \frac{1}{d^2} \tOi \ones (\tOi \ones)^\top.
+\end{align*}
+
+Comparing the two, we get,
+\begin{align*}
+    \Sigmamom - \Sigmaml 
+    &= \frac{1}{d} 
+    \tOi \ones \ones^\top \tOit \left(
+    \frac{1}{1+ \|\tO \tOi \ones \|^2} - \frac{1}{d}
+    \right).
+\end{align*}
+
+Firstly, if $\ones$ lies in the null space of $\tO$, then the variances
+of the two are equal. 
+Next, consider the trace of the two, which gives
+us a measure of $\|\hat{z}^\mom\|^2 - \|\hat{z}^\ml\|^2$,
+\begin{align*}
+    \Tr(\Sigmamom - \Sigmaml)
+    &= \frac{1}{d} 
+    \Tr(\tOi \ones \ones^\top \tOit) \left(
+    \frac{1}{1+ \| \tO \tOi \ones\|^2} - \frac{1}{d}
+    \right) \\
+    &= \frac{1}{d} \|\tOi \ones\|^2 \left(
+    \frac{1}{1+ \| \tO \tOi \ones\|^2} - \frac{1}{d}
+    \right) \\
+    &= \frac{1}{d} \|\tOi \tO \tOi \ones\|^2 \left(
+    \frac{1}{1+ \| \tO \tOi \ones\|^2} - \frac{1}{d}
+    \right) \\
+    &\ge \frac{\sigma_{k-1}(\tO)}{d} \|\tO \tOi \ones\|^2 \left(
+    \frac{1}{1+ \| \tO \tOi \ones\|^2} - \frac{1}{d}
+    \right).
+\end{align*}
+
+It remains for us to bound the projection $\|\tO \tOi \ones\|$. Observe,
+ \begin{align*}
+   O^\top \ones 
+     &= \sum_{\bh = \ones}^{\bh \prec k} \sum_{x = \ones}^{d} \Pr(x | \bh) e_\bh  \\
+     &= \ones \\
+   \tOt \ones
+       &= (O_{\neg d, k}^\top - \ones O_{\neg d, k}^\top) \ones  \\
+       &= \sum_{\bh = \ones}^{\bh \prec k} \sum_{x = \ones}^{x \prec d} \Pr(x | \bh) e_\bh - (\sum_{x = \ones}^{x \prec d} \Pr(x | k)) \ones^\top  \\
+       &= \sum_{\bh = \ones}^{\bh \prec k} (1 - \Pr(d | \bh)) e_\bh - (1 - \Pr(d | k)) \ones  \\
+       &= \sum_{\vh = \ones}^{\vh \prec k} (\Pr(d | k) - \Pr(d | \vh))e_\bh \\
+       &= \tO_{d,k} \ones^\top - \tO_{d,\neg k}.
+ \end{align*}
+ Let $c = \|\tO^\top \ones\|_2 \le \sqrt{k}$.
+ Let $\tO = U W V^\top$ be the SVD of $\tO$. We have,
+ \begin{align*}
+   \ones^\top U W V^\top 
+       &= \ones^\top \tO \\
+   \ones^\top U 
+     &= \ones^\top \tO V W\inv \\
+   \|\ones^\top U\|_2 
+       &\le \frac{\|\ones^\top \tO\|_2}{\sigma_{k}(\tO)} \\
+       &\le \frac{c}{\sigma_{k}(\tO)} \\
+   \|\ones^\top U\|_2 
+       &\ge \frac{c}{\sigma_{1}(\tO)}.
+ \end{align*}
+
 
 % With concrete expressions for $\Sigmamom$ and $\Sigmaml$, we can quantitatively evaluate their asymptotic efficiency,
 % \begin{proof}[Proof for Corollary X] %\corollaryref{efficiency}]
@@ -422,4 +561,51 @@ estimator is consistent as well.
 %         {1 - \ones^\top \tD \ones + v^\top \tD v } 
 %       - \ones^\top \tD \tOit  \tOi \tD \ones \\
 % \end{align*}
+
+
+
+% ARUN: This is wrong because pseudo-inverses don't work that way.
+%
+% The above expression is the inversion of an invertible matrix plus
+% a rank-one component. The Sherman-Morrison formula allows us to write
+% the inverse in closed form:
+% \begin{align*}
+%   (A + \alpha uv^\top)\inv &= A\inv - \frac{A\inv uv^\top A\inv}{\alpha\inv + v^\top A\inv u}.
+% \end{align*}
+% 
+% This gives us,
+% \begin{align}
+%     \Sigmaml
+%     &= (\tOt \tD\inv \tO)\inv
+%       - \frac{
+%       (\tOt \tD\inv \tO)\inv (\tOt \ones) (\tOt \ones)^\top (\tOt \tD\inv \tO)\inv }
+%       {\td + (\tOt \ones)^\top (\tOt \tD\inv \tO)\inv (\tOt \ones)} \nonumber \\
+%     &= \tOi \tD \tOit 
+%       - \frac{\tOi \tD (\tOit \tOt \ones) (\tOit \tOt \ones)^\top  \tD \tOit }
+%       {\td + (\tOit \tOt \ones)^\top \tD (\tOit \tOt \ones)} \nonumber \\
+%     &= \tOi \tD \tOit 
+%       - \frac{\tOi \tD v v^\top \tD \tOit }
+%       {\td + v^\top \tD v} \nonumber \\
+%     &= \tOi \tD \tOit 
+%       - \frac{\tOi \tD v v^\top \tD \tOit }
+%       {1 - \ones^\top \tD \ones + v^\top \tD v }, \label{eqn:asymp-var-ml}
+% \end{align}
+% where $v \eqdef (\tO \tOi)^\top \ones$, the projection of $\ones$ into the
+% column space of $\tO$. 
+% 
+% If $k = d$, then by assumption $\tO$ is invertible and $v = \ones$. In this case,
+% \begin{align*}
+%     \Sigmaml
+%     &= \tOi \tD \tOit 
+%       - \frac{\tOi \tD \ones \ones^\top \tD \tOit }
+%       {1 - \ones^\top \tD \ones + \ones^\top \tD \ones } \\
+%     &= \tOi \tD \tOit 
+%       - \tOi \tD \ones \ones^\top \tD \tOit.
+% \end{align*}
+% In other words, when $k = d$, the asymptotic variance of the
+% pseudoinverse estimator and the composite likelihood estimator are
+% equal.
+
+
+
 
