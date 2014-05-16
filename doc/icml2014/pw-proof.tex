@@ -280,7 +280,8 @@ From \equationref{lhood-grad} and \equationref{lhood-hess}, we get
           \tO \\
           - \ones^\top \tO
         \end{bmatrix} \\
-        &= \hphantom{-} \tOt (\tD\inv + \td\inv \ones \ones^\top) \tO,
+        &= \hphantom{-} 
+          \tOt \tD\inv \tO + \td\inv \tOt \ones \ones^\top \tO,
   \end{align*}
 where $\td = 1 - \ones^\top \tm$.
 As expected, $\E[\grad^2 \ell(x)] = -\Var [\grad \ell(x)]$ because
@@ -290,7 +291,10 @@ Finally, the asymptotic variance of $\Sigmaml$ is,
 \begin{align*}
     \Sigmaml &= \E[\grad^2 \ell(x ; \tz^*)]^{-1} \Var[\grad \ell(x ; \tz^*)] \E[\grad^2 \ell(x ; \tz^*)]^{-1} \\
       &= \Var[\grad \ell(x;\tz^*)]^{-1} \\
-      &= \left( \tO^\top(\tD\inv + \td\inv \ones \ones^\top) \tO \right)\inv
+      &= \left( \tOt \tD\inv \tO + \td\inv \tOt \ones \ones^\top \tO \right)\inv.
+      %&= \left( \tOt \tD\inv \tO  \right)\inv - 
+      %    \frac{\left( \tOt \tD\inv \tO \right)\inv  \tOt \ones \ones^\top \tO \left( \tOt \tD\inv \tO \right)\inv}
+      %    {\td + \ones^\top \tO \left( \tOt \tD\inv \tO \right)\inv \tOt \ones}.
 \end{align*}
 
 Given our assumptions, $\ones \succ \mu \succ \zeros$. Consequently,
@@ -298,12 +302,18 @@ $\tD$ is invertible and the asymptotic variance is finite and our
 estimator is consistent as well. 
 \end{proof}
 
-With concrete expressions for $\Sigmamom$ and $\Sigmaml$, let us
-qualitatively compare their asymptotic efficiencies.
+\subsection{Comparing the pseudoinverse and composite likelihood estimators}
 
-First, consider the case where $d=k$ and $\tO$ is invertible. The
-asymptotic variance of the composite likelihood estimator, $\Sigmaml$,
-is then,
+In \lemmaref{mom-pw-variance}, we derived concrete expressions for the
+asymptotic variances of the pseudoinverse and composite likelihood
+estimators, $\Sigmamom$ and $\Sigmaml$ respectively. In this section, we
+will study their relative efficiency, $e^\pi = \Tr(\Sigmaml
+\Sigmamomi)$.
+
+\paragraph{Case I: $d = k$}
+First, let us consider the case where $d=k$. Under our assumptions $\tO$
+is invertible, and we can simplify the expression of the asymptotic
+variance of the composite likelihood estimator, $\Sigmaml$, 
 \begin{align*}
     \Sigmaml 
       &= \left( \tO^\top(\tD\inv + \td\inv \ones \ones^\top) \tO \right)\inv \\
@@ -313,13 +323,17 @@ is then,
       &= \tO\inv (\tD - \tm \tm^\top) \tO\tinv \\
       &= \Sigmamom,
 \end{align*}
-where we have used the property that $\tD \ones = \tm$ and $\td
+where we have used the fact that $\tD \ones = \tm$ and $\td
 = 1 - \ones^\top \tm$.
-This says that the asymptotic variance of the pseudoinverse estimator
-matches the composite likelihood estimator when $d=k$.
+Thus, we observe that the asymptotic variance of the pseudoinverse estimator
+matches that of the composite likelihood estimator when $d=k$, and the
+pseudoinverse estimator is efficient in this case.
 
-Next, consider the case where the moments are the uniform distribution,
-$\mu = \frac{\ones}{d}$ and $\tD = \frac{1}{d} I$,
+\paragraph{Case II: Uniform moments}
+Next, let us consider the case where the moments are the uniform
+distribution, where $\mu = \frac{\ones}{d}$ and $\tD = \frac{1}{d} I$.
+The expressions for $\Sigmaml$ can be simplified as
+follows,
 \begin{align*}
     \Sigmaml 
       &= \left( \tOt(d I + d \ones \ones^\top) \tO \right)\inv \\
@@ -337,66 +351,181 @@ $\mu = \frac{\ones}{d}$ and $\tD = \frac{1}{d} I$,
       \tOi\tOit - \frac{\tOi \ones \ones^\top \tOit}
         {1+ \|\tO \tOi \ones\|_2^2} 
         \right) \\
-    \Sigmamom 
-    &= \tOi (\frac{I}{d} - \frac{\ones \ones^\top}{d^2}) \tOit \\
-    &= \frac{1}{d} \tOi\tOit - \frac{1}{d^2} \tOi \ones (\tOi \ones)^\top.
+      &= \frac{1}{d} \left(
+      \tOi\tOit - \frac{\tOi \ones \ones^\top \tOit}
+        {1+ \|\ones_U\|_2^2} 
+        \right),
 \end{align*}
+where $\ones_U \eqdef \tO \tOi \ones = \tOit \tOt \ones$ is the projection of $\ones$ onto
+the column space of $\tO$. 
 
-Comparing the two, we get,
+Next, we can simplify the expression for $\Sigmamomi$,
 \begin{align*}
-    \Sigmamom - \Sigmaml 
-    &= \frac{1}{d} 
-    \tOi \ones \ones^\top \tOit \left(
-    \frac{1}{1+ \|\tO \tOi \ones \|^2} - \frac{1}{d}
-    \right).
+    \Sigmamom &= 
+      \tOi \left( \frac{I}{d} - \frac{\ones \ones^\top}{d^2} \right) \tOit \\
+    \Sigmamomi &=
+        \left(
+        \frac{1}{d} 
+          \tOi\tOit - \frac{1}{d^2} \tOi \ones \ones^\top \tOit
+        \right)\inv \\
+        &=
+        d
+          (\tOi\tOit)\inv \\
+        &\quad
+          + d^2
+          \frac{
+              (\tOi\tOit)\inv \tOi \ones \ones^\top \tOit (\tOi\tOit)\inv 
+          }{
+            d - \ones^\top \tOit (\tOi\tOit)\inv \tOi \ones 
+          } \\
+          &=
+        d
+          \tOt\tO + d^2
+          \frac{
+              \tOt\tO \tOi \ones \ones^\top \tOit \tOt\tO
+          }{
+            d - \ones^\top \tOit \tOt\tO \tOi \ones 
+          } \\
+          &=
+        d \left(
+          \tOt\tO +
+          \frac{
+              \tOt \ones \ones^\top \tO
+          }{
+            d - \|\tOi \tO \ones\|_2^2 
+          } \right) \\
+          &=
+        d \left(
+          \tOt\tO +
+          \frac{
+              \tOt \ones \ones^\top \tO
+          }{
+            d - \|\ones_U\|_2^2 
+          } \right).
 \end{align*}
 
-Firstly, if $\ones$ lies in the null space of $\tO$, then the variances
-of the two are equal. 
-Next, consider the trace of the two, which gives
-us a measure of $\|\hat{z}^\mom\|^2 - \|\hat{z}^\ml\|^2$,
+Now, we are ready to study the relative efficiency. Let $\bbk = k-1$,
 \begin{align*}
-    \Tr(\Sigmamom - \Sigmaml)
-    &= \frac{1}{d} 
-    \Tr(\tOi \ones \ones^\top \tOit) \left(
-    \frac{1}{1+ \| \tO \tOi \ones\|^2} - \frac{1}{d}
-    \right) \\
-    &= \frac{1}{d} \|\tOi \ones\|^2 \left(
-    \frac{1}{1+ \| \tO \tOi \ones\|^2} - \frac{1}{d}
-    \right) \\
-    &= \frac{1}{d} \|\tOi \tO \tOi \ones\|^2 \left(
-    \frac{1}{1+ \| \tO \tOi \ones\|^2} - \frac{1}{d}
-    \right) \\
-    &\ge \frac{\sigma_{k-1}(\tO)}{d} \|\tO \tOi \ones\|^2 \left(
-    \frac{1}{1+ \| \tO \tOi \ones\|^2} - \frac{1}{d}
-    \right).
+  e^\mom &= \frac{1}{\bbk} \Tr(\Sigmaml \Sigmamomi) \\
+    &= \frac{1}{\bbk}
+    \Tr \Bigg( \frac{1}{d} \left(
+      \tOi\tOit - \frac{\tOi \ones \ones^\top \tOit}
+        {1+ \|\ones_U\|_2^2} 
+        \right) \\
+    &\quad \hphantom{\bbk \Tr}
+        d
+          \left(
+          \tOt\tO +
+          \frac{
+              \tOt \ones \ones^\top \tO
+          }{
+            d - \|\ones_U\|_2^2 
+          }
+          \right)
+          \Bigg) \\
+    &= 
+    \frac{1}{\bbk} \Tr(I) + \frac{1}{\bbk} \Tr\left(
+          \frac{
+              \tOi\tOit \tOt \ones \ones^\top \tO
+          }{
+            d - \|\ones_U\|_2^2 
+          } \right) \\
+    &\quad
+    - \frac{1}{\bbk} \Tr\left(
+      \frac{\tOi \ones \ones^\top \tOit \tOt\tO}{1+ \|\ones_U\|_2^2} 
+      \right) \\
+    &\quad
+    - \frac{1}{\bbk} \Tr\left(
+        \frac{\tOi \ones \ones^\top \tOit \tOt \ones \ones^\top \tO
+}{(d - \|\ones_U\|_2^2 )(1+ \|\ones_U\|_2^2)} 
+          \right) \\
+%%%%
+    &= 1 + \frac{1}{\bbk}
+          \frac{
+              \|\tOit \tOt \ones\|_2^2
+          }{
+            d - \|\ones_U\|_2^2 
+          } 
+        - \frac{1}{\bbk}
+        \frac{\|\tO \tOi \ones\|_2^2}{1+ \|\ones_U\|_2^2} \\
+    &\quad
+    - \frac{1}{\bbk}
+    \frac{\|\tOit \tOt \ones\|_2^2  \|\tO \tOi \ones\|_2^2}
+        {(d - \|\ones_U\|_2^2 ) (1+ \|\ones_U\|_2^2)} \\
+&= 1
+    + \frac{\|\ones_U\|^2}{d - \|\ones_U\|^2}
+    - \frac{\|\ones_U\|^2}{1 + \|\ones_U\|^2}\\
+&\quad
+    - \frac{\|\ones_U\|^4}{(1 + \|\ones_U\|^2)(d - \|\ones_U\|^2)}.
 \end{align*}
 
-It remains for us to bound the projection $\|\tO \tOi \ones\|$. Observe,
- \begin{align*}
-   O^\top \ones 
-     &= \sum_{\bh = \ones}^{\bh \prec k} \sum_{x = \ones}^{d} \Pr(x | \bh) e_\bh  \\
-     &= \ones \\
-   \tOt \ones
-       &= (O_{\neg d, k}^\top - \ones O_{\neg d, k}^\top) \ones  \\
-       &= \sum_{\bh = \ones}^{\bh \prec k} \sum_{x = \ones}^{x \prec d} \Pr(x | \bh) e_\bh - (\sum_{x = \ones}^{x \prec d} \Pr(x | k)) \ones^\top  \\
-       &= \sum_{\bh = \ones}^{\bh \prec k} (1 - \Pr(d | \bh)) e_\bh - (1 - \Pr(d | k)) \ones  \\
-       &= \sum_{\vh = \ones}^{\vh \prec k} (\Pr(d | k) - \Pr(d | \vh))e_\bh \\
-       &= \tO_{d,k} \ones^\top - \tO_{d,\neg k}.
- \end{align*}
- Let $c = \|\tO^\top \ones\|_2 \le \sqrt{k}$.
- Let $\tO = U W V^\top$ be the SVD of $\tO$. We have,
- \begin{align*}
-   \ones^\top U W V^\top 
-       &= \ones^\top \tO \\
-   \ones^\top U 
-     &= \ones^\top \tO V W\inv \\
-   \|\ones^\top U\|_2 
-       &\le \frac{\|\ones^\top \tO\|_2}{\sigma_{k}(\tO)} \\
-       &\le \frac{c}{\sigma_{k}(\tO)} \\
-   \|\ones^\top U\|_2 
-       &\ge \frac{c}{\sigma_{1}(\tO)}.
- \end{align*}
+Now, recall that $\tm = \tO \tz + O_{\neg d, k}$, and $\tm = \frac{1}{d} \ones$. Thus,
+\begin{align*}
+  \frac{1}{d} \ones &= \tO \tz + O_{\neg d, k} \\
+  \frac{1}{d} \tO \tOi \ones &= \tO \tOi \tO \tz + \tO \tOi O_{\neg d, k} \\
+  \frac{1}{d} \ones_U &= \tO \tz + \tO \tOi O_{\neg d, k} \\
+  \frac{1}{d} \ones_U &=  \frac{1}{d} \ones  - O_{\neg d, k} + \tO \tOi O_{\neg d, k} \\
+  \ones_U &=  \ones  - d (I - \tO \tOi) O_{\neg d, k}.
+\end{align*}
+
+This gives us bounds on the projection of $\ones$,
+\begin{align*}
+  \|\ones\|  - d\|(I - \tO \tOi) O_{\neg d, k}\| 
+    &\le 
+      \|\ones_U\| 
+      &\le \|\ones\|  + d\|(I - \tO \tOi) O_{\neg d, k}\|.
+\end{align*}
+Note that $O_{\neg d, k}$ consists of positive entries which sum to less
+than 1, and that $(\tO \tOi - I)$ is a projection on to a $d-k$
+dimensional subspace. Thus, $\|(\tO \tOi - I) O_{\neg d, k}\|_2 \le k$
+
+% Firstly, if $\ones$ lies in the null space of $\tO$, then the variances
+% of the two are equal. 
+
+% Next, consider the trace of the two, which gives
+% us a measure of $\|\hat{z}^\mom\|^2 - \|\hat{z}^\ml\|^2$,
+% \begin{align*}
+%     \Tr(\Sigmamom - \Sigmaml)
+%     &= \frac{1}{d} 
+%     \Tr(\tOi \ones \ones^\top \tOit) \left(
+%     \frac{1}{1+ \| \tO \tOi \ones\|^2} - \frac{1}{d}
+%     \right) \\
+%     &= \frac{1}{d} \|\tOi \ones\|^2 \left(
+%     \frac{1}{1+ \| \tO \tOi \ones\|^2} - \frac{1}{d}
+%     \right) \\
+%     &= \frac{1}{d} \|\tOi \tO \tOi \ones\|^2 \left(
+%     \frac{1}{1+ \| \tO \tOi \ones\|^2} - \frac{1}{d}
+%     \right) \\
+%     &\ge \frac{\sigma_{k-1}(\tO)}{d} \|\tO \tOi \ones\|^2 \left(
+%     \frac{1}{1+ \| \tO \tOi \ones\|^2} - \frac{1}{d}
+%     \right).
+% \end{align*}
+% 
+% It remains for us to bound the projection $\|\tO \tOi \ones\|$. Observe,
+%  \begin{align*}
+%    O^\top \ones 
+%      &= \sum_{\bh = \ones}^{\bh \prec k} \sum_{x = \ones}^{d} \Pr(x | \bh) e_\bh  \\
+%      &= \ones \\
+%    \tOt \ones
+%        &= (O_{\neg d, k}^\top - \ones O_{\neg d, k}^\top) \ones  \\
+%        &= \sum_{\bh = \ones}^{\bh \prec k} \sum_{x = \ones}^{x \prec d} \Pr(x | \bh) e_\bh - (\sum_{x = \ones}^{x \prec d} \Pr(x | k)) \ones^\top  \\
+%        &= \sum_{\bh = \ones}^{\bh \prec k} (1 - \Pr(d | \bh)) e_\bh - (1 - \Pr(d | k)) \ones  \\
+%        &= \sum_{\vh = \ones}^{\vh \prec k} (\Pr(d | k) - \Pr(d | \vh))e_\bh \\
+%        &= \tO_{d,k} \ones^\top - \tO_{d,\neg k}.
+%  \end{align*}
+%  Let $c = \|\tO^\top \ones\|_2 \le \sqrt{k}$.
+%  Let $\tO = U W V^\top$ be the SVD of $\tO$. We have,
+%  \begin{align*}
+%    \ones^\top U W V^\top 
+%        &= \ones^\top \tO \\
+%    \ones^\top U 
+%      &= \ones^\top \tO V W\inv \\
+%    \|\ones^\top U\|_2 
+%        &\le \frac{\|\ones^\top \tO\|_2}{\sigma_{k}(\tO)} \\
+%        &\le \frac{c}{\sigma_{k}(\tO)} \\
+%    \|\ones^\top U\|_2 
+%        &\ge \frac{c}{\sigma_{1}(\tO)}.
+%  \end{align*}
 
 
 % With concrete expressions for $\Sigmamom$ and $\Sigmaml$, we can quantitatively evaluate their asymptotic efficiency,
