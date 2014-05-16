@@ -18,12 +18,13 @@ np.random.seed(12)
 
 def generate_random_instance(k, d, badO = False):
     z = normalize(rand(k))
-    if badO:
-        O = 0.5 * column_normalize(rand(d-1, k))
-        O = np.vstack((O, 0.5 * np.ones(k)))
-    else:
-        O = column_normalize(rand(d, k))
-    assert np.allclose(O.sum(), k, 1e-4)
+    O = np.vstack( (0.5 * eye(2), [0.5, 0.5] ) )
+    # if badO:
+    #     O = 0.9 * column_normalize(rand(d-1, k))
+    #     O = np.vstack((O, 0.1 * np.ones(k)))
+    # else:
+    #     O = column_normalize(rand(d, k))
+    # assert np.allclose(O.sum(), k, 1e-4)
     mu = O.dot(z)
     return z, O, mu
 
@@ -112,6 +113,14 @@ def do_experiment(O, Ot, Ondk, mu, args):
 
     return mut_, zt_pi, zt_cl
 
+def get_lhood_gradient(mu_, Ot, z):
+    """
+    Returns - [Ot; -1^T Ot]^T D^-1 e_x
+    """
+    d_, _ = Ot.shape
+    O = np.vstack( (Ot, -ones(d_).T.dot(Ot)) )
+    mu_z = O.dot(z)
+    return O.dot.diag(mu_z).dot(mu_)
 
 def do_command(args):
     np.random.seed(args.seed)
@@ -130,13 +139,17 @@ def do_command(args):
     v = (Ot.dot(Oti)).T.dot(o)
 
     print "O cond", svd(O)[1]
-    print "ones residual", norm( Ot.T.dot(o) ), norm( v )
     print "mu residual", (Oti.dot(mut)), norm(Oti.dot(mut))
+    print "ones residual", norm( ones((D-1,1)).T.dot(Ot) )
 
     dZ_pi, dZ_cl = [], []
 
     for attempt in xrange(attempts):
         mut_, zt_pi, zt_cl = do_experiment(O, Ot, Ondk, mu, args)
+        print get_lhood_gradient(mut_, Ot, zt_cl)
+        # l'n(z) = l'n(z*) + ln''(z*) (z'-z*)
+        # l'n(z) = O[x]/mu(z)
+        #"z - z* = l''(z*)^inv -l'n(z)"
         if attempt % (attempts/20) == 0:
             sys.stderr.write('.')
             sys.stderr.flush()
