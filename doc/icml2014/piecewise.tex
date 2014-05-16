@@ -95,35 +95,70 @@ so to simplify the notation, let $m=1$
 and define $\mu = M_\sV \in \Re^d$,
 $z = Z_\sC \in \Re^k$,
 and $O = \mOppAll \in \Re^{d \times k}$.
+
 The hidden marginals $z$ and observed marginals $\mu$ are related via $\mu = O z$.
-Let $\hat z,\hat\mu$ denote the estimated quantities.
 % Let $\hat z,\hat\mu$ denote the estimated quantities
 % and $z^*,\mu^*$ denote the true quantities.
 % Let $\hat\E[\cdot]$ denote an expectation over the empirical distribution ($n$ i.i.d. points) over $x$.
+Let $\hat z, \hat\mu$ denote the estimated quantities.
+Note that $\hat z$ and $\hat \mu$ are constrained to lie on simplexes $\Delta_{k-1}$ and $\Delta_{d-1}$ respectively. 
+As a technicality, we reparameterize the problem using estimators
+$\htz \in \Re^{k-1}$ and $\htm \in \Re^{d-1}$ instead,
+\begin{align*}
+  \hat\mu &= 
+    \begin{bmatrix}
+      \htm \\
+      1 - \ones^\top\htm
+    \end{bmatrix} 
+  &
+  \hat z &= 
+    \begin{bmatrix}
+      \htz \\
+      1 - \ones^\top\htz
+    \end{bmatrix}.
+\end{align*}
+In this representation, $\tm$ and $\tz$ are related as follows,
+\begin{align*}
+  \mu &= O z \\
+  \begin{bmatrix}
+    \tm \\
+    1 - \ones^\top\tm
+  \end{bmatrix} 
+  &=
+    \begin{bmatrix}
+      O_{\neg d,\neg k} & O_{\neg d, k} \\ 
+      O_{d,\neg k} & O_{d, k} \\ 
+    \end{bmatrix}
+    \begin{bmatrix}
+      \tz \\
+      1 - \ones^\top\tz
+    \end{bmatrix} \\
+  \tm &= O_{\neg d,\neg k} \tz + O_{\neg d, k} - O_{\neg d, k} \ones^\top \tz \\
+      &= \underbrace{(O_{\neg d,\neg k} - O_{\neg d, k} \ones^\top )}_{\eqdef \tO} \tz +  O_{\neg d,k}.
+\end{align*}
 
-The pseudoinverse estimator is defined as $\hat z^\mom = \Pi(O^\dagger \hat\mu)$,
-where $\hat\mu = \hat\E[x]$, and $\Pi(z)$ be the projection of $z$ onto the
-$(k-1)$-dimensional simplex.  The projection makes the result more comparable with likelihood-based methods,
-which work on the simplex by default.
+The pseudoinverse estimator is defined as $\htz^\mom = \tO^\dagger (\htm - O_{\neg d, k})$, and the composite likelihood estimator is given by $\htz^\ml = \arg\max_{\tz} \hat\E[\ell(x; \tz)]$,
+where $\ell(x; \tz) = \log(\mu[x])$ is the log-likelihood function.
+%(note that $O[x, h] = \Pr(x \mid h)$ and $z^*[h] = \Pr(h)$).
 
-The composite likelihood estimator is given by $\hat z^\ml = \arg\max_{z \in \Delta^{k-1}} \hat\E[\ell(z; x)]$,
-where $\ell(z; x) = \log(O[x] z)$ is the log-likelihood function
-(note that $O[x, h] = \Pr(x \mid h)$ and $z^*[h] = \Pr(h)$).
+% The pseudoinverse estimator is defined as $\hat z^\mom = \Pi(O^\dagger \hat\mu)$,
+% where $\hat\mu = \hat\E[x]$, and $\Pi(z)$ be the projection of $z$ onto the
+% $(k-1)$-dimensional simplex.  The projection makes the result more comparable with likelihood-based methods,
+% which work on the simplex by default.
 
+First, we present the asymptotic variances of the two estimators.
 \begin{lemma}[Asymptotic variances]
   \label{lem:mom-pw-variance}
   The asymptotic variances of the pseudoinverse estimator $\hat z^\mom$
   and composite likelihood estimator $\hat z^\ml$ are:
   \begin{align*}
     \Sigmamom 
-      &= \tOi \tD \tOit - \tOi \tD \ones \ones^\top \tD \tOit, \\
+      &= \tOi (\tD - \tm \tm^\top) \tOit, \\
     \Sigmaml 
-      &=\tOi \tD \tOit 
-        - \frac{\tOi \tD v v^\top \tD \tOit }
-        {1 - \ones^\top \tD \ones + v^\top \tD v },
+      &=
+      \left( \tOt (\tD\inv + \td\inv \ones\ones^\top) \tO \right)\inv,
   \end{align*}
-  where $v = \tO \tOt \ones$, the projection of $\ones$ onto the column
-  space of $\tO$.
+  where $\tD \eqdef \diag(\tm)$ and $\td \eqdef 1 - \ones^\top\tm$.
   % \begin{align*}
   %   \Sigmamom_\sC &= C O^\dagger [\diag(\mu) - \mu\mu^\top] O^{\dagger\top} C^\top, \\
   %   \Sigmaml_\sC &= C O^\dagger \diag(\mu) O^{\dagger\top} C^\top,
@@ -131,6 +166,47 @@ where $\ell(z; x) = \log(O[x] z)$ is the log-likelihood function
   % where $C \in \Re^{k \times k}$ is the projection matrix corresponding to the
   % orthogonal complement of $\{ \alpha 1 : \alpha \in \Re \}$.
 \end{lemma}
+
+Next, let us compare the two estimators. we look at relative efficiency
+as a quantitative measure: $e^\mom = \frac{1}{\bbk} \Tr(\Sigmaml
+\Sigmamomi)$, where $\bbk = k-1$. The relative efficiency $e^\mom$ lies
+between $0$ and $1$. When $e^\mom = 1$, the pseudo-inverse estimator is
+said to be efficient.
+
+\begin{lemma}[Relative efficiency when $d = k$]
+  When $d = k$, the asymptotic variances of the pseudoinverse and
+  composite likelihood estimators are equal, $\Sigmaml = \Sigmamom$, and the relative efficiency is $1$.
+\end{lemma}
+
+\begin{lemma}[Relative efficiency with uniform observed moments]
+  Let the observed moments, $\mu$, be uniform, $\mu = \frac{1}{d} \ones$. 
+  The efficiency of the pseudo-inverse estimator is, 
+  \begin{align}
+    e^\mom &= 
+    1 - \frac{1}{k-1}\frac{\|\ones_U\|^2}{1 + \|\ones_U\|^2} \left( 1 - \frac{1}{d - \|\ones_U\|^2} \right) \label{eqn:efficiency},
+  \end{align}
+  where $\ones_U \eqdef \tOi\tO \ones$, the projection of $\ones$ onto
+  the column space of $\tO$. Note that $0 \le \|\ones_U\|_2 \le \sqrt{k-1}$.
+
+  When $\|\ones_U\|_2 = 0$, the pseudoinverse estimator is efficient:
+  $e^\mom = 1$. When $\|\ones_U\|_2 > 0$ and $d > k$, the pseudoinverse
+  estimator is strictly inefficient. In particular, when $\|\ones_U\|_2
+  = \frac{d-1}{2}$ the efficiency attains its minimum, 
+  \begin{align*}
+    e^\mom 
+    &= 1 - \frac{1}{k-1} \left( \frac{d-1}{d+1} \right)^2.
+  \end{align*}
+\end{lemma}
+
+\paragraph{Intuitions}
+\equationref{efficiency} describes the relative efficiency when the
+observed moments are distributed uniformly. The expression
+describes two phenomenon: firstly, for a given $k$, the
+pseudoinverse estimators becomes more efficient for larger $d$, and
+secondly, the pseudoinverse estimator in general becomes more
+efficient for larger $k$.  Empirically, we also observe that the
+composite likelihood estimator leads to more accurate estimates in
+non-asymptotic regimes (see \figureref{cl-hmm}).
 
 % \begin{proof}
 %   The above two results follow by direct application of the delta-method
