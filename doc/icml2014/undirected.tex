@@ -52,8 +52,9 @@ where $A(\theta) = \log \sum_{\vx, \vh}  \exp( \theta^\top \phi(\vx,\vh) )$ is t
 
 Of course, the log-likelihood is non-concave:
 \begin{align}
-L_\text{unsup}(\theta) \eqdef \E_{\vx \sim \sD}[\log \sum_{\vh \in \sH} p_\theta(\vx,\vh)].
+  L_\text{unsup}(\theta) \eqdef \E_{\vx \sim p^*}[\log \sum_{\vh \in \sH} p_\theta(\vx,\vh)],
 \end{align}
+where we are assuming for simplicity that we have infinite data drawn from the true distribution $p^*$.
 % PL: this doesn't make sense
 %While $\phi_\sC(x,h)$ can be an arbitrary featurization, we assume
 %  without loss of generality that $\phi_\sC(x,h)$ are the indicator
@@ -65,27 +66,29 @@ L_\text{unsup}(\theta) \eqdef \E_{\vx \sim \sD}[\log \sum_{\vh \in \sH} p_\theta
   %undirected graphical models parameterized as log-linear latent variable
   %models.
 On the other hand, 
-if we were able to observe $\vh$, the \emph{supervised} likelihood would be concave:
+if we were able to observe $\vh$, we would optimize \emph{supervised} likelihood, which is concave:
 \begin{align}
 \label{eqn:logLinearSupervised}
-L_\text{sup}(\theta) &\eqdef \E_{(\vx,\vh) \sim \sD_\text{sup}}[\log p_\theta(\vx,\vh)] \\
+L_\text{sup}(\theta) &\eqdef \E_{(\vx,\vh) \sim p^*}[\log p_\theta(\vx,\vh)] \\
                      &= \theta^\top \left(\sum_{\sC \in \sG} \E[\phi(\vx_\sC,\vh_\sC)]\right) - A(\theta).
 \end{align}
 While we don't have supervised data,
-note that the method of moments gives us hidden marginals $Z_\sC = \BP(\vh_\sC)$.
-Furthermore, given $\mOpp{v}{i}$ and $Z_\sC$ of any $\sC \ni v$, we can recover
-all marginals $\BP(\vx_\sC, \vh_\sC) = Z_\sC \cdot \mOppAll[\vx_\sV]$.%\todo{clean up}.
-Finally, the key step is that we can compute all the expected feature vectors from the marginals:
+recall that the method of moments provides the hidden marginals $Z_\sC = \BP(\vh_\sC)$
+and conditional moments $\mOpp{v}{i} = \Pr(x_v \mid h_i)$.
+Assuming our graphical model is in canonical form (\lemmaref{reduction}),
+every observed variable is connected to exactly one hidden variable.
+Then $Z_\sC$ and $\mOpp{v}{i}$ directly yield marginals for every clique $\BP(\vx_\sC, \vh_\sC)$.
+Given these marginals, we can compute the expected local feature vector:
 \begin{align}
 \label{eqn:logLinearFeatures}
 \mu_\sC \eqdef \E[\phi(\vx_\sC,\vh_\sC)] = \sum_{\vx_\sC,\vh_\sC} \BP(\vx_\sC,\vh_\sC) \phi(\vx_\sC,\vh_\sC).
 \end{align}
-Therefore, we can optimize the supervised likelihood objective without actually
-having supervised data.
-Of course, in the finite data regime, the method of moments yields estimates
-$\hat \mu^\text{mom}_\sC$ which approximate the true $\mu_\sC$.
-In supervised learning, we have different estimate $\hat\mu^\text{sup}_\sC$ of $\mu_\sC$ based on an empirical average
-over the data points.
+Note that $\{\mu_\sC\}_{\sC \in \sG}$ are exactly the sufficient statistics of the model (\equationref{logLinearSupervised}),
+so we can optimize the supervised likelihood objective without actually having any supervised data!
+In the finite data regime, the method of moments yields the estimate
+$\hat \mu^\text{mom}_\sC$ which approximates the true $\mu_\sC$.
+In supervised learning, we obtain a different estimate $\hat\mu^\text{sup}_\sC$ of $\mu_\sC$ based on an empirical average
+over data points.
 In the limit of infinite data, both estimators converge to $\mu_\sC$.
 
 %We exploit the connection between the moments of the clique potentials and
@@ -121,9 +124,9 @@ In the limit of infinite data, both estimators converge to $\mu_\sC$.
 %which is concave in $\theta$.
 \algorithmref{undirected} summarizes our approach.
 In \sectionref{directed}, we showed that $\LearnMarginals$ is a consistent
-estimator for $Z_\sC$ for any graphical model satisfying the exclusive views property (\propertyref{exclusive-views}). 
-Consequently, the result is that the output of \algorithmref{undirected},
-$\hat\theta$, is a consistent estimator.\footnote{Of course, the log-linear model must be identifiable
+estimator for $Z_\sC$ for any graphical model satisfying the uniformly bottlenecked property (\propertyref{bottleneck}). 
+Consequently, the output of \algorithmref{undirected}
+is a consistent estimator.\footnote{Of course, the log-linear model must be identifiable
 (it is violated, for example, if two components of $\phi(\vx_\sC, \vh_\sC)$ were identical).
 In general, we can identify the parameters up to the kernel of $\nabla^2 A(\theta)$.}
 
@@ -134,35 +137,55 @@ In general, we can identify the parameters up to the kernel of $\nabla^2 A(\thet
   \label{algo:undirected}
   \begin{algorithmic}
     \REQUIRE A graphical model $\sG$ satisfying \propertyref{bottleneck}, data $\sD$
-    \ENSURE A consistent estimate of parameters $\hat \theta$
+    \ENSURE Parameters $\theta$
       \STATE Apply $\LearnMarginals$ to $\sG$ to learn clique marginals $Z_\sC$.
-      \STATE Compute expected features (\equationref{logLinearFeatures}) and optimize \equationref{logLinearSupervised}.
+      \STATE Compute expected features $\{\mu_\sC\}_{\sC \in \sG}$ (\equationref{logLinearFeatures}) and optimize \equationref{logLinearSupervised}.
   \end{algorithmic}
 \end{algorithm}
 
 \paragraph{Pseudolikelihood.}
 Unlike for directed models, in the undirected case,
 graphs with high treewidth present a challenge
-for even fully-supervised maximum likelihood due to the intractability of the log-partition function.
+for even fully-supervised maximum likelihood due to the intractability of the log-partition function $A(\theta)$.
+%One can employ various variational approximations of $A(\theta)$ \cite{wainwright08varinf},
 This motivates looking at pseudolikelihood objective of \citep{besag75pseudo} for a computationally more
 efficient solution.
-The pseudolikelihood objective sums over the log-probability of each variable $a$ given its neighbors $\sN(a)$:
-$$L_\text{pseudo}(\theta) \eqdef \E_{x \sim \sD}\left[\sum_{a \in X \cup H} \log p_\theta(a \mid x_{\sN(a)})\right].$$
+The pseudolikelihood objective is a sum over the log-probability of each variable $a$ given its neighbors $\sN(a)$:
+\begin{align}
+  \label{eqn:pseudolikelihood}
+L_\text{pseudo}(\theta) \eqdef \E_{(\bx,\bh) \sim p^*}\left[\sum_{a \in X \cup H} \log p_\theta(a \mid \sN(a))\right].
+\end{align}
 In the fully-supervised setting, it is well-known that pseudolikelihood provides computationally efficient consistent estimates,
 albeit at the cost of statistical efficiency.
 Coincidentally, this is the same high-level motivation for using method of moments in the first place.
 
+Let $\phi_{a,\sN(a)}(a, \sN(a)) = \sum_{\sC \ni a} \phi_\sC(\bx_\sC,\bh_\sC)$
+denote the sum over cliques $\sC$ that contain $a$; note that only depends on $a$ and its neighbors $\sN(a)$.
+We can write each conditional log-likelihood as:
+\begin{align}
+p_\theta(a \mid \sN(a)) = \exp(\theta^\top\phi_{a,\sN(a)}(a, \sN(a)) - A_a(\theta; \sN(a))),
+\end{align}
+where the conditional log-partition function $A_a(\theta; \sN(a)) = \log \sum_{a'} \exp(\theta^\top\phi_{a,\sN(a)}(a', \sN(a)))$
+involves summing only over values to a single variable.
 
-The pseudolikelihood also replaces the log-partition function
-  $A(\theta)$ with a sum over the variables in the neighborhood:
-  $A_a(\theta; x_{\sN(a)}) = \sum_{a' \in \{a\} \union \sN(a)}
-  \exp(\theta^\top\phi_{\sN(a)}(a'))$.
-Note that the neighbors $\sN(a)$ in general do not form a clique, and
-  thus the uniformly bottlenecked assumption alone is not sufficient to
-  guarantee exclusive views for each variable in the subgraph.
-However, when we do have exclusive views for each neighborhood, as in
-  \figureref{examples-mrf}, we can adapt our earlier algorithm
-  ($\LearnClique$) to estimate the marginals over all neighborhoods $Z_{\sN(a)}$.
+If we knew $\mu_{a,\sN(a)} \eqdef \E[\phi_{a,\sN(a)}(a,\sN(a))]$,
+then we would be able to optimize the pseudolikelihood objective again without
+having access to any labeled data.
+%The pseudolikelihood also replaces the log-partition function
+%  $A(\theta)$ with a sum over the variables in the neighborhood:
+%  $A_a(\theta; x_{\sN(a)}) = \sum_{a' \in \{a\} \union \sN(a)}
+%  \exp(\theta^\top\phi_{\sN(a)}(a'))$.
+Note that $\{a\}\cup\sN(a)$ in general do not form a clique.
+Fortunately, \lemmaref{bottleneck-views} holds for all biconnected subgraphs.
+We can break $\{a\}\cup\sN(a)$ into a collection of 
+  % PL: this is not necessary
+  %thus the uniformly bottlenecked assumption alone is not sufficient to
+  %guarantee exclusive views for each variable in that subgraph.
+%However, when we do have exclusive views for each neighborhood, as in
+  \figureref{examples-mrf},
+  Therefore, we can adapt our algorithm ($\LearnClique$) to estimate all marginals of the form $Z_{a,\sN(a)} \eqdef \Pr(a,\sN(a))$,
+  from which we can compute the features $\mu_{a,\sN(a)}$,
+  and optimize \equationref{pseudolikelihood} to obtain a consistent estimate of $\theta$.
 
 % Arun: WRONG
 % The pseudolikelihood also replaces the log-partition function $A(\theta)$

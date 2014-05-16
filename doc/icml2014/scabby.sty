@@ -226,6 +226,8 @@
 \newtheorem{assumption}{Assumption}
 \newtheorem*{assumption*}{Assumption}
 \theoremstyle{plain}
+\newtheorem*{note}{Note}
+\newtheorem*{note*}{Note}
 
 \forcecommand[1]{\theoremref}{\itemref{Theorem}{thm}{#1}}
 \forcecommand[1]{\lemmaref}{\itemref{Lemma}{lem}{#1}}
@@ -236,7 +238,7 @@
 
 % Text
 \forcecommand[1]{\todo}{{\tiny \hl{\textsc{TODO:} #1}}}
-\forcecommand[1]{\note}{{\tiny \hl{\textsc{Note:} #1}}}
+%\forcecommand[1]{\note}{{\tiny \hl{\textsc{Note:} #1}}}
 \forcecommand[1]{\comment}{ % Comments of equations
   \text{\phantom{(#1)}} \tag{#1}
 }
@@ -298,6 +300,7 @@
 % Linear Algebra
 \forcecommand{\hprod} {\circ} % Hadamard
 \forcecommand{\inv}{^{-1}}
+\forcecommand{\tinv}{^{-\top}}
 \forcecommand{\pinv} {^{\dagger}}
 \forcecommand{\pinvt} {^{\dagger \top}}
 \forcecommand[2]{\innerp}{\left\langle #1, #2 \right\rangle}
