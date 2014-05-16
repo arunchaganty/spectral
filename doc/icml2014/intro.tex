@@ -23,7 +23,6 @@ anandkumar12lda,
 anandkumar12moments,
 hsu12identifiability,
 balle12automata}.
-%\todo{make sure we are citing the right people}
 These methods exploit the linear algebraic properties of the model to
 factorize moments of the observed data distribution into parameters,
 providing strong theoretical guarantees.
@@ -35,7 +34,6 @@ not as broadly applicable as EM.
   \centering
   \subimport{figures/}{approach.tikz}
   \caption{
- % \todo{need three steps: tensor factorization, optimize composite likelihood, recover model parameters;}
   Overview of our approach:
   we first use tensor factorization to learn the \emph{conditional moments}
   for each hidden variable.
@@ -58,12 +56,6 @@ not to directly provide a consistent parameter estimate as in previous work,
 but as constraints on a likelihood-based objective.
 %For a broad class of directed and undirected graphical models
 
-%In this work, we exploit the spectral method to learn moment constraints
-  %on the observed variables and show how these constraints lead to consistent parameter estimates 
-  %for any graphical model with the property that there exist at least
-  %three ``views'' or conditionally independent observed variables for
-  %every hidden variable (\propertyref{bottleneck}).
-
 % 5. We get moments from third-order tensors from bottlenecks and factorize them into marginals,
 % then get parameters.
 % DONE: try to talk about the approach in terms of three steps
@@ -85,29 +77,3 @@ The final step of turning hidden marginals into model parameters
 requires some specialization.
 In the directed case, this is simple post-processing;
 in the undirected case, we need to solve another convex optimization problem (\sectionref{undirected}).
-%Given these factors, we show that there exists a set of observed
-  %variables for every clique such that the likelihood is convex in the
-  %parameters of that clique. 
-%This guarantees that we can recover the true marginal distributions
-  %using EM.
-  %finally, with some post-processing, we are able to
-  %consistently recover the true parameters of the model.
-%In \sectionref{directed}, we describe our algorithm in more detail and
-%show that our algorithm yields consistent parameter estimates
-%under non-degenerate rank assumptions.
-%describe the
-  %settings and technical assumptions in which this approach is guaranteed
-  %to work.
-% PL: hard to talk about $O$ and $T$ at this stage.
-%As a particular example, we are able to recover parameters for the
-  %model depicted in \figureref{approach} if $O$ and $T$ are full-rank.
-
-%Our approach also applies to undirected log-linear latent variable
-  %models, where we use the recovered marginals to make the learning
-  %problem convex (\sectionref{undirected}).
-%Finally, our approach gracefully extends to more general model families
-%  in which we are unable to recover the marginal distributions for all
-%  hidden cliques; in such scenarios, we use posterior regularization to constrain
-%  EM.  
-%\todo{Is this possible?:  We show that empirically, using such constraints alleviates local
-%optima issues.}
