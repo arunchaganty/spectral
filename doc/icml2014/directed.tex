@@ -149,31 +149,26 @@ We have shown how to estimate the parameters of any clique that possesses the ex
   To provide intuition, we will provide more interpretable sufficient conditions
   and examples.
 
-It is clear that having uniform bottlenecks implies part (ii)
-of the exclusive views property (\propertyref{exclusive-views}) via \TensorFactorize,
-but we will show that part (i) follows as well.
+%It is clear that having uniform bottlenecks implies part (ii)
+%of the exclusive views property (\propertyref{exclusive-views}) via \TensorFactorize,
+%but we will show that part (i) follows as well.
 
-The exclusive views property 
-Next, we define a (in analogy with biconnected component)
+First, define the notion of a bidependent set (in analogy with biconnected component),
+in which conditionining on one variable does not make anything independent:
 \begin{definition}[Bidependent set]
 Given a graphical model $\sG$, we say that a subset of nodes $S$ is \emph{bidependent} if
 conditioned on any $a \in S$, there is an active trail between any other two nodes $b,c \in S$.
 \end{definition}
-Intuitively
-Note that all cliques are bidependent, but 
+Note that all cliques are bidependent, but bidependent can have fewer dependencies.
+
 Bottlenecks provide three views, but to satisfy condition (ii) of \propertyref{exclusive-views},
 only two is required.
 
 Now we establish the link between bottlenecks and exclusive views:
-\begin{lemma}[Uniformly bottlenecked implies exclusive views]
+\begin{lemma}[Bottlenecked implies exclusive views]
   \label{lem:bottleneck-views}  
-% PL: simplify to cliques (this is also bad notation, since \sG is a set of cliques, not nodes)
-%Let $\sG' = \{ h_{i_1}, \dots, h_{i_m} \} \subseteq \sG$ be
-  %a connected subgraph of hidden variables.
-  %If every hidden variable
-  %$h_i \in \sG'$ is a bottleneck, then $\sG'$ has the exclusive views property.
-  If a graphical model $\sG$ is faithful and uniformly bottlenecked, then
-  every bidependent set in $\sG$ has the exclusive views property (and hence so does $\sG$).
+  If a bidependent subset of hidden variables $S$ is a bottleneck,
+  then $S$ has the exclusive views property.
 \end{lemma}
 \begin{proof}
 We prove the contrapositive: suppose there exists a biconnected subgraph of $\sH \subset \sG$ consisting of hidden nodes
@@ -185,7 +180,7 @@ Conditioned on $h_0$,
 there is an active trail between $h_1$ and $h_2$ because $\sH$ is biconnected.
 Thus, there is an active trail $x_1 - h_1 - h_2 - x_2$ conditioned on $h_0$.
 Since $\sG$ is faithful, we have $x_1 \not\perp x_2 \mid h_0$.
-As this holds for any $x_1,x_2$, $h_0$ cannot be a bottleneck.
+As this holds for any $x_1$ and $x_2$, $h_0$ cannot be a bottleneck.
 \end{proof}
 
 With this lemma in place, we present the full algorithm, $\LearnMarginals$,
@@ -284,3 +279,162 @@ For example, \figureref{examples-noisy-or} shows
   a binary-valued noisy-or network which can be
   learned by the algorithm of \citet{halpern13noisyor},
   but does not satisfy the exclusive views property.
+<<<<<<< HEAD
+=======
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Sample complexity}
+\label{sec:sampleComplexity}
+% PL: "combine" is too vague to be useful
+%\LearnMarginals combines two consistent algorithms, \TensorFactorize and
+%\LearnCliqueNs, and is thus consistent itself.
+
+%In this section, we provide formal conditions under which $\LearnMarginals$
+%will produce consistent estimates.
+%We let
+%$\mOpphat{v}{i}$,
+%$\hat Z_\sC$,
+%and $\hat M_\sV$,
+%denote estimators for
+%$\mOpp{v}{i}$,
+%$Z_\sC$,
+%and $M_\sV$,
+%respectively.
+
+% But $\mOpp{v}{i}$ is a product of tensors on the path from $h_i$ to
+%   $x_v$, marginalizing out the rest of the graph.
+% To make this property more interpretable, let us assume the following
+%   property which we prove to be sufficient in
+%   \appendixref{assumption-proof}:
+% \begin{assumption} 
+% \label{asm:full-rank-plus}
+% The marginal distribution of every latent variable has full support:
+%   $\forall{h_i \in H},~ \mPi{i} \succ 0$.
+% For every clique $\sC \in \sG$ (including ones with observed variables),
+%   and every conditional distribution $\Pr(h_c \given \Pa(h_c))$, where
+%   $h_c \in \sC$, every {\em tensor unfolding} has full column rank, $k$.
+% \end{assumption}
+% In our directed grid example (\sectionref{directedExample}), for the
+%   clique $\sC = \{ h_1, h_2 \}$ this condition implies $\pi = \Pr(h_1)
+%   \succ 0$ and $T = \Pr(h_2 \mid h_1)$ has column rank $k$; for the clique
+%   $\sC = \{ h_1, x_1 \}$, it implies $O = \Pr(x_1 \mid h_1)$ has column
+%   rank $k$.
+
+%\todo{did they prove this; if so just say "they show", not "we can show"}
+%Using results from
+%  \citet{anandkumar12moments,anandkumar13tensor} we can show that
+%  learning $\mOpp{v_1}{i}$ for the bottleneck $h_i$ with views $x_{v_1},
+%  x_{v_2}, x_{v_3}$ has the following sample complexity,
+%  \todo{define hat O}
+%  \todo{max subscript is misaligned}
+%\begin{align*}
+%  \|\mOpphat{v_1}{i} - \mOpp{v_1}{i}\|^2_F &= \frac{1}{\sqrt{n}} O\left( \frac{k {\pi\oft{i}}_{\max}^2}{\sigma_k(M_{v_1,v_2})^5} \right). 
+%\end{align*}
+%It is easy to see that $\LearnMarginals$ has a polynomial sample complexity because it composes two parts that individually have polynomial sample complexity.
+%From \citet{anandkumar13tensor} given the non-degeneracy assumptions
+%  \assumptionref{non-degeneracy}, we have that $\mOpphat{v}{i}$
+%  converges to $\mOpp{v}{i}$ at a rate of $n^{-\frac12}$ with a constant
+%  that depends polynomially on the $k$-th singular value of
+%  $\mOpp{v}{i}$.
+% PL: we don't have a crisp theorem (because there's multiple paths), so leave it vague.
+%Recovering the marginals $Z_\sC$ from the conditional moments via $\LearnClique$ is a linear operation and thus also has polynomial sample complexity. 
+%Note that $\sigma_{k}(\mOpp{v}{i})$ can become extremely
+%small if $h_i$ and $x_v$ are connected via many intermediate hidden variables
+%\footnote{To see this, consider a chain-structured graphical model: $h_1
+%\to h_2 \cdots \to h_t \to x_v$. In this example, if
+%$\sigma_k(\Pr(h_{i+1} \given h_{i})) \ge \sigma_k$ for each $i = 1,
+%\cdots, t-1$, then $\sigma_k(\mOpp{v}{1})$ can be as bad as
+%$\sigma_k^t \sigma_k(\mOpp{v}{t})$.}.
+%\begin{theorem}[Sample complexity for $\mOpp{v}{i}$]
+%  \label{thm:sample-complexity}
+%  Without loss of generality, let $v=1, i=1$, and let $x_1, x_2, x_3$ be three views for
+%  $h_1$. With probability at least $1 - \delta$,
+%\begin{align*}
+%  \|\mOpphat{1}{1} - \mOpp{1}{1}\|_F 
+%    &\le  \\
+%    &
+%  \hspace{-0.3in}
+%      O\left(
+%      % PL: remove pi_max because that's upper bounded by 1.
+%      \frac{k \log(1/\delta) } 
+%      {\sqrt{n} \, \pi\oft{1}_{\min} (\sigma_{k}(\mOpp{1}{1}) \sigma_{k}(\mOpp{1}{2}))^{5/2}} \right),
+%\end{align*}
+%where $\pi\oft{1}_{\min}$ is the smallest element of $\pi\oft{1}$.
+
+%If $\sigma_{\min}(\Pr(c \given \Pa(h_c))) \le \sigma$ for every clique
+%  $\sC \in \sG$ and hidden variable $h_c \in \sC$,
+%\begin{align*}
+%  \|\mOpphat{1}{1} - \mOpp{1}{1}\|_F 
+%    &\le 
+%      O\left( 
+%      \frac{k \log(1/\delta) {\pi\oft{1}}_{\max}/{\pi\oft{1}}_{\min}} 
+%      {\sqrt{n} \sigma^{5t}} \right) \epsilon,
+%\end{align*}
+%where $t$ is the length of the shortest topological ordering from $h_1$
+%to the unique parent of $x_1$, $h_t$.
+%\end{theorem}
+%In general, $\sigma_{k}(\mOpp{v}{i})$ will depend exponentially on the
+  %path length between the hidden variable $h_i$ and $x_v$.
+%This is expected because the influence from $h_i$ to $x_v$
+  %gets diluted for every latent variable it must factor through.
+
+%\theoremref{sample-complexity}, proved in \appendixref{assumption-proof}
+%  says that the number of samples required to estimate the view
+%  $\mOpp{v}{i}$ grows exponentially in the {\em distance} between $x_v$
+%  and $h_i$. 
+
+%\todo{Present sample complexity bounds for $Z_\sC$?}
+
+% Easy case
+% Next, we need to show that the hidden marginals $\hat Z_\sC$ converge to $Z_\sC$.
+% First, $\hat M_\sV$ is just an empirical average of multinomials over the data points.
+% Abusing notation slightly, we let $\hat M_\sV$ also denote its
+% $d^{m}$-dimensional vectorized version.
+% We also represent $\mH_\sC$ as
+%   a vector in $\Re^{k^m}$, and represent $\mOppAll \eqdef
+%   \mOpp{v_1}{i_1} \otimes \cdots \otimes
+%   \mOpp{v_m}{i_m}$ as a matrix in $\Re^{d^m \times
+%   k^m}$.
+% By the central limit theorem, we have:
+% $\sqrt{n} (\hat M_\sV - M_\sV) \convind \sN(0, \Sigma_\sV)$,
+% where $\Sigma_\sV$ is the \emph{asymptotic variance} of $\hat M_\sV$: 
+% % ARUN: I don't think so - \todo{doesn't this need to be multiplied by something?}
+% \begin{align*}
+% \Sigma_\sV \eqdef \dM_\sV - M_\sV M_\sV^\top, \quad \dM_\sV \eqdef \text{diag}(M_\sV).
+% \end{align*}
+% 
+% Our next step will be to use the delta-method to convert the above
+% result into the asymptotic variance for the pseudoinverse version of
+% $\LearnClique$. 
+% \begin{lemma}[Asymptotic variance of pseudoinverse estimator for $\tilde Z_\sC$]
+%   \label{lem:mom-variance}  
+%   Assume $\hat M_{\sV}$ has asymptotic variance $\Sigma_\sV$ defined above.
+%   Then the asymptotic variance of $\hat{Z_\sC}$ is:
+%   \begin{align*}
+%     \Sigma^{\mom} &= \mOppAlli \Sigma_\sV \mOppAllit.
+%   \end{align*}
+%   %where ${\mOppAll}\pinv \eqdef {\mOpp{v_1}{i_1}}\pinv \otimes
+%   %\cdots \otimes {\mOpp{v_m}{i_m}}\pinv$, a $d^m \times k^m$ matrix.
+% \end{lemma}
+% \begin{proof}
+% For clique $\sC$, recall we have
+%   $Z_{\sC} = \mO_\sV(\mOppi{v_1}{i_1},\cdots,\mOppi{v_m}{i_m})$.
+% %Choosing to represent $Z_\sC$ and $M_\sV$ as vectors and
+% %$\mOppi{v_1}{i_1} \otimes \cdots \otimes \mOppi{v_m}{i_m}$ as the
+% %matrix,
+% We can rewrite this representation more compactly as: $Z_{\sC} = {\mOppAll}\pinv \mO_\sV$.
+% By the delta-method \cite{vaart98asymptotic},
+% % DONE: need to shorten
+% %we have that the asymptotic variance of $M_\sV$ is:
+% %\begin{align*}
+% %  \sqrt{n}(\hat M_\sV - M_\sV) \convind \sN(0, \Sigma_\sV),
+% %\end{align*}
+% %where $\Sigma_\sV$ is the variance of the observations. 
+% we immediately get:
+% $\sqrt{n}(\hat Z_\sC - Z_\sC) \convind \sN(0, \mOppAlli \Sigma_\sV \mOppAllit)$.
+% \end{proof}
+
+% DONE: too brazen to say
+%Note that extending these results to finite sample bounds can be done
+  %via a straightforward application of perturbation bounds.
+>>>>>>> 63098cf69601aab0b1a5b6fd3b449037a7c8dc72

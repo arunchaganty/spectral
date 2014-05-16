@@ -120,7 +120,8 @@ the graph:
 \begin{assumption}[Faithful]
   \label{prop:ci}  
   For any hidden variables $a,b,c \in \bh$
-  such that there is an active trail between $a$ and $b$ conditioned on $c$,
+  such that there is an active trail\footnote{See
+  \citet{koller2009probabilistic} for a definition.} between $a$ and $b$ conditioned on $c$,
   we have that $a$ and $b$ are dependent given $c$ (i.e., $a\not\perp b \given c$).
 \end{assumption}
 
@@ -270,7 +271,12 @@ The other model parameters can be recovered with a few additional matrix operati
 % PL: we don't have a crisp theorem (because there's multiple paths), so leave it vague.
 %Recovering the marginals $Z_\sC$ from the conditional moments via $\LearnClique$ is a linear operation and thus also has polynomial sample complexity. 
 However, $\sigma_{k}(\mOpp{v}{i})$ can become extremely
-small if $h_i$ and $x_v$ are connected via many intermediate hidden variables.
+small if $h_i$ and $x_v$ are connected via many intermediate hidden
+variables.\footnote{To see this, consider a chain-structured graphical model:
+$h_1 \to h_2 \cdots \to h_t \to x_v$. In this example, if
+$\sigma_k(\Pr(h_{i+1} \given h_{i})) \ge \sigma_k$ for each $i = 1,
+\cdots, t-1$, then $\sigma_k(\mOpp{v}{1})$ can be as bad as
+$\sigma_k^t \sigma_k(\mOpp{v}{t})$.}.
 
 % No parameters yet
 The tensor factorization method attacks the heart of the non-convexity
