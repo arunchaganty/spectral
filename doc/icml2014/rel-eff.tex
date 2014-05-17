@@ -18,9 +18,9 @@ matrix inverses:
 \begin{align*}
   (A + \alpha uv^\top)\inv &= A\inv - \frac{A\inv uv^\top A\inv}{\alpha\inv + v^\top A\inv u},
 \end{align*}
-for an invertible matrix $A$, vectors $u, v$ and a scalar constant
-$\alpha$. Unless otherwise specified, we $\|u\|$ to denote the euclidean
-norm of a vector $u$.
+where $A$ is an invertible matrix, $u, v$ are vectors and $\alpha$ is
+a scalar constant. Unless otherwise specified, we $\|u\|$ to denote the
+Euclidean norm of a vector $u$.
 
 First, let us consider the case where $d = k$,
 \begin{lemma}[Relative efficiency when $d = k$]
@@ -47,7 +47,7 @@ Note that $\tD \ones = \tm$ and $\td = 1 - \ones^\top \tm$. This gives us,
 \end{align*}
 \end{proof}
 
-Next, we consider the worst case where the observed moments $\mu$ is the
+Next, we consider the case where the observed moments $\mu$ is the
 uniform distribution.
 
 \begin{lemma}[Relative efficiency with uniform observed moments]
