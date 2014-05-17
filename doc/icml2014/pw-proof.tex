@@ -10,20 +10,14 @@ In \sectionref{piecewise}, we compared the asymptotic variance
 
 Recall, that in \sectionref{piecewise} we simplified notation by taking
   $m=1$ and flattening the moments $M_\sV$ and hidden marginals $Z_\sC$
-  into vectors $\mu \in \Re^d$ and $z \in \Re^k$ and similarly
-  flattening the tensor $O$ into a matrix $O \in \Re^{d\times
-  k}$.
-The hidden marginals $z$ and observed marginals $\mu$ are related via
-  $\mu = O z$.
+  into vectors $\mu \in \Re^d$ and $z \in \Re^k$ respectively. The
+  conditional moments, $O$, is a now matrix $O \in \Re^{d\times k}$ and
+  the hidden marginals $z$ and observed marginals $\mu$ are related via
+  $kmu = O z$.
 
-Note that $\mu$ and $z$ are multinomial distributions and are hence
-constrained to lie on simplexes. This makes asymptotic analysis tricky
-because $\mu, z$ lie on subspaces with Lebesgue measure zero in $\Re^d$
-and $\Re^k$ respectively. 
-
-To handle this constraint, we re-parameterize the problem in terms of
-  $\tm \in \Re^{d-1}$ and $\tz \in \Re^{k-1}$, 
-which are related to the original representation as follows:
+Recall also that we reparameterized $z \in \Delta_{k-1}$ and $\mu \in
+  \Delta_{d-1}$ using $\tz \in \Re^{k-1}$ and $\tm \in \Re^{d-1}$ to avoid
+  constraints:
 \begin{align*}
   \mu &= 
     \begin{bmatrix}
@@ -38,25 +32,11 @@ which are related to the original representation as follows:
     \end{bmatrix}.
 \end{align*}
 
-Now, $\tm$ and $\tz$ are related as,
+Finally, we showed that $\tz$ and $\tm$ are related as,
 \begin{align*}
-  \mu &= O z \\
-  \begin{bmatrix}
-    \tm \\
-    1 - \ones^\top\tm
-  \end{bmatrix} 
-  &=
-    \begin{bmatrix}
-      O_{\neg d,\neg k} & O_{\neg d, k} \\ 
-      O_{d,\neg k} & O_{d, k} \\ 
-    \end{bmatrix}
-    \begin{bmatrix}
-      \tz \\
-      1 - \ones^\top\tz
-    \end{bmatrix} \\
-  \tm &= O_{\neg d,\neg k} \tz + O_{\neg d, k} - O_{\neg d, k} \ones^\top \tz \\
-      &= \underbrace{(O_{\neg d,\neg k} - O_{\neg d, k} \ones^\top )}_{\eqdef \tO} \tz +  O_{\neg d,k}.
+  \tm &= \tO \tz +  O_{\neg d,k},
 \end{align*}
+where $\tO \eqdef O_{\neg d,\neg k} - O_{\neg d, k} \ones^\top$.
 
 We also describe $\mu$ in terms of $\tz$,
 \begin{align*}
@@ -81,20 +61,28 @@ We also describe $\mu$ in terms of $\tz$,
 With this reparameterization, we are ready to derive the asymptotic
 variances of the two estimators.
 
+\begin{lemma*}[Asymptotic variances]
+  The asymptotic variances of the pseudoinverse estimator $\hat z^\mom$
+  and composite likelihood estimator $\hat z^\ml$ are:
+  \begin{align*}
+    \Sigmamom 
+      &= \tOi (\tD - \tm \tm^\top) \tOit, \\
+    \Sigmaml 
+      &=
+      \left( \tOt (\tD\inv + \td\inv \ones\ones^\top) \tO \right)\inv,
+  \end{align*}
+  where $\tD \eqdef \diag(\tm)$ and $\td \eqdef 1 - \ones^\top\tm$.
+\end{lemma*}
 \begin{proof}[Proof for \lemmaref{mom-pw-variance}]
   First, let us look at the
-  asymptotic variance of the pseudoinverse estimator. With the
-  reparameterization $\tz$, we get,
-  \begin{align*}
-    \tm &= \tO \tz +  O_{\neg d,k} \\
-    \tz &= \tOi (\tm - O_{\neg d,k}).
-  \end{align*}
+  asymptotic variance of the pseudoinverse estimator
+  $\hat{z}^\mom = \tOi (\htm - O_{\neg d,k})$. 
   Note that $\mu$ is a multinomial distribution, hence the variance of
-    $\hat\tm$ is $(\tD - \tm \tm^\top)$ where $\tD \eqdef \diag(\tm)$.
+    $\htm$ is $(\tD - \tm \tm^\top)$ where $\tD \eqdef \diag(\tm)$.
   Since $\tz$ is just a linear transformation of $\tm$,
-  the asymptotic variance of $\hat{z}^\mom = \tOi (\hat\tm - O_{\neg d,k})$ is:
+  the asymptotic variance of $\hat{z}^\mom$ is:
   \begin{align*}
-      \Sigmamom &= \tOi \Var(\hat\tm) \tOit \\
+      \Sigmamom &= \tOi \Var(\htm) \tOit \\
       &= \tOi (\tD - \tm \tm^\top) \tOit.
       %&= \tOi \tD \tOit - \tOi \tD \ones \ones^\top \tD \tOit,
   \end{align*}
@@ -152,7 +140,7 @@ Taking the first derivative,
 \end{align}
 where $D \eqdef \diag(\mu)$.
 
-It is easily verified that the expectation of the first derivative is indeed $\zeros$.
+It is easily verified that the expectation of the first derivative is indeed $\zeros$:
 %Note that the expectation of the first derivative is indeed $\zeros$,
 \begin{align*}
   \E[\grad \ell(x; \tz)]
@@ -257,7 +245,8 @@ From \equationref{lhood-grad} and \equationref{lhood-hess}, we get
         &= \hphantom{-} 
           \tOt \tD\inv \tO + \td\inv \tOt \ones \ones^\top \tO,
   \end{align*}
-where $\td = 1 - \ones^\top \tm$.
+where $\tD = \diag(\tm)$ and $\td = 1 - \ones^\top \tm$, the diagonal
+  elements of $D$.
 As expected, $\E[\grad^2 \ell(x)] = -\Var [\grad \ell(x)]$ because
 $\hat{z}$ is a maximum likelihood estimator. 
 

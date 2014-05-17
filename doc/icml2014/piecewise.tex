@@ -74,7 +74,7 @@ Let $\hat Z^\mom_S$ to denote the pseudoinverse estimator and $\hat
   In practice, $\mOppAll$ would be estimated via tensor factorization.}
 
 %We turn to asymptotic statistics to answer this question.
-The Cramer-Rao lower bound tells us that maximum likelihood yields the
+The Cram\'{e}r-Rao lower bound tells us that maximum likelihood yields the
   most statistically efficient composite estimator for $Z_S$ given
   access to only samples of $\Sx\sV$.\footnote{Of course, we could improve
   statistical efficiency by maximizing the likelihood of all of $\vx$, but
@@ -173,9 +173,11 @@ First, we present the asymptotic variances of the two estimators.
 
 Next, let us compare the relative efficiencies of the two estimators:
 $e^\mom \eqdef \frac{1}{k-1} \Tr(\Sigmaml
-\Sigmamomi)$. The relative efficiency $e^\mom$ lies
-between $0$ and $1$, and when $e^\mom = 1$, the pseudoinverse estimator is
-said to be (asymptotically) efficient.
+\Sigmamomi)$. 
+From the Cram\'{e}r-Rao bound \cite{vaart98asymptotic}, we know that
+$\Sigmaml \preceq \Sigmamom$. This implies that the relative efficiency,
+$e^\mom$, lies between $0$ and $1$, and when $e^\mom = 1$, the
+pseudoinverse estimator is said to be (asymptotically) efficient.  
 To gain intuition, let us explore two special cases:
 
 \begin{lemma}[Relative efficiency when $d = k$]
