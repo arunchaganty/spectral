@@ -145,8 +145,8 @@ def do_command(args):
     v = (Ot.dot(Oti)).T.dot(o)
 
     print "O cond", svd(O)[1]
-    print "ones residual", norm( Ot.T.dot(o) ), norm( v )
     print "mu residual", (Oti.dot(mut)), norm(Oti.dot(mut))
+    print "ones residual", norm( ones((D-1,1)).T.dot(Ot) )
 
     dZ_pi, dZ_cl = [], []
 
@@ -154,8 +154,6 @@ def do_command(args):
 
     for attempt in xrange(attempts):
         mut_, zt_pi, zt_cl = do_experiment(O, Ot, Ondk, mu, args)
-
-        #ipdb.set_trace()
 
         # Does the Taylor's expansion hold?
         Ln_z_ = get_lhood_gradient(O, Ot, mut_, zt_cl)
