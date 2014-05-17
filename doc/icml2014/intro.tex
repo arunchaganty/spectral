@@ -48,32 +48,37 @@ not as broadly applicable as EM.
 
 % 4. State what we do: exploit moment constraints to make the problem easier.
 In this paper,
-we show that a much broader class of discrete directed and undirected graphical models can be consistently estimated:
+we show that a much broader class of discrete directed and undirected graphical
+models can be consistently estimated:
 specifically those in which \emph{each} hidden variable has three conditionally
-independent observed variables (``views'')---see \propertyref{bottleneck}.
+independent observed variables (``views'').
 Our key idea is to leverage the method of moments,
 not to directly provide a consistent parameter estimate as in previous work,
 but as constraints on a likelihood-based objective.
+Notably, our method applies to latent undirected log-linear models with high treewidth.
 %For a broad class of directed and undirected graphical models
 
 % 5. We get moments from third-order tensors from bottlenecks and factorize them into marginals,
 % then get parameters.
 % DONE: try to talk about the approach in terms of three steps
-The essence of our approach is illustrated in \figureref{approach}. 
+The essence of our approach is illustrated in \figureref{approach},
+which contains three steps.
 First, we identify three views for each hidden variable $h_i$ (for example,
 $x_1^a$, $x_1^b$ and $x_3^a$ are conditionally independent given $h_1$) and use
 the tensor factorization algorithm of
 \citet{anandkumar13tensor} to estimate the \emph{conditional
-moments} $\Pr(x_i^a \mid h_i)$ and $\Pr(x_i^b \mid h_i)$ for each $i$ (\sectionref{directed}).
+moments} $\Pr(x_i^a \mid h_i)$ and $\Pr(x_i^b \mid h_i)$ for each $i$ (\sectionref{bottlenecks}).
 Second, we optimize a \emph{composite marginal likelihood} to recover the marginals over
-each hidden clique (e.g., $\mathbb P(h_2, h_3, h_4)$).
+subsets of hidden nodes (e.g., $\mathbb P(h_2, h_3, h_4)$).
 Normally, such a marginal likelihood objective would be non-convex,
 but given the conditional moments, we obtain a convex objective,
-which can be globally optimized using EM (\sectionref{piecewise}).
+which can be globally optimized using EM
+(see Sections~\ref{sec:exclusiveViews} and \ref{sec:piecewise}).
 So far, our method has relied only on the conditional independence
 structure of the model and applies generically to both directed
 and undirected models.
 The final step of turning hidden marginals into model parameters
 requires some specialization.
-In the directed case, this is simple post-processing;
-in the undirected case, we need to solve another convex optimization problem (\sectionref{undirected}).
+In the directed case, this is simple normalization;
+in the undirected case, we need to solve another convex optimization problem
+(\sectionref{undirected}).

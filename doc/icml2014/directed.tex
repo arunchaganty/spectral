@@ -1,5 +1,5 @@
-\section{Exclusive views}
-\label{sec:directed}
+\section{Recovering hidden marginals}
+\label{sec:exclusiveViews}
 
 %In this section, we will develop a consistent parameter estimate for a class of directed graphical models.
 %The conditional moments $\mOpp{v}{i} \eqdef \Pr(x_v \mid h_i)$
@@ -8,12 +8,12 @@
   %| h_j)$ for some $v, j$, we present a systematic approach to learn the
   %conditional probability tables for every clique for a class of directed
   %graphical models.
-In this section, we will use the conditional moments $\mOpp{v}{i} \eqdef
-\Pr(x_v \mid h_i)$ recovered from the previous section
-to compute the marginal distribution of sets of hidden variables $Z_S \eqdef \Pr(\bh_S)$,
-taking us one step closer to the actual model parameters.
-For clarity, we derive our algorithm in the infinite data limit,
-although the actual algorithm works with estimates.
+Having recovered conditional moments $\mOpp{v}{i} \eqdef \Pr(x_v \mid h_i)$,
+we now seek to compute the marginal distribution of sets of hidden variables
+$Z_S \eqdef \Pr(\bh_S)$.
+%taking us one step closer to the actual model parameters.
+%For clarity, we derive our algorithm in the infinite data limit,
+%although the actual algorithm works with estimates.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Example: directed grid model}
@@ -57,8 +57,8 @@ $\mO_{234} \eqdef \Pr(x^a_2, x^a_3, x^a_4)$:
 \end{align*}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{General algorithm}
-\label{sec:directedGeneral}
+\subsection{Exclusive views}
+\label{sec:general}
 
   %Section~\ref{sec:directedGeneral} will describe the algorithm in full generality.
 %For ease of exposition we make the following simplifications to our presentation:
@@ -127,13 +127,12 @@ If $S \subseteq \bx$ is a subset of hidden variables with the exclusive views pr
 then \algorithmref{learnclique} recovers the marginals $Z_S = \Pr(\bh_S)$.
 \end{theorem}
 
-%If each $\mOpp{v_j}{i_j}$ has full column rank, then
-
 \begin{algorithm}
   \caption{\LearnClique~(pseudoinverse version)}
   \label{algo:learnclique}
   \begin{algorithmic}
-    \REQUIRE Hidden subset $S = \{ h_{i_1}, \dots, h_{i_m} \}$ with exclusive views $\sV = \{ x_{v_1}, \dots, x_{v_m} \}$ and $\{\mOpp{v_1}{i_i}\pinv\}$ % (\definitionref{exclusive-views})
+    \REQUIRE Hidden subset $S = \{ h_{i_1}, \dots, h_{i_m} \}$ with exclusive views $\sV = \{ x_{v_1}, \dots, x_{v_m} \}$
+    and $\{\mOpp{v_1}{i_i}\pinv\}$ % (\definitionref{exclusive-views})
     \ENSURE Marginal distribution $Z_S = \Pr(\bh_S)$.
       %\STATE Identify exclusive views $\Sx{\sV} = \{x_{v_1}, \dots, x_{v_m}\}$.
       \STATE Return $\mH_S \gets \mO_{\sV}( \mOpp{v_1}{i_i}\pinv, \dots, {\mOpp{v_m}{i_m}}\pinv )$.
@@ -192,21 +191,6 @@ Then we can recover $\mOpp{1}{0} = \Pr(x_1 \mid h_0)$ via $\TensorFactorize$.
 %\definitionref{exclusive-views}, only two is required for condition (i).
 With this lemma in place, we present our full algorithm, $\LearnMarginals$,
 in \algorithmref{directed}.
-
-\begin{algorithm}
-  \caption{\LearnMarginals}
-  \label{algo:directed}
-  \begin{algorithmic}
-    \REQUIRE Bidependent and bottlenecked subset of hidden nodes $S \subseteq \bh$
-    \ENSURE Marginals $Z_S = \Pr(\bh_S)$ % for every bidependent subset of hidden variables $S \in \sG$
-    \FOR{each hidden node $h_i \in S$ with exclusive view $x_v$} 
-      \STATE Apply $\TensorFactorize$ to learn conditional moments
-      $\mOpp{v}{i} = \Pr(x_v \mid h_i)$.
-    \ENDFOR
-    \STATE Apply $\LearnClique$ to learn the marginals $\mH_\sC$.
-  \end{algorithmic}
-\end{algorithm}
-
 
 % DONE: move here because not central to story
 \paragraph{Remarks.}
