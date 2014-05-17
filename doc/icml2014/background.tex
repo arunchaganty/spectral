@@ -187,14 +187,14 @@ The key notion is that of a bottleneck:
   and (ii) each $\mOpp{v}{i} \eqdef \Pr(x_v \mid h_i) \in \Re^{d \times k}$ has full column rank $k$
   for each $v \in \{v_1, v_2, v_3\}$.
   %Let $\sV_{h_i}$ denote any set of views for $h_i$.
-  We say that a subset of hidden variables $S \subseteq \bh$ is a bottleneck
+  We say that a subset of hidden variables $S \subseteq \bh$ is bottlenecked
   if every $h \in S$ is a bottleneck.
   We say that a graphical model $\sG$ is bottlenecked if all its hidden variables
   are bottlenecks.
 \end{definition}
 For example, in \figureref{approach}, $x_1^a,x_1^b,x_2^a$ are views of the bottleneck $h_1$,
 and $x_2^a,x_2^b,x_1^b$ are views of the bottleneck $h_2$.  Therefore, the clique
-$\{h_1,h_2\}$ is a bottleneck.  Note that views are allowed to overlap.
+$\{h_1,h_2\}$ is bottlenecked.  Note that views are allowed to overlap.
 
 %Intuitively, we need to ensure that every marginal distribution
   %$\Pr(x_v)$ can be separated into $k$ different conditional distributions
