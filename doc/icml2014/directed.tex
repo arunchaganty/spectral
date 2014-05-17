@@ -92,7 +92,7 @@ We say that $S$ has the \emph{exclusive views property} if every $h_i \in S$ has
 \end{definition}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\paragraph{Estimating hidden clique marginals}
+\paragraph{Estimating hidden subset marginals}
 
 We now show that if a subset of hidden variables $S$ has the exclusive views property,
 then we can recover the marginal distribution $\Pr(\bh_S)$.
@@ -127,12 +127,12 @@ space of $\mOppAll$:
   Z_{S} &= \mO_\sV(\mOpp{v_1}{i_1}\pinv,\cdots,\mOpp{v_m}{i_m}\pinv).
 \end{align*}
 
-\algorithmref{learnclique} summarizes the procedure, \LearnMarginals.
+\algorithmref{learnMarginals} summarizes the procedure, \LearnMarginals.
 Given $Z_S$, the conditional probability tables for $S$ can easily be
 obtained via renormalization.
 \begin{theorem}[Hidden marginals from exclusive views]
 If $S \subseteq \bx$ is a subset of hidden variables with the exclusive views property,
-then \algorithmref{learnclique} recovers the marginals $Z_S = \Pr(\bh_S)$.
+then \algorithmref{learnMarginals} recovers the marginals $Z_S = \Pr(\bh_S)$.
 \end{theorem}
 
 \begin{algorithm}
@@ -164,7 +164,7 @@ Given a graphical model $\sG$, we say that a subset of nodes $S$ is \emph{bidepe
 conditioned on any $a \in S$, there is an active trail between any other two nodes $b,c \in S$.
 \end{definition}
 Note that all cliques are bidependent, but bidependent sets can have more conditional independences.
-this will be important for pseudolikliehood in \sectionref{pseudolikelihood}.
+This will be important for pseudolikliehood in \sectionref{pseudolikelihood}.
 
 % bidependent, bottleneck => exclusive views
 Bidependent sets are significant because they guarantee exclusive views if they are bottlenecks:
@@ -197,8 +197,8 @@ Then we can recover $\mOpp{1}{0} = \Pr(x_1 \mid h_0)$ via $\TensorFactorize$.
 
 %Note that bottlenecks provide three views, which is important for condition (ii) of
 %\definitionref{exclusive-views}, only two is required for condition (i).
-With this lemma in place, we present our full algorithm, $\LearnMarginals$,
-in \algorithmref{directed}.
+% With this lemma in place, we present our full algorithm, $\LearnMarginals$,
+% in \algorithmref{learnMarginals}.
 
 % DONE: move here because not central to story
 \paragraph{Remarks.}
@@ -217,8 +217,8 @@ In this setting, the tensor factorization method of
   \citet{anandkumar13tensor} recovers the expected conditional means,
   $\mu_{vi} \eqdef \E(x_v | h_i) \in \Re^{d \times k}$ for each observed variable $x_v$ and
   hidden variable $h_i$.
-\algorithmref{learnclique} and \algorithmref{directed} still apply and allow
-  us to recover clique marginals $Z_\sC$.
+\algorithmref{learnMarginals} % and \algorithmref{directed} 
+still applies and allow us to recover clique marginals $Z_\sC$.
 %  \todo{make this a footnote if running out of space}
 % PL: don't understand this comment
 %In this case, we only require that the hidden variables in distinct
