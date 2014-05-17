@@ -17,7 +17,7 @@ The joint distribution is given by an exponential family:
   where $\theta$ is the parameter vector,
   and $\phi_\sC(\bx_\sC, \bh_\sC)$ is the local feature vector
   which only depends on the observed ($\bx_\sC$) and hidden ($\bh_\sC$) variables in clique $\sC$.
-  Also define $\sN(a) = \{ b \neq a : \exists \sC \supseteq \{ a, b \} \}$ be the neighbors of variable $a$.
+  Also define $\sN(a) = \{ b \neq a : \exists \sC \supseteq \{ a, b \} \}$ to be the neighbors of variable $a$.
 
 For directed models $\sG$,
   define $p_\theta(\bx,\bh) = \prod_{a \in \bx \cup \bh} p_\theta(a \mid \Pa(a))$,
@@ -134,7 +134,7 @@ in which all observed variables are leaves:
 \begin{assumption}[Canonical form]
   \label{asm:canonical}
   For each observed variable $x_v$, there exists exactly one $\sC \in \sG$
-  such that $\sC = \{ x_v, x_{v'} \}$ for some other node $x_{v'}$.
+  such that $\sC = \{ x_v, h_{i} \}$ for some hidden node $h_{i}$.
 \end{assumption}
 The following lemma shows that this is not a real assumption (see the appendix for the proof):
 \begin{lemma}[Reduction to canonical form]
@@ -199,7 +199,7 @@ for estimating $\Pr(x_v \mid h_i)$:
 \begin{theorem}[Tensor factorization]
 Let $h_i \in \bh$ be a bottleneck with views $x_{v_1},x_{v_2},x_{v_3}$.
 Then there exists an algorithm $\TensorFactorize$ that
-returns consistent estimates of $\mOpp{v}{i}$ for each $v \in \{v_1,v_2,v_3\}$.
+returns consistent estimates of $\mOpp{v}{i}$ for each $v \in \{v_1,v_2,v_3\}$ up to relabeling of the hidden variables.
 \end{theorem}
 
 To simplify notation, consider the example in \figureref{three-view} where $h_1=1,v_1=1,v_2=2,v_3=3$.
