@@ -105,26 +105,6 @@ These are tensors of
   Finally, we define \emph{conditional moments} $\mOpp{v}{i} \eqdef \Pr(x_v \mid h_i) \in \Re^{d \times k}$
   for each $v \in [L]$ and $i \in [M]$.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%\paragraph{Approach overview}
-%
-%\algorithmref{overview} summarizes our approach.
-%
-%\begin{algorithm}
-%  \caption{\LearnMarginals}
-%  \label{algo:overview}
-%  \begin{algorithmic}
-%    \REQUIRE Graphical model $\sG$, data $\sD$
-%    \ENSURE Parameters $\theta$
-%    \For{each clique $\sN$}
-%    \FOR{each hidden node $h_i \in S$ with exclusive view $x_v$} 
-%      \STATE Apply $\TensorFactorize$ to learn conditional moments
-%      $\mOpp{v}{i} = \Pr(x_v \mid h_i)$.
-%    \ENDFOR
-%    \STATE Apply $\LearnClique$ to learn the marginals $\mH_\sC$.
-%  \end{algorithmic}
-%\end{algorithm}
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Assumptions}
 
@@ -249,7 +229,6 @@ The other conditional moments can be recovered similarly.
   that depends polynomially on $\sigma_k(\mOpp{v}{i})^{-1}$,
   the inverse of the $k$-th largest singular value of $\mOpp{v}{i}$.
 % PL: we don't have a crisp theorem (because there's multiple paths), so leave it vague.
-%Recovering the marginals $Z_\sC$ from the conditional moments via $\LearnClique$ is a linear operation and thus also has polynomial sample complexity. 
 Note that $\sigma_{k}(\mOpp{v}{i})$ can become quite
 small if $h_i$ and $x_v$ are connected via many intermediate hidden
 variables.\footnote{To see this, suppose $h_1$ has a view $x_v$ via a chain:
