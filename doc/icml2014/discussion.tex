@@ -34,7 +34,7 @@ This bottleneck property of \citet{anandkumar13tensor}
 has been exploited in many other contexts,
 including Latent Dirichlet Allocation \cite{anandkumar12lda},
 parsing models \cite{hsu12identifiability},
-noisy-or Bayesian networks \cite{halpern13noisyor},
+noisy-or Bayesian networks \cite{halpern2013unsupervised},
 mixture of linear regressions \cite{chaganty13regression},
 and others.
 We also introduce the idea of \emph{exclusive views} (\definitionref{exclusive-views}),
@@ -57,7 +57,7 @@ the key property that allows us to learn the correlation structure between hidde
 
 % Correlation structure
 Other authors, e.g \citet{anandkumar12lda, anandkumar2013linear,
-  halpern13noisyor}, learn parameters for models outside this
+  halpern2013unsupervised}, learn parameters for models outside this
   family, but they do so with some knowledge of the correlation structure
   between hidden variables. 
 In a preprocessing step, they ``subtract'' out the correlations and
@@ -82,7 +82,7 @@ For example,
   in which the observed variables are linearly related to a sparse set of
   hidden variables. Once again, the key step is to identify the
   correlations between observed variables and exclude them from the views.
-\citet{halpern13noisyor} propose an algorithm to recover factors for
+\citet{halpern2013unsupervised} propose an algorithm to recover factors for
   a more densely connected bipartite noisy-or network; they also use
   bottlenecks to learn parameters, but exploit properties of the model
   to negate correlations from learned edges, allowing for more

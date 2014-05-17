@@ -25,6 +25,7 @@ bib: paper.tex $(SECTIONS)
 	bibtex $(subst .tex,,$<)
 	$(LATEX) $< 
 	$(LATEX) $< 
+	mv $(subst .tex,.pdf,$<) $(OUTPUT).pdf
 
 run:
 	go icml2014.pdf
