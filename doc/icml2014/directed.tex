@@ -1,5 +1,5 @@
 \section{Recovering hidden marginals}
-\label{sec:exclusiveViews}
+\label{sec:hiddenMarginals}
 
 \begin{figure}
   \centering
@@ -32,52 +32,62 @@ $Z_S \eqdef \Pr(\bh_S)$.
 %taking us one step closer to the actual model parameters.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Example: directed grid model}
-\label{sec:directedExample}
+%\subsection{Example: directed grid model}
+%\label{sec:directedExample}
 
-To gain some intuition, consider the directed grid model from \figureref{approach}.
+\paragraph{Example}
+
 %The model has eight observed variables $x^a_1, x^b_1 \cdots, x^a_4, x^b_4$ and four
   %hidden variables $h_1, \ldots, h_4$.
-The parameters of this model are the conditional probability tables
-$\pi \eqdef \Pr(h_1) \in \Re^k, T \eqdef \Pr(h_2 | h_1) = \Pr(h_3 | h_1) \in \Re^{k \times k},
-V \eqdef \Pr(h_4 | h_2, h_3) \in \Re^{k \times k \times k}$ and $O \eqdef \Pr(x^a_i | h_i)
-=  \Pr(x^b_i | h_i) \in \Re^{d \times k}$. 
+%The parameters of this model are the conditional probability tables
+%$\pi \eqdef \Pr(h_1) \in \Re^k, T \eqdef \Pr(h_2 | h_1) = \Pr(h_3 | h_1) \in \Re^{k \times k},
+%V \eqdef \Pr(h_4 | h_2, h_3) \in \Re^{k \times k \times k}$ and $O \eqdef \Pr(x^a_i | h_i)
+%=  \Pr(x^b_i | h_i) \in \Re^{d \times k}$. 
 
-\paragraph{Estimating $O$}
-Since the observed variables $x^a_1, x^b_1, x^a_2$ are
-  conditionally independent given $h_1$, we can $\TensorFactorize$ from
-  \sectionref{setup} to recover $O$.
+%\paragraph{Estimating $O$}
+%Since the observed variables $x^a_1, x^b_1, x^a_2$ are
+%  conditionally independent given $h_1$, we can $\TensorFactorize$ from
+%  \sectionref{setup} to recover $O$.
 
-\paragraph{Estimating $\pi$}
-The moments of $x^a_1$, $\mO_1 \eqdef \Pr(x^a_1)$ are directly related to
-  $\pi$ by a linear system: $\mO_1 = O \pi$. 
-If $O$ has full column rank, we can recover $\pi$ by taking the pseudoinverse: $\pi = O\pinv  \mO_1$.
+%\paragraph{Estimating $\pi$}
+%The moments of $x^a_1$, $\mO_1 \eqdef \Pr(x^a_1)$ are directly related to
+%  $\pi$ by a linear system: $\mO_1 = O \pi$. 
+%If $O$ has full column rank, we can recover $\pi$ by taking the pseudoinverse: $\pi = O\pinv  \mO_1$.
 
-\paragraph{Estimating $T$}
-Similarly, we can write down the moments of $x^a_1, x^a_2$, $\mO_{12}
-  \eqdef \Pr(x^a_1, x^a_2)$, in terms of the hidden marginals $\mH_{12}
-  \eqdef \Pr(h_1, h_2)$ and solve for $\mH_{12}$:
+%\paragraph{Estimating $T$}
+
+To gain some intuition, consider the directed grid model from \figureref{approach}.
+We can express the observed marginals $\mO_{12} \eqdef \Pr(x^a_1, x^a_2) \in \Re^{d \times d}$
+as a linear function of the hidden marginals $\mH_{12} \eqdef \Pr(h_1, h_2) \in \Re^{k \times k}$,
+where the linear coefficients are based on the conditional moments
+$\mOpp{1}{1},\mOpp{2}{2} \in \Re^{d \times k}$:
+%down the moments of $x^a_1, x^a_2$,
 \begin{align*}
-\mO_{12} = O \mH_{12} O^\top \quad\Rightarrow\quad
-  \mH_{12} = O\pinv  \mO_{12} O\pinvt .
+\mO_{12} = \mOpp{1}{1} \mH_{12} \mOppt{2}{2}.
 \end{align*}
-$T$ can be recovered from the $\mH_{12}$ by renormalizing the columns.
-
-\paragraph{Estimating $V$}
-Finally, we can estimate $V$ by renormalizing the hidden marginals
-$\mH_{234} \eqdef \Pr(h_2, h_3, h_4)$ from the third-order moments
-$\mO_{234} \eqdef \Pr(x^a_2, x^a_3, x^a_4)$:
+We can then solve for $\mH_{12}$ by matrix inversion:
 \begin{align*}
-  \mO_{234} = \mH_{234}(O, O, O) \quad\Rightarrow\quad
-  \mH_{234} = \mO_{234}(O\pinv , O\pinv , O\pinv ).
+\mH_{12} = \mOppi{1}{1} \mO_{12} \mOppit{2}{2}.
 \end{align*}
+%$T$ can be recovered from the $\mH_{12}$ by renormalizing the columns.
+
+%\paragraph{Estimating $V$}
+%Finally, we can estimate $V$ by renormalizing the hidden marginals
+%$\mH_{234} \eqdef \Pr(h_2, h_3, h_4)$ from the third-order moments
+%$\mO_{234} \eqdef \Pr(x^a_2, x^a_3, x^a_4)$:
+%\begin{align*}
+%  \mO_{234} = \mH_{234}(O, O, O) \quad\Rightarrow\quad
+%  \mH_{234} = \mO_{234}(O\pinv , O\pinv , O\pinv ).
+%\end{align*}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Exclusive views}
 \label{sec:general}
 
-The intuitions of the directed grid generalize readily to general graphs.
-The key property required for our algorithm to work is as follows:
+%The intuitions of the directed grid generalize readily to general graphs.
+%The key property required for our algorithm to work is as follows:
+For which subsets of hidden nodes can we recover the marginals?  The following
+definition offers an characterization:
 \begin{definition}[Exclusive views]
   \label{def:exclusive-views}
 Let $S \subseteq \bh$ be a subset of hidden variables.
@@ -92,7 +102,7 @@ We say that $S$ has the \emph{exclusive views property} if every $h_i \in S$ has
 \end{definition}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\paragraph{Estimating hidden subset marginals}
+\paragraph{Estimating hidden marginals}
 
 We now show that if a subset of hidden variables $S$ has the exclusive views property,
 then we can recover the marginal distribution $\Pr(\bh_S)$.
