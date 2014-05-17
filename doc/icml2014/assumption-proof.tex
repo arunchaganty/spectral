@@ -4,7 +4,7 @@
 % Define up front that we will focus on h, x_1, x_2, x_3
 In step 1 of \LearnMarginals, we used the bottleneck property of a hidden
   variable $h_i$ to learn conditional moments $\mOpp{v}{i} \eqdef
-  \Pr(x_v | h_i)$ for every view $x_v \in \sV_{h_i}$ using
+  \Pr(x_v \given h_i)$ for every view $x_v \in \sV_{h_i}$ using
   \TensorFactorize. 
 In order to do so, we require that \assumptionref{full-rank} holds, i.e.
 \begin{assumption*}
@@ -37,7 +37,7 @@ The analysis also tracks singular values, allowing us to present
 \paragraph{A recursive construction of $\mOpp{v}{i}$}
 
 Without loss of generality, let $i = 1$. We will express the conditional
-distribution $\mOpp{v}{1} \eqdef \Pr(x_v | h_1)$ recursively through the
+distribution $\mOpp{v}{1} \eqdef \Pr(x_v \given h_1)$ recursively through the
 parents of $x_v$, its parents, and so on. The approach is analogous to
 message passing, and the key idea is to express the same in the form of
 a tensor multiplication. \figureref{message-proof} outlines the
@@ -82,7 +82,7 @@ refer to the operation $A \times_C B$ as tensor multiplication.
 operation. 
 
 Note that $\mYpp{t}{\Pa(h_t)}$ is the conditional probability $\Pr(h_t
- | \Pa(h_t))$, which is assumed to be full rank, and can be easily
+ \given \Pa(h_t))$, which is assumed to be full rank, and can be easily
  computed from the hidden marginals $Z_\sC$ that contain $h_t$. 
 
 Now, let's further expand $\mYpp{ \Pa(h_t) }{1}$ in terms of {\em its

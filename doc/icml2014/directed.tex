@@ -25,7 +25,7 @@
 %The conditional moments $\mOpp{v}{i} \eqdef \Pr(x_v \mid h_i)$
 %recovered from {\TensorFactorize}, are not the underlying parameters.
   %Once we recover the conditional moments $\mOpp{v}{j} \eqdef \Pr(x_v
-  %| h_j)$ for some $v, j$, we present a systematic approach to learn the
+  %\given h_j)$ for some $v, j$, we present a systematic approach to learn the
   %conditional probability tables for every clique for a class of directed
   %graphical models.
 Having recovered conditional moments $\mOpp{v}{i} \eqdef \Pr(x_v \mid h_i)$,
@@ -119,7 +119,7 @@ times the conditional moments:
   \mO_\sV 
   &\eqdef \Pr(\Sx{\sV}) \\
   &= \sum_{\vh_S} \Pr(\Sh{S}) 
-                    \Pr(x_{v_1} | h_{i_1}) \cdots \Pr(x_{v_m} | h_{i_m}) \\
+                    \Pr(x_{v_1} \given h_{i_1}) \cdots \Pr(x_{v_m} \given h_{i_m}) \\
   &= Z_{S}(\mOpp{v_1}{i_1},\dots,\mOpp{v_m}{i_m}) \\
   &= Z_{S}(\mOppAll),
 \end{align*}
@@ -233,7 +233,7 @@ The bottleneck property (\definitionref{bottleneck} can also be relaxed if some 
 Our method extends naturally to the case in which the observed variables
   are real-valued $x_v \in \Re^d$, as long as the hidden variables remain discrete. 
 In this setting, the conditional moments
-  $\mOpp{v}{i} \eqdef \E(x_v | h_i) \in \Re^{d \times k}$
+  $\mOpp{v}{i} \eqdef \E(x_v \given h_i) \in \Re^{d \times k}$
   would no longer be distributions but general rank $k$ matrices.
   %for each observed variable $x_v$ and
   %hidden variable $h_i$.
