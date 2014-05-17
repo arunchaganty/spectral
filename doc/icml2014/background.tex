@@ -199,7 +199,7 @@ for estimating $\Pr(x_v \mid h_i)$:
 \begin{theorem}[Tensor factorization]
 Let $h_i \in \bh$ be a bottleneck with views $x_{v_1},x_{v_2},x_{v_3}$.
 Then there exists an algorithm $\TensorFactorize$ that
-returns consistent estimates of $\mOpp{v}{i}$ for each $v \in \{v_1,v_2,v_3\}$ up to permutation.
+returns consistent estimates of $\mOpp{v}{i}$ for each $v \in \{v_1,v_2,v_3\}$ up to relabeling of the hidden variables.
 \end{theorem}
 
 To simplify notation, consider the example in \figureref{three-view} where $h_1=1,v_1=1,v_2=2,v_3=3$.

@@ -89,7 +89,7 @@ We can then solve for $\mH_{12}$ by matrix inversion:
 %The intuitions of the directed grid generalize readily to general graphs.
 %The key property required for our algorithm to work is as follows:
 For which subsets of hidden nodes can we recover the marginals?  The following
-definition offers an characterization:
+definition offers a characterization:
 \begin{definition}[Exclusive views]
   \label{def:exclusive-views}
 Let $S \subseteq \bh$ be a subset of hidden variables.
@@ -98,7 +98,7 @@ We say $h_i \in S$ has an exclusive view $x_v$
   (i) there exists some observed variable
   $x_{v}$ which is conditionally independent of the others $S \backslash \{ h_i \}$ given $h_i$,
   and (ii) the conditional moment matrix $\mOpp{v}{i} \eqdef
-  \Pr(x_{v} \mid h_i)$ have full column rank $k$ and can be recovered.
+  \Pr(x_{v} \mid h_i)$ has full column rank $k$ and can be recovered.
 We say that $S$ has the \emph{exclusive views property} if every $h_i \in S$ has an exclusive view.
 %If every hidden clique has the exclusive views property, then we say that $\sG$ does as well.
 \end{definition}
@@ -107,7 +107,7 @@ We say that $S$ has the \emph{exclusive views property} if every $h_i \in S$ has
 \paragraph{Estimating hidden marginals}
 
 We now show that if a subset of hidden variables $S$ has the exclusive views property,
-then we can recover the marginal distribution $\Pr(\bh_S)$ up to relabeling of the hidden variables.\footnote{The relabeling for each hidden variables is determined by the permutation in $\TensorFactorize$.}
+then we can recover the marginal distribution $\Pr(\bh_S)$.
 Consider any $S = \{i_1, \ldots, i_m\}$ with the exclusive views property. Let
   $x_{v_j}$ be an exclusive view for $h_{i_j}$ in $S$ and define $\sV
   = \{v_1, \ldots, v_m\}$. % be a set of exclusive views for the clique $S$.
@@ -144,7 +144,9 @@ Given $Z_S$, the conditional probability tables for $S$ can easily be
 obtained via renormalization.
 \begin{theorem}[Hidden marginals from exclusive views]
 If $S \subseteq \bx$ is a subset of hidden variables with the exclusive views property,
-then \algorithmref{learnMarginals} recovers the marginals $Z_S = \Pr(\bh_S)$.
+then \algorithmref{learnMarginals} recovers the marginals $Z_S
+= \Pr(\bh_S)$ up to a global relabeling of the hidden variables
+determined by the labeling in $\TensorFactorize$.
 \end{theorem}
 
 \begin{algorithm}
@@ -168,8 +170,8 @@ then \algorithmref{learnMarginals} recovers the marginals $Z_S = \Pr(\bh_S)$.
   %To provide intuition, we will provide more interpretable sufficient conditions
   %and examples.
 
-The bottleneck property allow recovery of conditional moments,
-and the exclusive views property allow recovery of hidden marginals.
+The bottleneck property allows recovery of conditional moments,
+and the exclusive views property allows recovery of hidden marginals.
 But we will now show that the latter property is in fact implied by the former
 property for special sets of hidden variables, which we call bidependent
 sets (in analogy with biconnected components),
