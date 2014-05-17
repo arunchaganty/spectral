@@ -121,7 +121,8 @@ the graph:
   \label{prop:ci}  
   For any hidden variables $a,b,c \in \bh$
   such that there is an active trail\footnote{See
-  \citet{koller2009probabilistic} for a definition.} between $a$ and $b$ conditioned on $c$,
+  \citet{koller2009probabilistic} for a definition.
+  We do condition on observed variables.} between $a$ and $b$ conditioned on $c$,
   we have that $a$ and $b$ are dependent given $c$ (i.e., $a\not\perp b \given c$).
 \end{assumption}
 
@@ -170,6 +171,7 @@ can be used to reveal information about the hidden
 variables \citep{anandkumar13tensor}.  The key notion is that of a bottleneck:
 
 \begin{definition}[Bottleneck]
+  \label{def:bottleneck}
   A hidden variable $h_i$ is said to be a \emph{bottleneck} if there
   exists three observed variables (views), $x_{v_1}, x_{v_2}, x_{v_3}$
   that are conditionally independent given $h_i$,
@@ -272,11 +274,10 @@ The other model parameters can be recovered with a few additional matrix operati
 %Recovering the marginals $Z_\sC$ from the conditional moments via $\LearnClique$ is a linear operation and thus also has polynomial sample complexity. 
 However, $\sigma_{k}(\mOpp{v}{i})$ can become extremely
 small if $h_i$ and $x_v$ are connected via many intermediate hidden
-variables.\footnote{To see this, consider a chain-structured graphical model:
-$h_1 \to h_2 \cdots \to h_t \to x_v$. In this example, if
-$\sigma_k(\Pr(h_{i+1} \given h_{i})) \ge \sigma_k$ for each $i = 1,
-\cdots, t-1$, then $\sigma_k(\mOpp{v}{1})$ can be as bad as
-$\sigma_k^t \sigma_k(\mOpp{v}{t})$.}.
+variables.\footnote{To see this, suppose $h_1$ has a view $x_v$ via a chain:
+$h_1 - h_2 \cdots - h_t - x_v$. In this example, if
+$\sigma_k(\Pr(h_{i+1} \given h_{i})) = a_k$ for each $i = 1,
+\cdots, t-1$, then $\sigma_k(\mOpp{v}{1}) = a_k^t \sigma_k(\mOpp{v}{t})$.}.
 
 % No parameters yet
 The tensor factorization method attacks the heart of the non-convexity
