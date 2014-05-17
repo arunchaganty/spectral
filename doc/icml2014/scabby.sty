@@ -335,3 +335,10 @@
 \forcecommand{\Range} {\operatorname{Range}}
 \forcecommand{\Domain} {\operatorname{Dom}}
 
+\forcecommand[2]{\LINEIF}{%
+    \STATE\algorithmicif\ {#1}\ \algorithmicthen\ {#2} \algorithmicend\ \algorithmicif%
+}
+\forcecommand[3]{\LINEIFELSE}{%
+\STATE\algorithmicif\ {#1}\ \algorithmicthen\ {#2} \algorithmicelse\ {#3} \algorithmicend\ \algorithmicif%
+}
+

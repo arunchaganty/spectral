@@ -107,7 +107,7 @@ We say that $S$ has the \emph{exclusive views property} if every $h_i \in S$ has
 \paragraph{Estimating hidden marginals}
 
 We now show that if a subset of hidden variables $S$ has the exclusive views property,
-then we can recover the marginal distribution $\Pr(\bh_S)$.
+then we can recover the marginal distribution $\Pr(\bh_S)$ up to relabeling of the hidden variables.\footnote{The relabeling for each hidden variables is determined by the permutation in $\TensorFactorize$.}
 Consider any $S = \{i_1, \ldots, i_m\}$ with the exclusive views property. Let
   $x_{v_j}$ be an exclusive view for $h_{i_j}$ in $S$ and define $\sV
   = \{v_1, \ldots, v_m\}$. % be a set of exclusive views for the clique $S$.
