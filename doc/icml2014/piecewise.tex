@@ -40,10 +40,12 @@ with respect to the true distribution $\sM_\sV$ can be written in tensor form:
   &= \E[\log \mH_\sC(\mOpp{v_1}{i_1} [x_{v_1}], \cdots, \mOpp{v_m}{i_m} [x_{v_m}])] \nonumber \\
   &= \E[\log \mH_\sC(\mOppAll[\Sx\sV])]. \label{eqn:piecewise-obj}
 \end{align}
-The final form is an expectation over a log of linear function of $\mH_\sC$, which is concave in
-$\mH_\sC$.  But unlike maximum likelihood in fully-observed settings,
+The final form is an expectation over the log of a linear function of
+$\mH_\sC$, which is concave in $\mH_\sC$.  
+Unlike maximum likelihood in fully-observed settings,
 we do not have a closed-form solution, so we use EM to optimize.
-Since the function is concave, EM converges to a global maximum.
+However, since the function is concave EM is guaranteed to converge to
+a global maximum.
 \algorithmref{piecewise} summarizes our algorithm.
 
 \begin{algorithm}
@@ -87,7 +89,7 @@ Let us go one step further and quantify the \emph{relative efficiency} of the ps
   %$\Delta_{k^m-1}$ and that $M_\sV$ is similarly constrained to lie on
   %the simplex $\Delta_{d^m-1}$. 
 
-Abusing notation slightly, we can think of $M_\sV$ just as a flat multinomial over $d^m$ outcomes
+Abusing notation slightly, we can think of $M_\sV$ as just a flat multinomial over $d^m$ outcomes
 and $Z_\sC$ as a multinomial over $k^m$ outcomes, where the two are related by
 $\mOppAll \in \Re^{d^m \times k^m}$.
 We will not need to access the internal tensor structure of $M_\sV$ and $Z_\sC$,
@@ -95,15 +97,15 @@ so to simplify the notation, let $m=1$
 and define $\mu = M_\sV \in \Re^d$,
 $z = Z_\sC \in \Re^k$,
 and $O = \mOppAll \in \Re^{d \times k}$.
-
 The hidden marginals $z$ and observed marginals $\mu$ are related via $\mu = O z$.
+
 % Let $\hat z,\hat\mu$ denote the estimated quantities
 % and $z^*,\mu^*$ denote the true quantities.
 % Let $\hat\E[\cdot]$ denote an expectation over the empirical distribution ($n$ i.i.d. points) over $x$.
 Let $\hat z, \hat\mu$ denote the estimated quantities.
 Note that $\hat z$ and $\hat \mu$ are constrained to lie on simplexes $\Delta_{k-1}$ and $\Delta_{d-1}$ respectively. 
 As a technicality, we reparameterize the problem using estimators
-$\htz \in \Re^{k-1}$ and $\htm \in \Re^{d-1}$ instead,
+$\htz \in \Re^{k-1}$ and $\htm \in \Re^{d-1}$:
 \begin{align*}
   \hat\mu &= 
     \begin{bmatrix}
@@ -119,7 +121,7 @@ $\htz \in \Re^{k-1}$ and $\htm \in \Re^{d-1}$ instead,
 \end{align*}
 In this representation, $\tm$ and $\tz$ are related as follows,
 \begin{align*}
-  \mu &= O z \\
+  %\mu &= O z \\
   \begin{bmatrix}
     \tm \\
     1 - \ones^\top\tm
@@ -133,7 +135,8 @@ In this representation, $\tm$ and $\tz$ are related as follows,
       \tz \\
       1 - \ones^\top\tz
     \end{bmatrix} \\
-  \tm &= O_{\neg d,\neg k} \tz + O_{\neg d, k} - O_{\neg d, k} \ones^\top \tz \\
+  \tm 
+  %&= O_{\neg d,\neg k} \tz + O_{\neg d, k} - O_{\neg d, k} \ones^\top \tz \\
       &= \underbrace{(O_{\neg d,\neg k} - O_{\neg d, k} \ones^\top )}_{\eqdef \tO} \tz +  O_{\neg d,k}.
 \end{align*}
 
@@ -167,11 +170,11 @@ First, we present the asymptotic variances of the two estimators.
   % orthogonal complement of $\{ \alpha 1 : \alpha \in \Re \}$.
 \end{lemma}
 
-Next, let us compare the two estimators. we look at relative efficiency
-as a quantitative measure: $e^\mom = \frac{1}{\bbk} \Tr(\Sigmaml
-\Sigmamomi)$, where $\bbk = k-1$. The relative efficiency $e^\mom$ lies
-between $0$ and $1$. When $e^\mom = 1$, the pseudo-inverse estimator is
-said to be efficient.
+Next, let us compare the two estimators. We use relative efficiency
+as a quantitative measure: $e^\mom = \frac{1}{k-1} \Tr(\Sigmaml
+\Sigmamomi)$. The relative efficiency $e^\mom$ lies
+between $0$ and $1$, and when $e^\mom = 1$, the pseudoinverse estimator is
+said to be (asymptotically) efficient.
 
 \begin{lemma}[Relative efficiency when $d = k$]
   When $d = k$, the asymptotic variances of the pseudoinverse and
@@ -179,19 +182,20 @@ said to be efficient.
 \end{lemma}
 
 \begin{lemma}[Relative efficiency with uniform observed moments]
-  Let the observed moments, $\mu$, be uniform, $\mu = \frac{1}{d} \ones$. 
-  The efficiency of the pseudo-inverse estimator is, 
+  Let the observed moments, $\mu$, be uniform: $\mu = \frac{1}{d} \ones$. 
+  The efficiency of the pseudoinverse estimator is, 
   \begin{align}
     e^\mom &= 
     1 - \frac{1}{k-1}\frac{\|\ones_U\|^2}{1 + \|\ones_U\|^2} \left( 1 - \frac{1}{d - \|\ones_U\|^2} \right) \label{eqn:efficiency},
   \end{align}
   where $\ones_U \eqdef \tOi\tO \ones$, the projection of $\ones$ onto
-  the column space of $\tO$. Note that $0 \le \|\ones_U\|_2 \le \sqrt{k-1}$.
+  the column space of $\tO$. Note that $0 \le \|\ones_U\|^2_2 \le k-1$.
 
   When $\|\ones_U\|_2 = 0$, the pseudoinverse estimator is efficient:
   $e^\mom = 1$. When $\|\ones_U\|_2 > 0$ and $d > k$, the pseudoinverse
-  estimator is strictly inefficient. In particular, when $\|\ones_U\|_2
-  = \frac{d-1}{2}$ the efficiency attains its minimum, 
+  estimator is strictly inefficient. In particular, if $k
+  > \frac{d+1}{2}$, when $\|\ones_U\|_2 = \frac{d-1}{2}$ the efficiency
+  attains its minimum, 
   \begin{align*}
     e^\mom 
     &= 1 - \frac{1}{k-1} \left( \frac{d-1}{d+1} \right)^2.
@@ -200,13 +204,12 @@ said to be efficient.
 
 \paragraph{Intuitions}
 \equationref{efficiency} describes the relative efficiency when the
-observed moments are distributed uniformly. The expression
-describes two phenomenon: firstly, for a given $k$, the
-pseudoinverse estimators becomes more efficient for larger $d$, and
-secondly, the pseudoinverse estimator in general becomes more
-efficient for larger $k$.  Empirically, we also observe that the
-composite likelihood estimator leads to more accurate estimates in
-non-asymptotic regimes (see \figureref{cl-hmm}).
+observed moments are distributed uniformly. The expression describes two
+phenomenon: firstly, for a given $k$, the pseudoinverse estimator is
+more efficient for small $d$, and secondly, for a given $d$, the
+pseudoinverse estimator is more efficient for larger $k$.  
+Empirically, we observe that the composite likelihood estimator leads to more
+accurate estimates in non-asymptotic regimes (see \figureref{cl-hmm}).
 
 % \begin{proof}
 %   The above two results follow by direct application of the delta-method
