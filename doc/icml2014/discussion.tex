@@ -37,7 +37,7 @@ parsing models \cite{hsu12identifiability},
 noisy-or Bayesian networks \cite{halpern13noisyor},
 mixture of linear regressions \cite{chaganty13regression},
 and others.
-We also introduce the idea of \emph{exclusive views} (\propertyref{exclusive-views}),
+We also introduce the idea of \emph{exclusive views} (\definitionref{exclusive-views}),
 the key property that allows us to learn the correlation structure between hidden variables.
 
 %Much recent work on method of moments for estimating latent-variable models
@@ -61,8 +61,7 @@ Other authors, e.g \citet{anandkumar12lda, anandkumar2013linear,
   family, but they do so with some knowledge of the correlation structure
   between hidden variables. 
 In a pre-processing step, they ``subtract'' out the correlations and
-  recover a graph that satisfies the bottleneck property
-  (\propertyref{bottleneck}).
+  recover a graph that is bottlenecked.
 % TOO BOLD
 %Thus, while \propertyref{bottleneck} is much stronger than
 %  \propertyref{exclusive-views}, we expect that without any knowledge of
@@ -109,11 +108,11 @@ Another prominent line of work in the method of moments community has
   in conjunction with likelihood-based models. % which are driven by parameters.
 \citet{song2011spectral} propose an algorithm to learn an observable
   operator representations for latent tree graphical models, like the
-  one in \figureref{examples-tree}, assuming the bottleneck property (\propertyref{bottleneck}). 
+  one in \figureref{examples-tree}, assuming the graph is bottlenecked. 
 Their approach is similar to our first step of learning conditional moments,
   but only consider trees.
 \citet{parikh12spectral} extend this approach to general graphical
-  models in which \propertyref{bottleneck} holds, but consider the latent
+  models which are bottlenecked, but consider the latent
   junction tree representation. 
   Consequently, the size of the observable representations is exponential in
   the treewidth.

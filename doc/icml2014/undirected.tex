@@ -124,7 +124,7 @@ In the limit of infinite data, both estimators converge to $\mu_\sC$.
 %which is concave in $\theta$.
 \algorithmref{undirected} summarizes our approach.
 In \sectionref{directed}, we showed that $\LearnMarginals$ is a consistent
-estimator for $Z_\sC$ for any graphical model satisfying the uniformly bottlenecked property (\propertyref{bottleneck}). 
+estimator for $Z_\sC$ for any bottlenecked clique in the graphical model. 
 Consequently, the output of \algorithmref{undirected}
 is a consistent estimator.\footnote{Of course, the log-linear model must be identifiable
 (it is violated, for example, if two components of $\phi(\vx_\sC, \vh_\sC)$ were identical).
@@ -133,14 +133,14 @@ In general, we can identify the parameters up to the kernel of $\nabla^2 A(\thet
 \renewcommand{\algorithmicrequire}{\textbf{Input:}}
 \renewcommand{\algorithmicensure}{\textbf{Output:}}
 \begin{algorithm}
-  \caption{\LearnLogLinear}
+  \caption{\LearnLogLinear (for undirected models)}
   \label{algo:undirected}
   \begin{algorithmic}
-    \REQUIRE A graphical model $\sG$ satisfying \propertyref{bottleneck}, data $\sD$
+    \REQUIRE Conditional moments $\mOpp{v}{i}$ and clique marginals $Z_\sC$.
     \ENSURE Parameters $\theta$
-      \STATE Apply $\LearnMarginals$ to $\sG$ to learn clique marginals $Z_\sC$.
-      \STATE Compute expected features $\{\mu_\sC\}_{\sC \in \sG}$ (\equationref{logLinearFeatures}) and optimize \equationref{logLinearSupervised}.
-  \end{algorithmic}
+      \STATE Compute expected features $\{\mu_\sC\}_{\sC \in \sG}$ (\equationref{logLinearFeatures}).
+      \STATE Optimize \equationref{logLinearSupervised}.
+    \end{algorithmic}
 \end{algorithm}
 
 \subsection{Pseudolikelihood}
@@ -206,7 +206,7 @@ Note that neither sample nor computational complexity depends on the treewidth.
 
 \paragraph{Learning with partial moment constraints.}
 
-In general, it might be case that we only have exclusive views (\propertyref{exclusive-views}) for a subset of the cliques.
+In general, it might be case that we only have exclusive views for a subset of the cliques.
 In this case, we can estimate the expected features $\mu_\sC$ for those cliques
   and use posterior regularization \citep{graca08em} or the generalized expectation criteria \citep{mann08ge}
   to encourage $\E_{p_\theta}[\phi(\vx_\sC,\vh_\sC)]$ to match $\mu_\sC$.
