@@ -185,7 +185,7 @@ We can break $\{a\}\cup\sN(a)$ into a collection of
   %guarantee exclusive views for each variable in that subgraph.
 %However, when we do have exclusive views for each neighborhood, as in
   \figureref{examples-mrf},
-  Therefore, we can adapt our algorithm ($\LearnClique$) to estimate all marginals of the form $Z_{a,\sN(a)} \eqdef \Pr(a,\sN(a))$,
+  Therefore, we can adapt our algorithm ($\LearnMarginals$) to estimate all marginals of the form $Z_{a,\sN(a)} \eqdef \Pr(a,\sN(a))$,
   from which we can compute the features $\mu_{a,\sN(a)}$,
   and optimize \equationref{pseudolikelihood} to obtain a consistent estimate of $\theta$.
 

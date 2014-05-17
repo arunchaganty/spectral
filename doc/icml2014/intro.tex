@@ -35,10 +35,11 @@ not as broadly applicable as EM.
   \subimport{figures/}{approach.tikz}
   \caption{
   Overview of our approach:
-  we first use tensor factorization to learn the \emph{conditional moments}
-  for each hidden variable.
-  Second, we optimize a composite marginal likelihood to recover the \emph{hidden clique marginals},
-  from which we solve for the \emph{model parameters}.
+  (i) we use tensor factorization to learn the \emph{conditional moments}
+  for each hidden variable;
+  (ii) we optimize a composite likelihood to recover the hidden \emph{marginals};
+  and (iii) we optimize another likelihood objective to the \emph{model parameters}.
+  Both likelihood objectives are convex.
   }
 \end{figure}
 
