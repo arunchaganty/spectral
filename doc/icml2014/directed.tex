@@ -1,5 +1,5 @@
-\section{Exclusive views}
-\label{sec:directed}
+\section{Recovering hidden marginals}
+\label{sec:exclusiveViews}
 
 \begin{figure}
   \centering
@@ -26,12 +26,12 @@
   %| h_j)$ for some $v, j$, we present a systematic approach to learn the
   %conditional probability tables for every clique for a class of directed
   %graphical models.
-In this section, we will use the conditional moments $\mOpp{v}{i} \eqdef
-\Pr(x_v \mid h_i)$ recovered from the previous section
-to compute the marginal distribution of sets of hidden variables $Z_S \eqdef \Pr(\bh_S)$,
-taking us one step closer to the actual model parameters.
-For clarity, we derive our algorithm in the infinite data limit,
-although the actual algorithm works with estimates.
+Having recovered conditional moments $\mOpp{v}{i} \eqdef \Pr(x_v \mid h_i)$,
+we now seek to compute the marginal distribution of sets of hidden variables
+$Z_S \eqdef \Pr(\bh_S)$.
+%taking us one step closer to the actual model parameters.
+%For clarity, we derive our algorithm in the infinite data limit,
+%although the actual algorithm works with estimates.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Example: directed grid model}
@@ -75,8 +75,8 @@ $\mO_{234} \eqdef \Pr(x^a_2, x^a_3, x^a_4)$:
 \end{align*}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{General algorithm}
-\label{sec:directedGeneral}
+\subsection{Exclusive views}
+\label{sec:general}
 
   %Section~\ref{sec:directedGeneral} will describe the algorithm in full generality.
 %For ease of exposition we make the following simplifications to our presentation:
@@ -88,18 +88,18 @@ $\mO_{234} \eqdef \Pr(x^a_2, x^a_3, x^a_4)$:
 
 The intuitions of the directed grid generalize readily to general graphs.
 The key property required for our algorithm to work is as follows:
-\begin{property}[Exclusive views]
-  \label{prop:exclusive-views}
-Given a graphical model $\sG$,
-  a subset of hidden variables $S \subset \bh$ is said to satisfy the \emph{exclusive views property} if for
-  each $h_i \in S$, the two conditions hold:
+\begin{definition}[Exclusive views]
+  \label{def:exclusive-views}
+Let $S \subseteq \bh$ be a subset of hidden variables.
+We say $h_i \in S$ has an exclusive view $x_v$
+  if the two conditions hold:
   (i) there exists some observed variable
   $x_{v}$ which is conditionally independent of the others $S \backslash \{ h_i \}$ given $h_i$,
   and (ii) the conditional moment matrix $\mOpp{v}{i} \eqdef
   \Pr(x_{v} \mid h_i)$ have full column rank $k$ and can be recovered.
-We call $x_v$ an exclusive view of $h_i$ in $S$.
+We say that $S$ has the \emph{exclusive views property} if every $h_i \in S$ has an exclusive view.
 %If every hidden clique has the exclusive views property, then we say that $\sG$ does as well.
-\end{property}
+\end{definition}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \paragraph{Estimating hidden clique marginals}
@@ -128,7 +128,7 @@ $Z_S \in \Re^{k^m}$,
 $M_\sV \in \Re^{d^m}$,
 and $\mOppAll \in \Re^{d^m \times k^m}$.
 Since each $\mOpp{v}{i}$ has full column rank $k$,
-$\mOppAll$ has full column rank $k^m$.
+the tensor product $\mOppAll$ has full column rank $k^m$.
 Succinctly, $\mO_\sV$ (which can be estimated directly from data)
 is a linear function of $Z_S$ (what we seek to recover).
 We can solve for the hidden marginals $Z_S$ simply by projecting $\mO_\sV$ onto the column
@@ -145,15 +145,14 @@ If $S \subseteq \bx$ is a subset of hidden variables with the exclusive views pr
 then \algorithmref{learnclique} recovers the marginals $Z_S = \Pr(\bh_S)$.
 \end{theorem}
 
-%If each $\mOpp{v_j}{i_j}$ has full column rank, then
-
 \begin{algorithm}
   \caption{\LearnClique~(pseudoinverse version)}
   \label{algo:learnclique}
   \begin{algorithmic}
-    \REQUIRE Hidden subset $S$ with exclusive views (\propertyref{exclusive-views}).
-    \ENSURE Marginal distribution $Z_S$.
-      \STATE Identify exclusive views $\Sx{\sV} = \{x_{v_1}, \dots, x_{v_m}\}$.
+    \REQUIRE Hidden subset $S = \{ h_{i_1}, \dots, h_{i_m} \}$ with exclusive views $\sV = \{ x_{v_1}, \dots, x_{v_m} \}$
+    and $\{\mOpp{v_1}{i_i}\pinv\}$ % (\definitionref{exclusive-views})
+    \ENSURE Marginal distribution $Z_S = \Pr(\bh_S)$.
+      %\STATE Identify exclusive views $\Sx{\sV} = \{x_{v_1}, \dots, x_{v_m}\}$.
       \STATE Return $\mH_S \gets \mO_{\sV}( \mOpp{v_1}{i_i}\pinv, \dots, {\mOpp{v_m}{i_m}}\pinv )$.
   \end{algorithmic}
 \end{algorithm}
@@ -162,71 +161,60 @@ then \algorithmref{learnclique} recovers the marginals $Z_S = \Pr(\bh_S)$.
 \paragraph{Structural properties}
 
 We have shown how to estimate the parameters of any clique that possesses the exclusive
-  views property (\propertyref{exclusive-views}).
+  views property (\definitionref{exclusive-views}).
   But in a general graph, which cliques have this property?
   To provide intuition, we will provide more interpretable sufficient conditions
   and examples.
 
-%It is clear that having uniform bottlenecks implies part (ii)
-%of the exclusive views property (\propertyref{exclusive-views}) via \TensorFactorize,
-%but we will show that part (i) follows as well.
-
+% Define bidependent
 First, define the notion of a bidependent set (in analogy with biconnected component),
-in which conditionining on one variable does not make anything independent:
+in which conditionining on one variable does not break the set apart:
 \begin{definition}[Bidependent set]
 Given a graphical model $\sG$, we say that a subset of nodes $S$ is \emph{bidependent} if
 conditioned on any $a \in S$, there is an active trail between any other two nodes $b,c \in S$.
 \end{definition}
-Note that all cliques are bidependent, but bidependent can have fewer dependencies.
+Note that all cliques are bidependent, but bidependent sets can have more conditional independences.
+this will be important for pseudolikliehood in \sectionref{pseudolikelihood}.
 
-Bottlenecks provide three views, but to satisfy condition (ii) of \propertyref{exclusive-views},
-only two is required.
-
-Now we establish the link between bottlenecks and exclusive views:
+% bidependent, bottleneck => exclusive views
+Bidependent sets are significant because they guarantee exclusive views if they are bottlenecks:
+%If a subset of hidden nodes $S$ is a bottleneck, it is clear that (ii)
+%of the exclusive views property (\definitionref{exclusive-views}) via \TensorFactorize,
+%but we will show that part (i) follows as well.
+%Now we establish the link between bottlenecks and exclusive views:
 \begin{lemma}[Bottlenecked implies exclusive views]
   \label{lem:bottleneck-views}  
-  If a bidependent subset of hidden variables $S$ is a bottleneck,
-  then $S$ has the exclusive views property.
+  Let $S \subseteq \bh$ be a bidependent subset of hidden variables.
+  If $S$ is a bottleneck, then $S$ has the exclusive views property.
 \end{lemma}
 \begin{proof}
-We prove the contrapositive: suppose there exists a biconnected subgraph of $\sH \subset \sG$ consisting of hidden nodes
-such that some $h_0 \in \sH$ does not have an exclusive view.
-This means each observed variable $x_i$ in the graph is conditionally dependent on some
-$h_i \in \sH \backslash \{h_0\}$ given $h_0$.
-Consider any such two $x_1, x_2$.
-Conditioned on $h_0$,
-there is an active trail between $h_1$ and $h_2$ because $\sH$ is biconnected.
+Let $S$ be a bidependent subset and fix any $h_0 \in S$.
+Since $h_0$ is a bottleneck, it has three conditionally independent views,
+say $x_1, x_2, x_3$ without loss of generality. 
+For condition (i), we will show that at least one of the views is conditionally independent
+of $S \backslash \{ h_0 \}$ given $h_0$.
+For the sake of contradiction, 
+suppose that each observed variable $x_i$ is conditionally dependent on some
+$h_i \in S \backslash \{h_0\}$ given $h_0$, for $i \in \{1, 2, 3\}$.
+Then conditioned on $h_0$,
+there is an active trail between $h_1$ and $h_2$ because $S$ is biconnected.
 Thus, there is an active trail $x_1 - h_1 - h_2 - x_2$ conditioned on $h_0$.
-Since $\sG$ is faithful, we have $x_1 \not\perp x_2 \mid h_0$.
-As this holds for any $x_1$ and $x_2$, $h_0$ cannot be a bottleneck.
+Since the graphical model is faithful by assumption, we have $x_1 \not\perp x_2 \mid h_0$,
+contradicting the fact that $x_1$ and $x_2$ are conditionally independent given $h_0$.
+To show condition (ii), assume, without loss of generality, that $x_1$ is an exclusive view.
+Then we can recover $\mOpp{1}{0} = \Pr(x_1 \mid h_0)$ via $\TensorFactorize$.
 \end{proof}
 
-With this lemma in place, we present the full algorithm, $\LearnMarginals$,
+%Note that bottlenecks provide three views, which is important for condition (ii) of
+%\definitionref{exclusive-views}, only two is required for condition (i).
+With this lemma in place, we present our full algorithm, $\LearnMarginals$,
 in \algorithmref{directed}.
 
-\begin{algorithm}
-  \caption{\LearnMarginals}
-  \label{algo:directed}
-  \begin{algorithmic}
-    \REQUIRE Graphical model $\sG$ satisfying \propertyref{bottleneck}, data $\sD$
-    \ENSURE Marginals $Z_\sC$ for every clique $\sC \in \sG$
-
-      \FOR{each hidden variable $h_i \in \bh$} 
-        \STATE Apply $\TensorFactorize$ to learn conditional moments
-        $\mOpp{v}{i}$ for every $v \in \sV_{h_i}$.
-
-%    \COMMENT{Recover observation potentials $O$ using bottlenecks}
-      \ENDFOR
-%      \COMMENT{\textbf{Step 2:} Recover clique potentials from the piecewise likelihood.}
-\FOR{every clique $\sC = \{h_{i_1}, \ldots, h_{i_m}\} \in \sG$} 
-\STATE Apply $\LearnClique$ to learn the marginals $\mH_\sC$.
-\ENDFOR
-  \end{algorithmic}
-\end{algorithm}
-
-
 % DONE: move here because not central to story
-\paragraph{Remarks.} We note that \propertyref{bottleneck} can be relaxed if some cliques
+\paragraph{Remarks.}
+Note that even having two independent views for each $h_i \in S$ is sufficient for condition (i)
+  of the exclusive views property, while three is needed for condition (ii).
+The bottleneck property (\definitionref{bottleneck} can also be relaxed if some cliques
   share parameters.
 For example, in the directed grid model, we can recover the conditional moments $O$ from
   $x^a_1, x^b_1$ and $x^a_2$ with $h_1$ as the bottleneck.

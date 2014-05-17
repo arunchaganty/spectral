@@ -8,7 +8,7 @@ We assume that the domains of the variables
 are $x_v \in [d]$ for all $v \in [L]$
 and $h_i \in [k]$ for all $i \in [M]$,
 where $[n] = \{ 1, \dots, n \}$.
-Let $\sX \eqdef [d]^L$ and $\sH \eqdef [k]^{M}$ be the joint domains of $\bx$ and $\bh$.
+Let $\sX \eqdef [d]^L$ and $\sH \eqdef [k]^{M}$ be the joint domains of $\bx$ and $\bh$, respectively.
 
 For undirected models $\sG$,
 let $\sG$ denote a set of cliques, where each clique $\sC \subseteq \bx \cup \bh$ is a subset of nodes.
@@ -16,13 +16,13 @@ The joint distribution is given by an exponential family:
   $p_\theta(\bx,\bh) \propto \prod_{\sC \in \sG} \exp(\theta^\top\phi_\sC(\bx_\sC, \bh_\sC))$,
   where $\theta$ is the parameter vector,
   and $\phi_\sC(\bx_\sC, \bh_\sC)$ is the local feature vector
-  which only depends on the observed ($\bx_\sC$) and hidden ($\bh_\sC$) variables in that clique $\sC$.
-  Also define $\sN(a) = \{ b \neq a : \exists \sC \supseteq \{ a, b \}$ be the neighbors of variable $a$.
+  which only depends on the observed ($\bx_\sC$) and hidden ($\bh_\sC$) variables in clique $\sC$.
+  Also define $\sN(a) = \{ b \neq a : \exists \sC \supseteq \{ a, b \} \}$ be the neighbors of variable $a$.
 
 For directed models $\sG$,
-  $p_\theta(\bx,\bh) = \prod_{a \in \bx \cup \bh} p_\theta(a \mid \Pa(a))$,
+  define $p_\theta(\bx,\bh) = \prod_{a \in \bx \cup \bh} p_\theta(a \mid \Pa(a))$,
   where $\Pa(a) \subseteq \bx \union \bh$ are the parents of a variable $a$.
-  The parameters $\theta$ are the conditional probability tables of all variables,
+  The parameters $\theta$ are the conditional probability tables of each variable,
   and the cliques are $\sG = \{ \{ a \} \union \Pa(a) : a \in \bx \union \bh \}$.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -31,13 +31,13 @@ For directed models $\sG$,
 % Statement
 This paper focuses on the problem of parameter estimation:
 We are given $n$ i.i.d.~examples of the observed variables $\sD
-  = (\vx^{(1)}, \dots, \vx^{(n)})$ where each $\vx^{(i)} \sim p_{\theta^*}$ for
+  = (\vx^{(1)}, \dots, \vx^{(n)})$, where each $\vx^{(i)} \sim p_{\theta^*}$ for
   some true parameters $\theta^*$.
 Our goal is to produce a parameter estimate $\hat\theta$ that
   approximates $\theta^*$.
 
 % Maximum likelihood
-The standard estimation procedure is maximum (marginal) likelihood,
+The standard estimation procedure is maximum likelihood:
   \begin{align*}
     L_\text{unsup}(\theta) &\eqdef \sum_{\vx \in \sD} \log p_\theta(\vx)
         =  \sum_{\vx \in \sD} \log \sum_{\vh \in \sH} p_\theta(\vx,\vh).
@@ -50,19 +50,19 @@ In practice, one uses local optimization procedures (e.g., EM
   optima.
 We will later return to likelihoods, but let us first
 describe a method of moments approach for parameter estimation.
-First, a bit of notation is necessary.
+To do this, let's introduce some notation.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \paragraph{Notation}
 
-We use the notation $[\cdot]$ to indicate indexing; for example $M[i]$
-  is the $i$-th row of a matrix $M$ and $M[i,j]$ is the $i,j$-th element
+We use the notation $[\cdot]$ to indicate indexing; for example, $M[i]$
+  is the $i$-th row of a matrix $M$ and $M[i,j]$ is the $(i,j)$-th element
   of $M$.
 For a tensor $T \in \Re^{d \times \cdots \times d}$ and a vector $\bi
   = (i_1, \ldots, i_\ell)$, define the projection $T[\bi] = T[i_1, \ldots, i_\ell]$.
-Similarly, for a set $\sC$ of size $m$ and vector $v \in \Re^d$, we
-  will use the notation $v_\sC$ to get a vector in $\Re^m$ which selects
-  the appropriate elements of $v$.
+%Similarly, for a set $\sC$ of size $m$ and vector $v \in \Re^d$, we
+  %will use the notation $v_\sC$ to get a vector in $\Re^m$ which selects
+  %the appropriate elements of $v$.
 
 We use $\otimes$ to denote the tensor product: if $u \in \Re^d,
   v \in \Re^k$, then $u \otimes v \in \Re^{d \times k}$.
@@ -74,8 +74,8 @@ For an $\ell$-th order tensor $T \in \Re^{d \times \ldots \times
   &= \sum_{\bi}
             T[\bi] v_1[i_1] \cdots v_\ell[i_\ell].
 \end{align*}
-Analogously, for a matrices $M_1 \in \Re^{d \times k}, \cdots,
-  M_\ell \in \Re^{d \times k}$, we define
+Analogously, for matrices $M_1 \in \Re^{d \times k}, \cdots,
+  M_\ell \in \Re^{d \times k}$:
 \begin{align*}
   T(M_1, \cdots, M_\ell)[\vec j]
   &= \sum_{\bi} T[\vec i] {M_1}[i_1,j_1] \cdots M_\ell[i_\ell, j_\ell].
@@ -102,13 +102,35 @@ Next, we define the \emph{hidden marginals}:
 \end{align*}
 These are tensors of
   orders $1, 2, 3$ in $\Re^k, \Re^{k\times k}, \Re^{k \times k \times k}$.
+  Finally, we define \emph{conditional moments} $\mOpp{v}{i} \eqdef \Pr(x_v \mid h_i) \in \Re^{d \times k}$
+  for each $v \in [L]$ and $i \in [M]$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\paragraph{Approach overview}
+%
+%\algorithmref{overview} summarizes our approach.
+%
+%\begin{algorithm}
+%  \caption{\LearnMarginals}
+%  \label{algo:overview}
+%  \begin{algorithmic}
+%    \REQUIRE Graphical model $\sG$, data $\sD$
+%    \ENSURE Parameters $\theta$
+%    \For{each clique $\sN$}
+%    \FOR{each hidden node $h_i \in S$ with exclusive view $x_v$} 
+%      \STATE Apply $\TensorFactorize$ to learn conditional moments
+%      $\mOpp{v}{i} = \Pr(x_v \mid h_i)$.
+%    \ENDFOR
+%    \STATE Apply $\LearnClique$ to learn the marginals $\mH_\sC$.
+%  \end{algorithmic}
+%\end{algorithm}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Assumptions}
 
 In this section, we state technical assumptions that hold for the rest of the
 paper, but that we feel are not central to our main ideas.
-The first one ensures that we will encounter all realizations of a hidden variable are possible:
+The first one ensures that all realizations of each hidden variable are possible:
 
 \begin{assumption}[Non-degeneracy]
   \label{asm:non-degeneracy}
@@ -118,58 +140,44 @@ The first one ensures that we will encounter all realizations of a hidden variab
 Next, we assume the graphical model only has conditional independences given by
 the graph:
 \begin{assumption}[Faithful]
-  \label{prop:ci}  
+  \label{asm:faithful}  
   For any hidden variables $a,b,c \in \bh$
-  such that there is an active trail\footnote{See
-  \citet{koller2009probabilistic} for a definition.} between $a$ and $b$ conditioned on $c$,
-  we have that $a$ and $b$ are dependent given $c$ (i.e., $a\not\perp b \given c$).
+  such that an active trail\footnote{See
+  \citet{koller2009probabilistic} for a definition.
+  We do not condition on observed variables.} connects $a$ and $b$ conditioned on $c$,
+  we have that $a$ and $b$ are dependent given $c$. % (i.e., $a\not\perp b \given c$).
 \end{assumption}
 
-Finally, we describe a reduction of any graphical model to
-  a canonical form to make our arguments simpler.
-\begin{lemma}[Canonical form]
-  \label{lem:reduction}
-Every directed (undirected) graphical model can be transformed into one in which
-  the observed variables are leaves with exactly one parent (neighbor). 
-There is a one-to-one correspondence between the parameters of the
-  transformed and original models.
+Finally, we assume the graphical model is in a canonical form
+in which all observed variables are leaves:
+\begin{assumption}[Canonical form]
+  \label{asm:canonical}
+  For each observed variable $x_v$, there exists exactly one $\sC \in \sG$
+  such that $\sC = \{ x_v, x_{v'} \}$ for some other node $x_{v'}$.
+\end{assumption}
+The following lemma shows that this is not a real assumption (see the appendix for the proof):
+\begin{lemma}[Reduction to canonical form]
+\label{lem:reduction}
+Every graphical model can be transformed into canonical
+form (via \figureref{reduction}).
+There is a one-to-one correspondence between the parameters of the transformed
+and original models.
 \end{lemma}
-\begin{proof}
-  \begin{figure}
-    \centering
-    \subimport{figures/}{reduction.tikz}
-    \caption{Reduction to canonical form.}
-    \label{fig:reduction}
-  \end{figure}
-
-  \providecommand{\hp}{\ensuremath{h_\text{\rm new}}}
-  Let $x_v$ be an observed variable with parents $\Pa(x_v)$ and children $\text{Ch}(x_v)$.
-  Consider the following transformation.
-  Replace $x_v$ with a new hidden variable \hp\ with the same
-  parents $\Pa(x_v)$ and children $\text{Ch}(x_v) \union \{x_{v_1}, x_{v_2}, x_{v_3}\}$,
-  where $x_{v_1},x_{v_2},x_{v_3}$ are three copies of $x_v$
-  (\figureref{reduction}).
-  Define $\Pr(\hp \mid \Pa(x_v)) = \Pr(x_v \mid \Pa(x_v))$ and
-  $\Pr(x_{v_j} \mid \hp) = I$.
-  Then, there is a one-to-one correspondence between every value of
-  $\hp$ and $x_v$. Consequently, for any clique $\sC \contains \hp$, the
-  parameters in the original graphical model can be obtained by
-  substituting $\hp$ with $x_v$.
-
-  We apply this procedure for all non-leaf observed variables.
-  This procedure also applies straightforwardly for undirected graphical
-  models, considering the neighbors $\sN(x_v)$ instead of its parents
-  and children.
-\end{proof}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Bottlenecks}
+\section{Bottlenecks}
+\label{sec:bottlenecks}
 
-In this section, we describe how tensor factorization
-can be used to reveal information about the hidden
-variables \citep{anandkumar13tensor}.  The key notion is that of a bottleneck:
+We start by trying to reveal some information about the hidden variables
+that will be used by subsequent sections.
+Specifically, we review how
+the tensor factorization method of \citet{anandkumar13tensor}
+can be used to recover the conditional moments
+$\mOpp{v}{i} = \Pr(x_v \mid h_i)$.
+The key notion is that of a bottleneck:
 
 \begin{definition}[Bottleneck]
+  \label{def:bottleneck}
   A hidden variable $h_i$ is said to be a \emph{bottleneck} if there
   exists three observed variables (views), $x_{v_1}, x_{v_2}, x_{v_3}$
   that are conditionally independent given $h_i$,
@@ -185,15 +193,6 @@ For example, in \figureref{approach}, $x_1^a,x_1^b,x_2^a$ are views of the bottl
 $x_2^a,x_2^b,x_1^b$ are view of the bottleneck $h_2$.  Therefore, the clique
 $\{h_1,h_2\}$ is a bottleneck.  Note that views are allowed to overlap.
 
-%Now define the following property:
-%\begin{property}[Uniformly bottlenecked]
-%  \label{prop:bottleneck}
-%  every hidden variable in $S$ is a bottleneck. 
-%  If every hidden clique $\sC \in \sG$ is uniformly bottlenecked, then we say
-%  that the graph $\sG$ is uniformly bottlenecked as well.
-%\end{property}
-%If every hidden variable is a bottleneck, then we can estimate $\mOpp{v}{i}$
-
 %Intuitively, we need to ensure that every marginal distribution
   %$\Pr(x_v)$ can be separated into $k$ different conditional distributions
   %$\Pr(x_v | h_i)$. 
@@ -201,17 +200,6 @@ The full rank assumption on the conditional moments $\mOpp{v}{i} = \Pr(x_v \mid 
 ensures that all states of $h_i$ ``behave differently''.
 In particular, the conditional distribution of one state cannot be
 a mixture of that of other states.
-%PL: leave vague
-%asks that the conditional distributions are
-%  linearly independent; if this were not the case, the conditional
-%  distribution for a particular latent state could be imitated by the
-%  combination of several other latent states.
-
-%\begin{assumption}
-%\label{asm:full-rank}
-%The conditional moments $\mOpp{1}{1}$, $\mOpp{2}{1}$, $\mOpp{3}{1}$ have full column rank
-%  $k$, and $\pi\oft 1 \succ 0$.
-%\end{assumption}
 
 %\begin{figure}[t]
 %  \label{fig:three-view}
@@ -230,16 +218,6 @@ with views $x_{v_1},x_{v_2},x_{v_3}$.
 Then there exists an algorithm $\TensorFactorize$ that
 returns consistent estimates $\mOpphat{v}{i}$ for each $v \in \{v_1,v_2,v_3\}$.
 \end{theorem}
-
-%\citet{anandkumar12moments} presented a consistent estimator
-  %using the method of moments to learn the parameters of a three-view
-  %mixture model (\figureref{three-view}), an important case of directed
-  %graphical models. %, that sidesteps the local optima problem altogether. 
-%In that model, we have three observed variables $x_1, x_2, x_3$
-  %that are independent conditioned on a hidden variable $h_1$.  
-%The parameters of this model are the prior probabilities $\pi\oft 1 \eqdef
-  %\Pr(h_1) \in \Re^k$ and the conditional moments $\mOpp{i}{1} \eqdef
-  %\Pr(x_i \given h_1) \in \Re^{d \times k}$ for $i \in \{1,2,3\}$.
 
 To simplify notation, consider the example in \figureref{three-view} where $h_1=1,v_1=1,v_2=2,v_3=3$.
 The key idea is that the observed moments $\mO_{12}, \mO_{23}, \mO_{13}$ and
@@ -272,11 +250,11 @@ The other model parameters can be recovered with a few additional matrix operati
 %Recovering the marginals $Z_\sC$ from the conditional moments via $\LearnClique$ is a linear operation and thus also has polynomial sample complexity. 
 However, $\sigma_{k}(\mOpp{v}{i})$ can become extremely
 small if $h_i$ and $x_v$ are connected via many intermediate hidden
-variables.\footnote{To see this, consider a chain-structured graphical model:
-$h_1 \to h_2 \cdots \to h_t \to x_v$. In this example, if
-$\sigma_k(\Pr(h_{i+1} \given h_{i})) \ge \sigma_k$ for each $i = 1,
-\cdots, t-1$, then $\sigma_k(\mOpp{v}{1})$ can be as bad as
-$\sigma_k^t \sigma_k(\mOpp{v}{t})$.}.
+variables.\footnote{To see this, suppose $h_1$ has a view $x_v$ via a chain:
+$h_1 - h_2 \cdots - h_t - x_v$. In this example, if
+$\sigma_k(\Pr(h_{i+1} \given h_{i})) = a_k$ for each $i = 1,
+DEFINE
+\cdots, t-1$, then $\sigma_k(\mOpp{v}{1}) = a_k^t \sigma_k(\mOpp{v}{t})$.}.
 
 % No parameters yet
 The tensor factorization method attacks the heart of the non-convexity
