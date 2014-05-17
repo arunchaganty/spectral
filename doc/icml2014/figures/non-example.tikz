@@ -20,6 +20,7 @@
    \draw[-latex] (h1) -- (x2);
    \draw[-latex] (h1) -- (x3);
 
+   \draw[-latex] (h2) -- (x1);
    \draw[-latex] (h2) -- (x2);
    \draw[-latex] (h2) -- (x3);
    \draw[-latex] (h2) -- (x4);
