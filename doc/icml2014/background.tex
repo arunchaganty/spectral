@@ -38,10 +38,11 @@ Our goal is to produce a parameter estimate $\hat\theta$ that
 
 % Maximum likelihood
 The standard estimation procedure is maximum likelihood:
-  \begin{align*}
+  \begin{align}
+    \label{eqn:unsup}
     L_\text{unsup}(\theta) &\eqdef \sum_{\vx \in \sD} \log p_\theta(\vx)
         =  \sum_{\vx \in \sD} \log \sum_{\vh \in \sH} p_\theta(\vx,\vh).
-  \end{align*}
+  \end{align}
   Maximum likelihood is statistically efficient,
   but in general computationally intractable
   because marginalizing over hidden variables $\vh$ yields a non-convex objective.

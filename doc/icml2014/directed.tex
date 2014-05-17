@@ -148,11 +148,11 @@ then \algorithmref{learnMarginals} recovers the marginals $Z_S = \Pr(\bh_S)$.
 \end{theorem}
 
 \begin{algorithm}
-  \caption{\LearnMarginals~(pseudoinverse version)}
+  \caption{\LearnMarginals~(pseudoinverse)}
   \label{algo:learnMarginals}
   \begin{algorithmic}
     \REQUIRE Hidden subset $S = \{ h_{i_1}, \dots, h_{i_m} \}$ with exclusive views $\sV = \{ x_{v_1}, \dots, x_{v_m} \}$
-    and conditional moments $\mOpp{v_j}{i_j} = \Pr(x_{v_i} \mid h_{i_j})$
+    and conditional moments $\mOpp{v_j}{i_j} = \Pr(x_{v_i} \mid h_{i_j})$.
     \ENSURE Marginals $Z_S = \Pr(\bh_S)$.
       %\STATE Identify exclusive views $\Sx{\sV} = \{x_{v_1}, \dots, x_{v_m}\}$.
       \STATE Return $\mH_S \gets \mO_{\sV}( \mOpp{v_1}{i_i}\pinv, \dots, {\mOpp{v_m}{i_m}}\pinv )$.
