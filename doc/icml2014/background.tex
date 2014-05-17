@@ -164,6 +164,9 @@ There is a one-to-one correspondence between the parameters of the transformed
 and original models.
 \end{lemma}
 
+Finally, for clarity, we will derive our algorithms using exact moments of the true
+distribution $p_{\theta^*}$.  In practice, we would use moments estimated from data $\sD$.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Bottlenecks}
 \label{sec:bottlenecks}
@@ -173,31 +176,31 @@ that will be used by subsequent sections.
 Specifically, we review how
 the tensor factorization method of \citet{anandkumar13tensor}
 can be used to recover the conditional moments
-$\mOpp{v}{i} = \Pr(x_v \mid h_i)$.
+$\mOpp{v}{i} \eqdef \Pr(x_v \mid h_i)$.
 The key notion is that of a bottleneck:
 
 \begin{definition}[Bottleneck]
   \label{def:bottleneck}
-  A hidden variable $h_i$ is said to be a \emph{bottleneck} if there
-  exists three observed variables (views), $x_{v_1}, x_{v_2}, x_{v_3}$
+  A hidden variable $h_i$ is said to be a \emph{bottleneck} if (i) there
+  exists three observed variables (views), $x_{v_1}, x_{v_2}, x_{v_3}$,
   that are conditionally independent given $h_i$,
-  and each $\mOpp{v}{i} \eqdef \Pr(x_v \mid h_i) \in \Re^{d \times k}$ has full column rank $k$
+  and (ii) each $\mOpp{v}{i} \eqdef \Pr(x_v \mid h_i) \in \Re^{d \times k}$ has full column rank $k$
   for each $v \in \{v_1, v_2, v_3\}$.
   %Let $\sV_{h_i}$ denote any set of views for $h_i$.
   We say that a subset of hidden variables $S \subseteq \bh$ is a bottleneck
   if every $h \in S$ is a bottleneck.
-  We say that a graphical model $\sG$ is bottlenecked if all hidden variables
+  We say that a graphical model $\sG$ is bottlenecked if all its hidden variables
   are bottlenecks.
 \end{definition}
-For example, in \figureref{approach}, $x_1^a,x_1^b,x_2^a$ are views of the bottleneck $h_1$;
-$x_2^a,x_2^b,x_1^b$ are view of the bottleneck $h_2$.  Therefore, the clique
+For example, in \figureref{approach}, $x_1^a,x_1^b,x_2^a$ are views of the bottleneck $h_1$,
+and $x_2^a,x_2^b,x_1^b$ are views of the bottleneck $h_2$.  Therefore, the clique
 $\{h_1,h_2\}$ is a bottleneck.  Note that views are allowed to overlap.
 
 %Intuitively, we need to ensure that every marginal distribution
   %$\Pr(x_v)$ can be separated into $k$ different conditional distributions
   %$\Pr(x_v | h_i)$. 
 The full rank assumption on the conditional moments $\mOpp{v}{i} = \Pr(x_v \mid h_i)$
-ensures that all states of $h_i$ ``behave differently''.
+ensures that all states of $h_i$ ``behave differently.''
 In particular, the conditional distribution of one state cannot be
 a mixture of that of other states.
 
@@ -213,25 +216,24 @@ a mixture of that of other states.
 for estimating $\Pr(x_v \mid h_i)$:
   %using the method of moments to learn the parameters of a three-view
 \begin{theorem}[Tensor factorization]
-Let $h_i \in \bh$ be a hidden variable
-with views $x_{v_1},x_{v_2},x_{v_3}$.
+Let $h_i \in \bh$ be a bottleneck with views $x_{v_1},x_{v_2},x_{v_3}$.
 Then there exists an algorithm $\TensorFactorize$ that
-returns consistent estimates $\mOpphat{v}{i}$ for each $v \in \{v_1,v_2,v_3\}$.
+returns consistent estimates of $\mOpp{v}{i}$ for each $v \in \{v_1,v_2,v_3\}$.
 \end{theorem}
 
 To simplify notation, consider the example in \figureref{three-view} where $h_1=1,v_1=1,v_2=2,v_3=3$.
-The key idea is that the observed moments $\mO_{12}, \mO_{23}, \mO_{13}$ and
-  $\mO_{123}$ admit a factorization in terms of parameters:
+The observed moments $\mO_{12}, \mO_{23}, \mO_{13}$ and $\mO_{123}$ can be factorized as follows:
 \begin{align*}
-  \mO_{ij} &= \sum_h {\pi \oft 1}[h] {\mOppt{i}{1}}[h] \otimes {\mOppt{j}{1}}[h] \\ %\quad \forall i,j \in \{1,2,3\} \\
+  \mO_{vv'} &= \sum_h {\pi \oft 1}[h] {\mOppt{v}{1}}[h] \otimes {\mOppt{v'}{1}}[h] \\ %\quad \forall i,j \in \{1,2,3\} \\
   \mO_{123} &= \sum_h {\pi \oft 1}[h] {\mOppt{1}{1}}[h] \otimes {\mOppt{2}{1}}[h] \otimes  {\mOppt{3}{1}}[h].
 \end{align*}
-The algorithm first computes a whitening matrix $W \in
+The $\TensorFactorize$ algorithm first computes a whitening matrix $W \in
   \Re^{d \times k}$ such that $W^\top \mO_{12} W = I_{k \times k}$,
   and uses $W$ to transform $\mO_{123}$ into a symmetric orthogonal tensor.  
-Then a robust tensor power method is applied to extract the eigenvectors
-of the whitened $\mO_{123}$; unwhitening yields the columns of $\mOpp{3}{1}$.
-The other model parameters can be recovered with a few additional matrix operations.
+Then a robust tensor power method is used to extract the eigenvectors
+of the whitened $\mO_{123}$; unwhitening yields the columns of $\mOpp{3}{1}$
+(up to permutation and scaling).
+The other conditional moments can be recovered similarly.
 %  we call $\TensorFactorize$, which transforms estimates of the observed moments 
 %  into estimates of the parameters, $\pi\oft 1, \mOpp{1}{1},
 %  \mOpp{2}{1},\mOpp{3}{1}$ (up to permutation of the columns), provided
@@ -242,34 +244,33 @@ The other model parameters can be recovered with a few additional matrix operati
 %complexity.
 %From \citet{anandkumar13tensor} given the non-degeneracy assumptions
   %\assumptionref{non-degeneracy},
-  We have that $\mOpphat{v}{i}$
-  converges to $\mOpp{v}{i}$ at a rate of $n^{-\frac12}$ with a constant
-  that depends polynomially on the $k$-th singular value of
-  $\mOpp{v}{i}$.
+  The resulting estimate of %$\mOpphat{v}{i}$
+  $\mOpp{v}{i}$ based on $n$ data points converges at a rate of $n^{-\frac12}$ with a constant
+  that depends polynomially on $\sigma_k(\mOpp{v}{i})^{-1}$,
+  the inverse of the $k$-th largest singular value of $\mOpp{v}{i}$.
 % PL: we don't have a crisp theorem (because there's multiple paths), so leave it vague.
 %Recovering the marginals $Z_\sC$ from the conditional moments via $\LearnClique$ is a linear operation and thus also has polynomial sample complexity. 
-However, $\sigma_{k}(\mOpp{v}{i})$ can become extremely
+Note that $\sigma_{k}(\mOpp{v}{i})$ can become quite
 small if $h_i$ and $x_v$ are connected via many intermediate hidden
 variables.\footnote{To see this, suppose $h_1$ has a view $x_v$ via a chain:
 $h_1 - h_2 \cdots - h_t - x_v$. In this example, if
 $\sigma_k(\Pr(h_{i+1} \given h_{i})) = a_k$ for each $i = 1,
-DEFINE
-\cdots, t-1$, then $\sigma_k(\mOpp{v}{1}) = a_k^t \sigma_k(\mOpp{v}{t})$.}.
+\cdots, t-1$, then $\sigma_k(\mOpp{v}{1}) = a_k^t \sigma_k(\mOpp{v}{t})$.}
 
 % No parameters yet
 The tensor factorization method attacks the heart of the non-convexity
   in latent-variable models, providing some information about the hidden variables
   in the form of the conditional moments $\mOpp{v}{i} = \Pr(x_v \mid h_i)$.
-  Note that $\TensorFactorize$ only looks at the conditional independence structure
+  Note that $\TensorFactorize$ only examines the conditional independence structure
   of the graphical model, not its parametrization.
-  If $v$ is the single parent of $i$ (e.g., $\Pr(x_1^a \mid h_1)$ in \figureref{approach}),
-  then this conditional moment is a parameter of the model.
-  If not (e.g., $\Pr(x_2^a \mid h_1)$), then this is not a parameter.
-  Furthermore, there are some parameters (e.g., $\Pr(h_4 \mid h_2, h_3)$) which are
-  are still not recovered.
+  If $i$ is the single parent of $v$ (e.g., $\Pr(x_1^a \mid h_1)$ in \figureref{approach}),
+  then this conditional moment is a parameter of the model,
+  but this is in general not the case (e.g., $\Pr(x_2^a \mid h_1)$).
+  Furthermore, there are other parameters (e.g., $\Pr(h_4 \mid h_2, h_3)$) which we do
+  not have a handle on yet.
   In general, there is a gap between the conditional moments
   and the model parameters,
-  something we will address in the next section.
+  something we will address in the next two sections.
 
   %In the next two sections,
   %we will see how to use this result to estimate directed (Section~\ref{sec:directed})
