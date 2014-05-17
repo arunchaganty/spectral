@@ -1,3 +1,4 @@
+% vim:ft=tex
 % Macros to help with writing slides
 %
 
@@ -62,6 +63,13 @@
 \tikzstyle{node}=[circle,minimum size=2em,fill=white,draw=black]
 \tikzstyle{obsnode}=[circle,minimum size=2em,fill=gray!50,draw=black]
 \tikzstyle{inactive}=[opacity=0.3]
+\tikzstyle{squiggle}=[line join=round, decorate, 
+  decoration={
+    zigzag,
+    segment length=4,
+    amplitude=.5,post=lineto,
+    post length=2pt
+  }]
 
 \newcommand{\point}[2]{%
   \begin{pgfonlayer}{debug}

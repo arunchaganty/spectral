@@ -5,18 +5,29 @@
 \usepackage{import}
 \usepackage{scabby-diag}
 
+\providecommand{\TensorFactorize}{\textsc{TensorFactorize}}
+\providecommand{\LearnMarginals}{\textsc{LearnMarginals}}
+\providecommand{\LearnClique}{\textsc{LearnClique}}
+\providecommand{\LearnParameters}{\textsc{LearnParameters}}
+
 \begin{document}
 
 \begin{tikzpicture}
 
 % Import grid.
 %\node[scale=0.9] (step0) at (0,0) {\input{figures/grid.tikz}};
-\node[scale=0.9] (step1) at (0cm,0cm) {\input{grid-outline.tikz}};
-\node[scale=0.70] at (0,-2.5cm) {\objw{5cm}{\textbf{Step 1:} Estimate conditional moments for each bottleneck.}};
-\node[scale=0.6] (step2) at (4cm,0cm) {\input{factors.tikz}};
-\node[scale=0.70] at (4cm,-2.5cm) {\objw{5cm}{\textbf{Step 2:} Optimize the composite marginal likelihood of each clique.}};
+\node[scale=0.80] (step1) at (0cm,0cm) {\input{grid-outline.tikz}};
+%\node[scale=0.70] at (0,-2.5cm) {\objw{5cm}{\textbf{Step 1:} Estimate conditional moments for each bottleneck.}};
+\node[scale=0.70] at (0,-2cm) {\objw{4cm}{\centering \textbf{1.} \TensorFactorize}};
+\node[scale=0.4] (step2) at (3cm,0cm) {\input{factors.tikz}};
+%\node[scale=0.70] at (4cm,-2.5cm) {\objw{5cm}{\textbf{Step 2:} Optimize the composite marginal likelihood of each clique.}};
+\node[scale=0.70] at (2.75cm,-2cm) {\objw{4cm}{\centering \textbf{2.} \LearnMarginals}};
 
-\draw[-latex] (step1) -- (step2);
+\node[scale=1.4] (step3) at (5.5cm,0cm) {$\theta$};
+\node[scale=0.70] at (5.5cm,-2cm) {\objw{4cm}{\centering \textbf{3.} \LearnParameters}};
+
+\draw[-latex] ($(step1.east) - (0.2cm,0)$) -- (step2);
+\draw[-latex] ($(step2.east) + (0.2cm,0)$) -- (step3);
 
 \end{tikzpicture}
 

@@ -1,6 +1,24 @@
 \section{Exclusive views}
 \label{sec:directed}
 
+\begin{figure}
+  \centering
+  \subfigure[Three-view mixture model] {
+    \includegraphics[width=0.45\columnwidth]{figures/three-view.pdf}
+    \label{fig:three-view}
+  }
+  \subfigure[Exclusive views]{
+    \includegraphics[width=0.45\columnwidth]{figures/exclusive-views.pdf}
+    \label{fig:exclusive-views}
+  }
+
+  \caption{(a) The canonical three-view mixture model can be estimated consistently
+  using tensor factorization \citep{anandkumar13tensor}.
+  (b) An example of exclusive views for a bi-dependent subset $S$.
+  }
+\end{figure}
+
+
 %In this section, we will develop a consistent parameter estimate for a class of directed graphical models.
 %The conditional moments $\mOpp{v}{i} \eqdef \Pr(x_v \mid h_i)$
 %recovered from {\TensorFactorize}, are not the underlying parameters.
