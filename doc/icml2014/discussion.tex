@@ -3,42 +3,48 @@
 
 % Summarize paper
 For latent-variable models,
-there exists a tension between
+there has been tension between
 local optimization of likelihood,
-which is broadly applicable but has no global theoretical guarantees,
-and the method of moments, which provides consistent estimators
+which is broadly applicable but offers no global theoretical guarantees,
+and the spectral method of moments, which provides consistent estimators
 but are limited to models with special structure.
 The purpose of this work is to show that the two methods
 can be used synergistically to produce consistent estimates
 for a broader class of directed and undirected models.
-A notable example are undirected log-linear models with hidden variables of
-high treewidth.
-% Classes of models
+%for example, undirected log-linear models with high treewidth.
 
-% Repeat
-%Our approach can be summarized: (i) perform tensor factorization \citep{anandkumar13tensor} to
-%obtain information about each hidden variable in the form of conditional moments;
-%In some sense, the presence of these views helps tie down the hidden
-%  variables to the data. 
-%(ii) use composite likelihood to estimate the marginal distributions of latent variables;
-%and (iii) in the case of undirected models,
-%use the marginal distributions to formulate a convex optimization to
-%recover the model parameters.
-
-% Bottleneck is key
+% Bottleneck is key: previous work is preprocessing
 Our approach provides consistent estimates for
-models in which each hidden variable is a ``bottleneck''---that is,
-it has three conditionally independent observations
-(although the dependence on the observations could be quite complex as a function of the parameters).
+a family of models in which each hidden variable is a \emph{bottleneck}---that is,
+it has three conditionally independent observations.
 This bottleneck property of \citet{anandkumar13tensor}
 has been exploited in many other contexts,
 including Latent Dirichlet Allocation \cite{anandkumar12lda},
-parsing models \cite{hsu12identifiability},
+mixture of spherical Gaussians \cite{hsu13spherical},
+probabilistic grammars \cite{hsu12identifiability},
 noisy-or Bayesian networks \cite{halpern2013unsupervised},
 mixture of linear regressions \cite{chaganty13regression},
 and others.
-We also introduce the idea of \emph{exclusive views} (\definitionref{exclusive-views}),
-the key property that allows us to learn the correlation structure between hidden variables.
+Each of these methods can be viewed as ``preprocessing'' the given model into a
+form that exposes the bottleneck or tensor factorization structure.
+The model parameters correspond directly to the solution of the factorization.
+
+% Our work: post-processing
+In contrast, the bottlenecks in our graphical models are given by assumption,
+but the conditional distribution of the observations given the bottleneck
+can be quite complex.
+Our work can therefore be viewed as ``postprocessing'',
+where the conditional moments recovered from tensor factorization
+are used to further obtain the hidden marginals and eventually the parameters.
+Along the way, we developed the notion of exclusive views and bidependent sets,
+which characterize conditions under which the conditional moments can reveal
+the dependency structure between hidden variables.
+We also made use of custom likelihood functions which were constructed to be
+easy to optimize.
+
+%We also show that bottlenecks lead to a notion of \emph{exclusive views}
+%(\definitionref{exclusive-views}), the key property that allows us to learn the
+%correlation structure between hidden variables.
 
 %Much recent work on method of moments for estimating latent-variable models
 %has focused on increasing applicability to broader range of models,
@@ -56,12 +62,11 @@ the key property that allows us to learn the correlation structure between hidde
 %  features can be split into two uncorrelated sets.
 
 % Correlation structure
-Other authors, e.g \citet{anandkumar12lda, anandkumar2013linear,
-  halpern2013unsupervised}, learn parameters for models outside this
-  family, but they do so with some knowledge of the correlation structure
-  between hidden variables. 
-In a preprocessing step, they ``subtract'' out the correlations and
-  recover a graph that is bottlenecked.
+%Other authors \citep{anandkumar12lda, anandkumar2013linear,
+%  halpern13noisyor} learn parameters for models outside our
+%  family, but they do so with additional knowledge of the correlation structure
+%  between hidden variables, allowing them to ``subtract'' out these correlations and
+%  obtain a graph that is bottlenecked.
 % TOO BOLD
 %Thus, while \propertyref{bottleneck} is much stronger than
 %  \propertyref{exclusive-views}, we expect that without any knowledge of
@@ -73,23 +78,23 @@ In a preprocessing step, they ``subtract'' out the correlations and
 %  three-view mixture model.
 %
 %\todo{What about Mossel and Roch?}
-For example,
-\citet{anandkumar12lda} are able to recover parameters for correlated
-  discrete mixtures, e.g. latent Dirichlet allocation; their approach
-  follows that of the three-view mixture model, with a preprocessing step
-  that subtracts the correlation between the views.
-\citet{anandkumar2013linear} study a special family of Bayesian networks
-  in which the observed variables are linearly related to a sparse set of
-  hidden variables. Once again, the key step is to identify the
-  correlations between observed variables and exclude them from the views.
-\citet{halpern2013unsupervised} propose an algorithm to recover factors for
-  a more densely connected bipartite noisy-or network; they also use
-  bottlenecks to learn parameters, but exploit properties of the model
-  to negate correlations from learned edges, allowing for more
-  bottlenecks to be discovered. 
-Our work makes a different tradeoff: we do not assume any special correlation structure,
-but do rely on every hidden variable having an exclusive view so that we can
-learn the underlying structure.
+%For example,
+%\citet{anandkumar12lda} are able to recover parameters for correlated
+%  discrete mixtures, e.g. latent Dirichlet allocation; their approach
+%  follows that of the three-view mixture model, with a pre-processing step
+%  that subtracts the correlation between the views.
+%\citet{anandkumar2013linear} study a special family of Bayesian networks
+%  in which the observed variables are linearly related to a sparse set of
+%  hidden variables. Once again, the key step is to identify the
+%  correlations between observed variables and exclude them from the views.
+%\citet{halpern13noisyor} propose an algorithm to recover factors for
+%  a more densely connected bipartite noisy-or network; they also use
+%  bottlenecks to learn parameters, but exploit properties of the model
+%  to negate correlations from learned edges, allowing for more
+%  bottlenecks to be discovered. 
+%Our work makes a different tradeoff: we do not assume any special correlation structure,
+%but do rely on every hidden variable having an exclusive view so that we can
+%learn the underlying structure.
 
 %work to settings that do not meet the
   %criterion \propertyref{bottleneck}, but rely on knowing more about
@@ -101,33 +106,32 @@ learn the underlying structure.
 
 % Observable operator
 Another prominent line of work in the method of moments community has
-  focused on recovering an {\em observable operator
-  representation} of the observations.
+  focused on recovering {\em observable operator
+  representations} \citep{jaeger2000observable,hsu09spectral,bailly2010spectral,balle12automata}.
   These methods allow prediction of new observations, but do not
-  identify the actual parameters of the model, which makes them difficult to use
+  recover the actual parameters of the model, making them difficult to use
   in conjunction with likelihood-based models. % which are driven by parameters.
-\citet{song2011spectral} propose an algorithm to learn an observable
+\citet{song2011spectral} proposed an algorithm to learn observable
   operator representations for latent tree graphical models, like the
   one in \figureref{examples-tree}, assuming the graph is bottlenecked. 
 Their approach is similar to our first step of learning conditional moments,
-  but only consider trees.
-\citet{parikh12spectral} extend this approach to general graphical
-  models which are bottlenecked, but consider the latent
-  junction tree representation. 
+  but they only consider trees.
+\citet{parikh12spectral} extended this approach to general graphical
+  models which are bottlenecked using a latent junction tree representation. 
   Consequently, the size of the observable representations is exponential in
   the treewidth.
   In contrast, our algorithm only constructs moments of the order of size of the cliques
-  (and neighborhoods for pseudolikelihood), which can be much smaller.
+  (and sub-neighborhoods for pseudolikelihood), which can be much smaller.
 For example, an $n\times n$ grid model has a treewidth of $n$, but each
   clique is of size at most $2$ and the degree is at most $4$.
 %In some sense, an observable operator re-formulation of our algorithm
   %subsumes this work.
 
 % Identifiability
-An interesting direction of study is to examine the necessity of the bottleneck
-property.  Certainly, to some extent, three views are necessary to ensure
+An interesting direction is to examine the necessity of the bottleneck
+property.  Certainly, more than two views is necessary to ensure
 identifiability \cite{kruskal77three}, but requiring \emph{each} hidden variable to be
-a bottleneck is still stronger than we would like.  We hope that by judiciously
-leveraging likelihood-based methods in conjunction with the method of moments
+a bottleneck is stronger than we would like.  We hope that by judiciously
+leveraging likelihood-based methods in conjunction with the method of moments,
 we can generate new hybrid techniques for estimating
 an even richer class of latent-variable models.
