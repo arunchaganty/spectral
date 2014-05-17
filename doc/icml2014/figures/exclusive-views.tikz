@@ -18,10 +18,10 @@
 
   \draw (h1) -- (h2) -- (h3) -- (h4) -- (h1);
 
-  \draw[->,style=squiggle] (h1) -- (x1);
-  \draw[->,style=squiggle] (h2) -- (x2);
-  \draw[->,style=squiggle] (h3) -- (x3);
-  \draw[->,style=squiggle] (h4) -- (x4);
+  \draw[-latex,style=squiggle] (h1) -- (x1);
+  \draw[-latex,style=squiggle] (h2) -- (x2);
+  \draw[-latex,style=squiggle] (h3) -- (x3);
+  \draw[-latex,style=squiggle] (h4) -- (x4);
 
   \node[] at ($(0,0) + (-45:1.0cm)$) {$S$};
 
