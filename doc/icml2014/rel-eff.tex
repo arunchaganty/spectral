@@ -7,11 +7,13 @@ estimators, $\Sigmamom$ and $\Sigmaml$ respectively.
 In this section, we will use the asymptotic variances to compare the two
 estimators for two special cases.
 
-We look at relative efficiency as a quantitative measure: $e^\mom
+%We look at relative efficiency as a quantitative measure:
+Recall that the relative efficiency of the pseudoinverse estimator with respect to the composite likelihood estimator is
+$e^\mom
 = \frac{1}{\bbk} \Tr(\Sigmaml \Sigmamomi)$, where $\bbk = k-1$. The
-Cram\'{e}r-Rao lower bound gives us that $\Sigmaml \preceq \Sigmamom$:
+Cram\'{e}r-Rao lower bound tells us that $\Sigmaml \preceq \Sigmamom$:
 thus the relative efficiency $e^\mom$ lies between $0$ and $1$. When
-$e^\mom = 1$, the pseudo-inverse estimator is said to be efficient.
+$e^\mom = 1$, the pseudoinverse estimator is said to be efficient.
 
 We will make repeated use of the Sherman-Morrison formula to simplify
 matrix inverses:
@@ -21,17 +23,21 @@ matrix inverses:
 where $A$ is an invertible matrix, $u, v$ are vectors and $\alpha$ is
 a scalar constant. Unless otherwise specified, we $\|u\|$ to denote the
 Euclidean norm of a vector $u$.
+\todo{remove subscripts from the proofs}
 
-First, let us consider the case where $d = k$,
+\todo{replace condition with $\tO$ is full rank}
+
+First, let us consider the case where $d = k$:
 \begin{lemma}[Relative efficiency when $d = k$]
   When $d = k$, the asymptotic variances of the pseudoinverse and
   composite likelihood estimators are equal, $\Sigmaml = \Sigmamom$, and the relative efficiency
   is $1$.
 \end{lemma}
 \begin{proof}
-Under our assumptions, when $d=k$, $\tO$ is invertible. This allows us
+Under our assumptions that $\tO$ has full column rank, when $d=k$, $\tO$ is invertible. This allows us
 to simplify the expression of the asymptotic variance of the composite
-likelihood estimator, $\Sigmaml$, as follows, 
+likelihood estimator, $\Sigmaml$, as follows:
+\todo{use left and right parens}
 \begin{align*}
     \Sigmaml 
       &= \left( \tO^\top(\tD\inv + \td\inv \ones \ones^\top) \tO \right)\inv \\
@@ -52,19 +58,19 @@ uniform distribution.
 
 \begin{lemma}[Relative efficiency with uniform observed moments]
   Let the observed moments, $\mu$, be uniform, $\mu = \frac{1}{d} \ones$. 
-  The efficiency of the pseudo-inverse estimator is, 
+  The efficiency of the pseudoinverse estimator is, 
   \begin{align}
     e^\mom &= 
     1 - \frac{1}{\bbk}\frac{\|\ones_U\|_2^2}{1 + \|\ones_U\|_2^2} \left( 1 - \frac{1}{d - \|\ones_U\|_2^2} \right),
   \end{align}
-  where $\ones_U \eqdef \tOi\tO \ones$, the projection of $\ones$ onto
+  where $\ones_U \eqdef \tO\tOi \ones$, the projection of $\ones$ onto
   the column space of $\tO$. Note that $0 \le \|\ones_U\|^2_2 \le \bbk$.
 
   When $\|\ones_U\|_2 = 0$, the pseudoinverse estimator is efficient:
   $e^\mom = 1$. When $\|\ones_U\|_2 > 0$ and $d > k$, the pseudoinverse
   estimator is strictly inefficient. 
   In particular, if $\|\ones_U\|^2_2
-    = k-1$, and we get:
+    = \bbk$, and we get:
     \begin{align}
       e^\mom 
       &= 1 - \frac{1}{k} \left(1 - \frac{1}{1 + d - k} \right) \label{eqn:k-eff}.
@@ -232,7 +238,7 @@ Note that $\tO\tOi$ is a projection matrix and thus, $\tO\tOi
 
 Note that $\ones_U$ is the projection of $\ones$ on to a $k$-dimensional
 subspace, thus, $0 \le \|\ones_U\|^2_2 \le k$.
-When $\ones_U = \zeros$, the relative efficiency $e^\mom$ is $1$: the pseudo-inverse estimator is efficient. When $\|\ones_U\| > 0$ and $d > k$, the pseudo-inverse estimator is strictly inefficient.
+When $\ones_U = \zeros$, the relative efficiency $e^\mom$ is $1$: the pseudoinverse estimator is efficient. When $\|\ones_U\| > 0$ and $d > k$, the pseudoinverse estimator is strictly inefficient.
 
 Consider the case when $\|\ones_U\|^2 = \bbk$. Then, the relative efficiency
 is,
@@ -467,7 +473,7 @@ If $k > d/2$, the efficiency attains its minimum when $\|\ones_U\|^2
 
 
 
-% ARUN: This is wrong because pseudo-inverses don't work that way.
+% ARUN: This is wrong because pseudoinverses don't work that way.
 %
 % The above expression is the inversion of an invertible matrix plus
 % a rank-one component. The Sherman-Morrison formula allows us to write

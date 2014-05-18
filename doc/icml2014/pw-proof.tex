@@ -2,65 +2,66 @@
 \label{app:pw-proof}
 
 In \sectionref{piecewise}, we compared the asymptotic variance
-  $\Sigma^\ml_\sC$ of the composite likelihood estimator for a clique
-  $\sC$, with that of the pseudoinverse estimator, $\Sigma^\mom_\sC$. 
+  $\Sigma^\ml_S$ of the composite likelihood estimator
+  with that of the pseudoinverse estimator, $\Sigma^\mom_S$,
+  for a subset of hidden variables $S$.
   Now we will derive these asymptotic variances in detail.
 %In this part, we will derive the asymptotic variances of these two
   %estimators and compare their relative efficiencies.
 
 Recall, that in \sectionref{piecewise} we simplified notation by taking
-  $m=1$ and flattening the moments $M_\sV$ and hidden marginals $Z_\sC$
+  $m=1$ and flattening the moments $M_\sV$ and hidden marginals $Z_S$
   into vectors $\mu \in \Re^d$ and $z \in \Re^k$ respectively. The
   conditional moments, $O$, is a now matrix $O \in \Re^{d\times k}$ and
   the hidden marginals $z$ and observed marginals $\mu$ are related via
-  $kmu = O z$.
-
-Recall also that we reparameterized $z \in \Delta_{k-1}$ and $\mu \in
-  \Delta_{d-1}$ using $\tz \in \Re^{k-1}$ and $\tm \in \Re^{d-1}$ to avoid
-  constraints:
-\begin{align*}
-  \mu &= 
-    \begin{bmatrix}
-      \tm \\
-      1 - \ones^\top\tm
-    \end{bmatrix} 
-  &
-  z &= 
-    \begin{bmatrix}
-      \tz \\
-      1 - \ones^\top\tz
-    \end{bmatrix}.
-\end{align*}
-
-Finally, we showed that $\tz$ and $\tm$ are related as,
-\begin{align*}
-  \tm &= \tO \tz +  O_{\neg d,k},
-\end{align*}
-where $\tO \eqdef O_{\neg d,\neg k} - O_{\neg d, k} \ones^\top$.
-
-We also describe $\mu$ in terms of $\tz$,
-\begin{align*}
-  \mu 
-  &= 
-    \begin{bmatrix}
-      \tm \\
-      1 - \ones^\top\tm
-    \end{bmatrix} \\
-    &=
-    \begin{bmatrix}
-      \tO \\
-      - \ones^\top\tO
-    \end{bmatrix} \tz 
-    + 
-    \begin{bmatrix}
-      O_{\neg d, k} \\
-      1 - \ones^\top O_{\neg d, k}
-    \end{bmatrix}.
-\end{align*}
-
-With this reparameterization, we are ready to derive the asymptotic
-variances of the two estimators.
-
+  $\mu = O z$.
+%
+%Recall also that we reparameterized $z \in \Delta_{k-1}$ and $\mu \in
+%  \Delta_{d-1}$ using $\tz \in \Re^{k-1}$ and $\tm \in \Re^{d-1}$ to avoid
+%  constraints:
+%\begin{align*}
+%  \mu &= 
+%    \begin{bmatrix}
+%      \tm \\
+%      1 - \ones^\top\tm
+%    \end{bmatrix} 
+%  &
+%  z &= 
+%    \begin{bmatrix}
+%      \tz \\
+%      1 - \ones^\top\tz
+%    \end{bmatrix}.
+%\end{align*}
+%
+%Finally, we showed that $\tz$ and $\tm$ are related as,
+%\begin{align*}
+%  \tm &= \tO \tz +  O_{\neg d,k},
+%\end{align*}
+%where $\tO \eqdef O_{\neg d,\neg k} - O_{\neg d, k} \ones^\top$.
+%
+%We also describe $\mu$ in terms of $\tz$,
+%\begin{align*}
+%  \mu 
+%  &= 
+%    \begin{bmatrix}
+%      \tm \\
+%      1 - \ones^\top\tm
+%    \end{bmatrix} \\
+%    &=
+%    \begin{bmatrix}
+%      \tO \\
+%      - \ones^\top\tO
+%    \end{bmatrix} \tz 
+%    + 
+%    \begin{bmatrix}
+%      O_{\neg d, k} \\
+%      1 - \ones^\top O_{\neg d, k}
+%    \end{bmatrix}.
+%\end{align*}
+%
+%With this reparameterization, we are ready to derive the asymptotic
+%variances of the two estimators.
+%
 \begin{lemma*}[Asymptotic variances]
   The asymptotic variances of the pseudoinverse estimator $\hat z^\mom$
   and composite likelihood estimator $\hat z^\ml$ are:
@@ -77,7 +78,11 @@ variances of the two estimators.
   First, let us look at the
   asymptotic variance of the pseudoinverse estimator
   $\hat{z}^\mom = \tOi (\htm - O_{\neg d,k})$. 
-  Note that $\mu$ is a multinomial distribution, hence the variance of
+  Note that $\hat\mu = \frac1n\sum_{i=1}^n x_i$, where each $x_i$ is an independent draw from the multinomial distribution $\mu$.
+  Hence the variance of
+    $\hat\mu$ is $(D - \mu\mu^\top)$ where $D \eqdef \diag(\mu)$.
+  Recall that $\htm$ is just the first $d-1$ entries of $\hat\mu$, so
+  the variance of
     $\htm$ is $(\tD - \tm \tm^\top)$ where $\tD \eqdef \diag(\tm)$.
   Since $\tz$ is just a linear transformation of $\tm$,
   the asymptotic variance of $\hat{z}^\mom$ is:
@@ -87,7 +92,7 @@ variances of the two estimators.
       %&= \tOi \tD \tOit - \tOi \tD \ones \ones^\top \tD \tOit,
   \end{align*}
   
-  Now, let us look at the variance of the piecewise estimator.  Using
+  Now, let us look at the variance of the composite likelihood estimator.  Using
   the delta-method \cite{vaart98asymptotic} we have that the asymptotic
   variance of 
   %$\widehat{z}^\ml = \argmin_{\tz \in [0,1]^{k-1}} \hat\E[-\ell(x)]$ is,
@@ -245,7 +250,7 @@ From \equationref{lhood-grad} and \equationref{lhood-hess}, we get
         &= \hphantom{-} 
           \tOt \tD\inv \tO + \td\inv \tOt \ones \ones^\top \tO,
   \end{align*}
-where $\tD = \diag(\tm)$ and $\td = 1 - \ones^\top \tm$, the diagonal
+where $\tD = \diag(\tm)$ and $\td = 1 - \ones^\top \tm$ are the diagonal
   elements of $D$.
 As expected, $\E[\grad^2 \ell(x)] = -\Var [\grad \ell(x)]$ because
 $\hat{z}$ is a maximum likelihood estimator. 
@@ -261,7 +266,7 @@ Finally, the asymptotic variance of $\Sigmaml$ is,
 \end{align*}
 
 Given our assumptions, $\ones \succ \mu \succ \zeros$. Consequently,
-$\tD$ is invertible and the asymptotic variance is finite and our
-estimator is consistent as well. 
+$\tD$ is invertible and the asymptotic variance is finite.
+%and our estimator is consistent as well. 
 \end{proof}
 

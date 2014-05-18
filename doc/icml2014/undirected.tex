@@ -190,9 +190,9 @@ in the optimization of the pseudolikelihood objective.
 
 Note that our pseudolikelihood-based approach
 does depend exponentially on the size of the sub-neighborhoods,
-which could be larger than the largest clique size.
+which could be exceed the largest clique size.
 Therefore,
-for this approach to be effective,
+%for our approach to be effective,
 each node essentially should have low degree or locally exhibit a lot of
 conditional independence.
 %While this method is only viable for graphs with small sub-neighboof low
@@ -201,5 +201,4 @@ On the positive side, we can handle graphical models with high treewidth;
 neither sample nor computational complexity necessarily depends on the treewidth.
 %For example, for an $n \times n$ grid model, the treewidth is $n$,
 %but it is the degree (only 4 in this case) that governs the computational complexity.
-For example, an $n\times n$ grid model has a treewidth of $n$, but each
-  clique is of size at most $2$ and the degree is at most $4$.
+For example, an $n\times n$ grid model has a treewidth of $n$, but the degree is at most $4$.
