@@ -32,7 +32,7 @@ run:
 
 split: $(OUTPUT).pdf
 	pdfjam --outfile main.pdf $(OUTPUT).pdf 1-9
-	pdfjam --outfile appendix.pdf $(OUTPUT).pdf 10
+	pdfjam --outfile appendix.pdf $(OUTPUT).pdf 10-12
 
 clean:
 	rm -rf *.{aux,bbl,blg,log,out}

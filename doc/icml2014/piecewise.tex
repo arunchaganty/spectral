@@ -153,8 +153,8 @@ where $\ell(x; \tz) = \log(\mu[x])$ is the log-likelihood function.
 First, we compute the asymptotic variances of the two estimators.
 \begin{lemma}[Asymptotic variances]
   \label{lem:mom-pw-variance}
-  The asymptotic variances of the pseudoinverse estimator $\hat z^\mom$
-  and composite likelihood estimator $\hat z^\ml$ are:
+  The asymptotic variances of the pseudoinverse estimator $\htz^\mom$
+  and composite likelihood estimator $\htz^\ml$ are:
   \begin{align*}
     \Sigmamom 
       &= \tOi (\tD - \tm \tm^\top) \tOit, \\
@@ -179,10 +179,10 @@ $\Sigmaml \preceq \Sigmamom$. This implies that the relative efficiency,
 $e^\mom$, lies between $0$ and $1$, and when $e^\mom = 1$, the
 pseudoinverse estimator is said to be (asymptotically) efficient.  
 To gain intuition, let us explore two special cases:
-
-\begin{lemma}[Relative efficiency when $d = k$]
-  When $d = k$, the asymptotic variances of the pseudoinverse and
-  composite likelihood estimators are equal, $\Sigmaml = \Sigmamom$, and the relative efficiency is $1$.
+\begin{lemma}[Relative efficiency when $\tO$ is invertible]
+  When $\tO$ is invertible, the asymptotic variances of the
+  pseudoinverse and composite likelihood estimators are equal, $\Sigmaml
+  = \Sigmamom$, and the relative efficiency is $1$.
 \end{lemma}
 
 \begin{lemma}[Relative efficiency with uniform observed marginals]
@@ -218,8 +218,8 @@ moments are uniformly distributed.
 %pseudoinverse estimator is more efficient for larger $k$.  
 For instance, when $k = 2$ and $d \to \infty$, the efficency of the pseudolikelihood
 estimator is half that of the composite likelihood estimator.
-Empirically, we observe that the composite likelihood estimator leads to more
-accurate estimates even in general non-asymptotic regimes (see \figureref{cl-hmm}).
+Empirically, we observe that the composite likelihood estimator also leads to more
+accurate estimates in general non-asymptotic regimes (see \figureref{cl-hmm}).
 
 % \begin{proof}
 %   The above two results follow by direct application of the delta-method

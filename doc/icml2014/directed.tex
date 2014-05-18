@@ -5,7 +5,7 @@
   \centering
   \subfigure[Bottleneck] {
     \includegraphics[width=0.35\columnwidth]{figures/three-view.pdf}
-    \label{fig:three-view}
+    \label{fig:bottleneck}
   }
   \hspace{2em}
   \subfigure[Exclusive views]{
@@ -96,7 +96,7 @@ Let $S \subseteq \bh$ be a subset of hidden variables.
 We say $h_i \in S$ has an exclusive view $x_v$
   if the two conditions hold:
   (i) there exists some observed variable
-  $x_{v}$ which is conditionally independent of the others $S \backslash \{ h_i \}$ given $h_i$,
+  $x_{v}$ which is conditionally independent of the others $S \backslash \{ h_i \}$ given $h_i$ (\figureref{exclusive-views}),
   and (ii) the conditional moment matrix $\mOpp{v}{i} \eqdef
   \Pr(x_{v} \mid h_i)$ has full column rank $k$ and can be recovered.
 We say that $S$ has the \emph{exclusive views property} if every $h_i \in S$ has an exclusive view.
@@ -146,7 +146,7 @@ obtained via renormalization.
 If $S \subseteq \bx$ is a subset of hidden variables with the exclusive views property,
 then \algorithmref{learnMarginals} recovers the marginals $Z_S
 = \Pr(\bh_S)$ up to a global relabeling of the hidden variables
-determined by the labeling in $\TensorFactorize$.
+determined by the labeling from $\TensorFactorize$.
 \end{theorem}
 
 \begin{algorithm}

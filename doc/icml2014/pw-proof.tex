@@ -63,8 +63,8 @@ Recall, that in \sectionref{piecewise} we simplified notation by taking
 %variances of the two estimators.
 %
 \begin{lemma*}[Asymptotic variances]
-  The asymptotic variances of the pseudoinverse estimator $\hat z^\mom$
-  and composite likelihood estimator $\hat z^\ml$ are:
+  The asymptotic variances of the pseudoinverse estimator $\htz^\mom$
+  and composite likelihood estimator $\htz^\ml$ are:
   \begin{align*}
     \Sigmamom 
       &= \tOi (\tD - \tm \tm^\top) \tOit, \\
@@ -85,7 +85,7 @@ Recall, that in \sectionref{piecewise} we simplified notation by taking
   the variance of
     $\htm$ is $(\tD - \tm \tm^\top)$ where $\tD \eqdef \diag(\tm)$.
   Since $\tz$ is just a linear transformation of $\tm$,
-  the asymptotic variance of $\hat{z}^\mom$ is:
+  the asymptotic variance of $\htz^\mom$ is:
   \begin{align*}
       \Sigmamom &= \tOi \Var(\htm) \tOit \\
       &= \tOi (\tD - \tm \tm^\top) \tOit.
@@ -97,7 +97,7 @@ Recall, that in \sectionref{piecewise} we simplified notation by taking
   variance of 
   %$\widehat{z}^\ml = \argmin_{\tz \in [0,1]^{k-1}} \hat\E[-\ell(x)]$ is,
   % Definitely not optimizing over the whole set
-  $\hat{z}^\ml = \argmax_{\tz} \hat\E[\ell(x ; \tz)]$ is,
+  $\htz^\ml = \argmax_{\tz} \hat\E[\ell(x ; \tz)]$ is,
   \begin{align*}
     \Sigmaml &= \E[\grad^2 \ell(x ; \tz^*)]^{-1} \Var[\grad \ell(x ; \tz^*)] \E[\grad^2 \ell(x ; \tz^*)]^{-1},
   \end{align*}

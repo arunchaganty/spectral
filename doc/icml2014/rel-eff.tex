@@ -23,31 +23,27 @@ matrix inverses:
 where $A$ is an invertible matrix, $u, v$ are vectors and $\alpha$ is
 a scalar constant. Unless otherwise specified, we $\|u\|$ to denote the
 Euclidean norm of a vector $u$.
-\todo{remove subscripts from the proofs}
 
-\todo{replace condition with $\tO$ is full rank}
-
-First, let us consider the case where $d = k$:
-\begin{lemma}[Relative efficiency when $d = k$]
-  When $d = k$, the asymptotic variances of the pseudoinverse and
-  composite likelihood estimators are equal, $\Sigmaml = \Sigmamom$, and the relative efficiency
-  is $1$.
+First, let us consider the case where $\tO$:
+\begin{lemma}[Relative efficiency when $\tO$ is invertible]
+  When $\tO$ is invertible, the asymptotic variances of the
+  pseudoinverse and composite likelihood estimators are equal, $\Sigmaml
+  = \Sigmamom$, and the relative efficiency is $1$.
 \end{lemma}
 \begin{proof}
-Under our assumptions that $\tO$ has full column rank, when $d=k$, $\tO$ is invertible. This allows us
-to simplify the expression of the asymptotic variance of the composite
-likelihood estimator, $\Sigmaml$, as follows:
-\todo{use left and right parens}
+  Given that $\tO$ is invertible we can simplify the expression of the
+  asymptotic variance of the composite likelihood estimator, $\Sigmaml$,
+  as follows:
 \begin{align*}
     \Sigmaml 
       &= \left( \tO^\top(\tD\inv + \td\inv \ones \ones^\top) \tO \right)\inv \\
-      &= \tO\inv (\tD\inv - \td\inv \ones \ones^\top)\inv \tO\tinv \\
-      &= \tO\inv (\tD - \frac{\tD \ones \ones^\top \tD}{\td + \ones^\top \tD \ones}) \tO\tinv.
+      &= \tO\inv \left( \tD\inv - \td\inv \ones \ones^\top \right)\inv \tO\tinv \\
+      &= \tO\inv \left( \tD - \frac{\tD \ones \ones^\top \tD}{\td + \ones^\top \tD \ones} \right) \tO\tinv.
 \end{align*}
 Note that $\tD \ones = \tm$ and $\td = 1 - \ones^\top \tm$. This gives us,
 \begin{align*}
     \Sigmaml 
-      &= \tO\inv (\tD - \frac{\tm \tm^\top}{1 - \ones^\top \tm + \ones^\top \tm}) \tO\tinv \\
+      &= \tO\inv \left(\tD - \frac{\tm \tm^\top}{1 - \ones^\top \tm + \ones^\top \tm} \right) \tO\tinv \\
       &= \tO\inv (\tD - \tm \tm^\top) \tO\tinv \\
       &= \Sigmamom.
 \end{align*}
@@ -57,32 +53,32 @@ Next, we consider the case where the observed moments $\mu$ is the
 uniform distribution.
 
 \begin{lemma}[Relative efficiency with uniform observed moments]
-  Let the observed moments, $\mu$, be uniform, $\mu = \frac{1}{d} \ones$. 
+  Let the observed marginals $\mu$ be uniform: $\mu = \frac{1}{d} \ones$. 
   The efficiency of the pseudoinverse estimator is, 
   \begin{align}
     e^\mom &= 
-    1 - \frac{1}{\bbk}\frac{\|\ones_U\|_2^2}{1 + \|\ones_U\|_2^2} \left( 1 - \frac{1}{d - \|\ones_U\|_2^2} \right),
+    1 - \frac{1}{k-1}\frac{\|\ones_U\|_2^2}{1 + \|\ones_U\|_2^2} \left( 1 - \frac{1}{d - \|\ones_U\|_2^2} \right),
   \end{align}
   where $\ones_U \eqdef \tO\tOi \ones$, the projection of $\ones$ onto
-  the column space of $\tO$. Note that $0 \le \|\ones_U\|^2_2 \le \bbk$.
+  the column space of $\tO$. Note that $0 \le \|\ones_U\|^2_2 \le k - 1$.
 
   When $\|\ones_U\|_2 = 0$, the pseudoinverse estimator is efficient:
   $e^\mom = 1$. When $\|\ones_U\|_2 > 0$ and $d > k$, the pseudoinverse
   estimator is strictly inefficient. 
   In particular, if $\|\ones_U\|^2_2
-    = \bbk$, and we get:
+    = k-1$, and we get:
     \begin{align}
       e^\mom 
       &= 1 - \frac{1}{k} \left(1 - \frac{1}{1 + d - k} \right).
     \end{align}
 
-    If $k > \frac{d+1}{2}$, the efficiency attains its minimum when
-    $\|\ones_U\|^2_2 = \frac{d-1}{2}$:
-  \begin{align*}
-    e^\mom 
-    &= 1 - \frac{1}{\bbk} \left( \frac{d-1}{d+1} \right)^2.
-      %&= 1 - \frac{1}{\bbk +1} \left( 1 - \frac{1}{d - \bbk} \right).
-  \end{align*}
+%    If $k > \frac{d+1}{2}$, the efficiency attains its minimum when
+%    $\|\ones_U\|^2_2 = \frac{d-1}{2}$:
+%  \begin{align*}
+%    e^\mom 
+%    &= 1 - \frac{1}{\bbk} \left( \frac{d-1}{d+1} \right)^2.
+%      %&= 1 - \frac{1}{\bbk +1} \left( 1 - \frac{1}{d - \bbk} \right).
+%  \end{align*}
 \end{lemma}
 \begin{proof}
 Next, let us consider the case where the moments are the uniform
@@ -108,11 +104,11 @@ Next, we use the pseudoinverse property, $\tO\tOi\tOit = \tOit$,
     \Sigmaml 
       &= \frac{1}{d} \left(
       \tOi\tOit - \frac{\tOi \ones \ones^\top \tOit}
-        {1+ \|\tO \tOi \ones\|_2^2} 
+        {1+ \|\tO \tOi \ones\|^2} 
         \right) \\
       &= \frac{1}{d} \left(
       \tOi\tOit - \frac{\tOi \ones \ones^\top \tOit}
-        {1+ \|\ones_U\|_2^2} 
+        {1+ \|\ones_U\|^2} 
         \right),
 \end{align*}
 where $\ones_U \eqdef \tO \tOi \ones = \tOit \tOt \ones$ is the projection of $\ones$ onto
@@ -138,7 +134,7 @@ Next, we can simplify the expression for $\Sigmamomi$,
             d - \ones^\top \tOit (\tOi\tOit)\inv \tOi \ones 
           } \Bigg).
         \end{align*}
-Using the properties $(\tOt\tO)\inv = \tOi\tOit$ and $\tO\tOi\tOit = \tOit$ again, we get,
+Using the properties $(\tOi\tOit)\inv = \tOt\tO$ and $\tOt\tO\tOi = \tOt$, we get,
         \begin{align*}
 \Sigmamomi
           &=
@@ -155,7 +151,7 @@ Using the properties $(\tOt\tO)\inv = \tOi\tOit$ and $\tO\tOi\tOit = \tOit$ agai
           \frac{
               \tOt \ones \ones^\top \tO
           }{
-            d - \|\tOi \tO \ones\|_2^2 
+            d - \|\tOi \tO \ones\|^2 
           } \right) \\
           &=
         d \left(
@@ -163,7 +159,7 @@ Using the properties $(\tOt\tO)\inv = \tOi\tOit$ and $\tO\tOi\tOit = \tOit$ agai
           \frac{
               \tOt \ones \ones^\top \tO
           }{
-            d - \|\ones_U\|_2^2 
+            d - \|\ones_U\|^2 
           } \right).
 \end{align*}
 
@@ -173,7 +169,7 @@ Now, we are ready to study the relative efficiency.
     &= \frac{1}{\bbk}
     \Tr \Bigg( \frac{1}{d} \left(
       \tOi\tOit - \frac{\tOi \ones \ones^\top \tOit}
-        {1+ \|\ones_U\|_2^2} 
+        {1+ \|\ones_U\|^2} 
         \right) \\
     &\quad \hphantom{\bbk \Tr}
         d
@@ -182,7 +178,7 @@ Now, we are ready to study the relative efficiency.
           \frac{
               \tOt \ones \ones^\top \tO
           }{
-            d - \|\ones_U\|_2^2 
+            d - \|\ones_U\|^2 
           }
           \right)
           \Bigg) \\
@@ -191,16 +187,16 @@ Now, we are ready to study the relative efficiency.
           \frac{
               \tOi\tOit \tOt \ones \ones^\top \tO
           }{
-            d - \|\ones_U\|_2^2 
+            d - \|\ones_U\|^2 
           } \right) \\
     &\quad
     - \frac{1}{\bbk} \Tr\left(
-      \frac{\tOi \ones \ones^\top \tOit \tOt\tO}{1+ \|\ones_U\|_2^2} 
+      \frac{\tOi \ones \ones^\top \tOit \tOt\tO}{1+ \|\ones_U\|^2} 
       \right) \\
     &\quad
     - \frac{1}{\bbk} \Tr\left(
         \frac{\tOi \ones \ones^\top \tOit \tOt \ones \ones^\top \tO
-}{(d - \|\ones_U\|_2^2 )(1+ \|\ones_U\|_2^2)} 
+}{(d - \|\ones_U\|^2 )(1+ \|\ones_U\|^2)} 
           \right) \\
 %%%%
 \end{align*}
@@ -212,20 +208,19 @@ permutations,
   e^\mom
     &= 1 + \frac{1}{\bbk}
           \frac{
-              \|\tOit \tOt \ones\|_2^2
+              \|\tOit \tOt \ones\|^2
           }{
-            d - \|\ones_U\|_2^2 
+            d - \|\ones_U\|^2 
           } 
         - \frac{1}{\bbk}
-        \frac{\|\tO \tOi \ones\|_2^2}{1+ \|\ones_U\|_2^2} \\
+        \frac{\|\tO \tOi \ones\|^2}{1+ \|\ones_U\|^2} \\
     &\quad
     - \frac{1}{\bbk}
     \frac{(\ones^\top \tOit \tOt \ones)^2}
-        {(d - \|\ones_U\|_2^2 ) (1+ \|\ones_U\|_2^2)}.
+        {(d - \|\ones_U\|^2 ) (1+ \|\ones_U\|^2)}.
       \end{align*}
-Note that $\tO\tOi$ is a projection matrix and thus, $\tO\tOi
-      = (\tO\tOi)^\top$ and $\ones^\top \tOit\tOt \ones = \|\tO\tOi
-      \ones\|^2$,
+Note that $\tO\tOi$ is a symmetric projection matrix and thus, $\tO\tOi
+      = (\tO\tOi)^\top$ and $\tO\tOi = (\tO\tOi)(\tO\tOi)$. Then,
       \begin{align*}
         e^\mom
 &= 1
@@ -237,7 +232,7 @@ Note that $\tO\tOi$ is a projection matrix and thus, $\tO\tOi
 \end{align*}
 
 Note that $\ones_U$ is the projection of $\ones$ on to a $k$-dimensional
-subspace, thus, $0 \le \|\ones_U\|^2_2 \le k$.
+subspace, thus, $0 \le \|\ones_U\|^2 \le k$.
 When $\ones_U = \zeros$, the relative efficiency $e^\mom$ is $1$: the pseudoinverse estimator is efficient. When $\|\ones_U\| > 0$ and $d > k$, the pseudoinverse estimator is strictly inefficient.
 
 Consider the case when $\|\ones_U\|^2 = \bbk$. Then, the relative efficiency
@@ -247,13 +242,13 @@ is,
     &= 1 - \frac{1}{\bbk +1} \left(1 - \frac{1}{d - \bbk} \right) \\
     &= 1 - \frac{1}{k} \left(1 - \frac{1}{1 + d - k} \right).
 \end{align*}
-
-If $k > d/2$, the efficiency attains its minimum when $\|\ones_U\|^2
-= \frac{1}{2} (d-1)$, 
-\begin{align*}
-  e^\mom 
-  &= 1 - \frac{1}{\bbk}\left(\frac{d-1}{d+1}\right)^2.
-\end{align*}
+%
+%If $k > d/2$, the efficiency attains its minimum when $\|\ones_U\|^2
+%= \frac{1}{2} (d-1)$, 
+%\begin{align*}
+%  e^\mom 
+%  &= 1 - \frac{1}{\bbk}\left(\frac{d-1}{d+1}\right)^2.
+%\end{align*}
 \end{proof}
 
 % When is $\|\ones_U\| = \sqrt{\bbk}$? When $\ones$ is in the column space of $\tO$. 
@@ -293,7 +288,7 @@ If $k > d/2$, the efficiency attains its minimum when $\|\ones_U\|^2
 %        &= \sum_{\vh = \ones}^{\vh \prec k} (\Pr(d | k) - \Pr(d | \vh))e_\bh \\
 %        &= \tO_{d,k} \ones^\top - \tO_{d,\neg k}.
 %  \end{align*}
-%  Let $c = \|\tO^\top \ones\|_2 \le \sqrt{k}$.
+%  Let $c = \|\tO^\top \ones\| \le \sqrt{k}$.
 %  Let $\tO = U W V^\top$ be the SVD of $\tO$. We have,
 %  \begin{align*}
 %    \ones^\top U W V^\top 
