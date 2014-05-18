@@ -17,7 +17,7 @@ def do_command(args):
     data = scabby.tab_to_table(scabby.read_tab_file(args.fname), 'noise', 'dZ_pi', 'std_dZ_pi', 'dZ_cl', 'std_dZ_cl')
     print data
     plt.errorbar( data.T[0], data.T[1], yerr=data.T[2], linestyle='-', marker='o', label='Pseudoinverse')
-    plt.errorbar( data.T[0], data.T[3], yerr=data.T[4], linestyle='-', marker='s', label='Composite-Likelihood')
+    plt.errorbar( data.T[0], data.T[3], yerr=data.T[4], linestyle='-', marker='s', label='Composite likelihood')
 
     plt.ylabel(r'$\|\theta - \hat \theta\|_2$')
     plt.xlabel('$\epsilon$')
