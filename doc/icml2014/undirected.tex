@@ -141,9 +141,9 @@ variable $a$ given its neighbors $\sN(a)$:
 \end{align}
 In the fully-supervised setting, it is well-known that pseudolikelihood
 provides consistent estimates which are computationally efficient
-but less statistically efficiency.
-(Coincidentally, this is the same high-level motivation for using method of
-moments in the first place.)
+but less statistically efficiency.\footnote{
+Coincidentally, this is the same high-level motivation for using method of
+moments in the first place.}
 
 Let $\phi_{a,\sN(a)}(a, \sN(a)) = \sum_{\sC \ni a} \phi_\sC(\bx_\sC,\bh_\sC)$
 denote the sum over cliques $\sC$ that contain $a$; note that $\phi_{a, \sN(a)}$ only depends on $a$ and its neighbors $\sN(a)$.
@@ -160,21 +160,21 @@ If we knew the marginals for each neighborhood,
 \end{align}
 then we would be able to optimize the pseudolikelihood objective again without
 having access to any labeled data.
-However, $\{a\}\cup\sN(a)$ does not always have exclusive views
-(for example, consider $a = h_1$ and $\sN(a) = \{h_2,h_3,h_4\}$ in \figureref{examples-tree}).
+Unfortunately, $\{a\}\cup\sN(a)$ does not always have exclusive views.
+For example, consider $a = h_1$ and $\sN(a) = \{h_2,h_3,h_4\}$ in \figureref{examples-tree}.
 
 However, we can decompose $\{a\}\cup\sN(a)$ as follows:
 conditioning on $a$ partitions $\sN(a)$ into independent subsets;
 let $\sB(a)$ be the collection of these subsets,
 which we will call \emph{sub-neighborhoods}.
 For example, $\sB(h_1) = \{ \{h_2\},\{h_3\},\{h_4\} \}$ in \figureref{examples-tree}
-and $\sB(h_{2,2}) = \{ \{ h_{1,2}, h_{2,3}, h_{3,2}, h_{2,1} \} \}$ contains a single sub-neighborhood.
+and $\sB(h_{2,2}) = \{ \{ h_{1,2}, h_{2,3}, h_{3,2}, h_{2,1} \} \}$ contains a single sub-neighborhood in \figureref{examples-mrf}.
 
-A key observation is that for each $B \in \sB(a)$, each $\{a\} \cup B$ is bidependent:
+A key observation is that for each sub-neighborhood $B \in \sB(a)$, each $\{a\} \cup B$ is bidependent:
 conditioning on $a$ does not introduce new independencies within $B$ by construction of $\sB(a)$,
 and conditioning on any $b \in B$ does not either since every other $b' \in B \backslash \{b\}$
 is connected to $a$.
-Assuming $\sG$ is bottlenecked, by \lemmaref{bottleneck-views},
+Assuming $\sG$ is bottlenecked, by \lemmaref{bottleneck-views}
 we have that $\{a\} \cup B$ has exclusive views.
 Hence, we can recover $\Pr(a,B)$ for each $a$ and $B \in \sB(a)$.
 Based on conditional independence of the sub-neighborhoods $B$ given $a$,
@@ -192,7 +192,7 @@ does depend exponentially on the size of the sub-neighborhoods,
 which could be larger than the largest clique size.
 Therefore,
 for this approach to be effective,
-each node essentially should have low degree or locally exhibits a lot of
+each node essentially should have low degree or locally exhibit a lot of
 conditional independence.
 %While this method is only viable for graphs with small sub-neighboof low
 %degree, i.e.\@ when $|\sN(a)|$ is small,
