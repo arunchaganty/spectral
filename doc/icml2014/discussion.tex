@@ -122,16 +122,14 @@ Their approach is similar to our first step of learning conditional moments,
   the treewidth.
   In contrast, our algorithm only constructs moments of the order of size of the cliques
   (and sub-neighborhoods for pseudolikelihood), which can be much smaller.
-For example, an $n\times n$ grid model has a treewidth of $n$, but each
-  clique is of size at most $2$ and the degree is at most $4$.
 %In some sense, an observable operator re-formulation of our algorithm
   %subsumes this work.
 
 % Identifiability
 An interesting direction is to examine the necessity of the bottleneck
-property.  Certainly, more than two views is necessary to ensure
+property.  Certainly, three views is in general needed to ensure
 identifiability \cite{kruskal77three}, but requiring \emph{each} hidden variable to be
-a bottleneck is stronger than we would like.  We hope that by judiciously
+a bottleneck is stronger than what we would like.  We hope that by judiciously
 leveraging likelihood-based methods in conjunction with the method of moments,
 we can generate new hybrid techniques for estimating
-an even richer class of latent-variable models.
+even richer classes of latent-variable models.
