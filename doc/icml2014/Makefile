@@ -31,8 +31,8 @@ run:
 	go icml2014.pdf
 
 split: $(OUTPUT).pdf
-	pdfjam --outfile main.pdf $(OUTPUT).pdf 1-9
-	pdfjam --outfile appendix.pdf $(OUTPUT).pdf 10-12
+	pdfjam --paper letterpaper --outfile main.pdf $(OUTPUT).pdf 1-9
+	pdfjam --paper letterpaper --outfile appendix.pdf $(OUTPUT).pdf 10-12
 
 clean:
 	rm -rf *.{aux,bbl,blg,log,out}
