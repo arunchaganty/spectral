@@ -101,12 +101,13 @@ In the limit of infinite data, both estimators converge to $\mu_\sC$.
     \REQUIRE Conditional moments $\mOpp{v}{i} = \Pr(x_v \mid h_i)$
              and hidden marginals $Z_S = \Pr(\bh_S)$.
     \ENSURE Parameters $\theta$.
-    \IF{$\sG$ is directed} \STATE Normalize each $\Pr(a,\Pa(a))$. 
+    \IF{$\sG$ is directed} \STATE Normalize $\Pr(a,\Pa(a))$ for $a \in \bx \cup \bh$.
     \ELSIF{$\sG$ is undirected with low treewidth}
-      \STATE Compute expected features $\{\mu_\sC\}_{\sC \in \sG}$ (\equationref{logLinearFeatures}).
+      \STATE Compute features $\mu_\sC$ for $\sC \in \sG$ (\equationref{logLinearFeatures}).
       \STATE Optimize full likelihood (\equationref{logLinearSupervised}).
     \ELSIF{$\sG$ is undirected with high treewidth}
-      \STATE Compute expected features $\{\mu_S\}_{S \in \sB}$ (\equationref{neighborhoodFeatures}).
+      %\STATE Compute expected features $\mu_{\{a\} \cup B}$ for $a \in \bh, B \in \sB(a)$ (\equationref{neighborhoodFeatures}).
+      \STATE Compute features $\mu_{\{a\} \cup \sN(a)}$ for $a \in \bh$ (\equationref{neighborhoodFeatures}).
       \STATE Optimize pseudolikelihood (\equationref{pseudolikelihood}).
     \ENDIF
     \end{algorithmic}
@@ -137,7 +138,7 @@ The pseudolikelihood objective is a sum over the log-probability of each
 variable $a$ given its neighbors $\sN(a)$:
 \begin{align}
   \label{eqn:pseudolikelihood}
-  L_\text{pseudo}(\theta) \eqdef \E_{(\bx,\bh) \sim p_{\theta^*}}\left[\sum_{a \in X \cup H} \log p_\theta(a \mid \sN(a))\right].
+  L_\text{pseudo}(\theta) \eqdef \E_{(\bx,\bh) \sim p_{\theta^*}}\left[\sum_{a \in \bx \cup \bh} \log p_\theta(a \mid \sN(a))\right].
 \end{align}
 In the fully-supervised setting, it is well-known that pseudolikelihood
 provides consistent estimates which are computationally efficient
@@ -179,7 +180,7 @@ we have that $\{a\} \cup B$ has exclusive views.
 Hence, we can recover $\Pr(a,B)$ for each $a$ and $B \in \sB(a)$.
 Based on conditional independence of the sub-neighborhoods $B$ given $a$,
 we have that $\Pr(a, \sN(a)) = \Pr(a) \prod_{B \in \sB(a)} \Pr(B \mid a)$.
-This allows us to estimate the expected features $\mu_{a,\sN(a)}$ and use these quantities
+This allows us to compute the expected features $\mu_{a,\sN(a)}$ and use them
 in the optimization of the pseudolikelihood objective.
 
 %  Therefore, we can adapt our algorithm ($\LearnMarginals$) to estimate all
@@ -197,6 +198,8 @@ conditional independence.
 %While this method is only viable for graphs with small sub-neighboof low
 %degree, i.e.\@ when $|\sN(a)|$ is small,
 On the positive side, we can handle graphical models with high treewidth;
-neither sample nor computational complexity depends on the treewidth.
-For example, in the grid model, the treewidth is linear in the size of the grid,
-but it is the degree (only 4 in this case) that governs the computational complexity.
+neither sample nor computational complexity necessarily depends on the treewidth.
+%For example, for an $n \times n$ grid model, the treewidth is $n$,
+%but it is the degree (only 4 in this case) that governs the computational complexity.
+For example, an $n\times n$ grid model has a treewidth of $n$, but each
+  clique is of size at most $2$ and the degree is at most $4$.

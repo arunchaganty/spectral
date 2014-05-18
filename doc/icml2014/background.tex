@@ -237,12 +237,13 @@ $h_1 - h_2 \cdots - h_t - x_v$. In this example, if
 $\sigma_k(\Pr(h_{i+1} \given h_{i})) = a_k$ for each $i = 1,
 \cdots, t-1$, then $\sigma_k(\mOpp{v}{1}) = a_k^t \sigma_k(\mOpp{v}{t})$.}
 
-% No parameters yet
 The tensor factorization method attacks the heart of the non-convexity
   in latent-variable models, providing some information about the hidden variables
   in the form of the conditional moments $\mOpp{v}{i} = \Pr(x_v \mid h_i)$.
   Note that $\TensorFactorize$ only examines the conditional independence structure
   of the graphical model, not its parametrization.
+
+% No parameters yet
   If $i$ is the single parent of $v$ (e.g., $\Pr(x_1^a \mid h_1)$ in \figureref{approach}),
   then this conditional moment is a parameter of the model,
   but this is in general not the case (e.g., $\Pr(x_2^a \mid h_1)$).
@@ -250,7 +251,7 @@ The tensor factorization method attacks the heart of the non-convexity
   not have a handle on yet.
   In general, there is a gap between the conditional moments
   and the model parameters,
-  something we will address in the next two sections.
+  which we will address in the next two sections.
 
   %In the next two sections,
   %we will see how to use this result to estimate directed (Section~\ref{sec:directed})

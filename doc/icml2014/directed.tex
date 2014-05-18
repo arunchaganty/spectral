@@ -15,9 +15,9 @@
 
   \caption{
     \label{fig:bottleneckExclusiveViews}
-  (a) A bottleneck can be estimated consistently
-  using tensor factorization \citep{anandkumar13tensor}.
-  (b) An example of exclusive views for a bidependent subset $S$.
+  (a) A bottleneck $h_1$ has three conditionally independent views $x_1,x_2,x_3$.
+  %using tensor factorization \citep{anandkumar13tensor}.
+  (b) A bidependent subset $S$ has exclusive views $\{x_1,x_2,x_3,x_4\}$.
   }
 \end{figure}
 
@@ -108,9 +108,9 @@ We say that $S$ has the \emph{exclusive views property} if every $h_i \in S$ has
 
 We now show that if a subset of hidden variables $S$ has the exclusive views property,
 then we can recover the marginal distribution $\Pr(\bh_S)$.
-Consider any $S = \{i_1, \ldots, i_m\}$ with the exclusive views property. Let
+Consider any $S = \{h_{i_1}, \ldots, h_{i_m}\}$ with the exclusive views property. Let
   $x_{v_j}$ be an exclusive view for $h_{i_j}$ in $S$ and define $\sV
-  = \{v_1, \ldots, v_m\}$. % be a set of exclusive views for the clique $S$.
+  = \{x_{v_1}, \ldots, x_{v_m}\}$. % be a set of exclusive views for the clique $S$.
 By the exclusive views property,
 the marginal over the observed variables $\Pr(\bx_\sV)$
 factorizes according to the marginal over the hidden variables $\Pr(\bh_S)$
@@ -133,8 +133,8 @@ Since each $\mOpp{v}{i}$ has full column rank $k$,
 the tensor product $\mOppAll$ has full column rank $k^m$.
 Succinctly, $\mO_\sV$ (which can be estimated directly from data)
 is a linear function of $Z_S$ (what we seek to recover).
-We can solve for the hidden marginals $Z_S$ simply by projecting $\mO_\sV$ onto the column
-space of $\mOppAll$:
+We can solve for the hidden marginals $Z_S$ simply by multiplying $\mO_\sV$ by the pseudoinverse of
+$\mOppAll$:
 \begin{align*}
   Z_{S} &= \mO_\sV(\mOpp{v_1}{i_1}\pinv,\cdots,\mOpp{v_m}{i_m}\pinv).
 \end{align*}
@@ -154,10 +154,10 @@ determined by the labeling in $\TensorFactorize$.
   \label{algo:learnMarginals}
   \begin{algorithmic}
     \REQUIRE Hidden subset $S = \{ h_{i_1}, \dots, h_{i_m} \}$ with exclusive views $\sV = \{ x_{v_1}, \dots, x_{v_m} \}$
-    and conditional moments $\mOpp{v_j}{i_j} = \Pr(x_{v_i} \mid h_{i_j})$.
+    and conditional moments $\mOpp{v_j}{i_j} = \Pr(x_{v_j} \mid h_{i_j})$.
     \ENSURE Marginals $Z_S = \Pr(\bh_S)$.
       %\STATE Identify exclusive views $\Sx{\sV} = \{x_{v_1}, \dots, x_{v_m}\}$.
-      \STATE Return $\mH_S \gets \mO_{\sV}( \mOpp{v_1}{i_i}\pinv, \dots, {\mOpp{v_m}{i_m}}\pinv )$.
+      \STATE Return $\mH_S \gets \mO_{\sV}( \mOpp{v_1}{i_1}\pinv, \dots, {\mOpp{v_m}{i_m}}\pinv )$.
   \end{algorithmic}
 \end{algorithm}
 
@@ -182,7 +182,7 @@ conditioned on any $a \in S$, there is an active trail between any other two nod
 \end{definition}
 Note that all cliques are bidependent, but bidependent sets can have more conditional independences
 (e.g., $\{h_1,h_2,h_3\}$ in \figureref{bottleneckExclusiveViews}(b)).
-This will be important for pseudolikelihood in \sectionref{pseudolikelihood}.
+This will be important in \sectionref{pseudolikelihood}.
 
 % bidependent, bottleneck => exclusive views
 Bidependent sets are significant because they guarantee exclusive views if they
@@ -223,7 +223,7 @@ Then we can recover $\mOpp{1}{0} = \Pr(x_1 \mid h_0)$ via $\TensorFactorize$.
 \paragraph{Remarks.}
 Note that having only two independent views for each $h_i \in S$ is sufficient for condition (i)
   of the exclusive views property, while three is needed for condition (ii).
-The bottleneck property (\definitionref{bottleneck} can also be relaxed if some cliques
+The bottleneck property (\definitionref{bottleneck}) can also be relaxed if some cliques
   share parameters (see examples below).
 %For example, in the directed grid model, we can recover the conditional moments $O$ from
   %$x^a_1, x^b_1$ and $x^a_2$ with $h_1$ as the bottleneck.
@@ -231,7 +231,7 @@ The bottleneck property (\definitionref{bottleneck} can also be relaxed if some 
   %need not be bottlenecks, and we can omit the observations $x^b_2, x^b_3$ and $x^b_4$.
 
 Our method extends naturally to the case in which the observed variables
-  are real-valued $x_v \in \Re^d$, as long as the hidden variables remain discrete. 
+  are real-valued ($x_v \in \Re^d$), as long as the hidden variables remain discrete. 
 In this setting, the conditional moments
   $\mOpp{v}{i} \eqdef \E(x_v \given h_i) \in \Re^{d \times k}$
   would no longer be distributions but general rank $k$ matrices.

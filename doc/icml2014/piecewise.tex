@@ -31,9 +31,9 @@ rather than the full likelihood.
   %gradient-based optimization will converge to the unique global
   %optimum.
 
-Consider a bidependent subset of hidden nodes $S = \{h_{i_1}, \dots, h_{i_m}\}$, with
+Consider a subset of hidden nodes $S = \{h_{i_1}, \dots, h_{i_m}\}$, with
   exclusive views $\sV = \{x_{v_1}, \dots, x_{v_m}\}$. 
-The expected composite likelihood over $\Sx{\sV}$ given parameters $\mH_S \eqdef \Pr(\bh_S)$
+The expected composite log-likelihood over $\Sx{\sV}$ given parameters $\mH_S \eqdef \Pr(\bh_S)$
 with respect to the true distribution $\sM_\sV$ can be written as follows:
 \begin{align}
   \sL_\ml(Z_S) %(\Sx{\sV}) 
@@ -45,7 +45,7 @@ with respect to the true distribution $\sM_\sV$ can be written as follows:
 The final expression is an expectation over the log of a linear function of
 $\mH_S$, which is concave in $\mH_S$.  
 Unlike maximum likelihood in fully-observed settings,
-we do not have a closed-form solution, so we use EM to optimize.
+we do not have a closed-form solution, so we use EM to optimize it.
 However, since the function is concave, EM is guaranteed to converge to
 the \emph{global} maximum.
 \algorithmref{piecewise} summarizes our algorithm.
@@ -56,7 +56,7 @@ the \emph{global} maximum.
   \begin{algorithmic}
     % DONE: interface should match LearnClique from directed.tex  
     \REQUIRE Hidden subset $S = \{ h_{i_1}, \dots, h_{i_m} \}$ with exclusive views $\sV = \{ x_{v_1}, \dots, x_{v_m} \}$
-    and conditional moments $\mOpp{v_j}{i_j} = \Pr(x_{v_i} \mid h_{i_j})$.
+    and conditional moments $\mOpp{v_j}{i_j} = \Pr(x_{v_j} \mid h_{i_j})$.
     \ENSURE Marginals $Z_S = \Pr(\bh_S)$.
     \STATE Return $\mH_S = \arg\max_{\mH_S \in \Delta_{k^m-1}} \E[\log \mH_S(\mOppAll[\Sx \sV])]$.
 %      Run expectation-maximization to convergence on the piecewise likelihood \eqref{eqn:piecewise}, over data $\{\vec x_S : x \in \sD\}$
@@ -69,8 +69,8 @@ the \emph{global} maximum.
 We have proposed two methods for estimating the hidden marginals $Z_S$ given
 the conditional moments $\mOppAll$, one based on computing a simple pseudoinverse,
 and the other based on composite likelihood.
-Let $\hat Z^\mom_S$ to denote the pseudoinverse estimator and $\hat
-  Z^\ml_S$ to denote the composite likelihood estimator.\footnote{For simplicity, assume that $\mOppAll$ is known.
+Let $\hat Z^\mom_S$ denote the pseudoinverse estimator and $\hat
+  Z^\ml_S$ denote the composite likelihood estimator.\footnote{For simplicity, assume that $\mOppAll$ is known.
   In practice, $\mOppAll$ would be estimated via tensor factorization.}
 
 %We turn to asymptotic statistics to answer this question.
@@ -103,8 +103,8 @@ The hidden marginals $z$ and observed marginals $\mu$ are related via $\mu = O z
 % Let $\hat z,\hat\mu$ denote the estimated quantities
 % and $z^*,\mu^*$ denote the true quantities.
 % Let $\hat\E[\cdot]$ denote an expectation over the empirical distribution ($n$ i.i.d. points) over $x$.
-Let $\hat z, \hat\mu$ denote the estimated quantities.
-Note that $\hat z$ and $\hat \mu$ are constrained to lie on simplexes $\Delta_{k-1}$ and $\Delta_{d-1}$, respectively. 
+%Let $\hat z, \hat\mu$ denote the estimated quantities.
+Note that $z$ and $\mu$ are constrained to lie on simplexes $\Delta_{k-1}$ and $\Delta_{d-1}$, respectively. 
 To avoid constraints, we reparameterize $z$ and $\mu$ using
 $\tz \in \Re^{k-1}$ and $\tm \in \Re^{d-1}$:
 \begin{align*}
@@ -150,7 +150,7 @@ where $\ell(x; \tz) = \log(\mu[x])$ is the log-likelihood function.
 % $(k-1)$-dimensional simplex.  The projection makes the result more comparable with likelihood-based methods,
 % which work on the simplex by default.
 
-First, we present the asymptotic variances of the two estimators.
+First, we compute the asymptotic variances of the two estimators.
 \begin{lemma}[Asymptotic variances]
   \label{lem:mom-pw-variance}
   The asymptotic variances of the pseudoinverse estimator $\hat z^\mom$
@@ -394,7 +394,10 @@ accurate estimates even in general non-asymptotic regimes (see \figureref{cl-hmm
 %  \includegraphics[width=0.8\columnwidth]{figures/hmm-2-3.pdf}
   \includegraphics[width=0.8\columnwidth]{figures/asymp-k2d5.pdf}
 %  }
-  \caption{Parameter estimation error versus noise in moments when recovering parameters for a hidden
-  Markov Model with $k=2$ states and $d=5$ emissions using two types of estimators. Results are averaged over a 400 trials.}
+  \caption{
+    \todo{if space, give details about noise, connect with $\epsilon$ in figure}
+    \todo{change Composite-Likelihood to 'Composite likelihood' in figure}
+  Parameter estimation error versus noise in moments $\Pr(x_1,x_2,x_3)$ when recovering parameters for a hidden
+  Markov Model with $k=2$ states and $d=5$ observations. Results are averaged over 400 trials.}
     \label{fig:cl-hmm}
 \end{figure}
