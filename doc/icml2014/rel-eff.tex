@@ -62,8 +62,16 @@ uniform distribution.
 
   When $\|\ones_U\|_2 = 0$, the pseudoinverse estimator is efficient:
   $e^\mom = 1$. When $\|\ones_U\|_2 > 0$ and $d > k$, the pseudoinverse
-  estimator is strictly inefficient. In particular, when $\|\ones_U\|^2_2
-  = \frac{d-1}{2}$ the efficiency attains its minimum, 
+  estimator is strictly inefficient. 
+  In particular, if $\|\ones_U\|^2_2
+    = k-1$, and we get:
+    \begin{align}
+      e^\mom 
+      &= 1 - \frac{1}{k} \left(1 - \frac{1}{1 + d - k} \right) \label{eqn:k-eff}.
+    \end{align}
+
+    If $k > \frac{d+1}{2}$, the efficiency attains its minimum when
+    $\|\ones_U\|^2_2 = \frac{d-1}{2}$:
   \begin{align*}
     e^\mom 
     &= 1 - \frac{1}{\bbk} \left( \frac{d-1}{d+1} \right)^2.
@@ -230,8 +238,8 @@ Consider the case when $\|\ones_U\|^2 = \bbk$. Then, the relative efficiency
 is,
 \begin{align*}
   e^\mom 
-    &= 1 - \frac{1}{\bbk +1} (1 - \frac{1}{d - \bbk}) \\
-    &= 1 - \frac{1}{k +1} (1 - \frac{1}{1 + d - k}).
+    &= 1 - \frac{1}{\bbk +1} \left(1 - \frac{1}{d - \bbk} \right) \\
+    &= 1 - \frac{1}{k} \left(1 - \frac{1}{1 + d - k} \right).
 \end{align*}
 
 If $k > d/2$, the efficiency attains its minimum when $\|\ones_U\|^2

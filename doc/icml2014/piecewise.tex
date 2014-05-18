@@ -197,28 +197,29 @@ To gain intuition, let us explore two special cases:
 
   When $\|\ones_U\|_2 = 0$, the pseudoinverse estimator is efficient:
   $e^\mom = 1$. When $\|\ones_U\|_2 > 0$ and $d > k$, the pseudoinverse
-  estimator is strictly inefficient. In particular, if $k
-  > \frac{d+1}{2}$,
-  the efficiency attains its minimum
-  when $\|\ones_U\|_2 = \frac{d-1}{2}$, and we get:
-  \begin{align*}
+  estimator is strictly inefficient. In particular, if $\|\ones_U\|^2_2
+  = k-1$, and we get:
+  \begin{align}
     e^\mom 
-    &= 1 - \frac{1}{k-1} \left( \frac{d-1}{d+1} \right)^2.
-  \end{align*}
+    &= 1 - \frac{1}{k} \left(1 - \frac{1}{1 + d - k} \right) \label{eqn:k-eff}.
+  \end{align}
 \end{lemma}
 
 %\paragraph{Intuitions}
-Based on \equationref{efficiency}, we see that the pseudoinverse
-gets progressively worse compared to the composite likelihood
-as the gap between $k$ and $d$ increases.
+Based on \equationref{efficiency} and \equationref{k-eff}, we see that the pseudoinverse gets
+progressively worse compared to the composite likelihood as the gap
+between $k$ and $d$ increases for the special case wherein the observed
+moments are uniformly distributed.
 %describes the relative efficiency when the
 %observed moments are distributed uniformly.
 %The expression describes two
 %phenomenon: First, for a given $k$, the pseudoinverse estimator is
 %more efficient for small $d$. Second, for a given $d$, the
 %pseudoinverse estimator is more efficient for larger $k$.  
+For instance, when $k = 2$ and $d \to \infty$, the efficency of the pseudolikelihood
+estimator is half that of the composite likelihood estimator.
 Empirically, we observe that the composite likelihood estimator leads to more
-accurate estimates in non-asymptotic regimes (see \figureref{cl-hmm}).
+accurate estimates even in general non-asymptotic regimes (see \figureref{cl-hmm}).
 
 % \begin{proof}
 %   The above two results follow by direct application of the delta-method
