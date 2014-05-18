@@ -152,7 +152,7 @@ We can write each conditional log-likelihood from \equationref{pseudolikelihood}
 \begin{align*}
 p_\theta(a \mid \sN(a)) = \exp(\theta^\top\phi_{a,\sN(a)}(a, \sN(a)) - A_a(\theta; \sN(a))),
 \end{align*}
-where the conditional log-partition function $A_a(\theta; \sN(a)) = \log \sum_{a'} \exp(\theta^\top\phi_{a,\sN(a)}(a', \sN(a)))$
+where the conditional log-partition function $A_a(\theta; \sN(a)) = \log \sum_{\alpha \in [k]} \exp(\theta^\top\phi_{a,\sN(a)}(\alpha, \sN(a)))$
 involves marginalizing only over the single variable $a$.
 
 If we knew the marginals for each neighborhood,
