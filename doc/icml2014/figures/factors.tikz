@@ -1,0 +1,66 @@
+% vim:ft=tex
+\documentclass[tikz,convert={outfile=factors.pdf}]{standalone}
+%\usetikzlibrary{...}% tikz package already loaded by 'tikz' option
+\usepackage{scabby-diag}
+
+\begin{document}
+
+\begin{tikzpicture}
+\tikzset{%
+  highlight/.style={rectangle,rounded corners,fill=red!15,draw,fill opacity=0.5,thick,inner sep=0pt}
+}
+
+% anchors
+\point{h1c}{(0,0)};
+\point{h2c}{($(h1c.south west) + (-135:1.0cm)$)};
+\point{h3c}{($(h1c.south east) + (-45:1.0cm)$)};
+\point{h4c}{($(h2c.south east) + (-45:1.0cm)$)};
+%% Observed nodes
+\point{x1ac}{($(h1c.north west) + (+135:0.7cm)$)}
+\point{x1bc}{($(h1c.north east) + (+45:0.7cm)$)}
+
+\point{x2ac}{($(h2c.north west) + (+135:0.7cm)$)}
+\point{x2bc}{($(h2c.south west) + (-135:0.7cm)$)}
+
+\point{x3ac}{($(h3c.north east) + (+45:0.7cm)$)}
+\point{x3bc}{($(h3c.south east) + (-45:0.7cm)$)}
+
+\point{x4ac}{($(h4c.south west) + (-135:0.7cm)$)}
+\point{x4bc}{($(h4c.south east) + ( -45:0.7cm)$)}
+
+% Factor 1
+\newcommand{\factor}[3] { 
+  \node[style=node, scale=0.8] (#1-h#2) at     ($(h#2c) +  #3$) {$h_#2$};
+  \node[style=obsnode, scale=0.7] (#1-x#2a) at ($(x#2ac) + #3$) {$x^a_#2$};
+  \node[style=obsnode, scale=0.7] (#1-x#2b) at ($(x#2bc) + #3$) {$x^b_#2$};
+  \draw[-latex] (#1-h#2) -- (#1-x#2a);
+  \draw[-latex] (#1-h#2) -- (#1-x#2b);
+}
+
+\factor{f1}{1}{(0.0,1.2)};
+
+\factor{f2}{1}{(-1.2,0.0)};
+\factor{f2}{2}{(-1.2,0.0)};
+\draw[-latex] (f2-h1) -- (f2-h2);
+
+\factor{f3}{1}{(1.2,0.0)};
+\factor{f3}{3}{(1.2,0.0)};
+\draw[-latex] (f3-h1) -- (f3-h3);
+
+\factor{f4}{2}{(0.0,-1.2)};
+\factor{f4}{3}{(0.0,-1.2)};
+\factor{f4}{4}{(0.0,-1.2)};
+\draw[-latex] (f4-h2) -- (f4-h4);
+\draw[-latex] (f4-h3) -- (f4-h4);
+
+%\filldraw[fill opacity=0.5, fill=blue] (f4-x3a.north west) -- (f4-x3b.south west) -- (f4-x4a.south west) -- (f4-x4b.south east) -- (f4-x2b.south east) -- (f4-x2a.north east) -- cycle;
+\begin{pgfonlayer}{background}
+\node[draw, fill=white, fit=(f1-x1a) (f1-x1b) (f1-h1)] {};
+\node[draw, fill=white, fit=(f2-x2a) (f2-x2b) (f2-x1a) (f2-x1b)] {};
+\node[draw, fill=white, fit=(f3-x3a) (f3-x3b) (f3-x1a) (f3-x1b)] {};
+\node[draw, fill=white, fit=(f4-x3a) (f4-x3b) (f4-x2a) (f4-x2b) (f4-x4a) (f4-x4b)] {};
+\end{pgfonlayer}
+
+\end{tikzpicture}
+
+\end{document}

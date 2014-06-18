@@ -5,8 +5,7 @@ import java.util.*;
 
 import fig.basic.*;
 import fig.exec.*;
-import fig.prob.*;
-import fig.record.*;
+
 import static fig.basic.LogInfo.*;
 
 import org.ejml.simple.SimpleMatrix;
@@ -81,13 +80,13 @@ public class BottleneckSpectralEM implements Runnable {
     public Analysis( Model model, ParamsVec trueParams, List<Example> examples ) {
       this.model = model;
       this.trueParams = trueParams;
-      this.trueCounts = model.newParamsVec();
+      this.trueCounts = model.newParams();
       this.examples = examples;
 
       Hp = new HashMap<Integer, Hypergraph<Example>>();
       for( Map.Entry<Integer,Integer> pair : getCountProfile(examples).entrySet() ) {
         int L = pair.getKey(); int cnt = pair.getValue();
-        Hypergraph<Example> H = model.createHypergraph(L, trueParams.weights, trueCounts.weights, (double) cnt/examples.size());
+        Hypergraph<Example> H = model.createHypergraph(trueParams.weights, trueCounts.weights, (double) cnt/examples.size());
         H.computePosteriors(false);
         H.fetchPosteriors(false);
 
@@ -400,7 +399,7 @@ public class BottleneckSpectralEM implements Runnable {
   @SuppressWarnings("unchecked")
   Pair<ParamsVec,boolean[]> solveBottleneck( final List<Example> data ) {
     LogInfo.begin_track("solveBottleneck");
-    ParamsVec measurements = model.newParamsVec();
+    ParamsVec measurements = model.newParams();
     boolean[] measuredFeatures = new boolean[measurements.numFeatures];
 
     // Construct data. For now, just return expected counts
@@ -418,9 +417,10 @@ public class BottleneckSpectralEM implements Runnable {
       // node.
       int K = model.K; int D = model.D;
 
+      // TODO: FIXME
       Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> bottleneckMoments = null;
       Iterator<double[][]> dataSeq = constructDataSequence( model, data );
-      bottleneckMoments = algo.recoverParameters( K, D, dataSeq );
+//      bottleneckMoments = //algo.recoverParameters( K, D, dataSeq );
       populateFeatures( model, bottleneckMoments, measurements, measuredFeatures ); 
     }
     LogInfo.logs("sum_counts: " + MatrixOps.sum(measurements.weights));
@@ -446,6 +446,7 @@ public class BottleneckSpectralEM implements Runnable {
     for (iter = 0; iter < numIters && !done; iter++) {
       LogInfo.begin_track("Iteration %s/%s", iter, numIters);
       done = maximizer.takeStep(state);
+      state.performGradientCheck();
       LogInfo.logs("objective=%f", state.value());
       //LogInfo.logs("counts=%s", Fmt.D(state.counts.weights));
 
@@ -495,7 +496,7 @@ public class BottleneckSpectralEM implements Runnable {
     public GlobalTerm(Model model, ParamsVec params, List<Example> examples) {
       this.model = model;
       this.params = params;
-      this.gradient = model.newParamsVec();
+      this.gradient = model.newParams();
 
       // Construct a H for each length in the examples.
       // HACK: Likely only to work for the examples we're using.
@@ -507,7 +508,7 @@ public class BottleneckSpectralEM implements Runnable {
         int L = pair.getKey(); int cnt = pair.getValue();
 
         LogInfo.logs( "%d instances of %d length", cnt, L );
-        Hp.put( model.createHypergraph(L, params.weights, gradient.weights, (double) cnt/examples.size()),
+        Hp.put( model.createHypergraph(params.weights, gradient.weights, (double) cnt/examples.size()),
             cnt );
         //Hp.put( model.createHypergraph(L, params.weights, gradient.weights, (double) 1), 1 );
         //break; // Cheating because we're running out of memory.
@@ -563,7 +564,7 @@ public class BottleneckSpectralEM implements Runnable {
     ExamplesTerm(Model model, ParamsVec params, List<Example> examples, boolean storeHypergraphs) {
       this.model = model;
       this.params = params;
-      this.gradient = model.newParamsVec();
+      this.gradient = model.newParams();
       this.examples = examples;
       this.storeHypergraphs = storeHypergraphs;
     }
@@ -601,7 +602,7 @@ public class BottleneckSpectralEM implements Runnable {
     ExpectedLinearTerm(Model model, ParamsVec params, List<Example> examples, boolean storeHypergraphs) {
       this.model = model;
       this.params = params;
-      this.gradient = model.newParamsVec();
+      this.gradient = model.newParams();
       this.examples = examples;
       this.storeHypergraphs = storeHypergraphs;
     }
@@ -662,7 +663,7 @@ public class BottleneckSpectralEM implements Runnable {
       this.params = params;
 
       this.objective = 0;
-      this.gradient = model.newParamsVec();
+      this.gradient = model.newParams();
 
       this.target = target;
       this.pred = pred;
@@ -720,6 +721,27 @@ public class BottleneckSpectralEM implements Runnable {
       }
     }
 
+    public void performGradientCheck() {
+      double epsilon = 1e-4;
+      // Save point
+      double[] currentGradient = gradient();
+      double[] currentPoint = point();
+
+      // Set point to be +/- gradient
+      for( int i = 0; i < currentPoint.length; i++ ) {
+        params.weights[i] = currentPoint[i] + epsilon * currentGradient[i];
+        double valuePlus = value();
+        params.weights[i] = currentPoint[i] - epsilon * currentGradient[i];
+        double valueMinus = value();
+        params.weights[i] = currentPoint[i];
+
+        double expectedValue = (valuePlus - valueMinus)/(2*epsilon);
+        double actualValue = currentGradient[i];
+
+        assert MatrixOps.equal( expectedValue, actualValue );
+      }
+    }
+
     abstract public ParamsVec getCounts();
   }
 
@@ -768,7 +790,7 @@ public class BottleneckSpectralEM implements Runnable {
   @SuppressWarnings("unchecked")
   public double reportAccuracy( ParamsVec params, List<Example> examples ) {
     LogInfo.begin_track("report-accuracy");
-    ParamsVec counts = model.newParamsVec();
+    ParamsVec counts = model.newParams();
     int K = model.K;
 
     // Create a confusion matrix with prediced vs estimated label choices
@@ -805,7 +827,7 @@ public class BottleneckSpectralEM implements Runnable {
   ParamsVec initializeParameters(final List<Example> examples, final ParamsVec measurements, final boolean[] measuredFeatures) {
     LogInfo.begin_track("initialize parameters");
     // The objective function!
-    ParamsVec params = model.newParamsVec();
+    ParamsVec params = model.newParams();
     Maximizer maximizer = newMaximizer();
     MomentMatchingObjective state = new MomentMatchingObjective(
         model, params, 
@@ -825,7 +847,7 @@ public class BottleneckSpectralEM implements Runnable {
       return initializeParameters( examples, moments, allMeasuredFeatures );
   }
   ParamsVec initializeParameters() {
-    ParamsVec init = model.newParamsVec();
+    ParamsVec init = model.newParams();
     init.initRandom( initRandom, initParamsNoise );
     return init;
   }
@@ -876,10 +898,29 @@ public class BottleneckSpectralEM implements Runnable {
     return solveEM( data, initialParams );
   }
 
-  public void setModel(Model model, int L) {
+//  ParamsVec solveMeasurements(List<Example> data, ParamsVec initialParams, Pair<ParamsVec,boolean[]> bottleneckCounts ) {
+//    LogInfo.begin_track("solveMeasurements");
+//    LogInfo.logs( "Solving for %d parameters, using %d instances",
+//        initialParams.numFeatures, data.size() );
+//    Maximizer maximizer = newMaximizer();
+//    EMObjective state = new MeasurementsObjective(
+//        model, initialParams,
+//        data, storeHypergraphs,
+//        mRegularization);
+//    // Optimize
+//    optimize( maximizer, state, numIters, data, "em" );
+//    state.params.write( Execution.getFile("params") );
+//    state.getCounts().write( Execution.getFile("counts") );
+//    LogInfo.end_track("solveMeasurements");
+//
+//    return initialParams;
+//  }
+
+
+  public void setModel(Model model) {
     this.model = model;
     // Run once to just instantiate features
-    model.createHypergraph(L, null, null, 0);
+    model.createHypergraph(null, null, 0);
   }
 
   ///////////////////////////////////
@@ -907,7 +948,7 @@ public class BottleneckSpectralEM implements Runnable {
    *  - Uses genRand as a seed.
    */
   ParamsVec generateParameters( Model model, GenerationOptions opts ) {
-    ParamsVec trueParams = model.newParamsVec();
+    ParamsVec trueParams = model.newParams();
     trueParams.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
     return trueParams;
   }
@@ -918,8 +959,8 @@ public class BottleneckSpectralEM implements Runnable {
    */
   List<Example> generateData( Model model, ParamsVec params, GenerationOptions opts ) {
     LogInfo.begin_track("generateData");
-    ParamsVec counts = model.newParamsVec();
-    Hypergraph<Example> Hp = model.createHypergraph(modelOpts.L, params.weights, counts.weights, 1);
+    ParamsVec counts = model.newParams();
+    Hypergraph<Example> Hp = model.createHypergraph(params.weights, counts.weights, 1);
     // Necessary preprocessing before you can generate hyperpaths
     Hp.computePosteriors(false);
     Hp.fetchPosteriors(false);
@@ -960,15 +1001,15 @@ public class BottleneckSpectralEM implements Runnable {
         model_ = model;
         break;
       }
-      case tallMixture: {
-        TallMixture model = new TallMixture();
-        model.L = opts.L;
-        model.D = opts.D;
-        model_ = model;
-        break;
-      }
+//      case tallMixture: {
+//        TallMixture model = new TallMixture();
+//        model.L = opts.L;
+//        model.D = opts.D;
+//        model_ = model;
+//        break;
+//      }
       case grid: {
-        GridModel model = new GridModel(opts.L, opts.D);
+        GridModel model = new GridModel(opts.K, opts.D, opts.L);
         model_ = model;
         break;
       }
@@ -984,7 +1025,7 @@ public class BottleneckSpectralEM implements Runnable {
 
     // Setup; generate model 
     Model model = generateModel( modelOpts );
-    setModel( model, modelOpts.L );
+    setModel( model);
 
     // Generate parameters
     ParamsVec trueParams = generateParameters( model, genOpts );
@@ -994,6 +1035,7 @@ public class BottleneckSpectralEM implements Runnable {
     analysis = new Analysis( model, trueParams, data );
 
     // Run the bottleneck spectral algorithm
+    //ParamsVec params = solveBottleneckEM(data);
     ParamsVec params = solveBottleneckEM(data);
 
     // Return the error in estimate

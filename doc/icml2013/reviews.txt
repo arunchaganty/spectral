@@ -1,0 +1,146 @@
+
+
+# Reviewer 2 
+
+* Major comments:
+
+(1) In order to apply Theorem 5.1 from [AGHKT12], the tensor \hat{T} should be close to a symmetric tensor with orthogonal decomposition T. In the proof of Theorem 1 you are applying that result to T = M_3(W,W,W) and \hat{T} = \hat{M}_3(\hat{W},\hat{W},\hat{W}), but the error bounds given in line 388 are only between M_p and \hat{M}_p. How do you bound the error incurred by the whitening step?
+
+(2) Related to (1), the bounds of Theorem 5.1 from [AGHKT12] apply to the decomposition of the whitened tensor. To bound the error on the \hat{\beta}_h in Theorem 1 you need to account for the error in the un-whitening step.
+
+* Minor comments:
+
+(3) Can you provide some intuition on what does the positive definiteness assumption on Sigma_p mean?
+
+(4) In the proof of Lemma 3, do the empirical expectations assume that h and epsilon are observed for each point in the dataset?
+
+(5) Other relevant references in the recent literature on spectral learning algorithms are: [BQC11] gave a spectral algorithm for learning a discriminative model over sequences in terms of observable operator models; [B11] used the ouput of a spectral learning algorithm as a starting point for EM; in [BM12] a similar two-step algorithm was given, first solving a convex matrix completion problem, then using its output as the moments on a spectral learning algorithm.
+
+[BQC11] A Spectral Learning Algorithm for Finite State Transducers. Balle, Quattoni, and Carreras. ECML-PKDD 2011
+[B11] Quadratic Weighted Automata: Spectral Algorithm and Likelihood Maximization. Bailly. ACML 2011
+[BM12] Spectral Learning of General Weighted Automata via Constrained Matrix Completion. Balle and Mohri. NIPS 2012
+
+(6) Since there is some space left in the paper, I suggest you expand the calculations involved in lines 482-483.
+
+(7) Definition (9) is not the same as in [TSHK11]. I think the i-th coordinate of X_p(M_p;D) should be the inner product between M_p and {x^(i)}^{\oprod p}.
+
+(8) What noise level \sigma was used in the experiments? Does it affect the results?
+
+(9) How did you set the regularization parameters in the experiments? Have you tried to optimize these parameters and compare them with the theoretical predictions?
+
+* Notation and typos:
+
+[L108] Please, define the mode-i unfolding
+[L116] Must X have rank K to define ||X||_*?
+[L121] Please define the Frobenius norm for tensors
+[L122] I think the dimensionality of cvec(X) should be (d+p+1 choose p) (number of multisets with p elements from a set of d elements)
+[L193] M_1 - \beta_ h -> \beta_h - M_1
+[Lemma 1] Be consistent with the use of _p
+[L460] Use the norm _op instead of _2 for X*
+[L463] I think some constant is missing from the bound
+[L476] X_p
+[L497] The equation should read s_min(\hat{\Sigma}_p) >= s_min(\Sigma_p) - ||...||
+[L515] Take the operator norm of the empirical expectation
+[L525] I think the bound should be 2L instead of L
+[L655] SpecTral 
+
+
+## Review 1
+
+> I do have some serious misgivings about both the theory and the experiments.
+> These concerns could entirely be due to my own mis-understanding but I would
+> still like the authors to address these in the rebuttal before I can
+> recommend the paper for publication.
+>
+> (1) The theory seems to prove a $1/\sqrt{n}$ rate of consistency for the
+> spectral algorithm but in Figure 3, the error is clearly decreasing at a much
+> slower rate even when $n$ is on the order of millions. This is a simulation
+> experiment and the data are generated according to the true model, so doesn't
+> the result contradict the theory?
+>
+> (2) In the proof of Lemma 3, the authors assert that $\| \hat{E}_1 [ \langle
+> M_1 - \beta_h, x \rangle x ] \|_{op}$ (and analogous quantities for the
+> higher order moments) is decreasing at the rate of $O_p (1/\sqrt{n})$. Why is
+> this true? Does this assume that $x$ has mean 0? If so, surely we cannot
+> assume that $x^{\otimes 2}$ also has mean 0. It seems to me that $\|
+> \hat{E}_2 [ \langle M_2 - \beta_h^{\otimes 2}, x^{\otimes 2} \rangle
+> x^{\otimes 2} ] \|_{op}$ converges to some constant times the second moment
+> of $x$. Also, what is the meaning of the operator norm for a vector $x$?
+>
+> (3) The identifiability conditions are a bit difficult to intuitively digest.
+> Could the authors comment a little on whether the model is identifiable or
+> not if $x$ is not a function of some scalar $t$ but rather a $N(0,Id)$
+> Gaussian vector? This is more of a side comment than a serious concern.
+
+## Review 2
+
+> * Major comments:
+>
+> (1) In order to apply Theorem 5.1 from [AGHKT12], the tensor \hat{T} should
+> be close to a symmetric tensor with orthogonal decomposition T. In the proof
+> of Theorem 1 you are applying that result to T = M_3(W,W,W) and \hat{T}
+> = \hat{M}_3(\hat{W},\hat{W},\hat{W}), but the error bounds given in line 388
+> are only between M_p and \hat{M}_p. How do you bound the error incurred by
+> the whitening step?
+> (2) Related to (1), the bounds of Theorem 5.1 from [AGHKT12] apply to the
+> decomposition of the whitened tensor. To bound the error on the \hat{\beta}_h
+> in Theorem 1 you need to account for the error in the un-whitening step.
+> * Minor comments:
+>
+> (3) Can you provide some intuition on what does the positive definiteness
+> assumption on Sigma_p mean?
+> (4) In the proof of Lemma 3, do the empirical expectations assume that h and
+> epsilon are observed for each point in the dataset?
+> (5) Other relevant references in the recent literature on spectral learning
+> algorithms are: [BQC11] gave a spectral algorithm for learning
+> a discriminative model over sequences in terms of observable operator models;
+> [B11] used the ouput of a spectral learning algorithm as a starting point for
+> EM; in [BM12] a similar two-step algorithm was given, first solving a convex
+> matrix completion problem, then using its output as the moments on a spectral
+> learning algorithm.
+>
+> [BQC11] A Spectral Learning Algorithm for Finite State Transducers. Balle,
+> Quattoni, and Carreras. ECML-PKDD 2011 [B11] Quadratic Weighted Automata:
+> Spectral Algorithm and Likelihood Maximization. Bailly. ACML 2011 [BM12]
+> Spectral Learning of General Weighted Automata via Constrained Matrix
+> Completion. Balle and Mohri. NIPS 2012
+> (6) Since there is some space left in the paper, I suggest you expand the
+> calculations involved in lines 482-483.
+>
+> (7) Definition (9) is not the same as in [TSHK11]. I think the i-th
+> coordinate of X_p(M_p;D) should be the inner product between M_p and
+> {x^(i)}^{\oprod p}.
+> (8) What noise level \sigma was used in the experiments? Does it affect the
+> results?
+> (9) How did you set the regularization parameters in the experiments? Have
+> you tried to optimize these parameters and compare them with the theoretical
+> predictions?
+
+## Review 3
+
+> The authors proposed a new algorithm to estimate the coefficients of
+> a mixture of regressions. The approach can be viewed as an extension to the
+> method of moments with "overcomplete" moments. In this specific mixture of
+> regression problem, these moments have a low-rank tensor structure that can
+> be recovered by tensor factorization techniques. The main advantage is that
+> the authors use recent rank-recovery results for tensors to show that the
+> parameters can be recovered efficiently.
+>
+> The first part of the paper is well written and illustrate well the core
+> idea. I was not able to check in details the proof of the main theorem, but
+> if it is valid, this is a nice result since it would prove the consistency of
+> a mixture of regression with a guaranteed polynomial-time algorithm (the
+> classical multiple-restart EM algorithm has no polynomial-time guarantee).
+>
+> Concerning the experiments, they illustrate the main feature of the
+> algorithm, which is the robustness with respect to initialization, but this
+> is only for a well chosen toy example, and this might not be the case for any
+> real situation where mixture of regressions are actually useful. A related
+> question is whether the mixture of regression with a fixed number of
+> components is really useful: in general, the number of components is selected
+> by cross-validation, so that there is little change that a "badly
+> initialized" estimate is selected: when the number of components increases,
+> the chances to miss an important component is small and smaller.
+> In addition, a plot showing the convergence of the algorithm to the exact
+> value simulated parameters and comparing it to the EM convergence would be
+> instructive.

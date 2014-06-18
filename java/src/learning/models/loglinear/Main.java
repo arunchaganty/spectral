@@ -5,8 +5,7 @@ import java.util.*;
 
 import fig.basic.*;
 import fig.exec.*;
-import fig.prob.*;
-import fig.record.*;
+
 import static fig.basic.LogInfo.*;
 
 import org.ejml.simple.SimpleMatrix;
@@ -19,10 +18,43 @@ import static learning.models.loglinear.Models.*;
 // A term in the objective function.
 abstract class ObjectiveTerm {
   double value;
+  ParamsVec params;
   ParamsVec counts;
 
   // Populate |value| and |counts| based on the current state.
   public abstract void infer(boolean needGradient);
+
+  public void performGradientCheck() {
+    if( params == null ) return;
+    LogInfo.begin_track("gradient-check");
+    double epsilon = 1e-6;
+
+    // Save point
+    infer(true);
+    double[] currentGradient = Arrays.copyOf(counts.weights, counts.weights.length);
+    double[] currentPoint = Arrays.copyOf(params.weights, counts.weights.length);
+
+    // Set point to be +/- gradient
+    for( int i = 0; i < currentPoint.length; i++ ) {
+      params.weights[i] = currentPoint[i] + epsilon;
+      infer(false);
+      double valuePlus = value;
+
+      params.weights[i] = currentPoint[i] - epsilon;
+      infer(false);
+      double valueMinus = value;
+
+      double expectedValue = (valuePlus - valueMinus)/(2*epsilon);
+      double actualValue = currentGradient[i];
+
+      params.weights[i] = currentPoint[i];
+      infer(false);
+
+      assert MatrixOps.equal( expectedValue, actualValue, 1e-2 );
+    }
+    infer(true); // Restore the values of objective and gradient
+    LogInfo.end_track("gradient-check");
+  }
 }
 
 class ZeroTerm extends ObjectiveTerm {
@@ -32,7 +64,6 @@ class ZeroTerm extends ObjectiveTerm {
 
 // Linear function with given coefficients
 class LinearTerm extends ObjectiveTerm {
-  ParamsVec params;
   ParamsVec coeffs;
   boolean[] measuredFeatures;  // Which features to include
 
@@ -86,6 +117,7 @@ class ExamplesTerm extends ObjectiveTerm {
       // Cache the hypergraph
       if (Hq == null) Hq = model.createHypergraph(ex.x.length, ex, params.weights, counts.weights, 1.0/examples.size());
       if (storeHypergraphs) ex.Hq = Hq;
+      Hq = model.createHypergraph(ex.x.length, ex, params.weights, counts.weights, 1.0/examples.size());
 
       Hq.computePosteriors(false);
       if (needGradient) Hq.fetchPosteriors(false); // Places the posterior expectation $E_{Y|X}[\phi]$ into counts
@@ -157,7 +189,7 @@ class LikelihoodFunctionState implements Maximizer.FunctionState {
     this.regularization = regularization;
 
     // Create state
-    this.gradient = model.newParamsVec();
+    this.gradient = model.newParams();
     this.params.initRandom(initRandom, initNoise);
   }
 
@@ -165,6 +197,37 @@ class LikelihoodFunctionState implements Maximizer.FunctionState {
   public double[] point() { return params.weights; }
   public double value() { compute(false); return objective; }
   public double[] gradient() { compute(true); return gradient.weights; }
+
+  public void performGradientCheck() {
+    LogInfo.begin_track("gradient-check");
+    // First check each part
+    pred.performGradientCheck();
+    target.performGradientCheck();
+
+    // Then the whole
+    double epsilon = 1e-5;
+    // Save point
+    compute(true);
+    double[] currentGradient = Arrays.copyOf(gradient(), params.weights.length);
+    double[] currentPoint = Arrays.copyOf(point(), params.weights.length);
+
+    // Set point to be +/- gradient
+    for( int i = 0; i < currentPoint.length; i++ ) {
+      if( !measuredFeatures[i] ) continue;
+      params.weights[i] = currentPoint[i] + epsilon;
+      double valuePlus = value();
+      params.weights[i] = currentPoint[i] - epsilon;
+      double valueMinus = value();
+      params.weights[i] = currentPoint[i];
+
+      double expectedValue = (valuePlus - valueMinus)/(2*epsilon);
+      double actualValue = currentGradient[i];
+
+      assert MatrixOps.equal( expectedValue, actualValue );
+    }
+    compute(true); // Restore the values of objective and gradient
+    LogInfo.end_track("gradient-check");
+  }
 
   public void compute(boolean needGradient) {
     //if (needGradient ? gradientValid : objectiveValid) return;
@@ -252,9 +315,9 @@ public class Main implements Runnable {
 
   void generateExamples() {
     // Create the true parameters
-    trueParams = model.newParamsVec();
+    trueParams = model.newParams();
     trueParams.initRandom(opts.trueParamsRandom, opts.trueParamsNoise);
-    trueCounts = model.newParamsVec();
+    trueCounts = model.newParams();
 
     Hypergraph<Example> Hp = model.createHypergraph(opts.L, null, trueParams.weights, trueCounts.weights, 1);
     Hp.computePosteriors(false);
@@ -294,15 +357,15 @@ public class Main implements Runnable {
         this.model = model;
         break;
       }
-      case tallMixture: {
-        TallMixture model = new TallMixture();
-        model.L = opts.L;
-        model.D = opts.D;
-        this.model = model;
-        break;
-      }
+      //case tallMixture: {
+      //  TallMixture model = new TallMixture();
+      //  model.L = opts.L;
+      //  model.D = opts.D;
+      //  this.model = model;
+      //  break;
+      //}
       case grid: {
-        GridModel model = new GridModel(opts.L, opts.D);
+        GridModel model = new GridModel(opts.K, opts.D, opts.L);
         this.model = model;
         break;
       }
@@ -330,12 +393,12 @@ public class Main implements Runnable {
 
     Random random = new Random(3);
     if (opts.expectedMeasurements) {
-      measurements = model.newParamsVec();
+      measurements = model.newParams();
 
       // Currently, using true measurements
       for (int j = 0; j < model.numFeatures(); j++) {
         // TODO: Revert to the original.
-        //measuredFeatures[j] = random.nextDouble() < opts.measurementProb;
+        //measuredFeatures[j] = random.nextDouble() < opts.measuredFraction;
         if( j == 1 )
           measuredFeatures[j] = true;
         if (measuredFeatures[j])
@@ -343,7 +406,7 @@ public class Main implements Runnable {
       }
     } else {
       assert(false); // Don't do this yet.
-      measurements = model.newParamsVec();
+      measurements = model.newParams();
       // Construct triples of three observed variables around the hidden
       // node.
       Iterator<double[][]> dataSeq;
@@ -376,8 +439,9 @@ public class Main implements Runnable {
 
       TensorMethod algo = new TensorMethod();
 
+      // FIXME: Use computable moments
       Quartet<SimpleMatrix,SimpleMatrix,SimpleMatrix,SimpleMatrix> 
-        bottleneckMoments = algo.recoverParameters( opts.K, opts.D, dataSeq );
+        bottleneckMoments = null; //algo.recoverParameters( opts.K, opts.D, dataSeq );
 
       // Set appropriate measuredFeatures to observed moments
       switch (opts.modelType) {
@@ -430,20 +494,20 @@ public class Main implements Runnable {
 
   // Goal: min KL(q||p)
   void optimize() {
-    ParamsVec eParams = model.newParamsVec();  // beta + theta (q)
-    ParamsVec mParams = model.newParamsVec();  // theta (p)
-    ParamsVec mCounts = model.newParamsVec();  // mu (deterministic function of mParams)
+    ParamsVec eParams = model.newParams();  // beta + theta (q)
+    ParamsVec mParams = model.newParams();  // theta (p)
+    ParamsVec mCounts = model.newParams();  // mu (deterministic function of mParams)
 
     boolean[] allMeasuredFeatures = new boolean[model.numFeatures()];
     for (int j = 0; j < model.numFeatures(); j++) allMeasuredFeatures[j] = true;
 
-    ZeroTerm zeroTerm = new ZeroTerm(model.newParamsVec());
+    ZeroTerm zeroTerm = new ZeroTerm(model.newParams());
     LinearTerm measurementsTerm = new LinearTerm(eParams, measurements, measuredFeatures);  // \tau
     // WARNING: This actually contains terms for all the variables; only
     // the "measured" subset is selected inside the LikelihoodFunctionState.
-    ExamplesTerm eExamplesTerm = new ExamplesTerm(model, eParams, model.newParamsVec(), examples, opts.storeHypergraphs);
+    ExamplesTerm eExamplesTerm = new ExamplesTerm(model, eParams, model.newParams(), examples, opts.storeHypergraphs);
 
-    ExamplesTerm mExamplesTerm = new ExamplesTerm(model, mParams, model.newParamsVec(), examples, opts.storeHypergraphs);
+    ExamplesTerm mExamplesTerm = new ExamplesTerm(model, mParams, model.newParams(), examples, opts.storeHypergraphs);
     LinearTerm supervisedTerm = new LinearTerm(mParams, trueCounts, allMeasuredFeatures);  // Infinite data
     LinearTerm examplesOutTerm = new LinearTerm(mParams, eExamplesTerm.counts, allMeasuredFeatures); // <\theta, E_q[\phi]> - this is Q(\theta | \theta^t)
     GlobalTerm globalTerm = new GlobalTerm(model, opts.L, mParams, mCounts); // A_i, E_p[\phi]
@@ -466,7 +530,7 @@ public class Main implements Runnable {
         eTargetTerm = measurementsTerm; // <\tau,\beta> (both objective and gradient)
         ePredTerm = eExamplesTerm; // \sum_i B_i and \E_q[\sigma] (part of objective, and via hack, the gradient!)
         mTargetTerm = examplesOutTerm; // This is cleverly $B_i$ 
-        mPredTerm = globalTerm; // A(\hteta)
+        mPredTerm = globalTerm; // A(\theta)
         break;
       case unsupervised_em:
         eTargetTerm = zeroTerm;
@@ -504,7 +568,7 @@ public class Main implements Runnable {
 
     boolean done = false;
     for (int iter = 0; iter < opts.numIters && !done; iter++) {
-      ParamsVec old_mParams = model.newParamsVec();
+      ParamsVec old_mParams = model.newParams();
       ListUtils.set(old_mParams.weights, mParams.weights);
 
       LogInfo.begin_track("Iteration %d/%d", iter, opts.numIters);
@@ -553,19 +617,19 @@ public class Main implements Runnable {
       LogInfo.end_track();
 
       // Switch to pure unsupervised
-      if (opts.objectiveType == Options.ObjectiveType.measurements && iter == opts.numMeasurementIters) {
-        LogInfo.logs("Switching over from measurements to unsupervised_gradient");
-        eTargetTerm = zeroTerm;
-        ePredTerm = zeroTerm;
-        mTargetTerm = mExamplesTerm;
-        mPredTerm = globalTerm;
-        eState = new LikelihoodFunctionState(
-            model, eParams, eTargetTerm, ePredTerm, measuredFeatures,
-            opts.eRegularization, opts.initRandom, opts.initParamsNoise);
-        mState = new LikelihoodFunctionState(
-            model, mParams, mTargetTerm, mPredTerm, allMeasuredFeatures,
-            opts.mRegularization, opts.initRandom, opts.initParamsNoise);
-      }
+//      if (opts.objectiveType == Options.ObjectiveType.measurements && iter == opts.numMeasurementIters) {
+//        LogInfo.logs("Switching over from measurements to unsupervised_gradient");
+//        eTargetTerm = zeroTerm;
+//        ePredTerm = zeroTerm;
+//        mTargetTerm = mExamplesTerm;
+//        mPredTerm = globalTerm;
+//        eState = new LikelihoodFunctionState(
+//            model, eParams, eTargetTerm, ePredTerm, measuredFeatures,
+//            opts.eRegularization, opts.initRandom, opts.initParamsNoise);
+//        mState = new LikelihoodFunctionState(
+//            model, mParams, mTargetTerm, mPredTerm, allMeasuredFeatures,
+//            opts.mRegularization, opts.initRandom, opts.initParamsNoise);
+//      }
     }
 
     if (done) LogInfo.logs("Converged");
@@ -583,6 +647,7 @@ public class Main implements Runnable {
     for (iter = 0; iter < numIters && !done; iter++) {
       LogInfo.begin_track("Iteration %s/%s", iter, numIters);
       done = maximizer.takeStep(state);
+      state.performGradientCheck();
       LogInfo.logs("%s objective = %f", stepName, state.value());
       LogInfo.end_track();
     }

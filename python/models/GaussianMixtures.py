@@ -118,6 +118,16 @@ class GaussianMixtureModel( Model ):
         # Unwrap the store and put it into the appropriate model
         return GaussianMixtureModel( model.fname, **model.params )
 
+    def get_log_likelihood(self, X):
+        lhood = 0.
+        for x in X:
+            lhood_ = 0.
+            for i in xrange(self.k):
+                lhood_ += self.weights[i] * sc.exp( -0.5 * (self.means[i] - x).dot(self.sigmas[i]).dot(self.means[i] - x) )
+            lhood += sc.log(lhood_)
+        return lhood
+
+
 def test_gaussian_mixture_generator_dimensions():
     "Test the GaussianMixtureModel generator"
     import tempfile

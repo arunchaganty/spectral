@@ -1,0 +1,142 @@
+% NIPS 2013 Rebuttal
+
+# Concerning Experiments
+
+* (Reviewer 3): Needs a rigorous experimental evaluation with a
+comparison with alternative methods.
+    + We compare with EM.
+* How were the HMMs and mixture models generated?
+    + We generated parameters for both the mixture model and for the
+HMMs by generating the model parameter vector $\theta$ with uniform
+random entries in [-1,1]. Note that normalization is taken care of by
+the partition function.
+* "In the discussion, the authors mention that they have empirical
+evidence that their algorithm produces better results for factorial
+HMMs and the grid model but the experimental results only show results
+for HMMs and mixture models."
+    + :-/ uh oh.
+
+# Regarding the Measurements Objective
+
+* The author’s make what seems like a huge assumption, that the
+log-partition function is strongly convex. Do other methods for
+finding the parameters of log-linear models (EM L-BFGS) make this same
+assumption?
+    + We're really finding the best fit in the exponential family,
+which is reasonable.
+
+# Algorithm
+  * Do the authors believe that assumption 1 and 2 are likely to be
+true in practice?
+      + If $B$ weren't full column rank, then we are over-estimating
+the number of latent states, and should choose a smaller $k$.
+      + I don't think assumption 2 necessarily holds in practice.
+
+# Unshuffling
+
+* Is the size of the domain of the composite latent variable the
+product of the domains of the latent variables that compose it?
+    + Yes.
+* Isn't this method going to be incredibly sensitive to sampling
+error? There is a need to match match between the columns of L and
+combinations of { v_ia } - from my experience these kind of matching
+problems are very sensitive to sampling error, because a small
+continuous error (when values are close to each other) can cause a
+fundamental discrete change in order. What is the kind of separation
+conditions you need for this to work? Not theoretically, but even
+empirically.
+   + Yes :-/
+
+# Minor points:
+* In Figure 3: I thought that h was a discrete variable, but here it
+says that h is integer–valued. Am I missing something?
+    + $h$ is indeed a discrete variable, but we can represent it's
+values using an integer.
+* In 4a: does the algorithm or problem setup differ from the problem in [13]?
+    + While the problem setup is identical, in [13], the authors focus
+on the recovery of all the parameters of the HMM, requiring that only
+$x_{1}$, $x_{2}$ and $x_{3}$ be used to construct the moments. We
+posit that we can use _every_ subsequent triple of observed variables
+e.g. $x_{i-1}, x_{i}, x_{i+1}$, to form good estimates of the
+observation matrix $O$, and recover the remaining parameters using the
+measurements framework.
+
+* Note about observable operators: these methods *do* produce
+parameter estimates, just not for HMMs etc. They produce parameter
+estimates for a wider class of predictive models. For example the
+spectral learning algorithm for HMMs produces parameter estimates for
+an observable operator model.
+* I am not sure MLE with latent-variables is statistically efficient
+or even consistent when latent-variables are introduced. Please make
+sure it is correct.
+   + Where was this claim made?
+
+# Verbatim
+
+> Question	 
+> Comments to author(s). First provide a summary of the paper, and then address the following criteria: Quality, clarity, originality and significance. (For detailed reviewing guidelines, see http://nips.cc/PaperInformation/ReviewerInstructions)	Title: Learning Latent –Variable Log-Linear Models by Factorizing Moments
+> 
+> Overview: This paper looks at the problem of learning back the parameters of latent-variable log-linear models. The method extends the recent method of Anandkumar et al. for learning mixture models. The main contribution is the fact that this algorithm, with some additional work, can be used to learn mixtures of log-linear models and factorial mixture models.
+> 
+> Major Comments:
+> 1. The paper is well written.
+> 2. The authors justify their contribution by claiming that a spectral algorithm for learning log-linear models has not yet been developed, and that a paper that develops such an algorithm is an interesting contribution to the spectral learning literature. While this is no doubt true, I would have liked to have seen a more thorough comparison to existing algorithms for learning log-linear models including a rigorous experimental evaluation. As it stands, I can’t really tell whether this algorithm is actually any better than the competition or, if so, in what ways it is better. Is the algorithm more accurate? Faster? Have the authors implemented a comparison?
+> 3. Sections 3-3.2 are basically just Anandkumar et al.’s algorithm. Section 3.3 introduces the first real new step, which is the optimization to recover the parameters of the log-linear model. Here the author’s make what seems like a huge assumption, that the log-partition function is strongly convex. Do other methods for finding the parameters of log-linear models (EM L-BFGS) make this same assumption?
+> 4. Do the authors believe that assumption 1 and 2 are likely to be true in practice?
+> 5. The experimental results could use a lot more explanation.
+> 6. For the HMM and mixture model results. How were the HMMs and mixture models generated? What were the parameters of the models? The parameters can make a * huge * difference in how difficult it is to identify the models. In fact, the 3-view approach to learning, where each view is a single observation, will not work for many HMMs (e.g. if the observation model or transition models are close to rank degenerate).
+> 7. In the discussion, the authors mention that they have empirical evidence that their algorithm produces better results for factorial HMMs and the grid model but the experimental results only show results for HMMs and mixture models.
+> Minor Comments:
+> 1. In Figure 3: I thought that h was a discrete variable, but here it says that h is integer–valued. Am I missing something?
+> 2. In 4a: does the algorithm or problem setup differ from the problem in [13]?
+> 3. Text in figure 5 is way too small.
+> 4. Might explain what micro-averaging is.
+> 5. In the first paragraph of the discussion: these methods * do * produce parameter estimates, just not for HMMs etc. They produce parameter estimates for a wider class of predictive models. For example the spectral learning algorithm for HMMs produces parameter estimates for an observable operator model.
+> Please summarize your review in 1-2 sentences	The paper contains some interesting ideas but suffers due to a weak evaluation with respect to competing approaches.
+> Quality Score - Does the paper deserves to be published?	5: Marginally below the acceptance threshold
+> Impact Score - Independently of the Quality Score above, this is your opportunity to identify papers that are very different, original, or otherwise potentially impactful for the NIPS community.	1: This work is incremental and unlikely to have much impact even though it may be technically correct and well executed.
+> Confidence	4: Reviewer is confident but not absolutely certain
+> Masked Reviewer ID: 	Assigned_Reviewer_6
+> Review: 	
+> Question	 
+> Comments to author(s). First provide a summary of the paper, and then address the following criteria: Quality, clarity, originality and significance. (For detailed reviewing guidelines, see http://nips.cc/PaperInformation/ReviewerInstructions)	This is a paper that shows how to estimate the parameters of log-linear models with latent-variables. It goes through two steps: in section 3 it describes a simpler case, in which there are three views for the latent variables, and relies on techniques similar to Anandkumar et al. (2012). In section 5, it actually shows what to do when the latent-variables do not have three separate views.
+> 
+> The way I see it, the new material comes at section 4 and 5. Everything before that is a direct derivative, I believe, of Anandkumar et al. (2012). Section 4 is not too novel by itself, it still relies heavily on Anandkumar et al. (2012). It just posits that we need to find three views such that they are conditionally independent given a latent variable in the graphical model. This is the exact setting which Anandkumar et al. work in, and I don't think much is needed to change their algorithm with tensor factorizations. The examples the authors present in this section, though, are interesting.
+> 
+> Section 5 is the real novel part in the paper, and I think it is actually quite interesting. It shows how to untangle latent variables when they are all estimated as a single latent variable using three or more views. A few questions: (1) is the size of the domain of the composite latent variable the product of the domains of the latent variables that compose it? (2) Isn't this method going to be incredibly sensitive to sampling error? There is a need to match match between the columns of L and combinations of { v_ia } - from my experience these kind of matching problems are very sensitive to sampling error, because a small continuous error (when values are close to each other) can cause a fundamental discrete change in order. What is the kind of separation conditions you need for this to work? Not theoretically, but even empirically.
+> 
+> The experiments are quite confusing to me, and I find them rather disappointing. First, they are run on really simple toy examples, where very simple spectral algorithms are known to nail down the parameters. Second, if I am not mistaken, I don't see section 5 coming into play into the experiments. Was the actual unshuffling factorization method (in section 5) needed for this kind of estimation? If so, why? Both HMMs and mixture models should have enough views for the latent variables. Why is unshuffling factorization necessary?
+> 
+> In general, I am interested in the experiments section being more explicit (for example, in "General results" the text starts with "for both the mixture model and HMM", but doesn't specify how these were constructed, etc. Is "the mixture model"
+> the model from section 3? I don't think there are sufficient details there to replicate the results), more replicable and give more connections (as in mentions) to the sections 3-5.
+> 
+> I invite the authors to answer my questions in the author response period, I think this paper seems interesting, but it might be too early to publish this material. I wish the authors were much more clear and extensive in section 5. That section, I believe, should be the focus of the paper. I also wish the experiments were done (much) better.
+> 
+> Minor:
+> 
+> 1. I am not sure MLE with latent-variables is statistically efficient or even consistent when latent-variables are introduced. Please make sure it is correct.
+> 
+> 2. If you are going to state an algorithm UNSHUFFLEFACTORIZE, please state clearly what is its input and what is its output. There is a lot of notation there, and it is quite confusing.
+> Please summarize your review in 1-2 sentences	This paper shows how to estimate latent-variable log-linear models using spectral methods. The paper presents an interesting idea of decomposing composite latent variables.
+> Quality Score - Does the paper deserves to be published?	6: Marginally above the acceptance threshold
+> Impact Score - Independently of the Quality Score above, this is your opportunity to identify papers that are very different, original, or otherwise potentially impactful for the NIPS community.	1: This work is incremental and unlikely to have much impact even though it may be technically correct and well executed.
+> Confidence	5: Reviewer is absolutely certain
+> Masked Reviewer ID: 	Assigned_Reviewer_8
+> Review: 	
+> Question	 
+> Comments to author(s). First provide a summary of the paper, and then address the following criteria: Quality, clarity, originality and significance. (For detailed reviewing guidelines, see http://nips.cc/PaperInformation/ReviewerInstructions)	Summary: This work introduces a variation on optimizing log-likelihood for log-linear models: adding spectrally-motivated constraints that help guide the optimization. Given a latent bottleneck variable and three conditionally independent observed variables, previous work has shown how to convert observed moments (M_1, M_2) into estimates of latent moments (pi, B). This work incorporates the latent moments as constraints for max-likelihood learning. Additionally (in Section 5), the authors develop a method for handling models such as restricted Boltzmann machines, where the hidden variables don't have three conditionally independent observed variables.
+> 
+> Clarity: This work is somewhat hard to follow. It seems to assume the reader is very familiar with [8] and [13], and doesn't always make clear the difference between those works and this one. For instance, in Section 3.3, we have the statement: "In [8], our latent moments, (pi, B) would be the parameters, but for log-linear models, we still need to do a bit more work." This implies that [8] doesn't deal with log-linear models, but this is certainly not the case, as even the title of [8] mentions HMMs. Many small issues like this make the work hard to follow. Also noticed a few minor typos:
+> 
+> 1) Line 356: "this is LP is" should be "this LP is".
+> 
+> 2) Appendix A.3: "Here ,h_1" should be "Here, h_1".
+> 
+> Originality and significance: Sections 4 and 5 contain the novel elements of this work. The use of constraints in Section 4 isn't itself that large of a leap, but the work in Section 5 seems more substantial. Dealing with models that don't have hidden variables with three conditionally independent observed variables is an important step.
+> 
+> Quality: The experimental section of this paper could use some work. First of all, the experiments don't seem to test any of the ideas from Section 5, which is one of the more novel sections of the paper. The two structures tested on, "Mixture" and "HMM" don't require the "unshuffle factorize" method, so its practical performance is untested. Further, the experiments are entirely on synthetic data. Application to at least one real-world task would strengthen the paper's claims. Finally, it would be nice to see some timing results, or some indication that all the methods have comparable runtimes.
+> Please summarize your review in 1-2 sentences	This work presents some novel modifications to standard log-likelihood optimization for latent-variable log-linear models, based on incorporating spectrally-motivated constraints. The exposition is somewhat hard to follow though, and could benefit from additional experiments.
+> Quality Score - Does the paper deserves to be published?	5: Marginally below the acceptance threshold
+> Impact Score - Independently of the Quality Score above, this is your opportunity to identify papers that are very different, original, or otherwise potentially impactful for the NIPS community.	1: This work is incremental and unlikely to have much impact even though it may be technically correct and well executed.
+> Confidence	3: Reviewer is fairly confident
+

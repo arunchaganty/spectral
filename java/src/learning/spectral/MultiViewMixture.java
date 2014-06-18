@@ -154,7 +154,7 @@ public class MultiViewMixture {
     // Compute the moments
     SimpleMatrix P12 = MatrixOps.Pairs( X1, X2 );
     SimpleMatrix P13 = MatrixOps.Pairs( X1, X2 );
-    SimpleTensor P123 = MatrixOps.Triples( X1, X2, X3 );
+    Tensor P123 = MatrixOps.Triples( X1, X2, X3 );
 
     // Check input conditions
     if( MatrixOps.rank( P12 ) < k || MatrixOps.rank( P13 ) < k ) {

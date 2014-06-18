@@ -32,7 +32,8 @@ public interface EMOptimizable {
 
   public int numFeatures();
   // L = \theta^T \E_q, gradient = \E_q
-  public double compute(double[] params, int[][] X, double[] gradient);
+  public void setParams(double[] params);
+  public double compute(int[][] X, double[] gradient);
 
 }
 

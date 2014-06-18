@@ -7,5 +7,5 @@ for f in deps/*.jar; do
   deps=$f:$deps;
 done;
 
-$JAVA_PATH/java -ea -Xms10g -Xmx16g -cp $deps:bin $@
+$JAVA_PATH/java -ea -Xms6g -Xmx6g -cp $deps:bin:test_data $@
 

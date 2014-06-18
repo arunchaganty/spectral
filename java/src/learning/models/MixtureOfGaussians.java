@@ -5,29 +5,35 @@
  */
 package learning.models;
 
-import learning.Misc;
-import learning.linalg.*;
-
-import org.ejml.simple.SimpleMatrix;
-import org.ejml.data.DenseMatrix64F;
-
+import fig.basic.LogInfo;
 import fig.basic.Option;
 import fig.basic.OptionsParser;
-import fig.basic.LogInfo;
 import fig.prob.MultGaussian;
+import learning.Misc;
+import learning.data.ComputableMoments;
+import learning.data.HasExactMoments;
+import learning.data.HasSampleMoments;
+import learning.linalg.FullTensor;
+import learning.linalg.MatrixFactory;
+import learning.linalg.MatrixOps;
+import learning.linalg.RandomFactory;
+import org.ejml.simple.SimpleMatrix;
+import org.javatuples.Pair;
+import org.javatuples.Quartet;
+import org.javatuples.Triplet;
 
 import java.io.FileOutputStream;
-import java.io.ObjectOutputStream;
 import java.io.IOException;
-
+import java.io.ObjectOutputStream;
 import java.util.Random;
-
-import org.javatuples.*;
 
 /**
  * A mixture of experts model
+ *
+ * TODO (arun): I hate this class
  */
-public class MixtureOfGaussians {
+@Deprecated
+public class MixtureOfGaussians implements HasExactMoments, HasSampleMoments {
 
   protected int K; // Number of components
   protected int D; // Dimensionality of space
@@ -37,17 +43,29 @@ public class MixtureOfGaussians {
   protected SimpleMatrix weights;
   protected SimpleMatrix[] means;
   protected SimpleMatrix[][] covs;
+  protected SimpleMatrix[][] invcovs;
 
   Random rnd = new Random();
 
-  public MixtureOfGaussians( int K, int D, int V, SimpleMatrix weights, SimpleMatrix[] means, SimpleMatrix[][] covs ) {
+  public MixtureOfGaussians(int K, int D, int V, SimpleMatrix weights, SimpleMatrix[] means, SimpleMatrix[][] covs) {
     this.K = K;
     this.D = D;
     this.V = V;
 
     this.weights = weights;
     this.means = means;
+    // The covs are unit? So be it.
+    if(covs == null) {
+      covs = new SimpleMatrix[V][K];
+      for(int view = 0; view < V; view++)
+        for(int k = 0; k < K; k++)
+          covs[view][k] = MatrixFactory.eye(D);
+    }
     this.covs = covs;
+    this.invcovs = new SimpleMatrix[V][K];
+    for(int view = 0; view < V; view++)
+      for(int k = 0; k < K; k++)
+        invcovs[view][k] = covs[view][k].invert();
   }
 
   public SimpleMatrix getWeights() {
@@ -72,17 +90,49 @@ public class MixtureOfGaussians {
       computeExactMoments( SimpleMatrix weights, 
         SimpleMatrix M1, SimpleMatrix M2, SimpleMatrix M3 ) {
     // Compute the moments
-    SimpleMatrix M12 = M1.mult( MatrixFactory.diag( weights ) ).mult( M2.transpose() );
     SimpleMatrix M13 = M1.mult( MatrixFactory.diag( weights ) ).mult( M3.transpose() );
-    SimpleMatrix M23 = M2.mult( MatrixFactory.diag( weights ) ).mult( M3.transpose() );
+    SimpleMatrix M12 = M1.mult( MatrixFactory.diag( weights ) ).mult( M2.transpose() );
+    SimpleMatrix M32 = M3.mult( MatrixFactory.diag( weights ) ).mult( M2.transpose() );
     FullTensor M123 = FullTensor.fromDecomposition( weights, M1, M2, M3 );
 
-    return new Quartet<>( M12, M13, M23, M123 );
+    Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> x = MatrixOps.svd(M12);
+
+    return new Quartet<>( M13, M12, M32, M123 );
   }
   public Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor>
       computeExactMoments() {
     return computeExactMoments( weights, means[0], means[1], means[2] ); 
   }
+
+  @Deprecated
+  public ComputableMoments computeExactMoments_() {
+    final SimpleMatrix M1 = means[0];
+    final SimpleMatrix M2 = means[1];
+    final SimpleMatrix M3 = means[2];
+    return new ComputableMoments() {
+      @Override
+      public MatrixOps.Matrixable computeP13() {
+        return MatrixOps.matrixable(M1.mult( MatrixFactory.diag( weights ) ).mult( M3.transpose() ));
+      }
+
+      @Override
+      public MatrixOps.Matrixable computeP12() {
+        return MatrixOps.matrixable(M1.mult( MatrixFactory.diag( weights ) ).mult( M2.transpose() ));
+      }
+
+      @Override
+      public MatrixOps.Matrixable computeP32() {
+        return MatrixOps.matrixable(M3.mult( MatrixFactory.diag( weights ) ).mult( M2.transpose() ));
+      }
+
+      @Override
+      public MatrixOps.Tensorable computeP123() {
+        return MatrixOps.tensorable(FullTensor.fromDecomposition( weights, M1, M2, M3 ));
+      }
+    };
+  }
+
+
   public static Triplet<
         Pair<SimpleMatrix, FullTensor>,
         Pair<SimpleMatrix, FullTensor>,
@@ -117,7 +167,7 @@ public class MixtureOfGaussians {
   public SimpleMatrix sample( int N, int view, int cluster ) {
     double[] mean = MatrixFactory.toVector( MatrixOps.col( means[view], cluster ) );
     double[][] cov = MatrixFactory.toArray( covs[view][cluster] );
-		fig.prob.MultGaussian mgRnd = new MultGaussian( mean, cov );
+		MultGaussian mgRnd = new MultGaussian( mean, cov );
 		double[][] y = new double[N][D];
 
 		for(int n = 0; n < N; n++)
@@ -128,7 +178,7 @@ public class MixtureOfGaussians {
   public Pair<SimpleMatrix,int[]> sampleWithCluster( int N, int view, int cluster ) {
     double[] mean = MatrixFactory.toVector( MatrixOps.col( means[view], cluster ) );
     double[][] cov = MatrixFactory.toArray( covs[view][cluster] );
-		fig.prob.MultGaussian mgRnd = new MultGaussian( mean, cov );
+		MultGaussian mgRnd = new MultGaussian( mean, cov );
 		double[][] y = new double[N][D];
 		int[] h = new int[N];
 
@@ -184,6 +234,39 @@ public class MixtureOfGaussians {
     }
 
     return new Pair<>(X, h);
+  }
+
+  public double computeLikelihood(SimpleMatrix[] data) {
+    double lhood = 0.;
+    for(int view = 0; view < V; view++) {
+      SimpleMatrix data_ = data[view];
+      SimpleMatrix means_ = means[view];
+      for(int row = 0; row < data_.numRows(); row++) {
+        // Add the Gaussian of each component.
+        SimpleMatrix datum = MatrixOps.row(data_, row);
+        for(int k = 0; k < K; k++ ) {
+          SimpleMatrix mean = MatrixOps.col(means_,k).transpose();
+          lhood += 0.5 * (datum.minus(mean).normF() * datum.minus(mean).normF()) - Math.log(K);
+//                  MatrixOps.xMy(datum.minus(mean), invcovs[view][k], datum.minus(mean));
+        }
+      }
+    }
+
+    return lhood;
+  }
+
+  @Override
+  public Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, FullTensor> computeSampleMoments(int N) {
+    SimpleMatrix[] X = sample(N);
+    int K = getK();
+
+    // Compute the moments
+    SimpleMatrix P13 = MatrixOps.Pairs( X[0], X[2] );
+    SimpleMatrix P12 = MatrixOps.Pairs( X[0], X[1] );
+    SimpleMatrix P32 = MatrixOps.Pairs( X[2], X[1] );
+    FullTensor P123 = MatrixOps.Triples( X[0], X[1], X[2] );
+
+    return Quartet.with(P13, P12, P32, P123);
   }
 
   public static enum WeightDistribution {
@@ -370,6 +453,9 @@ public class MixtureOfGaussians {
     public String covs = "eye";
     @Option(gloss="variance parameter") 
     public double sigma = 0.01;
+
+    @Option(gloss="genRandom")
+    Random genRandom = new Random(42);
   }
   public static class OutputOptions {
     @Option(gloss="Output file: '-' for STDOUT") 
@@ -392,7 +478,7 @@ public class MixtureOfGaussians {
     if( !parser.parse( args ) ) {
       return;
     }
-    MixtureOfGaussians model = MixtureOfGaussians.generate( genOptions );
+    MixtureOfGaussians model = MixtureOfGaussians.generate(genOptions);
 
     int N = (int) outOptions.N;
     int D = (int) genOptions.D;

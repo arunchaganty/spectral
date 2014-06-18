@@ -1,5 +1,8 @@
 package learning.linalg;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 
 import org.ejml.data.DenseMatrix64F;
@@ -13,10 +16,11 @@ import fig.prob.MultGaussian;
  * A set of functions to generate random variables
  */
 public class RandomFactory {
-  public static Random rand = new Random();
-  public int seed = 0;
+  public static long seed = 0;
+  public static Random rand = new Random(seed);
 
   public static void setSeed(long seed) {
+    RandomFactory.seed = seed;
     rand.setSeed( seed );
   }
 
@@ -33,6 +37,8 @@ public class RandomFactory {
 
     return X;
   }
+
+  @Deprecated
   public static SimpleMatrix randn(int N, int D) {
     return randn( rand, N, D );
   }
@@ -67,9 +73,13 @@ public class RandomFactory {
 
   /**
    * Generate a single random variable
-   * @param sigma - noise
+   * @param sigma2 - noise
    * @return
    */
+  public static double randn(Random rand, double sigma2) {
+    return rand.nextGaussian() * Math.sqrt(sigma2);
+  }
+  @Deprecated
   public static double randn(double sigma2) {
     return rand.nextGaussian() * Math.sqrt(sigma2);
   }
@@ -132,8 +142,11 @@ public class RandomFactory {
    * @param pi
    * @return
    */
+  public static int multinomial(Random rnd, SimpleMatrix pi) {
+    return multinomial( rnd, pi.getMatrix().data );
+  }
   public static int multinomial(SimpleMatrix pi) {
-    return multinomial( pi.getMatrix().data );
+    return multinomial(rand, pi);
   }
 
   /**
@@ -141,8 +154,8 @@ public class RandomFactory {
    * @param pi
    * @return
    */
-  public static int multinomial(double[] pi) {
-    double x = rand.nextDouble();
+  public static int multinomial(Random rnd, double[] pi) {
+    double x = rnd.nextDouble();
     for( int i = 0; i < pi.length; i++ )
     {
       if( x <= pi[i] )
@@ -154,6 +167,10 @@ public class RandomFactory {
     // The remaining probability is assigned to the last element in the sequence.
     return pi.length-1;
   }
+  @Deprecated
+  public static int multinomial(double[] pi) {
+    return multinomial(rand, pi);
+  }
 
   /**
    * Draw many elements from a multinomial distribution with weights given in matrix.
@@ -161,22 +178,26 @@ public class RandomFactory {
    * @param pi - Parameters
    * @return - Vector with count of number of times a value was drawn
    */
-  public static double[] multinomial(double[] pi, int n) {
+  public static double[] multinomial(Random rnd, double[] pi, int n) {
     double[] cnt = new double[pi.length];
 
     for( int i = 0; i < n; i++)
-      cnt[ multinomial(pi) ] += 1;
+      cnt[ multinomial(rnd, pi) ] += 1;
 
     return cnt;
   }
+  public static double[] multinomial(double[] pi, int n) {
+    return multinomial(rand, pi, n);
+  }
+  public static SimpleMatrix multinomial(Random rnd, SimpleMatrix pi, int n) {
+    return MatrixFactory.fromVector( multinomial( rnd, MatrixFactory.toVector( pi ), n ) );
+  }
   public static SimpleMatrix multinomial(SimpleMatrix pi, int n) {
-    return MatrixFactory.fromVector( multinomial( MatrixFactory.toVector( pi ), n ) );
+    return multinomial(rand, pi, n);
   }
 
   /**
    * Generate a random matrix with standard normal entries.
-   * @param D
-   * @return
    */
   public static double[][] multivariateGaussian(double[] mean, double[][] cov, int count) {
     MultGaussian gaussian = new MultGaussian( mean, cov );
@@ -199,9 +220,6 @@ public class RandomFactory {
 
   /**
    * Generate a D x D x D tensor of rank K (w.h.p.)
-   * @param K
-   * @param D
-   * @return
    */
   public static FullTensor symmetricTensor(int K, int D) {
     SimpleMatrix w = RandomFactory.rand(1, K);
@@ -239,5 +257,19 @@ public class RandomFactory {
     symmetric(N, X);
     return SimpleMatrix.wrap(X);
   }
+
+  /**
+   * Returns the permutation on n integers
+   * @param n - size of permutation
+   * @return list of size n to permute
+   */
+  public static List<Integer> permutation(int n, Random rnd) {
+    List<Integer> perm = new ArrayList<Integer>();
+    for( int i = 0; i < n; i++ ) perm.add(i);
+    Collections.shuffle(perm, rnd);
+    return perm;
+  }
+
+
 }
 

@@ -1,0 +1,85 @@
+\section{Introduction}
+\label{sec:introduction}
+
+% 1. Latent variable models are good.
+Latent-variable graphical models provide compact representations of data
+and have been employed across many fields % \todo{find a much better/broader set of citations}
+\cite{ghahramani1999variational,jaakkola1999variational,blei03lda,quattoni04crf,haghighi06prototype}.
+% 2. Learning them is hard.
+However, learning these models remains a difficult problem due to the
+non-convexity of the negative log-likelihood.  Local methods such as expectation maximization (EM)
+are the norm, but are susceptible to local optima.
+
+% 3. People have approached unsupervised learning with the MoM magic sauce, but the sauce is limited.
+Recently, unsupervised learning techniques based on the spectral method of moments
+have offered a refreshing perspective on
+this learning problem
+\citep{mossel2005learning,
+hsu09spectral,
+bailly2010spectral,
+song2011spectral,
+anandkumar11tree,
+anandkumar12lda,
+anandkumar12moments,
+hsu12identifiability,
+balle12automata}.
+These methods exploit the linear algebraic properties of the model to
+factorize moments of the observed data distribution into parameters,
+providing strong theoretical guarantees.
+However, they apply to a limited set of models, and are thus
+not as broadly applicable as EM.
+
+\begin{figure}[t]
+  \label{fig:approach}
+  \centering
+  \subimport{figures/}{approach.tikz}
+  \caption{
+  Overview of our approach:
+  (i) we use tensor factorization to learn the \emph{conditional moments}
+  for each hidden variable;
+  (ii) we optimize a composite likelihood to recover the hidden \emph{marginals};
+  and (iii) we optimize another likelihood objective to the \emph{model parameters}.
+  Both likelihood objectives are convex.
+  }
+\end{figure}
+
+% DONE: need to say from the beginning that we have a hybrid approach, not just using method of moments;
+% there are really two contributions: one is the consistent estimate result for class of models,
+% and the other is the general idea of using partial constraints]
+
+% 4. State what we do: exploit moment constraints to make the problem easier.
+In this paper,
+we show that a much broader class of discrete directed and undirected graphical
+models can be consistently estimated:
+specifically those in which \emph{each} hidden variable has three conditionally
+independent observed variables (``views'').
+Our key idea is to leverage the method of moments,
+not to directly provide a consistent parameter estimate as in previous work,
+but as constraints on a likelihood-based objective.
+Notably, our method applies to latent undirected log-linear models with high treewidth.
+%For a broad class of directed and undirected graphical models
+
+% 5. We get moments from third-order tensors from bottlenecks and factorize them into marginals,
+% then get parameters.
+% DONE: try to talk about the approach in terms of three steps
+The essence of our approach is illustrated in \figureref{approach},
+which contains three steps.
+First, we identify three views for each hidden variable $h_i$ (for example,
+$x_1^a$, $x_1^b$ and $x_3^a$ are conditionally independent given $h_1$) and use
+the tensor factorization algorithm of
+\citet{anandkumar13tensor} to estimate the \emph{conditional
+moments} $\Pr(x_i^a \mid h_i)$ and $\Pr(x_i^b \mid h_i)$ for each $i$ (\sectionref{bottlenecks}).
+Second, we optimize a \emph{composite marginal likelihood} to recover the marginals over
+subsets of hidden nodes (e.g., $\mathbb P(h_2, h_3, h_4)$).
+Normally, such a marginal likelihood objective would be non-convex,
+but given the conditional moments, we obtain a convex objective,
+which can be globally optimized using EM
+(see Sections~\ref{sec:hiddenMarginals} and \ref{sec:piecewise}).
+So far, our method has relied only on the conditional independence
+structure of the model and applies generically to both directed
+and undirected models.
+The final step of turning hidden marginals into model parameters
+requires some specialization.
+In the directed case, this is simple normalization;
+in the undirected case, we need to solve another convex optimization problem
+(\sectionref{undirected}).

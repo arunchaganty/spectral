@@ -5,6 +5,7 @@
  */
 package learning.linalg;
 
+import org.ejml.data.DenseMatrix64F;
 import org.ejml.simple.SimpleMatrix;
 
 /**
@@ -72,14 +73,25 @@ public class MatrixFactory {
    */
   public static double[][] toArray( SimpleMatrix X )
   {
-    double[][] M = new double[ X.numRows() ][ X.numCols() ];
-    for( int row = 0; row < X.numRows(); row++ ) {
-      for( int col = 0; col < X.numCols(); col++ ) {
+    return toArray(X.getMatrix());
+  }
+  public static double[][] toArray( DenseMatrix64F X )
+  {
+    double[][] M = new double[ X.numRows ][ X.numCols ];
+    for( int row = 0; row < X.numRows; row++ ) {
+      for( int col = 0; col < X.numCols; col++ ) {
         M[row][col] = X.get( row, col );
       }
     }
 
     return M;
+  }
+
+  public static double[] unitVector(int D, int idx) {
+    assert(idx < D);
+    double[] x = new double[D];
+    x[idx] = 1;
+    return x;
   }
 
   /**

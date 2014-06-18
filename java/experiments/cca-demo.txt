@@ -1,0 +1,2 @@
+ant && ./run.sh learning.experiments.VisualizingEM -execPoolDir state/execs/VisualizingEM
+python do_cca.py --mode random state/execs/VisualizingEM/5.exec/points.dat

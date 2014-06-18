@@ -1,0 +1,288 @@
+\subsection{Recovering conditional moments}
+\label{app:assumption-proof}
+
+% Define up front that we will focus on h, x_1, x_2, x_3
+In step 1 of \LearnMarginals, we used the bottleneck property of a hidden
+  variable $h_i$ to learn conditional moments $\mOpp{v}{i} \eqdef
+  \Pr(x_v \given h_i)$ for every view $x_v \in \sV_{h_i}$ using
+  \TensorFactorize. 
+In order to do so, we require that \assumptionref{full-rank} holds, i.e.
+\begin{assumption*}
+  Given a bottleneck $h_1$ with views $x_1, x_2, x_3$, the conditional
+  moments $\mOpp{1}{1}, \mOpp{2}{1}, \mOpp{3}{1}$ have full column rank
+  $k$, and $\pi\oft 1 \succ 0$.
+\end{assumption*}
+
+To interpret this assumption better, we would like find an equivalent
+condition on the model parameters $Z_\sC$ that imply the above condition
+on $\mOpp{v}{i}$. In this section, we will show that
+\assumptionref{full-rank} is actually implied by the following condition
+(\assumptionref{full-rank-plus});
+\begin{assumption*}
+For every clique $\sC \in \sG$ (including ones involving observed
+  variables) and for every {\em conditioning} of the clique's marginals,
+  every unfolding has full rank. 
+\end{assumption*}
+
+% Tour guide
+Going forward, we will describe $\mOpp{v}{i}$ recursively in terms of
+  tensor multiplications of conditional distributions $\Pr(h_c \given
+  \Pa(h_c))$ in a variable elimination ordering.
+We then show that the above assumption implies the unfoldings of the
+  conditional distributions are full rank as well.
+The analysis also tracks singular values, allowing us to present
+  a sample complexity bound that highlights an exponential dependence on
+  the size of the variable elimination set.  
+
+\paragraph{A recursive construction of $\mOpp{v}{i}$}
+
+Without loss of generality, let $i = 1$. We will express the conditional
+distribution $\mOpp{v}{1} \eqdef \Pr(x_v \given h_1)$ recursively through the
+parents of $x_v$, its parents, and so on. The approach is analogous to
+message passing, and the key idea is to express the same in the form of
+a tensor multiplication. \figureref{message-proof} outlines the
+procedure.
+
+\begin{figure}[t]
+  \label{fig:message-proof}
+  \centering
+  \subimport{figures/}{assumption.tikz}
+  \caption{A recursive construction of the conditional moments $\mOpp{v}{i}$. Shaded regions indicate participating variables in the intermediate distributions.}
+\end{figure}
+
+Recall that $x_v$ is the observed variable in consideration; let $h_t$
+be its unique parent. Then, 
+\begin{align}
+  \mOpp{v}{1} &\eqdef \Pr( x_v \given h_1 ) \nonumber \\
+              &= \sum_{h_t}  \Pr( h_t \given h_1 ) \Pr( x_v \given h_t ) \nonumber\\
+              &= \mOpp{v}{t} \mYpp{t}{1}, \label{eqn:expanding-O}
+\end{align}
+where $\mYpp{i}{j} \eqdef \Pr( h_i \given h_j )$. 
+More generally, for two sets of hidden variables $C \eqdef \{h_{C_1}
+\cdots h_{C_m} \}$ and $C' \eqdef \{h_{C'_1} \cdots h_{C'_n} \}$, 
+define $\mYpp{C}{C'} \eqdef \Pr( h_{C_1} \cdots h_{C_m} \given h_{C'_1}
+\cdots h_{C'_n} )$. 
+With this representation, $\mYpp{C}{C'}$ is a $|C| + |C'|$-th order
+tensor.
+  
+Going forward, we will construct $\mYpp{v}{1}$ recursively.
+Without loss of generality, let $h_1, h_2, \cdots, h_t$ be a topological
+  ordering rooted at $h_1$,
+and let $\Pa(h)$ be the parents of a hidden variable $h$ in
+  this topological ordering.
+Then $\mYpp{t}{1}$ can be expressed as,
+\begin{align*}
+  \mYpp{t}{1} &\eqdef \Pr( h_t \given h_1 )  \\
+  &= \sum_{\vh \in H_{\Pa(h_t)}} \Pr( \Pa(h_t) \given h_1 ) \Pr( h_t \given \Pa(h_t) ) \\
+  &= \mYpp{t}{\Pa(h_t)} \times_{\Pa(h_t)} \mYpp{ \Pa(h_t) }{1},
+\end{align*}
+where $A \times_{C} B$ refers to summation along the indices $C$. We
+refer to the operation $A \times_C B$ as tensor multiplication.
+\appendixref{tensor-multiplication} proves some key properties of this
+operation. 
+
+Note that $\mYpp{t}{\Pa(h_t)}$ is the conditional probability $\Pr(h_t
+ \given \Pa(h_t))$, which is assumed to be full rank, and can be easily
+ computed from the hidden marginals $Z_\sC$ that contain $h_t$. 
+
+Now, let's further expand $\mYpp{ \Pa(h_t) }{1}$ in terms of {\em its
+  parents}, recursively doing so until we reach $h_1$.
+Let $C$ be an intermediate set of hidden variables. Let $h_c \neq h_1$
+  be some hidden variable in $C$ which we wish to eliminate. 
+Let $C' = C \union \Pa(h_c) \setminus \{h_c\}$, the new set of hidden
+  variables containing the parents of $h_c$ instead of $h_c$ and $\del
+  C = C' \setminus (C \union \{h_1\})$, the variables in the interface
+  between $C$ and $C'$.
+Note that $\Pa(h_c) \subseteq \del C$.
+Then,
+\begin{align}
+  \mYpp{C}{1} &\eqdef \Pr( h_c \given h_1 ) \nonumber \\
+  &= \sum_{\vh \in H_{\del C}} \Pr( h_c \given \Pa(h_c) ) \Pr( C' \given h_1 ) \nonumber \\
+  &= \mYpp{c}{\Pa(h_c)}  \times_{\del C} \mYpp{ C' }{ 1 }. \label{eqn:recursive-step}
+\end{align}
+This process is repeated until the base case, $\mYpp{1}{1} = \ones$.
+\algorithmref{Y} summarizes the procedure.
+
+\begin{algorithm}
+  \caption{$\mYpp{C}{1}$}
+  \label{algo:Y}
+  \begin{algorithmic}
+    \REQUIRE The root $h_1$, a set of hidden variables $C$.
+    \ENSURE The hidden moments distribution $\mYpp{C}{1}$.
+    \IF{ $C = \{h_1\}$ }
+      \STATE $\mYpp{1}{1} = \ones$.
+    \ELSE
+      \STATE Let $h_c \neq h_1$ be some hidden variable in $C$.
+      \STATE Let $C' = C \union \Pa(h_c) \setminus \{h_c\}$.
+      \STATE $\mYpp{C}{1} = \mYpp{C'}{1} \times_{\Pa(h_c)} \mYpp{c}{\Pa(h_c)}$.
+    \ENDIF
+  \end{algorithmic}
+\end{algorithm}
+
+\paragraph{Rank conditions for $\mYpp{c}{\Pa(h_c)}$}
+
+\algorithmref{Y} constructs an expression for $\mYpp{t}{1}$ entirely as
+  tensor multiplications of terms of the form $\mYpp{c}{\Pa(h_c)}$ for
+  some hidden variable $h_c$. 
+The singular values of unfoldings of individual $\mYpp{c}{\Pa(h_c)}$ can
+  be easily computed from the clique marginals $Z_\sC$ as follows.
+
+\begin{lemma} 
+  Let $\sC_0 \eqdef {h_c} \union \Pa(h_c) \subseteq \sC_1 \union \cdots
+  \union \sC_\ell$ for $\sC_1, \cdots, \sC_\ell \in \sG$. Note that
+  $\sC_0$ need not belong in the graph.
+
+  Then, for the unfolding $\{c\}$, we get 
+  \begin{align*}
+    \sigma_{k}(\mYpp{c}{\Pa(c)}\munf{I}) &\ge \max_{i\in[\ell]}\{\sigma_{k}(Z_{\sC_i}\munf{I_i})\},
+  \end{align*}
+  where $i$ is the subset of $I$ present in clique $\sC_i$.
+\end{lemma} 
+\begin{proof}
+Without loss of generality, let $\sC \eqdef \{c\} \union \Pa(h_c)$ be a clique
+  in the graph $\sG$.
+If instead $\sC \subseteq \sC_1 \union \sC_2$ for some $\sC_1, \sC_2 \in
+\sG$, then $Z_{\sC}$ is the marginalization of some $Z_{\sC_1 \union \sC_2}$
+(which may not be a parameter in our model). 
+
+\lemmaref{tensor-projection} states that when a tensor, $Z_{\sC_1 \union
+\sC_2}$, is projected by a non-zero vector $v$ (in this case, $\ones$),
+then the singular values of the projection $Z_\sC$ are preserved along
+any unfolding $I$ of $Z_\sC$:
+\begin{align*}
+  \sigma_{k}(Z_{\sC}\munf{I}) &\ge \sigma_{k}(Z_{\sC_1 \union \sC_2}\munf{I})v_{k} \\
+  \sigma_{k}(Z_{\sC_1 \union \sC_2}\munf{I}) &\ge
+  \sigma_{k}(Z_{\sC}\munf{I})v_{\max}\inv.
+\end{align*}
+
+In this case, we get that $\sigma_{k}(Z_{\sC_1 \union \sC_2}\munf{I})
+= \sigma_{k}(Z_{\sC}\munf{I})v_{\max}\inv$.
+
+Furthermore, assuming that any unfolding of $Z_{\sC_1}$ is full rank, we
+have that $Z_{\sC_1 \union \sC_2}$ is also full rank along any common
+unfolding. 
+
+Proceeding,
+\begin{align*}
+\mYpp{c}{\Pa(h_c)} 
+  &\eqdef \Pr(h_c \given \Pa(h_c)) \\
+  &= \frac{\Pr(h_c, \Pa(h_c))}{\Pr(\Pa(h_c))} \\
+  \mYpp{c}{\Pa(h_c)}\munf{I}
+  &= Z_\sC\munf{I} \diag{Z_\sC(\ones, \cdot, \ldots, \cdot)}^{-1},
+\end{align*}
+where $\diag(\sP)$ is a ``diagonal'' tensor constructed by taking the
+tensor product with the identity matrix,
+\begin{align*}
+  \diag(\sP)[\vi,\vj] &\eqdef \sP[\vi] \delta[\vi,\vj].
+\end{align*}
+
+We have from the previous argument that $Z_\sC\munf{I}$ has full column
+rank $k$; furthermore, $Z_\sC(\ones, \cdot, \ldots, \cdot)$ is
+guaranteed to have at least $k$ non-zero elements because its complete
+marginals, $\mPi{i} \succ 0 ~\forall h_i \in \sC$ have full support. 
+Consequently, $\diag(Z_\sC(\ones, \cdot, \ldots, \cdot))$ has column rank $k$.
+\todo{What happens if $\Pr(h_2, h_3) = 0$ at some point?}
+\end{proof}
+
+\paragraph{Sample complexity results}
+
+With an expression for $\mOpp{v}{i}$, we are finally ready to describe
+sufficient conditions for $\mOpp{v}{i}$ to be full rank, along with the
+sample complexity for estimation.
+
+\begin{lemma}[Sufficiency of \assumptionref{full-rank-plus}]
+  \label{lem:full-rank-suff}
+  Given the full rank conditions in \assumptionref{full-rank-plus}, then
+  for any hidden variable $h_i$ and observed variable $x_v$,
+  $\mOpp{v}{i}$ has full column rank.
+\end{lemma}
+\begin{proof}
+Again, wlog, let $i=1$. 
+The key step of the proof will be to use the property that the tensor
+  multiplication in \equationref{recursive-step} preserves rank.
+
+\theoremref{tensor-multiplication} shows that for any two tensors $A,
+  B$ and an index set $C$, the unfoldings $I$ of $A \times_C B$ are full
+  rank when the projected unfoldings $I_A$ of $A$ and $I_B$ of $B$ are
+  full rank:
+\begin{align*}
+  \sigma_{k}( (A \times_C B)\munf{I} )
+    &\ge \sigma_{k}(A\munf{I_A}) \sigma_{k}(B\munf{I_B}).
+\end{align*}
+
+By the assumption, any unfolding of $\mYpp{c}{\Pa(h_c)}$ is full-rank. 
+From \equationref{recursive-step} and
+  \theoremref{tensor-multiplication}, this implies that $\mYpp{C}{1}$ is
+  full rank for any $C$, including $C = \{h_t\}$.
+
+Thus, $\mYpp{t}{1}$ is a full rank matrix. 
+Again, by assumption,
+  $\mOpp{v}{t}$ is full rank. From \equationref{expanding-O}, we finally
+  get that $\mOpp{v}{1}$ is full rank.
+\end{proof}
+
+Next, we turn to the question of the sample complexity of estimating
+$\mOpp{v}{i}$, which depends mainly on smallest singular value,
+$\sigma_{k}(\mOpp{v}{i})$. 
+
+\begin{lemma}[Singular values of $\mOpp{v}{1}$]
+  \label{lem:mopp-singular-values}
+
+Let $h_t$ be the unique parent of $x_v$, as above.
+Let $h_1 \succ h_2 \cdots \succ h_t$ be a topological ordering of
+  variables according to the graph $\sG$.
+  Then, the smallest singular value of $\mOpp{v}{1}$ is at least the product of the smallest singular values of $\mYpp{c}{\Pa(h_c)}$.
+\begin{align*}
+  \sigma_{k}(\sP) &\ge \sigma_{k}(\mOpp{v}{t}) 
+        \prod_{c \in [t]} \sigma_{k}(\mYpp{c}{\Pa(h_c)}),
+\end{align*}
+where the parents $\Pa(h_c)$ are decided by the topological ordering. 
+\end{lemma}
+\begin{proof}
+  The proof follows directly by application of
+  \theoremref{tensor-multiplication} to \equationref{expanding-O} and
+  \equationref{recursive-step}.
+\end{proof}
+
+Finally, using the tensor power method of \citep{anandkumar13tensor}, we
+  get the following result on sample complexity.
+\begin{theorem}[Sample complexity for $\mOpp{v}{i}$]
+  \label{thm:sample-complexity-1}
+  Wlog, let $v=1$ and $i=1$. Let $x_1, x_2, x_3$ be three views for
+  $h_1$.  
+  If 
+\begin{align*}
+  \|\hat M_{1,2} - M_{1,2}\|_{\op} &\le \epsilon & \|\hat M_{1,2,3} - M_{1,2,3}\|_{\op} &\le \epsilon,
+\end{align*}
+for some $\epsilon < \half$, then
+with probability at least $1 - \delta$,
+\begin{align*}
+  \|\mOpphat{1}{1} - \mOpp{1}{1}\|_F 
+    &\le  \\
+    &
+      O\left( k 
+      \frac{{\pi\oft{1}}_{\max}/{\pi\oft{1}}_{\min}} 
+      {(\sigma_{k}(\mOpp{1}{1}) \sigma_{k}(\mOpp{1}{2}))^{5/2}} \right) \epsilon.
+\end{align*}
+
+Furthermore, if $\sigma_{k}(\mYpp{c}{\Pa(h_c)}) \le \sigma$ for every
+  such
+$\mYpp{c}{\Pa(h_c)}$, we get,
+\begin{align*}
+  \|\mOpphat{1}{1} - \mOpp{1}{1}\|_F 
+    &\le 
+      O\left( k 
+      \frac{{\pi\oft{1}}_{\max}/{\pi\oft{1}}_{\min}} 
+      {\sigma^{5t}} \right) \epsilon,
+\end{align*}
+where $t$ is the length of the topological ordering, $h_1 > \cdots
+> h_t$ as defined above.
+\end{theorem}
+\begin{proof}
+  The first statement follows directly from Theorem 5.1 of
+  \citet{anandkumar13tensor} by noting that $\|M_{1,2}\|_\op \le 1$ and
+  $\|M_{1,2,3}\|_\op \le 1$ (as they represent probability
+  distributions). The second statement follows directly from
+  \lemmaref{mopp-singular-values}.
+\end{proof}
+

@@ -238,9 +238,9 @@ public class FullTensor implements Tensor, Serializable {
 
     int L1, L2, L3;
     switch(axis) {
-      case 0: L1 = M.numCols(); L2 = D2; L3 = D3; break;
-      case 1: L1 = D1; L2 = M.numCols(); L3 = D3; break;
-      case 2: L1 = D1; L2 = D2; L3 = M.numCols(); break;
+      case 0: assert( D1 == M.numRows() ); L1 = M.numCols(); L2 = D2; L3 = D3; break;
+      case 1: assert( D2 == M.numRows() ); L1 = D1; L2 = M.numCols(); L3 = D3; break;
+      case 2: assert( D3 == M.numRows() ); L1 = D1; L2 = D2; L3 = M.numCols(); break;
       default:
         throw new NoSuchMethodError("invalid axis");
     }
@@ -383,6 +383,17 @@ public class FullTensor implements Tensor, Serializable {
    * @param theta3
    * @return
    */
+  public double project3(double[] theta1, double[] theta2, double[] theta3) {
+    double y = 0.0;
+    for( int d1 = 0; d1 < D1; d1++ ) {
+      for( int d2 = 0; d2 < D2; d2++ ) {
+        for( int d3 = 0; d3 < D3; d3++ ) {
+          y += theta1[d1] * theta2[d2] * theta3[d3] * X[d1][d2][d3];
+        }
+      }
+    }
+    return y;
+  }
   public double project3(DenseMatrix64F theta1, DenseMatrix64F theta2, DenseMatrix64F theta3) {
     double y = 0.0;
     for( int d1 = 0; d1 < D1; d1++ ) {
@@ -508,4 +519,15 @@ public class FullTensor implements Tensor, Serializable {
   }
 
 
+  public double elementSum() {
+    double y = 0.0;
+    for( int d1 = 0; d1 < D1; d1++ ) {
+      for( int d2 = 0; d2 < D2; d2++ ) {
+        for( int d3 = 0; d3 < D3; d3++ ) {
+          y += X[d1][d2][d3];
+        }
+      }
+    }
+    return y;
+  }
 }

@@ -1,0 +1,48 @@
+\section{Parameter Estimation for Log-linear Latent-Variable Models}
+\label{sec:log-linear}
+
+\paragraph{Setup}
+Let $z$ be a collection of variables indexed by $V$ (that is, $z = \{z_j\}_{j \in V}$).
+Suppose that some of the variables are observed ($x = \{ z_j \}_{j \in O}$, where $O \subset V$) 
+and the rest are hidden ($h = \{ z_j \}_{j \in H}$, where $H = V \backslash O$).
+Let $C \subset 2^V$ be a collection of subsets of variables,
+and let $\phi_c(z_c) \in \Re^d$ be the feature map for each $c \in C$.
+In this paper, we will consider both directed and undirected models over $z$.
+In the undirected case, we define the standard globally-normalized exponential family model:
+\begin{align}
+  \label{eqn:undirectedSetup}
+  p_\theta(z) = \exp\{ \phi(z)^\top\theta - A(\theta) \},
+\end{align}
+where $\phi(z) \eqdef \sum_{c \in C} \phi_c(z_c) \in \Re^d$ is the global feature vector, $\theta \in \Re^d$ is the parameter vector,
+and $A(\theta) = \log \int \exp\{\phi(z)^\top\theta\} dz$ is the global log-partition function.
+To some extent, our methods only depend on the conditional independence
+structure of the models.
+
+\paragraph{Problem statement}
+
+% Statement
+This paper focuses on the problem of parameter estimation:
+We are given $n$ i.i.d.~examples of the observed variables $D = (x^{(1)}, \dots, x^{(n)})$
+where each $x^{(i)} \sim p_{\theta^*}$ for some true parameters $\theta^*$.
+Our goal is to produce a parameter estimate $\hat\theta$ that approximates $\theta^*$.
+
+% Maximum likelihood
+The standard estimation procedure is maximum (marginal) likelihood,
+$\sL \eqdef \max_{\theta \in \Re^d} \sum_{x \in D} \log p_\theta(x)$,
+which is statistically efficient but computationally intractable.
+In practice, one uses gradient-based optimization procedures (e.g., EM or L-BFGS)
+on the marginal likelihood, which can get stuck in local optima.
+
+\paragraph{Primer: Three-view log-linear mixture models}
+
+\citet{anandkumar12moments} describe an algorithm to recover parameters
+  for a directed three-view mixture model. 
+We will consider an undirected log-linear model variant of this model,
+  shown in \figureref{three-view}.
+The model has features $\phi(x,y) = \{\bI(x_1,y_1), \bI(x_2,y_1), \bI(x_2,y_1)\}$.
+
+Recover moments with tensor factorization.
+Show that the constrained optimization problem is convex.
+
+Statement: consistency.
+

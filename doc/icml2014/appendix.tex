@@ -1,0 +1,67 @@
+\section{Proofs}
+\label{app:proofs}
+
+Due to space limitations, we have omitted some proofs from
+the main body of the paper.  The proofs are provided below.
+
+\begin{figure}
+  \centering
+  \subimport{figures/}{reduction.tikz}
+  \caption{Reduction to canonical form.}
+  \label{fig:reduction}
+\end{figure}
+
+\subsection{\lemmaref{reduction}}
+\label{app:reduction-proof}
+\begin{proof}
+  \providecommand{\hp}{\ensuremath{h_\text{\rm new}}}
+  Let $x_v$ be an observed variable which is contained in more than one clique
+  or in cliques of size larger than 2.
+  We apply the following simple transformation (see \figureref{reduction} for directed models):
+  first, replace $x_v$ with a a new hidden variable \hp;
+  for directed models, this means that the parents and children of $x_v$ become the parents and children of $\hp$.
+  Second, create three fresh observed variables
+  $x_{v_1},x_{v_2},x_{v_3}$, connecting them to $\hp$,
+  and making all new nodes to deterministically take on identical values.
+  We add three copies so that $\hp$ is guaranteed to be a bottleneck.
+  By construction, there is a one-to-one mapping between the joint distributions
+  of the old and new graphical models, and thus the parameters as well.
+  We repeatedly apply this procedure until the graphical model is in canonical form.
+\end{proof}
+  %Define $\Pr(\hp \mid \Pa(x_v)) = \Pr(x_v \mid \Pa(x_v))$ and
+  %$\Pr(x_{v_j} \mid \hp) = I$.
+  %Then, there is a one-to-one correspondence between every value of
+  %$\hp$ and $x_v$. Consequently, for any clique $\sC \contains \hp$, the
+  %parameters in the original graphical model can be obtained by
+  %substituting $\hp$ with $x_v$.
+
+  %We apply this procedure for all non-leaf observed variables.
+  %This procedure also applies straightforwardly for undirected graphical
+  %models, considering the neighbors $\sN(x_v)$ instead of its parents
+  %and children.
+  %Let $x_v$ be an observed variable with parents $\Pa(x_v)$ and children $\text{Ch}(x_v)$.
+  %Consider the following transformation.
+  %Replace $x_v$ with a new hidden variable \hp\ with the same
+  %parents $\Pa(x_v)$ and children $\text{Ch}(x_v) \union \{x_{v_1}, x_{v_2}, x_{v_3}\}$,
+  %where $x_{v_1},x_{v_2},x_{v_3}$ are three copies of $x_v$
+  %(\figureref{reduction}).
+  %Define $\Pr(\hp \mid \Pa(x_v)) = \Pr(x_v \mid \Pa(x_v))$ and
+  %$\Pr(x_{v_j} \mid \hp) = I$.
+  %Then, there is a one-to-one correspondence between every value of
+  %$\hp$ and $x_v$. Consequently, for any clique $\sC \contains \hp$, the
+  %parameters in the original graphical model can be obtained by
+  %substituting $\hp$ with $x_v$.
+
+  %We apply this procedure for all non-leaf observed variables.
+  %This procedure also applies straightforwardly for undirected graphical
+  %models, considering the neighbors $\sN(x_v)$ instead of its parents
+  %and children.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\subimport{}{exclusive-views}
+%\subimport{}{assumption-proof}
+\subimport{}{pw-proof}
+\subimport{}{rel-eff}
+%\subimport{}{tensor-multiplication}
+

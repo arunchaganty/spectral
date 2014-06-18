@@ -1,0 +1,406 @@
+\subsection{Composite likelihood}
+\label{sec:piecewise}
+
+So far, we have provided a method of moments estimator
+which used (i) tensor decomposition to recover conditional moments
+and (ii) matrix pseudoinversion to recover the hidden marginals.
+We will now improve statistical efficiency by replacing (ii)
+with a convex likelihood-based objective.
+
+% DONE: set the stage a bit more
+Of course, optimizing the original marginal likelihood (\equationref{unsup}) is
+subject to local optima.
+However, we make two changes to circumvent non-convexity:
+The first is that we already have the conditional moments from tensor decomposition,
+so effectively a subset of the parameters are fixed.
+However, this alone is not enough, for the full likelihood is still non-convex.
+The second change is that we will optimize a
+\emph{composite likelihood objective} \cite{lindsay88composite}
+rather than the full likelihood.
+
+%The method of moments approach to recover parameters for each clique
+  %$S$ presented in the previous section is easy to understand and
+  %analyze, but sensitive to noise. 
+%In this section we propose an alternate solution, optimizing the 
+  %likelihood for each clique, that is more robust to noise.
+% PL: this is redundant
+%We show that under the same conditions as \algorithmref{directed}, the
+  %negative composite likelihood function is strictly convex and thus
+  %tractable to estimate exactly.
+  %guaranteeing that
+  %gradient-based optimization will converge to the unique global
+  %optimum.
+
+Consider a subset of hidden nodes $S = \{h_{i_1}, \dots, h_{i_m}\}$, with
+  exclusive views $\sV = \{x_{v_1}, \dots, x_{v_m}\}$. 
+The expected composite log-likelihood over $\Sx{\sV}$ given parameters $\mH_S \eqdef \Pr(\bh_S)$
+with respect to the true distribution $\sM_\sV$ can be written as follows:
+\begin{align}
+  \sL_\ml(Z_S) %(\Sx{\sV}) 
+  &\eqdef \E[\log \Pr( \Sx \sV )] \nonumber \\
+  &= \E[\log \sum_{\Sh S} \Pr(\Sh S) \Pr( \Sx \sV \given \Sh S )] \nonumber \\
+  &= \E[\log \mH_S(\mOpp{v_1}{i_1} [x_{v_1}], \cdots, \mOpp{v_m}{i_m} [x_{v_m}])] \nonumber \\
+  &= \E[\log \mH_S(\mOppAll[\Sx\sV])]. \label{eqn:piecewise-obj}
+\end{align}
+The final expression is an expectation over the log of a linear function of
+$\mH_S$, which is concave in $\mH_S$.  
+Unlike maximum likelihood in fully-observed settings,
+we do not have a closed-form solution, so we use EM to optimize it.
+However, since the function is concave, EM is guaranteed to converge to
+the \emph{global} maximum.
+\algorithmref{piecewise} summarizes our algorithm.
+
+\begin{algorithm}
+  \caption{$\LearnMarginals$~(composite likelihood)}
+  \label{algo:piecewise}
+  \begin{algorithmic}
+    % DONE: interface should match LearnClique from directed.tex  
+    \REQUIRE Hidden subset $S = \{ h_{i_1}, \dots, h_{i_m} \}$ with exclusive views $\sV = \{ x_{v_1}, \dots, x_{v_m} \}$
+    and conditional moments $\mOpp{v_j}{i_j} = \Pr(x_{v_j} \mid h_{i_j})$.
+    \ENSURE Marginals $Z_S = \Pr(\bh_S)$.
+    \STATE Return $\mH_S = \arg\max_{\mH_S \in \Delta_{k^m-1}} \E[\log \mH_S(\mOppAll[\Sx \sV])]$.
+%      Run expectation-maximization to convergence on the piecewise likelihood \eqref{eqn:piecewise}, over data $\{\vec x_S : x \in \sD\}$
+  \end{algorithmic}
+\end{algorithm}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Statistical efficiency}
+
+We have proposed two methods for estimating the hidden marginals $Z_S$ given
+the conditional moments $\mOppAll$, one based on computing a simple pseudoinverse,
+and the other based on composite likelihood.
+Let $\hat Z^\mom_S$ denote the pseudoinverse estimator and $\hat
+  Z^\ml_S$ denote the composite likelihood estimator.\footnote{For simplicity, assume that $\mOppAll$ is known.
+  In practice, $\mOppAll$ would be estimated via tensor factorization.}
+
+%We turn to asymptotic statistics to answer this question.
+The Cram\'{e}r-Rao lower bound tells us that maximum likelihood yields the
+  most statistically efficient composite estimator for $Z_S$ given
+  access to only samples of $\Sx\sV$.\footnote{Of course, we could improve
+  statistical efficiency by maximizing the likelihood of all of $\vx$, but
+  this would lead to a non-convex optimization problem.}
+Let us go one step further and quantify the \emph{relative efficiency} of the pseudoinverse
+  estimator compared to the composite likelihood estimator.
+
+%To begin, let us compute the asymptotic variances of the two estimators.
+%Let $Z_S \in \Delta_{k^m-1}$ and $M_\sV \in \Delta_{d^m-1}$
+%denote the true quantities, which we would converge
+%to in the limit of infinite data.
+%Note that $Z_S$ is constrained to lie on the simplex
+  %$\Delta_{k^m-1}$ and that $M_\sV$ is similarly constrained to lie on
+  %the simplex $\Delta_{d^m-1}$. 
+
+Abusing notation slightly, think of $M_\sV$ as just a flat multinomial over $d^m$ outcomes
+and $Z_S$ as a multinomial over $k^m$ outcomes, where the two are related by
+$\mOppAll \in \Re^{d^m \times k^m}$.
+We will not need to access the internal tensor structure of $M_\sV$ and $Z_S$,
+so to simplify the notation, let $m=1$
+and define $\mu = M_\sV \in \Re^d$,
+$z = Z_S \in \Re^k$,
+and $O = \mOppAll \in \Re^{d \times k}$.
+The hidden marginals $z$ and observed marginals $\mu$ are related via $\mu = O z$.
+
+% Let $\hat z,\hat\mu$ denote the estimated quantities
+% and $z^*,\mu^*$ denote the true quantities.
+% Let $\hat\E[\cdot]$ denote an expectation over the empirical distribution ($n$ i.i.d. points) over $x$.
+%Let $\hat z, \hat\mu$ denote the estimated quantities.
+Note that $z$ and $\mu$ are constrained to lie on simplexes $\Delta_{k-1}$ and $\Delta_{d-1}$, respectively. 
+To avoid constraints, we reparameterize $z$ and $\mu$ using
+$\tz \in \Re^{k-1}$ and $\tm \in \Re^{d-1}$:
+\begin{align*}
+  \mu &= 
+    \begin{bmatrix}
+      \tm \\
+      1 - \ones^\top\tm
+    \end{bmatrix} 
+  &
+  z &= 
+    \begin{bmatrix}
+      \tz \\
+      1 - \ones^\top\tz
+    \end{bmatrix}.
+\end{align*}
+In this representation, $\tm$ and $\tz$ are related as follows,
+\begin{align*}
+  %\mu &= O z \\
+  \begin{bmatrix}
+    \tm \\
+    1 - \ones^\top\tm
+  \end{bmatrix} 
+  &=
+    \begin{bmatrix}
+      O_{\neg d,\neg k} & O_{\neg d, k} \\ 
+      O_{d,\neg k} & O_{d, k} \\ 
+    \end{bmatrix}
+    \begin{bmatrix}
+      \tz \\
+      1 - \ones^\top\tz
+    \end{bmatrix} \\
+  \tm 
+  %&= O_{\neg d,\neg k} \tz + O_{\neg d, k} - O_{\neg d, k} \ones^\top \tz \\
+      &= \underbrace{(O_{\neg d,\neg k} - O_{\neg d, k} \ones^\top )}_{\eqdef \tO} \tz +  O_{\neg d,k}.
+\end{align*}
+
+The pseudoinverse estimator is defined as $\htz^\mom = \tO^\dagger (\htm - O_{\neg d, k})$, and the composite likelihood estimator is given by $\htz^\ml = \arg\max_{\tz} \hat\E[\ell(x; \tz)]$,
+where $\ell(x; \tz) = \log(\mu[x])$ is the log-likelihood function.
+%(note that $O[x, h] = \Pr(x \mid h)$ and $z^*[h] = \Pr(h)$).
+
+% The pseudoinverse estimator is defined as $\hat z^\mom = \Pi(O^\dagger \hat\mu)$,
+% where $\hat\mu = \hat\E[x]$, and $\Pi(z)$ be the projection of $z$ onto the
+% $(k-1)$-dimensional simplex.  The projection makes the result more comparable with likelihood-based methods,
+% which work on the simplex by default.
+
+First, we compute the asymptotic variances of the two estimators.
+\begin{lemma}[Asymptotic variances]
+  \label{lem:mom-pw-variance}
+  The asymptotic variances of the pseudoinverse estimator $\htz^\mom$
+  and composite likelihood estimator $\htz^\ml$ are:
+  \begin{align*}
+    \Sigmamom 
+      &= \tOi (\tD - \tm \tm^\top) \tOit, \\
+    \Sigmaml 
+      &=
+      \left( \tOt (\tD\inv + \td\inv \ones\ones^\top) \tO \right)\inv,
+  \end{align*}
+  where $\tD \eqdef \diag(\tm)$ and $\td \eqdef 1 - \ones^\top\tm$.
+  % \begin{align*}
+  %   \Sigmamom_S &= C O^\dagger [\diag(\mu) - \mu\mu^\top] O^{\dagger\top} C^\top, \\
+  %   \Sigmaml_S &= C O^\dagger \diag(\mu) O^{\dagger\top} C^\top,
+  % \end{align*}
+  % where $C \in \Re^{k \times k}$ is the projection matrix corresponding to the
+  % orthogonal complement of $\{ \alpha 1 : \alpha \in \Re \}$.
+\end{lemma}
+
+Next, let us compare the relative efficiencies of the two estimators:
+$e^\mom \eqdef \frac{1}{k-1} \Tr(\Sigmaml
+\Sigmamomi)$. 
+From the Cram\'{e}r-Rao bound \cite{vaart98asymptotic}, we know that
+$\Sigmaml \preceq \Sigmamom$. This implies that the relative efficiency,
+$e^\mom$, lies between $0$ and $1$, and when $e^\mom = 1$, the
+pseudoinverse estimator is said to be (asymptotically) efficient.  
+To gain intuition, let us explore two special cases:
+\begin{lemma}[Relative efficiency when $\tO$ is invertible]
+  When $\tO$ is invertible, the asymptotic variances of the
+  pseudoinverse and composite likelihood estimators are equal, $\Sigmaml
+  = \Sigmamom$, and the relative efficiency is $1$.
+\end{lemma}
+
+\begin{lemma}[Relative efficiency with uniform observed marginals]
+  Let the observed marginals $\mu$ be uniform: $\mu = \frac{1}{d} \ones$. 
+  The efficiency of the pseudoinverse estimator is:
+  \begin{align}
+    e^\mom &= 
+    1 - \frac{1}{k-1}\frac{\|\ones_U\|^2}{1 + \|\ones_U\|^2} \left( 1 - \frac{1}{d - \|\ones_U\|^2} \right) \label{eqn:efficiency},
+  \end{align}
+  where $\ones_U \eqdef \tO\tOi \ones$, the projection of $\ones$ onto
+  the column space of $\tO$. Note that $0 \le \|\ones_U\|^2_2 \le k-1$.
+
+  When $\|\ones_U\|_2 = 0$, the pseudoinverse estimator is efficient:
+  $e^\mom = 1$. When $\|\ones_U\|_2 > 0$ and $d > k$, the pseudoinverse
+  estimator is strictly inefficient. In particular, if $\|\ones_U\|^2_2
+  = k-1$, and we get:
+  \begin{align}
+    e^\mom 
+    &= 1 - \frac{1}{k} \left(1 - \frac{1}{1 + d - k} \right) \label{eqn:k-eff}.
+  \end{align}
+\end{lemma}
+
+%\paragraph{Intuitions}
+Based on \equationref{efficiency} and \equationref{k-eff}, we see that the pseudoinverse gets
+progressively worse compared to the composite likelihood as the gap
+between $k$ and $d$ increases for the special case wherein the observed
+moments are uniformly distributed.
+%describes the relative efficiency when the
+%observed moments are distributed uniformly.
+%The expression describes two
+%phenomenon: First, for a given $k$, the pseudoinverse estimator is
+%more efficient for small $d$. Second, for a given $d$, the
+%pseudoinverse estimator is more efficient for larger $k$.  
+For instance, when $k = 2$ and $d \to \infty$, the efficency of the pseudolikelihood
+estimator is half that of the composite likelihood estimator.
+Empirically, we observe that the composite likelihood estimator also leads to more
+accurate estimates in general non-asymptotic regimes (see \figureref{cl-hmm}).
+
+% \begin{proof}
+%   The above two results follow by direct application of the delta-method
+%   \cite{vaart98asymptotic}.
+%   %Refer to \appendixref{pw-proof} for a complete derivation.
+% First compute the asymptotic variance of the pseudoinverse:
+% The covariance of $\hat\mu = \hat\E[x]$ is given by the variance of a standard multinomial distribution:
+% $\Var(\hat\mu) = \frac{1}{n}(\diag(\mu) - \mu\mu^\top)$.
+% Recall the pseudoinverse estimator is defined by $\hat z = O^\dagger \hat\mu$,
+% so $\Var(\hat z) = \frac{1}{n} O^\dagger (\diag(\mu) - \mu\mu^\top) O^{\dagger\top}$.
+% 
+% For the asymptotic variance of the composite likelihood,
+% let us make some simple calculations.
+% The first derivative is
+% $\nabla\ell(z; x) = \frac{O[x]^\top}{O[x] z} \in \Re^k$,
+% and the second derivative is
+% $\nabla^2\ell(z; x) = -\frac{O[x]^\top O[x]}{(O[x] z)^2} \in \Re^{k \times k}$.
+% The expectations are $\E[\nabla\ell(z; x)] = \bone$
+% and $H(z) \eqdef -\E[\nabla^2\ell(z;x)] = O^\top \diag(\mu) \diag(\mu)^{-2} O = O^\top \diag(\mu)^{-1} O$.
+% Define the variance $V(z) = \Var[\nabla\ell(z; x)]$.
+% 
+% We perform a Taylor expansion:
+% $\hat\E[\nabla\ell(\hat z; x)] =
+% \hat\E[\nabla\ell(z^*; x)] +
+% \hat\E[\nabla^2\ell(z^*; x)] (\hat z - z^*) + o_P(\|\hat z - z^*\|_2)$
+% In unconstrained optimization, the left-hand side is zero,
+% but in this case, we only know that $\hat\E[\nabla\ell(\hat z; x)] = \alpha \bone$.
+% On the right-hand side, $\hat\E[\nabla\ell(z^*; x)]$ is an empirical average of $n$ i.i.d. variables
+% with mean $\E[\nabla\ell(z^*; x)] = \bone$ and
+% variance $\frac1n \Var(\nabla\ell(z^*; x)) = \frac1n[O^\top\diag(\mu)^{-1}O - \bone\bone^\top]$.
+% The second term $\hat\E[\nabla^2\ell(z^*; x)]$ converges in probability to $O^\top \diag(\mu)^{-1} O$.
+% Assuming that $\alpha = 1$, the $\bone$'s cancel out \todo{this is sketchy},
+% then we have that the asymptotic variance is
+% $H(z^*)^{-1} G(z^*) H(z^*)^{-1} = (O^\dagger \diag(\mu) O^{\dagger\top}) [O^\top\diag(\mu)^{-1}O - \bone\bone^\top] (O^\dagger \diag(\mu) O^{\dagger\top})$.
+% \todo{finish this proof}
+% Need to show $\diag(\mu) O^{\dagger\top}\bone$ is larger than $\mu$.
+% We get equality when $O = I$.  In general, we expect this to hold.  But in practice,
+% we found $O^\dagger$ to have negative entries.
+% \end{proof}
+
+%In practice, we also constrain the estimator $\hat Z_S$ to the simplex,
+%which complicates its asymptotic variance.
+%Thus, we reparameterize our problem in
+%  terms of $\tZ_S \in [0,1]^{k^m-1}$ and $\tM_\sV \in [0,1]^{d^m-1}$.
+%  The first $k^m -1$ terms of $\tZ_S$ and $Z_S$ are equal, and the
+%  last element, $Z_S[k, \ldots, k]$ is the remaining proability mass:
+%  %picks up the slack to make $Z_S$ sum to 1:
+%\begin{align*}
+%  Z_S[\vi] &= \left\{
+%    \begin{array}{ll}
+%      1 - \sum_{\vi' \prec \vk} \tZ_S[\vi'] & \vi = \vk \\
+%      \tZ_S[\vi] & \text{otherwise,}
+%      \end{array}
+%      \right.
+%\end{align*} 
+%where $\vk = (k, \ldots, k)$ is the $m$-dimensional vector of all $k$'s. 
+%$M_\sV$ is similarly defined in terms of $\tM_\sV$.
+%
+%Now, abusing notation slightly by using the vectorized forms of $M_\sV
+%\in \Re^{d^m}$, $\tM_\sV \in \Re^{d^m-1}$, $Z_S \in \Re^{k^m}$, $\tZ_S \in \Re^{k^m-1}$
+%and the matrix form of $\mOppAll \in \Re^{d^m \times k^m}$, the marginal
+%distribution can be expressed as follows:
+%\begin{align*}
+%  \tM_\sV 
+%        &= \mOppAll_{\neg \bd} Z_S \\
+%        &= \mOppAll_{\neg \bd, \neg \vk} \tZ_S + \mOppAll_{\neg \bd, \vk} (1 - \ones^\top \tZ_S) \\
+%        &= \underbrace{(\mOppAll_{\neg \bd, \neg \vk} -  \mOppAll_{\neg \bd, \vk}\ones^\top)}_{\eqdef \mOppTAll} \tZ_S + \mOppAll_{\neg \bd, \vk},
+%        % &= \mOppTAll \tZ_S + \mOppAll_{\vk},
+%\end{align*}
+%where $\neg \bd$ selects all but the last row,
+%$\neg \bk$ selects all but the last column, and
+%$\bk$ selects only the last column.
+%where $\mOppAll_{\neg \bd, \neg \vk} \in \Re^{d^m -1 \times k^m - 1}$ is a matrix containing the
+%first $d^m-1$ rows and first $k^m-1$ columns of $\mOppAll$ and $\mOppAll_{\neg \bd, \vk} \in \Re^{d^m}$ is the last column $\mOppAll$, ignoring the last row. 
+
+%We will now study the asymptotic properties of estimators of $\tZ_S$.
+%$\hatt{Z_{S}}$
+%We are now ready to study the asymptotic properties of $Z_S$ through
+%$\tZ_S$ and $\tM_\sV$.
+
+%\begin{lemma}[Asymptotic variances]
+%  \label{lem:mom-pw-variance}
+%  The asymptotic variances of the pseudoinverse estimator $\hatt{Z^\mom_{S}}$
+%  and composite likelihood estimator $\hatt{Z^\ml_{S}}$ are:
+%  \begin{align*}
+%    \Sigmamom_S &= \mOppTAlli \tilde\Sigma_\sV \mOppTAllit \\
+%    \Sigmaml_S 
+%    &= \mOppTAlli \tS_\sV\inv \mOppTAllit 
+%      - \frac{s_\sV \mOppTAlli \tS_\sV\inv J \ones \ones^\top J \tS_\sV\inv \mOppTAllit }
+%      {1 + s_\sV \ones^\top J \tS_\sV\inv J \ones}.
+%  \end{align*}
+%  where $J = \mOppTAll \mOppTAlli$, $\tD_\sV = \diag(\tM_\sV)$, $\tilde \Sigma_\sV = \tD_\sV (I
+%  - \tD_\sV)$, the variance of $\tM_\sV$, $\tS_\sV = \tD_\sV\inv (I - \tD_\sV)$ and $s_\sV = \frac{1 - M_\sV[\bd]}{M_\sV[\bd]}$.
+%\end{lemma}
+%\begin{proof}
+%  The above two results follow by direct application of the delta-method
+%  \cite{vaart98asymptotic}. Refer to \appendixref{pw-proof} for
+%  a complete derivation.
+%\end{proof}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%The following corollary (proved in \appendixref{pw-proof}) gives
+%a qualitative handle on the relative efficiency of the pseudoinverse
+%estimator.
+%\begin{corollary}[Asymptotic efficiency]
+%  \label{cor:efficiency}
+%The pseudoinverse estimator is strictly less efficient
+%than the composite likelihood estimator in that its relative efficiency is:
+%\begin{align*}
+%e^\mom &\eqdef 
+%    \frac{1}{\bbk} \Tr(\Sigmaml\Sigmamomi ) \\
+%        &= \frac{1}{\bbk} \Tr( J \tS_\sV\inv J \tilde\Sigma_\sV\inv ) - \frac{1}{\bbk} \frac{s_\sV \ones^\top J \tS_\sV\inv J \tilde\Sigma_\sV\inv J \tS_\sV\inv J \ones }
+%      {1 + s_\sV \ones^\top J \tS_\sV\inv J \ones} \\
+%    &\le \|\tS_\sV\inv\|_\infty  \|\tilde\Sigma_\sV\inv\|_\infty
+%      - 
+%        \frac{1}{\bar k} 
+%    \frac{
+%        s_\sV c^2 /(\|\tS_\sV\|^2_{\infty} \|\tilde\Sigma_\sV\|_{\infty}
+%            \sigma_{1}(\mOppTAll))
+%    }
+%    {1 + (s_\sV c^2 \|\tS_\sV\inv\|_{\infty})/
+%          \sigma_{k}(\mOppTAll)
+%    },
+%\end{align*}
+%where $c = \|\mOppTAll_{\bd,\bk} \ones^\top - \mOppTAll_{\bd,\neg \bk}^\top\|_2 \le \sqrt{\bbk}$ and $\bbk = k^m - 1$.
+%
+%When $M_\sV$ is the uniform distribution, i.e. $M_\sV = \frac{1}{d^m}
+%  \ones$, we get that 
+%\begin{align*}
+%e^\mom 
+%    &\le
+%    \left(1 + \frac{1}{d^m - 1}\right)^2 
+%    \left(1 - \frac{1}{\bbk} \frac{c^2/\sigma_{1}(\mOppTAll)}{1 + c^2 / \sigma_{k}(\mOppTAll)}\right).
+%\end{align*}
+%\end{corollary}
+%
+%The relative efficiency tells us that the pseudoinverse estimator is
+%strictly suboptimal for any finite $\bbk$ or $\bbd$.
+%\todo{from the above expression, $e^\mom$ is not always less than $1$}
+%Furthermore for
+%a given $\bbk$, it is most efficient in large dimensions, and in general
+%its efficiency increases as $\bbk$ and $\bbd$ grow.
+%Empirically, we also observe that the composite likelihood estimator
+%leads to more accurate estimates in non-asymptotic regimes (see \figureref{cl-hmm}).
+%\figureref{cl-hmm} compares the parameter recovery error of the
+  %pseudoinverse estimator and the composite likelihood estimator.
+
+% Visualize
+% To visualize this phenomenon, note that the pseudoinverse estimator can be written
+% as $\hat Z_S = \argmin_{Z_S} \|Z_S \mOppAll - M_\sV \|_F^2$.
+% \figureref{piecewise-objective} plots the compares the objective values for
+% different choices of the $\pi$ parameter in a hidden Markov model
+% (\figureref{examples-hmm}) with 2 states ($k=2$) and $d=10$ dimensions.
+% Note that the negative log-likelihood objective is more
+% strongly convex than the pseudoinverse objective.
+% \todo{this is perhaps misleading, you could get the plot with the same with $100000000000 x^2$ and $x^2$.
+% Let's talk about this.  If can't fix, remove.
+% }
+
+\begin{figure}
+  \centering
+  %  \subfigure[Comparing the piecewise objective with the moment-matching objective] {
+  %    \label{fig:piecewise-objective}
+  %    \includegraphics[width=0.45\columnwidth]{figures/piecewise-objective.pdf}
+  %  }
+%  \subfigure[Directed grid model] {
+%    \label{fig:examples-grid}
+%    \includegraphics{figures/grid.pdf}
+%  }
+%  \subfigure[] {
+%  \includegraphics[width=0.8\columnwidth]{figures/hmm-2-3.pdf}
+  \includegraphics[width=0.8\columnwidth]{figures/asymp-k2d5.pdf}
+%  }
+  \caption{
+  %  \todo{if space, give details about noise, connect with $\epsilon$ in figure}
+  Comparison of parameter estimation error ($\|\hat \theta
+    - \theta\|_2$) versus error in moments ($\epsilon$) for a hidden
+    Markov model with $k=2$ hidden and $d=5$ observed values.
+  Empirical moments $\widehat M_{123}$ were generated by adding Gaussian
+    noise, $\sN(0,\epsilon I)$, to expected moments $M_{123}$.
+  Results are averaged over 400 trials.}
+    \label{fig:cl-hmm}
+\end{figure}

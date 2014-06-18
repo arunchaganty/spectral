@@ -10,6 +10,8 @@ import learning.linalg.SimpleTensor;
 import learning.exceptions.NumericalException;
 
 import org.ejml.alg.dense.mult.VectorVectorMult;
+import org.ejml.factory.DecompositionFactory;
+import org.ejml.factory.QRDecomposition;
 import org.ejml.factory.SingularValueDecomposition;
 import org.ejml.ops.CommonOps;
 import org.ejml.ops.SpecializedOps;
@@ -20,6 +22,9 @@ import org.ejml.simple.SimpleEVD;
 import org.javatuples.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Random;
 
 public class MatrixOps {
 
@@ -135,6 +140,21 @@ public class MatrixOps {
   }
   public static double dot( DenseMatrix64F x, DenseMatrix64F y ) {
     return VectorVectorMult.innerProd( x, y );
+  }
+
+  public static double[][] mult( double[][] A, double[][] B ) {
+    assert( A[0].length == B.length );
+    int m = A.length;
+    int n = A[0].length;
+    int l = B[0].length;
+
+    double[][] C = new double[m][l];
+    for( int i = 0; i < m; i++ )
+      for( int j = 0; j < l; j++ )
+        for( int k = 0; k < l; k++ )
+          C[i][j] += A[i][k] * B[k][j];
+
+   return C;
   }
 
   /**
@@ -254,6 +274,44 @@ public class MatrixOps {
   public static double norm(SimpleMatrix X) {
     return norm( X.getMatrix() );
   }
+  public static double norm(FullTensor T) {
+    double norm = 0.0;
+    for(int d1 = 0; d1 < T.D1; d1++ )
+      for(int d2 = 0; d2 < T.D2; d2++ )
+        for(int d3 = 0; d3 < T.D3; d3++ )
+          norm += (T.X[d1][d2][d3]) * (T.X[d1][d2][d3]);
+    return Math.sqrt(norm);
+  }
+
+  public static double diffL1(double[] X, double[] Y) {
+    double diff = 0.0;
+    for(int d1 = 0; d1 < X.length; d1++ )
+        diff += Math.abs(X[d1] - Y[d1]);
+    return diff;
+  }
+  public static double diffL1(double[][] X, double[][] Y) {
+    double diff = 0.0;
+    for(int d1 = 0; d1 < X.length; d1++ )
+      for(int d2 = 0; d2 < X[d1].length; d2++ )
+        diff += Math.abs(X[d1][d2] - Y[d1][d2]);
+    return diff;
+  }
+
+
+  public static double diff(double[] X, double[] Y) {
+    double diff = 0.0;
+    for(int d1 = 0; d1 < X.length; d1++ )
+      diff += Math.pow(X[d1] - Y[d1], 2);
+    return Math.sqrt(diff);
+  }
+  public static double diff(double[][] X, double[][] Y) {
+    double diff = 0.0;
+    for(int d1 = 0; d1 < X.length; d1++ )
+      for(int d2 = 0; d2 < X[d1].length; d2++ )
+        diff += Math.pow(X[d1][d2] - Y[d1][d2], 2);
+    return Math.sqrt(diff);
+  }
+
   public static double diff(DenseMatrix64F X, DenseMatrix64F Y) {
     return SpecializedOps.diffNormF(X, Y);
   }
@@ -270,7 +328,23 @@ public class MatrixOps {
           err += (X.X[d1][d2][d3] - Y.X[d1][d2][d3]) * (X.X[d1][d2][d3] - Y.X[d1][d2][d3]);
     return Math.sqrt(err);
   }
+  public static double maxdiff(FullTensor X, FullTensor Y) {
+    assert( X.D1 == Y.D1 ); assert( X.D2 == Y.D2 ); assert( X.D3 == Y.D3 );
 
+    double err = 0.0;
+    for(int d1 = 0; d1 < X.D1; d1++)
+      for(int d2 = 0; d2 < X.D2; d2++)
+        for(int d3 = 0; d3 < X.D3; d3++)
+          err = Math.max( err, (X.X[d1][d2][d3] - Y.X[d1][d2][d3]) );
+    return err;
+  }
+
+
+  public static void abs( double[][] X ) {
+    for(int i = 0; i < X.length; i++)
+      for(int j = 0; j < X[i].length; j++)
+        X[i][j] = Math.abs(X[i][j]);
+  }
   /**
    * Return the absolute value of each entry in X
    */
@@ -296,6 +370,13 @@ public class MatrixOps {
 
     return min;
   }
+  public static int min( int[] x ) {
+    int min = Integer.MAX_VALUE;
+    for( int i = 0; i < x.length; i++ )
+      if( x[i] < min ) min = x[i];
+
+    return min;
+  }
   public static double min( DenseMatrix64F X ) {
     return min( X.data );
   }
@@ -310,11 +391,33 @@ public class MatrixOps {
   }
 
   /**
+   * Get pointwise minimums
+   * @param X
+   * @param Y
+   * @return
+   */
+  public static SimpleMatrix min( SimpleMatrix X, SimpleMatrix Y ) {
+    SimpleMatrix m = new SimpleMatrix(X);
+    for(int elem = 0; elem < m.getNumElements(); elem++) {
+      m.set(elem, Math.min(m.get(elem), Y.get(elem)));
+    }
+    return m;
+  }
+
+
+  /**
    * Find the maximum value of the matrix X
    */
   public static double max( double[] x ) {
     double max = Double.NEGATIVE_INFINITY;
     for( int i = 0; i < x.length; i++ ) 
+      if( x[i] > max ) max = x[i];
+
+    return max;
+  }
+  public static int max( int[] x ) {
+    int max = Integer.MIN_VALUE;
+    for( int i = 0; i < x.length; i++ )
       if( x[i] > max ) max = x[i];
 
     return max;
@@ -354,6 +457,17 @@ public class MatrixOps {
     int idx = -1;
     double max = Double.NEGATIVE_INFINITY;
     for( int i = 0; i < x.length; i++ ) 
+      if( x[i] > max ) {
+        idx = i;
+        max = x[i];
+      }
+
+    return idx;
+  }
+  public static int argmax( int[] x ) {
+    int idx = -1;
+    double max = Double.NEGATIVE_INFINITY;
+    for( int i = 0; i < x.length; i++ )
       if( x[i] > max ) {
         idx = i;
         max = x[i];
@@ -427,8 +541,42 @@ public class MatrixOps {
   /**
    * Compute Triples
    */
-  public static SimpleTensor Triples( SimpleMatrix X1, SimpleMatrix X2, SimpleMatrix X3 ) {
-    return new SimpleTensor( X1, X2, X3 );
+//  public static SimpleTensor Triples( SimpleMatrix X1, SimpleMatrix X2, SimpleMatrix X3 ) {
+//    return new SimpleTensor( X1, X2, X3 );
+//  }
+  public static FullTensor Triples( DenseMatrix64F X1, DenseMatrix64F X2, DenseMatrix64F X3 ) {
+    // TODO: Optimize
+    assert( X1.numRows == X2.numRows && X2.numRows == X3.numRows );
+
+    int nRows = X1.numRows;
+    int d1 = X1.numCols;
+    int d2 = X2.numCols;
+    int d3 = X3.numCols;
+
+    double[] X1_ = X1.data;
+    double[] X2_ = X2.data;
+    double[] X3_ = X3.data;
+    double[][][] Z = new double[d1][d2][d3];
+
+    // Average the outer products
+    for(int row = 0; row < nRows; row++ ) {
+      for( int i = 0; i < d1; i++ ) {
+        double x1 = X1_[X1.getIndex(row, i)];
+        for( int j = 0; j < d2; j++ ) {
+          double x2 = X2_[X2.getIndex(row, j)];
+          for( int k = 0; k < d3; k++ ) {
+            double x3 = X3_[X3.getIndex(row, k)];
+            // Rolling average
+            Z[i][j][k] += (x1*x2*x3 - Z[i][j][k])/(row+1);
+          }
+        }
+      }
+    }
+
+    return new FullTensor(Z);
+  }
+  public static FullTensor Triples( SimpleMatrix X1, SimpleMatrix X2, SimpleMatrix X3 ) {
+    return Triples(X1.getMatrix(), X2.getMatrix(), X3.getMatrix());
   }
 
   /**
@@ -603,7 +751,7 @@ public class MatrixOps {
   }
   public static SimpleMatrix normalize(SimpleMatrix x) {
     assert( isVector( x ) );
-    return x.scale( 1.0 / x.normF() );
+    return x.scale( 1.0 / x.elementSum() );
   }
 
   /**
@@ -750,6 +898,46 @@ public class MatrixOps {
       X_[ X.getIndex( row, col )] /= sum;
   }
 
+  public static double[][] cdist(double[] X, double[] Y) {
+    int n = X.length;
+    int m = Y.length;
+
+    double[][] Z = new double[n][m];
+
+    for( int i = 0; i < n; i++ ) {
+      for( int j = 0; j < m; j++ ) {
+        // Find the distance between X and Y
+        Z[i][j] = Math.abs(X[i] - Y[j]);
+      }
+    }
+
+    return Z;
+  }
+
+  public static double[][] cdist(double[][] X, double[][] Y) {
+    assert( X[0].length == Y[0].length );
+
+    int n = X.length;
+    int m = Y.length;
+
+    double[][] Z = new double[n][m];
+
+    for( int i = 0; i < n; i++ ) {
+      for( int j = 0; j < m; j++ ) {
+        // Find the distance between X and Y
+        double d = 0;
+        for( int k = 0; k < X[i].length; k++ ) {
+          double d_ = X[i][k] - Y[j][k];
+          d += d_ * d_;
+        }
+        Z[i][j] = Math.sqrt(d);
+      }
+    }
+
+    return Z;
+  }
+
+
   /**
    * Find the pairwise distance of the i-th row in X and j-th row in Y
    * @param X
@@ -815,7 +1003,13 @@ public class MatrixOps {
 
     for( int col = 0; col < nCols; col++ ) {
       // For each column, normalize the vector and zero out negative values.
-      columnNormalize( X, col );
+      // Get the majority sign
+      int positives = 0;
+      for( int row = 0; row < nRows; row++ ) positives += (X.get(row,col) > 0) ? 1 : 0;
+
+      // Flip sign
+      if( positives < nRows / 2 ) for( int row = 0; row < nRows; row++ )
+        X.set(row, col, -X.get(row,col));
 
       for( int row = 0; row < nRows; row++ ) {
         double x  = X_[ X.getIndex(row, col) ];
@@ -902,6 +1096,14 @@ public class MatrixOps {
   }
   public static Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> svdk( DenseMatrix64F X ) {
     return svdk(SimpleMatrix.wrap(X));
+  }
+  public static Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> svd( SimpleMatrix X ) {
+    @SuppressWarnings("unchecked")
+    SimpleSVD<SimpleMatrix> UWV = X.svd(true);
+    SimpleMatrix U = UWV.getU();
+    SimpleMatrix W = UWV.getW();
+    SimpleMatrix V = UWV.getV();
+    return new Triplet<>(U, W, V);
   }
 
   /**
@@ -995,6 +1197,17 @@ public class MatrixOps {
     SimpleMatrix D = UDV.getValue1();
     return U.mult(sqrt( D ).invert());
   }
+  public static SimpleMatrix randomizedWhitener( SimpleMatrix X, SimpleMatrix Q, int K ) {
+    Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> UDV = svd(X);
+    SimpleMatrix U = UDV.getValue0();
+    U = Q.mult(U);
+    SimpleMatrix D = UDV.getValue1();
+    // Truncate
+    U = U.extractMatrix(0, SimpleMatrix.END, 0, K);
+    D = D.extractMatrix(0, K, 0, K);
+    SimpleMatrix Dsqrtinv = sqrt( D ).invert();
+    return U.mult(Dsqrtinv);
+  }
   public static SimpleMatrix colorer( SimpleMatrix X ) {
     Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> UDV = svdk(X);
     SimpleMatrix U = UDV.getValue0();
@@ -1006,6 +1219,78 @@ public class MatrixOps {
     SimpleMatrix U = UDV.getValue0();
     SimpleMatrix D = UDV.getValue1();
     return U.mult(sqrt(D));
+  }
+
+  // Align the rows of X to match as closely to Y as possible.
+  public static double[] alignRows( double[] X, double[] Y ) {
+    assert( X.length == Y.length );
+    int nCols = X.length;
+
+    double[][] W = cdist( Y, X );
+    int[][] matching = HungarianAlgorithm.findWeightedMatching(W, false);
+
+    // Populate the weight matrix
+    // Compute min-weight matching
+    // Shuffle rows
+    double[] Z = new double[nCols];
+    for( int[] match : matching )
+      Z[match[0]] = X[match[1]];
+
+    return Z;
+  }
+
+  // Align the rows of X to match as closely to Y as possible.
+  public static double[][] alignRows( double[][] X, double[][] Y ) {
+    assert( X.length == Y.length );
+    assert( X[0].length == Y[0].length );
+    int nRows = X.length;
+    int nCols = X[0].length;
+
+    double[][] W = cdist( Y, X );
+    int[][] matching = HungarianAlgorithm.findWeightedMatching(W, false);
+
+    // Populate the weight matrix
+    // Compute min-weight matching
+    // Shuffle rows
+    double[][] Z = new double[nRows][nCols];
+    for( int[] match : matching )
+      System.arraycopy(X[match[1]], 0, Z[match[0]], 0, nCols);
+
+    return Z;
+  }
+
+  /**
+   * Align the rows of matrix X so that the rows/columns are matched with the
+   * columns of Y (ignores signs)
+   */
+  public static SimpleMatrix alignMatrixWithSigns( SimpleMatrix X, SimpleMatrix Y ) {
+    assert( X.numRows() == Y.numRows() );
+    assert( X.numCols() == Y.numCols() );
+    int nRows = X.numRows();
+    int nCols = X.numCols();
+
+    // Populate the weight matrix
+    double[][] W =  MatrixFactory.toArray( min(cdist(Y, X.scale(-1.)), cdist(Y, X)) );
+    // Compute min-weight matching
+    int[][] matching = HungarianAlgorithm.findWeightedMatching( W, false );
+    // Shuffle rows
+    SimpleMatrix X_ = new SimpleMatrix( nRows, nCols );
+    for( int[] match : matching ) {
+      SimpleMatrix row = row( X, match[1] );
+      // Decide on sign
+      SimpleMatrix row_ = row(Y, match[0]);
+      if( diff(row.scale(-1.), row_) < diff(row, row_) )
+        row = row.scale(-1.);
+      setRow( X_, match[0], row );
+    }
+
+    return X_;
+  }
+  public static SimpleMatrix alignMatrixWithSigns( SimpleMatrix X, SimpleMatrix Y, boolean compareColumns ) {
+    if( compareColumns )
+      return alignMatrixWithSigns(X.transpose(), Y.transpose()).transpose();
+    else
+      return alignMatrixWithSigns(X, Y);
   }
 
   /**
@@ -1034,6 +1319,49 @@ public class MatrixOps {
       return alignMatrix( X.transpose(), Y.transpose() ).transpose();
     else
       return alignMatrix( X, Y );
+  }
+  public static int[] alignRows( SimpleMatrix X, SimpleMatrix Y) {
+    assert( X.numRows() == Y.numRows() );
+    assert( X.numCols() == Y.numCols() );
+    int nRows = X.numRows();
+    int nCols = X.numCols();
+
+    // Populate the weight matrix
+    double[][] W = MatrixFactory.toArray( cdist( Y, X ) );
+    // Compute min-weight matching
+    int[][] matching = HungarianAlgorithm.findWeightedMatching( W, false );
+    // Shuffle rows
+    int[] perm = new int[nRows];
+    for( int[] match : matching )
+      perm[match[0]] = match[1];
+
+    return perm;
+  }
+  public static int[] alignColumns( SimpleMatrix X, SimpleMatrix Y) {
+    return alignRows( X.transpose(), Y.transpose() );
+  }
+
+  public static SimpleMatrix permuteRows( SimpleMatrix X, int[] perm ) {
+    int nRows = X.numRows();
+    int nCols = X.numCols();
+    SimpleMatrix X_ = new SimpleMatrix( nRows, nCols );
+    // Shuffle rows
+    for( int i = 0; i < nRows; i++ ) {
+      setRow( X_, i, row( X, perm[i] ) );
+    }
+
+    return X_;
+  }
+  public static SimpleMatrix permuteColumns( SimpleMatrix X, int[] perm ) {
+    int nRows = X.numRows();
+    int nCols = X.numCols();
+    SimpleMatrix X_ = new SimpleMatrix( nRows, nCols );
+    // Shuffle rows
+    for( int i = 0; i < nCols; i++ ) {
+      setCol( X_, i, col( X, perm[i] ) );
+    }
+
+    return X_;
   }
 
   // Algebraic operations
@@ -1093,6 +1421,9 @@ public class MatrixOps {
    */
   public static double xMy(final DenseMatrix64F x, final DenseMatrix64F M, final DenseMatrix64F y) {
     return VectorVectorMult.innerProdA(x, M, y);
+  }
+  public static double xMy(final SimpleMatrix x, final SimpleMatrix M, final SimpleMatrix y) {
+    return xMy(x.getMatrix(), M.getMatrix(), y.getMatrix());
   }
   public static void quadraticForm(final DenseMatrix64F X, final DenseMatrix64F M, DenseMatrix64F y) {
     int N = X.numRows;
@@ -1154,7 +1485,8 @@ public class MatrixOps {
 
     for( int d = 0; d < D; d++ )
       for( int d_ = 0; d_ <= d; d_++ )
-        if( !equal(M.get( d, d_ ), M.get( d_, d ) ) ) return false;
+        if( !equal(M.get( d, d_ ), M.get( d_, d ) ) )
+          return false;
 
     return true;
   }
@@ -1178,6 +1510,38 @@ public class MatrixOps {
     }
 
     return true;
+  }
+  public static double symmetricSkewMeasure( FullTensor T ) {
+    double skew = 0.0;
+    assert(T.D1 == T.D2 && T.D2 == T.D3 );
+    int D = T.D1;
+
+    for( int d1 = 0; d1 < D; d1++ ) {
+      for( int d2 = 0; d2 < D; d2++ ) {
+        for( int d3 = 0; d3 < D; d3++ ) {
+          skew += ( Math.abs(T.X[d1][d2][d3] - T.X[d1][d3][d2]) +
+                    Math.abs(T.X[d1][d2][d3] - T.X[d2][d1][d3]) +
+                    Math.abs(T.X[d1][d2][d3] - T.X[d2][d3][d1]) +
+                    Math.abs(T.X[d1][d2][d3] - T.X[d3][d1][d2]) +
+                    Math.abs(T.X[d1][d2][d3] - T.X[d3][d2][d1]) ) / 5;
+        }
+      }
+    }
+
+    return skew;
+  }
+  public static double symmetricSkewMeasure( SimpleMatrix M ) {
+    double skew = 0.0;
+    assert(M.numRows() == M.numCols());
+    int D = M.numRows();
+
+    for( int d1 = 0; d1 < D; d1++ ) {
+      for( int d2 = 0; d2 < D; d2++ ) {
+        skew += Math.abs(M.get(d1,d2) - M.get(d2,d1));
+      }
+    }
+
+    return skew;
   }
 
   /**
@@ -1225,6 +1589,277 @@ public class MatrixOps {
   public static void scale( double[] x, double factor ) {
     for( int i = 0; i < x.length; i++ )
         x[i] *= factor;
+  }
+
+  /**
+   * Returns the indicies of decreasing values of col
+   * @param col
+   * @return
+   */
+  public static Integer[] argsort(final SimpleMatrix col) {
+    Integer[] indices = new Integer[col.getNumElements()];
+    for( int i = 0; i < indices.length; i++ ) indices[i] = i;
+
+    Arrays.sort(indices, new Comparator<Integer>() {
+      @Override
+      public int compare(Integer i1, Integer i2) {
+        return -Double.compare(col.get(i1), col.get(i2));
+      }
+    });
+    // Make sure it's in descending order
+    assert( col.get(indices[0]) > col.get(indices[indices.length-1]) );
+
+    return indices;
+  }
+  public static Integer[] argsort(final double[] col) {
+    Integer[] indices = new Integer[col.length];
+    for( int i = 0; i < indices.length; i++ ) indices[i] = i;
+
+    Arrays.sort(indices, new Comparator<Integer>() {
+      @Override
+      public int compare(Integer i1, Integer i2) {
+        return -Double.compare(col[i1], col[i2]);
+      }
+    });
+    // Make sure it's in descending order
+    assert( col[indices[0]] > col[indices[indices.length-1]] );
+
+    return indices;
+  }
+
+  public static SimpleMatrix symmetrize(SimpleMatrix pairs) {
+    return pairs.plus(pairs.transpose()).divide(2.0);
+  }
+  public static FullTensor symmetrize(FullTensor triples) {
+    FullTensor triples_ = triples.clone();
+    for(int d1 = 0; d1 < triples.D1; d1++ ) {
+      for(int d2 = 0; d2 < triples.D2; d2++ ) {
+        for(int d3 = 0; d3 < triples.D3; d3++ ) {
+          triples_.X[d1][d2][d3] =
+              (triples.X[d1][d2][d3] +
+                  triples.X[d1][d3][d2] +
+                  triples.X[d2][d1][d3] +
+                  triples.X[d2][d3][d1] +
+                  triples.X[d3][d1][d2] +
+                  triples.X[d3][d2][d1] )/6.0;
+        }
+      }
+
+    }
+    return triples_;
+  }
+
+  public static double sum(double[][][] x ) {
+    double sum = 0.0;
+    for( int i = 0; i < x.length; i++ )
+      for( int j = 0; j < x[i].length; j++ )
+        for( int k = 0; k < x[i][j].length; k++ )
+          sum += x[i][j][k];
+    return sum;
+  }
+
+  public static void abs(double[] x) {
+    for(int i = 0; i < x.length; i++)
+      x[i] = Math.abs(x[i]);
+  }
+
+  public static void scale(double[][][] x, double factor) {
+    for( int i = 0; i < x.length; i++ )
+      for( int j = 0; j < x[i].length; j++ )
+        for( int k = 0; k < x[i][j].length; k++ )
+          x[i][j][k] *= factor;
+  }
+
+  public static double sum(double[][][][] P) {
+    double z = 0;
+    for(int h1 = 0; h1 < P.length; h1++)
+      for(int h2 = 0; h2 < P[h1].length; h2++)
+        for(int h3 = 0; h3 < P[h1][h2].length; h3++)
+          for(int h4 = 0; h4 < P[h1][h2][h3].length; h4++)
+            z += P[h1][h2][h3][h4];
+
+    return z;
+  }
+
+  public static interface Matrixable {
+    public int numRows();
+    public int numCols();
+    // TODO: Change everything to be SimpleMatrix?
+    public SimpleMatrix rightMultiply(SimpleMatrix right);
+    public SimpleMatrix leftMultiply(SimpleMatrix left);
+    public SimpleMatrix doubleMultiply(SimpleMatrix left, SimpleMatrix right);
+  }
+  public static Matrixable matrixable(final SimpleMatrix M) {
+    return new Matrixable() {
+
+      @Override
+      public int numRows() {
+        return M.numRows();
+      }
+
+      @Override
+      public int numCols() {
+        return M.numCols();
+      }
+
+      @Override
+      public SimpleMatrix rightMultiply(SimpleMatrix right) {
+        return M.mult(right);
+      }
+
+      @Override
+      public SimpleMatrix leftMultiply(SimpleMatrix leftT) {
+        return leftT.transpose().mult(M);
+      }
+
+      @Override
+      public SimpleMatrix doubleMultiply(SimpleMatrix leftT, SimpleMatrix right) {
+        return leftT.transpose().mult(M).mult(right);
+      }
+    };
+  }
+
+  public static interface Tensorable {
+    public int numD1();
+    public int numD2();
+    public int numD3();
+    // TODO: Implement elsewhere
+//    public FullTensor multiply1(SimpleMatrix M);
+//    public FullTensor multiply2(SimpleMatrix M);
+//    public FullTensor multiply12(SimpleMatrix M, SimpleMatrix N);
+    FullTensor multiply123(SimpleMatrix L, SimpleMatrix M, SimpleMatrix N);
+  }
+  public static Tensorable tensorable(final FullTensor T) {
+    return new Tensorable() {
+      @Override
+      public int numD1() {
+        return T.D1;
+      }
+
+      @Override
+      public int numD2() {
+        return T.D2;
+      }
+
+      @Override
+      public int numD3() {
+        return T.D3;
+      }
+
+      // TODO: Implement elsewhere
+//      @Override
+//      public FullTensor multiply1(SimpleMatrix M) {
+//        return T.rotate(0, M);
+//      }
+//
+//      @Override
+//      public FullTensor multiply2(SimpleMatrix M) {
+//        return T.rotate(1, M);
+//      }
+//
+//      @Override
+//      public FullTensor multiply12(SimpleMatrix M, SimpleMatrix N) {
+//        return T.rotate(M, N, SimpleMatrix.identity(T.D3));
+//      }
+      @Override
+      public FullTensor multiply123(SimpleMatrix L, SimpleMatrix M, SimpleMatrix N) {
+        return T.rotate(L, M, N);
+      }
+    };
+  }
+
+
+  /**
+   * Implements the randomized range finder routine from:
+   *   Finding structure with randomness: Probabilistic algorithms for constructing approximate matrix decompositions
+   *   Nathan Halko, Per-Gunnar Martinsson, Joel A. Tropp
+   *   http://arxiv.org/pdf/0909.4061
+   *
+   * @param M - object supporting multiply routines (used for random projections)
+   * @param p - Size of the random projection. Should be about $2k$, where $k$ is the rank approximation of $M$ you desire
+   * @param rnd - Random generator
+   * @return - the range of M, Q (i.e. A ~= Q Q* A)
+   */
+  public static SimpleMatrix randomizedRangeFinder(Matrixable M, int p, Random rnd) {
+    // Create a random matrix
+    int n = M.numRows();
+    SimpleMatrix Omega = RandomFactory.randn(rnd, n, p);
+
+    // Form the product Y = A Omega
+    DenseMatrix64F Y = M.rightMultiply(Omega).getMatrix();
+    QRDecomposition<DenseMatrix64F> qr = DecompositionFactory.qr(n, p);
+    qr.decompose(Y);
+    DenseMatrix64F Q = qr.getQ(null, true);
+
+    return SimpleMatrix.wrap(Q);
+  }
+
+  /**
+   * Compute the SVD approximately.
+   * @param M - object supporting matrix multiply routines
+   * @param Qt - range of M
+   * @return - SVD of M
+   */
+  public static Triplet<SimpleMatrix,SimpleMatrix,SimpleMatrix> randomizedSvd(Matrixable M, SimpleMatrix Qt) {
+    int N = M.numRows();
+
+    // Form B = Q* A
+    SimpleMatrix B = new SimpleMatrix(M.leftMultiply(Qt));
+    // Compute SVD of smaller matrix
+    Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> UDV = svd(B);
+
+    // Project up: $U = Q\tilde{U}$
+    SimpleMatrix U = (new SimpleMatrix(Qt)).mult(UDV.getValue0());
+
+    return Triplet.with(U, UDV.getValue1(), UDV.getValue2());
+  }
+  public static Triplet<SimpleMatrix,SimpleMatrix,SimpleMatrix> randomizedSvd(Matrixable M, SimpleMatrix Qt, int K) {
+    Triplet<SimpleMatrix, SimpleMatrix, SimpleMatrix> UWV = randomizedSvd(M, Qt);
+    SimpleMatrix U = UWV.getValue0();
+    SimpleMatrix W = UWV.getValue1();
+    SimpleMatrix V = UWV.getValue2();
+
+    // Truncate U, W and V to k-rank
+    U = U.extractMatrix(0, SimpleMatrix.END, 0, K);
+    W = W.extractMatrix(0, K, 0, K);
+    V = V.extractMatrix(0, SimpleMatrix.END, 0, K);
+
+    return Triplet.with(U, W, V);
+  }
+
+  /**
+   * Collapse the 3rd order moment along index;
+   * E[x_1 \otimes x_2 ] = \sum_{x_3} \E[ x_1 \otimes x_2 \otimes x_3]
+   * @param T - tensor
+   * @param index1 - Primary key of the resultant 2nd order moment
+   * @param index2 - Secondary key of the resultant 2nd order moment
+   * @param index3 - Index to Eliminate
+   * @return - 2nd order moment
+   */
+  public static SimpleMatrix condenseMoment( FullTensor T, int index1, int index2, int index3 ) {
+    SimpleMatrix M = new SimpleMatrix(T.getDim(index1), T.getDim(index2));
+
+    int I = T.getDim(index1);
+    int J = T.getDim(index2);
+    int K = T.getDim(index3);
+
+    for(int i = 0; i < I; i++ ) {
+      for(int j = 0; j < J; j++ ) {
+        // Collapse all these entries.
+        double val = 0.;
+        for(int k = 0; k < K; k++ ) {
+          int[] idx = new int[3];
+          idx[index1] = i; idx[index2] = j; idx[index3] = k;
+          val += T.X[idx[0]][idx[1]][idx[2]];
+        }
+        M.set(i,j, val);
+      }
+    }
+
+    return M;
+  }
+  public static SimpleMatrix condenseMoment( FullTensor T ) {
+    return condenseMoment(T, 0, 1, 2);
   }
 
 }

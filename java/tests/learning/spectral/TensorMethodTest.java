@@ -5,13 +5,11 @@
  */
 package learning.spectral;
 
+import learning.data.ComputableMoments;
 import learning.linalg.*;
 
-import learning.exceptions.NumericalException;
-import learning.exceptions.RecoveryFailure;
-
 import learning.models.MixtureOfGaussians;
-import learning.models.MixtureOfGaussians.*;
+
 import static learning.models.MixtureOfGaussiansTest.*;
 
 import org.javatuples.*;
@@ -35,8 +33,8 @@ public class TensorMethodTest {
     LogInfo.writeToStdout = false;
     LogInfo.init();
   }
-  // Actual tests
 
+  // Actual tests
   public void testSymmetrization( MixtureOfGaussians model ) {
     int K = model.getK();
     int D = model.getD();
@@ -74,7 +72,6 @@ public class TensorMethodTest {
     Assert.assertTrue( MatrixOps.allclose( symmetricMoments.getValue0(), Pairs ) );
     Assert.assertTrue( MatrixOps.allclose( symmetricMoments.getValue1(), Triples ) );
   }
-
   @Test
   public void testSymmetrizationSmallEye() { testSymmetrization( generateSmallEye() ); }
   @Test
@@ -94,7 +91,8 @@ public class TensorMethodTest {
     SimpleMatrix Pairs = moments.getValue0();
     FullTensor Triples = moments.getValue3();
     TensorMethod algo = new TensorMethod();
-    Pair<SimpleMatrix, SimpleMatrix> params = algo.recoverParameters( K, Pairs, Triples  );
+//    Pair<SimpleMatrix, SimpleMatrix> params = algo.recoverParameters( K, Pairs, Triples  );
+    Pair<SimpleMatrix, SimpleMatrix> params = algo.recoverParameters( K, Triples  );
     SimpleMatrix weights_ = params.getValue0();
     SimpleMatrix M_ = params.getValue1();
 
@@ -130,7 +128,8 @@ public class TensorMethodTest {
         model.computeExactMoments();
 
     TensorMethod algo = new TensorMethod();
-    Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, SimpleMatrix> params = algo.recoverParameters( K, moments );
+//    Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, SimpleMatrix> params = algo.recoverParameters( K, moments );
+    Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, SimpleMatrix> params = algo.recoverParametersAsymmetric( K, moments.getValue3() );
     SimpleMatrix weights_ = params.getValue0();
     SimpleMatrix M1_ = params.getValue1();
     SimpleMatrix M2_ = params.getValue2();
@@ -184,6 +183,94 @@ public class TensorMethodTest {
     if( parser.parse( args ) ) {
     }
   }
+
+  public void testRandomizedSymmetricRunner( MixtureOfGaussians model ) {
+    int K = model.getK();
+    int D = model.getD();
+    int V = model.getV();
+
+    ComputableMoments moments = model.computeExactMoments_();
+    TensorMethod algo = new TensorMethod();
+    Pair<SimpleMatrix, SimpleMatrix> params = algo.randomizedSymmetricRecoverParameters(K, moments);
+    SimpleMatrix weights_ = params.getValue0();
+    SimpleMatrix M_ = params.getValue1();
+
+    // Properties
+
+    Assert.assertTrue( weights_.numRows() == 1 );
+    Assert.assertTrue( weights_.numCols() == K );
+
+    Assert.assertTrue( M_.numRows() == D );
+    Assert.assertTrue( M_.numCols() == K );
+
+    // Exact values
+    SimpleMatrix weights = model.getWeights();
+    SimpleMatrix M = model.getMeans()[0];
+
+    M_ = MatrixOps.alignMatrix( M_, M, true );
+
+    Assert.assertTrue( MatrixOps.allclose( weights, weights_) );
+    Assert.assertTrue( MatrixOps.allclose( M, M_) );
+  }
+  @Test
+  public void testRandomizedSmallSymmetric() { testRandomizedSymmetricRunner( generateSmallSymmetric() ); }
+  @Test
+  public void testRandomizedMediumSymmetric() { testRandomizedSymmetricRunner( generateMediumSymmetric() ); }
+
+  public void testRandomizedRunner( MixtureOfGaussians model ) {
+    int K = model.getK();
+    int D = model.getD();
+    int V = model.getV();
+
+    ComputableMoments moments = model.computeExactMoments_();
+    TensorMethod algo = new TensorMethod();
+    Quartet<SimpleMatrix, SimpleMatrix, SimpleMatrix, SimpleMatrix> params = algo.randomizedRecoverParameters( K, moments );
+    SimpleMatrix weights_ = params.getValue0();
+    SimpleMatrix M1_ = params.getValue1();
+    SimpleMatrix M2_ = params.getValue2();
+    SimpleMatrix M3_ = params.getValue3();
+
+    // Properties
+
+    Assert.assertTrue( weights_.numRows() == 1 );
+    Assert.assertTrue( weights_.numCols() == K );
+    Assert.assertTrue( M1_.numRows() == D );
+    Assert.assertTrue( M1_.numCols() == K );
+    Assert.assertTrue( M2_.numRows() == D );
+    Assert.assertTrue( M2_.numRows() == D );
+    Assert.assertTrue( M3_.numCols() == K );
+    Assert.assertTrue( M3_.numCols() == K );
+
+    // Exact values
+    SimpleMatrix weights = model.getWeights();
+    SimpleMatrix M1 = model.getMeans()[0];
+    SimpleMatrix M2 = model.getMeans()[1];
+    SimpleMatrix M3 = model.getMeans()[2];
+
+    M1_ = MatrixOps.alignMatrix( M1_, M1, true );
+    M2_ = MatrixOps.alignMatrix( M2_, M2, true );
+    M3_ = MatrixOps.alignMatrix( M3_, M3, true );
+
+    Assert.assertTrue( MatrixOps.allclose( weights, weights_) );
+    Assert.assertTrue( MatrixOps.allclose( M1, M1_) );
+    Assert.assertTrue( MatrixOps.allclose( M2, M2_) );
+    Assert.assertTrue( MatrixOps.allclose( M3, M3_) );
+  }
+
+
+  @Test
+  public void testRandomizedSmallSymmetric_() { testRandomizedRunner( generateSmallSymmetric() ); }
+  @Test
+  public void testRandomizedMediumSymmetric_() { testRandomizedRunner( generateMediumSymmetric() ); }
+  @Test
+  public void testRandomizedSmallEye() { testRandomizedRunner( generateSmallEye() ); }
+  @Test
+  public void testRandomizedMediumEye() { testRandomizedRunner( generateMediumEye() ); }
+  @Test
+  public void testRandomizedSmallRandom() { testRandomizedRunner( generateSmallRandom() ); }
+  @Test
+  public void testRandomizedMediumRandom() { testRandomizedRunner( generateMediumRandom() ); }
+
 
 }
 

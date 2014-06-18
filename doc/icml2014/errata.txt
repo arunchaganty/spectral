@@ -1,0 +1,9 @@
+- footnote 1: replace "Assumption 2" by "Property 2"
+    + Not actually true - clarify if necessary.
+- line 470: maybe replace "Non-examples" by "negative examples" or
+"counter-examples"?
+    + Unsure
+- Lines 302, 324, 325: Inconsistent notation for set of exclusive views.
+Both \mathcal{V} and mathbf{x}_{\mathcal{V}} used to denote set of
+exclusive views.
+    + Clean up

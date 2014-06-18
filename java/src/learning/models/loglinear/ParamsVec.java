@@ -4,15 +4,14 @@ import java.io.*;
 import java.util.*;
 
 import fig.basic.*;
-import fig.exec.*;
-import fig.prob.*;
-import fig.record.*;
-import static fig.basic.LogInfo.*;
+import learning.models.Params;
 
-public class ParamsVec {
-  public int K;  // Number of hidden states
-  public Indexer<Feature> featureIndexer;
-  public int numFeatures;
+public class ParamsVec extends Params {
+  public final int K;  // Number of hidden states
+  public final Indexer<Feature> featureIndexer;
+  public final int numFeatures;
+  public final double[] weights;
+
   ParamsVec(int K, Indexer<Feature> featureIndexer) {
     this.K = K;
     this.featureIndexer = featureIndexer;
@@ -20,17 +19,102 @@ public class ParamsVec {
     this.weights = new double[numFeatures];
   }
 
-  public double[] weights;
+  // -- Params implementation
+  @Override
+  public Params newParams() {
+    return new ParamsVec(K, featureIndexer);
+  }
+  @Override
+  public Params merge(Params that_) {
+    if(that_ instanceof  ParamsVec) {
+      ParamsVec that = (ParamsVec) that_;
+      // Join the two featureIndexers
+      Indexer<Feature> joinedIndex = new Indexer<>();
+      joinedIndex.addAll(featureIndexer);
+      joinedIndex.addAll(that.featureIndexer);
+      ParamsVec ret = new ParamsVec(K, joinedIndex);
+      for( Feature f : featureIndexer )
+        ret.weights[ret.featureIndexer.indexOf(f)] += weights[featureIndexer.indexOf(f)];
+      for( Feature f : that.featureIndexer )
+        ret.weights[ret.featureIndexer.indexOf(f)] += that.weights[that.featureIndexer.indexOf(f)];
+      return ret;
+    } else {
+      throw new IllegalArgumentException();
+    }
+  }
+  @Override
+  public double[] toArray() {return weights;}
+  @Override
+  public int size() {return weights.length;}
+  @Override
+  public void clear() { Arrays.fill(weights,0.); }
 
-  public void initRandom(Random random, double noise) {
-    for (int j = 0; j < numFeatures; j++)
-      weights[j] = noise * (2 * random.nextDouble() - 1);
+  public Indexer<Feature> getFeatureIndexer() {
+    return featureIndexer;
   }
 
-  public void clear() { ListUtils.set(weights, 0); }
-  public void incr(double scale, ParamsVec that) { ListUtils.incr(this.weights, scale, that.weights); }
-  public double dot(ParamsVec that) { return ListUtils.dot(this.weights, that.weights); }
+  // -- ParamsVec specific
+  public double get(Feature f) {
+    return this.weights[featureIndexer.indexOf(f)];
+  }
+  public void set(Feature f, double val) {
+    this.weights[featureIndexer.indexOf(f)] = val;
+  }
+  public void incr(Feature f, double val) {
+    this.weights[featureIndexer.indexOf(f)] += val;
+  }
 
+//  /**
+//   * Add two params vecs and place result in vec3
+//   * @param vec1
+//   * @param vec2
+//   * @param vec3
+//   * @return
+//   */
+//  public static ParamsVec plus(ParamsVec vec1, ParamsVec vec2, ParamsVec vec3 ) {
+//    for( Feature f : vec3.featureIndexer ) {
+//      vec3.weights[vec3.featureIndexer.indexOf(f)] =
+//              (vec1.featureIndexer.contains(f) ? vec1.weights[vec1.featureIndexer.indexOf(f)] : 0.)
+//                      + (vec2.featureIndexer.contains(f) ? vec2.weights[vec2.featureIndexer.indexOf(f)] : 0.);
+//    }
+//
+//    return vec3;
+//  }
+//  public static ParamsVec plus(ParamsVec vec1, ParamsVec vec2 ) {
+//    Indexer<Feature> featureIndexer = new Indexer<>();
+//    featureIndexer.addAll(vec1.featureIndexer);
+//    featureIndexer.addAll(vec2.featureIndexer);
+//
+//    ParamsVec vec3 = new ParamsVec(vec1.K, featureIndexer);
+//    plus( vec1, vec2, vec3 );
+//    return vec3;
+//  }
+
+//  /**
+//   * Subtract two params vecs and place result in vec3
+//   * @param vec1
+//   * @param vec2
+//   * @param vec3
+//   * @return
+//   */
+//  public static ParamsVec minus(ParamsVec vec1, ParamsVec vec2, ParamsVec vec3 ) {
+//    for( Feature f : vec3.featureIndexer ) {
+//      vec3.weights[vec3.featureIndexer.indexOf(f)] =
+//              (vec1.featureIndexer.contains(f) ? vec1.weights[vec1.featureIndexer.indexOf(f)] : 0.)
+//                      - (vec2.featureIndexer.contains(f) ? vec2.weights[vec2.featureIndexer.indexOf(f)] : 0.);
+//    }
+//
+//    return vec3;
+//  }
+//  public static ParamsVec minus(ParamsVec vec1, ParamsVec vec2 ) {
+//    Indexer<Feature> featureIndexer = new Indexer<>();
+//    featureIndexer.addAll(vec1.featureIndexer);
+//    featureIndexer.addAll(vec2.featureIndexer);
+//
+//    ParamsVec vec3 = new ParamsVec(vec1.K, featureIndexer);
+//    minus( vec1, vec2, vec3 );
+//    return vec3;
+//  }
   public double computeDiff(ParamsVec that, int[] perm) {
     // Compute differences in ParamsVec with optimal permutation of parameters.
     // Assume features have the form h=3,..., where the label '3' can be interchanged with another digit.
@@ -78,7 +162,7 @@ public class ParamsVec {
    * parameters, ignoring error on unmeasured measured features (of
    * this).
    */
-  double computeDiff(ParamsVec that, boolean[] measuredFeatures, int[] perm) {
+  public double computeDiff(ParamsVec that, boolean[] measuredFeatures, int[] perm) {
     // Assume features have the form h=3,..., where the label '3' can be interchanged with another digit.
     // Use bipartite matching.
 
@@ -132,4 +216,17 @@ public class ParamsVec {
       out.println(featureIndexer.getObject(f) + "\t" + weights[f]);
     out.close();
   }
+
+  public String toString() {
+    StringBuilder builder = new StringBuilder();
+    for (int f = 0; f < numFeatures; f++)
+      builder.append(featureIndexer.getObject(f)).append("\t").append(weights[f]).append(" ");
+    return builder.toString();
+  }
+
+  @Override
+  public int numGroups() {
+    return K;
+  }
+
 }

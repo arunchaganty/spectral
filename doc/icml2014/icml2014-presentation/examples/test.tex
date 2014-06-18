@@ -1,0 +1,29 @@
+\documentclass{beamer}
+
+\usetheme{boxes}
+
+\usepackage{tikz}
+\usetikzlibrary{tikzmark}
+
+\begin{document}
+
+% This didn't work.
+%\tikzset{%
+%  every picture/.append style={%
+%        shift=(current page.center)
+%        }}
+
+\begin{frame}
+  \begin{itemize}
+    \item \tikzmark{a} abcd
+    \item abcd
+    \item abcd
+  \end{itemize}
+  \begin{tikzpicture}[remember picture,overlay]%,shift=(current page.center)]
+    \node at (current page.center) {o};
+    \node at (pic cs:a) {tikz-a};
+  \end{tikzpicture}
+
+\end{frame}
+
+\end{document}

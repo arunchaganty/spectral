@@ -1,0 +1,249 @@
+\subsection{Tensor Operations}
+\label{app:tensor-multiplication}
+
+%In this section, we present basic results regarding two tensor
+%operations we define, tensor multiplication, which is analogous to
+%matrix multiplication, and the diagonal tensor.
+In this section, we present some results regarding a few tensor
+operations, most significant of which is tensor multiplication, an
+operation analogous to matrix multiplication.  
+First, let us define some notation.
+
+\paragraph{Notation}
+In the following, let $\sP \in \Re^{d_1 \times \ldots \times d_m}$ be
+  a $m$-th order tensor and let $\sQ \in \Re^{d'_1 \times \ldots \times
+  d'_n}$ be an $n$-th order tensor. %, where wlog, $m \ge n$. 
+We use the notation $\Domain(\sP) = [d_1] \times \cdots \times [d_m]$
+  to denote the domain of the indices of $\sP$.
+Let $M$ be an index matching set, i.e. $M = \{ (a_1; b_1),
+  (a_2, b_2), \ldots, (a_\ell, b_\ell) \}$, such that the corresponding
+  dimensions agree, i.e. $d_{a_i} = d'_{b_i}$ for all $i$. Let $D_{\ba}
+  = [d_{a_1}] \times \cdots \times [d_{a_\ell}]$ and $D'_{\bb}
+  = [d'_{b_1}] \times \cdots \times [d'_{b_\ell}]$ be the domains of the
+  corresponding indices.
+
+Finally, for some $\vi \in [d_1] \times \cdots \times [d_\ell]$ and $\vj
+\in [d_{\ell + 1}] \times \cdots \times [d_m]$ and  we use the notation
+$\sP[\vi \ \vj]_\pi \eqdef \sP[\pi(i_1, \cdots, i_\ell, j_{\ell+1},
+\cdots j_m)]$ to conjoin indices $\vi$ and $\vj$ up to the permutation
+$\pi$. 
+
+\paragraph{Unfoldings}
+For a tensor $\sP$, as defined above, 
+  given an index set $I \subset [m]$ we
+  define an unfolding of a tensor $\sP$ along $I$,
+ $\sP\munf{I}$, to be a matrix of dimensions $(\prod_{i \in I} d_i)
+ \times (\prod_{j \not\in I} d_j)$. $\sP\munf{I}$ has elements
+ $\sP\munf{I}[\vi;\vj] = \sP[\vi\ \vj]_{\pi}$, where $\pi$ is an
+ appropriate permutation to align the indices of $\vi$ and $\vj$ with
+ the ordering of $I$. 
+For example, if $\sP$ were a $4$-th order tensor and $I = \{1,3\}$,
+  $\sP\munf{13}[i_1,i_2; j_1,j_2] = \sP[i_1,j_1,i_2,j_2]$.
+For notational convenience, we will omit the permutation $\pi$ subsequently.
+Let $D_I = \bigtimes_{i \in I} [d_i]$ and  $\bar I \eqdef [m] \setminus
+  I$ represent the complement of indices. Note that $\sP\munf{I}
+  = (\sP\munf{\bar I})^\top$.
+
+%For our purposes, the specific ordering of the tensor's indices
+%are not important and are usually referred to by variable naming.
+
+% \begin{definition}[Diagonal Tensor]
+%   The diagonalized tensor $\diag(\sP)$ is a $(2m)$-th order tensor
+%   constructed by taking the tensor product along $I^{\otimes p}$,
+%   \begin{align*}
+%     \diag(\sP)[\vi,\vj] &\eqdef \sP[\vi] \delta[\vi,\vj],
+%   \end{align*}
+%   where $\vi, \vj \in [d_1] \times \cdots \times [d_m]$ and $\delta(\vi,
+%   \vj) = \BI[\vi = \vj]$ is the Kronecker delta function.
+% \end{definition}
+% 
+% Note that when $\sP$ is a vector, the diagonal tensor is a diagonal
+% matrix, with entries given by the vector.
+
+\paragraph{Tensor Multiplication}
+First, let us formally define the tensor multiplication operation.
+
+\begin{definition}[Tensor Multiplication]
+  We define the tensor multiplication operation $\sR \eqdef P \times_{M}
+  Q$ to be the $(m - \ell + n - \ell)$-th order tensor $\sR$ formed by
+  conjoining $\sP$ and $\sQ$ followed by summing out the indices in $M$:
+\begin{align*}
+  \sR[\vi\ \vj] &\eqdef \sum_{\mathclap{\bu, \bv \in D_\ba \times D'_\bb}} \sP[\vi \  \bu]_{\pi_P} \sQ[\vj \  \bv]_{\pi_Q} ~ \delta_{u_1 v_1} \delta_{u_2 v_2} \ldots \delta_{u_\ell v_\ell},
+\end{align*}
+  for every $\vi \in \Domain(\sP) \setminus D_a$ and $\vj \in
+  \Domain(\sQ) \setminus D'_b$, where $\pi_P$ and $\pi_Q$ are
+  permutations of the indices that respect the matching $M$. For
+  notational convenience, we will omit $\pi_P$, $\pi_Q$ in the sequel.
+\end{definition}
+
+Note that when $m, n = 2$, i.e. $\sP$ and $\sQ$ are matrices, and $M
+  = \{(2,1)\}$, the operation is equivalent to matrix multiplication. 
+Furthermore, similar to matrix multiplication, the operator defined above
+  is associative and distributive. 
+
+The main result of this section is that, similar to matrix
+multiplication, if $\sR = \sP \times_{M} \sQ$, then the singular values
+of unfoldings of $\sR$ are bounded by those of $\sP$ and $\sQ$.
+
+\begin{theorem}[Tensor Multiplication and Singular Values]
+  \label{thm:tensor-multiplication}
+Let $\sP, \sQ$ be $m$-th order and $n$-th order tensors respectively, $M$ be an
+  index mapping and $\sR = \sP \times_M \sQ$. 
+Let $I \subset [m - k + n - k]$ be any arbitrary subset of the index set
+  of $\sR$,
+and let $I_P$, $I_Q$ be the partitioning of $I$ into subsets contained
+  in $\sP$ and $\sQ$ respectively.
+Then,
+\begin{align*}
+\sigma_{1}(\sR\munf{I}) &\le \sigma_{1}(\sP\munf{I_P}) \sigma_{1}(\sQ\munf{I_P}) \\
+\sigma_{k}(\sR\munf{I}) &\ge \sigma_{k}(\sP\munf{I_Q}) \sigma_{k}(\sQ\munf{I_Q}).
+\end{align*}
+\end{theorem}
+
+Note that in the matrix case, when $m = n = 2$ and $M=\{(2,1)\}$, i.e.
+when $R = P Q$, we get the standard result that 
+\begin{align}
+\sigma_{1}(R) &\le \sigma_{1}(P) \sigma_{1}(Q) \\
+\sigma_{k}(R) &\ge \sigma_{k}(P) \sigma_{k}(Q) \label{eqn:matrix-singular}.
+\end{align}
+
+\begin{proof}
+  Without loss of generality, let $M = \{(1,1), \ldots, (\ell,\ell)\}$,
+  and $D_\ell = [d_1] \times \cdots \times [d_\ell]$. 
+  Then, 
+  \begin{align*}
+    \sR[\vi\ \vj] &\eqdef \sum_{\vk \in D_\ell} \sP[\vk\ \vi_P\ \vj_P] \sQ[\vk\ \vi_Q\ \vj_Q],
+  \end{align*}
+  where $\vi_P, \vi_Q$, are the components of $\vi$ in $\sP$ and $\sQ$
+  respectively and $\vj_P, \vj_Q$ is similarly defined.
+
+Consider an $(I)$-unfolding of $\sR$,
+  \begin{align*}
+    \sR\munf{I}[\vi;\vj] 
+       &= \sum_{\vk \in D_\ell} \sP[\vk\  \vi_P \  \vj_P] \sQ[\vk\  \vi_Q \  \vj_Q] \\
+       &= \sum_{\vk \in D_\ell} \sP\munf{I_P}[\vi_P; \vj_P \  \vk] \sQ\munf{\bar I_Q}[\vj_Q ; \vi_Q \  \vk].
+  \end{align*}
+Note that the indices that were summed out belong in the complement of
+$I_P$ and $I_Q$ respectively.
+
+The key idea is to represent the above expression as matrix multiplication.
+To do so, we can temporarily ``inflate'' the unfoldings $\sP\munf{I_P}$
+  and $\sQ\munf{I_Q}$ by taking the outer product of $\sP\munf{I_P}$ with
+  $|I_Q|$ identity matrices, and vice versa. Define 
+\begin{align*}
+  \sP' &\eqdef \sP \otimes I_{d'_1} \otimes \cdots \otimes I_{d'_{|I_Q|}} \\
+  \sQ' &\eqdef \sQ \otimes I_{d'_1} \otimes \cdots \otimes I_{d'_{|\bar I_P|}}.
+\end{align*}
+
+Now, $\sP'$ is a $(m + 2 |I_Q|)$-th order tensor and similarly $\sQ'$
+  is a $(n + 2 |\bar I_P|)$-th order tensor. 
+For every identity matrix we tensor $\sP$ and $\sQ$ by, we include one of
+  its indices in the new set $I'_P$ and $I'_Q$ respectively.
+Note that ${\sP'}\munf{I'_P}$ is a $(I_P + I_Q)\times (|\bar I_P| + \ell
+  + |I_Q|)$ matrix, and ${\sQ'}\munf{\bar I'_Q}$ is $(|\bar I_Q| + |\bar
+  I_P|) \times (|\bar I_Q| + \ell + |\bar I_P|)$ matrix.
+Then,
+\begin{align*}
+    \sR\munf{I}[\vi;\vj] 
+    &= \sum_{\vj'_P, \vi'_Q, \vk}
+    {\sP'}\munf{I'_P}[\vi_P \  \vi_Q; \vj'_P \  \vk \  \vi'_Q ]  \\ 
+    &\quad \hphantom{\sum_{\be_P, \be_Q, \vk}}
+    {\sQ'}\munf{I'_Q}[\vj_Q \  \vj_P; \vi'_Q \  \vk \  \vj'_P ] \\
+    \sR\munf{I} &= {\sP'}\munf{I'_P} ({\sQ'}\munf{\bar I'_Q})^\top \\
+                &= {\sP'}\munf{I'_P} {\sQ'}\munf{I'_Q}.
+\end{align*}
+
+Using lemma \lemmaref{tensor-prod} and the bound on matrix singular
+values, \equationref{matrix-singular}, we get,
+\begin{align*}
+\sigma_{1}(\sR\munf{I}) 
+    &\le \sigma_{1}({\sP'}\munf{I'_P}) \sigma_{1}({\sQ'}\munf{I'_Q}) \\
+      &= \sigma_{1}(\sP\munf{I_P}) \sigma_{1}(\sQ\munf{I_Q}) \\
+    \sigma_{k}(\sR\munf{I})  
+    &\ge \sigma_{k}({\sP'}\munf{I'_P}) \sigma_{k}({\sQ'}\munf{I'_Q}) \\
+      &= \sigma_{k}(\sP\munf{I_P}) \sigma_{k}(\sQ\munf{I_Q}).
+\end{align*}
+\end{proof}
+
+For completeness, we also provide a proof for the following standard
+lemma regarding the tensor product of matrices.
+
+\begin{lemma}[Singular values of the tensor products of matrices]
+  \label{lem:tensor-prod}
+  Let $A = \Un1 \Sigma_1 \Vnt1$ and $B = \Un2 \Sigma_2 \Vnt2$ be two
+  matrices and their singular value decompositions, 
+  with $\Sigma_1 = \diag(\sigma_{11}, \ldots, \sigma_{1m})$ and $\Sigma_2
+  = \diag(\sigma_{21}, \ldots, \sigma_{2n})$. 
+  Then, for $C = A \otimes B$, the matrix unfolding $C\munf{13}$ is full
+  rank, with singular values $\sigma_{11} \sigma_{21}, \ldots, \sigma_{1m}
+  \sigma_{2n}$.
+\end{lemma}
+\begin{proof}
+  An alternative representation of $A$ and $B$ (and consequently $C$) is as follows
+  \begin{align*}
+    A &= \sum_{i=1}^m \sigma_{1i}~ \un{1}_i \otimes \vn{1}_i \\
+    B &= \sum_{j=1}^n \sigma_{2j}~ \un{2}_j \otimes \vn{2}_j \\
+    C^{13} &= \sum_{i=1}^m \sum_{j=1}^n \sigma_{1i} \sigma_{2j}~ (\un{1}_i \otimes \un{2}_j)(\vn{1}_i \otimes \vn{2}_j)^\top.
+  \end{align*}
+
+  For the unfolding $\{1,3\}$ which pairs $\un{1}$ and $\un{2}$, we have
+basis elements $\un{1} \otimes \un{2}$ that are orthogonal to each
+other, and thus the above is a valid singular value decomposition,
+with singular values $\{ \sigma_{1i} \sigma_{2j} \}_{i=1,j=1}^{i=m,j=m}$. 
+\end{proof}
+
+\paragraph{Tensor Projections}
+
+We will now study the singular values of a tensor projection. 
+Let $\sP \in \Re^{d_1 \times \ldots \times d_m}$ be a $m$-th order
+  tensor. 
+For some vector $v \succ 0$, let $\sQ$ be the $m-1$-th order tensor
+  formed by projecting one of the axes of $\sP$ by $v$. 
+Without loss of generality, let the projected axes be the last one, $\sQ
+  \eqdef \sP(\cdot, \cdots, \cdot, v)$.
+Then, we have the following lemma linking the singular values of $\sQ$
+  and $\sP$.
+\begin{lemma}[Tensor projection preserves rank]
+  \label{lem:tensor-projection}
+  Let $\sP, \sQ$ and $v$ be defined as above. For any unfolding $I
+  \not\contains v$, 
+\begin{align*}
+  \sigma_{k}(\sP\munf{I}) &\ge \frac{\sigma_{k}(\sQ\munf{I})}{v_{\max}}.
+\end{align*}
+In particular, if $\sQ\munf{I}$ has full row/column rank, $\sR\munf{I}$
+  does too.
+\end{lemma}
+\begin{proof}
+  We will show that $\sQ\munf{I}$ is $\sP\munf{I}$ related by
+  a projection operator. When $v \succ 0$, this projection operator has
+  full column rank, entailing the result.
+
+  By definition of $\sQ$, for any $\vx$
+  \begin{align*}
+    \sQ[\vi] &= \sum_{k=1}^{d_m} \sP[\vi, k] v[k].
+  \end{align*}
+  Consider the unfolding along $I$,
+  \begin{align*}
+    \sQ\munf{I}[\vi;\vj] &= \sum_{k=1}^{d_m} \sP\munf{I}[\vi;\vj\ k] v[k].
+  \end{align*}
+
+  We can represent this as matrix multiplication by taking the tensor
+  product of $v$ with the $D_{\bar I \setminus \{m\}} \times D_{\bar
+  I \setminus \{m\}}$ identity matrix, $\bI$. Note that $\bI \otimes v$ is a $
+  D_{\bar I \setminus \{m\}} d_m \times D_{\bar I \setminus \{m\}}
+  = D_{\bar I } \times D_{\bar I \setminus \{m\}}$ matrix.
+  \begin{align*}
+    \sQ\munf{I}[\vi;\vj] 
+    &= \sum_{j'=\ones, k=1}^{\bd, d_m} \sP\munf{I}[\vi;\vj'\ k] \underbrace{(v[k] \delta[\vj' \vj])}_{v'[k \vj'; \vj]} \\
+    \sQ\munf{I}
+      &= \sP\munf{I} \bI \otimes v.
+  \end{align*}
+  If $v$ has no non-zero elements, $\bI \otimes v$ has full-column
+  rank, with singular values $v_1, \cdots, v_{d_m}$. 
+  Matrix multiplication can not increase the rank of the matrix, and
+  thus $\rank(\sP\munf{I}) \ge \rank(\sQ\munf{I})$. 
+
+
+\end{proof}
+
+

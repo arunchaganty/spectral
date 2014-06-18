@@ -1,0 +1,272 @@
+\subsection{\lemmaref{mom-pw-variance}}
+\label{app:pw-proof}
+
+In \sectionref{piecewise}, we compared the asymptotic variance
+  $\Sigma^\ml_S$ of the composite likelihood estimator
+  with that of the pseudoinverse estimator, $\Sigma^\mom_S$,
+  for a subset of hidden variables $S$.
+  Now we will derive these asymptotic variances in detail.
+%In this part, we will derive the asymptotic variances of these two
+  %estimators and compare their relative efficiencies.
+
+Recall, that in \sectionref{piecewise} we simplified notation by taking
+  $m=1$ and flattening the moments $M_\sV$ and hidden marginals $Z_S$
+  into vectors $\mu \in \Re^d$ and $z \in \Re^k$ respectively. The
+  conditional moments, $O$, is a now matrix $O \in \Re^{d\times k}$ and
+  the hidden marginals $z$ and observed marginals $\mu$ are related via
+  $\mu = O z$.
+%
+%Recall also that we reparameterized $z \in \Delta_{k-1}$ and $\mu \in
+%  \Delta_{d-1}$ using $\tz \in \Re^{k-1}$ and $\tm \in \Re^{d-1}$ to avoid
+%  constraints:
+%\begin{align*}
+%  \mu &= 
+%    \begin{bmatrix}
+%      \tm \\
+%      1 - \ones^\top\tm
+%    \end{bmatrix} 
+%  &
+%  z &= 
+%    \begin{bmatrix}
+%      \tz \\
+%      1 - \ones^\top\tz
+%    \end{bmatrix}.
+%\end{align*}
+%
+%Finally, we showed that $\tz$ and $\tm$ are related as,
+%\begin{align*}
+%  \tm &= \tO \tz +  O_{\neg d,k},
+%\end{align*}
+%where $\tO \eqdef O_{\neg d,\neg k} - O_{\neg d, k} \ones^\top$.
+%
+%We also describe $\mu$ in terms of $\tz$,
+%\begin{align*}
+%  \mu 
+%  &= 
+%    \begin{bmatrix}
+%      \tm \\
+%      1 - \ones^\top\tm
+%    \end{bmatrix} \\
+%    &=
+%    \begin{bmatrix}
+%      \tO \\
+%      - \ones^\top\tO
+%    \end{bmatrix} \tz 
+%    + 
+%    \begin{bmatrix}
+%      O_{\neg d, k} \\
+%      1 - \ones^\top O_{\neg d, k}
+%    \end{bmatrix}.
+%\end{align*}
+%
+%With this reparameterization, we are ready to derive the asymptotic
+%variances of the two estimators.
+%
+\begin{lemma*}[Asymptotic variances]
+  The asymptotic variances of the pseudoinverse estimator $\htz^\mom$
+  and composite likelihood estimator $\htz^\ml$ are:
+  \begin{align*}
+    \Sigmamom 
+      &= \tOi (\tD - \tm \tm^\top) \tOit, \\
+    \Sigmaml 
+      &=
+      \left( \tOt (\tD\inv + \td\inv \ones\ones^\top) \tO \right)\inv,
+  \end{align*}
+  where $\tD \eqdef \diag(\tm)$ and $\td \eqdef 1 - \ones^\top\tm$.
+\end{lemma*}
+\begin{proof}[Proof for \lemmaref{mom-pw-variance}]
+  First, let us look at the
+  asymptotic variance of the pseudoinverse estimator
+  $\hat{z}^\mom = \tOi (\htm - O_{\neg d,k})$. 
+  Note that $\hat\mu = \frac1n\sum_{i=1}^n x_i$, where each $x_i$ is an independent draw from the multinomial distribution $\mu$.
+  Hence the variance of
+    $\hat\mu$ is $(D - \mu\mu^\top)$ where $D \eqdef \diag(\mu)$.
+  Recall that $\htm$ is just the first $d-1$ entries of $\hat\mu$, so
+  the variance of
+    $\htm$ is $(\tD - \tm \tm^\top)$ where $\tD \eqdef \diag(\tm)$.
+  Since $\tz$ is just a linear transformation of $\tm$,
+  the asymptotic variance of $\htz^\mom$ is:
+  \begin{align*}
+      \Sigmamom &= \tOi \Var(\htm) \tOit \\
+      &= \tOi (\tD - \tm \tm^\top) \tOit.
+      %&= \tOi \tD \tOit - \tOi \tD \ones \ones^\top \tD \tOit,
+  \end{align*}
+  
+  Now, let us look at the variance of the composite likelihood estimator.  Using
+  the delta-method \cite{vaart98asymptotic} we have that the asymptotic
+  variance of 
+  %$\widehat{z}^\ml = \argmin_{\tz \in [0,1]^{k-1}} \hat\E[-\ell(x)]$ is,
+  % Definitely not optimizing over the whole set
+  $\htz^\ml = \argmax_{\tz} \hat\E[\ell(x ; \tz)]$ is,
+  \begin{align*}
+    \Sigmaml &= \E[\grad^2 \ell(x ; \tz^*)]^{-1} \Var[\grad \ell(x ; \tz^*)] \E[\grad^2 \ell(x ; \tz^*)]^{-1},
+  \end{align*}
+  where $\ell(x;\tz)$ is the log-likelihood of the observations $x$
+  given parameters $\tz$. We can write $\ell(x;\tz)$ in terms of $\tz$
+  and $\tO$ as,
+  \begin{align*}
+    \ell(x;\tz) 
+              &= \log( \mu[x] ) \\
+              &= \log \left( 
+    e_x^\top \begin{bmatrix}
+      \tO \\
+      - \ones^\top\tO
+    \end{bmatrix} \tz 
+    + 
+    e_x^\top \begin{bmatrix}
+      O_{\neg d, k} \\
+      1 - \ones^\top O_{\neg d, k}
+    \end{bmatrix}
+    \right),
+ %             
+ %             \BI[x \neq d] \tm[x] + \BI[x = d] (1 - \ones^\top \tm ) )\\
+ %             &= \log( \BI[x \neq d] (\tO[x] \tz + O_{\neg d, k}[x]) \\
+ %             &\quad + \BI[x = d] (1 - \ones^\top (\tO \tz + O_{\neg d, k})) ).
+  \end{align*}
+where $e_x$ is an indicator vector on $x$.
+
+Taking the first derivative,
+\begin{align}
+  \grad \ell(x; \tz)
+  &= 
+  \frac{
+  1}{\mu[x]}
+  \begin{bmatrix}
+    \tO \\
+    -\ones^\top \tO
+  \end{bmatrix}^\top
+ e_x \nonumber \\
+  &= 
+  \begin{bmatrix}
+    \tO \\
+    -\ones^\top \tO
+  \end{bmatrix}^\top
+  D^{-1} e_x, \label{eqn:lhood-grad}
+\end{align}
+where $D \eqdef \diag(\mu)$.
+
+It is easily verified that the expectation of the first derivative is indeed $\zeros$:
+%Note that the expectation of the first derivative is indeed $\zeros$,
+\begin{align*}
+  \E[\grad \ell(x; \tz)]
+  &= 
+  \begin{bmatrix}
+    \tO \\
+    -\ones^\top \tO
+  \end{bmatrix}^\top
+  D^{-1} \E[e_x] \\
+  &= 
+  \begin{bmatrix}
+    \tO \\
+    -\ones^\top \tO
+  \end{bmatrix}^\top
+  D^{-1} \mu \\
+  &= 
+  \begin{bmatrix}
+    \tO \\
+    -\ones^\top \tO
+  \end{bmatrix}^\top
+  \ones \\
+  &= \tOt\ones - \tOt\ones \\
+  &= \zeros.
+\end{align*}
+
+Taking the second derivative,
+\begin{align}
+  \grad^2 \ell(x; \tz)
+  &= 
+  \frac{
+  1}{\mu[x]^2}
+  \begin{bmatrix}
+    \tO \\
+    -\ones^\top \tO
+  \end{bmatrix}^\top
+ e_x e_x^\top 
+  \begin{bmatrix}
+    \tO \\
+    -\ones^\top \tO
+  \end{bmatrix}
+  \nonumber
+ \\ 
+  &= 
+  \begin{bmatrix}
+    \tO \\
+    -\ones^\top \tO
+  \end{bmatrix}^\top
+    D^{-1} e_x e_x^\top D^{-1} 
+  \begin{bmatrix}
+    \tO \\
+    -\ones^\top \tO
+  \end{bmatrix}. \label{eqn:lhood-hess}%
+\end{align}
+
+From \equationref{lhood-grad} and \equationref{lhood-hess}, we get
+  \begin{align*}
+    \E[\grad^2 \ell(x; \tz^*)] 
+    &= -
+        \begin{bmatrix}
+          \tO \\
+          -\ones^\top \tO
+        \end{bmatrix}^\top
+          D^{-1} \E[e_x e_x^\top] D^{-1} 
+        \begin{bmatrix}
+          \tO \\
+          -\ones^\top \tO
+        \end{bmatrix} \\
+    \Var [\grad \ell(x; \tz^*)] 
+    &= \hphantom{-}
+        \begin{bmatrix}
+          \tO \\
+          -\ones^\top \tO
+        \end{bmatrix}^\top
+          D^{-1} \E[e_x e_x^\top] D^{-1} 
+        \begin{bmatrix}
+          \tO \\
+          -\ones^\top \tO
+        \end{bmatrix} \\
+    &= \hphantom{-}
+        \begin{bmatrix}
+          \tO \\
+          -\ones^\top \tO
+        \end{bmatrix}^\top
+          D^{-1} D D^{-1} 
+        \begin{bmatrix}
+          \tO \\
+          -\ones^\top \tO
+        \end{bmatrix} \\
+    &= \hphantom{-}
+        \begin{bmatrix}
+          \tO \\
+          - \ones^\top \tO
+        \end{bmatrix}^\top
+        \begin{bmatrix}
+          \tD\inv & \zeros \\
+          \zeros^\top & \td\inv
+        \end{bmatrix}
+        \begin{bmatrix}
+          \tO \\
+          - \ones^\top \tO
+        \end{bmatrix} \\
+        &= \hphantom{-} 
+          \tOt \tD\inv \tO + \td\inv \tOt \ones \ones^\top \tO,
+  \end{align*}
+where $\tD = \diag(\tm)$ and $\td = 1 - \ones^\top \tm$ are the diagonal
+  elements of $D$.
+As expected, $\E[\grad^2 \ell(x)] = -\Var [\grad \ell(x)]$ because
+$\hat{z}$ is a maximum likelihood estimator. 
+
+Finally, the asymptotic variance of $\Sigmaml$ is,
+\begin{align*}
+    \Sigmaml &= \E[\grad^2 \ell(x ; \tz^*)]^{-1} \Var[\grad \ell(x ; \tz^*)] \E[\grad^2 \ell(x ; \tz^*)]^{-1} \\
+      &= \Var[\grad \ell(x;\tz^*)]^{-1} \\
+      &= \left( \tOt \tD\inv \tO + \td\inv \tOt \ones \ones^\top \tO \right)\inv.
+      %&= \left( \tOt \tD\inv \tO  \right)\inv - 
+      %    \frac{\left( \tOt \tD\inv \tO \right)\inv  \tOt \ones \ones^\top \tO \left( \tOt \tD\inv \tO \right)\inv}
+      %    {\td + \ones^\top \tO \left( \tOt \tD\inv \tO \right)\inv \tOt \ones}.
+\end{align*}
+
+Given our assumptions, $\ones \succ \mu \succ \zeros$. Consequently,
+$\tD$ is invertible and the asymptotic variance is finite.
+%and our estimator is consistent as well. 
+\end{proof}
+

@@ -1,0 +1,513 @@
+\subsection{Comparing the pseudoinverse and composite likelihood estimators}
+\label{app:rel-eff}
+
+In \lemmaref{mom-pw-variance}, we derived concrete expressions for the
+asymptotic variances of the pseudoinverse and composite likelihood
+estimators, $\Sigmamom$ and $\Sigmaml$ respectively. 
+In this section, we will use the asymptotic variances to compare the two
+estimators for two special cases.
+
+%We look at relative efficiency as a quantitative measure:
+Recall that the relative efficiency of the pseudoinverse estimator with respect to the composite likelihood estimator is
+$e^\mom
+= \frac{1}{\bbk} \Tr(\Sigmaml \Sigmamomi)$, where $\bbk = k-1$. The
+Cram\'{e}r-Rao lower bound tells us that $\Sigmaml \preceq \Sigmamom$:
+thus the relative efficiency $e^\mom$ lies between $0$ and $1$. When
+$e^\mom = 1$, the pseudoinverse estimator is said to be efficient.
+
+We will make repeated use of the Sherman-Morrison formula to simplify
+matrix inverses:
+\begin{align*}
+  (A + \alpha uv^\top)\inv &= A\inv - \frac{A\inv uv^\top A\inv}{\alpha\inv + v^\top A\inv u},
+\end{align*}
+where $A$ is an invertible matrix, $u, v$ are vectors and $\alpha$ is
+a scalar constant. Unless otherwise specified, we $\|u\|$ to denote the
+Euclidean norm of a vector $u$.
+
+First, let us consider the case where $\tO$:
+\begin{lemma}[Relative efficiency when $\tO$ is invertible]
+  When $\tO$ is invertible, the asymptotic variances of the
+  pseudoinverse and composite likelihood estimators are equal, $\Sigmaml
+  = \Sigmamom$, and the relative efficiency is $1$.
+\end{lemma}
+\begin{proof}
+  Given that $\tO$ is invertible we can simplify the expression of the
+  asymptotic variance of the composite likelihood estimator, $\Sigmaml$,
+  as follows:
+\begin{align*}
+    \Sigmaml 
+      &= \left( \tO^\top(\tD\inv + \td\inv \ones \ones^\top) \tO \right)\inv \\
+      &= \tO\inv \left( \tD\inv - \td\inv \ones \ones^\top \right)\inv \tO\tinv \\
+      &= \tO\inv \left( \tD - \frac{\tD \ones \ones^\top \tD}{\td + \ones^\top \tD \ones} \right) \tO\tinv.
+\end{align*}
+Note that $\tD \ones = \tm$ and $\td = 1 - \ones^\top \tm$. This gives us,
+\begin{align*}
+    \Sigmaml 
+      &= \tO\inv \left(\tD - \frac{\tm \tm^\top}{1 - \ones^\top \tm + \ones^\top \tm} \right) \tO\tinv \\
+      &= \tO\inv (\tD - \tm \tm^\top) \tO\tinv \\
+      &= \Sigmamom.
+\end{align*}
+\end{proof}
+
+Next, we consider the case where the observed moments $\mu$ is the
+uniform distribution.
+
+\begin{lemma}[Relative efficiency with uniform observed moments]
+  Let the observed marginals $\mu$ be uniform: $\mu = \frac{1}{d} \ones$. 
+  The efficiency of the pseudoinverse estimator is, 
+  \begin{align}
+    e^\mom &= 
+    1 - \frac{1}{k-1}\frac{\|\ones_U\|_2^2}{1 + \|\ones_U\|_2^2} \left( 1 - \frac{1}{d - \|\ones_U\|_2^2} \right),
+  \end{align}
+  where $\ones_U \eqdef \tO\tOi \ones$, the projection of $\ones$ onto
+  the column space of $\tO$. Note that $0 \le \|\ones_U\|^2_2 \le k - 1$.
+
+  When $\|\ones_U\|_2 = 0$, the pseudoinverse estimator is efficient:
+  $e^\mom = 1$. When $\|\ones_U\|_2 > 0$ and $d > k$, the pseudoinverse
+  estimator is strictly inefficient. 
+  In particular, if $\|\ones_U\|^2_2
+    = k-1$, and we get:
+    \begin{align}
+      e^\mom 
+      &= 1 - \frac{1}{k} \left(1 - \frac{1}{1 + d - k} \right).
+    \end{align}
+
+%    If $k > \frac{d+1}{2}$, the efficiency attains its minimum when
+%    $\|\ones_U\|^2_2 = \frac{d-1}{2}$:
+%  \begin{align*}
+%    e^\mom 
+%    &= 1 - \frac{1}{\bbk} \left( \frac{d-1}{d+1} \right)^2.
+%      %&= 1 - \frac{1}{\bbk +1} \left( 1 - \frac{1}{d - \bbk} \right).
+%  \end{align*}
+\end{lemma}
+\begin{proof}
+Next, let us consider the case where the moments are the uniform
+distribution, where $\mu = \frac{1}{d}\ones$ and $\tD = \frac{1}{d} I$.
+The expressions for $\Sigmaml$ can be simplified as
+follows,
+\begin{align*}
+    \Sigmaml 
+      &= \left( \tOt(d I + d \ones \ones^\top) \tO \right)\inv \\
+      &= \frac{1}{d} \left( \tOt\tO + \tOt\ones \ones^\top \tO \right)\inv \\
+      &= \frac{1}{d} \left(
+      (\tOt\tO)\inv - \frac{(\tOt\tO)\inv \tOt\ones \ones^\top \tO (\tOt\tO)\inv}
+        {1 + \ones^\top \tO (\tOt\tO)\inv \tOt\ones} 
+        \right)\\
+      &= \frac{1}{d} \left(
+      \tOi\tOit - \frac{(\tOi\tOit\tOt) \ones \ones^\top (\tO\tOi\tOit)}
+        {1+ (\ones^\top \tO \tOi) (\tOit \tOt\ones)} 
+        \right),
+      \end{align*}
+where we have used the property $(\tOt\tO)\inv = \tOi\tOit$ in the last step.
+Next, we use the pseudoinverse property, $\tO\tOi\tOit = \tOit$,
+      \begin{align*}
+    \Sigmaml 
+      &= \frac{1}{d} \left(
+      \tOi\tOit - \frac{\tOi \ones \ones^\top \tOit}
+        {1+ \|\tO \tOi \ones\|^2} 
+        \right) \\
+      &= \frac{1}{d} \left(
+      \tOi\tOit - \frac{\tOi \ones \ones^\top \tOit}
+        {1+ \|\ones_U\|^2} 
+        \right),
+\end{align*}
+where $\ones_U \eqdef \tO \tOi \ones = \tOit \tOt \ones$ is the projection of $\ones$ onto
+the column space of $\tO$. 
+
+Next, we can simplify the expression for $\Sigmamomi$,
+\begin{align*}
+    \Sigmamom &= 
+      \tOi \left( \frac{I}{d} - \frac{\ones \ones^\top}{d^2} \right) \tOit \\
+    \Sigmamomi &=
+        \left(
+        \frac{1}{d} 
+          \tOi\tOit - \frac{1}{d^2} \tOi \ones \ones^\top \tOit
+        \right)\inv \\
+        &=
+        d \Bigg(
+          (\tOi\tOit)\inv \\
+        &\quad
+          + 
+          \frac{
+              (\tOi\tOit)\inv \tOi \ones \ones^\top \tOit (\tOi\tOit)\inv 
+          }{
+            d - \ones^\top \tOit (\tOi\tOit)\inv \tOi \ones 
+          } \Bigg).
+        \end{align*}
+Using the properties $(\tOi\tOit)\inv = \tOt\tO$ and $\tOt\tO\tOi = \tOt$, we get,
+        \begin{align*}
+\Sigmamomi
+          &=
+        d \left(
+          \tOt\tO + 
+          \frac{
+              \tOt\tO \tOi \ones \ones^\top \tOit \tOt\tO
+          }{
+            d - \ones^\top \tOit \tOt\tO \tOi \ones 
+          } \right) \\
+          &=
+        d \left(
+          \tOt\tO +
+          \frac{
+              \tOt \ones \ones^\top \tO
+          }{
+            d - \|\tOi \tO \ones\|^2 
+          } \right) \\
+          &=
+        d \left(
+          \tOt\tO +
+          \frac{
+              \tOt \ones \ones^\top \tO
+          }{
+            d - \|\ones_U\|^2 
+          } \right).
+\end{align*}
+
+Now, we are ready to study the relative efficiency. 
+\begin{align*}
+  e^\mom &= \frac{1}{\bbk} \Tr(\Sigmaml \Sigmamomi) \\
+    &= \frac{1}{\bbk}
+    \Tr \Bigg( \frac{1}{d} \left(
+      \tOi\tOit - \frac{\tOi \ones \ones^\top \tOit}
+        {1+ \|\ones_U\|^2} 
+        \right) \\
+    &\quad \hphantom{\bbk \Tr}
+        d
+          \left(
+          \tOt\tO +
+          \frac{
+              \tOt \ones \ones^\top \tO
+          }{
+            d - \|\ones_U\|^2 
+          }
+          \right)
+          \Bigg) \\
+    &= 
+    \frac{1}{\bbk} \Tr(I) + \frac{1}{\bbk} \Tr\left(
+          \frac{
+              \tOi\tOit \tOt \ones \ones^\top \tO
+          }{
+            d - \|\ones_U\|^2 
+          } \right) \\
+    &\quad
+    - \frac{1}{\bbk} \Tr\left(
+      \frac{\tOi \ones \ones^\top \tOit \tOt\tO}{1+ \|\ones_U\|^2} 
+      \right) \\
+    &\quad
+    - \frac{1}{\bbk} \Tr\left(
+        \frac{\tOi \ones \ones^\top \tOit \tOt \ones \ones^\top \tO
+}{(d - \|\ones_U\|^2 )(1+ \|\ones_U\|^2)} 
+          \right) \\
+%%%%
+\end{align*}
+
+Next we apply the property that the trace is invariant under cyclic
+permutations,
+\begin{align*}
+%%%%
+  e^\mom
+    &= 1 + \frac{1}{\bbk}
+          \frac{
+              \|\tOit \tOt \ones\|^2
+          }{
+            d - \|\ones_U\|^2 
+          } 
+        - \frac{1}{\bbk}
+        \frac{\|\tO \tOi \ones\|^2}{1+ \|\ones_U\|^2} \\
+    &\quad
+    - \frac{1}{\bbk}
+    \frac{(\ones^\top \tOit \tOt \ones)^2}
+        {(d - \|\ones_U\|^2 ) (1+ \|\ones_U\|^2)}.
+      \end{align*}
+Note that $\tO\tOi$ is a symmetric projection matrix and thus, $\tO\tOi
+      = (\tO\tOi)^\top$ and $\tO\tOi = (\tO\tOi)(\tO\tOi)$. Then,
+      \begin{align*}
+        e^\mom
+&= 1
++ \frac{1}{\bbk} \frac{\|\ones_U\|^2}{d - \|\ones_U\|^2}
+    -  \frac{1}{\bbk}\frac{\|\ones_U\|^2}{1 + \|\ones_U\|^2}\\
+&\quad
+    -  \frac{1}{\bbk}\frac{\|\ones_U\|^4}{(1 + \|\ones_U\|^2)(d - \|\ones_U\|^2)} \\
+    &= 1 - \frac{\|\ones_U\|^2}{\bbk (1 + \|\ones_U\|^2)} \left( 1 - \frac{1}{d - \|\ones_U\|^2} \right).
+\end{align*}
+
+Note that $\ones_U$ is the projection of $\ones$ on to a $k$-dimensional
+subspace, thus, $0 \le \|\ones_U\|^2 \le k$.
+When $\ones_U = \zeros$, the relative efficiency $e^\mom$ is $1$: the pseudoinverse estimator is efficient. When $\|\ones_U\| > 0$ and $d > k$, the pseudoinverse estimator is strictly inefficient.
+
+Consider the case when $\|\ones_U\|^2 = \bbk$. Then, the relative efficiency
+is,
+\begin{align*}
+  e^\mom 
+    &= 1 - \frac{1}{\bbk +1} \left(1 - \frac{1}{d - \bbk} \right) \\
+    &= 1 - \frac{1}{k} \left(1 - \frac{1}{1 + d - k} \right).
+\end{align*}
+%
+%If $k > d/2$, the efficiency attains its minimum when $\|\ones_U\|^2
+%= \frac{1}{2} (d-1)$, 
+%\begin{align*}
+%  e^\mom 
+%  &= 1 - \frac{1}{\bbk}\left(\frac{d-1}{d+1}\right)^2.
+%\end{align*}
+\end{proof}
+
+% When is $\|\ones_U\| = \sqrt{\bbk}$? When $\ones$ is in the column space of $\tO$. 
+% When is $\|\ones_U\| = 0$?
+
+% Firstly, if $\ones$ lies in the null space of $\tO$, then the variances
+% of the two are equal. 
+
+% Next, consider the trace of the two, which gives
+% us a measure of $\|\hat{z}^\mom\|^2 - \|\hat{z}^\ml\|^2$,
+% \begin{align*}
+%     \Tr(\Sigmamom - \Sigmaml)
+%     &= \frac{1}{d} 
+%     \Tr(\tOi \ones \ones^\top \tOit) \left(
+%     \frac{1}{1+ \| \tO \tOi \ones\|^2} - \frac{1}{d}
+%     \right) \\
+%     &= \frac{1}{d} \|\tOi \ones\|^2 \left(
+%     \frac{1}{1+ \| \tO \tOi \ones\|^2} - \frac{1}{d}
+%     \right) \\
+%     &= \frac{1}{d} \|\tOi \tO \tOi \ones\|^2 \left(
+%     \frac{1}{1+ \| \tO \tOi \ones\|^2} - \frac{1}{d}
+%     \right) \\
+%     &\ge \frac{\sigma_{k-1}(\tO)}{d} \|\tO \tOi \ones\|^2 \left(
+%     \frac{1}{1+ \| \tO \tOi \ones\|^2} - \frac{1}{d}
+%     \right).
+% \end{align*}
+% 
+% It remains for us to bound the projection $\|\tO \tOi \ones\|$. Observe,
+%  \begin{align*}
+%    O^\top \ones 
+%      &= \sum_{\bh = \ones}^{\bh \prec k} \sum_{x = \ones}^{d} \Pr(x | \bh) e_\bh  \\
+%      &= \ones \\
+%    \tOt \ones
+%        &= (O_{\neg d, k}^\top - \ones O_{\neg d, k}^\top) \ones  \\
+%        &= \sum_{\bh = \ones}^{\bh \prec k} \sum_{x = \ones}^{x \prec d} \Pr(x | \bh) e_\bh - (\sum_{x = \ones}^{x \prec d} \Pr(x | k)) \ones^\top  \\
+%        &= \sum_{\bh = \ones}^{\bh \prec k} (1 - \Pr(d | \bh)) e_\bh - (1 - \Pr(d | k)) \ones  \\
+%        &= \sum_{\vh = \ones}^{\vh \prec k} (\Pr(d | k) - \Pr(d | \vh))e_\bh \\
+%        &= \tO_{d,k} \ones^\top - \tO_{d,\neg k}.
+%  \end{align*}
+%  Let $c = \|\tO^\top \ones\| \le \sqrt{k}$.
+%  Let $\tO = U W V^\top$ be the SVD of $\tO$. We have,
+%  \begin{align*}
+%    \ones^\top U W V^\top 
+%        &= \ones^\top \tO \\
+%    \ones^\top U 
+%      &= \ones^\top \tO V W\inv \\
+%    \|\ones^\top U\|_2 
+%        &\le \frac{\|\ones^\top \tO\|_2}{\sigma_{k}(\tO)} \\
+%        &\le \frac{c}{\sigma_{k}(\tO)} \\
+%    \|\ones^\top U\|_2 
+%        &\ge \frac{c}{\sigma_{1}(\tO)}.
+%  \end{align*}
+
+
+% With concrete expressions for $\Sigmamom$ and $\Sigmaml$, we can quantitatively evaluate their asymptotic efficiency,
+% \begin{proof}[Proof for Corollary X] %\corollaryref{efficiency}]
+%   Let $\bar k = k -1$ and $\bar d = d -1$. 
+%   We have that
+%   \begin{align*}
+%     \Sigmamom 
+%       &= \tOi \tD \tOit - \tOi \tD \ones \ones^\top \tD \tOit, \\
+%     \Sigmaml &= 
+%          \tOi \tD \tOit - \frac{\tOi \tD v v^\top \tD \tOit }{1 + v\top \tD v - \ones\top \tD \ones}.
+%   \end{align*}
+% 
+%   We use the following identity,
+%   \begin{align*}
+%     \Tr( A_1 A_2\inv ) 
+%       &= \Tr( (A - x x^\top) (A - yy^\top)\inv ) \\
+%       &= \Tr( (A - x x^\top) (A\inv + \frac{(A\inv y)(A\inv y)^\top }{1 - y^\top A\inv y}) ) \\
+%       &= \Tr( I - xx^\top A\inv + \frac{ y (A\inv y)^\top - x x^\top (A\inv y)(A\inv y)^\top}{1 - y^\top A\inv y} ) \\
+%       &= k - x^\top A\inv x + \frac{ y^\top A\inv y - (x^\top A\inv y)^2 }{1 - y^\top A\inv y}.
+%   \end{align*}
+% 
+%   Let us now consider their relative efficiencies, 
+%   \begin{align*}
+%     e^\mom 
+%         &\eqdef \frac{1}{\bbk} \Tr(\Sigmaml \Sigmamomi ) \\
+%         \Tr( \tOi \tS\inv \tOit \tOt \tilde\Sigma\inv \tO ) \\
+%       &\quad - \frac{1}{\bar k} \frac{s \Tr( \tOi \tS\inv J \ones \ones^\top J \tS\inv \tOit \tOt  \tilde\Sigma\inv \tO  )}
+%       {1 + s \ones^\top J \tS\inv J \ones} \\
+%         &= \frac{1}{\bar k} \Tr( J \tS\inv J \tilde\Sigma\inv ) - \frac{1}{\bar k} \frac{s \ones^\top J \tS\inv J \tilde\Sigma\inv J \tS\inv J \ones }
+%       {1 + s \ones^\top J \tS\inv J \ones},
+%   \end{align*}
+%   where $J \eqdef \tO \tOi = U U^\top$ as before. 
+%   
+%   Note that $\Tr(J) = \rank(J) = {\bar k}$.
+%   Next we use H\"{o}lder's inequality for the trace: $\Tr(D A) \le
+%   \|D\|_\infty \Tr(A)$ if $D$ is diagonal. Thus,
+%   \begin{align*}
+%       \Tr( J \tS\inv J \tilde\Sigma\inv ) 
+%         &= \Tr( \tS\inv J \tilde\Sigma\inv J ) \\
+%         &\le \|\tS\inv\|_\infty \Tr( J \tilde\Sigma\inv J ) \\
+%         &= \|\tS\inv\|_\infty \Tr( \tilde\Sigma\inv J ) \\
+%         &\le \|\tS\inv\|_\infty \|\tilde\Sigma\inv\|_\infty \Tr( J ) \\
+%         &= {\bar k} \|\tS\inv\|_\infty \|\tilde\Sigma\inv\|_\infty.
+%   \end{align*}
+% 
+%   To bound the next term, we need bound the projection of the ones
+%   vector, $\ones$, through $J \eqdef U U^\top$,
+%   \begin{align*}
+%       \ones^\top J \tS\inv J \tilde\Sigma\inv J \tS\inv J \ones \\
+%       &=
+%       (\ones^\top U) (U^\top \tS\inv U) (U^\top \tilde\Sigma\inv U) \\
+%       &\quad (U^\top \tS\inv U) (U^\top \ones)  \\
+%       &\ge 
+%       (\tS\inv)^2_{\min}
+%       (\tilde\Sigma\inv)_{\min}
+%       \|\ones^\top U\|^2_2 \\
+%       &\ge 
+%       \frac{\|\ones^\top U\|^2_2}{\|\tS\|^2_\infty \|\tilde\Sigma\|_\infty},
+%   \end{align*}
+%   where we have used the property that each of the bracketed terms is an
+%   eigen-decomposition, and $U^\top \ones$, lies in the subspace $U$.
+%   We similarly have that
+%   \begin{align*}
+%       \ones^\top J \tS\inv J \ones \\
+%       &=
+%       (\ones^\top U) (U^\top \tS\inv U) (U^\top \ones) \\
+%       &\le 
+%       \|\tS\inv\|_{\infty}
+%       \|\ones^\top U\|^2_2.
+%   \end{align*}
+% 
+%   Finally, to bound $\|\ones^\top U\|_2$, we have:
+%   \begin{align*}
+%     \ones^\top O 
+%       &= \sum_{\bh = \ones}^{\bh \prec k} \sum_{x = \ones}^{d} \Pr(x | \bh) e_\bh  \\
+%       &= \ones \\
+%     \ones^\top \tO 
+%         &= \ones^\top (O_{\neg \neg d, k} - O_{\neg d, k}\ones^\top) \\
+%         &= \sum_{\bh = \ones}^{\bh \prec k} \sum_{x = \ones}^{x \prec d} \Pr(x | \bh) e_\bh - (\sum_{x = \ones}^{x \prec d} \Pr(x | k)) \ones^\top  \\
+%         &= \sum_{\bh = \ones}^{\bh \prec k} (1 - \Pr(d | \bh)) e_\bh - (1 - \Pr(d | k)) \ones^\top  \\
+%         &= \sum_{\vh = \ones}^{\vh \prec k} (\Pr(d | k) - \Pr(d | \vh))e_\bh \\
+%         &= \tO_{d,k} \ones^\top - \tO_{d,\neg k}^\top.
+%   \end{align*}
+%   Let $c = \|\tO_{d,k} \ones^\top - \tO_{d,\neg
+%   k}^\top\|_2 \le \sqrt{k}$.
+%   Let $\tO = U W V^\top$ be the SVD of $\tO$. We have,
+%   \begin{align*}
+%     \ones^\top U W V^\top 
+%         &= \ones^\top \tO \\
+%     \ones^\top U 
+%       &= \ones^\top \tO V W\inv \\
+%     \|\ones^\top U\|_2 
+%         &\le \frac{\|\ones^\top \tO\|_2}{\sigma_{k}(\tO)} \\
+%         &\le \frac{c}{\sigma_{k}(\tO)} \\
+%     \|\ones^\top U\|_2 
+%         &\ge \frac{c}{\sigma_{1}(\tO)}.
+%   \end{align*}
+% 
+%   Thus,
+%   \begin{align*}
+%       \ones^\top J \tS\inv J \tilde\Sigma\inv J \tS\inv J \ones 
+%       &\ge \frac
+%           {c^2}
+%           { \|\tS\|_{\infty} \|\tilde\Sigma\|_{\infty}
+%           \sigma_{1}(\tO)} \\
+%       \ones^\top J \tS\inv J \ones  
+%       &\le \frac
+%           {c^2 \|\tS\inv\|_{\infty}}
+%           {\sigma_{k}(\tO)}.
+%   \end{align*}
+% 
+%   Finally, we have the result,
+%   \begin{align*}
+%     e^\mom 
+%     &\le \|\tS\inv\|_\infty  \|\tilde\Sigma\inv\|_\infty \\
+%     &\quad - 
+%         \frac{1}{\bar k} 
+%     \frac{
+%         s c^2 /(\|\tS\|^2_{\infty} \|\tilde\Sigma\|_{\infty}
+%             \sigma_{1}(\tO))
+%     }
+%     {1 + (s c^2 \|\tS\inv\|_{\infty})/
+%           \sigma_{k}(\tO)
+%     }.
+%   \end{align*}
+% 
+%   For the uniform distribution $M[x] = \frac{1}{\bar d + 1}$,
+%   $\|\tS\|_\infty = \bbd$, $\|\tilde
+%   \Sigma\|_\infty = \frac{\bbd}{(\bbd + 1)^2}$:
+%   \begin{align*}
+%     e^\mom 
+%     &\le \frac{1}{\bbd} \frac{(\bbd + 1)^2}{\bbd} 
+%     - \frac{1}{\bbk} \frac{
+%     \bbd c^2/(\bbd^2 \frac{\bbd}{(\bbd +1)^2} \sigma_{k}(\tO))
+%     }{
+%     1 + c^2 \bbd \frac{1}{\bbd} / \sigma_{k}(\tO)
+%     } \\
+%     &= (1 + \frac{1}{\bbd})^2 - \frac{1}{\bbk} (1 + \frac{1}{\bbd})^2 \frac{c^2/\sigma_{1}(\tO)}
+%       {1 + c^2 / \sigma_{k}(\tO)} \\
+%     &= (1 + \frac{1}{\bbd})^2 (1 - \frac{1}{\bbk} \frac{c^2/\sigma_{1}(\tO)}{1 + c^2 / \sigma_{k}(\tO)}).
+%   \end{align*}
+% 
+%   This shows that the pseudoinverse estimator is strictly less efficient
+%   than the composite likelihood estimator for finite $k$ and $d$.
+%   Furthermore, for a fixed $\bbk$, the pseudoinverse estimator is most
+%   efficient for large $\bbd$, and in general it is more efficient for
+%   larger $\bbk$.
+% \end{proof}
+% 
+
+% \begin{align*}
+%   \Tr(\Sigmamom - \Sigmaml) 
+%   &= 
+%       \Tr\left( 
+%       \frac{\tOi \tD v v^\top \tD \tOit }
+%         {1 - \ones^\top \tD \ones + v^\top \tD v } 
+%       - \tOi \tD \ones \ones^\top \tD \tOit 
+%       \right) \\
+%   &= 
+%       \frac{v^\top \tD \tOit \tOi \tD v}
+%         {1 - \ones^\top \tD \ones + v^\top \tD v } 
+%       - \ones^\top \tD \tOit  \tOi \tD \ones \\
+% \end{align*}
+
+
+
+% ARUN: This is wrong because pseudoinverses don't work that way.
+%
+% The above expression is the inversion of an invertible matrix plus
+% a rank-one component. The Sherman-Morrison formula allows us to write
+% the inverse in closed form:
+% \begin{align*}
+%   (A + \alpha uv^\top)\inv &= A\inv - \frac{A\inv uv^\top A\inv}{\alpha\inv + v^\top A\inv u}.
+% \end{align*}
+% 
+% This gives us,
+% \begin{align}
+%     \Sigmaml
+%     &= (\tOt \tD\inv \tO)\inv
+%       - \frac{
+%       (\tOt \tD\inv \tO)\inv (\tOt \ones) (\tOt \ones)^\top (\tOt \tD\inv \tO)\inv }
+%       {\td + (\tOt \ones)^\top (\tOt \tD\inv \tO)\inv (\tOt \ones)} \nonumber \\
+%     &= \tOi \tD \tOit 
+%       - \frac{\tOi \tD (\tOit \tOt \ones) (\tOit \tOt \ones)^\top  \tD \tOit }
+%       {\td + (\tOit \tOt \ones)^\top \tD (\tOit \tOt \ones)} \nonumber \\
+%     &= \tOi \tD \tOit 
+%       - \frac{\tOi \tD v v^\top \tD \tOit }
+%       {\td + v^\top \tD v} \nonumber \\
+%     &= \tOi \tD \tOit 
+%       - \frac{\tOi \tD v v^\top \tD \tOit }
+%       {1 - \ones^\top \tD \ones + v^\top \tD v }, \label{eqn:asymp-var-ml}
+% \end{align}
+% where $v \eqdef (\tO \tOi)^\top \ones$, the projection of $\ones$ into the
+% column space of $\tO$. 
+% 
+% If $k = d$, then by assumption $\tO$ is invertible and $v = \ones$. In this case,
+% \begin{align*}
+%     \Sigmaml
+%     &= \tOi \tD \tOit 
+%       - \frac{\tOi \tD \ones \ones^\top \tD \tOit }
+%       {1 - \ones^\top \tD \ones + \ones^\top \tD \ones } \\
+%     &= \tOi \tD \tOit 
+%       - \tOi \tD \ones \ones^\top \tD \tOit.
+% \end{align*}
+% In other words, when $k = d$, the asymptotic variance of the
+% pseudoinverse estimator and the composite likelihood estimator are
+% equal.
+
+

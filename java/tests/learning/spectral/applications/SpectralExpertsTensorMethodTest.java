@@ -11,36 +11,14 @@ import learning.exceptions.NumericalException;
 import learning.linalg.*;
 import learning.models.MixtureOfExperts;
 
-import learning.optimization.PhaseRecovery;
-import learning.optimization.ProximalGradientSolver;
-import learning.optimization.TensorRecovery;
-import learning.spectral.MultiViewMixture;
-
-import learning.data.MomentComputer;
-import learning.data.RealSequence;
-
 import learning.spectral.TensorMethod;
-import org.ejml.alg.dense.mult.GeneratorMatrixMatrixMult;
-import org.ejml.alg.dense.mult.MatrixMatrixMult;
-import org.ejml.data.DenseMatrix64F;
-import org.ejml.ops.CommonOps;
-import org.ejml.simple.SimpleBase;
 import org.ejml.simple.SimpleMatrix;
 import org.javatuples.*;
 
-import fig.basic.LogInfo;
 import fig.basic.Option;
-import fig.basic.OptionsParser;
 import fig.exec.Execution;
 
-import java.lang.ref.SoftReference;
-import java.util.Date;
 import java.io.IOException;
-import java.io.FileNotFoundException;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.lang.ClassNotFoundException;
 
 /**

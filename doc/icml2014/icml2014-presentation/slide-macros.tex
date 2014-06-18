@@ -1,0 +1,95 @@
+
+\newcommand{\sidenote}[1]{\begin{itemize} \item #1 \end{itemize}}
+\newcommand{\hlmath}[2]{\textrm{\color{#1}\ensuremath{#2}}}
+
+\newtoggle{debug}
+\toggletrue{debug}
+%\togglefalse{debug}
+
+\iftoggle{debug}{\newcommand{\@dbgmark}{x}}
+  {\newcommand{\@dbgmark}{}}
+
+
+\pgfdeclarelayer{background}
+\pgfdeclarelayer{debug}
+\pgfsetlayers{background,main,debug}
+
+
+\newcommand{\point}[2]{
+  \begin{pgfonlayer}{debug}
+    \node (#1) at #2 {\@dbgmark}
+  \end{pgfonlayer}{debug}
+}
+\newcommand{\splitcolumn}[2]{%
+\begin{columns}
+  \begin{column}{0.48\textwidth}
+    #1
+  \end{column}
+  \hfill
+  \begin{column}{0.48\textwidth}
+    #2
+  \end{column}
+\end{columns}
+}
+\newcommand{\obj}[1]{%
+    {%
+    \begin{minipage}{6cm}
+      #1
+    \end{minipage}
+    }
+}
+\newcommand{\objw}[2]{%
+    {%
+    \begin{minipage}{#1}
+      #2
+    \end{minipage}
+    }
+}
+\tikzstyle{box}=[scale=0.8,rectangle,fill=white,draw=black]
+\tikzstyle{txt}=[minimum height=3ex]
+\tikzstyle{lbl}=[minimum height=1ex]
+\tikzstyle{loop}=[smooth,dashed,in=-90,out=-90,looseness=0.75]
+
+\makeatletter
+\newcommand*{\centerfloat}{%
+  \parindent \z@
+  \leftskip \z@ \@plus 1fil \@minus \textwidth
+  \rightskip\leftskip
+  \parfillskip \z@skip}
+\makeatother
+
+%\newcommand*{\tikzgridon}{%
+%\setbeamertemplate{background canvas}{%
+%\begin{tikzpicture}[remember picture, overlay]
+%    \draw[help lines,xstep=.25,ystep=.25,gray!20] (current page.south west) grid (current page.north east);
+%    \draw[help lines,xstep=1,ystep=1,gray] (current page.south west) grid (current page.north east);
+%    \foreach \x in {-15,-14.5,...,15} {%
+%        \node [anchor=north, gray] at (\x,0) {\tiny \x};
+%        \node [anchor=east,gray] at (0,\x) {\tiny \x};
+%    }
+%\end{tikzpicture}
+%}
+%}
+%\newcommand{\tikzgridoff}{\setbeamertemplate{background canvas}{}}
+
+% Input is dimensions
+\newcommand*{\tikzrect}[4]{%
+  \draw[#1] #2 -- ++(-#3,0) -- ++(0,-#4) -- ++(#3,0) -- cycle;
+}
+
+\newcommand*{\tikzcube}[5]{%
+  \draw[#1] #2 -- ++(-#3,0,0) -- ++(0,-#4,0) -- ++(#3,0,0) -- cycle;
+  \draw[#1] #2 -- ++(0,0,-#5) -- ++(0,-#4,0) -- ++(0,0,#5) -- cycle;
+  \draw[#1] #2 -- ++(-#3,0,0) -- ++(0,0,-#5) -- ++(#3,0,0) -- cycle;
+}
+
+\newenvironment{canvas}{%
+  \begin{tikzpicture}[remember picture, overlay]
+  \draw[use as bounding box] (current page.north west) rectangle (current page.south east);
+  \iftoggle{debug}{\node at (0,0) {o}}{};
+}{
+    \end{tikzpicture}
+}
+
+
+

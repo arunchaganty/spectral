@@ -1,19 +1,27 @@
 package learning.models.loglinear;
 
-import java.io.*;
-import java.util.*;
-
-import learning.linalg.MatrixOps;
+import learning.linalg.FullTensor;
 
 import fig.basic.*;
-import fig.exec.*;
-import fig.prob.*;
-import fig.record.*;
-import static fig.basic.LogInfo.*;
+import learning.models.Params;
+import learning.common.Counter;
+import org.ejml.simple.SimpleMatrix;
 
 public class Models {
   public static class MixtureModel extends Model {
-    int L; // L = number of views, D = choices per view;
+    public MixtureModel(int K, int D, int L) {
+      this.K = K;
+      this.D = D;
+      this.L = L;
+      createHypergraph(null,null,0);
+      fullParams = new ParamsVec(K, featureIndexer);
+//      restrictedFeatureIndexer.clear();
+//      for(Feature f : featureIndexer.getObjects().subList(0,K))
+//        restrictedFeatureIndexer.add(f);
+    }
+    @Deprecated
+    public MixtureModel() {
+    }
 
     public Example newExample() {
       Example ex = new Example();
@@ -27,10 +35,10 @@ public class Models {
       return new Example( x, new int[1] );
     }
 
-    public Hypergraph<Example> createHypergraph(int L, Example ex, double[] params, double[] counts, double increment) {
+    public Hypergraph<Example> createHypergraph(Example ex, double[] params, double[] counts, double increment) {
       Hypergraph<Example> H = new Hypergraph<Example>();
-      //H.debug = true;
-      
+      // H.debug = true;
+
       // The root node disjuncts over the possible hidden state values
       Object rootNode = H.sumStartNode();
       for (int h = 0; h < K; h++) {  // For each value of hidden states...
@@ -38,14 +46,12 @@ public class Models {
         H.addProdNode(hNode); // this is product node over each view
 
         // probability of choosing this value for h.
-        //int hf = featureIndexer.getIndex(new UnaryFeature(h, "pi"));
-        //H.addEdge(rootNode, hNode, edgeInfo(params, counts, hf, increment));
-        H.addEdge(rootNode, hNode, hiddenEdgeInfo(0,h) ); 
+        H.addEdge(rootNode, hNode, hiddenEdgeInfo(0,h) );
 
-        for (int j = 0; j < L; j++) {  // For each view j...
-          String xNode = "h="+h+",x"+j;
+        for (int l = 0; l < L; l++) {  // For each view l...
+          String xNode = "h="+h+",x"+l;
           if (ex != null) {  // Numerator: generate x[j]
-            int f = featureIndexer.getIndex(new UnaryFeature(h, "x="+ex.x[j]));
+            int f = featureIndexer.getIndex(new UnaryFeature(h, "x="+ex.x[l]));
             if (params != null)
               H.addEdge(hNode, H.endNode, edgeInfo(params, counts, f, increment));
           } else {  // Denominator: generate each possible assignment x[j] = a
@@ -54,22 +60,59 @@ public class Models {
             for (int a = 0; a < D; a++) {
               int f = featureIndexer.getIndex(new UnaryFeature(h, "x="+a));
               if (params != null)
-                H.addEdge(xNode, H.endNode, edgeInfo(params, counts, f, increment, j, a));
+                H.addEdge(xNode, H.endNode, edgeInfo(params, counts, f, increment, l, a));
             }
           }
         }
       }
       return H;
     }
+
+    public ParamsVec getSampleMarginals(Counter<Example> examples) {
+      ParamsVec marginals = (ParamsVec) fullParams.newParams();
+      for(Example ex : examples) {
+        int y = ex.h[0];
+        for( int x : ex.x ) {
+          marginals.incr(new UnaryFeature(y, "x="+x), examples.getFraction(ex));
+        }
+      }
+      ParamsVec marginals_ = newParams();
+      marginals_.copyOver(marginals);
+      return marginals_;
+    }
+
+    @Override
+    public Counter<Example> getDistribution(Params params_) {
+      ParamsVec params = (ParamsVec) params_;
+      Counter<Example> examples = new Counter<>();
+      examples.addAll(generateExamples(L));
+      for(Example ex: examples) {
+        examples.set( ex, getProbability(params, ex));
+      }
+      return examples;
+    }
+
+    @Override
+    public double updateMoments(Example ex, double count, SimpleMatrix P12, SimpleMatrix P13, SimpleMatrix P32, FullTensor P123) {
+      int x1 = ex.x[0];
+      int x2 = ex.x[1];
+      int x3 = ex.x[2];
+      P13.set( x1, x3, P13.get( x1, x3 ) + count);
+      P12.set( x1, x2, P12.get( x1, x2 ) + count);
+      P32.set( x3, x2, P32.get( x3, x2 ) + count);
+      P123.set( x1, x2, x3, P123.get(x1, x2, x3) + count );
+      return count;
+    }
   }
 
   public static class HiddenMarkovModel extends Model {
-    int L; // L = number of views, D = choices per view;
-
+    int avgWindow = 1;
     public HiddenMarkovModel(int K, int D, int L) {
       this.K = K;
       this.D = D;
       this.L = L;
+      createHypergraph(null,null,0);
+      fullParams = new ParamsVec(K, featureIndexer);
     }
     HiddenMarkovModel(){}
 
@@ -139,7 +182,7 @@ public class Models {
       }
     }
 
-    public Hypergraph<Example> createHypergraph(int L, Example ex, double[] params, double[] counts, double increment) {
+    public Hypergraph<Example> createHypergraph(Example ex, double[] params, double[] counts, double increment) {
       // Set length to be length of example data.
       assert( (ex == null) || ex.x.length == L );
 
@@ -163,14 +206,90 @@ public class Models {
         int i = L-1;
         for (int h = 0; h < K; h++) {  // And finally an end state.
           addEmission( H, i, h, ex, params, counts, increment );
+          // Add an end-transition state
+          // Create a link to the sum node that will enumerate over next states
+//          String hNode = String.format("h_%d=%d", i, h );
+//          H.addEdge(hNode, H.endNode); // Again, no potential required; hNode is a product node
         }
       }
       return H;
     }
+
+    public ParamsVec getSampleMarginals(Counter<Example> examples) {
+      ParamsVec marginals = (ParamsVec) fullParams.newParams();
+      for(Example ex : examples) {
+        for(int t = 0; t < ex.x.length; t++) {
+          int y = ex.h[t]; int x = ex.x[t];
+          marginals.incr(new UnaryFeature(y, "x="+x), examples.getFraction(ex));
+          if( t > 0 ) {
+            int y_ = ex.h[t-1];
+            marginals.incr(new BinaryFeature(y_, y), examples.getFraction(ex));
+          }
+        }
+      }
+      ParamsVec marginals_ = newParams();
+      marginals_.copyOver(marginals);
+      return marginals_;
+    }
+
+    @Override
+    public Counter<Example> getDistribution(Params params_) {
+      ParamsVec params = (ParamsVec) params_;
+      Counter<Example> examples = new Counter<>();
+      examples.addAll(generateExamples(L));
+      for(Example ex: examples) {
+        examples.set( ex, getProbability(params, ex));
+      }
+      return examples;
+    }
+//      @Override
+      public Counter<Example> getFullDistribution(Params params_) {
+          ParamsVec params = (ParamsVec) params_;
+          Counter<Example> examples = new Counter<>();
+          examples.addAll(generateExamples(L));
+          for(Example ex: examples) {
+              examples.set( ex, getProbability(params, ex));
+          }
+          return examples;
+      }
+    @Override
+    public double updateMoments(Example ex, double count, SimpleMatrix P12, SimpleMatrix P13, SimpleMatrix P32, FullTensor P123) {
+      double updates = 0.;
+      for(int start = 0; start < ex.x.length - 2; start++ ) {
+        int x1 = ex.x[(start)];
+        int x3 = ex.x[(start+1)]; // The most stable one we want to actually recover
+        int x2 = ex.x[(start+2)];
+        P13.set( x1, x3, P13.get( x1, x3 ) + count);
+        P12.set( x1, x2, P12.get( x1, x2 ) + count);
+        P32.set( x3, x2, P32.get( x3, x2 ) + count);
+        P123.set( x1, x2, x3, P123.get(x1, x2, x3) + count );
+
+        updates += count;
+      }
+
+      return updates;
+    }
+
+    // Version with a window: Obsolete.
+//    @Override
+//    public void updateMoments(Example ex, double count, SimpleMatrix P12, SimpleMatrix P13, SimpleMatrix P32, FullTensor P123) {
+//      int window = avgWindow;
+//      for(int start = 0; start < ex.x.length - 2; start++ ) {
+//        int x1 = ex.x[(start)];
+//        int x3 = ex.x[(start+1)]; // The most stable one we want to actually recover
+//        for(int extent = 0; extent < window && start + 2 + extent < ex.x.length; extent++) {
+//          int x2 = ex.x[start+2+extent];
+//          P13.set( x1, x3, P13.get( x1, x3 ) + count);
+//          P12.set( x1, x2, P12.get( x1, x2 ) + count);
+//          P32.set( x3, x2, P32.get( x3, x2 ) + count);
+//          P123.set( x1, x2, x3, P123.get(x1, x2, x3) + count );
+//        }
+//      }
+//    }
   }
 
-  public static class TallMixture extends Model {
-    int L, D; // L = number of views, D = choices per view;
+  public abstract static class TallMixture extends Model {
+    int D; // L = number of views, D = choices per view;
 
     public Example newExample() {
       Example ex = new Example();
@@ -235,7 +354,7 @@ public class Models {
     }
 
 
-    public Hypergraph<Example> createHypergraph(int L, Example ex, double[] params, double[] counts, double increment) {
+    public Hypergraph<Example> createHypergraph(Example ex, double[] params, double[] counts, double increment) {
       // Set length to be length of example data.
       assert( (ex == null) || ex.x.length == L );
 
@@ -257,6 +376,10 @@ public class Models {
       }
       return H;
     }
+
+    public ParamsVec getSampleMarginals(Counter<Example> examples) {
+      throw new RuntimeException();
+    }
   }
 
   // 2 x width grid.  Each node has two observations, 
@@ -267,13 +390,15 @@ public class Models {
   public static class GridModel extends Model {
     final int height = 2;
     int width;
-    int L; // L = number of grid cells, D = choices per X;
 
-    public GridModel(int L, int D) {
+    public GridModel(int K, int D, int L) {
+      this.K = K;
       this.L = L;
       this.D = D;
       this.width = L / height;
       assert L % height == 0 : L;
+      createHypergraph(null,null,0);
+      fullParams = new ParamsVec(K, featureIndexer);
     }
 
     public Example newExample() {
@@ -362,11 +487,72 @@ public class Models {
       return node;
     }
 
-    public Hypergraph<Example> createHypergraph(int L, Example ex, double[] params, double[] counts, double increment) {
+    public Hypergraph<Example> createHypergraph(Example ex, double[] params, double[] counts, double increment) {
       Hypergraph<Example> H = new Hypergraph<Example>();
-      //H.debug = true;
+      H.debug = true;
       H.addEdge(H.sumStartNode(), transNode(H, ex, params, counts, increment, 0, -1, -1));
       return H;
     }
+
+    public ParamsVec getSampleMarginals(Counter<Example> examples) {
+      ParamsVec marginals = (ParamsVec) fullParams.newParams();
+      for(Example ex : examples) {
+        for(int r = 0; r < height; r++) {
+          for(int c = 0; c < width; c++) {
+            int y = ex.h[hiddenNodeIndex(r,c)];
+            {
+              int x0 = ex.x[observedNodeIndex(r,c,0)];
+              int x1 = ex.x[observedNodeIndex(r,c,1)];
+              marginals.incr(new UnaryFeature(y, "x="+x0), examples.getFraction(ex));
+              marginals.incr(new UnaryFeature(y, "x="+x1), examples.getFraction(ex));
+            }
+            if(r > 0) {
+              int y_ = ex.h[hiddenNodeIndex(r-1,c)];
+              marginals.incr(new BinaryFeature(y_, y), examples.getFraction(ex));
+            }
+            if(c > 0) {
+              int y_ = ex.h[hiddenNodeIndex(r,c-1)];
+              marginals.incr(new BinaryFeature(y_, y), examples.getFraction(ex));
+            }
+          }
+        }
+      }
+      ParamsVec marginals_ = newParams();
+      marginals_.copyOver(marginals);
+      return marginals_;
+    }
+
+    @Override
+    public Counter<Example> getDistribution(Params params_) {
+      ParamsVec params = (ParamsVec) params_;
+      Counter<Example> examples = new Counter<>();
+      examples.addAll(generateExamples(2*L));
+      for(Example ex: examples) {
+        examples.set( ex, getProbability(params, ex));
+      }
+      return examples;
+    }
+
+    @Override
+    public double updateMoments(Example ex, double count, SimpleMatrix P12, SimpleMatrix P13, SimpleMatrix P32, FullTensor P123) {
+      double updates = 0;
+      for( int r = 0; r < height; r++ ) {
+        for( int c = 0; c < width; c++ ) {
+          int x2 = ex.x[observedNodeIndex(r,c,0)];
+          int x3 = ex.x[observedNodeIndex(r,c,1)]; // Just because we extract M3 - so lets pivot around this.
+          // TODO: Average over all the other possibilities
+          int x1 = ex.x[observedNodeIndex( (r+1) % height,c,0)];
+          P13.set( x1, x3, P13.get( x1, x3 ) + count);
+          P12.set( x1, x2, P12.get( x1, x2 ) + count);
+          P32.set( x3, x2, P32.get( x3, x2 ) + count);
+          P123.set( x1, x2, x3, P123.get(x1, x2, x3) + count );
+          updates += count;
+        }
+      }
+      return updates;
+    }
+
   }
+
+
 }

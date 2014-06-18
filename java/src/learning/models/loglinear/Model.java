@@ -1,34 +1,42 @@
 package learning.models.loglinear;
 
-import java.io.*;
 import java.util.*;
 
-import learning.linalg.MatrixOps;
-
 import fig.basic.*;
-import fig.exec.*;
-import fig.prob.*;
-import fig.record.*;
-import static fig.basic.LogInfo.*;
+import learning.models.ExponentialFamilyModel;
+import learning.models.Params;
+import learning.common.Counter;
 
-public abstract class Model {
-  public int K;  // Number of latent states
-  public int D;  // Number of emissions
-  public Indexer<Feature> featureIndexer = new Indexer<Feature>();
+public abstract class Model extends ExponentialFamilyModel<Example> {
+  public int K;
+  public int getK() { return K; }
+  public int D;
+  public int getD() { return D; }
+  public int L; // Number of 'views' or length.
+  public int getL() { return L; }
+  public final Indexer<Feature> featureIndexer = new Indexer<>();
+  public ParamsVec fullParams;
+//  public final Indexer<Feature> restrictedFeatureIndexer = new Indexer<>();
   public int numFeatures() { return featureIndexer.size(); }
-
-  ParamsVec newParamsVec() { return new ParamsVec(K, featureIndexer); }
+  public ParamsVec newParams() {
+//    return new ParamsVec(K, restrictedFeatureIndexer);
+    return new ParamsVec(K, featureIndexer);
+  }
 
   abstract Example newExample();
   abstract Example newExample(int[] x);
   // L gives the length of the observation sequence.
-  public Hypergraph<Example> createHypergraph(int L, double[] params, double[] counts, double increment) {
-    return createHypergraph( L, null, params, counts, increment );
+  // Use the ExponentialFamilyModel interface
+  @Deprecated
+  public Hypergraph<Example> createHypergraph(double[] params, double[] counts, double increment) {
+    return createHypergraph( null, params, counts, increment );
   }
-  public Hypergraph<Example> createHypergraph(Example ex, double[] params, double[] counts, double increment) {
-    return createHypergraph( ex.x.length, ex, params, counts, increment );
+  @Deprecated
+  abstract Hypergraph<Example> createHypergraph(Example ex, double[] params, double[] counts, double increment);
+  @Deprecated
+  public Hypergraph<Example> createHypergraph(int L, Example ex, double[] params, double[] counts, double increment) {
+    return createHypergraph( ex, params, counts, increment );
   }
-  abstract Hypergraph<Example> createHypergraph(int L, Example ex, double[] params, double[] counts, double increment);
 
   Hypergraph.LogHyperedgeInfo<Example> nullInfo = new Hypergraph.LogHyperedgeInfo<Example>() {
     public double getLogWeight() { return 0; }
@@ -77,7 +85,6 @@ public abstract class Model {
     }
   }
 
-
   Hypergraph.LogHyperedgeInfo<Example> hiddenEdgeInfo(final int j, final int v) {
     return new UpdatingEdgeInfo(j, v, true);
   }
@@ -91,5 +98,95 @@ public abstract class Model {
   Hypergraph.LogHyperedgeInfo<Example> edgeInfo(double[] params, double[] counts, int f, double increment, final int j, final int v) {
     return new UpdatingMultinomialEdgeInfo(params, counts, f, increment, j, v, false);
   }
+
+  @Override
+  public double getLogLikelihood(Params params, int L) {
+    int temp = this.L;
+    this.L = L;
+    double lhood = getLogLikelihood(params);
+    this.L = temp;
+    return lhood;
+  }
+  @Override
+  public double getLogLikelihood(Params params, Example example) {
+//    ParamsVec parameters = (ParamsVec) params;
+    fullParams.copyOver(params);
+    Hypergraph<Example> Hp = createHypergraph(example, fullParams.weights, null, 0.);
+    Hp.computePosteriors(false);
+    return Hp.getLogZ();
+  }
+
+  @Override
+  public void updateMarginals(Params params, int L, double scale, double count, Params marginals_) {
+    int temp = this.L;
+    this.L = L;
+    updateMarginals(params, (Example) null, scale, count, marginals_);
+    this.L = temp;
+  }
+  @Override
+  public void updateMarginals(Params params, Example example, double scale, double count, Params marginals_) {
+    fullParams.copyOver(params);
+//    ParamsVec parameters = (ParamsVec) params;
+//    ParamsVec marginals = (ParamsVec) marginals_;
+    ParamsVec marginals = (ParamsVec) fullParams.newParams();
+    Hypergraph<Example> Hp = createHypergraph(example, fullParams.weights, marginals.weights, scale);
+    Hp.computePosteriors(false);
+    Hp.fetchPosteriors(false);
+    marginals_.plusEquals(marginals);
+  }
+  @Override
+  public Counter<Example> drawSamples(Params params, Random rnd, int n) {
+    fullParams.copyOver(params);
+//    ParamsVec parameters = (ParamsVec) params;
+    ParamsVec counts = (ParamsVec) fullParams.newParams();
+    Hypergraph<Example> Hp = createHypergraph(fullParams.weights, counts.weights, 1);
+    // Necessary preprocessing before you can generate hyperpaths
+    Hp.computePosteriors(false);
+    Hp.fetchPosteriors(false);
+
+    Counter<Example> examples = new Counter<>();
+    for (int i = 0; i < n; i++) {
+      Example ex = newExample();
+      Hp.fetchSampleHyperpath(rnd, ex);
+      examples.add(ex);
+    }
+    return examples;
+  }
+
+  /**
+   * Choose idx
+   */
+  void generateExamples(Example current, int idx, List<Example> examples) {
+    if( idx == current.x.length ) {
+      examples.add(new Example(current.x));
+    } else {
+      // Make a choice for this index
+      for(int i = 0; i < D; i++) {
+        current.x[idx] = i;
+        generateExamples(current, idx+1, examples);
+      }
+    }
+  }
+  List<Example> generateExamples(int L) {
+    List<Example> examples = new ArrayList<>((int)Math.pow(2,L));
+    Example ex = new Example(new int[L]);
+    generateExamples(ex, 0, examples);
+    return examples;
+  }
+
+
+  public int getSize(Example ex) {
+    return ex.x.length;
+  }
+
+    @Override
+    public Example bestLabelling(Params params, Example ex) {
+        Hypergraph<Example> Hp = createHypergraph(ex, fullParams.weights, null, 1.0);
+        Hp.computePosteriors(true);
+        ex = newExample(ex.x);
+        Hp.fetchBestHyperpath(ex);
+        return ex;
+    }
+
 }
 
