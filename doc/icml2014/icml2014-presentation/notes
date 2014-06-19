@@ -1,185 +1,86 @@
-# June 7th 2013
+# June 12, 2014  
 
-* LABEL GRAPHS
-* Be very clear that we're looking at generative models.
-* cite mixture of experts in the discriminative model slide
-* Use "if" instead of "assume"; it's less permanent.
+slide 3:
+  'we use a local optimzation' => 'people typically use' to
+distinguish it from you
+  make this slide go faster
+slide 4:
+  EM 'solve it' => 'can generate an algorithm'
+slide 5:
+  point: method of moments used in conjunction with likelihood
+slide 8:
+  quickly say: what are the parameters of the model?
+  discrete variables; under full rank, as number of examples tends to infinity
+slide 9:
+  Bigger pause before this part, because now it's your contribution -
+need more setup
+  Make clear that this is a stepping stone
+  KEY POINT: we can recover complex distributions, but hard to get the
+actual parameters
+  10: write down solving the actual linear equation
+  Refer to the examples on slides more
+  SAY explicitly: we introduce the notions 'exclusive view',
+'uniformly bottleneck'
+  Write down the general theorem:
+  Say that you assume infinite amount of data -> perturbation
 
-* I should some how get to the meat faster.
+slide 15:
+  not clear what the log likelihood is
 
-* Correct citations
-* Talk about the axes when presenting a graph
-* Include full details of the experimental setup.
-* Using "intutive" instead of "not surprising"
-* Including future work might be good.
-* Pull MLR earlier?
+General comments
+  More formal (not necessarily more equations): what are parameters?
+   what are the contracts (your theorem and the black box)?
+  Refer to the examples on the slides more
+  Define terminology
+  Related work
 
+# May 1st, 2014
+Slide 4: say this is a cartoon
+Slide 4: spending too much time on the first part of this slide.  The last bullet is the most important point,
+put it on its own slide!
 
-# Slide 1
+Slide 5: don't talk about three-view under "Main contributions"...
+Main contributions should not be 4 bullet points
+  Broaden: High treewidth and log-linear models
+  Techniques: combine likelihood and moments (not just bonus points, needed for log-linear models)
 
-* took too long "features about your data", wandering (*)
-* Logistic regression => mixture of experts (*)
+Slide 7: make colors of vectors and Gaussians match
+Spending too much time here (great for NLP talk, not for ICML) - say this is review, and treat it as black box.
 
-# Slide 2
+Slide 8: bottleneck: say why it's a bottleneck
+say "directed grid" model
 
-* negative log-likelihood (*)
+Slide 10: clearer if you build the graphical model gradually as you mention the parts
+ (don't need to say: T doesn't have to be the same)
+  Can't see the checkmarks, put checkmarks with the actual parameters
 
-# Slide 3
+SLide 10: talk about linear relation in a two latent-variable model
 
-* "EM" => "generally, local optimization" (*)
-* Goal of everything:
-  "not only get better" => "but converge to the correct parameters" (+)
-* Method of moments is more general than spectral methods; (+)
-  + Be aware that spectral methods is more general
-  + Spectral methods for learning latent-variable models
+Slide 11: should be clearer; uniformly bottlenecked property
+Skip talk about parameter sharing
 
-# Slide 4:
+*** Need to talk about p(x_j|h_i) are various properties of the model, not the actual parameters.
+We can recover some nasty product of the parameters - need to highlight this challenge.
 
-* [k] notation not defined (*)
-* Slip up: Say "define generative model" (+)
+Give more examples of graphs with bottleneck 
 
-* Need to say given $\beta_h$ alone, can recover mean, but not sufficient (*)
-* Your dot operator changed (*)
-* M_p is undefined (*)
+Slide 12: could have better use of space (text is too cramped)
 
-# Title: method of moments for mixture of linear regressions (emphasize low-rank) 
+Slide 12: assumptions should be new slide;
+A bit too loose: say that matrix, solve
 
-* Say method: regularize by nuclear norm first before saying analysis ( )
-* Refer to AHK work (GMM): before, moments of the data were powers of $\beta$;
-here have to work harder to recover them (+)
-* Going through derivation: say explicitly we prove sample complexity results,
-don't slog through it (+)
+Slide 13: don't talk about edge cases / parameter sharing
 
-* Flip back between visualization and histogram of errors (+)
+Slide 15: terminology needs to be made consistent (piecewise => composite, moment matching => pseudoinverse)
 
-* "Not too surprising" => "intuitive"  (+)
-* Figure: emphasize "spectral gets ballpark" (this should be a conclusion) (+)
-* Experimental setup: say what the number of examples is, k = 3, d = 3  (+)
+Slide 17: didn't talk about loopy graphs
 
-* Say assumptions (*)
-  h is independent of x
-  B is full rank
+** Meta statement - say at beginning: use Anandkumar as black box, do some graphical models stuff on top
 
-* Slip: "anneal regression coefficient" => "regularization parameter" (+)
-  "featurization" => "not deterministic polynomial dependencies"
-* Say "this is good when d is small relative to n" (+)
-----
+** Need figure that demonstrates the flow of information (observed moments => hidden moments => parameters)
 
-- Histogram axes unlabeled
-- Reordering: put a bit more "setup" upfront and then go through histories.
------
+** Ignore edge cases to save time
 
-- Label that histogram, I found it hard to interpret in the beginning.
-It also looked very sparse.
-- Maybe address problems with the experiments proactively: like one
-thing that stood out for me is that it seems that MoM did not work on
-the graph. Given it is standard practice to show the best results in a
-talk, perhaps you should explain why it didnt converge as a part of
-the talk. But the insight is appreciated.
-- i think it took 5 min for it to get anywhere near your
-contributions, i think that can be shortened to 2 or 3 min.
-- for the error bound, unless it is compared to some previous bound,
-it seems rather un-interpretable besides that it is polynomial.
-- a few words about complexity
-- if the slides are going to contain boxes, i think its better if they
-align together, but not a big deal.
-----
+** More connection between rank/matrices and probabilities/graphical models
 
-Time: 15 minutes; 10:16
-
-Big points
- - Introduce notation, make it clear before saying
- - "moments" is way too overloaded
- - Focus on important point; don't say things that hide details
- - reference the figures more
-
-When in doubt, just move on
-
--- Slide 2
-Use examples of latent variable models
-Latent CRF
-Discriminative LDA
-reference h, z, x, y, h
-
-Discriminative models: logistic regression
-
--- Slide 3
-marginal likelihood $p(x)$
-don't say NP hard, say intractable
-EM can work in practice provided good initialization
-
--- Slide 4
-Method of moments is old
-studied in control theory / automata
-Observable operator models (not representation learning)
-Parameter estimation
-
--- Slide 5
-introduce simple mixture model
-Need to introduce notation (x^\otimes 3), \beta, means
-Need actual mixture model
-tensor power method
-words: \beta's...means... forget whitening
-
--- Slide 6
-mixture of linear regressions: simplest model
-Generative model is as follows:
-Purpose is defining the model:
-don't stress dimensionality - we can't estimate in this
-To generate a point
-Data => Example
-Stress: don't know h
-
-E[\beta_h]: define
-Say, that $M_1$ doesn't give you $\beta$
-Hide hideous equations: focus on first term.
-Don't use trace, just do dot product
-just say bias, noise
-generalized product
-
-don't use word "moments"
-low-rank: $d^3$ too subtle
-
-Slide just to summarize algorithm
-Then slide for analysis;
-don't say too much about analysis; make faster
-
-Slide 9
-featurizations: confusing: (t, t^2)
-curves are just
-label axes
-graphs are
-explain the figure (build), explain axes
-
-Draw an example where spectral is right basin of attraction but too high,
-whereas EM has better objective, but
-
-# June 6th 2013
-
-* Gen vs Disc. graphical model. (*)
-* HMMs, GMMs, etc. (*)
-
-* MLE is consistent. EM is not.  (*)
-* Get rid of applications nonsense (*)
-
-* MoM the big picture, i.e. /talks/2013/microsoft/ (~)
-* Cite the new result in 2009,  (~)
-  * Outline the high level idea of tensor factorization (-symmetric).
-  * move the tensor factorization to mom. (*)
-  * Let's see how we can apply this building block to our scenario. (*)
-* -unmixing (*)
-* -mom (*)
-* -unweidly stuff . (*)
-* one slide for y = ... (*)
-* diagrmas for y = x . M_p (*)
-* Warm up with M1 and M2 (*)
-* regression just for y3. (*)
-  + Error analysis for just M3
-* EM for just 1
-* Compared to observable operator 
-  - animations.
-  - histogram
-  - revisit the optimaization picture.
-
-* Get clear the difference between discriminative and generative models.
-
+Mention sample complexity?
