@@ -44,13 +44,13 @@
 \begin{document}
 
 % "Beamer, do the following at the start of every section"
-\AtBeginSection[] 
-{%
-\begin{frame}<beamer> 
-\frametitle{Outline} % make a frame titled "Outline"
-\tableofcontents[currentsection]  % show TOC and highlight current section
-\end{frame}
-}
+%\AtBeginSection[] 
+%{%
+%\begin{frame}<beamer> 
+%\frametitle{Outline} % make a frame titled "Outline"
+%\tableofcontents[currentsection]  % show TOC and highlight current section
+%\end{frame}
+%}
 
 \begin{frame}
   \titlepage
@@ -146,6 +146,11 @@
   \end{itemize}
 \end{frame}
 
+\begin{frame}<beamer> 
+\frametitle{Outline} % make a frame titled "Outline"
+\tableofcontents  % show TOC and highlight current section
+\end{frame}
+
 \section{Tensor Factorization for a Generative Model}
 
 \begin{frame}
@@ -208,6 +213,8 @@
 
 \begin{frame}
   \frametitle{Example: Gaussian Mixture Model}
+  \cornertext{\cite{anandkumar12moments}}
+  \vspace{-2ex}
   \splitcolumn{%
     \begin{itemize}
       \item Generative process\tikzmark{gen}:
@@ -250,7 +257,7 @@
 
     \uncover<4->{%
       \point{m2-pos}{({pic cs:m2} -| mark)};
-      \point{m2}{($(m2-pos) - (0,4.5cm)$)};
+      \point{m2}{($(m2-pos) - (0,5.0cm)$)};
       \tikzrect{M2}{black,fill=white}{($(m2) + (1cm,1cm)$)}{1}{1};
       \node[anchor=west] at ($(m2) + (1.1cm, 0.5cm)$) {$\E[x\tp{2}]$};
       \node[anchor=east] at ($(m2) + (-0.1cm, 0.5cm)$) {$d$};
@@ -258,7 +265,7 @@
     }
     \uncover<5->{%
       \point{m3-pos}{({pic cs:m3} -| mark)};
-      \point{m3}{($(m3-pos) - (-1cm,3.5cm)$)};
+      \point{m3}{($(m3-pos) - (-1cm,4.0cm)$)};
       \tikzcube{M3}{black,fill=white}{($(m3) + (0,0,0)$)}{1}{1}{1};
       \node[anchor=west] at ($(m3) + (0.5cm, -0.5cm)$) {$\E[x\tp{3}]$};
       \node[anchor=east] at ($(m3) + (-1.1cm, -0.5cm)$) {$d$};
@@ -452,11 +459,11 @@
         }{%
           \innerpp{\ub{\E[\beta_h\tp{2}]}_{M_2}}{x\tp{2}}
         }
-        &&+ \color{DarkGreen} \textrm{bias} + \color{red} \textrm{noise} \\[4ex]
+        &&+ \color{DarkGreen} \textrm{bias}_2 + \color{red} \textrm{noise}_2 \\[4ex]
     }
     \action<5->{%
     y^3 \tikzmark{regC}
-    &= \color{blue} \innerpp{\ub{\E[\beta_h\tp{3}]}_{M_3}}{x\tp{3}} &&+ \color{DarkGreen} \textrm{bias} + \color{red} \textrm{noise} 
+    &= \color{blue} \innerpp{\ub{\E[\beta_h\tp{3}]}_{M_3}}{x\tp{3}} &&+ \color{DarkGreen} \textrm{bias}_3 + \color{red} \textrm{noise}_3 
     }
   \end{align*}
   }{%
@@ -542,7 +549,7 @@
     \begin{align*}
       \robustaltm<-2>{\hat M_2}{\mathmb{\hat M_3}} &= \arg\min_{M} \sum_{(x,y)\in\mathcal{D}} \left( 
       \robustaltm<-2>{y^2 - \innerp{M}{x\tp{2}}}{\mathmb{y^3 - \innerp{M}{x\tp{3}}}}
-      - \textrm{bias}\right)^2 
+      - \robustaltm<-2>{\textrm{bias}_2}{\textrm{bias}_3} \right)^2 
       \uncover<2->{+
       \robustaltm<2>{\mathmb{\ub{\|M\|_{*}}_{\sum_i \sigma_i(M)}}}
         {\|M\|_{*}}

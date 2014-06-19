@@ -13,8 +13,8 @@ $(OUTPUT).pdf: $(FILE).tex ${FIGURES}
 ${FIGURES}: %.pdf : %.eps 
 	epstopdf --autorotate=All $^
 
-.PHONY: clean
-
 clean:
-	rm -rf $(FILE).{aux,dvi,out,log,nav,snm,toc}
+	rm -rf *.{aux,dvi,out,log,nav,snm,toc,bbl}
+
+.PHONY: clean
 
