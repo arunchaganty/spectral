@@ -50,6 +50,7 @@
 {%
 \begin{frame}<beamer> 
 \frametitle{Outline} % make a frame titled "Outline"
+\todo{Make outline a diagram}
 \tableofcontents[currentsection]  % show TOC and highlight current section
 \end{frame}
 }
@@ -118,7 +119,7 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{Parameter Estimation is Hard}
+  \frametitle{Consistent estimation for general models}
 
   \begin{itemize}
     \item<+-> Several estimators based on the method of moments.
@@ -126,19 +127,37 @@
         \item {\bf Phylogenetic trees:} \cite{mossel2005learning}.
         \item {\bf Hidden Markov models:} \cite{hsu09spectral}
         \item {\bf Latent Dirichlet Allocation:} \cite{anandkumar12lda}
-        \item {\bf Latent tree structure:} \cite{anandkumar11tree, hsu12identifiability}
+        \item {\bf Latent trees:} \cite{anandkumar11tree}
+        \item {\bf PCFGs:} \cite{hsu12identifiability}
+        \item {\bf Mixtures of linear regressors} \cite{chaganty13regression}
+        \item {\bf \ldots}
       \end{itemize}
-    \item<+-> These estimators are applicable only to a specific type of
-      model. 
+    \item<+-> These estimators are applicable only to a specific type of model. 
     \item<+-> In contrast, EM and gradient descent apply for almost any model.
-    \item<+-> Some work in the observable operator framework does apply to a more general model class.
+    \item<+-> Note: some work in the observable operator framework does apply to a more general model class.
       \begin{itemize}
         \item {\bf Weighted automata:} \cite{balle12automata}.
         \item {\bf Junction trees:} \cite{song2011spectral}
+        \item {\bf \ldots}
+        \item \todo{Check that this list is representative}
       \end{itemize}
     \item<+-> {\bf How can we apply the method of moments to estimate {\em parameters efficiently} for a {\em general} model?}
   \end{itemize}
 \end{frame}
+
+\begin{frame}
+  \frametitle{Setup}
+  \splitcolumn{%
+    \begin{itemize}
+      \item Discrete models, $d$, $k$.
+      \item Assume $d > k$.
+      \item Parameters and marginals can be put into a matrix or tensor -> introduce notation.
+      \item Assume infinite data.
+      \item Highlight directed vs undirected - we focus on directed.
+    \end{itemize}
+  }{%
+  }
+  \end{frame}
 
 \begin{frame}
   \frametitle{Background: Three-view Mixture Models}
@@ -169,13 +188,15 @@
         %};
       \end{canvas}
   }
-  \end{frame}
+\end{frame}
+
+\printoutline
 
 \begin{frame}
   \frametitle{Example: a bridge, take I}
   \splitcolumn{%
     \begin{itemize}
-      \item<1-> Each edge has a parameter.
+      \item<1-> Each edge has a set of parameters.
       \item<2-> $h_1$ and $h_2$ are bottlenecks.
       \item<3-> We can learn $\Pr(x_1^a | h_1), \Pr(x_1^b | h_1), \cdots$.
       \item<5-> However, we can't learn $\Pr(h_2 | h_1)$ this way.
@@ -226,6 +247,7 @@
   \splitcolumn{%
     \begin{itemize}
       \item<1-> Observe the joint distribution,
+        \todo{Use cartoon matrices}
         \begin{align*}
           \underbrace{\Pr(x_1^b, x_2^a)}_{M_{12}} &= \sum_{h_1, h_2} 
           \underbrace{\Pr(x_1^b \given h_1)}_{\mOpp{1}{1}}
@@ -274,7 +296,6 @@
 \begin{frame}
   \frametitle{Exclusive Views}
   \splitcolumn{%
-  \alt<1>{
   \begin{definition}[Exclusive views]
     We say $h_i \in S \subseteq \bh$ has an {\bf exclusive view} $x_v$
       if
@@ -285,12 +306,26 @@
         \item The conditional moment matrix $\mOpp{v}{i} \eqdef
           \Pr(x_{v} \mid h_i)$ has full column rank $k$ and can be
           recovered.
+        \item \todo{Exclusive views for a clique}
       \end{enumerate}
   \end{definition}
-  }{
+  }{%
+  \begin{canvas}
+    \point{mark}{(4cm,0)};
+    \node at (mark) {%
+      \includegraphics[width=0.5\textwidth,height=3cm,keepaspectratio]{figures/exclusive-views.pdf}
+      };
+  \end{canvas}
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Exclusive views give parameters}
+  \splitcolumn{%
   \begin{itemize}
     \item Given {\em exclusive views}, $\Pr(x \given h)$,
       learning cliques is solving a linear equation!
+        \todo{Use cartoon tensors}
       \begin{align*}
         \underbrace{\Pr(x_1, \ldots, x_m)}_{M} &=
         \sum_{h_1, \ldots, h_m}
@@ -304,32 +339,6 @@
         }
       \end{align*}
   \end{itemize}
-  }
-  }{%
-  \begin{canvas}
-    \point{mark}{(4cm,0)};
-    \node<-4> at (mark) {%
-      \includegraphics[width=0.5\textwidth,height=3cm,keepaspectratio]{figures/exclusive-views.pdf}
-      };
-  \end{canvas}
-  }
-\end{frame}
-
-\begin{frame}
-  \frametitle{Bottlenecks}
-  \splitcolumn{%
-  \begin{itemize}
-    \item<1-> When are we assured exclusive views?
-  \end{itemize}
-  \uncover<2->{
-  \begin{definition}[Bottlenecked set]
-    A set of hidden variables $S$ is said to be {\em bottlenecked} if
-    each $h \in S$ is a bottleneck.
-  \end{definition}
-  }
-  \begin{itemize}
-    \item<3-> {\bf Theorem:} A bottlenecked clique has exclusive views.
-  \end{itemize}
   }{%
   \begin{canvas}
     \point{mark}{(4cm,0)};
@@ -341,21 +350,34 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{Pseudoinverse Estimator}
+  \frametitle{Bottlenecked graphs}
   \splitcolumn{%
-  \begin{enumerate}
-    \item<+-> Estimate conditional moments $\Pr(x|h)$ using bottleneck
-      algorithm.
-    \item<+-> Solve linear equation between $\Pr(h_1,\cdots,h_m)$ and $P(x_1,
-      \cdots, x_m)$.
-      \begin{align*}
-        Z &= M(\mOppi{1}{1}, \cdots, \mOppi{m}{m}).
-      \end{align*}
-%    \item<+-> {\bf Assumptions}: For every clique $\Pr(h_1, \cdots, h_m)$,
-%      every conditioning $\Pr(h_1, \cdots, h_k | h_{k+1}, \cdots h_m)$
-%      is ``full-rank''.
-  \end{enumerate}
+  \begin{itemize}
+    \item<1-> When are we assured exclusive views?
+  \end{itemize}
+  \uncover<2->{
+  \begin{definition}[Bottlenecked set]
+    A set of hidden variables $S$ is said to be {\em bottlenecked} if
+    each $h \in S$ is a bottleneck. 
+  \end{definition}
+  }
+  \begin{itemize}
+    \item<3-> {\bf Theorem:} A bottlenecked clique has exclusive views. \todo{Say show in paper.}
+  \end{itemize}
   }{%
+  \begin{canvas}
+    \point{mark}{(4cm,0)};
+    \node at (mark) {%
+      \includegraphics[width=0.5\textwidth,height=3cm,keepaspectratio]{figures/exclusive-views.pdf}
+      };
+  \end{canvas}
+  }
+\end{frame}
+
+\printoutline
+
+\begin{frame}
+  \frametitle{Example}
   \begin{canvas}
     \point{mark}{(3cm,0)};
     \point{start-grid}{(mark)};
@@ -454,7 +476,6 @@
   \draw<11->[blue,-latex] (h3) -- (h4);
 
   \end{canvas}
-  }
   
 \end{frame}
 
@@ -505,18 +526,25 @@
   \frametitle{Convex marginal likelihoods}
   \splitcolumn{%
     \begin{itemize}
-      \item<1-> The MLE is most statistically
-        efficient, but hard to compute.
-      \item<2-> Given the observed marginals, $-\log \Pr(x)$ is convex in $\theta$.
-      \item<3-> A local method like EM is guaranteed to converge to the global optimum.
+      \item<1-> The MLE is statistically
+        most efficient, but usually non-convex. 
+      \item<2-> If we fix the conditional moments, $-\log \Pr(x)$ is convex in $\theta$.
+      \item<3-> No closed form solution, but a local method like EM is
+        guaranteed to converge to the global optimum.
     \end{itemize}
   }{%
     \begin{canvas}
       \point{stuff}{(2cm,2.5cm)};
       \drawbridge<1->{(stuff)};
-      \node<2->[scale=0.8] at ($(start-bridge) - (-1,2.5cm)$) {\obj{
+      \node[scale=0.8] at ($(start-bridge) - (-1,2.5cm)$) {\obj{
       \begin{align*}
-        \log \Pr(\bx) &= \log \sum_{h_1,h_2} \underbrace{\Pr(\bx_1 | h_1) \Pr(\bx_2 | h_2)}_{\text{known}} \mathmb{\Pr(h_1, h_2)}
+        \log \Pr(\bx) &= \log \sum_{h_1,h_2} 
+        \robustaltm<1>{
+        \mathmb{\Pr(\bx_1 | h_1) \Pr(\bx_2 | h_2)}
+        }{
+        \underbrace{\Pr(\bx_1 | h_1) \Pr(\bx_2 | h_2)}_{\text{known}} 
+        }
+        \mathmb{\Pr(h_1, h_2)}
       \end{align*}
       }};
       \node<2->[scale=0.8,anchor=north] at ($(start-bridge) - (-1cm,3.0cm)$) {
@@ -530,7 +558,7 @@
   \frametitle{Composite likelihoods}
   \splitcolumn{%
     \begin{itemize}
-      \item<1-> In general, the full likelihood is still non-convex.
+      \item<1-> In general, the full likelihood is still non-convex. \todo{Specify which x}.
       \item<2-> Consider {\em composite likelihood} on a subset of observed variables.
       \item<4-> Can be shown that estimation with composite likelihoods is consistent (\cite{lindsay88composite}).
       \item<4-> Asymptotically, the composite likelihood estimator is more efficient.
@@ -587,7 +615,7 @@
       parameterization for a directed model. 
     \item Can be recovered by normalization:
       \begin{align*}
-        \Pr(h_2 \given h_1) &= \frac{\Pr(h_1, h_2)}{\sum_{h_1} \Pr(h_1, h_2)}.
+        \Pr(h_2 \given h_1) &= \frac{\Pr(h_1, h_2)}{\sum_{h_2} \Pr(h_1, h_2)}.
         \end{align*}
   \end{itemize}
   }{%
@@ -612,7 +640,7 @@
 
   \splitcolumn{%
     \begin{itemize}
-      \item<1-> Assume a log-linear parameterization,
+      \item<1-> Assume a log-linear parameterization, \todo{use sum over cliques - talk through}.
         \begin{align*}
         p_\theta(\bx, \bh) &= \exp\left( \theta^\top \phi(\bx,\bh) - A(\theta) \right).
         \end{align*}
@@ -642,7 +670,7 @@
   \splitcolumn{%
     \begin{itemize}
       \item<1-> Recall, the marginals can typically estimated from
-        supervised data.
+        supervised data. 
           \begin{align*}
           \label{eqn:logLinearSupervised}
           \sL_\text{sup}(\theta) &= -\mathmb{\theta^\top} \mathmg{\underbrace{\left(\sum_{\sC \in \sG} \E_{(\bx,\bh) \sim \sD_\text{sup}}[\phi(\bx_\sC,\bh_\sC)]\right)}_{\mu_\sC}} + \mathmb{A(\theta)}.
@@ -670,15 +698,16 @@
   \splitcolumn{%
     \begin{itemize}
         \item<1-> Estimating marginals $\mu_\sC$ is independent of treewidth, but 
-          computing the normalization constant is:
+          computing the normalization constant is: \todo{convex but not easy}
           \begin{align*}
             A(\theta) &\eqdef \log \sum_{\bx, \bh} \exp\left(\theta^\top \phi(\bx, \bh) \right).
           \end{align*}
-        \item<2-> We can use pseudolikelihood to consistently estimate
-          distributions over local neighborhoods.
+        \item<2-> We can use pseudolikelihood (\cite{besag75pseudo}) to consistently estimate
+          distributions over local neighborhoods. 
           \begin{align*}
             A_{\text{pseudo}}(\theta; \sN(a)) &\eqdef \log \sum_{a} \exp\left(\theta^\top \phi(\bx_\sN, \bh_\sN) \right).
           \end{align*}
+        \item<3-> Clique marginals not sufficient statistics, but we can still estimate them.
     \end{itemize}
   }{%
     \begin{canvas}
@@ -708,8 +737,10 @@
      %   \item Hidden Markov Models 
      %   \item Latent Dirichlet Allocation
      % \end{itemize}
+     \item \todo{Use outline slide}.
+     \item \todo{Show the venn diagram on progress on generality.}.
      \item<1-> An algorithm for any (non-degenerate) {\bf bottlenecked discrete graphical models}. \tikzmark{grid}
-    \item<2-> Efficiently learns models with low-degree but {\bf high-treewidth}.
+    \item<2-> Efficiently learns models with {\bf high-treewidth}.
     \item<3-> Combine moment estimators with composite
       likelihood estimators.
     \item<4-> Extends to {\bf log-linear models}.

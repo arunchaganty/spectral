@@ -1,3 +1,46 @@
+# June 18, 2014  
+
+Categorize this message as:
+Never show this again
+Major point: have a general scheme (flowchart) as a outline
+  1. p(x) => P(x|h)
+  2. p(x), P(x|h) => P(h1,h2) [pseudoinverse, composite likelihood]
+  3. Extract parameters [maximum likelihood (counting or
+optimization), pseudolikelihood]
+
+Define observed moments, conditional moments, hidden marginals, parameters
+  slowly in the beginning
+
+Say discrete variables
+state what the parameters are (list them out)
+Say focus on directed models
+
+General
+  Much better, smoother
+
+Slide 4:
+  Latent tree structure => break up
+
+  Make distinction with observable operator clearer
+
+AHK 2012: based on simultaneous diagonalization
+
+Slide 6:
+  Each edge has a 'parameter' => 'set of parameters'
+
+Say: 'empirical moments' => 'observed moments'
+
+Slide 10: recall what a bottleneck is
+
+Slide 11: use red instead of blue - 'done' color needs to contrast more
+
+Slide 14: no closed-form likelihood, but convex, so can use EM
+
+Slide 15: 'we show in the paper that...'
+
+Slide 21: 'low-degree' is not necessary
+  'extends to ...'
+
 # June 12, 2014  
 
 slide 3:
