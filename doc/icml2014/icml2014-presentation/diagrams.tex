@@ -1,4 +1,3 @@
-
 \newcommand<>{\drawgen}[1]{%
   \uncover#2{
     \point{start-gen}{#1}
@@ -12,6 +11,21 @@
     \draw[-latex] (h) -- (x3);
   }
 }
+
+\newcommand<>{\drawgensquiggle}[1]{%
+  \uncover#2{
+    \point{start-gen}{#1}
+    \node[style=node] (h) at (start-gen) {$h$};
+%    \node[left=0.1cm of h] {$h$};
+    \node[style=obsnode,below=1cm of h] (x2) {$x_2$};
+    \node[style=obsnode,left=0.5cm of x2] (x1) {$x_1$};
+    \node[style=obsnode,right=0.5cm of x2] (x3) {$x_3$};
+    \draw[-latex,squiggle] (h) -- (x1);
+    \draw[-latex,squiggle] (h) -- (x2);
+    \draw[-latex,squiggle] (h) -- (x3);
+  }
+}
+
 
 \newcommand<>{\drawdisc}[1]{%
   \uncover#2{
@@ -138,6 +152,7 @@
    \draw[-latex] (h1) -- (x2);
    \draw[-latex] (h1) -- (x3);
 
+   \draw[-latex] (h2) -- (x1);
    \draw[-latex] (h2) -- (x2);
    \draw[-latex] (h2) -- (x3);
    \draw[-latex] (h2) -- (x4);
@@ -145,13 +160,54 @@
    }
 }
 
+\newcommand<>{\drawbridge}[1]  {
+  \uncover#2{
+    \point{start-bridge}{#1};
+    % Hidden nodes
+   \node[style=node, scale=0.8] (h1) at (start-bridge) {$h_1$};
+   \node[style=node, scale=0.8, right= 1.0cm of h1] (h2) {$h_2$};
+   \draw[-latex] (h1) -- node[above] (h1h2) {} (h2);
+
+% Observed nodes
+   \node[style=obsnode, scale=0.6, below left=0.3cm of h1] (x1a) {$x_1^a$};
+   \node[style=obsnode, scale=0.6, below=0.3cm of h1] (x1b) {$x_1^b$};
+   \node[style=obsnode, scale=0.6, below=0.3cm of h2] (x2a) {$x_2^a$};
+   \node[style=obsnode, scale=0.6, below right=0.3cm of h2] (x2b) {$x_2^b$};
+   \draw[-latex] (h1) -- (x1a);
+   \draw[-latex] (h1) -- (x1b);
+   \draw[-latex] (h2) -- (x2a);
+   \draw[-latex] (h2) -- (x2b);
+   }
+}
+
+\newcommand<>{\drawubridge}[1]  {
+  \uncover#2{
+    \point{start-ubridge}{#1};
+    % Hidden nodes
+   \node[style=node, scale=0.8] (h1) at (start-ubridge) {$h_1$};
+   \node[style=node, scale=0.8, right= 1.0cm of h1] (h2) {$h_2$};
+   \draw[-] (h1) -- node[above] (h1h2) {} (h2);
+
+% Observed nodes
+   \node[style=obsnode, scale=0.6, below left=0.3cm of h1] (x1a) {$x_1^a$};
+   \node[style=obsnode, scale=0.6, below=0.3cm of h1] (x1b) {$x_1^b$};
+   \node[style=obsnode, scale=0.6, below=0.3cm of h2] (x2a) {$x_2^a$};
+   \node[style=obsnode, scale=0.6, below right=0.3cm of h2] (x2b) {$x_2^b$};
+   \draw[-] (h1) -- (x1a);
+   \draw[-] (h1) -- (x1b);
+   \draw[-] (h2) -- (x2a);
+   \draw[-] (h2) -- (x2b);
+   }
+}
+
+
 \newcommand{\tensorfactorization}[1]{%
   \point{start-tf}{#1}
   \tikzcube{tensoring}{black,fill=white}{($(start-tf) + (0,0,0)$)}{1}{1}{1};
   \node at ($(tensoring) + (1.0cm,-0.3cm)$) {$=$};
   \tensorfiber{t1}{fill=blue!70}{($(tensoring) + (2.5cm,0.0cm)$)};
   \node at ($(t1) + (1.0cm,-0.3cm)$) {$+$};
-  \tensorfiber{t2}{fill=green!70}{($(t1) + (2.5cm,0.0cm)$)};
+  \tensorfiber{t2}{fill=DarkGreen!70}{($(t1) + (2.5cm,0.0cm)$)};
   \node at ($(t2) + (1.0cm,-0.3cm)$) {$+ \dots + $};
   \tensorfiber{t3}{fill=red!70}{($(t2) + (3.0cm,0.0cm)$)};
 
@@ -165,7 +221,7 @@
     \node at ($(mat) + (1.0cm,-0.3cm)$) {$=$};
     \matfiber{t1}{fill=blue!70}{($(mat) + (2.5cm,0.0cm)$)};
     \node at ($(t1) + (1.0cm,-0.3cm)$) {$+$};
-    \matfiber{t2}{fill=green!70}{($(t1) + (2.5cm,0.0cm)$)};
+    \matfiber{t2}{fill=DarkGreen!70}{($(t1) + (2.5cm,0.0cm)$)};
     \node at ($(t2) + (1.0cm,-0.3cm)$) {$+ \dots + $};
     \matfiber{t3}{fill=red!70}{($(t2) + (3.0cm,0.0cm)$)};
     \draw [decorate,decoration={brace,amplitude=10pt,raise=4pt,mirror},yshift=0pt] 
@@ -179,7 +235,7 @@
     \node at ($(vec) + (1.0cm,-0.3cm)$) {$=$};
     \tikzrect{t1}{fill=blue!70}{($($(vec) + (2.5cm,0.0cm)$)$)}{0.3}{1};
     \node at ($(t1) + (1.0cm,-0.3cm)$) {$+$};
-    \tikzrect{t2}{fill=green!70}{($($(t1) + (2.5cm,0.0cm)$)$)}{0.3}{1};
+    \tikzrect{t2}{fill=DarkGreen!70}{($($(t1) + (2.5cm,0.0cm)$)$)}{0.3}{1};
     \node at ($(t2) + (1.0cm,-0.3cm)$) {$+ \dots + $};
     \tikzrect{t3}{fill=red!70}{($($(t2) + (3cm,0.0cm)$)$)}{0.3}{1};
     \draw [decorate,decoration={brace,amplitude=10pt,raise=4pt,mirror},yshift=0pt] 
