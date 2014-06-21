@@ -1,0 +1,33 @@
+% vim:ft=tex
+\documentclass[tikz,convert={outfile=reduction2.pdf}]{standalone}
+%\usetikzlibrary{...}% tikz package already loaded by 'tikz' option
+\usepackage{scabby-diag}
+\usepackage{standalone}
+
+\begin{document}
+
+\begin{tikzpicture}
+
+% Hidden nodes
+   \node[style=node, scale=0.8] (h1) at (0,0) {$h_1$};
+   \node[style=node, scale=0.8, right= 1cm of h1] (h2) {$h_2$};
+   \node[style=node, scale=0.8, below right= 0.5cm of h1] (h3) {$h_{\textrm{new}}$};
+
+   \node[style=obsnode, scale=0.8] (x3c2) at ($(h3.south west) + (-90:0.75cm)$) {$x_{v_3}$};
+   \node[style=obsnode, scale=0.8] (x3c3) at ($(h3.south west) + (-180:0.75cm)$) {$x_{v_1}$};
+   \node[style=obsnode, scale=0.8] (x3) at ($(h3.south west) + (-135:0.75cm)$) {$x_{v_2}$};
+
+   \node[style=node, scale=0.8, below right= 0.5cm of h3] (h4) {$h_4$};
+
+   \draw[-latex] (h1) -- (h3);
+   \draw[-latex] (h2) -- (h3);
+   \draw[-latex] (h3) -- (h4);
+   \draw[-latex] (h3) -- (x3);
+   \draw[-latex] (h3) -- (x3c2);
+   \draw[-latex] (h3) -- (x3c3);
+
+\end{tikzpicture}
+
+\end{document}
+
+

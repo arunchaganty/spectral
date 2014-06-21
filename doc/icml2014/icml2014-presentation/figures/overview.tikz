@@ -1,0 +1,27 @@
+% vim:ft=tex
+\documentclass[tikz,convert={outfile=outline.pdf}]{standalone}
+%\usetikzlibrary{...}% tikz package already loaded by 'tikz' option
+\usepackage{scabby}
+\usepackage{scabby-diag}
+\input{macros}
+
+\begin{document}
+
+\begin{tikzpicture}
+  \node (obs-mom) {$M \eqdef \Pr(\bx)$};
+  \node (cond-mom) at ($(obs-mom) + (2cm, -2cm)$) {$\mOpp{1}{1} \eqdef \Pr(\bx | \bh)$};
+  \node (hid-marg) at ($(cond-mom) + (-2cm, -2cm)$) {$Z \eqdef \Pr(\bh)$};
+  \node (params) at ($(hid-marg) + (0, -2cm)$) {$\theta$};
+
+  \node[right=0.1cm of obs-mom] {Observed moments};
+  \node[right=0.1cm of cond-mom] {Conditional moments};
+  \node[right=0.1cm of hid-marg] {Hidden marginals};
+  \node[right=0.1cm of params] {Parameters};
+
+  \draw[-latex] (obs-mom) -- node[right] (obs-edge) {} (cond-mom);
+  \draw[-latex] (cond-mom) -- node[right] (cond-edge) {} (hid-marg);
+  \draw[-latex] (obs-mom) -- node[right] (hid-edge) {} (hid-marg);
+  \draw[-latex] (hid-marg) -- node[right] (params-edge) {}    (params);
+\end{tikzpicture}
+
+\end{document}

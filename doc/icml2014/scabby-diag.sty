@@ -15,6 +15,9 @@
 %\PassOptionsToPackage{customcolors}{hf-tikz}
 %\RequirePackage{hf-tikz}
 
+\newtoggle{beamer}
+\togglefalse{beamer}
+
 \newtoggle{debug}
 \togglefalse{debug}
 
@@ -23,10 +26,11 @@
 
 \DeclareOption{debug}{\toggletrue{debug}}
 \DeclareOption{debugmarks}{\toggletrue{debugmarks}}
+\DeclareOption{beamer}{\toggletrue{beamer}}
 \ProcessOptions
 
 % Include the right tikz libraries.
-\usetikzlibrary{calc,fit,patterns,positioning,shapes,shadows,arrows,decorations,decorations.pathreplacing}
+\usetikzlibrary{calc,fit,patterns,positioning,shapes,shadows,arrows,tikzmark,decorations,decorations.pathreplacing}
 
 % Basic macros
 %%%%%%%%%%%%%%%
@@ -107,6 +111,7 @@
   }
 }
 
+%\newcommand{\checkmark}[1]{\tikz\fill[#1](0,.35) -- (.25,0) -- (1,.7) -- (.25,.15) -- cycle;} 
 % A minipage object for Tikz
 \newcommand{\objw}[2]{%
     {%

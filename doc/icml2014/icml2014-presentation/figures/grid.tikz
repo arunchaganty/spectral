@@ -1,0 +1,55 @@
+% vim:ft=tex
+\documentclass[tikz,convert={outfile=grid.pdf}]{standalone}
+%\usetikzlibrary{...}% tikz package already loaded by 'tikz' option
+\usepackage{scabby-diag}
+\begin{document}
+
+\begin{tikzpicture}
+
+% Hidden nodes
+   \node[style=node, scale=0.8] (h1) at (0,0) {$h_1$};
+   \node[style=node, scale=0.8, below left= 0.5cm of h1] (h2) {$h_2$};
+   \node[style=node, scale=0.8, below right= 0.5cm of h1] (h3) {$h_3$};
+   \node[style=node, scale=0.8, below right= 0.5cm of h2] (h4) {$h_4$};
+
+   \draw[-latex] (h1) -- (h2);
+   \draw[-latex] (h1) -- (h3);
+   \draw[-latex] (h2) -- (h4);
+   \draw[-latex] (h3) -- (h4);
+
+% Observed nodes
+   \node[style=obsnode, scale=0.7, above left=0.3cm of h1] (x1a) {$x^a_1$};
+   \node[style=obsnode, scale=0.7, above right=0.3cm of h1] (x1b) {$x^b_1$};
+   \draw[-latex] (h1) -- (x1a);
+   \draw[-latex] (h1) -- (x1b);
+
+   \node[style=obsnode, scale=0.7, above left=0.3cm of h2] (x2a) {$x^a_2$};
+   \node[style=obsnode, scale=0.7, below left=0.3cm of h2] (x2b) {$x^b_2$};
+   \draw[-latex] (h2) -- (x2a);
+   \draw[-latex] (h2) -- (x2b);
+
+   \node[style=obsnode, scale=0.7, above right=0.3cm of h3] (x3a) {$x^a_3$};
+   \node[style=obsnode, scale=0.7, below right=0.3cm of h3] (x3b) {$x^b_3$};
+   \draw[-latex] (h3) -- (x3a);
+   \draw[-latex] (h3) -- (x3b);
+    
+   \node[style=obsnode, scale=0.7, below left=0.3cm of  h4] (x4a) {$x^a_4$};
+   \node[style=obsnode, scale=0.7, below right=0.3cm of h4] (x4b) {$x^b_4$};
+
+   \draw[-latex] (h4) -- (x4a);
+   \draw[-latex] (h4) -- (x4b);
+
+%\begin{pgfonlayer}{background}
+%\draw[line width=1pt, dotted, black] 
+%                ($(x1b.north east) + (45:0.3cm)$) -- 
+%                ($(x1a.north west) + (135:0.3cm)$) -- 
+%                ($(x2a.north west) + (135:0.3cm)$) -- 
+%                ($(x2a.south west) + (-135:0.3cm)$) -- 
+%                ($(h1.south) + (-90:0.3cm)$) -- 
+%                ($(x1b.east) + (0:0.3cm)$) -- 
+%                cycle;
+%\end{pgfonlayer}
+
+\end{tikzpicture}
+
+\end{document}
