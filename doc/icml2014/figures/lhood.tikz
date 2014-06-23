@@ -1,0 +1,50 @@
+% vim:ft=tex
+\documentclass[tikz,convert={outname=lhood}]{standalone}
+%\usetikzlibrary{...}% tikz package already loaded by 'tikz' option
+\usepackage{standalone}
+\usepackage{import}
+\usepackage{scabby}
+\usepackage{scabby-diag}
+
+\begin{document}
+  \begin{tikzpicture}
+    % x, y
+    \begin{axis}[
+        x=1cm,
+        y=3cm,
+        scale only axis,
+        height=8cm,
+        width=4cm,
+        axis lines*=left,
+        xtick=\empty,
+        ytick=\empty,
+        xlabel=parameters,
+        ylabel=$-$log-likelihood
+        ]
+      \addplot[
+          black,
+          thick,
+          smooth,
+          ] file [% Provide data as a table
+            ] {data/llhood.table}
+       node[pos=0.27] (em1) {}
+       node[pos=0.55] (spec) {}
+       node[pos=0.61] (mle) {}
+       node[pos=0.85] (em2) {}
+       node[pos=0.9] (em2-start) {}
+       ;
+
+    \end{axis}
+    
+    \node[scale=0.3,circle,fill=black] at (mle) {};
+    \node at ($(mle) + (0.6cm,0)$) {$\mathmb{\textrm{MLE}}$};
+    \node[scale=0.3,circle,fill=black] at (em1) {};
+    \node at ($(em1) + (0.5cm,0)$) {$\mathmr{\textrm{EM}}$};
+    \node[scale=0.3,circle,fill=black] at (em2) {};
+    \node at ($(em2) + (0.5cm,0)$) {$\mathmr{\textrm{EM}}$};
+
+    \node[scale=0.3,circle,fill=black] at (spec) {};
+    \node at ($(spec) + (0.5cm,0.3cm)$) {$\textrm{MoM}$};
+  \end{tikzpicture}
+
+\end{document}

@@ -1,5 +1,5 @@
 % vim:ft=tex
-\documentclass[tikz,convert={outfile=three-view.pdf}]{standalone}
+\documentclass[tikz,convert={outfile=three-view.pdf},border=3mm,fill=white]{standalone}
 
 \usepackage{scabby-diag}
 %\usetikzlibrary{...}% tikz package already loaded by 'tikz' option
@@ -16,6 +16,7 @@
    \draw[-latex, squiggle] (h) -- (x1);
    \draw[-latex, squiggle] (h) -- (x2);
    \draw[-latex, squiggle] (h) -- (x3);
+
 \end{tikzpicture}
 
 \end{document}

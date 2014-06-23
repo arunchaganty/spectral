@@ -7,13 +7,14 @@
 \typeout{Scabby diagram macros}
 
 \RequirePackage{etoolbox}
+\RequirePackage{xcolor}
 \RequirePackage{tikz}
 \RequirePackage{pgfplots}
 \RequirePackage{graphicx}
 \RequirePackage{mathtools}
 \RequirePackage{calc}
-%\PassOptionsToPackage{customcolors}{hf-tikz}
-%\RequirePackage{hf-tikz}
+\PassOptionsToPackage{customcolors}{hf-tikz}
+\RequirePackage{hf-tikz}
 
 \newtoggle{beamer}
 \togglefalse{beamer}
@@ -50,8 +51,8 @@
 % Settings
 %%%%%%%%%%%%%%55
 % HF-tikz default settings
-%\hfsetfillcolor{blue!10}
-%\hfsetbordercolor{blue!90}
+\hfsetfillcolor{blue!10}
+\hfsetbordercolor{blue!90}
 
 %\pgfplotsset{compat=1.8}
 
@@ -124,11 +125,11 @@
 
 % Common Shapes
 \newcommand*{\tikzrect}[5]{%
-  \node (#1) at #3 {};
+  \node (#1) at ($#3 - 0.5*(#4,#5)$) {};
   \draw[#2] #3 -- ++(-#4,0) -- ++(0,-#5) -- ++(#4,0) -- cycle;
 }
 \newcommand*{\tikzcube}[6]{%
-  \node (#1) at #3 {};
+  \node (#1) at ($#3 - 0.5*(#4,#5)$) {};
   \draw[#2] #3 -- ++(-#4,0,0) -- ++(0,-#5,0) -- ++(#4,0,0) -- cycle;
   \draw[#2] #3 -- ++(0,0,-#6) -- ++(0,-#5,0) -- ++(0,0,#6) -- cycle;
   \draw[#2] #3 -- ++(-#4,0,0) -- ++(0,0,-#6) -- ++(#4,0,0) -- cycle;

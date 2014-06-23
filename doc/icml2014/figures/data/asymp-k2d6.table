@@ -1,0 +1,13 @@
+noise=1e0	dZ_pi=0.568308	std_dZ_pi=0.176211	dZ_cl=0.320623	std_dZ_cl=0.135024
+noise=1e-1	dZ_pi=0.571561	std_dZ_pi=0.182362	dZ_cl=0.321997	std_dZ_cl=0.135643
+noise=5e-2	dZ_pi=0.567523	std_dZ_pi=0.175371	dZ_cl=0.320987	std_dZ_cl=0.133278
+noise=1e-2	dZ_pi=0.568790	std_dZ_pi=0.174986	dZ_cl=0.326419	std_dZ_cl=0.137521
+noise=5e-3	dZ_pi=0.565460	std_dZ_pi=0.172633	dZ_cl=0.330508	std_dZ_cl=0.138792
+noise=1e-3	dZ_pi=0.543661	std_dZ_pi=0.182627	dZ_cl=0.339797	std_dZ_cl=0.125373
+noise=5e-4	dZ_pi=0.450403	std_dZ_pi=0.188368	dZ_cl=0.318671	std_dZ_cl=0.106715
+noise=3e-4	dZ_pi=0.262661	std_dZ_pi=0.103741	dZ_cl=0.342395	std_dZ_cl=0.089968
+noise=1e-4	dZ_pi=0.116252	std_dZ_pi=0.054098	dZ_cl=0.214917	std_dZ_cl=0.091827
+noise=7e-5	dZ_pi=0.061654	std_dZ_pi=0.029251	dZ_cl=0.112377	std_dZ_cl=0.050328
+noise=5e-5	dZ_pi=0.041974	std_dZ_pi=0.020117	dZ_cl=0.071205	std_dZ_cl=0.034087
+noise=3e-5	dZ_pi=0.024028	std_dZ_pi=0.011066	dZ_cl=0.036458	std_dZ_cl=0.017856
+noise=1e-5	dZ_pi=0.005328	std_dZ_pi=0.002639	dZ_cl=0.007864	std_dZ_cl=0.004071

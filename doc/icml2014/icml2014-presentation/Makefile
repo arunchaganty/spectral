@@ -8,7 +8,7 @@ FIGURES=
 
 $(OUTPUT).pdf: $(FILE).tex ${FIGURES}
 	pdflatex --file-line-error --interaction=nonstopmode $<
-#	pdflatex --file-line-error --interaction=nonstopmode $<
+	pdflatex --file-line-error --interaction=nonstopmode $<
 	mv $(FILE).pdf $@
 
 ${FIGURES}: %.pdf : %.eps 
